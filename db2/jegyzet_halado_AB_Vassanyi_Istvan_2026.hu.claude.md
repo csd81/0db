@@ -1,10 +1,10 @@
 # 1. Az alapvető adatbázis-ismeretek áttekintése
 
-Üdvözlet! A kurzus néhány bemutatójában a Northwind minta relációs adatbázist és a Microsoft SQL Server 2022 technológiát fogjuk használni. A Northwind adatbázist egy kis, fogyasztási cikkekkel kereskedő vállalat kiszolgálására tervezték. Tartalmaz egy készletnyilvántartást és táblákat a rendelések adminisztrációjához. A táblák és fájlok nevei önmagukért beszélnek.
+Ebben a kurzusban egyes bemutatókhoz a Northwind minta relációs adatbázist és a Microsoft SQL Server 2022 technológiát fogjuk használni. A Northwind adatbázist egy kis, fogyasztási cikkekkel kereskedő vállalat kiszolgálására tervezték. Tartalmaz egy készletnyilvántartást és táblákat a rendelések adminisztrációjához. A táblák és fájlok nevei önmagukért beszélnek.
 
 *(Az adatbázis sémáját lásd a PDF 5. oldalán: Suppliers, Products, Categories, Orders, Order Details, Customers, Employees, EmployeeTerritories, Territories, Region táblák.)*
 
-> Az adatbázis dump-ja letölthető innen: https://www.microsoft.com/en-us/download/details.aspx?id=23654  
+> Az adatbázis-mentés (dump) letölthető innen: https://www.microsoft.com/en-us/download/details.aspx?id=23654  
 > A kurzushoz az eredeti adatbázist módosítottuk: a Customers táblához hozzáadtuk a `territory_id` idegen kulcsot, az Employees táblához pedig a `Salary` mezőt.
 
 ---
@@ -13,19 +13,19 @@
 
 - Először az On-Line Transaction Processing (OLTP) adatbázisok alapvető relációs modellezési fogalmait tekintjük át a Northwind adatbázis példáján: Customers, Employees, Orders, OrderDetails, Products, Categories, Territories táblák.
   
-  - A kiindulópontunk a **fogalmi modell** (domain modell vagy egyed-kapcsolat modell), amelyet a felhasználói esetleírásokból (use case) vezetünk le; célunk a logikai adatbázis-modell kidolgozása.
+  - A kiindulópontunk a **fogalmi modell** (tartománymodell vagy egyed-kapcsolat modell), amelyet a felhasználói esetleírásokból (use case) vezetünk le; célunk a logikai adatbázis-modell kidolgozása.
   
   - A **relációs modell** a legelterjedtebb paradigma a hagyományos üzleti folyamatok modellezésére, egyszerűsége miatt.
   
   - Az entitásokat, attribútumokat, példányokat és azonosítókat a relációs modellben táblák, mezők, rekordok és elsődleges kulcsok valósítják meg. A kulcsok több mezőből is állhatnak.
   
-  - Minden cellában csak egyetlen érték szerepelhet — redundancia és inkonzisztencia nem megengedett a harmadik normálformában (3NF). A 3NF jellemzői:
+  - Minden cellában csak egyetlen érték szerepelhet; a harmadik normálforma (3NF) célja a redundancia és az inkonzisztencia minimalizálása. A 3NF jellemzői:
     
     - Minden táblának van egy elsődleges kulcsa, amely több mezőből is állhat, és amelytől az összes többi mező funkcionálisan függ.
     - Összetett (többmezős) kulcsok esetén az összes nem-kulcs mező a teljes kulcstól függ, nem csupán annak egy részétől — vagyis nincsenek **részleges függések**.
     - A nem-kulcs mezők kizárólag a kulcstól függnek, más mezőtől nem — vagyis nincs **tranzitív függés** a táblán belül.
   
-  - Az összes tábla kapcsolatban áll egymással.
+  - A táblák kapcsolatokon keresztül kapcsolódnak egymáshoz.
   
   - **1:N** (egy-a-sokhoz) kapcsolatokat idegen kulcsok valósítanak meg (pl. `Orders.EmployeeID`).
   
@@ -42,7 +42,7 @@
     
     - **Hópehely- (snowflake) vagy snowball struktúra**: minden hópehely egy vagy több tranzakciót támaszt alá.
     - Az **alaptáblák** a leveleken helyezkednek el (pl. `Region`, `Customers`, `Categories`).
-    - A **tranzakciós táblák** (esemény-táblák) középen találhatók (`Order Details`, `EmployeeTerritories`). Ezek a táblák az információs rendszer „lüktető szívét” alkotják.
+    - A **tranzakciós táblák** (eseménytáblák) középen találhatók (`Order Details`, `EmployeeTerritories`). Ezek a táblák az információs rendszer „lüktető szívét” alkotják.
 
 | Jellemző           | Alaptáblák                                       | Tranzakciós táblák                                                 |
 |:------------------ |:------------------------------------------------ |:------------------------------------------------------------------ |
@@ -68,7 +68,7 @@
   
   - Telepítsd az MS SQL Server 2016-os vagy újabb verzióját, indítsd el az adatbázis-szolgáltatást, és csatlakozz hozzá az MS Management Studio segítségével.
   
-  - Futtasd a Northwind adatbázis létrehozó dump szkriptjét, és tekintsd át a táblákat a GUI eszközök segítségével.
+  - Futtasd a Northwind adatbázis létrehozó mentésszkriptjét, és tekintsd át a táblákat a grafikus felhasználói felület (GUI) eszközeinek segítségével.
   
   - Rajzolj a fenti diagramhoz hasonló logikai adatbázis-modell diagramot.
   
@@ -846,7 +846,7 @@ Először állítsd be a tesztkörnyezetet. A replikációs példák megfelelő 
 
 ### A kiadvány létrehozása
 
-1. Csatlakozz a Principal szerverhez, és hozz létre egy új adatbázist Northwind névvel, ha még nem létezik. Futtasd a Northwind adatbázis létrehozó dump-ját.
+1. Csatlakozz a Principal szerverhez, és hozz létre egy új adatbázist Northwind névvel, ha még nem létezik. Futtasd a Northwind adatbázis létrehozó mentésszkriptjét.
 
 2. Az alábbi hiba elkerülése érdekében: *„Cannot execute as the database principal because the principal "dbo" does not exist, …"* — amely a Northwind adatbázis hiányos visszaállításából ered — futtasd a következő szkriptet a Northwind adatbázison:
 
