@@ -1,210 +1,178 @@
-## 1. Az alapvető adatbázis-készségek áttekintése
+# 1. Az alapvető adatbázis-ismeretek áttekintése
 
-Üdvözöljük a kurzusban. A kurzus néhány bemutatójában a Northwind minta relációs adatbázist és a
-Microsoft SQL Server 2022 technológiát használjuk. A Northwind adatbázist egy fogyóeszközökkel
-kereskedő kis cég támogatására tervezték. Tartalmaz készletnyilvántartást és rendeléskezelő
-táblákat. A táblák és fájlok nevei magukért beszélnek.
+Üdvözlet! A kurzus néhány bemutatójában a Northwind minta relációs adatbázist és a Microsoft SQL Server 2022 technológiát fogjuk használni. A Northwind adatbázist egy kis, fogyasztási cikkekkel kereskedő vállalat kiszolgálására tervezték. Tartalmaz egy készletnyilvántartást és táblákat a rendelések adminisztrációjához. A táblák és fájlok nevei önmagukért beszélnek.
 
-### Modellezés
+*(Az adatbázis sémáját lásd a PDF 5. oldalán: Suppliers, Products, Categories, Orders, Order Details, Customers, Employees, EmployeeTerritories, Territories, Region táblák.)*
 
-Az OLTP-adatbázisok relációs modellezésének alapjait a Northwind példáján tekintjük át: `Customers`,
-`Employees`, `Orders`, `Order Details`, `Products`, `Categories`, `Territories`.
+> Az adatbázis dump-ja letölthető innen: https://www.microsoft.com/en-us/download/details.aspx?id=23654  
+> A kurzushoz az eredeti adatbázist módosítottuk: a Customers táblához hozzáadtuk a `territory_id` idegen kulcsot, az Employees táblához pedig a `Salary` mezőt.
 
-- A kiindulópont a koncepcionális modell, vagyis a domainmodell vagy az entitáskapcsolati modell,
-  amelyet a használati esetekből vezetünk le. A cél a logikai adatbázismodell kialakítása.
+---
 
-- A relációs modell egyszerűsége miatt a hagyományos üzleti folyamatok támogatásának leggyakoribb
-  megközelítése. A Northwind adatbázis dumpja innen tölthető le:
-  <https://www.microsoft.com/en-us/download/details.aspx?id=23654> A kurzusban az eredeti adatbázist
-  úgy módosítottuk, hogy egy `territory_id` idegen kulcsot adtunk a `Customers` táblához, valamint
-  egy extra `Salary` mezőt az `Employees` táblához.
+## Adatmodellezés
 
-- Az entitásokat, attribútumokat, előfordulásokat és azonosítókat a relációs modellben táblák,
-  mezők, rekordok és elsődleges kulcsok formájában valósítjuk meg. A kulcsok több mezőből is
-  állhatnak.
-
-- Egyetlen cellában csak egy érték lehet, ezért a redundancia és az inkonzisztencia nem megengedett
-  a harmadik normál formában (3NF).
-
-- A 3NF jellemzői:
+- Először az On-Line Transaction Processing (OLTP) adatbázisok alapvető relációs modellezési fogalmait tekintjük át a Northwind adatbázis példáján: Customers, Employees, Orders, OrderDetails, Products, Categories, Territories táblák.
   
-  - Minden táblának van egy elsődleges kulcsa, amely több mezőből is állhat, és amelytől az összes
-    többi mező funkcionálisan függ.
-  - Kompozit, vagyis többmezős kulcsok esetén az összes nem kulcsmező a teljes kulcstól függ, nem
-    csak annak egy részétől, vagyis nincs részleges függés.
-  - A nem kulcsmezők a kulcson kívül más mező(k)től nem függnek, vagyis nincs tranzitív függés egy
-    táblán belül.
-
-- Minden tábla kapcsolódik más táblákhoz.
-
-- Az 1:N, vagyis az egy a sokhoz kapcsolatokat idegen kulcsokkal valósítjuk meg (például
-  `Orders.EmployeeID`).
-
-- Az N:M, vagyis a sok a sokhoz kapcsolatokat kapcsolótáblákkal valósítjuk meg (például
-  `EmployeeTerritories`).
-
-- Az 1:1 kapcsolat nem szerepel a Northwind adatbázisban.
+  - A kiindulópontunk a **fogalmi modell** (tartománymodell vagy egyed-kapcsolat modell), amelyet a felhasználói esetleírásokból (use case) vezetünk le; célunk a logikai adatbázis-modell kidolgozása.
   
-  - Egy normál 1:1 kapcsolat lehetne például egy `CompanyCar` tábla, ha egy alkalmazottnak
-    legfeljebb egy céges autója lehet.
-  - Egy specializációs típusú 1:1 kapcsolat lehetne például egy `ExciseProducts` tábla a jövedéki
-    termékek extra mezőivel, például `ExciseDutyAmount`, `RegBarCode` stb.
-
-- Az összekapcsoló táblák általában összetett kulcsokkal rendelkeznek. Kulcsot csak akkor
-  generálunk, ha külső hivatkozásra van szükség.
-
-- Az OLTP-séma kapcsolati struktúrája feltárja az adatbázist használó alkalmazás kulcsfontosságú
-  tranzakcióit.
-
-- A törzstáblák a séma szélén, a tranzakciós táblák pedig a középpontban találhatók. Az előbbiek
-  kicsik és ritkán változnak, az utóbbiak nagyok és gyakran módosulnak.
-
-- Egy jól megtervezett grafikus felhasználói felület is követi ezt a szerkezetet:
+  - A **relációs modell** a legelterjedtebb paradigma a hagyományos üzleti folyamatok modellezésére, egyszerűsége miatt.
   
-  - rejtett vagy csak olvasható mező: kulcs
-  - szerkeszthető szövegmezők: a kulcstól függő attribútumok
-  - legördülő vagy kombinált listák: hivatkozások törzstáblákra
-  - jelölőnégyzet kiegészítő szövegmezővel: specializáció
-  - legördülő táblák vagy listák: 1:N kapcsolatok
-
-További olvasnivalók a modellezésről:
-
-- <https://www.safaribooksonline.com/library/view/relational-theoryfor/9781449365431/ch01.html>
-- <http://www.blackwasp.co.uk/RelationalDBConcepts.aspx>
-- <https://www.tutorialspoint.com/ms_sql_server/index.htm>
-
-GYAKORLAT: a minta adatbázis létrehozása és bővítése
-
-- Telepítsd az MS SQL Server 2016 vagy újabb verzióját, indítsd el az adatbázis-szolgáltatást, és
-  csatlakozz hozzá az MS Management Studio segítségével.
-- Futtasd a Northwind adatbázist létrehozó szkriptet, készíts dumpot, és tekintsd át a táblákat a
-  grafikus felhasználói felület eszközeivel
-- Rajzolj a fenti diagramhoz hasonló logikai adatbázis-modell diagramot
-- Add hozzá az Employees.Salary és a Customers.territory_id mezőket
-- Tervezd meg és valósítsd meg az adatbázis kiterjesztését a következő forgatókönyv modellezéséhez.
-  Munkatársainkat rendszeres képzésekre küldjük, ahol különféle ismereteket sajátítanak el. A
-  képzéseket szerződött harmadik fél cégek szervezik. Van egy listánk a szükséges készségekről
-  (például „B fokú üzleti prezentáció” vagy „számviteli alapismeretek” stb.). Minden foglalkoztatási
-  kategóriához (például „értékesítési menedzser”, lásd Alkalmazottak.Megnevezés) meg vannak
-  határozva azok a készségek, amelyeket a munkaviszonyuk kezdetétől számított 10 éven belül el kell
-  sajátítaniuk. Minden képzéshez tároljuk az időtartamot (kezdési és befejezési dátum), a helyszínt,
-  a szervező céget, az oktatott készségeket, a résztvevőket, a képzési állapotukat (például
-  „beiratkozott”, „kezdett”, „befejezett”, „megszakított”) és a vizsgaeredményeiket külön-külön a
-  különböző készségek esetében. Tekintettel a képzéseket szervező cégekre, tároljuk a cégünk által
-  fizetett díjakat a képzések minden évében.
-- (Add hozzá az új táblákat az adatbázis diagramhoz, és adj meg néhány tesztadatot)
-- MEGOLDÁS: train_tables.sql2
-
-### Lekérdezés
-
-- Áttekintjük a Structured Query Language (SQL) lekérdezés alapjait, mint például a kiválasztás,
-  csoportosítás, összekapcsolás. Példa lekérdezések:
+  - Az entitásokat, attribútumokat, példányokat és azonosítókat a relációs modellben táblák, mezők, rekordok és elsődleges kulcsok valósítják meg. A kulcsok több mezőből is állhatnak.
   
+  - Minden cellában csak egyetlen érték szerepelhet — redundancia és inkonzisztencia nem megengedett a harmadik normálformában (3NF). A 3NF jellemzői:
+    
+    - Minden táblának van egy elsődleges kulcsa, amely több mezőből is állhat, és amelytől az összes többi mező funkcionálisan függ.
+    - Összetett (többmezős) kulcsok esetén az összes nem-kulcs mező a teljes kulcstól függ, nem csupán annak egy részétől — vagyis nincsenek **részleges függések**.
+    - A nem-kulcs mezők kizárólag a kulcstól függnek, más mezőtől nem — vagyis nincs **tranzitív függés** a táblán belül.
+  
+  - Minden tábla összefügg a többi táblával.
+  
+  - **1:N** (egy-a-sokhoz) kapcsolatokat idegen kulcsok valósítanak meg (pl. `Orders.EmployeeID`).
+  
+  - **N:M** (sok-a-sokhoz) kapcsolatokat kapcsolótáblák valósítanak meg (pl. `EmployeeTerritories`).
+  
+  - **1:1** (egy-az-egyhez) kapcsolatra a Northwind adatbázisban nincs példa.
+    
+    - Normál 1:1 kapcsolat lehet például egy `CompanyCar` tábla, ahol egy alkalmazotthoz legfeljebb egy céges autó tartozhat.
+    - Specializációs 1:1 kapcsolat lehet például egy `ExciseProducts` (Jövedéki termékek) tábla, `ExciseDutyAmount`, `RegBarCode` stb. extra mezőkkel.
+  
+  - A kapcsolótábláknak általában összetett kulcsuk van. Generált kulcsot csak akkor alkalmazunk, ha külső hivatkozás szükséges.
+  
+  - Az OLTP séma kapcsolatstruktúrája feltárja az adatbázist használó alkalmazás kulcstranzakcióit.
+    
+    - **Hópehely- (snowflake) vagy hógömb- (snowball) struktúra**: minden hópehely egy vagy több tranzakciót támaszt alá.
+    - Az **alaptáblák** a leveleken helyezkednek el (pl. `Region`, `Customers`, `Categories`).
+    - A **tranzakciós táblák** (esemény-táblák) középen találhatók (`Order Details`, `EmployeeTerritories`). Ezek a táblák az információs rendszer „szívét" alkotják.
+
+| Jellemző           | Alaptáblák                                       | Tranzakciós táblák                                                 |
+|:------------------ |:------------------------------------------------ |:------------------------------------------------------------------ |
+| Pozíció a sémában  | Levélelem. Nem hivatkozik más táblára.           | Középpont. Közvetlenül vagy közvetve hivatkozik az összes táblára. |
+| Méret              | Kicsi                                            | Nagy                                                               |
+| Változás sebessége | Lassú. Hideg (offline) mentés is elegendő lehet. | Gyors. Online mentés szükséges.                                    |
+
+- Kapcsolat a jól tervezett grafikus felhasználói felület (GUI) és a relációs séma között:
+  
+  - Rejtett vagy csak olvasható felirat: **kulcs**
+  - Szerkeszthető szövegmezők: a kulcstól függő attribútumok (mezők)
+  - Legördülő / kombinált listák: hivatkozások alaptáblákra
+  - Jelölőnégyzet kiegészítő szövegmezővel: specializáció
+  - Legördülő táblák vagy listák: 1:N kapcsolatok
+
+- További olvasnivaló az adatmodellezésről:
+  
+  - https://www.safaribooksonline.com/library/view/relational-theory-for/9781449365431/ch01.html
+  - http://www.blackwasp.co.uk/RelationalDBConcepts.aspx
+  - https://www.tutorialspoint.com/ms_sql_server/index.htm
+
+- **GYAKORLAT:** Hozd létre és bővítsd ki a minta adatbázist!
+  
+  - Telepítsd az MS SQL Server 2016-os vagy újabb verzióját, indítsd el az adatbázis-szolgáltatást, és csatlakozz hozzá az MS Management Studio segítségével.
+  
+  - Futtasd a Northwind adatbázis létrehozó dump szkriptjét, és tekintsd át a táblákat a GUI eszközök segítségével.
+  
+  - Rajzolj a fenti diagramhoz hasonló logikai adatbázis-modell diagramot.
+  
+  - Add hozzá az `Employees.Salary` és a `Customers.territory_id` mezőket.
+  
+  - Tervezd meg és valósítsd meg az adatbázis alábbi forgatókönyv modellezéséhez szükséges bővítményét:
+    
+    > *Az alkalmazottainkat rendszeres képzésekre küldjük, ahol különböző készségeket sajátítanak el. A képzéseket szerződött harmadik fél cégek szervezik. Minden foglalkoztatási kategóriához (pl. „értékesítési vezető", lásd `Employees.Title`) van egy listánk az elvárt készségekről (pl. „B szintű üzleti prezentáció" vagy „számviteli alapismeretek"), amelyeket a munkaviszony megkezdésétől számított 10 éven belül kell elsajátítani. Minden képzéshez tároljuk az időtartamot (kezdési és befejezési dátum), a helyszínt, a szervező céget, az oktatott készségeket, a résztvevőket, a képzési állapotukat (pl. „beiratkozott", „elkezdett", „befejezett", „megszakított") és vizsgaeredményeiket az egyes készségek vonatkozásában. A képzéseket szervező cégek tekintetében tároljuk a cégünk által az egyes képzési foglalkozásokért évente fizetett díjakat.*
+  
+  - Add hozzá az új táblákat az adatbázis-diagramhoz, és vigyél fel néhány tesztadatot.
+  
+  - MEGOLDÁS: `train_tables.sql`²
+
+---
+
+## Lekérdezés
+
+- Az SQL lekérdezés alapjait tekintjük át: kiválasztás, csoportosítás, összekapcsolás (joining). Példalekérdezések:
   - Az egyes rendelések értéke
-  - Minden egyes termékre éves szinten eladott minimális és maximális mennyiség
+  - Az egyes termékekből évenként eladott minimális és maximális mennyiség
   - Melyik alkalmazott adta el a legtöbb darabot a legnépszerűbb termékből 1998-ban?
 
-- Minden rendelés értéke
+```sql
+-- Az egyes rendelések értéke
+select o.orderid, o.orderdate,
+    str(sum((1-discount)*unitprice*quantity), 15, 2) as order_value,
+    sum(quantity) as no_of_pieces,
+    count(d.orderid) as no_of_items
+from orders o inner join [order details] d on o.orderid=d.orderid
+group by o.orderid, o.orderdate
+order by sum((1-discount)*unitprice*quantity) desc
+
+-- Évenként eladott mennyiség termékenkénti bontásban
+select p.ProductID, p.ProductName, year(o.orderdate), SUM(quantity) as quantity
+from orders o inner join [order details] d on o.orderid=d.orderid
+inner join Products p on p.ProductID=d.ProductID
+group by p.ProductID, p.ProductName, year(o.orderdate)
+order by p.ProductName
+
+-- Melyik alkalmazott adta el a legtöbb darabot a legnépszerűbb termékből 1998-ban?
+select top 1 u.titleofcourtesy+' '+u.lastname+' '+u.firstname+' ('+u.title+')' as name,
+    sum(quantity) as pieces_sold,
+    pr.productname as productname
+from orders o inner join [order details] d on o.orderid=d.orderid
+    inner join employees u on u.employeeid=o.employeeid
+    inner join products pr on pr.productid=d.productid
+where year(o.orderdate)=1998 and d.productid =
+    (select top 1 p.productid
+    from products p left outer join [order details] d on p.productid=d.productid
+    group by p.productid
+    order by count(*) desc)
+group by u.employeeid, u.titleofcourtesy, u.title, u.lastname, u.firstname,
+pr.ProductID, pr.productname
+order by sum(quantity) desc
+```
+
+- További példákért és az SQL lekérdezések szisztematikus áttekintéséért lásd a Mellékletet.
+
+- További olvasnivaló a lekérdezésekről:
   
-  ```sql
-  select o.orderid, o.orderdate,
-         str(sum((1-discount)*unitprice*quantity), 15, 2) as order_value,
-         sum(quantity) as no_of_pieces,
-         count(d.orderid) as no_of_items
-  from orders o inner join [order details] d on o.orderid=d.orderid
-  group by o.orderid, o.orderdate
-  order by sum((1-discount)*unitprice*quantity) desc
-  ```
+  - https://docs.microsoft.com/en-us/sql/t-sql/queries/queries
 
-- Évesen termékenként eladott mennyiség
+- **GYAKORLAT:** Az első gyakorlatban megvalósított táblák segítségével valósítsd meg a következő lekérdezéseket:
   
-  ```sql
-  select p.ProductID, p.ProductName, year(o.orderdate), SUM(quantity) as quantity
-  from orders o inner join [order details] d on o.orderid=d.orderid
-  inner join Products p on p.ProductID=d.ProductID
-  group by p.ProductID, p.ProductName, year(o.orderdate)
-  order by p.ProductName
-  ```
+  - Mik a hiányzó készségek Mrs. Peacock számára?
+  - Vannak-e olyan jövőbeli foglalkozások, amelyeken Peacocknak még részt kell vennie?
+  - Mi az első és az utolsó képzési dátum, és mekkora a képzések átlagos időtartama napokban?
+  - Melyik alkalmazott rendelkezik a legtöbb készséggel, ha a vizsgaeredményt „nem felelt meg" kategóriában vizsgáljuk?
+  - Mennyi az összes díj, amelyet azokért a képzési foglalkozásokért fizettünk, amelyeken a legképzettebb alkalmazottunk (lásd fent) részt vett?
+  - Melyik elvárt készség(ek)et nem fedte le még egyetlen képzési foglalkozás sem?
+  - MEGOLDÁS: `train_solution.sql`
 
-- Melyik alkalmazott adta el a legtöbb darabot a legnépszerűbb termékből 1998-ban?
+---
+
+## Programozás
+
+- Az SQL mellett a procedurális tranzakciós logika a T-SQL szkriptnyelvben is megvalósítható, és a szerver oldalon futtatható és tárolható.
   
-  ```sql
-  select top 1 u.titleofcourtesy+' '+u.lastname+' '+u.firstname+' ('+u.title+')',
-         sum(quantity) as pieces_sold,
-         pr.productname as productname
-  from orders o inner join [order details] d on o.orderid=d.orderid
-  inner join employees u on u.employeeid=o.employeeid
-  inner join products pr on pr.productid=d.productid
-  where year(o.orderdate)=1998
-    and d.productid = (
-      select top 1 p.productid
-      from products p left outer join [order details] d on p.productid=d.productid
-      group by p.productid
-      order by count(*) desc
-    )
-  group by u.employeeid, u.titleofcourtesy, u.title, u.lastname, u.firstname,
-           pr.ProductID, pr.productname
-  order by sum(quantity) desc
-  ```
-
-- További példákért és az SQL-lekérdezések szisztematikus áttekintéséért lásd a Függeléket
-
-- További olvasnivalók a lekérdezésről:
+  - A szerveroldali üzleti logika előnyei és hátrányai:
+    
+    - ✓ Egyszerű architektúra
+    - ✓ Technológiai semlegesség
+    - ✓ Adatbiztonság
+    - ✓ Kezelhetőség
+    - ✓ Hatékonyság
+    - ✓ Olvasható kód
+    - ✗ Alacsony szintű
+    - ✗ Gyenge szoftvertechnológiai támogatás
+    - ✗ Drága skálázhatóság
   
-  - • névként,
-
-<!-- -->
-
-    https://docs.microsoft.com/en-us/sql/t-sql/queries/queries
-
-GYAKORLAT: az első gyakorlatban megvalósított táblák segítségével valósítsa meg a következő
-lekérdezéseket
-
-- Mik a hiányzó képességek Mrs. Peacock számára?
-- Vannak a jövőben olyan foglalkozások, amelyeken továbbra is részt kell venni Peacock-nak?
-- Mi az első és az utolsó képzés dátuma és a képzések átlagos időtartama napokban?
-- Melyik alkalmazott rendelkezik a legtöbb olyan készséggel, ahol a vizsgaeredmény jobb, mint „elbukott” (fail)?
-- Mennyi a teljes díja minden olyan képzésért, amelyen a legképzettebb munkatársunk (lásd fent)
-  részt vett?
-- Mely szükséges készségekkel nem foglalkoztak még egyetlen tréningen sem?
-- MEGOLDÁS: train_solution.sql
-
-### Programozás
-
-- Az SQL mellett a procedurális tranzakciós logika a TSQL szkriptnyelvben is megvalósítható, és a
-  szerver oldalon futtatható és tárolható
-  - A szerveroldali üzleti logika előnyei és hátrányai ✓ Egyszerű architektúra ✓ Technológiai
-    semlegesség ✓ Adatbiztonság ✓ Kezelhetőség ✓ Hatékonyság
-
-✓ Olvasható kód  Alacsony szint  Gyenge szoftvertechnológiai támogatás  Drága méretezhetőség
-
-- A lényeg az, hogy az üzleti logika egyszerű, halmazalapú részét, vagyis a nagy mennyiségű
-  strukturált adattal végzett műveletek végrehajtását és kezelését a legcélszerűbb az
-  adatbázis-kiszolgálón megvalósítani tárolt eljárások, függvények, triggerek és jobok formájában.
-  Az üzleti logika eljárásilag kifinomult részeit, amelyek magas szintű, objektumorientált
-  programozási környezetet igényelnek, egy alkalmazásszerveren kell implementálni.
-
-- A szerver oldali programozhatóság elemei
-
-- Speciális SQL kulcsszavak a vezérlési folyamathoz: `DECLARE`, `SET`, `BEGIN/END`, `IF/ELSE`,
-  `WHILE/BREAK/CONTINUE`, `RETURN`, `WAITFOR/DELAY/TIME`, `GOTO`
-
-- Hibakezelés: `TRY/CATCH/THROW/RAISERROR`
-
-- A programozhatóságot támogató objektumok: `PROCEDURE` / `FUNCTION` / `TRIGGER`
-
-- Tranzakciós támogatás: `BEGIN/COMMIT/ROLLBACK TRANSACTION`
-
-- `CREATE`
-
-Az alábbiakban egy egyszerű példa látható egy T-SQL scriptre és annak tárolt eljárásos
-megfelelőjére. Egy hasonló felhasználó által definiált függvény egy `SELECT` utasításban is
-használható.
+  - Összefoglalás: azokat az üzleti logika elemeket, amelyek *nagy mennyiségű*, *strukturált* adaton végzett egyszerű, halmazalapú műveleteket igényelnek, a legjobb az adatbázis-szerveren tárolt eljárások, függvények, triggerek és ütemezett feladatok formájában megvalósítani. A procedurálisan összetett részeket, amelyekhez magas szintű, objektum-orientált programozási környezet szükséges, alkalmazásszerveren kell futtatni.
+  
+  - A szerveroldali programozhatóság elemei:
+    
+    - Speciális SQL vezérlőutasítások: `DECLARE`, `SET`, `BEGIN/END`, `IF/ELSE`, `WHILE/BREAK/CONTINUE`, `RETURN`, `WAITFOR/DELAY/TIME`, `GOTO`
+    - Hibakezelés: `TRY/CATCH/THROW/RAISERROR`
+    - Programozhatóságot támogató objektumok: `CREATE PROCEDURE/FUNCTION/TRIGGER`
+    - Tranzakciókezelés: `BEGIN/COMMIT/ROLLBACK TRANSACTION`
+  
+  - Az alábbiakban egy egyszerű T-SQL szkript és tárolt eljárásként megvalósított megfelelője látható. A hasonló, felhasználó által definiált függvény `SELECT` utasításban is hívható.
 
 ```sql
---a simple script that demonstrates the elements of T-SQL
---megkeresünk egy alkalmazottat, és ha pontosan egy találat van,
---10%-kal megemeljük az alkalmazott fizetését
+--egyszerű szkript: alkalmazott keresése, és ha egyetlen egyező rekordot találunk,
+--a fizetés emelése 10%-kal
 set nocount on
 declare @name nvarchar(20), @address nvarchar(max), @res_no int, @emp_id int
 set @name='Fuller'
@@ -212,14 +180,15 @@ select @res_no=count(*) from Employees where LastName like @name + '%'
 if @res_no=0 print 'No matching record.'
 else if @res_no>1 print 'More than one matching record.'
 else begin --egyetlen találat
-select @address=Country+', '+City+' '+Address, @emp_id=EmployeeID
-from Employees where LastName like @name
-print 'Employee ID: ' + cast(@emp_id as varchar(10)) + ', address: ' + @address
-update Employees set salary=1.1*salary where EmployeeID=@emp_id
-print 'Salary increased.'
+        select @address=Country+', '+City+' '+Address, @emp_id=EmployeeID
+                from Employees where LastName like @name
+        print 'Employee ID: ' + cast(@emp_id as varchar(10)) + ', address: ' + @address
+        update Employees set salary=1.1*salary where EmployeeID=@emp_id
+        print 'Salary increased.'
 end
 go
---csomagold be tárolt eljárásba
+
+--tárolt eljárásba csomagolva
 create procedure sp_increase_salary @name nvarchar(40)
 as
 set nocount on
@@ -228,36 +197,34 @@ select @res_no=count(*) from Employees where LastName like @name + '%'
 if @res_no=0 print 'No matching record.'
 else if @res_no>1 print 'More than one matching record.'
 else begin --egyetlen találat
-select @address=Country+', '+City+' '+Address, @emp_id=EmployeeID
-from Employees where LastName like @name
-print 'Employee ID: ' + cast(@emp_id as varchar(10)) + ', address: ' + @address
-update Employees set salary=1.1*salary where EmployeeID=@emp_id
-print 'Salary increased.'
+        select @address=Country+', '+City+' '+Address, @emp_id=EmployeeID
+                from Employees where LastName like @name
+        print 'Employee ID: ' + cast(@emp_id as varchar(10)) + ', address: ' + @address
+        update Employees set salary=1.1*salary where EmployeeID=@emp_id
+        print 'Salary increased.'
 end
 go
---test
-```
-
-```sql
+--teszt
 select Salary from Employees where LastName like 'Fuller%'
 exec sp_increase_salary 'Fuller'
 select Salary from Employees where LastName like 'Fuller%'
---skaláris függvény, amely visszaadja egy személy fizetését, vagy 0-t, ha a személy nem található
+
+--skaláris értékű függvény: visszaadja egy személy fizetését, vagy 0-t, ha nem található
 go
 create function fn_salary (@name nvarchar(40)) returns money as
 begin
-declare @salary money, @res_no int
-select @res_no=count(*) from Employees where LastName like @name + '%'
-if @res_no <> 1 set @salary=0
-else select @salary=Salary from Employees where LastName like @name + '%'
-return @salary
+        declare @salary money, @res_no int
+        select @res_no=count(*) from Employees where LastName like @name + '%'
+        if @res_no <> 1 set @salary=0
+        else select @salary=Salary from Employees where LastName like @name + '%'
+        return @salary
 end
 go
 --teszt
 select [your user name].fn_salary('Fuller') as salary
 ```
 
-- Vedd figyelembe, hogy egy tárolt eljárás több rekordkészletet is visszaadhat, ha több
+- Megjegyzés: a **tárolt eljárás** több rekordhalmazt is visszaadhat, ha változóhozzárendelés nélkül több `SELECT` utasítást tartalmaz. A fenti példában szereplő paraméterek INPUT típusú paraméterek. A tárolt eljárások OUTPUT paraméterekkel skaláris értékeket is visszaadhatnak (nem szerepel a példában). Mivel más tárolt eljárásokat és függvényeket is meghívhatnak, összetett üzleti logika is megvalósítható velük az adatbázis-szerveren.
   `SELECT` utasítást tartalmaz változó-hozzárendelés nélkül. A példában szereplő paraméterek
   INPUT típusú, érték szerint átadott paraméterek. A tárolt eljárások skaláris értékeket is
   visszaadhatnak az OUTPUT paraméterekben (a példában nem láthatók). A tárolt eljárások más tárolt
@@ -384,163 +351,167 @@ select top 3 * from Orders where CustomerID='arout' order by OrderDate desc
 --after correction, test the other two branches as well
 ```
 
-- További olvasnivalók a programozásról:
-  - •
+ - További olvasnivaló a programozásról:
+  
+  - https://docs.microsoft.com/en-us/sql/t-sql/language-elements/control-of-flow
 
-<!-- -->
+- **GYAKORLAT:** Az előző gyakorlatban megvalósított táblák és szkriptek segítségével:
+  - Írj egy szkriptet, amely ellenőrzi, hogy egy alkalmazottnak szüksége van-e valamelyik képzési foglalkozáson kínált készségre, és ha igen, iratkoztasd be az alkalmazottat az összes ilyen foglalkozásra.
+  - Futtasd a szkriptet tárolt eljárásként.
+  - MEGOLDÁS: `train_solution.sql`
 
-    https://docs.microsoft.com/en-us/sql/t-sql/language-elements/control-of-flow
+---
 
-GYAKORLAT: az előző gyakorlatban megvalósított táblák és szkriptek felhasználásával,
+## Kurzorok
 
-- Írjon egy forgatókönyvet, amely ellenőrzi, hogy egy alkalmazottnak szüksége van-e az a. által
-  kínált készségekre tréningen, és ha igen, jelentkezz be minden ilyen foglalkozásra.
-- Futtassa a szkriptet egy tárolt eljárásban.
-- MEGOLDÁS: train_solution.sql
+A kurzorok olyan problémáknál alkalmazhatók, ahol a procedurális, soronkénti megközelítés megfelelőbb, mint a halmazalapú lekérdezési megközelítés.
+
+**PÉLDA** kurzor szintaxisra:
 
 ```sql
-### Cursors
-Azokban a problémákban, ahol a procedurális, soronkénti feldolgozás célravezetőbb, mint a halmazalapú
-lekérdezési megközelítés, kurzorokat használhatunk.
-PÉLDA a kurzor szintaxisára
 declare @emp_id int, @emp_name nvarchar(50), @i int, @address nvarchar(60)
 declare cursor_emp cursor for
-select employeeid, lastname, address from employees order by lastname
+    select employeeid, lastname, address from employees order by lastname
 set @i=1
 open cursor_emp
 fetch next from cursor_emp into @emp_id, @emp_name, @address
 while @@fetch_status = 0
 begin
-print cast(@i as varchar(5)) + ' EMPLOYEE:'
-print 'ID: ' + cast(@emp_id as varchar(5)) + ', LASTNAME: ' + @emp_name + ', ADDRESS: '
-+ @address
-set @i=@i+1
-fetch next from cursor_emp into @emp_id, @emp_name, @address
+    print cast(@i as varchar(5)) + ' EMPLOYEE:'
+    print 'ID: ' + cast(@emp_id as varchar(5)) + ', LASTNAME: ' + @emp_name + ', ADDRESS: ' + @address
+    set @i=@i+1
+    fetch next from cursor_emp into @emp_id, @emp_name, @address
 end
 close cursor_emp
 deallocate cursor_emp
 go
---ez ezzel egyenértékű egy SELECT-tel
+--ezzel egyenértékű SELECT megoldás
 select 'ID: ' + cast(employeeid as varchar(5)) + isnull(', LASTNAME: ' + lastname, '') +
-isnull( ', ADDRESS: ' + address, '')
+isnull(', ADDRESS: ' + address, '')
 from employees order by lastname
 --vagy sorszámmal
 select cast(row_number() over(order by lastname) as varchar(50))+
 '. ügynök: ID: ' + cast(employeeid as varchar(5)) + isnull(', LASTNAME: ' + lastname, '') +
-isnull( ', ADDRESS: ' + address, '')
+isnull(', ADDRESS: ' + address, '')
 from employees
 ```
 
-GYAKORLAT: Valósíts meg egy kurzort, amely bejárja az USA-beli ügyfeleket, és soronként kiírja a
-nekik megfelelő rendeléseket.
+**GYAKORLAT:** Valósíts meg egy kurzort, amely végigiterál az USA-beli vevőkön, és soronként kiírja a hozzájuk tartozó rendelések számát!
 
-### Tranzakciókezelés
+---
 
-- A tranzakciós alapfogalmak
-  - A tranzakciót úgy definiáljuk, mint egy üzleti folyamat logikailag koherens műveletsorozatát. A
-    „logikailag koherens” azt jelenti, hogy a műveletek szemantikai egységet alkotnak. A tranzakciók
-    beágyazhatók, például egy helikoptervásárlási tranzakció tartalmazhatja az ügyfél-azonosítás és
-    a banki átutalásos fizetés tranzakcióját is.
-  - Az atomitás, a konzisztencia, az izoláció és a tartósság (ACID) a tranzakciókat megvalósító
-    környezettel szemben támasztott alapvető követelmények. Az utolsó rendelésfeldolgozási példában
-    megszegtük az atomitási és izolációs követelményt.
-  - Vannak implicit és explicit (programozott) tranzakciók. Minden SQL DML utasítás implicit
-    tranzakciónak tekinthető.
-  - A T-SQL-ben a tranzakciókat a `BEGIN TRANSACTION`, `COMMIT TRANSACTION` és
-    `ROLLBACK TRANSACTION` utasításokkal programozzuk. A tranzakció a `BEGIN TRANSACTION` és a
-    `COMMIT TRANSACTION` vagy `ROLLBACK TRANSACTION` közötti összes utasításból áll. A `COMMIT`
-    lezárja a tranzakciót, és felszabadítja az összes erőforrást, például a táblazárakat, amelyeket
-    a szerver a tranzakciókezeléshez használt. A `ROLLBACK` ugyanezt teszi, de előtte visszavonja a
-    tranzakció összes módosítását. Ehhez a szerver egy kifinomult naplózási mechanizmust használ, az
-    úgynevezett Write-Ahead Logot (WAL). Ha nem csonkolják vagy nem mentik le, a tranzakciós napló
-    akár nagyobb is lehet, mint maga az adatbázis.
-  - Az MS SQL Serverben, ha az XACT_ABORT be van kapcsolva, és a tranzakció egyik utasítása hibát
-    okoz, a szerver leállítja a tranzakció végrehajtását, és automatikusan végrehajt egy `ROLLBACK`
-    műveletet.
+## Tranzakciókezelés
+
+- Az alapvető tranzakciókezelési fogalmak:
+  
+  - A **tranzakciót** egy üzleti folyamat logikailag koherens műveleti sorozataként definiáljuk. A „logikailag koherens" azt jelenti, hogy a műveletek szemantikai egységet alkotnak. A tranzakciók **egymásba ágyazhatók** — például a helikoptervásárlás tranzakciója magában foglalja a vevő azonosításának és a banki átutalással történő fizetésnek a tranzakcióját.
+  
+  - Az **atomicitás**, a **konzisztencia**, az **elszigeteltség** és a **tartósság** (ACID) a tranzakciókat megvalósító rendszerekkel szemben támasztott követelmények. A rendelésfeldolgozási példánkban az atomicitás és az elszigeteltség követelményét sértettük meg.
+  
+  - Léteznek **implicit** és **explicit** (programozott) **tranzakciók**. Az implicit tranzakciók az összes SQL DML utasítást jelentik.
+  
+  - A T-SQL-ben a tranzakciókat a `BEGIN/COMMIT/ROLLBACK TRANSACTION` utasításokkal programozzuk. A tranzakció a `BEGIN TRANSACTION` és a `COMMIT TRANSACTION` vagy `ROLLBACK TRANSACTION` utasítás közötti összes utasításból áll. A `COMMIT` lezárja a tranzakciót, és felszabadítja az összes erőforrást (pl. táblazárakat), amelyeket a szerver a tranzakciókezeléshez használt. A `ROLLBACK` ugyanezt teszi, de előtte visszavonja a tranzakció összes módosítását. Ehhez a szerver egy kifinomult naplózási mechanizmust alkalmaz: **Write-Ahead Log (WAL)**. Ha nem csonkítják vagy mentik le, a tranzakciós napló nagyobb is lehet, mint maga az adatbázis.
+  
+  - Az MS SQL Serverben, ha az `XACT_ABORT` be van kapcsolva (`ON`), és a tranzakció valamelyik utasítása hibát okoz, a szerver leállítja a tranzakció végrehajtását, és automatikus `ROLLBACK`-et hajt végre.
 
 ```sql
-PÉLDA
---egyszerű atomitási demo, XACT_ABORT-tal
+--atomicitás bemutatója xact_abort nélkül
 set xact_abort off
 delete t2
 go
 begin tran
-insert t2 (id, t1_id) values (10, 1)
-insert t2 (id, t1_id) values (11, 2) --idegen kulcs megszorítás megsértése
-insert t2 (id, t1_id) values (12, 3)
+        insert t2 (id, t1_id) values (10, 1)
+        insert t2 (id, t1_id) values (11, 2) --idegen kulcs megszorítás megsértése
+        insert t2 (id, t1_id) values (12, 3)
 commit tran
 go
---"Az INSERT utasítás ütközött a FOREIGN KEY megszorítással ..." etc
 select * from t2
-id
-t1_id
---az atomitás nem maradt meg
+-- 10   1
+-- 12   3
+-- atomicitás NEM teljesült
+
 set xact_abort on
 delete t2
 go
 begin tran
-insert t2 (id, t1_id) values (10, 1)
-insert t2 (id, t1_id) values (11, 2) --idegen kulcs megszorítás megsértése
-insert t2 (id, t1_id) values (12, 3)
+        insert t2 (id, t1_id) values (10, 1)
+        insert t2 (id, t1_id) values (11, 2) --idegen kulcs megszorítás megsértése
+        insert t2 (id, t1_id) values (12, 3)
 commit tran
 go
-```
-
-```sql
---"Az INSERT utasítás ütközött a FOREIGN KEY megszorítással ..." stb.
 select * from t2
-id
-t1_id
---az atomitás megmaradt
+-- (üres)
+-- atomicitás teljesült
 ```
 
-- A beágyazott tranzakciók technikailag több `BEGIN TRANSACTION` utasítást jelentenek. Az egyetlen
-  `ROLLBACK` visszaállítja az összes megkezdett tranzakciót, lásd a példát alább.
+- Az **egymásba ágyazott tranzakciók** technikailag több `BEGIN TRANSACTION` utasítást jelentenek. Egyetlen `ROLLBACK` az összes megkezdett tranzakciót visszavonja:
 
 ```sql
 begin tran
-print @@trancount --1
-begin tran
-print @@trancount
+        print @@trancount  --1
+        begin tran
+                print @@trancount  --2
+        commit tran
+        print @@trancount  --1
 commit tran
-print @@trancount --1
-commit tran
-print @@trancount --0
+print @@trancount  --0
+
 begin tran
-print @@trancount --1
-begin tran
-print @@trancount
+        print @@trancount  --1
+        begin tran
+                print @@trancount  --2
 rollback tran
-print @@trancount --0
+print @@trancount  --0
 ```
 
-- --2
+- Súlyos **programozási hiba**, ha egy tranzakciót nem zárunk le sem `COMMIT`-tal, sem `ROLLBACK`-kel. A lezáratlan tranzakció folyamatosan fogyasztja a szerver erőforrásait, és végül megbénítja a rendszert. A `@@TRANCOUNT` globális változóval ellenőrizhető, hogy az aktuális kapcsolatban van-e lezáratlan tranzakció.
 
-<!-- -->
-
-    --2
-
-Súlyos programozási hiba, ha nem zárunk le egy tranzakciót sem `COMMIT`-, sem `ROLLBACK`
-utasítással. A befejezetlen tranzakció továbbra is kiszolgáló erőforrásokat fogyaszt, és végül
-megbénítja a rendszert. A `@@TRANCOUNT` globális változóval ellenőrizhető, hogy az aktuális
-kapcsolatnak van-e befejezetlen tranzakciója.
+**PÉLDA:** A rendelésfeldolgozó szkript hiányosságainak orvoslásához csomagoljuk tárolt eljárásba, és adjunk hozzá `TRY/CATCH` hibakezelést és tranzakciós támogatást:
 
 ```sql
-PÉLDA: az előző rendelésfeldolgozó script hiányosságainak kijavításához
-csomagoljuk azt tárolt eljárásba, és adjunk hozzá TRY/CATCH hibakezelést és tranzakciós támogatást.
 go
-create procedure sp_new_order
-@prod_name nvarchar(40), @quantity smallint, @cust_id nchar(5)
+create procedure sp_example (@emp_id int)
 as
-set nocount on
-set xact_abort on
---változók
-declare @status_message nvarchar(100), @status int --az üzleti folyamat eredménye
-declare @res_no int --találatok száma
-declare @prod_id int, @order_id int --azonosítók
-declare @stock int --meglévő készlet
-declare @cust_balance money --vevőegyenleg
-declare @unitprice money --termék egységára
+set xact_abort on --automatikus visszagörgetés bármilyen hiba esetén
+begin tran
+begin try
+        declare @i int
+        select @i=count(*) from employees where EmployeeID=@emp_id
+        if @i>0 print 'Employee found: ' + cast(@emp_id as varchar(50))
+        else print 'Not found: ' + cast(@emp_id as varchar(50))
+        if @i>0 begin
+                update employees set salary=salary*1.1 where EmployeeID=@emp_id
+                commit tran
+                print 'Salary successfully increased'
+        end else begin
+                print 'Rolling back transaction'
+                rollback tran
+        end
+end try
+begin catch
+        print 'OTHER ERROR: '+ ERROR_MESSAGE() + ' (' + cast(ERROR_NUMBER() as varchar(20)) + ')'
+        print 'Rolling back transaction'
+        rollback tran
+end catch
+go
+--teszt
+exec sp_example 12  --Not found: 12 Rolling back transaction
+exec sp_example 11  --Employee found: 11 Salary successfully increased
+```
+
+- További olvasnivaló a tranzakciókezelésről:
+  
+  - https://docs.microsoft.com/en-us/sql/t-sql/language-elements/control-of-flow
+  - https://learn.microsoft.com/en-us/sql/t-sql/language-elements/transactions-transact-sql?view=sql-server-ver16
+  - https://www.sqlshack.com/transactions-in-sql-server-for-beginners/
+
+- **GYAKORLAT:** Adj tranzakciós támogatást a saját képzéskezelő tárolt eljárásodhoz, és teszteld különböző hibákra!
+
+---
+
+> ² A hallgatók feladatainak megoldásaiért keresd meg a szerzőt.
+
+# 2. Laza csatolás triggerek és ütemezett feladatok alapján
 begin tran
 begin try
 select @res_no = count(*) from products where productname like '%' + @prod_name +

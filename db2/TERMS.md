@@ -7,6 +7,7 @@ This glossary is tailored for advanced database management system course materia
 | English Original | Suggested Hungarian Translation | Incorrect Machine Translation to Avoid |
 | :--- | :--- | :--- |
 | Database | Adatbázis | - |
+| Core database skills | Alapvető adatbázis-ismeretek | Alapvető adatbázis-készségek |
 | Table | Tábla | Asztal, Táblázat |
 | Row / Record | Sor / Rekord | - |
 | Column / Field | Oszlop / Mező | - |
@@ -18,6 +19,9 @@ This glossary is tailored for advanced database management system course materia
 | Relationship | Kapcsolat | - |
 | Entity | Entitás | - |
 | Attribute | Attribútum / Tulajdonság | - |
+| Conceptual Model | Fogalmi modell | Koncepcionális modell |
+| Instance | Példány | Előfordulás |
+| Consumables | Fogyasztási cikkek | Fogyóeszközök |
 | Schema | Séma | - |
 | Data Warehouse | Adattárház | - |
 
@@ -26,10 +30,12 @@ This glossary is tailored for advanced database management system course materia
 | English Original | Suggested Hungarian Translation | Incorrect Machine Translation to Avoid |
 | :--- | :--- | :--- |
 | Stored Procedure | Tárolt eljárás | - |
-| Trigger | Trigger or Eseményvezérlő | Ravasz, Kioldó |
+| Trigger | Trigger or Eseményvezérlő | Ravasz, Kioldó, Kiváltó |
 | Insert / Update / Delete Trigger | Beszúró / Módosító / Törlő trigger | Beszúrás ravaszt |
 | Cursor | Kurzor | - |
 | Function | Függvény | Funkció in a programming context |
+| Exam result | Vizsgaeredmény | - |
+| Fail (grade/status) | Nem felelt meg | Elbukott |
 | Execution Plan | Végrehajtási terv | - |
 | Parameterization | Paraméterezés | - |
 
@@ -78,12 +84,50 @@ This glossary is tailored for advanced database management system course materia
 | :--- | :--- | :--- |
 | Always Encrypted | Always Encrypted / Folyamatosan titkosított | - |
 | Ciphertext | Titkosított szöveg | - |
-| Plaintext | Nyílt szöveg / Titkosítatlan szöveg | Sima szöveg |
-| Collation | Rendezési szabály / Collation | Leválogatás |
+| Plaintext | Nyílt szöveg / Titkosítatlan szöveg / Egyszerű szöveg | Sima szöveg |
+| Collation | Rendezési szabály / Collation / Összevetési sorrend | Leválogatás |
 | Certificate | Tanúsítvány | - |
 | Certificate Store | Tanúsítványtároló | - |
 | Sysadmin | Rendszergazda | - |
 | Privilege / Permission | Jogosultság | - |
+
+## 7. Replication
+
+| English Original | Suggested Hungarian Translation | Incorrect Machine Translation to Avoid |
+| :--- | :--- | :--- |
+| Replication | Replikáció | - |
+| Publisher | Közzétevő | Kiadó |
+| Subscriber | Előfizető | - |
+| Subscription | Feliratkozás | Előfizetés (in a financial sense) |
+| Distributor | Terjesztő | Elosztó |
+| Publication | Kiadvány / Publikáció | - |
+| Article | Cikk (Adatbázis-objektum) | - |
+| Snapshot Replication | Pillanatkép-replikáció | - |
+| Transactional Replication | Tranzakciós replikáció | - |
+| Merge Replication | Összefésülő replikáció | Egyesítő replikáció |
+| Push / Pull Subscription | Tolt / Húzott (vagy Push / Pull) feliratkozás | - |
+
+## 8. Data Modeling & Normalization
+
+| English Original | Suggested Hungarian Translation | Incorrect Machine Translation to Avoid |
+| :--- | :--- | :--- |
+| Entity-Relationship Model | Egyed-kapcsolat modell | Entitáskapcsolati modell |
+| Normal Form (e.g., 3NF) | Normálforma | - |
+| Transitive Dependency | Tranzitív függés | - |
+| Partial Dependency | Részleges függés | - |
+| Redundancy | Redundancia | - |
+| Base Table | Alaptábla / Törzstábla | Alap asztal |
+| Transactional Table / Event Table | Tranzakciós tábla / Eseménytábla | - |
+
+## 9. Advanced Features & Data Quality
+
+| English Original | Suggested Hungarian Translation | Incorrect Machine Translation to Avoid |
+| :--- | :--- | :--- |
+| Master Data Management (MDM) | Törzsadat-kezelés | Mesteradat-kezelés |
+| Data Cleansing / Data Quality | Adattisztítás / Adatminőség | - |
+| Columnstore | Oszlopalapú tároló / Columnstore | - |
+| Partitioning | Particionálás | - |
+| Failover Cluster | Feladatátvevő fürt / Failover cluster | - |
 
 ## General Advice for Translating IT Course Materials
 

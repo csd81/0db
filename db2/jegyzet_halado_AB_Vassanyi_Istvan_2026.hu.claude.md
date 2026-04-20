@@ -1903,6 +1903,7 @@ Végezd el a következő lépéseket:
 Ezt az alkalmazást a Google Cloud Firestore-ba migráljuk. A Google Cloud Firestore egy dokumentumtároló. Több dokumentumgyűjtemény tárolását támogatja. A korábbi Realtime Database új kiadása, amely egyetlen monolitikus JSON-t használt.[^24] A Cloud Firestore jellemzői:
 
 - „Firestore adatbázis = dokumentumok gyűjteményei".
+
 - Minden dokumentum lényegében egy JSON rekord, pl.:
   
   ```
@@ -1911,12 +1912,19 @@ Ezt az alkalmazást a Google Cloud Firestore-ba migráljuk. A Google Cloud Fires
         last : "Long"
   born : 1995
   ```
+
 - A gyűjteménynek **nincs sémája**, vagyis tetszőleges szerkezetű dokumentumokat tárolhat ugyanabban a gyűjteményben. Mindazonáltal még ha nincs is sémaellenőrzés beszúráskor, minden valósághű alkalmazás, amely a gyűjteményt olvassa, egy bizonyos sémát vár — ez az **'schema-on-read'** rendszer. Ez ellentétben áll a relációs adatbázisok **'schema-on-write'** megközelítésével, ahol a sémának nem megfelelő írások nem engedélyeztek.
+
 - Minden dokumentumnak egyedi kulcsa kell legyen, amely automatikusan generálható, de **nem lehet szám**.
+
 - A gyűjtemények nem ágyazhatók egymásba. Egy dokumentum azonban tartalmazhat egy hozzá csatolt algyűjteményt, egy coll-doc-coll-doc-coll-... stb. hierarchiában, legfeljebb 100 mélységig.
+
 - Speciális dokumentum adattípusok: 1-D tömb, map (asszociatív tömb), reference típus. A referencia egy dokumentumhoz vezető elérési út string, pl. egy hierarchiában lévő dokumentumra mutató referencia. Formája lehet: `coll_id/doc_id/coll_id/...` stb. Algyűjteményekkel kapcsolatos lehetséges probléma, hogy 'árva' állapotban is fennmaradhatnak, ha a szülő gyűjtemény törlésre kerül.
+
 - Az egy-a-többhöz kapcsolatok beágyazással valósíthatók meg; **a több-a-többhöz gyűjtemények beágyazás és referenciák kombinációjával** valósíthatók meg.
+
 - A Firestore valós idejű egyidejű frissítéseket és atomi tranzakciókat támogat. A lekérdezések szűrőkkel valósíthatók meg.
+
 - Egy Realtime/snapshot listener eseményt generál, amikor egy dokumentum megváltozik, és egy alkalmazás egy visszahívó függvénnyel (callback) feliratkozhat erre az eseményre.[^25]
 
 ### A Firestore dokumentumtárunk tervezése, létrehozása és feltöltése
