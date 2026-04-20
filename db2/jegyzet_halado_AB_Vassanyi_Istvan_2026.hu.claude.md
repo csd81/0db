@@ -2904,7 +2904,7 @@ select lastname, birthdate from employees
 --the name of those customers who are located in London
 select companyname, city
 from customers
---where city LIKE 'L%' and (city LIKE '%b%' or city LIKE '%n%') --partial matching
+--where city LIKE 'L%' and (city LIKE '%b%' or city LIKE '%n%') --részleges egyezés
 where city IN ('London', 'Lander')
 where city ='London' or city ='Lander'
 where city IN ('London')
@@ -2933,7 +2933,7 @@ where birthdate = (
     from employees
 )
 
---PROBLEM: find the ShipAddress of the first order
+--FELADAT: keresd meg az első rendelés ShipAddress mezőjét
 select orderdate, shipaddress from orders
 where orderdate = (
     select min(orderdate) as min_date
@@ -2968,7 +2968,7 @@ inner join products p on p.productid=od.productid
 where e.employeeid=9 --she is the youngest
 order by productname
 
---PROBLEM: which are the ship cities of products with CategoryID=1?
+--FELADAT: mely városokba szállítják az 1-es kategóriájú termékeket?
 select distinct o.shipcity
 from orders o inner join [order details] od on od.orderid=o.orderid
 inner join products p on p.productid=od.productid
@@ -2989,7 +2989,7 @@ select employeeid, count(*)
 from orders
 group by employeeid
 
---a note aside: how to test for null?
+--mellékes megjegyzés: hogyan teszteljük a NULL értéket?
 select * from orders where employeeid is null
 delete from orders where employeeid is null
 
@@ -2997,8 +2997,7 @@ delete from orders where employeeid is null
 select e.lastname, count(*)
 from orders o inner join employees e on o.employeeid=e.employeeid
 group by e.lastname
---results in logical error if there are
---2 persons with the same lastname!!!
+--logikai hibát okoz, ha két személynek azonos a vezetékneve!!!
 
 --3/5)
 select e.lastname, e.firstname, count(*)
@@ -3006,7 +3005,7 @@ from orders o inner join employees e on o.employeeid=e.employeeid
 group by e.employeeid, e.lastname, e.firstname
 --this query misses the agent with no orders
 
---PROBLEM: list the number of products in each Category (we need the CategoryName also)
+--FELADAT: listázd ki az egyes kategóriákban lévő termékek számát (a CategoryName-re is szükségünk van)
 3. select c.categoryid, c.categoryname, count(*) as no_prod
 1. from products p inner join categories c on p.categoryid=c.categoryid
 2. group by c.categoryid, c.categoryname
