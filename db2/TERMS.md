@@ -125,9 +125,31 @@ This glossary is tailored for advanced database management system course materia
 | :--- | :--- | :--- |
 | Master Data Management (MDM) | Törzsadat-kezelés | Mesteradat-kezelés |
 | Data Cleansing / Data Quality | Adattisztítás / Adatminőség | - |
-| Columnstore | Oszlopalapú tároló / Columnstore | - |
+| Columnstore | Oszloptár / Columnstore | Oszlopalapú tároló |
 | Partitioning | Particionálás | - |
 | Failover Cluster | Feladatátvevő fürt / Failover cluster | - |
+| Row compression | Sor-alapú tömörítés / Sorszintű tömörítés | Soros tömörítés |
+| Page compression | Lap-alapú tömörítés / Lapszintű tömörítés | Lapos tömörítés |
+| Low cardinality | Alacsony kardinalitású (kevés különböző értékkel) | - |
+| I/O operations (few) | Kevés I/O-művelet / Alacsony I/O-műveletszám | - |
+
+## 10. Terminology with Multiple Accepted Forms
+
+Some terms have more than one equally valid Hungarian form. To prevent reviewers from repeatedly flipping the document between alternatives, both forms are listed here as accepted canonical choices. **Do not flip between these based on any single reviewer's preference** — pick one and keep it stable throughout the document.
+
+| English | Accepted Forms (both valid) | Notes |
+| :--- | :--- | :--- |
+| Publication | Kiadvány / Publikáció | SQL Server replication context |
+| Subscription | Feliratkozás / Előfizetés | "Előfizetés" risks financial connotation |
+| Publisher | Közzétevő / Kiadó | |
+| Data Governance | Adatkormányzás / Adatirányítás / Adatvagyon-kezelés | |
+| Data Steward | Adatgondozó / Adatgazda | "Adatgazda" preferred in corporate MDM |
+| Row compression | Sor-alapú / Sorszintű tömörítés | |
+| Page compression | Lap-alapú / Lapszintű tömörítés | |
+| Eventual consistency | Végső konzisztencia / Végleges konzisztencia / Esemény utáni konzisztencia | |
+| Rollback | Visszagörgetés / Visszavonás | Developer slang vs. formal |
+| Schema (GraphQL/DB) | Séma / Schema | Bilingual acceptable on first use |
+| Node (graph theory) | Csomópont / Csúcs | "Csúcs" mathematically preferred; "Csomópont" matches Microsoft docs |
 
 ## General Advice for Translating IT Course Materials
 
