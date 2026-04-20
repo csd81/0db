@@ -88,10 +88,9 @@ GYAKORLAT: a minta adatbázis létrehozása és bővítése
   A képzéseket szerződött harmadik fél cégek szervezik. Van egy listánk
   szükséges készségek (például „B fokú üzleti prezentáció” vagy „számviteli alapismeretek” stb.).
   minden foglalkoztatási kategóriát (például „értékesítési menedzser”, lásd Alkalmazottak.Megnevezés), amelyet meg kell tenniük
-  munkaviszonyuk kezdetétől számított 10 éven belül megtanulják. Minden edzéshez mi
-  tárolja az időtartamot (kezdési és befejezési dátum), a helyszínt, a szervező céget, a készségeket
+  munkaviszonyuk kezdetétől számított 10 éven belül megtanulják. Minden képzéshez tároljuk az időtartamot (kezdési és befejezési dátum), a helyszínt, a szervező céget, a készségeket
   tanított, résztvevők, képzési állapotuk (például „beiratkozott”, „kezdett”, „befejezett”,
-  „elvetélt”) és vizsgaeredményeiket külön-külön a különböző készségek esetében. Tekintettel a
+  „megszakított”) és vizsgaeredményeiket külön-külön a különböző készségek esetében. Tekintettel a
   tréningeket szervező cégeknél tároljuk a cégünk által fizetett díjakat a
   képzések minden évben.
 - (Add hozzá az új táblákat az adatbázisdiagramhoz, és adj meg néhány tesztadatot)
@@ -159,7 +158,7 @@ GYAKORLAT: az első gyakorlatban megvalósított táblák segítségével valós
 
 - Mik a hiányzó képességek Mrs. Peacock számára?
 - Vannak a jövőben olyan foglalkozások, amelyeken továbbra is részt kell venni Peacock-nak?
-- Mi az első és az utolsó képzés dátuma és az edzések átlagos időtartama napokban?
+- Mi az első és az utolsó képzés dátuma és az képzések átlagos időtartama napokban?
 - Melyik alkalmazott rendelkezik a legtöbb készségekkel, ha a vizsga eredménye „elbukott”?
 - Mennyi a teljes díja minden olyan képzésért, amelyen a legképzettebb munkatársunk
   (lásd fent) részt vett?
@@ -446,7 +445,7 @@ a megfelelő rendeléseket soronként.
   - A T-SQL-ben a tranzakciókat a `BEGIN TRANSACTION`, `COMMIT TRANSACTION` és
     `ROLLBACK TRANSACTION` utasításokkal programozzuk. A tranzakció a
     `BEGIN TRANSACTION` és a `COMMIT TRANSACTION` vagy `ROLLBACK TRANSACTION`
-    közötti összes utasításból áll. A `COMMIT` lezárd a tranzakciót, és felszabadítja az összes
+    közötti összes utasításból áll. A `COMMIT` lezárja a tranzakciót, és felszabadítja az összes
     erőforrást, például a táblazárakat, amelyeket a szerver a tranzakciókezeléshez használt. A
     `ROLLBACK` ugyanezt teszi, de előtte visszavonja a tranzakció összes módosítását. Ehhez a
     szerver egy kifinomult naplózási mechanizmust használ, az úgynevezett Write-Ahead Logot
@@ -1120,7 +1119,7 @@ ReorderLevel mező.
    változatlan adatok. Példa erre egy cég külső fióktelepe, amelyek saját helyi fiókkal rendelkeznek
    a központi adatbázisnak csak a működésük szempontjából releváns részeit tároló szerverek. Ilyen egy
    az architektúra javítja a webhely autonómiáját és az információs rendszer robusztusságát.
-- Replikáció egyesítése. Ebben a sémában az előfizetők maguk generálhatnak módosításokat a
+- Összefésülő replikáció. Ebben a sémában az előfizetők maguk generálhatnak módosításokat a
    adatokat, és létezik egy olyan mechanizmus, amely ezeket a változtatásokat az összes félhez eljuttatja és egyesíti
    konzisztens adatbázisba. Az összevonás folyamata konfliktusfeloldással is járhat. In
    A rekordok több szerveren történő azonosítása érdekében a tábláknak rendelkezniük kell egy mezővel
@@ -1139,20 +1138,20 @@ FIGYELMEZTETÉS: bár a replikáció több másolatot készít az adatokról, ez
 és a katasztrófa utáni helyreállítás tervezése.
 A replikációban három kiszolgálói szerepkör van: a kiadó, a terjesztő és az előfizető. Mind a három
 A szerepköröket ugyanaz a kiszolgálópéldány veheti fel, amikor egy helyi adatbázist egy másik helyi adatbázisba replikálnak
-adatbázisból vagy különböző példányokból. Reálisabb beállításoknál az Elosztó szerepét egy másik veszi át
-szervert a kiadó tehermentesítéséhez. A megváltozott adatok megosztott formában történő tárolásáért az Elosztó felelős
+adatbázisból vagy különböző példányokból. Reálisabb beállításoknál a Terjesztő szerepét egy másik veszi át
+szervert a közzétevő tehermentesítéséhez. A megváltozott adatok megosztott formában történő tárolásáért a Terjesztő felelős
 mappát vagy terjesztési adatbázist és az adatok továbbítását az előfizetőknek. Egy kiadó rendelkezhet
-csak egy Elosztó, de egy Elosztó több előfizetőt is kiszolgálhat.
+csak egy Terjesztő, de egy Terjesztő több előfizetőt is kiszolgálhat.
 Kétirányú vagy frissíthető replikáció esetén az előfizető módosíthatod a fájlt
 kiadó is.
 Az SQL-kiszolgáló különféle ügynökökkel valósítja meg a replikációs funkciókat. Ezek az ügynökök futó feladatok
 az SQL Server Agent felügyelete alatt.
 
 - A Snapshot ügynök létrehozd a pillanatképet, és eltárolja a pillanatkép mappájában a
-  Elosztó. Az ügynök a `bcp` (bulk copy) segédprogramot használd a kiadvány cikkeinek másolásához.
+  Terjesztő. Az ügynök a `bcp` (bulk copy) segédprogramot használd a kiadvány cikkeinek másolásához.
 - Az elosztó ügynök. Pillanatkép-replikáció esetén ez az ügynök a pillanatképet a
   előfizető, és a tranzakciós replikációban futtatja a disztribúcióban tárolt tranzakciókat
-  adatbázis az előfizetőről. A disztribúciós adatbázis egy rendszeradatbázis az Elosztón,
+  adatbázis az előfizetőről. A disztribúciós adatbázis egy rendszeradatbázis a Terjesztőn,
   ezért a Rendszeradatbázisok csoportban találja meg. Ez az ügynök a következő előfizetőjénél fut
   pull előfizetések, és a kiadónál fut a push előfizetések esetén.
 - A Naplóolvasó ügynök beolvasd a tranzakciós naplót a kiadónál, és lemásold a megfelelőt
@@ -1163,7 +1162,7 @@ az SQL Server Agent felügyelete alatt.
 - A Merge agent egyesíti az előfizetőnél és az előfizetőnél egyaránt előforduló növekményes változtatásokat
   kiadó az egyesített replikációban. A változások észlelése triggereken alapul. Az egyesítő ügynök nem
   tranzakciós replikációban használják.
-  A pull-előfizetés kivételével minden ügynök az Elosztón fut.
+  A pull-előfizetés kivételével minden ügynök a Terjesztőn fut.
   Pillanatkép replikáció
   Először is állítsd be a tesztkörnyezetet. Ahhoz, hogy a replikációs példák a várt módon működjenek, Te
   három „nevű” MS SQL Server példányt kell telepíteni ugyanarra a szervergépre. Azoknak kell lenniük
@@ -1298,7 +1297,7 @@ Products where CategoryID=1)
 
 9. Válaszd az Új előfizetés lehetőséget a kiadvány előugró menüjében
 
-10. Válaszd az Összes ügynök futtatása az Elosztón lehetőséget a következő panelen (push előfizetés)
+10. Válaszd az Összes ügynök futtatása a Terjesztőn lehetőséget a következő panelen (push előfizetés)
 
 11. Válaszd ki az nw_repl adatbázist előfizetési adatbázisként:
 
@@ -1309,7 +1308,7 @@ Products where CategoryID=1)
 14. A következő, Előfizetések inicializálása panelen válaszd az Azonnal lehetőséget
 
 15. Teszteld a tranzakciós replikáció megfelelő működését. Frissítsd az alkalmazotti azonosítót az elsőben
-    a Rendelések tábla rekordját az északi szél adatbázisban, majd válaszd ki ugyanazt a rekordot a
+    a Rendelések tábla rekordját a Northwind adatbázisban, majd válaszd ki ugyanazt a rekordot a
     nw_repl adatbázis. 10 másodpercen belül látnod kell a megváltozott értéket.
 
 16. Ellenőrizd a replikációs ügynökök működését
@@ -1331,7 +1330,7 @@ Products where CategoryID=1)
 20. A MÁSODIK példány replikációjának előugró menüjében válaszd az Elosztás konfigurálása lehetőséget, majd
     fogadd el az első választást. Ez létrehozd a terjesztési adatbázist a SECOND napon.
     A Windows 10 rendszereken futó SQL Server 2019 egyik hibája miatt a varázsló az `sp_adddistributor`
-    használatakor a megadott jelszó helyett üres jelszót küldhet a távoli Elosztónak, és a 21768-as kivételt
+    használatakor a megadott jelszó helyett üres jelszót küldhet a távoli Terjesztőnek, és a 21768-as kivételt
     adhatja vissza. A bemutató futtatásához futtasd manuálisan az `sp_adddistributor` parancsot a helyes
     jelszóval, például:
     
@@ -1358,10 +1357,10 @@ Products where CategoryID=1)
     A kiadó konfigurálása
 
 27. Ahhoz, hogy a PRIM-et kiadóként konfigurálhassuk, először letiltjuk terjesztőként. Emlékezz arra
-    eddig a PRIM saját Elosztójaként működött. A Replikáció előugró menüjében válaszd a Letiltás lehetőséget
+    eddig a PRIM saját Terjesztőjeként működött. A Replikáció előugró menüjében válaszd a Letiltás lehetőséget
     Terjesztés és kiadás. Ha a PRIM disztribútorként le van tiltva, megjelenik a felugró ablak
     menü változások. Válaszd most az Elosztás konfigurálása lehetőséget, és add meg a MÁSODIK példányt mint a
-    PRIM Elosztóját:
+    PRIM Terjesztőjét:
 
 28. A következő ablaktáblában add meg ugyanazt a jelszót, mint korábban (a 8. lépésben).
 
@@ -1377,7 +1376,7 @@ Products where CategoryID=1)
 32. Hozz létre egy új előfizetést a HARMADIK példányon a Hozzáadás a helyi előfizetésekből lehetőség kiválasztásával.
     Válaszd ki a PRIM-et kiadóként, és válaszd ki az előző lépésben létrehozott kiadványt.
 
-33. Válaszd az Összes ügynök futtatása az Elosztón lehetőséget.
+33. Válaszd az Összes ügynök futtatása a Terjesztőn lehetőséget.
 
 34. A varázsló új adatbázisként létrehozhatja az előfizetési adatbázist a HARMADIK oldalon
     nw_repl.
@@ -1434,7 +1433,7 @@ Products where CategoryID=1)
     ügynök úgy van beállítva, hogy 14 naponként fusson. Ekkor az egyesítő ügynök feladata hasonló az elosztáshoz
     ügynök a tranzakciós replikációban azzal a különbséggel, hogy az egyesítési replikáció alapértelmezés szerint be van állítva
     kétirányú. Ez azt jelenti, hogy az ügynök az előfizetői és a kiadói oldalon is alkalmazza a változtatásokat.
-    Minden előfizetéshez külön egyesítő ügynök tartozik. Az egyesítő ügynök push előfizetés esetén az Elosztón
+    Minden előfizetéshez külön egyesítő ügynök tartozik. Az egyesítő ügynök push előfizetés esetén a Terjesztőn
     push előfizetés esetén és az előfizetőn pull-előfizetés esetén.
     A terjesztési adatbázis csak az előzményeket és a hibainformációkat tárolja.
     A kétirányú adatszinkronizálás támogatása érdekében az egyesített replikációban lévő cikkeknek rendelkezniük kell a
@@ -1475,10 +1474,10 @@ GYAKORLAT: A megoldás fejlesztéséhez kövesd az alábbi lépéseket.
    szervert az sp_enumcustomresolvers eljárással lehet listázni. A szükséges paraméterekhez
    a beépített feloldók közül lásd 9. Saját feloldóját is hozzáadhatja tárolt eljárásként vagy
    DLL10. Az alapértelmezett feloldó az „első a megjelenítő nyer” stratégiát valósítja meg:
-   a. ha a konfliktus egy Kiadó és egy Előfizető között lép fel, a Kiadó változása az
+   a. ha a konfliktus egy Közzétevő és egy Előfizető között lép fel, a Közzétevő változása az
    elfogadásra kerül, és az Előfizetői érték elutasításra kerül.
    b. ha az ütközés két pull-előfizetést használó Előfizető között történik, akkor a
-   az első Előfizetőről történő módosítás a Kiadóval való szinkronizáláshoz elfogadásra kerül, és
+   az első Előfizetőről történő módosítás a Közzétevővel való szinkronizáláshoz elfogadásra kerül, és
    másokat elutasítanak.
 
 7. A következő panel arra figyelmeztet, hogy egy új GUID kerül hozzáadásra a táblahoz. Ez nem változtat a
@@ -4526,15 +4525,14 @@ A titkosítás/visszafejtés az ügyfélben történik, és a kulcsok a szerverp
 (akár helyileg a Windows tanúsítványtárolójában, akár az Azure Key Vaultban).
 DEMO: az Alkalmazottak tábla Cím oszlopához hozzáadjuk az Always Encrypted elemet.
 
-1. Válaszd az Északi szél -> Táblázatok -> Alkalmazottak -> Oszlopok titkosítása lehetőséget, és válaszd ki a Cím mezőt.
+1. Válaszd az Northwind -> Táblázatok -> Alkalmazottak -> Oszlopok titkosítása lehetőséget, és válaszd ki a Cím mezőt.
 
-2. Válaszd a Véletlenszerű típust. Ez azt jelenti, hogy a csoportosítás, az egyenlőség szerinti szűrés és a táblák összekapcsolása be van kapcsolva
-   titkosított oszlopok nem lesznek lehetségesek a szerveren, de egy ECB59 típusú támadás a
+2. Válaszd a Véletlenszerű típust. Ez azt jelenti, hogy a csoportosítás, az egyenlőség szerinti szűrés és táblák összekapcsolása titkosított oszlopokon nem lesz lehetséges a szerveren, de egy ECB59 típusú támadás a
    oszlop meg van akadályozva
 
 3. Válaszd ki az új oszlopkulcs létrehozását
 
-4. Fogadd el, hogy a leválogatás binárisra változik
+4. Fogadd el, hogy a rendezési sorrend (collation) binárisra változik
 
 5. A következő ablaktáblában válaszd ki a Windows tanúsítványtárolót. Ez kívül esik az SQL szerver példányán
    így a sysadmin kiszolgálói szerepkörben lévő SQL-kiszolgáló rendszergazdája nem fog hozzáférni.
