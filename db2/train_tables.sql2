@@ -1,0 +1,187 @@
+use northwind;
+go
+
+-- Northwind training extension schema.
+-- This script creates the tables for the employee training scenario described in the notes.
+
+/* Drop child tables first so the script can be rerun safely. */
+if object_id('dbo.TrainingExamResults', 'U') is not null drop table dbo.TrainingExamResults;
+if object_id('dbo.TrainingParticipants', 'U') is not null drop table dbo.TrainingParticipants;
+if object_id('dbo.TrainingSessionSkills', 'U') is not null drop table dbo.TrainingSessionSkills;
+if object_id('dbo.TrainingSessions', 'U') is not null drop table dbo.TrainingSessions;
+if object_id('dbo.CompanyYearFees', 'U') is not null drop table dbo.CompanyYearFees;
+if object_id('dbo.CategoryRequiredSkills', 'U') is not null drop table dbo.CategoryRequiredSkills;
+if object_id('dbo.EmploymentCategories', 'U') is not null drop table dbo.EmploymentCategories;
+if object_id('dbo.Skills', 'U') is not null drop table dbo.Skills;
+if object_id('dbo.TrainingCompanies', 'U') is not null drop table dbo.TrainingCompanies;
+go
+
+create table dbo.TrainingCompanies (
+    CompanyID int identity(1,1) not null primary key,
+    CompanyName nvarchar(100) not null unique,
+    ContactName nvarchar(100) null,
+    ContactEmail nvarchar(100) null
+);
+go
+
+create table dbo.Skills (
+    SkillID int identity(1,1) not null primary key,
+    SkillName nvarchar(150) not null unique,
+    SkillDescription nvarchar(400) null
+);
+go
+
+create table dbo.EmploymentCategories (
+    CategoryID int identity(1,1) not null primary key,
+    Title nvarchar(50) not null unique
+);
+go
+
+create table dbo.CategoryRequiredSkills (
+    CategoryID int not null,
+    SkillID int not null,
+    YearsLimit int not null constraint DF_CategoryRequiredSkills_YearsLimit default (10),
+    constraint PK_CategoryRequiredSkills primary key (CategoryID, SkillID),
+    constraint FK_CategoryRequiredSkills_Category
+        foreign key (CategoryID) references dbo.EmploymentCategories(CategoryID),
+    constraint FK_CategoryRequiredSkills_Skill
+        foreign key (SkillID) references dbo.Skills(SkillID)
+);
+go
+
+create table dbo.TrainingSessions (
+    SessionID int identity(1,1) not null primary key,
+    CompanyID int not null,
+    BeginDate date not null,
+    EndDate date not null,
+    Location nvarchar(150) not null,
+    constraint FK_TrainingSessions_Company
+        foreign key (CompanyID) references dbo.TrainingCompanies(CompanyID),
+    constraint CK_TrainingSessions_Dates check (EndDate >= BeginDate)
+);
+go
+
+create table dbo.TrainingSessionSkills (
+    SessionID int not null,
+    SkillID int not null,
+    constraint PK_TrainingSessionSkills primary key (SessionID, SkillID),
+    constraint FK_TrainingSessionSkills_Session
+        foreign key (SessionID) references dbo.TrainingSessions(SessionID),
+    constraint FK_TrainingSessionSkills_Skill
+        foreign key (SkillID) references dbo.Skills(SkillID)
+);
+go
+
+create table dbo.TrainingParticipants (
+    SessionID int not null,
+    EmployeeID int not null,
+    TrainingStatus nvarchar(20) not null,
+    constraint PK_TrainingParticipants primary key (SessionID, EmployeeID),
+    constraint FK_TrainingParticipants_Session
+        foreign key (SessionID) references dbo.TrainingSessions(SessionID),
+    constraint FK_TrainingParticipants_Employee
+        foreign key (EmployeeID) references dbo.Employees(EmployeeID),
+    constraint CK_TrainingParticipants_Status check (
+        TrainingStatus in (N'enrolled', N'started', N'completed', N'aborted')
+    )
+);
+go
+
+create table dbo.TrainingExamResults (
+    SessionID int not null,
+    EmployeeID int not null,
+    SkillID int not null,
+    ExamResult nvarchar(30) not null,
+    ExamScore decimal(5,2) null,
+    ExamDate date null,
+    constraint PK_TrainingExamResults primary key (SessionID, EmployeeID, SkillID),
+    constraint FK_TrainingExamResults_Participant
+        foreign key (SessionID, EmployeeID) references dbo.TrainingParticipants(SessionID, EmployeeID),
+    constraint FK_TrainingExamResults_Skill
+        foreign key (SkillID) references dbo.Skills(SkillID)
+);
+go
+
+create table dbo.CompanyYearFees (
+    CompanyID int not null,
+    FeeYear int not null,
+    FeeAmount money not null,
+    constraint PK_CompanyYearFees primary key (CompanyID, FeeYear),
+    constraint FK_CompanyYearFees_Company
+        foreign key (CompanyID) references dbo.TrainingCompanies(CompanyID)
+);
+go
+
+/* Test data for the training model. */
+insert dbo.TrainingCompanies (CompanyName, ContactName, ContactEmail)
+values
+    (N'Alpha Training Ltd.', N'Kovacs Eva', N'info@alpha-training.example'),
+    (N'Business Skills Kft.', N'Szabo Peter', N'contact@business-skills.example');
+go
+
+insert dbo.Skills (SkillName, SkillDescription)
+values
+    (N'grade B business presentation', N'Professional business presentation at intermediate level'),
+    (N'accounting basics', N'Basic accounting knowledge'),
+    (N'negotiation skills', N'Client negotiation and closing techniques');
+go
+
+insert dbo.EmploymentCategories (Title)
+values
+    (N'Sales Manager'),
+    (N'Sales Representative'),
+    (N'Accountant');
+go
+
+insert dbo.CategoryRequiredSkills (CategoryID, SkillID, YearsLimit)
+values
+    (1, 1, 10),
+    (1, 3, 10),
+    (2, 1, 10),
+    (3, 2, 10);
+go
+
+insert dbo.TrainingSessions (CompanyID, BeginDate, EndDate, Location)
+values
+    (1, '2026-02-10', '2026-02-12', N'Veszprem'),
+    (2, '2026-03-15', '2026-03-16', N'Budapest');
+go
+
+insert dbo.TrainingSessionSkills (SessionID, SkillID)
+values
+    (1, 1),
+    (1, 3),
+    (2, 2);
+go
+
+insert dbo.TrainingParticipants (SessionID, EmployeeID, TrainingStatus)
+values
+    (1, 1, N'enrolled'),
+    (1, 2, N'completed'),
+    (2, 3, N'started');
+go
+
+insert dbo.TrainingExamResults (SessionID, EmployeeID, SkillID, ExamResult, ExamScore, ExamDate)
+values
+    (1, 2, 1, N'pass', 87.50, '2026-02-12'),
+    (1, 2, 3, N'pass', 91.00, '2026-02-12'),
+    (2, 3, 2, N'fail', 41.00, '2026-03-16');
+go
+
+insert dbo.CompanyYearFees (CompanyID, FeeYear, FeeAmount)
+values
+    (1, 2026, 120000.00),
+    (2, 2026, 85000.00);
+go
+
+-- Quick sanity checks.
+select * from dbo.TrainingCompanies;
+select * from dbo.Skills;
+select * from dbo.EmploymentCategories;
+select * from dbo.CategoryRequiredSkills;
+select * from dbo.TrainingSessions;
+select * from dbo.TrainingSessionSkills;
+select * from dbo.TrainingParticipants;
+select * from dbo.TrainingExamResults;
+select * from dbo.CompanyYearFees;
+go
