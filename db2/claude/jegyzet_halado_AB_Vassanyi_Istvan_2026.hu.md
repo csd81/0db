@@ -75,12 +75,12 @@ További olvasnivalók a modellezésről:
 
 GYAKORLAT: a minta adatbázis létrehozása és bővítése
 
-- Telepítsd az MS SQL Server 2016 vagy újabb verzióját, indítsd el az adatbázis-szolgáltatást, és csatlakozzon hozzá
-  MS Management Studio.
-- Futtassa a northwin adatbázist, készítsen kiírásot, és tekintse át a táblákat a grafikus felhasználói felület eszközeivel
-- Rajzoljon a fenti diagramhoz hasonló logikai adatbázis-modell diagramot
+- Telepítsd az MS SQL Server 2016 vagy újabb verzióját, indítsd el az adatbázis-szolgáltatást, és csatlakozz hozzá
+  az MS Management Studio-val.
+- Futtasd a Northwind adatbázist, készíts kiírást, és tekintsd át a táblákat a grafikus felhasználói felület eszközeivel
+- Rajzolj a fenti diagramhoz hasonló logikai adatbázismodell-diagramot
 - Add hozzá az Alkalmazottak.Bérezés és a Vevők.terület_azonosítója mezőket
-- Tervezze meg és valósítsa meg az adatbázis kiterjesztését a következő forgatókönyv modellezéséhez.
+- Tervezd meg és valósítsd meg az adatbázis kiterjesztését a következő forgatókönyv modellezéséhez.
   Munkatársainkat rendszeres képzésekre küldjük, ahol különféle ismereteket sajátítanak el.
   A képzéseket szerződött harmadik fél cégek szervezik. Van egy listánk
   szükséges készségek (például „B fokú üzleti prezentáció” vagy „számviteli alapismeretek” stb.).
@@ -91,7 +91,7 @@ GYAKORLAT: a minta adatbázis létrehozása és bővítése
   „elvetélt”) és vizsgaeredményeiket külön-külön a különböző készségek esetében. Tekintettel a
   tréningeket szervező cégeknél tároljuk a cégünk által fizetett díjakat a
   képzések minden évben.
-- (Add hozzá az új táblákat az adatbázis diagramhoz, és adjon meg néhány tesztadatot)
+- (Add hozzá az új táblákat az adatbázisdiagramhoz, és adj meg néhány tesztadatot)
 - MEGOLDÁS: train_tables.sql2
 
 ### Lekérdezés
@@ -145,12 +145,7 @@ GYAKORLAT: a minta adatbázis létrehozása és bővítése
 
 - További példákért és az SQL-lekérdezések szisztematikus áttekintéséért lásd a Függeléket
 - További olvasnivalók a lekérdezésről:
-  - •
-    névként,
-
-```
-https://docs.microsoft.com/en-us/sql/t-sql/queries/queries
-```
+  - https://docs.microsoft.com/en-us/sql/t-sql/queries/queries
 
 GYAKORLAT: az első gyakorlatban megvalósított táblák segítségével valósítsa meg a következő lekérdezéseket
 
@@ -276,7 +271,7 @@ select [your user name].fn_salary('Fuller') as salary
   specifikáció.
   A valósághűbb üzleti folyamat bemutatása érdekében itt van egy példa a szkript elkészítéséhez
   egy új Northwind rendelés, amely egyetlen rendelési tételt tartalmaz. A forgatókönyv szerint a cég
-  iroda sürgős rendelést kap egy kedves vásárlótól telefonon. Such a process is a
+  iroda sürgős rendelést kap egy kedves vásárlótól telefonon. Egy ilyen folyamat
   tipikus üzleti tranzakció.
 
 ```sql
@@ -332,7 +327,6 @@ customerid=@cust_id
 insert into orders (customerID, orderdate) values (@cust_id,
 getdate()) --orderid: identity
 set @order_id = @@identity --az utolsó identity eredménye
-insert
 insert [order details] (orderid, productid, quantity,
 UnitPrice) --itt hibát követünk el
 values(@order_id, @prod_id, @quantity, @unitprice) -itt hibát követünk el
