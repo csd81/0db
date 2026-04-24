@@ -7,6 +7,7 @@ set nocount on
 declare @name nvarchar(20), @address nvarchar(max), @res_no int, @emp_id int
 set @name='Fuller'
 select @res_no=count(*) from Employees where LastName like @name + '%'
+
 if @res_no=0 print 'No matching record.'
 else if @res_no>1 print 'More than one matching record.'
 else begin --egyetlen találat
