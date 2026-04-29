@@ -1,0 +1,370 @@
+lítani.
+Jó.
+És akkor kérem szépen
+menjünk vissza a
+a
+küensükhöz. Ezt nyugodtan csukjuk be.
+Tehát azt hiszem itt lehetett látni
+akkor itt itt lehetne beállítani például
+valami valami domain rot. Most nincs
+beállítva domain rule, de lehetne
+például egy olyan domain r, hogy hogy a
+a az ország nevében nem születnek számok
+például. Szóval bármi ilyesmi ilyesmi
+lehetne. Jó, és minden doménynak van egy
+neve.
+Meg adattípusa például az nagyon fontos.
+Ez például string. Jó, ezt csukjunk be.
+És akkor próbáljuk megcsinálni egy ilyen
+egy ilyen data cleansing projektet.
+Tehát mit fogunk csinálni? ö egy
+bizonyos ö táblánknak egy bizonyos
+mezőjét fogjuk egy domén szerint
+megpróbálni javítani és tisztítani. Jó,
+tehát konkrétan azt fogjuk megnézni,
+hogy van-e itt a dim customer táblánkban
+ebben, amit itt eddig nézegettünk,
+vannak valószínűleg elgépelt vezeték
+nevek, mert ez a cégnek sokba kerülhet.
+Tehát
+dem
+customer.
+Ja, bocsánat, egy distinctet
+lefelejtettem.
+Tehát összesen 375 különböző
+vezetéknél van. Viszont nem is tudom,
+több 10000 Lastném szerepel egyébként,
+tehát nyilván minden név sokszor
+szerepel.
+Úgyhogy
+úgyhogy térjünk vissza ide a ide a
+projektünkhöz is. És azt mondjuk, hogy
+new data quality project. Jó, kell neki
+adni egy nevet, és ez lesz a Dream
+Customer.
+Itt a projektnek neve.
+Last nem.
+Oké. Last
+then. Jó, rend és ugye ezt a ezt azt a
+tudásbázist használom majd hozzá. Ennek
+is majd a US Lastné mezőjét fogjuk
+használni. És be kell állítanunk azt,
+hogy hogy melyik
+melyik mezőt, melyik domén szerint
+szeretnénk
+majd
+tisztítani
+mindjárt a következő panelen. Szóval itt
+igazából ennek a ennek a kíves
+programnak a lassúságára nincs nincs
+nincsen magyarázat. Ezt egyszerűen így
+sikerült nekik
+megcsinálni, mert elvileg ennek sokkal
+gyorsabban kéne mennie. Jó, persze az is
+igaz, hogy a a az az én gépem az
+különösen lassú jelenleg,
+de majd azért mindjárt be tudjuk
+állítani.
+Kérem szépen,
+lehet, hogy
+virtuális gépplasságon mögött van még
+valami egyéb probléma.
+Másik most nem fut.
+De hát közben azért, amíg ez itt ez itt
+ez itt fut, azért azt
+azt az azt elmondom, hogy
+hogy igazából egy ilyen odatisztítás
+során egy konkrét táblának a a a mezői
+közül
+lehet többet is tisztítani, mondjuk több
+különböző domén szerint.
+És hát aztán ez úgy úgy úgy fut ki a
+végére, hogy a javasolt változ
+választások vagy változtatások közül
+nekem kell eldöntenem azt, hogy
+hogy melyiket fogadom el és melyiket nem
+fogadom el.
+Azt hiszem, hogy
+Aha. Hát ez eléggé lassan indult el
+most. Na mindegy, azért azért indítsuk
+el. Jó, és akkor majd utána lehet, hogy
+egy másik útvonalat választok a
+demózásra. Szóval, hogy meg ki kell
+választom azt, hogy melyik adatbázis.
+Ugye ez a DW29
+lesz az adatbázis.
+És hogy melyik tábla az a dim customer.
+És ezen belül a Lászné mezőt szeretném
+a a Lásném domén alapján tisztítani.
+Jó.
+Na most még mielőtt itt a start gombra
+rányomnánk,
+van itt a
+ebben a data quint servicesben egy bug,
+amihez kell egy kell egy work around,
+tehát egy mondjam
+nekünk kézzel kell beavatkoznunk, mert
+különben ez hibára fut ez a sajnos ez a
+ez a ez a kliens it tehát, hogy ha most
+Megfrissítjük a DS main adatbázisnak a
+hopp a tábláit. Ezt akartam csak
+megfrissíteni.
+Tehát ezt itt
+akkor
+azt látjuk, hogy minden ilyen új
+projectnek, bocsánat, nem is a DQS
+mainnek, hanem a a
+DQS projects, az ami a projectjeink
+vannak DQS mainben, abban a logika van,
+meg az meg a tudásbázisok. A DQS
+Projectben vannak a projektek és a DQS
+staging data az amit idegenes
+adattárolással használunk. Jó, tehát
+akkor itt ha most ezt a DKS Project
+adatbázist kinyitjuk, akkor lehet látni,
+hogy létre egy csomó tábla, azért, mert
+én indítottam egy új adattisztítási
+projektet.
+Majd mindjárt mutatom őket.
+És
+és hát az egyik ilyen
+táblában be kell állítani egy egy külső
+kulcskényszernek a
+a modalitását.
+Mégpedig úgy most ugye ezek a ezek a
+most létrejött táblák meg vannak
+sorszámozva a projektjeink ez ugye egel
+1-yel kezdődik és akkor úgy megy fölfel
+lesz még egy projektünk akkor több lesz
+szóval lényeg az hogy itt el kell
+jönnünk a az index lexicon extension
+táblához
+ehhez
+és ennek van egy olyan külső kulcsa
+amivel ez a tábla az index lexikonra
+hivatkozik,
+tehát az index lexicon
+extension index lexicon
+foreign key, tehát ez az
+és
+és ennek a táblának kell módosítani
+a
+az a a az on delete action
+tulajdonsága át azér, hogy ne fusson
+hibára ez a bizonyos
+adattisztítás. Mindjárt mutatom, hogy
+hogyan.
+Tehát itt az insert and update
+specificationt kell kiválasztani és a
+delete trot átírni a no actionről
+kaszkádra,
+mert egy tőlés híva következik külön
+különben be, tehát egy egy külső
+kulcskényszeről és vagy iva következik
+be különben, amikor megpróbáljuk ezt
+módosítani.
+Jó, ezt becsuk, ezt után be kell csukni.
+Delete kaskát, és utána még el is kell
+menteni ezt a változtatást ahhoz, hogy
+az életbe lépjen.
+Oké.
+Na és hogyha most visszajövünk a a
+kliensünkhöz, most már jó reményekkel el
+lehet indítani
+a a cleansinget, de ez még ilyen
+normális gépen is eltart egy két-három
+percig, úgyhogy ezt most egyelőre
+hagyjuk itt futni. Jó, én nem az önök
+gépe az gyorsabb, mint mint mint az
+enyém. És én kihasználom ezt az időt
+arra,
+hogy hogy közben fogok beszélni
+a a másik ilyen ilyen alapvető
+projekttípusról,
+ami a
+ami az identity matching. Tehát amit
+most csinálunk,
+ez a data cleansing, ez arra való, hogy
+egy
+konkrét mezőnek a az értékeit javítsuk
+ki
+interaktívan. vagy automatizáltam
+valamilyen
+adatbázis alapján egy egy másik értékre.
+És egyébként a az az eredményt, tehát
+amikor megkapjuk a azisztás eredményét,
+akkor ott minden esetben külön fogják
+jelezni nekünk, hogy
+hogy ezt a rekordot ezt
+most javasoljuk, módosítani, javasoljuk
+átérni valami másra,
+amit aztán mi elmenthetünk ezt az
+eredményt egy táblába, és utána
+programozottan adságun, amit akarunk, de
+az eredeti forrásatok sohase módosulnak.
+Ugye hát azért gondolják meg, hogy hogy
+itt
+óriási
+hibát követhetünk-e, például, hogyha
+tévesenre módosítunk valamit, tehát
+mindenképpen egy embernek kell
+jóváhagyni a a változásokat, és mi csak
+egy táblába mentjük el. Tipikusan itt a
+a
+szerveren
+ebbe a DQ és staging data adaptate tárba
+mehetjük el a az eredményeket, aztán
+utána feldolgozzuk, ahogy akarjuk. Na de
+szóval ez az egész ez ez mind csak a a
+az adat ez a ez a data cleansing típusú
+projekt. És a másik típusú projekt is
+nagyon érdekes és nagyon fontos. És most
+arról szereténk mondani egy pár szót.
+Itt a a módul lapon van egy olyan
+háttéranyag,
+amit Igen. Hát a maga a a Microsoft is
+támogatja tulajdonképpen ezt az identity
+matching típusú projektet.
+Azonban
+pillanat
+térünk vissza ide a data qualityhez. És
+akkor itt van egy olyan k study bad
+based identity matching.
+Hát ezt szeretném itt
+ő bemutatni. Tehát hogy amit most
+mutattam eddig vagy mutatók éppen a fut
+fut a háttérben, az ilyen szabályok
+alapján próbál
+hasonló rekordokat keresni. Például azt
+mondjuk, hogy hogy hasonló értékeket egy
+mezőn belül, hogy az Afganisztán meg az
+apagisztán az hasonló, mert kicsi a
+lévenstin távolsága, ugye? Ö de van egy
+olyan problémakör is, amikor tegyük fel,
+hogy esetleg nincs is ilyen
+tudásbázisunk egyáltalán.
+Vagy esetleg van tudásbázisunk, de
+mindenesetre arról szól, hogy több mint
+egy információforrásunk van, és ezek
+között kell észrevenni azt, hogy ugyanaz
+az entitás szerepel mindkettőben az
+adatok alapján. Bár ugye külön-külön
+ennyik atribútumos egyezik
+aiknek a másik rekordjával. Viszont ha
+az ember ránéz, rögtön látja, hogy ezek
+ugyanazok. hogy most mutatok azért egy
+azért egy kedves korábbi hallgatónknak
+egyébként pont ugye ebben a tárgyban
+neki ez volt a a projektje, hogy egy
+ilyen egy egy ilyen bert alapú identity
+matching rendszert fejlesztett ki. Most
+itt itt látják, azt mondom, hogy egyiket
+úgy hívják, hogy itt itt van három adat,
+email address, name, meg a meg a
+foglalkoztató. Ez meg egy másik
+rendszer. Ugye ránézünk, mi tudjuk, hogy
+ez ugyanaz az ember, ugye? Itt másképp
+írték, írták a cég nevét, mint itt. Ugye
+itt azt írták, hogy appel, nem az, hogy
+Apple és a többi. De azért mi tudjuk. Na
+és akkor honnan tudjuk? Hát ugye mi
+intelligensek vagyunk és erre lehet
+szabályokat is készíteni. Tehát ennek a
+problémak a megoldására
+ugye ugye azt várjuk, hogy itt az
+élmény, hogy ez a kettőhez ugyanazzeket
+össze kell mergeölni. És ugye itt megint
+az a probléma, hogy kicsit magasabb
+szinten, hogyha két példában létezik az
+illető a a cég adatbázisában, abból nagy
+bajok lehetnek, ugye? Egyiknek küldjük
+ezt a levelet, a másnak meg küldjük azt
+a levelet, és azt hiszük, hogy ez a két
+különböző ember. Ugye nagyon idegesítő
+tud lenni. Például én magam is itt a
+Veszprórház
+ban egy ideje egy két példám léteztem,
+mert egyszer rosszul írták a nevemet,
+tehát nem volt identity matching a a
+rendszeren belül. És ez sok kárt okoz a
+cégeknek.
+Ugye erre vannak ennek erre a problémára
+többféle megoldás van. Ez a rulebased
+ugye ez a legegyszerűbb. Ez az, amit a
+Microsoft DKS is megvalósít a másik
+típusú projektben, tehát nem abban a
+projektban, amit elítottunk, hanem egy
+másik típusú projektben.
+De az a gond ezekkel a ezekkel a
+szabályalapú identity managing
+megoldásokkal,
+hogy igazából aki a szabályokat
+csinálja, annak hogy is néz ki egy ilyen
+szabály? Mondjuk tegyük föl, hogy van
+három mezőnk. Ugye először is ö
+nem is biztos tudjon a mezők szerepeek a
+két adforásban, de tegyük föl, hogy van
+van mondjuk a a name meg van a van az
+employer.
+Ugye itt látható, hogy már eleve a
+employer name and address szerepelt itt
+még az employer, de nagyon mondjuk egy
+hasonló mező van, csak azt mondjuk, hogy
+jó, akkor mezőpárokra számoljunk ki egy
+hasonlóságot, mondjuk egy 0 és egy
+közötti számot. utána
+besúlyozzuk ezeket a távolságokat. Azt
+jelenti, hogy ez a mező mennyire fontos
+azonosítás szempontjából, ugye? És utána
+ebből lesz egy egy score, ami a két
+rekordnak a hasonlóságára jellemző. Na,
+ha ez egy küszöbő értéket, akkor az
+valószínűleg ugyanaz. Ugye ez a
+szabályalapú megközelítés. Csak, hogy
+honnan tudja az illető szakértő, aki ezt
+az egészet konfigurálja,
+hogy milyen küszöveket kell beállítani
+és milyen súlyokat kell beállítani. Hát
+ezt nem azt a azt nem tudja, ugye?
+Viszont előföd, hogy vannak
+tanulóadataink. Tehát amikor tudjuk azt,
+hogy ez a kettő ugyanaz, ugye ezek
+lehetnek egy ilyen egy ilyen egy ilyen
+ember által ellenőrzött referenciai
+adatbázisban.
+És és akkor előjön, ha van, ha már van
+tanítóminta, akkor előjön a neurális
+hálózatoknak az előnye, a
+tanulóképessége,
+hogy ő meg tudja tanulni azt, hogy
+melyik mező fontosabb, mint a másik a
+példák alapján. Például hadd mondjak el
+egy triviális példát, ugye budapesti
+címek
+ott, hogyha azt mondom, hogy
+hogy Petőfutca 13.
+kerület, vagy azt mondom, hogy hogy hogy
+Petfi utca 13.
+kerület. Hát ugye akkor tök egyértelmű,
+hogy valaki elírta a Petőfi Petfira,
+ugye? De hogyha az Petőfi utca 13.
+kerületnek Petőfi utca 13. kerület. Ott
+viszont már egyáltalán nem biztos, mert
+a kerületből minden kerületből van
+Petőfi utca, és a kerületben egy
+karaktertévesztés az sokkal nagyobb
+változás, mint az utca nevében. Értik a
+különbséget, ugye? Tehát az egy az egy
+sokkal lényegesebb információ. Most
+ilyeneket meg tud tanulni egy neurális
+háló. Ez konkrétan egy ilyen egy ilyen
+bertrend. Az azt jelenti ugye, hogy ez
+csak egy encóder.
+Ez ez ez áttranszformálja tulajdonképpen
+a rekordjainkat egy egy olyan térben,
+ahol könnyen lehet a hasonlóságokat
+elemezni
+és
+és ilyen módon jobb eredményt tudunk
+elérni hosszú távon. Kösak, hogyha tanul
+a 

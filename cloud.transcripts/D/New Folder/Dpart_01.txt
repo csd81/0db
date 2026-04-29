@@ -1,0 +1,246 @@
+on csak a vezérlés,
+illetve az adatoknak a a módosítása.
+És ezt próbálja ez a cloud fant is
+megvalósítani. Most az én személyes
+véleményem az első pont, hogy hogy ez
+szerintem egy fantasztikus klassz dolog.
+Nem biztos, hogy ezzel mindenki
+egyetért. Mostanában lehet olvasgatni
+ellen véleményeket is egyre inkább, hogy
+hát, hogy ez mégsem annyira váltotta be
+a reményeket, még ez az egész szerver
+nélküli futtatás, ez nem annyira oké. Én
+nem tudom, én általában nem írnám ezt
+le. Szerintem az ötlet fantasztikus.
+Nyilván nem minden alkalmazáshoz ez a
+legjobb technológia. Tehát majd látni
+fogjátok. El kell
+előbb sajátítani az alapokat, aztán el
+kell dönteni, hogy hogy
+egy célproblémára ez vagy nem ez a
+legjobb implementációs meg megoldás
+vagy megvalósítás.
+Tehát
+hogyha a modularitást vagy a komponens
+alapú szoftverfejlesztést tényleg az
+extrém irányba elvisszük, hogy minden
+egyes függvény egy külön létező egység,
+ami valahol a felhőben ül és
+végrehajtható, akkor eljutunk az ilyen
+clan functionbe felépített szoftverhez.
+Ennek ugye a lényege az lesz, hogy ha
+egy meglévő funkciót meg kell
+változtatnunk, akkor az annyit jelent,
+hogy egy vagy több függvényt
+módosítanunk kell, vagy le kell
+cserélni.
+hogyha újabb funkciót kell hozzárakni,
+akkor az eseményvezérlés miatt nagyon
+könnyű beszúrni
+újabb függvényeket, amíg csak ugyanúgy
+reagálnak különböző eseményekre a
+végrehajtás során, és nem kell az egész
+forrást újra
+letölteni, módosítani, újrafordítani
+satöbbi, hanem ez mint forráskód szinten
+pücsül a felhőben.
+a script nyelveket használunk, akkor ezt
+nem is kell lefordítani, mert a kutató
+környezet ezt megoldja. Hogyha olyan
+nyelvet használunk, ahol kell fordítás,
+akkor viszont a ugye deploy lépésben,
+amikor föltöltjük a a felhőt, akkor le
+fog fordulni, és onnantól kezdve
+binárisan futtatásra kész a állapotban
+lesz.
+És hát nyilván mivel ez a felhőben van,
+bárhol megtalálhatók ez a függ ezek a
+függvények, vagy bárhon elhelyezhetjük
+őket, és így redundánsak lehetnek,
+hibatűrők, minden jót akarhatunk. És
+hogyha egy bizonyos függvényt sokat
+használunk, akkor a skálázhatóságot
+rendkívül egyszerűen meg lehet oldani,
+csak automatikusan több példán kell azt
+a függvényt végrehajtani.
+Jó, tehát akkor röviden ennyi. Remélem,
+hogy
+követhető volt, vagy nem volt túl
+unalmas.
+És
+itt az utolsó pont, hogy milyen nyelven
+lehet ezeket létrehozni. Tehát ahogy
+mondtam, a script nyelvek azok a a
+legegyszerűbben alkalmazható nyelvek,
+mert egyszerűen megírjuk JavaScript-ben
+vagy Pythonban a kódot, azt feltöltjük,
+és onnantól kezdve egy az elhőfuttató
+rendszer gondoskodik arról, hogy
+lepusson a függvény, amikor kell.
+Nyilván a háttérben lesznek futtató
+szerverek, tehát a javascriptesek azok
+például egy no szerveren futnak. A
+Python az egy Python környezetben,
+hogyha Javát akarunk, akkor szerver
+virtuális gépek lesznek, amiken
+hasonlóan mondjuk egy ilyen szerver
+alkalmazáshoz
+majdnem ilyen szervelet formában futnak
+le a függvények, de ezt mind megoldja
+helyettünk a a szolgáltató, tehát a
+felhőfuttató
+környezet.
+És igazából ma már szinte minden nyelven
+lehet ezeket programozni. A kezdet
+kezdetén csak közkü nyelvek voltak,
+tehát interpretált nyelvek, de most már
+a kompár nyelveket is lehet használni.
+Sőt, ha valaki nagyon vad dolgot akar
+csinálni, akkor még C++ban is írhat
+ilyen függvényeket.
+Na és akkor itt van egy áttekintő ábra,
+hogy hogy működik ez a az egész nagyon
+absztrakt szinten.
+Tehát vannak
+a bal oldalon
+szolgáltatásaink.
+vagy programok, akármi,
+amik valamilyen eseményt generálnak,
+olyan eseményt, aminek a hatására mi el
+szeretnénk egy függvényt indítani.
+Ez a függvény nyilván elvégez valamilyen
+feladatot, vagy módosít adatot, satöbbi,
+satöbbi. És ha kell, akkor ő újabb
+eseményeket
+indíthat el, vagy triggerelhet. ami
+elindít további függvényeket,
+vagy
+üzenetet küld egy másik szolgáltatásnak,
+és körülbelül ennyi.
+És a kérdés az majd ezzel fogunk először
+foglalkozni, hogy ezek a függvények
+milyen milyen eseményekre tudnak
+egyáltalán elindulni,
+ezeket hogyan lehet megadni, hogy tudjuk
+felkonfigurálni ezt a gráfot,
+és hát hogy mit is lehet ezekkel
+csinálni. Jó, tehát ez egy nagyon
+absztrakt szint, de itt a a felhő részen
+középen képzeljétek azt el, hogy ott egy
+nagy gráf van, tehát nagyon nagyon sok
+függvényt egymással is összeköthetünk
+események segítségével.
+Na most hol lehet ezt használni, vagy
+mire gondolnánk, hogy ez igazán jó?
+Hát röviden azt is mondhatnánk, hogy
+szinte bárhol és bármire, de itt van
+egy-két példa. Ezeket a a Google Docsból
+vettem ki.
+Nyilván a példák még bővíthetők
+lennének. Nézzük a bal oldalon először.
+Tehát használhatjuk
+ezeket a függvényeket tulajdonképpen
+ilyen backendként, tehát ilyen üzleti
+logika megvalósítására.
+És itt az első pont az, hogy integráció,
+tehát hogy összekössünk különböző
+rendszereket. Itt nyilván főleg az
+esemény az, ami érdekes, és az események
+hatására elinduló függvények fogják az
+integrációt megvalósítani.
+Aztán lehet ebből mobil backendeket
+csinálni.
+Igazából egy komplett web oldalt vagy
+webalkalmazást is lehet ennek segítségel
+megvalósítani. Vagy ha valaki ilyen
+szenzoros alkalmazásokkal foglalkozik,
+akkor a
+internetes
+IoT adatoknak a feldolgozására is ezt
+lehet használni. És ez az utolsó átvisz
+minket már a valós idei feldolgozásra.
+Ugye a legutóbbi alkalommal beszéltünk a
+stream feldolgozásról.
+Hát ugyanezt meg lehet csinálni itt is.
+Tehát ahogy bejön egy adat egység,
+kisebb vagy nagyobb, mindegy, az
+triggerelhet egy függvényt. Ha az
+elvégezte a saját feladatát, akkor ő egy
+újabb függvényt figgerelhet és adhatja
+tovább az adatot és a többi és a többi.
+Tehát egy valósítói feldolgozásnál egy
+ilyen pipeline-t is létre lehet ebből
+hozni,
+de lehet ez csak egy függvény is. Tehát
+mondjuk mondjuk
+majd ezt meg is nézzük példában
+feltöltünk valahová egy fát és az
+triggerelhet egy függvényt, hogy olvassa
+ki a fáj tartalmát és azzal valamit
+csináljon. És akkor a harmadik oszlobban
+itt jobb oldalon hát egy ilyen gyűjtő
+kifejezés alatt látjuk azt, hogy
+intelligens alkalmazások.
+Itt hát, hogy ezt most mennyire kell
+komolyan venni az intelligenciát, azt
+hagyjuk, de a lényeg az, hogy valamilyen
+AI jellegű dolog be kerül a a képbe.
+Ami a leggyakoribb
+forma, az képeknek, videóknak, hangnak a
+az elemzése,
+vagy pedig valamilyen idősoros
+adatoknak a feldolgozása.
+És hát persze a végén jöhet ezek
+klasszikus ilyen nyelvi modelles dolgok
+is, de abba nem fogok belemenni, mert ez
+annyire engem nem érdekel, de majd
+mutatok egy példát, hogyha valakit
+érdekel, akkor megnézheti ezt is. Jó, és
+akkor itt rögtön van egy ilyen további
+link. Nem tudom, ezt megnyísam-e.
+Talán most nem, hogy
+a Google szerint még hol lehet ezeket
+használni. Szerintem inkább haladjunk,
+hogy nehogy beoltassalak benneteket itt
+nagyon. És amikor elérkeztünk oda, hogy
+akkor tulajdonképpen
+hogy is néz ki ez a függvény, milyen
+fajtái vannak. Tehát a függvényt úgy
+kell elképzelni, hogy van neve ennek a
+függvénynek van függvénytörzs, ahol
+valamilyen végrehajtható kód található,
+és ez valamilyen eseményre elindul. Most
+attól függően, hogy ez az esemény
+milyen, két alapvető függvénytípust
+különböztetünk meg. Hogyha egy HTTP
+kérés triggereli a függvényt, akkor HTTP
+függvényről beszélünk. Hogyha bármilyen
+más felhőn belülről származó esemény,
+ami nem HTTP,
+hanem a felhő esemény küldőrendszerét
+használja, akkor pedig úgynevezett
+háttérfüggvényről vagy background
+functionről beszélünk. Jó, szerintem
+sejthetitek, hogy a HTTP az főleg ilyen
+frontend jellegű dolgok megvalósítására
+való. A background az meginkább backend
+jellegű implementációkat támogat.
+Jó, itt van egy-két példa a cloud
+storage például, hogy hogyha fölkerül
+valamilyen adat egy ilyen bakitba, az
+például tud generálni egy eseményt, ami
+elindíthat egy adatfeldolgozó függvényt.
+Jó, hát a HTTP-nél az meg egyértelmű,
+valamilyen címre érkezik egy get
+request, és akkor az elindítja majd a
+függvényünket.
+Itt megint van egy link, akit majd
+érdekel a részlet,
+megnézheti, hogy a dokumentáció mit mond
+ezeknek a függvényeknek a megírásáról.
+Na most ahogy mondtam, nyilván ezek nem
+a levegőben futnak, hanem van mögöttük
+egy futtatókörnyezet,
+amit automatikusan a rendszer menedzsel.
+Tehát amikor mi feltöltjük a függvényt a
+felhőbe, a

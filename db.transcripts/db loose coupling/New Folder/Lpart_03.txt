@@ -1,0 +1,97 @@
+lgozás, mennyi ideig tartott
+satöbbi. Itt a process gyűlés azért
+számított nező ugye kivonjuk a a tehát a
+megnézzük a kezdet és a végkülönbségét.
+És amit logolunk, az az, hogy milyen
+típusú esemény történt és hogy melyik
+rendeléssel.
+Magát az adatokat nem logoljuk ide,
+hiszen majd a feldogozó Job szépen ki
+tudja venni az orders táblából a
+megfelelő idejű eseményt, vagy vagy
+bocsánat rendelést, és el tudja dönteni,
+hogy mit csináljon vele. Tehát hozzuk
+létre ezt a táblát.
+Felté, hogy nincs már benne. Nézzük csak
+meg.
+Aztongja order log.
+Jó, nincsen benne. Akkor hozzuk létre.
+És most nézzük a triggert. Tehát
+igazából ez egy érdekes dolog, mi mit
+csinálunk. Ugye ez a trigger lehetőleg
+igyekszik nem hibára futni, mert akkora
+a rendésfelvétés hibára fog futni. Tehát
+ez nagyon egyszerű akar lenni.
+Először is mit csinálunk? A megnézzük
+azt, hogy hogy mi a rendelés idé, ami a
+a trigger elsülését okozta. És azt is
+lehet látni, hogy ez nem csak
+beszúrásra, hanem update-re is el fog
+sülni ez a trigger. Tehát hogyha
+módosítan egy rendést, akkor is elsül.
+És majd mi itt a triggerben eldöntjük,
+hogy melyik esemény történt. Lehetne azt
+is csinálni egyébként, hogy két triggert
+csinálunk, külön egyet az inzetre, külön
+egyet az update-re, de így jobban
+áttekinthető az egész, és végül is erre
+találták ki ezt a technológiát.
+Szóval
+itt van valami ilyen ilyen ilyen
+printüzenet. Mondjuk ez nem annyira
+lényeges. Ezek a printek a valóságban
+sehol nem jelennek meg, ugye? Tehát mi
+itt látjuk ezt a printet ezen a
+konzolon, de hogyha ez egy alkalmazás
+volna, mondjuk sárban írtak egy
+alkalmazást, akkor ezek a prininttel írt
+üzenetek, ezek nem jelennek meg a
+meg a kliens alkalmazásban.
+Úgyhogy ez csak a programozónak szól. Na
+nézzük. Van egy ilyen függő, hogy update
+és utána zárójelben egy mezőnév. Ez
+triggeren belül használható.
+SQL szerve specifikus. És ez akkor ad
+vissza igaz értéket, hogyha ugye ez egy
+update trigger és ez az order mező
+változott.
+Hogyha valamelyik másik mező változott,
+akkor hamis értéket ad vissza.
+Na most ha ugye az order id a az a
+táblának a kulcsa, a tábla kulcsa az nem
+változhat csak akkor, hogyha új report
+jön létre.
+Ugye ez a ez az alapötető ez a az az
+alapgondolat.
+Tehát innen tudjuk azt, hogy most
+igazából mi történt, update történt vagy
+inserzert? Hát ezek szerint itt ebben az
+esetben egy inzert történt. És akkor
+kiísjuk azt, hogy ez egy ez egy új
+rendelés. És ebben az esetben
+beszúrunk az order block táblába
+hát egy new order recordot. Most igaz
+szerint többet is beszúratunk, hogyha az
+inserted tábla többet tartom. Azt
+hiszem, hogyha több rekord
+többet több rendést vettek fel egyetlen
+insert utasítással,
+ugye, akkor ennek a szereknek több
+rekordja lesz. Na most ez persze nem
+túlságosan realisztikus,
+mert tip mert azért nem hiszem el, hogy
+egy egy kereskedő szoftver úgy van
+megírva, hogy ott egy oké gombra
+ráklikkeléskor egyszerre több rendést is
+fel lehet venni. Mindenesetre ezt csak
+úgy megjegyzem, hogy mi még erre is fel
+vagyunk készülve, hogyha esetleg ez
+történne, akkor mindegyiket fel tudjuk
+dolgozni. Tehát akkor nem egy rekordos a
+logban, hanem többet.
+Jó?
+És mindegyiknek a típusa az lesz, hogy
+new order. Na most, hogyha nem változott
+az order idé, akkor az azt jelenti, hogy
+most ez tényleg egy update utasítás
+volt, és eb

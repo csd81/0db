@@ -1,0 +1,396 @@
+zt szeretnénk, hogy ez a sok-sok
+apró lépés az egyetlen lépés formájában
+legyen végrehajtható
+úgy, ahogy bekarikáztam.
+És ez a nagy bekarikázott dolog, ez
+legyen egyetlen függvényhívás, hogy a
+távoli szerver csináljon valamit. Jó? És
+akkor most nézzünk a jobb oldalra.
+Valami ilyesmit szeretnénk, hogy legyen
+egy olyan függvényünk,
+amit mi lokálisan a kliens oldalon
+meghívunk,
+de nem ott fut le, hanem a távoli
+szerveren fog lefutni.
+Ez nem egy egyszerű dolog, ugye? Tehát
+helyben van a függvény,
+de nem ott fut le, hanem hanem valahol
+messze. Na most
+mindenki programozott, remélem köztetek
+annyit, hogy tudja, hogyha egy függvényt
+meghívunk, akkor az a függvény, a
+függvény törzsében levő utasítások az
+végrehajtja,
+ugye? Tehát az helyben fog lefutni,
+mégpedig gyorsan egymás után, nem fog
+átmenni egy másik szerverre. Tehát, hogy
+lehet azt megcsinálni, hogy ilyen
+formában nézzen ki a programunk, de
+mégse lokálisan fusson le, hanem valahol
+távol,
+és az eredmény meg érkezzen vissza
+automatikusan hozzánk, amit utána egy
+eredményváltozóban
+el tudunk tárolni.
+Tehát ez egy koncepcionálisan rendkívül
+elegáns és egyszerű
+programozási modell, de a technikai
+megvalósítása az nagyon komplex.
+Arra próbáltam utalni ezzel, hogy hogy a
+függvény hol fog lefutni, meg meg hogyan
+hajtódnak végre az utasítások.
+Tehát magyarán ha mi írunk egy
+függvényt, az soha semmilyen körülmények
+között nem fog egy távoli gépen lefutni.
+Tehát hogy működhet ez még itt?
+Hát úgy, hogy be kell csapni a
+rendszert, tehát trükköznünk kell.
+És a trükk az
+ez a remote procedure
+call nevű technológiában található.
+És ez pedig egy úgynevezett köztes réteg
+vagy middle wnek a alkalmazása,
+ami
+berak egy plusz réteget az operációs
+rendszer és a mi programunk közé. Azt
+nem tudom, erre van-e. Itt nincsen ábrám
+sajnos, csak itt a korbánál.
+Lehet, hogy ezt most így gyorsan itt
+lerajzolom nektek.
+Azt mondja, hogyunk
+ide.
+Tehát ez a mi programunk.
+Ez lesz a middleware. Ez pedig az
+operációs rendszer. Ezt inkább kiírom.
+Ó, és ez a három doboz, a kliens,
+ez pedig a szerver.
+No és akkor az történik, hogy amikor ez
+a két program szeretne egymással
+beszélgetni,
+akkor
+de logikailag
+ezt szeretnénk
+Jó, tehát azt azt akarjuk, hogy ez a
+kliens és a szerver a program szintjén
+kommunikáljon egymással. Ez a
+függvényhívás. Ehelyett nem ez lesz.
+Amikor lefordítjuk a programunkat, akkor
+a lokális
+függvény, amiet szeretnénk, hogy távol
+fusson le, az úgy fog lefordulni, hogy
+létrejön
+egy
+olyan kódrész, ami ennek a middlevernek
+igazából a része,
+ami automatikusan veszi a
+függvényhívásnak a paramétereit, tehát a
+függvény nevét, bemenő paramétereket,
+azokat becsomag magolja egy üzenetbe,
+majd
+átküldi őket az operációs rendszernek.
+Más színű.
+Tehát valahogy így
+tehát becsapja a programunkat, meghívjuk
+a függvényt, és nem a eredeti tartalom
+fog lefutni, hanem egy olyan kód, ami
+veszi a függvényhívás paramétereit,
+abból létrehozza
+ezt a lépést. egy üzenet
+ökészítését,
+vagy végrehajtja ezt a lépést, majd
+utána az operációs rendszer segítségével
+elküldi az üzenetet.
+Ezt nem így akartam
+a másik gépnek.
+Jó, tehát fizikailag ez fog történni.
+Elnézést, egy kicsit mögökben nyerős így
+a rajzolás, de azért remélem, hogy hogy
+érthető. Jó, na most a terver operációs
+rendszer mikor ezt megkapja, akkor ott
+belül tudja azt, hogy ez az üzenet a
+rajtafutó programnak
+van szánva. Úgyhogy továbbítja a
+programhoz tartozó middle w kódrésznek,
+amelyik kicsomagolja azt az üzenetet,
+megnézi, hogy milyen függvény az, amit
+végre kell hajtani, és milyen
+paraméterekkel.
+majd a szerveren ennek a függvénynek a
+valós implementációját,
+ami már tényleg azokat az utasításokat
+használja vagy tartalmazza, ami a
+funkcióhoz kell, azt lefuttatja a
+szerveren,
+létrejön az eredmény, ami valamilyen
+változó,
+és akkor azt viszont utána újra a
+middleware összecsomagolja
+és visszaküldi az operációs rendszeren
+keresztül a másik gépnek ott. megérkezik
+a mi programunkba, és ott automatikusan
+mi mint egy változót fogjuk megkapni
+jelen esetben ebben a resultban. Jó,
+tehát ez az automatikus kicsomagolás
+satöbbi, ez ez a háttérben történik a
+programozónak. Erről igazából nem is
+kell tudni semmit. És ennek az egésznek
+az volt a lényege, azért hozták létre,
+mert így ugyanaz a logika jelenik meg a
+program kódban, ami a lokális
+végrehajtásnál is van. Annyi a
+különbség, hogy nyilván kell egy extra
+paraméter valahogyan,
+ami tudatja ezzel a
+távoli eljárással, hogy neki milyen
+szerveren kell futni.
+Tehát valahogyan ki kell deríteni a
+rendszernek, hogy ez egy tábori
+függvényhívás lesz, nem pedig egy
+lokális. Jó. És akkor itt alul látjuk
+azt, hogy mi is történik.
+Ez a becsomagolás, kicsomagolás. Ez
+szakterminológiában a marshalling nevet
+viseli. Tehát a marshalling az, hogy
+valamilyen adatból egy binár byt
+sorozatot hozunk
+létre, és ez lesz az üzenet, amit
+átküldünk a hálózaton. Az anmarsalin
+pedig az, hogy ezekből a bátokból
+újraépítjük azokat a
+adott változókat, ami kell a függvény
+hívásnak a végrehajtásához.
+Közben automatikusan ugye létrehozza a
+kapcsolatot is, elvégzi az adatküldést
+mindkét irányba, és
+nyilván sokkal elegánsabb valami. És ami
+a lényeg, hogy ez itt egyben fut le.
+Tehát tudjuk azt biztosítani, hogy ez
+vagy lefut, vagy nem fut. Tehát nincs
+az, hogy öt lépés van, és nem tudjuk,
+hogy az öt lépés közül éppen hol milyen
+hiba jelentkezik, hanem itt ez vagy
+lefut hiba nélkül, vagy nem fut le.
+Tehát a hibának a kezelése is sokkal
+egyszerűbbé válik.
+Jó, elnézést, hogyha ez egy picit most
+ilyen nagyon részletesnek tűnik, vagy
+esetleg nem
+ideillőnek, de majd remélem, hogy
+mindenki látni fogja végén, hogy azért
+ez koncepcionálisan egy fontos kérdés.
+Jó, tehát ez a távoli eljárás hívásnak a
+technológiája. Na most ezt nem az
+internetre találták ki, hanem lokális
+hálózatokon működő elosztott
+rendszerekre.
+És ennek itt a a szabvány
+specifikációja,
+tehát láthatjátok, hogy ez nem mai
+gyerek. 1995-ben
+jött létre ez a szabvány,
+ez a RPC vagy remote procedure
+specifikáció, amit a Sun Microsystems
+talált ki
+hát 95 előtt valamennyivel, és akkor
+95-ben
+ez hivatalossá vált. Ez egy C-ben
+implementált
+programozási rendszer.
+Gyönyörű szépen működött nagyon sokáig.
+A egy probléma volt csak vele, hogy ez
+mivel C-ben van, nem objektum orientált.
+És a 90-es évek végére már megjelent az
+objektumorientáltság,
+megjelent a C++,
+aztán megjelent 95-ben a Java, meg még
+jó néhány ilyen objektum orientált
+rendszer. És akkor jött az, hogy hát jó
+lenne az objektum orientált környeződben
+használni.
+De hát az egy bonyolultabb dolog,
+mert ugye az objektumorientáltságban
+osztályaink vannak,
+amikhez tartoznak
+példányok. A példányoz meg kód.
+És képzeljük azt el, hogy egy kliens
+lokálisan példányosít egy osztályt,
+és azt szeretné átküldeni a túloldalra.
+Ugye
+akkor hogy fog az a kód odakerülni?
+Mindent előre telepítenünk kell a távoli
+szerverre, vagy hogy lehet ezt
+megcsinálni? Tehát még több probléma
+jelenik meg. Na és akkor létrejött egy
+újabb szabvány, amit nem kell
+megtanulnok, csak jó, hogyha legalább
+egyszer halljátok. Ez a Common Object
+Request Broker Architecture nevű valami
+tipikusan ilyen
+vállalati szabvány bizottság által
+létrehozott név.
+Ne ne nehogy
+nagyon egyszerű legyen a neve, de
+mindenki csak korbának hívja.
+Ez tulajdonképpen ugyanaz a távoli
+eljárás hívási rendszer, csak
+objektumorientált kivitelben. És ami
+fontos, hogy nyelv független,
+és arra épül, hogy
+a
+távoli szerver programnak a
+funkcionalitását le lehet írni egy
+interface-zel.
+Itt erre van egy interface leíró nyelv,
+ez az idl. És ebből kliens oldalon lehet
+fordítás közben létrehozni automatikusan
+C++ Jával satöbbi nyelvi
+implementációkat,
+amin keresztül az a szerver meghívható,
+vagy annak a szerver
+neak bizonyos funkcionalitása meghívható
+a kliens oldalról.
+Probléma ezzel a rendszerrel az volt,
+hogy mivel
+hát olyan szerény céljai voltak, hogy a
+az elosztott rendszerek minden
+problémáját oldja meg, ezért
+rettenetesen túlbonyolították
+ezt a architektúrát,
+mármint szoftver szempontból.
+És
+ez igazából egy specifikáció volt, amit
+rábíztak a vállalatokra,
+szoftverfejlesztő vállalatokra, hogy
+implementálják.
+És mivel hatalmas nagy volt a
+specifikáció, tulajdonképpen egyetlen
+szoftver cég sem implementálta az
+egészet, hanem csak mondjuk 80-90%-át.
+Tehát mindig voltak olyan részek, ami
+éppen nincs implementálva. És ebből elég
+komoly galibák történtek, hogy mondjuk a
+a kliens oldali rendszer az az A cégnek
+az implementációt használta a
+szerveroldali meg a B cégét,
+és kiderült, hogy hoppá, én meghívtam
+valamit, ami nincs implementálva az ő
+korendszerüket.
+Tehát voltak ilyen kisnakadások,
+és hát a végén annyi annyi gond lett
+ezekkel.
+megjelent az a a Worldwide Web, ami ugye
+http alapú kommunikációt használ, és
+másfajta
+kapcsolatmenedzselés, mint a TCP.
+És ugye a www után megjelentek a
+tűzfalak is. A tűzfalak letiltották a
+TCP portokat, és onnantól kezdve ez már
+internet szinten egy nem működő
+architektúra volt. Úgyhogy emiatt úgy
+szép, szép lassan kimúlt,
+hogy ma már nem nagyon használja senki.
+No, de ez egy nagyon fontos lépés volt a
+az általánosan interneten át vagy
+interneten keresztül, vagy az interneten
+rajta is használható
+klien szerver programozási modelleknek a
+a létrehozásához.
+Jó, tehát ez egy pontos
+tanuló időszak volt. Ezt tényleg csak
+felvillantanám.
+Aki esetleg otthonosabb a Jávában, annak
+érdekes lehet, hogy
+ennek a távoli eljárás hívásnak van egy
+Java implementációja, a
+Java remote method invocation, az erem
+annak a rövidítése. Ezt oda is írom, mi
+elfelejtem.
+ami tulajdonképpen egy objektumorientált
+változata az egésznek.
+Kábé ugyanaz, mint a korba, de
+kimondottan csak járva, nyelvre
+kitalálva. És ennek van egy nagyon
+érdekes, szép tulajdonsága, hogy hogy
+Java objektumokat lehet az egyik
+virtuális gépből egy másikba vagy távoli
+virtuális gépbe küldeni, és ott az
+automatikusan rögtön működőképes,
+futtatható. És ebből nagyon érdekes
+rendszereket lehet létrehozni. A másik,
+ami itt egy fontos szempont, hogy ez
+talán az első olyan rendszer, ahol
+megjelenünk a szolgáltatás orientáltság.
+bizonyos szinten.
+És ez pedig ennek az eremi registrynek a
+a
+bevezetésének köszönhető. Ugyanis a
+hagyományos kliensrendszereknél az a
+probléma többek között, hogy a
+szervernek a címét ismernünk kell. Ugye
+interneten ez egy IP cím meg egy
+portszám.
+Ugye mondjuk, ha a webszervert
+használjuk analógiának, akkor mit tudom
+én, a google.com az beképződik egy IP
+címre, a port az meg 80-as port, mert
+ott futnak a webszerek. Jó, tehát ahhoz,
+hogy elérjünk egy szervert, tudnunk kell
+annak a szervernek a
+IP címét, portszámát.
+Jó, amíg egy-két szerver van, ez nem
+gond. De mi van akkor, hogyha ez egy
+nagy elosztott rendszer,
+és mondjuk használunk egy szervert, be
+van írva a címe a programunkba, és az a
+szerver egyszer csak lehal,
+elromlik, leáll satöbbi. Elindítanak
+helyett egy másikat,
+de az valószínűleg egy másik IP címen
+fog futni. Ez egy fizikailag másik gép.
+A programunk meg még a régit használná.
+Tehát itt van egyfajta dinamikus
+újra konfigurálhatósági igény,
+hogy egy kliens bármikor el tudjon érni
+egy szervert lehetőleg anélkül, hogy
+tudná, hogy ez fizikailag melyik gépen
+fut. Na most ezt hagyományos
+programozási modellel, a socket alapú
+modellel nem lehet megcsinálni. És a
+Javában ezt úgy oldották meg, hogy
+a Javában létezik az interface, ami
+felsorolja
+egy osztálynak a publikus metódusait,
+de nincs mögöttük implementáció.
+És minden szolgáltatás vagy távoli
+funkció egy ilyen interface-szel van
+leírva, és ide a registrybe
+egy olyan objektum, ami ezt az
+interface-t implementálja,
+és
+az implementáció
+tartalmazza
+a szerver kapcsolatfelvételre szükséges
+összes információt, de ez belül van, ez
+láthatatlan.
+És a kliens az nem közvetlenül a
+szerverhez kapcsolódik először, hanem az
+RMy registryhez, és megnézi, hogy van-e
+ott olyan objektum, ami a számára fontos
+interface-t implementálja,
+és ha van, akkor azt onnan letölti.
+Jó, ezt elfelejtettem ide írni. Ezt most
+beírom, hogy
+szó ez nem teljesen így igaz, mert nem
+csak az interface-t
+tárolja, hanem ugye azt implementál
+objektumot is, de ez most a lényeg
+szempontjából nem érdekes.
+és
+akkor amikor a kliens szeretne
+Tehát a az interface alapján végzünk egy
+keresést az RMI registryben.
+Ha találunk olyan objektumot, ami azt
+implementálja, azt letöltjük, és a
+letöltött objektumban már benne van a
+szerver elérési információ. Na most ez
+így önma

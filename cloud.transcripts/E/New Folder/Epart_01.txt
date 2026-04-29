@@ -1,0 +1,219 @@
+ehet.
+És
+minden egyes ilyen sorban ugye különböző
+oszlopok lehetnek, és ezeknek a
+metszete, tehát egy sor, egy oszlop, az
+lesz egy cella. Jó? Na most több
+oszlopot, hogyha ezek között van valami
+kapcsolat, vagy logikai egység, akkor be
+lehet sorolni egy úgynevezett
+családba, tehát egy oszlop családba,
+vagy colum familybe, aminek szintén
+szerepe van a a lekérdezéseknél, illetve
+a teljesítmény növelésnél.
+És akkor a ez a pont a legérdekesebb,
+hogy minden egyes cella értéknek
+időbélyege van.
+Tehát egyetlen egy sor, oszlop,
+cella az nem csak egy értéket tud
+tárolni, hanem többet is. És ezeknek van
+időbélyege, és így lehet idősoros
+adatokat egy sorcella a metszedben
+kezelni. Jó, és ezt itt lát láthatjátok
+ezen a táblázaton vagy ábrán, hogy hogy
+néz ki ez logikailag.
+Tehát a kék dobozkák azok az értékek,
+amiket tárolunk. És látjuk, hogy például
+itt a egyes sor kettes
+család egyes oszlopában nincsen érték,
+tehát ott nem fog tárolni semmit a
+rendszer. Ugyanígy itt lent a 22
+metszetében viszont az első sor második
+család második oszlopában több érték
+van, és ez a T1, T2, T3 jelzi a
+különböző időbélyegeket. Tehát ha
+érdekel minket az, hogy hogyan változik
+a az értékidőben, akkor ezeket majd el
+tudjuk érni és lehet velük dolgozni.
+Na hát idáig volt a logikai rész, amit a
+felhasználó
+vagy a fejlesztő lát. És akkor egy picit
+azért nézzünk be mögé, hogy mi is
+történik itt a háttérben. Tehát hogy
+tudja ezt a Google nekünk
+szolgáltatni, illetve működtetni.
+amit itt láttok, ez az egésznek az
+architektúrája.
+És most egy picit gyorsan rárajzolok
+erre.
+Tehát a kék rész
+ez egyenes vonal akart lenni, de nem
+baj. Tehát amit pirossal megjelöltem, ez
+maga a big table,
+ez az egész architektúra.
+És ugye fönt látjuk a klienseket, akik
+szeretnék ezt használni
+itt fölül,
+és
+a big table alatt egy szerver cluster
+található. Nyilván valahol ennek futnia
+kell.
+És hát ahogy ez lenni szokott az ilyen
+rendszerekben, ugye van egy
+kvázi egy ilyen login notes szerű
+valami, ez a frontend szerver, ami nem
+egy szerver, hanem az is sok szerverből
+állhat. Ezek fogadják a kéréseket, és ők
+osztják el majd a klaszternek a a
+csomópontjai vagy nójai között ezeket a
+kéréseket.
+Jó, itt a középső rész az, ami minket
+legjobban érdekelni fog, tehát ez a big
+table cluster, tehát effektíve ez az,
+ami üzemelteti a klaszterünket.
+És az alsó szint az pedig a adattárolási
+réteg.
+És
+itt van egy-két nagyon érdekes dolog.
+Nem tudom, hogy ki mennyire emlékszik
+vissza a a Hadup rendszerre,
+ahol ugye volt egy HDFS nevű
+nagy megbízhatóságú fárendszer, az
+tárolta az adatokat.
+És ugye a adub clusternek a nójai, a
+burkörökán
+a azokat az adatokat dolgozták föl. De
+hát itt is valami hasonlóról van szó.
+Az egyik nagyon fontos architektúrális
+elv, hogy a big table clusternek a
+nodejai nem tárolnak adatot. Jó, tehát
+ezt próbáljátok megjegyezni, hogy
+ezeken,
+amit mutatok a az egérrel, nincs
+adattárolás.
+Az adattárolás az egy fá rendszerben
+van. Ennek a a Google-nál a neve a
+Colosszus nevű fárendszer.
+És az adatok azok ilyen kisebb
+adategységekben vannak eltárolva, amit
+ők ilyen SS tableek hívnak. Jó, ezeket
+tabletnek is szokták hívni.
+Tehát amikor egy nagy táblánk van, ami
+ugye lehet akár terabtos méretű is,
+akkor a rendszer azt a nagy táblát nem
+egyetlen egy nagy egységként tárolja,
+hanem felosztja kisebb
+darabokra, particionálja magyarán,
+és
+ezek kerülnek bele ezekbe a tabletekbe.
+És a tabletnek a az adatformátuma ez az
+SS table, tehát ilyen módon tárolja a fá
+rendszer ezt. Na most fölmerül a kérdés,
+hogy ez miért jó nekünk?
+Hát egyrészt az a jó, az elsőre
+visszatérve, hogy a noddok nem tárolják
+az adatot,
+hanem igazából csak mutatókat vagy
+pointereket
+tárolnak. Tehát ez nem memória címet
+kell ezatt érteni, hanem kvázi mint egy
+a fárendszerben ezekre a kis tabletekre.
+Tehát ennek az a lényege, hogy ha
+véletlenül egy nód kiesik, meghibásodik
+satöbbi, akkor az nem rántja magával az
+adatot. Tehát az adattárolás az teljesen
+független az egésztől,
+és így lehet hibatűrővé tenni a
+plasztert. Tehát ha kiesik egy node,
+akkor egyszerűen berakunk helyette egy
+újat, és csak annyi a feladat, hogy
+azokat a
+adatpinereket, amit az előző node
+használt, azt megkapja az újon a belépő
+node, és onnantól kezdve ugyanúgy
+elérhetővé válik a rendszer. Vagy ha
+szeretnénk a klasszternek a méretét
+növelni, tehát nagy a terhelés, és azt
+szeretnénk, hogy több erőforrásáljon
+rendelkezésre a kérések kiszolgálásához,
+akkor egyszerűen csak hozzáadunk a
+rendszerhez több-több cluster nodódot,
+és ők megkapják ugyanígy a fárendszerből
+ezeket a poereket, és onnantól kezdve az
+adat elérhetővé válik. Tehát nagyon
+gyorsan
+újra lehet konfigurálni a klustereket.
+Ennek az adattárolásra semmi hatása
+nincs. A másik előnye
+a, hogy mivel az adattárolás egy ilyen
+fárendszerben van, hogy a
+adatreplikáció,
+tehát a a biztonsági
+mentések satöbbi satöbbi, az megint csak
+független a klustzertől, tehát azt a fá
+rendszer elvégezheti
+a háttérben.
+És az pedig, hogy kisebb adatokban van,
+az megint hát nyilván egyrészt
+teljesítmény okai is vannak ennek, tehát
+a kisebb adatmennyiségeket könnyebb
+mozgatni, beolvasni,
+esetleg áthelyezni egy újabb helyre,
+hogyha a fárendszernél ilyen replikáció
+van. Tehát nem kell arra várnunk, hogy
+az egész tábla egyszerre menjen át
+valahová, hanem részenként lehet
+folyamatosan a a háttérben ezeket a
+műveleteket elvégezni. Jó, tehát röviden
+ez egy nagyon nagy komplex, elosztott
+számítási és adattárolási szolgáltatás,
+de szerencsére ebből mi nem látunk
+semmit, csak azt, hogy ez megbízhatóan
+működik. Nyilván persze lehetnek mindig
+hibák meg kiesések, de alapvetően a
+rendszer úgy van megtervezve, hogy hogy
+ez hibatűrő módon és megbízhatóan
+működjön.
+Tehát ez volt akkor az architektúra, és
+azt hiszem, hogy ezt itt kábé elmondtam,
+ami ezen van.
+Igen,
+így van. Úgyhogy megyek is tovább.
+Jó. És akkor ugye az örök problémánk az
+ilyen rendszerekben a terhelésnek az
+elosztása.
+Tehát mivel egy elosztott klustzterről
+van szó,
+a kérdés az, hogyha jön be egy kérés,
+akkor hogyan tudjuk azt biztosítani,
+hogy a klusternek mondjuk ne egy nódja
+legyen leterhelve, mert mondjuk pont ő
+tárolja azokat a mondjuk soroknak a a
+pointereit,
+amit minden kliens le akar kérdezni. A
+többi nód az meg olyan helyekre mutat,
+amit nem nagyon akar senki sem kérdezni.
+És ugye emiatt egy ilyen aszimmetrikus
+terhelés alakul ki. Tehát egy egy node
+nagyon sok kérést kap, a többi meg
+semmit.
+És hát itt megint bejön a képbe ezeknek
+a tableteknek a használata.
+hogyha sok kis tabletünk van, akkor
+ezeket ha kvázi véletlenszerűen
+szétszórjuk a nódok között, akkor
+statisztikailag nagyon nagy az esélye
+annak, hogy a nódok terhelése egyenletes
+lesz. Tehát mindig valaki más kapja a
+kérést.
+Ha kiderül azonban, hogy valamelyik
+tablet
+még így is folyamatosan sok sok sok sok
+kérést kap, vagy túl nagy, akkor
+a rendszer képes arra, hogy ilyen
+tableteket
+feldaraboljon további kis részekre, és
+azokat szétszórja megint a módok között,
+és ezt ő automatikusan meg tudja
+csinálni. És ennek a fordítottja is
+igaz, hogyha kiderü

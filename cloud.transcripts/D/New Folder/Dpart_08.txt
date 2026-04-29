@@ -1,0 +1,296 @@
+ülök a forráskódhoz,
+aztán majd utána lépésenként
+végigmegyünk az egészen.
+Jó, a kódnál
+milyen kódot szeretnétek látni? A java
+scriptest vagy a Pythont,
+Jaavát, ki melyiket preferálja?
+Én inkább a Pythont.
+Python legyen. Jó, oké. Na, hát akkor
+nézzük a Pythont. Ti is, hogyha
+gondoljátok, nézhetitek a saját
+képernyőtökön.
+Tehát az elején van egy van egy main,
+ahol tulajdonképpen csak a az egyes
+szolgáltatásoknak az eléréséhez
+szükséges objektumokat
+hozza létre. Tehát lesz egy vision
+client, egy translate client. Ugye ez
+ahhoz kell, hogy elérjük a külső
+szolgáltatásokat. Storage client szintén
+lesz egy publisher, amin keresztül majd
+fogunk küldeni eseményt.
+És akkor az első függvény itt a
+képfeldolgozó rész. Most gyorsan
+végigszaladok, hogy milyen sorrendben
+jelennek meg.
+A következő az egy function, ami kiszedi
+a
+szöveget, deálja a szöveget. Ez a
+translate,
+illetve az elmentés.
+Jó, akkor ezzük az elsővel.
+a process imageel,
+tehát vannak a client
+valamink, és akkor
+azt mondja, hogy tehát látjuk, hogy ez
+egy
+function lesz,
+és
+a process image lesz a functionnek a
+neve, ami valamilyen esemény hatására
+fog elindulni.
+Jó, és akkor itt látjuk a megjegyzésben,
+hogy ez a cloud function storage
+eventel fog elindulni.
+És akkor nézzük, hogy belül mi van.
+Tehát itt a az esemény, ez a V1
+finalized, amit ha emlékeztek, mi is
+használtunk a az első egyszerű kis
+példánál.
+És hogyha nem ez jön meg, akkor hiba
+lesz. Ha ez jött ugye a receive type
+megegyez vele, akkor megyünk tovább.
+Akkor szépen kiszedi az eseményből a
+az információkat. Tehát van egy esemény
+data. A data az igazából a bucketet és a
+fánevet fogja tartalmazni, és meghívja a
+detect text függvényt.
+Jó, tehát van egy cloud functionünk, ami
+külön ezt a detect text függvényt
+meghívja, ami egy sima
+Python függvény lesz. És akkor ez a
+függvény azt fogja csinálni, hogy
+előveszi
+a
+a vision.
+Ez volt a neve?
+Igen. A
+itt van egy konfigurációs rész,
+tehát a a vision appin keresztül
+beállítja, hogy hol van ennek a képnek a
+forrása. Ugye ez a GS bakit satöbbi, ez
+lesz a solid pakit. És utána a vision
+clienten keresztül meghívja a text
+detection
+api hívást.
+A paraméter pedig az image lesz, amit
+itt létrehoztunk.
+Jó. És akkor
+ebből elvileg kijön a detektált szöveg,
+és hogyha ez megvan, akkor a translate
+clientnek
+át fogja adni a detektált szövegből
+kiszedett
+konkrét szöveget.
+És ennek az első hívásnak az a célja,
+hogy kiderítse, hogy hogy milyen nyelvű
+ez a szöveg,
+mert itt még van egy plusz egy lépés,
+hogy bizonyos nyelven írt szöveget
+akarunk majd lefordítani.
+Jó, és akkor reméljük, hogy detektált
+valamit, és akkor ebből lesz ez a source
+language paraméterünk.
+És akkor ezzel megtörtént az első
+feldolgozási lépés. És most egy papszab
+üzenet létrehozása következik, ami el
+fogja indítani a következő
+lépést, ami ennek a szövegnek a majd a
+fordítását elvégzi. Jó. És akkor nézzük
+meg, hogy itt mi történik.
+mondja, hogy van egy újabb paraméterünk,
+ez a target language, tehát hogy milyen
+nyelvekre szeretnénk fordítani. Ez
+egynél több is lehet. Egy ciklusban
+fogja ezt elvégezni,
+és minden egyes célnyelvre
+lekéri a topiknak a nevét, ami egy külső
+változóból jön.
+és létrehoza az üzenetet, ami
+tartalmazza a lefordítandó szöveget,
+az eredeti fálnevet, forrásnyelvet és a
+célnyelvet.
+Ebből létrejön egy message, és akkor a a
+publisherön keresztül a publish az ebbe
+a topicba
+feltölti az üzenetet,
+és ezzel a publisher rész az
+befejeződött, tehát elment az üzenet.
+És akkor itt a végén ugye itt ez mindegy
+asinkron üzenetküldés volt. A végén van
+egy várakozás, hogy csak akkor lépké,
+hogyha ezek mind meg is érkeztek.
+Jó és akkor van egy újabb függvényünk.
+Jön egy újabb ilyen function framework
+clan function, ami elvégzi a fordítást.
+Ugye ez most már egysza event hatására
+indul el. Tehát az első lépés az lesz,
+hogy ki kell ebből szednünk, mármint az
+üzenetből.
+a szöveget. Itt egy kicsit lejjebb
+szaladok. Tehát látjuk, hogy a
+az üzenet az egy Jason formátumú valami
+lesz. És akkor ebből szépen kiszedi a
+szövegrészt, megint az eredeti fánevet,
+a célnyelvet, illetve a forrásnyelvet.
+És akkor itt újra jön a a Translate
+client. Itt most szépen lefordítjuk a
+szöveget, és ezt visszakapjuk ebben a
+translatben.
+Ha ez megvan, akkor egy újabb üzenetet
+állítunk össze, ami viszont már egy
+másik topikba megy. Nem a translate
+topicba, hanem az eredmény topicba, mert
+ugye ezt fogja figyelni majd a
+elmentést végző függvény. berakjuk a
+lefordított szöveget, és megint a
+publisher publissal elküldjük
+a topicba ezt az üzenetet. Akkor az
+utolsó függvény az ennek hatására
+elindul.
+ki fogja olvasni
+szöveget ebben a kód részben, illetve
+hogy milyen nyelv
+re lett lefordítva
+és elindíti elindítja az elmentést.
+Ugye környezeti változóból lekéri a
+bakitnek a nevét. Van egy fá name
+létrehozás, ugye ezért jött a az eredeti
+fil name, hogy
+ezzel tudjuk elmenteni. Csak hozzárak
+egy toldalékot, hogy milyen nyelvre
+fordítottuk,
+és akkor a storage client get buckittal
+lekéri konkrétan azt a bakitot, ahova
+menni fog az adat. És akkor ez a bucket
+blob
+hívás, ez elmenti az adatot,
+és ezzel,
+illetve az upload résszel befejeződik a
+a mentés.
+Jó, tehát ez a
+az alkalmazásnak a váza tulajdonképpen.
+És akkor
+hát ha van kedvetek, akkor ezt most
+megpróbálhatjuk
+összekalapálni.
+Bár még mielőtt hozzán kezdenék, még egy
+pillanatra visszatérnék a a diára, mert
+hogy van egy aktuálisan a
+dokumentációban megtalálható demó, ami
+hasonló dolgot csinál. Ezt még talán
+megmutatnám, mert biztosen már itt csak
+két díja van hátra,
+ami nagyon hasonló ehhez. Tehát ha
+megnézitek, itt ugyanaz történik, hogy
+van egy
+storage
+példányunk. Oda feltöltünk egy fá, az
+generálni fog egy eseményt, az elindít
+egy függvényt. És itt a függvény az
+ebben a példában
+itt fönt van a URL, ahol ezt el lehet
+olvasni.
+Ez azt csinálja, hogy megnézi, hogy a
+két ételt ábrázol-e,
+és ha igen, akkor csinál belőle egy
+ilyen kis
+előnézeti képet.
+Plusz feltölt egy ilyen menü
+szolgáltatásba
+szöveget, hogy ezen a képen ilyen meg
+ilyen ételek
+voltak megtalálhatók. A demóban ez a
+menü service rész, ez nincs
+implementálva, csak a képpeldolgozó
+rész.
+Tehát ezt is megnézhetitek. És akkor ez
+itt a részletes workflownak a leírása.
+Tehát, hogy hogy csinálja meg a
+thumbnail képet, megnéz, hogy van-e
+rajta étel satöbbi, satöbbi.
+Jó, úgyhogy ezt még gyorsan meg akartam
+mutatni. És akkor térünk vissza ehhez.
+És szerintem
+ami időnk hátra van, az pont elég
+kellene, hogy legyen ahhoz,
+hogy ezt megcsináljuk és lefuttassuk.
+Próbáljuk meg.
+Tehát ha visszamegyünk ennek az oldalnak
+a tetejére,
+akkor
+igen, itt kezdődik.
+És hát akkor menjünk a
+esetleg a Python ágon végig.
+Jó, tehát szükségünk lesz nekünk
+két bakitra, és akkor itt kitölthetjük a
+a paramétereket,
+és utána a konzolon, vagyis a cloudből
+ezt végre lehet hajtani.
+Jó, hát akkor ez legyen csak simán egy
+bakét.
+És a végére odaírom a Neptun kódomat,
+hogy egyedi legyen.
+Ezt nektek is ajánlom.
+Jó. És akkor a resulten ide mind.
+Igen.
+Tr topik. Hát azt megyemzót.
+Top megint csakdal
+is lesz egy
+stopik ugyanígy.
+Na és akkor ezt a négy
+parancsot végre kellene hajtani
+a
+naből.
+Jó, nem feltétlenül kell velem
+szinkronban csinálnatok, tehát nyugodtan
+haladjatok
+saját tempótokban.
+Létrejött a két bakit.
+Két topik.
+Jó, itt nálam pont a topic az látszik.
+Meg is mutatom, hogy
+remélhetőleg
+jöttek.
+Minden, itt van topic.
+és a translate topic.
+Oké.
+És akkor most mehetünk tovább.
+És akkor le kell tölteni a példa kódot.
+Megvan. Belépünk a könyvtárba.
+És akkor látjuk, hogy itt a main
+minden itt van, ami kell.
+Jó. És akkor most jön a
+functionöknek a
+feltöltése. Itt be kell állítani a
+régiót, illetve a saját projekt
+azonosítónkat, és remélhetőleg mást nem
+kell.
+Igen. És akkor megnézhetitek, hogy itt
+például a célnyelvek az spanyol, angol,
+francia, japán.
+És
+akkor mondjuk, ha egy magyar nyelvű
+szöveget feltöltünk, az lehet, hogy jó
+is lesz.
+Hát lehet, hogy én a japánt azt
+kicserélem majd németre
+karakterek miatt, hogy jobban lássuk,
+hogy mi történik.
+Akkor a régió az mondjuk legyen itt
+Europe
+így
+Igen.
+Jó,
+akkor ezt végrehajt
+meg tölteni.
+Reméljük sziba nélkül
+lefut.
+Jó, úgyhogy rendben van. És most átek a
+hang
+akkor látni kellene a
+lépre hozzok két függ vagy három
+függvényt.
+Az egyiknek ott kéne lennie, aztán most
+jön a követke

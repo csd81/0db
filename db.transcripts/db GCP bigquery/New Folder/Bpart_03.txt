@@ -1,0 +1,106 @@
+e, és akkor ott ez
+megtörténik, és ott ott be lehet
+állítani, hogy hány magot szeretnénk,
+satöbbi, satöbbi. De a a BQU esetén
+viszont az történik, hogy ez az egész
+párzamos feldolgozás a felhőben történik
+meg, tehát nem egyetlen gépen belül.
+És a a az SQL lekkérdezésünk
+is szépen, párhuzamosan
+fog lefutni. Akit érdekel ez a dolog, a
+jegyzetben vannak erre linkek, hogy ez
+pontosan hogy megy. Hát minket persze
+elsősorban az érdekel, hogy akkor
+ténylegesen milyen teljesítményt tud ez
+ez nyújtani egy egy nagy táblánál.
+Na, akkor az legyen a tehát az az volt
+az én elképzelésem, hogy az egész
+koherens tegy, amit itt tanulunk, hogy
+van ez a North Indatbázisunk és a a
+Northind adatbázisból csinálunk egy
+adattárházat,
+és ezt az adattárházat föltöltjük a big
+querybe, aztán megnézzük, hogy mit
+tudunk vele kezdeni.
+Hát, hogy lehet egy adatbázb, egy
+adattárat csinálni? Az első kérdés az
+ugye, hogy hogyan lesz igazi
+adatbázisunk, mert ami nekünk most a a
+Northwindben van,
+most mutatom itt a itt a Northw
+adabbázist,
+tehát
+itt Isten igazából
+ugye nem voltak orders recordjaink,
+nem voltak order details recordjaink se,
+és és nem hoztuk át a
+hogy customers táblá Ánk volt. Az volt
+igen.
+De de hát hiányoznak itt ahhoz, hogy
+igaz adat értelme legyen építeni, ahhoz
+ugye tények kellenek. A tények egy
+ténytáblában vannak általában. És akkor
+a ténytáblához kapcsolanak a a
+dimenziótáblák. Most itt az eladás a
+tény ebben az esetben. És akkor milyen
+dimenziói vannak egy eladásnak? Hát az,
+hogy hogy például melyik országból ki
+vásárolta azt meg, aztán az, hogy mit
+vásárolt, hogy milyen terméket vásárolt,
+hogy mikor vásárolt. Tehát ez máris
+kapásból három dimenzió, de egyébként
+még lehetne egy csomó másik
+dimenzió is, akár 100 dimenzió is lehet
+egy adattárban, mondjuk támogatva.
+És
+hát ezeket
+denormalizáltan tároljuk. Most én
+megcsináltam azt itt háttérmunkaként,
+hogy ezzel ne kelljen itt sokat
+vesződni, hogy csináltam egy olyan
+scriptet, amelyik feltölti az összes
+terméket, tehát nem csak azt a hármat,
+ami korábban volt.
+Ugye az összes termléket feltölti a
+Northendásba, aztán az összes vásárlót
+feltölti,
+és aztán az összes rendelést és az
+összes rendelési tételt. Ugyanis
+hogyha nincsen egy pár ezer rekordunk,
+akkor egyáltalán nem tudunk ebből
+döntéstámogatást csinálni.
+Tehát ahhoz, hogy adattáznak lehessen
+hívni, át az három rekordonal nem lesz
+adattárház. Jó, hát hogyha ezt
+lefuttatjuk, én már lefuttattam.
+akkor lesz egy egy tisztességesebb
+adatbázisunk, és ebből úgy lesz,
+hát ez ugyanaz ugyanaz, mint a Northwin,
+csak ugye most nem az SQS szerveren van,
+hanem a PSG
+és hogyan ez adattára itt látható ez
+kérem szépen, hogy ezzel a select
+lekérdezéssel ezzel denorm
+denormalizáljuk az adatbázisunk. Hát az
+mit jelent? Az azt jelenti, hogy a
+táblákat joinnal összefűzzük,
+és kiválatjuk belül azokat a mezőket,
+amelyek úgy gondoljuk, hogy üzleti
+elemzés céljára hasznosak lehetnek.
+Tehát tipikusan nem a
+a termékazonosítót, ami egy integer,
+fogjuk majd elemezgetni üzletileg.
+Bár azt azt azt is kiválatjuk, de
+de tipikusan nem azt fogjuk, hanem
+azokat a mezőket, amelyek
+a vásárlásnak a független dimenziójaként
+szóba jöhetnek. Hát én itt arra
+gondoltam,
+hogy az az ország, hogy honnan
+vásárolták, hogy milyen terméktípus,
+tehát hogy például italt vettek, vagy
+játékot, vagy mit. Aztán az, hogy hogy h
+hogy milyen áru ez a ez a bizonyos
+dolog,
+és hogy és hogy van-e
+árengedmény,

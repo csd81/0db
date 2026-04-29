@@ -1,0 +1,2528 @@
+1
+00:00:01,680 --> 00:00:09,360
+No, szóval a relációs adatbázis
+
+2
+00:00:06,440 --> 00:00:11,519
+technológia folyamatosan kapja a
+
+3
+00:00:09,360 --> 00:00:14,280
+kihívásokat
+
+4
+00:00:11,519 --> 00:00:18,439
+más technológiák irányából. És az egyik
+
+5
+00:00:14,280 --> 00:00:21,039
+ilyen kihívás az a úgynevezett hálózatos
+
+6
+00:00:18,439 --> 00:00:23,720
+vagy gráfadatbázis modell. Azt tudni
+
+7
+00:00:21,039 --> 00:00:26,720
+kell, hogy az informatikában tényleg
+
+8
+00:00:23,720 --> 00:00:29,599
+időről időre feltalálják ugyanazt másik
+
+9
+00:00:26,720 --> 00:00:32,360
+néven. Ez már pár évtized után nagyon
+
+10
+00:00:29,599 --> 00:00:34,920
+ismétlődő jelenség. És hát ebben az
+
+11
+00:00:32,360 --> 00:00:37,680
+esetben is ez így történt. Tehát jó
+
+12
+00:00:34,920 --> 00:00:40,480
+régen, még mielőtt a reakciós modell
+
+13
+00:00:37,680 --> 00:00:43,200
+egyed uralkodó lett volna,
+
+14
+00:00:40,480 --> 00:00:45,879
+létezett egy hálózatos adatbázis
+
+15
+00:00:43,200 --> 00:00:48,760
+struktúra.
+
+16
+00:00:45,879 --> 00:00:51,039
+Aminek pont az volt a lényege, hogy hogy
+
+17
+00:00:48,760 --> 00:00:54,120
+igazából egy gráf szerkezetet
+
+18
+00:00:51,039 --> 00:00:56,640
+igyekeztünk egy az egyben visszaadni.
+
+19
+00:00:54,120 --> 00:00:58,840
+Most, hogyha meggondoljuk, hogy egy
+
+20
+00:00:56,640 --> 00:01:02,480
+igazából egy reációs adális szerkezet és
+
+21
+00:00:58,840 --> 00:01:02,480
+egy gráf, ugye,
+
+22
+00:01:02,519 --> 00:01:09,360
+ahol a úgy a a modellezés során
+
+23
+00:01:06,560 --> 00:01:11,759
+meghatározzuk, hogy mik az entitások és
+
+24
+00:01:09,360 --> 00:01:14,439
+az entitásoknak az attribútuma a mezők
+
+25
+00:01:11,759 --> 00:01:18,439
+és az entitások közötti kapcsolatokat,
+
+26
+00:01:14,439 --> 00:01:21,720
+tehát a gráfoknak az éleit azt külső
+
+27
+00:01:18,439 --> 00:01:24,280
+kulcskényszerekkel valósítjuk meg.
+
+28
+00:01:21,720 --> 00:01:27,159
+Akkor, hogyha egy sok kapcsolatról van
+
+29
+00:01:24,280 --> 00:01:29,079
+szó, akkor nincs is ez nincs is ezzel
+
+30
+00:01:27,159 --> 00:01:31,520
+semmi probléma. Egy külső kulcsra meg
+
+31
+00:01:29,079 --> 00:01:33,399
+eztanim, de hogyha sok-sok kapcsolatról
+
+32
+00:01:31,520 --> 00:01:37,159
+van szó, akkor már a relációs módonek
+
+33
+00:01:33,399 --> 00:01:39,159
+szüksége van egy kapcsolótáblára.
+
+34
+00:01:37,159 --> 00:01:40,880
+Tehát effektív egy új táblába kerül az
+
+35
+00:01:39,159 --> 00:01:43,880
+az él, ami ezt a két csomópontot
+
+36
+00:01:40,880 --> 00:01:43,880
+összeköti.
+
+37
+00:01:44,079 --> 00:01:50,000
+Na most a
+
+38
+00:01:47,240 --> 00:01:52,079
+am a amit most fogok mutatni az az SQL
+
+39
+00:01:50,000 --> 00:01:54,360
+szerveres az SK szerver reációs
+
+40
+00:01:52,079 --> 00:01:58,759
+adabásának a kiegészítése
+
+41
+00:01:54,360 --> 00:02:00,799
+a a gráf és és éltáblákkal
+
+42
+00:01:58,759 --> 00:02:06,119
+ami tulajdonképpen viszonylag kevés
+
+43
+00:02:00,799 --> 00:02:09,319
+kiegészítéssel lehetővé teszi a
+
+44
+00:02:06,119 --> 00:02:12,680
+a gráf adatszerkezetben való gondolkodás
+
+45
+00:02:09,319 --> 00:02:14,280
+és bizonyos típusú feladatokra ra,
+
+46
+00:02:12,680 --> 00:02:16,959
+tehát például kapcsolati hálók
+
+47
+00:02:14,280 --> 00:02:19,560
+ábrázolására, de különösen az ezeken
+
+48
+00:02:16,959 --> 00:02:22,920
+való navigálásra hatékonyabb és jobb
+
+49
+00:02:19,560 --> 00:02:26,120
+lehet, mint a tradicionális
+
+50
+00:02:22,920 --> 00:02:28,560
+reációs modellnek a használata. Tehát
+
+51
+00:02:26,120 --> 00:02:32,879
+annyi annyi a
+
+52
+00:02:28,560 --> 00:02:34,840
+az újítás, hogy amikor egy táblát
+
+53
+00:02:32,879 --> 00:02:38,040
+deklar deklarálunk, most mindjárt írtok
+
+54
+00:02:34,840 --> 00:02:41,040
+egy képernyő megosztást, és akkor lehet
+
+55
+00:02:38,040 --> 00:02:41,040
+látni.
+
+56
+00:02:43,800 --> 00:02:49,239
+Tehát itt a a megosztáson lehet azt
+
+57
+00:02:46,959 --> 00:02:51,200
+látni, hogy amikor egy táblát
+
+58
+00:02:49,239 --> 00:02:53,760
+létrehozunk a create table parancsra,
+
+59
+00:02:51,200 --> 00:02:55,800
+akkor annak lehet egy olyan kiegészítése
+
+60
+00:02:53,760 --> 00:02:58,319
+igen, hogy ez node, tehát hogy ez egy ez
+
+61
+00:02:55,800 --> 00:03:00,959
+egy csomó pont táb lesz, illetve lehetne
+
+62
+00:02:58,319 --> 00:03:02,879
+egy olyan kiegészítése is, hogy edge. Ez
+
+63
+00:03:00,959 --> 00:03:06,920
+edge.
+
+64
+00:03:02,879 --> 00:03:09,680
+És úgy működik a a dolog, hogy a
+
+65
+00:03:06,920 --> 00:03:12,000
+csomópont táblákat, tehát note típusú
+
+66
+00:03:09,680 --> 00:03:15,000
+táblákat edge típusú táblák
+
+67
+00:03:12,000 --> 00:03:15,000
+összeköthetik.
+
+68
+00:03:15,200 --> 00:03:19,239
+A
+
+69
+00:03:16,959 --> 00:03:22,599
+az, hogy mi hogyan, mit hogy köt össze,
+
+70
+00:03:19,239 --> 00:03:24,760
+azt tulajdonképpen mi döntjük el.
+
+71
+00:03:22,599 --> 00:03:30,440
+Most amit ami amit most tudok mutatni,
+
+72
+00:03:24,760 --> 00:03:30,440
+az SQL szerver 2017-es megvalósítás.
+
+73
+00:03:31,480 --> 00:03:36,599
+A ennél van fejlettebb is. Az esk
+
+74
+00:03:33,680 --> 00:03:40,120
+szerver 2019-es. Sajnos azt az azt most
+
+75
+00:03:36,599 --> 00:03:41,360
+ezen a szerveren nem tudom demonstrálni.
+
+76
+00:03:40,120 --> 00:03:44,640
+Az egy kicsit fejedtebb olyan
+
+77
+00:03:41,360 --> 00:03:48,599
+szempontból, hogy
+
+78
+00:03:44,640 --> 00:03:50,599
+már meg lehet azt is szűkíteni, hogy
+
+79
+00:03:48,599 --> 00:03:52,439
+melyik él, milyen csomóponthoz
+
+80
+00:03:50,599 --> 00:03:56,640
+csatlakoztat. Hát mi ezt most nem fogjuk
+
+81
+00:03:52,439 --> 00:03:58,400
+megszűk vagy nem tudjuk megszűkíteni, de
+
+82
+00:03:56,640 --> 00:04:00,239
+azért attól függetlenül, ha okosan
+
+83
+00:03:58,400 --> 00:04:02,599
+használjuk a táblákat, akkor akkor
+
+84
+00:04:00,239 --> 00:04:05,120
+nyilván logikailag a megfelel tudjuk
+
+85
+00:04:02,599 --> 00:04:06,799
+őket kötni. Tehát például ugye ez egy
+
+86
+00:04:05,120 --> 00:04:08,319
+egyszerű kis demo, amit a Microsofttól
+
+87
+00:04:06,799 --> 00:04:11,079
+kölcsönöztem.
+
+88
+00:04:08,319 --> 00:04:14,840
+Egy néhány táblából áll. Van a a
+
+89
+00:04:11,079 --> 00:04:16,359
+jegyzetben egy
+
+90
+00:04:14,840 --> 00:04:18,680
+egy
+
+91
+00:04:16,359 --> 00:04:22,519
+kép a simáról. Mindjárt megpróbálom azt
+
+92
+00:04:18,680 --> 00:04:22,519
+ide bevarázsolni.
+
+93
+00:04:40,120 --> 00:04:45,120
+Itt van a sája ennek a ennek a kis
+
+94
+00:04:42,919 --> 00:04:46,400
+adatbázisnak.
+
+95
+00:04:45,120 --> 00:04:49,199
+Tehát látod, hogy van benne három
+
+96
+00:04:46,400 --> 00:04:51,840
+csomópont. Vannak személyek,
+
+97
+00:04:49,199 --> 00:04:53,800
+városok és éttermek, és az élek pedig a
+
+98
+00:04:51,840 --> 00:04:56,160
+kapcsolatokat
+
+99
+00:04:53,800 --> 00:04:58,720
+demonstrálják közöttük. Például egy egy
+
+100
+00:04:56,160 --> 00:05:01,560
+személynek lehet saját magával, hát
+
+101
+00:04:58,720 --> 00:05:03,639
+bocsánat, egy személy típusnak
+
+102
+00:05:01,560 --> 00:05:05,440
+lehet kapcsolata saját magával. Az egyik
+
+103
+00:05:03,639 --> 00:05:08,199
+ember, tehát lehet barátja, egy másik
+
+104
+00:05:05,440 --> 00:05:10,120
+emberhez a friend kapcsolat, akkor a a
+
+105
+00:05:08,199 --> 00:05:11,840
+személyek azok laknak bizonyos
+
+106
+00:05:10,120 --> 00:05:15,080
+városokban
+
+107
+00:05:11,840 --> 00:05:17,680
+és ugyanakkor ö szeretnek is bizonyos
+
+108
+00:05:15,080 --> 00:05:21,360
+városokat. Itt már azt is lehet látni,
+
+109
+00:05:17,680 --> 00:05:24,479
+hogy egy kapcsolatnak, tehát egy egy
+
+110
+00:05:21,360 --> 00:05:26,960
+élnek, egy edgenek annak lehet
+
+111
+00:05:24,479 --> 00:05:28,960
+attribútuma. Itt ilyen esetben ez a ez a
+
+112
+00:05:26,960 --> 00:05:31,160
+review, hogy mennyire szereti. Egyben
+
+113
+00:05:28,960 --> 00:05:32,759
+egyébként Isten igazából semmi újdonság
+
+114
+00:05:31,160 --> 00:05:35,639
+nincsen, hiszen amikor mi a reakciós
+
+115
+00:05:32,759 --> 00:05:37,600
+modellben összekötünk két táblát
+
+116
+00:05:35,639 --> 00:05:40,520
+és ez egy kapcsolótáblát használunk,
+
+117
+00:05:37,600 --> 00:05:43,400
+mert ez sok-sok kapcsolatról van szó.
+
+118
+00:05:40,520 --> 00:05:45,919
+Mi? Hát például itt ugye ez a
+
+119
+00:05:43,400 --> 00:05:47,520
+ez a ez a person meg a city között ez a
+
+120
+00:05:45,919 --> 00:05:49,960
+lives kapcsolat, ez egy sok-sok
+
+121
+00:05:47,520 --> 00:05:52,360
+kapcsolatnak tűnik, hiszen egy személy
+
+122
+00:05:49,960 --> 00:05:54,039
+az több várost is szerethet és egy
+
+123
+00:05:52,360 --> 00:05:55,919
+várost is több személy szerethet. Tehát
+
+124
+00:05:54,039 --> 00:05:57,560
+ez egy kapcsolt táv valósulhat meg
+
+125
+00:05:55,919 --> 00:06:00,120
+reakciós modellben, valósulna meg
+
+126
+00:05:57,560 --> 00:06:02,720
+reakciós modellben. Szóval ilyen esetben
+
+127
+00:06:00,120 --> 00:06:04,280
+természetesen annak a rekordnak, ami egy
+
+128
+00:06:02,720 --> 00:06:06,360
+bizonyos szemét, egy bizonyos város
+
+129
+00:06:04,280 --> 00:06:08,520
+összeket, lehetnek egyéb mezői is. Ezek
+
+130
+00:06:06,360 --> 00:06:09,759
+a kapcsolatnak az attribútumai. Na most
+
+131
+00:06:08,520 --> 00:06:12,440
+ezek azt mondjuk, hogy itt ebben az
+
+132
+00:06:09,759 --> 00:06:14,199
+esetben az élnek az attribút lesznek és
+
+133
+00:06:12,440 --> 00:06:15,960
+hasonlóképpen itt van van egy nagy egy
+
+134
+00:06:14,199 --> 00:06:18,319
+attribútum ez a ez a review. Tehát
+
+135
+00:06:15,960 --> 00:06:22,039
+összesen ez a három note van, és van egy
+
+136
+00:06:18,319 --> 00:06:26,639
+1 2 3 4 5 él, tehát nyolc táblá tudjuk
+
+137
+00:06:22,039 --> 00:06:31,080
+ezt a ezt a kis modellt megvalósítani.
+
+138
+00:06:26,639 --> 00:06:33,639
+Amikor létrehozzuk a a táblákat, akkor
+
+139
+00:06:31,080 --> 00:06:35,560
+akkor csak a minket érintő vagy érdeklő
+
+140
+00:06:33,639 --> 00:06:38,240
+attribútunkat tesszük bele. Tehát van
+
+141
+00:06:35,560 --> 00:06:42,479
+egy ID meg egy meg egy meg egy meg egy
+
+142
+00:06:38,240 --> 00:06:42,479
+név, ugye? Tehát semmi különös.
+
+143
+00:06:44,599 --> 00:06:46,919
+És
+
+144
+00:06:47,160 --> 00:06:50,599
+és ugye itt látható, hogy amikor az
+
+145
+00:06:48,400 --> 00:06:54,000
+éleket létrehozzuk, annak csak egy nevet
+
+146
+00:06:50,599 --> 00:06:56,479
+adunk, illetve akkor, hogyha hogyha van
+
+147
+00:06:54,000 --> 00:06:58,759
+neki ö
+
+148
+00:06:56,479 --> 00:07:00,599
+saját attribútom is itt ugye a a sok-sok
+
+149
+00:06:58,759 --> 00:07:03,960
+kapcsolat esetén, hogy a Likesnál volt
+
+150
+00:07:00,599 --> 00:07:06,639
+egy ilyen, akkor oda betesszük egy
+
+151
+00:07:03,960 --> 00:07:08,319
+mezőnek a a ratinget. Most valójában az
+
+152
+00:07:06,639 --> 00:07:09,960
+történik, hogy amikor ilyen táblákat
+
+153
+00:07:08,319 --> 00:07:13,840
+létrehozunk, tehát edge, illetve node
+
+154
+00:07:09,960 --> 00:07:21,680
+típusú táblákat, akkor minden esetben
+
+155
+00:07:13,840 --> 00:07:21,680
+létrejön egy rejtett azonosító is, egy
+
+156
+00:07:21,919 --> 00:07:25,840
+egy olyan az egy olyan azonosító, amit
+
+157
+00:07:23,960 --> 00:07:29,160
+mi le is kérhetünk egyébként, és a
+
+158
+00:07:25,840 --> 00:07:32,400
+rendszer generálja. És ez azonosító ez
+
+159
+00:07:29,160 --> 00:07:34,639
+valójában egy egy Jason dokumentum.
+
+160
+00:07:32,400 --> 00:07:38,919
+Hát például itt most nézzük meg. Ugye
+
+161
+00:07:34,639 --> 00:07:42,599
+van öt emberünk, van három éttermünk
+
+162
+00:07:38,919 --> 00:07:46,199
+és van három városunk. Jó.
+
+163
+00:07:42,599 --> 00:07:49,800
+És ha most beszúrok egy táblába egy egy
+
+164
+00:07:46,199 --> 00:07:52,000
+élet, tehát most összekötök
+
+165
+00:07:49,800 --> 00:07:55,759
+konkrétan az egyes
+
+166
+00:07:52,000 --> 00:07:59,240
+szemét kötöm össze az egyes étteremmel
+
+167
+00:07:55,759 --> 00:08:01,199
+és ezt be fogom szúrni a likes táblába,
+
+168
+00:07:59,240 --> 00:08:03,479
+mégpedig olyan módon, hogy az egyes
+
+169
+00:08:01,199 --> 00:08:05,599
+személy kilencesre értékelte ezt a
+
+170
+00:08:03,479 --> 00:08:08,400
+bizonyos éttermet. Akkor itt azt lehet
+
+171
+00:08:05,599 --> 00:08:11,599
+látni, hogy amikor amikor az értékeket
+
+172
+00:08:08,400 --> 00:08:14,479
+beeszem a a L táblába,
+
+173
+00:08:11,599 --> 00:08:16,080
+akkor itt van egy lekérdezés, ami
+
+174
+00:08:14,479 --> 00:08:17,879
+tulajdonképpen
+
+175
+00:08:16,080 --> 00:08:19,960
+ezt a rejtett mezőt hozza el, ezt a
+
+176
+00:08:17,879 --> 00:08:22,440
+dollár node idét, amit a rendszer
+
+177
+00:08:19,960 --> 00:08:24,479
+generált nekünk. És hát most nézzük meg,
+
+178
+00:08:22,440 --> 00:08:28,280
+hogy mi ez a Ja, itt már itt ide ki is
+
+179
+00:08:24,479 --> 00:08:30,639
+listáztam. Mi ez a ez a ez a node idé?
+
+180
+00:08:28,280 --> 00:08:33,800
+Ez ez tát kapcsol zárójelek között
+
+181
+00:08:30,639 --> 00:08:36,279
+látható. Ez tulajdonképpen egy Jason,
+
+182
+00:08:33,800 --> 00:08:39,159
+aminek
+
+183
+00:08:36,279 --> 00:08:41,399
+van egy típus attribútuma, akkor ez a
+
+184
+00:08:39,159 --> 00:08:44,640
+sémazsas és a tábla, ez együtt a táblát
+
+185
+00:08:41,399 --> 00:08:47,680
+azonosítja az adabison belül.
+
+186
+00:08:44,640 --> 00:08:51,560
+És és azon kívül van neki egy ideje. Hát
+
+187
+00:08:47,680 --> 00:08:54,240
+ugye hanyadik él, mondjuk úgy. Tehát
+
+188
+00:08:51,560 --> 00:08:56,200
+ezért nem kellett itt nekünk, amikor az
+
+189
+00:08:54,240 --> 00:08:58,720
+éleket létrehoztuk,
+
+190
+00:08:56,200 --> 00:09:01,240
+itt ugye nem nem kellett azonosított
+
+191
+00:08:58,720 --> 00:09:02,959
+megadnunk egyáltalán. Tulajdonképpen
+
+192
+00:09:01,240 --> 00:09:05,640
+ebből a szempontból itt sem kellett
+
+193
+00:09:02,959 --> 00:09:06,839
+volna, amikor a CT-t létreztuk meg a
+
+194
+00:09:05,640 --> 00:09:08,839
+resztot, nem kellett volna idét
+
+195
+00:09:06,839 --> 00:09:11,399
+használnunk. De hát ugye már, hogy
+
+196
+00:09:08,839 --> 00:09:13,279
+megszokásból használunk egyét.
+
+197
+00:09:11,399 --> 00:09:17,959
+Szóval, szóval így tudunk éleket
+
+198
+00:09:13,279 --> 00:09:20,920
+beszurkálni a a ez az éltá, vagyis a
+
+199
+00:09:17,959 --> 00:09:24,160
+igen, az az edges táblába, az edge
+
+200
+00:09:20,920 --> 00:09:25,480
+táblába ugye itt a itt a likes táblába
+
+201
+00:09:24,160 --> 00:09:27,800
+most sok mindent besz, illetve a
+
+202
+00:09:25,480 --> 00:09:30,959
+lestában most ilyen esetben csak olyanok
+
+203
+00:09:27,800 --> 00:09:33,680
+szúrunk be, hogy a hogy a személyek és a
+
+204
+00:09:30,959 --> 00:09:35,880
+és a és és az éttermek közötti
+
+205
+00:09:33,680 --> 00:09:38,959
+lájkolások vannak. Ugye most lehetne
+
+206
+00:09:35,880 --> 00:09:40,959
+például ebben a táblában olyan is, ami a
+
+207
+00:09:38,959 --> 00:09:44,279
+személyek és a városok közötti
+
+208
+00:09:40,959 --> 00:09:45,920
+lájkolások. Az is az is lehetne itt,
+
+209
+00:09:44,279 --> 00:09:48,279
+de olyan olyan olyan példánk most
+
+210
+00:09:45,920 --> 00:09:51,360
+nincsen. Ugye ez még az a változata
+
+211
+00:09:48,279 --> 00:09:53,800
+ennek az egész gráfadatbázisos dolognak,
+
+212
+00:09:51,360 --> 00:09:56,800
+amikor nem tudjuk leszűkíteni azt, hogy
+
+213
+00:09:53,800 --> 00:09:58,480
+ez a L tábla ez konkrétan ezek az élek,
+
+214
+00:09:56,800 --> 00:10:01,560
+ezek milyen táblákat, milyen nódokat
+
+215
+00:09:58,480 --> 00:10:03,880
+köthessenek össze.
+
+216
+00:10:01,560 --> 00:10:06,519
+Jó. És és itt azt is lehet látni, hogy
+
+217
+00:10:03,880 --> 00:10:09,519
+hogy egy élnek
+
+218
+00:10:06,519 --> 00:10:12,720
+mi az mi az azonosítója? Ez azd hogy néz
+
+219
+00:10:09,519 --> 00:10:14,560
+ki? Hát így néz ki. Tehát ha most
+
+220
+00:10:12,720 --> 00:10:16,760
+megnézzük, hogy mi van ebbe a likes
+
+221
+00:10:14,560 --> 00:10:19,480
+táblába,
+
+222
+00:10:16,760 --> 00:10:22,760
+akkor itt látható egy ilyen GD, ugye itt
+
+223
+00:10:19,480 --> 00:10:26,800
+is a típusra egy ér, akkor ez a séma
+
+224
+00:10:22,760 --> 00:10:30,320
+adatbázis az az mondja meg, hogy melyik
+
+225
+00:10:26,800 --> 00:10:33,720
+tábláról van szó. Ez ugye a LX tábla.
+
+226
+00:10:30,320 --> 00:10:35,920
+És és ez a bizonyos ID az, ami ezt az
+
+227
+00:10:33,720 --> 00:10:37,880
+élet itt azonosítja. Látod, hogy négy
+
+228
+00:10:35,920 --> 00:10:40,360
+négy él van benne, mind a égnek más az
+
+229
+00:10:37,880 --> 00:10:44,279
+idéje. Tehát ezt a rendszer generálja.
+
+230
+00:10:40,360 --> 00:10:46,000
+Talán azért csinálták ezt így, hogy a a
+
+231
+00:10:44,279 --> 00:10:48,440
+programozónak
+
+232
+00:10:46,000 --> 00:10:49,959
+ne kelljen ezzel foglalkoznia,
+
+233
+00:10:48,440 --> 00:10:52,279
+tehát
+
+234
+00:10:49,959 --> 00:10:53,560
+úgy úgy úgy lehessen igazából szerintem
+
+235
+00:10:52,279 --> 00:10:57,920
+minél inkább azt akarták, hogy
+
+236
+00:10:53,560 --> 00:10:57,920
+hasonlítson egy ilyen dokumentumtárra.
+
+237
+00:10:58,040 --> 00:11:03,000
+No, tehát ilyen módon föl tudunk építeni
+
+238
+00:11:00,560 --> 00:11:05,680
+gráfot. Ez a lényeg.
+
+239
+00:11:03,000 --> 00:11:07,800
+Itt most még teszünk bele olyasmikat is,
+
+240
+00:11:05,680 --> 00:11:09,320
+hogy
+
+241
+00:11:07,800 --> 00:11:12,560
+a
+
+242
+00:11:09,320 --> 00:11:15,440
+hogy hogy ki hol lakik. Ugye ez a ez a
+
+243
+00:11:12,560 --> 00:11:17,839
+bizonyos lives in, ez is egy ez is egy
+
+244
+00:11:15,440 --> 00:11:21,880
+él. Ez a városok és az emberek közötti
+
+245
+00:11:17,839 --> 00:11:21,880
+él. az egyes
+
+246
+00:11:23,120 --> 00:11:26,320
+emberünk az egyes városban, a kettes a
+
+247
+00:11:24,920 --> 00:11:27,839
+kettesben. Úgy szeretném azt
+
+248
+00:11:26,320 --> 00:11:29,480
+megjegyezni, ugye, hogy itt itt nincs
+
+249
+00:11:27,839 --> 00:11:32,200
+olyan
+
+250
+00:11:29,480 --> 00:11:35,040
+megkötés, hogy egy olyan, aki csak egy
+
+251
+00:11:32,200 --> 00:11:39,079
+városban élhet ezek szerint, ugye? Tehát
+
+252
+00:11:35,040 --> 00:11:41,800
+ezek az élek, ezek ezek minden esetben a
+
+253
+00:11:39,079 --> 00:11:43,600
+sok-sok kapcsolatokat támogatják úgy
+
+254
+00:11:41,800 --> 00:11:46,120
+defaultba. Az, hogy mi itt most nem
+
+255
+00:11:43,600 --> 00:11:49,560
+szúrunk be egy embert két különböző
+
+256
+00:11:46,120 --> 00:11:53,320
+városhoz is, az az a mi dolgunk, de be
+
+257
+00:11:49,560 --> 00:11:53,320
+lehetne szúrni elvileg.
+
+258
+00:11:53,680 --> 00:11:57,240
+Jó, itt most itt most mindig itt
+
+259
+00:11:54,959 --> 00:11:59,079
+hozzáendünk valahova. Látható, hogy a a
+
+260
+00:11:57,240 --> 00:12:00,760
+hármas városban ketten is laknak hármas
+
+261
+00:11:59,079 --> 00:12:03,440
+meg a négyes is ott lakik. Az egyesben
+
+262
+00:12:00,760 --> 00:12:05,040
+is ketten laknak.
+
+263
+00:12:03,440 --> 00:12:06,800
+És akkor még van egy olyan, hogy melyik
+
+264
+00:12:05,040 --> 00:12:09,600
+város hol van. Az egyes egyes kedes
+
+265
+00:12:06,800 --> 00:12:12,360
+hármas hármas hármasban van. Már nincsen
+
+266
+00:12:09,600 --> 00:12:15,560
+nagyon nagy különlegesség. Hát most
+
+267
+00:12:12,360 --> 00:12:17,959
+végeztünk egy feltöltéssel, és mi van
+
+268
+00:12:15,560 --> 00:12:19,720
+akkor, hogyha szeretnénk lekérdezni? Bár
+
+269
+00:12:17,959 --> 00:12:20,880
+igazából itt jön az egésznek a lényege,
+
+270
+00:12:19,720 --> 00:12:23,800
+tehát hogy ezt az egészet azért
+
+271
+00:12:20,880 --> 00:12:26,639
+csinálták, hogy az emberi gondolkodáshoz
+
+272
+00:12:23,800 --> 00:12:29,880
+közelálló módon
+
+273
+00:12:26,639 --> 00:12:31,519
+lehessen ezen a gráfon mozogni. Tehát az
+
+274
+00:12:29,880 --> 00:12:35,680
+egyik csomópontba, egy élen keresztül
+
+275
+00:12:31,519 --> 00:12:39,360
+lehessen jutni egy másik csomópontba.
+
+276
+00:12:35,680 --> 00:12:43,160
+Látható az, hogy a a programozó
+
+277
+00:12:39,360 --> 00:12:47,000
+szakmában az SQL-nek az ismerete az az
+
+278
+00:12:43,160 --> 00:12:48,680
+általában eléggé gyatra, és ezért a
+
+279
+00:12:47,000 --> 00:12:51,480
+különböző
+
+280
+00:12:48,680 --> 00:12:54,199
+adatbázis gyártók azok mindenféle módon
+
+281
+00:12:51,480 --> 00:12:57,160
+igyekeznek a
+
+282
+00:12:54,199 --> 00:12:58,440
+az SQR-ket úgy kiegészíteni, hogy hogy
+
+283
+00:12:57,160 --> 00:13:00,120
+közel legyen egy magas szintű
+
+284
+00:12:58,440 --> 00:13:02,360
+programozás a nyelvhez. Na, itt is
+
+285
+00:13:00,120 --> 00:13:04,279
+valami hasonló
+
+286
+00:13:02,360 --> 00:13:06,000
+történt. Itt, bocsánat, itt még van az,
+
+287
+00:13:04,279 --> 00:13:08,360
+hogy ki kinek a barátja, abból is van
+
+288
+00:13:06,000 --> 00:13:11,760
+egy példa.
+
+289
+00:13:08,360 --> 00:13:14,760
+És akkor nézzük meg ezt a ezt a ezt a
+
+290
+00:13:11,760 --> 00:13:18,199
+lelkedésű példát. Tehát itt történik ez
+
+291
+00:13:14,760 --> 00:13:20,639
+bizonyos kiegészítése az SQL nyelvnek.
+
+292
+00:13:18,199 --> 00:13:22,639
+Ugye ez a ez a nyilacskázás, ez ez
+
+293
+00:13:20,639 --> 00:13:26,959
+nagyon ismerős mindenféle magas szintű
+
+294
+00:13:22,639 --> 00:13:29,480
+programozási nyelvből. És ez a minusz
+
+295
+00:13:26,959 --> 00:13:32,079
+után a zárójelben az él neve és a másik
+
+296
+00:13:29,480 --> 00:13:35,440
+nód. Hát ez ez úgy grafikusan tényleg
+
+297
+00:13:32,079 --> 00:13:37,440
+már a az óvodásoknak is érthető módon
+
+298
+00:13:35,440 --> 00:13:40,199
+mutatja meg azt, hogy miről van szó.
+
+299
+00:13:37,440 --> 00:13:43,680
+Tehát elindulunk egy csomópontból,
+
+300
+00:13:40,199 --> 00:13:46,120
+utána van egy nyl, ugye innentől idáig
+
+301
+00:13:43,680 --> 00:13:48,240
+van egy nyíl, és a nyílra rá van írva a
+
+302
+00:13:46,120 --> 00:13:50,440
+gömbő zárójelek között az, hogy milyen
+
+303
+00:13:48,240 --> 00:13:53,279
+élen keresztül jutunk el valahova. A
+
+304
+00:13:50,440 --> 00:13:56,720
+P1-ből, a friend of élen keresztől P2-be
+
+305
+00:13:53,279 --> 00:13:56,720
+jutunk el.
+
+306
+00:13:57,880 --> 00:14:02,600
+Itt felsorolom a azokat a táblákat,
+
+307
+00:14:00,800 --> 00:14:04,079
+amelyeket egyáltalán használni akarok.
+
+308
+00:14:02,600 --> 00:14:05,759
+Ugye most itt ezt három akarom
+
+309
+00:14:04,079 --> 00:14:08,560
+használni.
+
+310
+00:14:05,759 --> 00:14:11,279
+Mi a ez a personl a personba megy ez az
+
+311
+00:14:08,560 --> 00:14:14,079
+él, ezért ugye ezt két könzű aliasszal
+
+312
+00:14:11,279 --> 00:14:17,000
+is felveszem. És akkor a a meccs kulcszó
+
+313
+00:14:14,079 --> 00:14:19,639
+után gömbőz darek között van egy
+
+314
+00:14:17,000 --> 00:14:22,399
+úgynevezett gráfkeresési minta. Tehát ez
+
+315
+00:14:19,639 --> 00:14:24,959
+egy ilyen pattern, egy ilyen minta, ami
+
+316
+00:14:22,399 --> 00:14:27,480
+eléggé intuitív, igyekszik lenni. Tehát
+
+317
+00:14:24,959 --> 00:14:32,560
+most a minta az az, hogy azokat
+
+318
+00:14:27,480 --> 00:14:36,440
+keressük, ö azokat a ugye itt a P2-ből
+
+319
+00:14:32,560 --> 00:14:41,000
+vesszük majd ki a name mezőt. Szóval
+
+320
+00:14:36,440 --> 00:14:43,040
+azokat a person recordokat, amelyek egy
+
+321
+00:14:41,000 --> 00:14:46,000
+ilyen nyílnak a végén vannak, tehát akik
+
+322
+00:14:43,040 --> 00:14:48,240
+valakinek a barátai, ugye bárkinek a
+
+323
+00:14:46,000 --> 00:14:52,519
+barátai, csak még itt van egy plusz most
+
+324
+00:14:48,240 --> 00:14:54,800
+már hagyományos SQL-esvel feltétel, hogy
+
+325
+00:14:52,519 --> 00:14:56,480
+a P1 name John, tehát a John-nak az
+
+326
+00:14:54,800 --> 00:15:00,040
+összes barátját szeretnénk látni. Ez
+
+327
+00:14:56,480 --> 00:15:00,040
+gyakorlatilag azt mutatja,
+
+328
+00:15:02,320 --> 00:15:09,120
+az a Mary meg a meg a July, mert ugye a
+
+329
+00:15:05,600 --> 00:15:11,920
+a John az
+
+330
+00:15:09,120 --> 00:15:15,519
+ki is volt? Pillanat,
+
+331
+00:15:11,920 --> 00:15:19,279
+egyes volt a John. Úgyhogy
+
+332
+00:15:15,519 --> 00:15:19,279
+aztongja, hogy a
+
+333
+00:15:19,639 --> 00:15:24,680
+a az egyesnek a barátja a kettes és az
+
+334
+00:15:22,480 --> 00:15:27,680
+ötös, ugye? Tehát a Mary meg a meg a
+
+335
+00:15:24,680 --> 00:15:30,040
+Julie, a kettes a Mary, ötös meg a
+
+336
+00:15:27,680 --> 00:15:32,920
+Julie. Jó, nézzük egy kicsit
+
+337
+00:15:30,040 --> 00:15:34,399
+bonyolultabb mintázatot.
+
+338
+00:15:32,920 --> 00:15:36,759
+Hát bocsánat, ez még nem bonyolultabb,
+
+339
+00:15:34,399 --> 00:15:39,160
+sőt ez még egyszerűbb is. Milyen
+
+340
+00:15:36,759 --> 00:15:41,920
+éttermeket szeret Ját? Itt ugye a person
+
+341
+00:15:39,160 --> 00:15:43,920
+likes és it nincs szükségünk ugyan a
+
+342
+00:15:41,920 --> 00:15:46,120
+tábára kétszer, hiszen a person
+
+343
+00:15:43,920 --> 00:15:48,440
+csomópontból jutunk el. Kicsit
+
+344
+00:15:46,120 --> 00:15:51,440
+visszahozom ezt. Person csomópontból
+
+345
+00:15:48,440 --> 00:15:54,639
+jutunk a restaurant csomópontba a likes
+
+346
+00:15:51,440 --> 00:15:54,639
+élen keresztül.
+
+347
+00:15:56,000 --> 00:15:59,000
+Jó.
+
+348
+00:16:00,319 --> 00:16:04,880
+Na, egy kicsit bonyolottabb az, hogy
+
+349
+00:16:02,000 --> 00:16:06,800
+milyen éttermeket szeretnek a John-nak a
+
+350
+00:16:04,880 --> 00:16:08,000
+barátai.
+
+351
+00:16:06,800 --> 00:16:09,839
+Hát, hogy először is meg kell tudnunk,
+
+352
+00:16:08,000 --> 00:16:12,600
+hogy kik a Johnak a barátai, és akkor
+
+353
+00:16:09,839 --> 00:16:15,959
+onnan megyünk tovább ezen az élen, ezen
+
+354
+00:16:12,600 --> 00:16:18,440
+a Likes élen az éttermekbe. Tehát ugye
+
+355
+00:16:15,959 --> 00:16:22,120
+kezdődik azzal, ami ami eddig volt. Ugye
+
+356
+00:16:18,440 --> 00:16:25,480
+ezt már láttuk az előbb. Ez a personal a
+
+357
+00:16:22,120 --> 00:16:28,040
+P1, P2 volt. Personal friend of P2.
+
+358
+00:16:25,480 --> 00:16:30,519
+Tehát ezek a Johnak a barátai akkor,
+
+359
+00:16:28,040 --> 00:16:32,800
+hogyha personal némas John, ugye? De
+
+360
+00:16:30,519 --> 00:16:34,160
+most megy tovább. Tehát itt ugye egy
+
+361
+00:16:32,800 --> 00:16:35,560
+csomópontból a másik csomópont
+
+362
+00:16:34,160 --> 00:16:39,319
+eljutottunk, és aztán megint indul egy
+
+363
+00:16:35,560 --> 00:16:41,240
+nyír. Csak erre a L van ráírva.
+
+364
+00:16:39,319 --> 00:16:48,079
+Tehát, hogy azokat kapjuk vissza, azokat
+
+365
+00:16:41,240 --> 00:16:48,079
+a mind azokat a csomópontokat, amelyek
+
+366
+00:16:49,120 --> 00:16:54,880
+úgy állnak elő, hogy ezekből a person 2
+
+367
+00:16:51,600 --> 00:16:59,000
+rekordokból követjük ezeket a likes
+
+368
+00:16:54,880 --> 00:16:59,000
+éleket a restaurant táblában.
+
+369
+00:16:59,399 --> 00:17:02,519
+És
+
+370
+00:17:00,920 --> 00:17:04,720
+hát tulajdonképpen minden ilyen minden
+
+371
+00:17:02,519 --> 00:17:08,319
+ilyen meccsnek az eredménye az egy az
+
+372
+00:17:04,720 --> 00:17:12,439
+egy algráf. Most ilyen esetben
+
+373
+00:17:08,319 --> 00:17:14,240
+az ételmeknek a nevei lesznek.
+
+374
+00:17:12,439 --> 00:17:16,240
+Ez az egyes és a kettes. Lehet szépen
+
+375
+00:17:14,240 --> 00:17:18,679
+ellenőrizgetni egyébként, ugye, hogyha
+
+376
+00:17:16,240 --> 00:17:20,240
+hogyha megnézzük a az adatkészletünket,
+
+377
+00:17:18,679 --> 00:17:22,520
+hogy tényleg az. Hát tervileg annak kell
+
+378
+00:17:20,240 --> 00:17:25,319
+lennie.
+
+379
+00:17:22,520 --> 00:17:28,919
+Na most van egy kicsit érdekesebb dolog,
+
+380
+00:17:25,319 --> 00:17:30,520
+hogy kik azok, akik kezdenek legalább
+
+381
+00:17:28,919 --> 00:17:32,679
+egy olyan éttermet, ami ugyanabban a
+
+382
+00:17:30,520 --> 00:17:37,200
+városban van, mint amiben ők laknak. Itt
+
+383
+00:17:32,679 --> 00:17:39,720
+az arra példa, hogy hogy ezeket a a
+
+384
+00:17:37,200 --> 00:17:42,160
+mintákat, ezeket a gráfkeresési mintákat
+
+385
+00:17:39,720 --> 00:17:44,360
+lehet kombinálni logikai operátorokkal.
+
+386
+00:17:42,160 --> 00:17:46,640
+Tehát most
+
+387
+00:17:44,360 --> 00:17:51,120
+és operátorral kombináljuk őket, mert
+
+388
+00:17:46,640 --> 00:17:51,120
+ugye ugyanabban a városban keresünk.
+
+389
+00:17:52,120 --> 00:17:56,960
+Tehát van egyszer egy olyan halmaz,
+
+390
+00:17:57,039 --> 00:18:03,200
+ami azt tartalmazza, hogy azokat a azt
+
+391
+00:18:01,080 --> 00:18:05,320
+az algfot, hogy úgy mondjam, azok az
+
+392
+00:18:03,200 --> 00:18:08,039
+emberek vannak
+
+393
+00:18:05,320 --> 00:18:11,000
+akik egy bizonyos város, bármelyik
+
+394
+00:18:08,039 --> 00:18:13,960
+városban lévő éttermet kedvelnek. És
+
+395
+00:18:11,000 --> 00:18:18,880
+akkor ezt kombináljuk azzal, tehát hogy
+
+396
+00:18:13,960 --> 00:18:21,520
+ezt a k ezt éeljük azzal, hogy ugyanazok
+
+397
+00:18:18,880 --> 00:18:23,480
+a rekordok azok lakjanak, tehát a
+
+398
+00:18:21,520 --> 00:18:26,960
+lezzing kapcsolatban is legyenek
+
+399
+00:18:23,480 --> 00:18:26,960
+ugyanazzal a várossal.
+
+400
+00:18:27,760 --> 00:18:33,520
+Nyilván úgy van megcsinálva ez a kis
+
+401
+00:18:29,600 --> 00:18:35,960
+demó, hogy ez ne legyen egy üres halmaz.
+
+402
+00:18:33,520 --> 00:18:40,120
+És látható, hogy egészen egészen sok
+
+403
+00:18:35,960 --> 00:18:42,640
+vannak egyébként ugye hát nyilván
+
+404
+00:18:40,120 --> 00:18:45,559
+logikus is, hogy mindenki abba a városba
+
+405
+00:18:42,640 --> 00:18:47,840
+szeret ebédelni, ahol lakik. Na most ez
+
+406
+00:18:45,559 --> 00:18:51,440
+már egy kicsit bonyolultabb ez a ez a ez
+
+407
+00:18:47,840 --> 00:18:51,440
+az utolsó példa,
+
+408
+00:18:51,559 --> 00:18:55,280
+hogy
+
+409
+00:18:53,600 --> 00:18:57,520
+hogy ugye itt volt az, hogy kik azok,
+
+410
+00:18:55,280 --> 00:18:59,600
+akik ugyanabban a városban szeretnek rá
+
+411
+00:18:57,520 --> 00:19:01,840
+értelmet laknak. És akkor most még úgy
+
+412
+00:18:59,600 --> 00:19:05,240
+komun tovább, hogy kik azok, akiknek van
+
+413
+00:19:01,840 --> 00:19:06,840
+legalább egy olyan barátjuk, aki
+
+414
+00:19:05,240 --> 00:19:08,559
+ugyanabb a városban lakó éttermet
+
+415
+00:19:06,840 --> 00:19:11,799
+kérdel, mint amiben lakik. Ez már ugye
+
+416
+00:19:08,559 --> 00:19:14,200
+eléggé bonyolult, ugye nak hangzik úgy
+
+417
+00:19:11,799 --> 00:19:17,679
+elsőre azért tehát ki ezt a gráfos
+
+418
+00:19:14,200 --> 00:19:20,280
+dolgot, hogy ezt így kvázi olvassa ott
+
+419
+00:19:17,679 --> 00:19:22,200
+volna egyik feltétel
+
+420
+00:19:20,280 --> 00:19:25,919
+ugye, tehát hogy a P1 legyen barátja a
+
+421
+00:19:22,200 --> 00:19:27,559
+P2-nek és akkor a P2
+
+422
+00:19:25,919 --> 00:19:30,360
+kedveljen egy éttermet valamelyik
+
+423
+00:19:27,559 --> 00:19:31,880
+városban. És akkor P2 lakn abba a
+
+424
+00:19:30,360 --> 00:19:35,559
+városba. Hát szépen meg lehetett ezt
+
+425
+00:19:31,880 --> 00:19:37,840
+fogalmazni, ugye? És nekünk a P1 kell,
+
+426
+00:19:35,559 --> 00:19:41,400
+tehát a ez ez az eredeti, akinek van
+
+427
+00:19:37,840 --> 00:19:41,400
+legalább egy barátja.
+
+428
+00:19:41,960 --> 00:19:47,760
+És akkor látjuk, hogy hogy igazából a az
+
+429
+00:19:45,559 --> 00:19:49,720
+ötből négy ilyen, akinek van valami van
+
+430
+00:19:47,760 --> 00:19:52,240
+valamilyen barátja. Na most
+
+431
+00:19:49,720 --> 00:19:55,520
+tulajdonképpen a
+
+432
+00:19:52,240 --> 00:19:57,720
+ez tehát a a gráfon való keresésminták
+
+433
+00:19:55,520 --> 00:20:00,880
+segítségével, ilyen gráfminták
+
+434
+00:19:57,720 --> 00:20:03,400
+segítségével, de vannak még egyéb
+
+435
+00:20:00,880 --> 00:20:07,200
+szolgáltatások is, amiket például az SQS
+
+436
+00:20:03,400 --> 00:20:07,200
+szerver gráfos kiegészítése
+
+437
+00:20:07,400 --> 00:20:11,600
+támogat,
+
+438
+00:20:09,200 --> 00:20:14,000
+amik ennek ennél több értelme van
+
+439
+00:20:11,600 --> 00:20:16,159
+szerintem, mert azért majd látni fogjuk
+
+440
+00:20:14,000 --> 00:20:18,480
+mindjárt csak úgy viccből elkészítettem
+
+441
+00:20:16,159 --> 00:20:21,000
+ugyanezt reakciós modellben is. Szóval
+
+442
+00:20:18,480 --> 00:20:22,679
+látni fogjuk, hogy hogy ettől még nem
+
+443
+00:20:21,000 --> 00:20:25,559
+kellett volna ezt egy új technológiának
+
+444
+00:20:22,679 --> 00:20:28,280
+hívni, de például, hogyha itt meg
+
+445
+00:20:25,559 --> 00:20:30,320
+akarnánk találni egy gráfon belül a
+
+446
+00:20:28,280 --> 00:20:32,799
+legrövidebb utat, na az már nem volan
+
+447
+00:20:30,320 --> 00:20:35,919
+egyszerű egy SQL elkérdezésre, ugye?
+
+448
+00:20:32,799 --> 00:20:37,720
+Tehát ez már bizony
+
+449
+00:20:35,919 --> 00:20:39,480
+egy nagyon hasznos függvény lehet egy
+
+450
+00:20:37,720 --> 00:20:42,720
+ilyen esetben, mondjuk egy ismeretségi
+
+451
+00:20:39,480 --> 00:20:45,559
+hálóban, ugye
+
+452
+00:20:42,720 --> 00:20:49,039
+mekkora az ismertségi háló átmérője,
+
+453
+00:20:45,559 --> 00:20:50,559
+ugye? Tehát tehát mi az a
+
+454
+00:20:49,039 --> 00:20:52,679
+leghosszabb
+
+455
+00:20:50,559 --> 00:20:55,600
+ösvény, ami összeköt két tetszögesen
+
+456
+00:20:52,679 --> 00:20:57,760
+kiválasztott embert? Hát ugye ezt bizony
+
+457
+00:20:55,600 --> 00:21:01,799
+ebbe kicsit beleizzadnánk, mire ezt mire
+
+458
+00:20:57,760 --> 00:21:03,039
+ezt leprogramoznánk egy SKL-vel. Szóval
+
+459
+00:21:01,799 --> 00:21:06,919
+csak az a baj, hogy ezt most nem tudom
+
+460
+00:21:03,039 --> 00:21:09,720
+demonstrálni, mert az a a az a 17-es
+
+461
+00:21:06,919 --> 00:21:12,120
+megossításban még nincsen benne. De aki
+
+462
+00:21:09,720 --> 00:21:15,000
+gondolja meg majd lehet, hogy idés
+
+463
+00:21:12,120 --> 00:21:17,080
+megpróbálom feltani 2019-es szervert,
+
+464
+00:21:15,000 --> 00:21:19,120
+akkor később esetleg ezt ezt ezt ezt ki
+
+465
+00:21:17,080 --> 00:21:21,360
+lehet próbálni. Na de hogy értsük, hogy
+
+466
+00:21:19,120 --> 00:21:23,559
+mit csinálunk, akkor nézzük meg, hogy
+
+467
+00:21:21,360 --> 00:21:26,360
+hogy nézne ki. Ugyanez a problémakör,
+
+468
+00:21:23,559 --> 00:21:29,080
+tehát ez
+
+469
+00:21:26,360 --> 00:21:31,600
+a gráftechnológia nélkül. Hát ugye mit
+
+470
+00:21:29,080 --> 00:21:33,440
+mondanánk? Az, hogy egy város vagy egy
+
+471
+00:21:31,600 --> 00:21:35,360
+étterem csak egy városban van. Tehát ez
+
+472
+00:21:33,440 --> 00:21:36,960
+egy egy sok kapcsolat, amit meg tudunk
+
+473
+00:21:35,360 --> 00:21:39,600
+oldani itt a restoran egy külső
+
+474
+00:21:36,960 --> 00:21:42,440
+kulccsal.
+
+475
+00:21:39,600 --> 00:21:45,320
+Egy ember csak egy városban lakik, tehát
+
+476
+00:21:42,440 --> 00:21:48,360
+ezt a ezt a liv ezt meg tudjuk oldani
+
+477
+00:21:45,320 --> 00:21:52,360
+egy külső kulccsal person táblában. A
+
+478
+00:21:48,360 --> 00:21:52,360
+likes az egy sok-sok kapcsolat.
+
+479
+00:21:52,400 --> 00:21:59,520
+Meg ez a ez a friends is egy is egy
+
+480
+00:21:56,600 --> 00:22:02,159
+sok-sok kapcsolat. Hát ezekhez
+
+481
+00:21:59,520 --> 00:22:05,039
+kapcsolótábára lesz szükségünk. És akkor
+
+482
+00:22:02,159 --> 00:22:08,880
+akkor nézzük meg, hogy hogy néz ez ki.
+
+483
+00:22:05,039 --> 00:22:11,559
+Most ilyen R betűvel jelöltem azt, hogy
+
+484
+00:22:08,880 --> 00:22:16,400
+hogy
+
+485
+00:22:11,559 --> 00:22:17,799
+ez most ez most a reációs megvalósítás
+
+486
+00:22:16,400 --> 00:22:19,880
+és
+
+487
+00:22:17,799 --> 00:22:23,320
+és ezzel az öt táblával tulajdonképpen
+
+488
+00:22:19,880 --> 00:22:25,240
+meg tudjuk oldani a dolgokat. Hát
+
+489
+00:22:23,320 --> 00:22:28,760
+az a különbséggel, hogy itt viszont mi
+
+490
+00:22:25,240 --> 00:22:34,760
+már megmondjuk azt, hogy hogy ez a likes
+
+491
+00:22:28,760 --> 00:22:37,960
+ez konkrétan a az embernek a
+
+492
+00:22:34,760 --> 00:22:41,880
+a tehát a personnek az étterem irányába
+
+493
+00:22:37,960 --> 00:22:44,039
+való szeretetét jelenti, és nem a
+
+494
+00:22:41,880 --> 00:22:46,960
+personnek a city irányába való
+
+495
+00:22:44,039 --> 00:22:48,760
+szeretetét. Ugye az eddigi példánkban is
+
+496
+00:22:46,960 --> 00:22:51,400
+ez a likes tábla. Egy pillanat, mindjárt
+
+497
+00:22:48,760 --> 00:22:54,720
+följebb megyek.
+
+498
+00:22:51,400 --> 00:22:56,679
+Ez a Lives Zin, a Likes, ez mindig ember
+
+499
+00:22:54,720 --> 00:22:58,840
+és étterem között volt, ugye? Hát
+
+500
+00:22:56,679 --> 00:23:00,799
+elvileg ugye a sémánk szerint lehetne
+
+501
+00:22:58,840 --> 00:23:03,039
+olyan is, hogy hogy person és City
+
+502
+00:23:00,799 --> 00:23:04,640
+között, de olyanra itt nem volt példa,
+
+503
+00:23:03,039 --> 00:23:06,960
+és ezért ebben a reakciós modellben
+
+504
+00:23:04,640 --> 00:23:10,760
+sincsen példa,
+
+505
+00:23:06,960 --> 00:23:13,640
+hanem mindössze ezzel az öt táblával
+
+506
+00:23:10,760 --> 00:23:15,760
+megoldjuk a dolgot. Tehát itt látható
+
+507
+00:23:13,640 --> 00:23:17,799
+van három
+
+508
+00:23:15,760 --> 00:23:22,039
+hát entitásáblánk,
+
+509
+00:23:17,799 --> 00:23:22,039
+tehát az emberek, városok, éttermek,
+
+510
+00:23:22,679 --> 00:23:29,799
+amelyekben már meg is oldottunk
+
+511
+00:23:26,080 --> 00:23:32,520
+két egy sok kapcsolatot, ugye azt, hogy
+
+512
+00:23:29,799 --> 00:23:34,760
+hogy ki hol lakik, meg hogy az étterem
+
+513
+00:23:32,520 --> 00:23:36,840
+hol van. És van két kapcsolótáblánk a
+
+514
+00:23:34,760 --> 00:23:38,559
+sok-sok kapcsolatok modellezésére, és
+
+515
+00:23:36,840 --> 00:23:42,039
+ott is expit megmondjuk, hogy ez mire
+
+516
+00:23:38,559 --> 00:23:45,039
+vonatkozik. Ugye erre vannak ezek a
+
+517
+00:23:42,039 --> 00:23:48,159
+references constraintek.
+
+518
+00:23:45,039 --> 00:23:51,840
+Ugye abban az esetben, hogyha ennek a
+
+519
+00:23:48,159 --> 00:23:55,279
+mezőnek ugyanaz a neve, mint a a person
+
+520
+00:23:51,840 --> 00:23:58,360
+táblában hivatkozott mező
+
+521
+00:23:55,279 --> 00:24:01,279
+neve, akkor akkor nem kell
+
+522
+00:23:58,360 --> 00:24:03,799
+kiírnunk a mezőnevét. És tulajdonképpen
+
+523
+00:24:01,279 --> 00:24:05,679
+kész. Itt látható, hogy a kapcsolót
+
+524
+00:24:03,799 --> 00:24:09,440
+táblákban
+
+525
+00:24:05,679 --> 00:24:11,520
+több mezős kulcsokat használunk.
+
+526
+00:24:09,440 --> 00:24:13,000
+Természetesen
+
+527
+00:24:11,520 --> 00:24:17,200
+ez azt jelenti, hogy egyből aki csak
+
+528
+00:24:13,000 --> 00:24:17,200
+egyszer lájkolhat egy éttermet
+
+529
+00:24:17,720 --> 00:24:21,919
+és csak egyszer lett barátja valakinek.
+
+530
+00:24:22,799 --> 00:24:27,200
+Beírjuk ugyanazokat az értékeket, mint
+
+531
+00:24:25,320 --> 00:24:29,240
+az előbb.
+
+532
+00:24:27,200 --> 00:24:31,720
+Hát mit mondjak? Kicsit tömrebb az SQL
+
+533
+00:24:29,240 --> 00:24:34,200
+kód. Nagyon úgy tűnik. És akkor nézzük
+
+534
+00:24:31,720 --> 00:24:36,919
+meg ugyanazt a legkérdezést, hogy Kik
+
+535
+00:24:34,200 --> 00:24:39,279
+John-nak a barátai. Egy össze kell
+
+536
+00:24:36,919 --> 00:24:41,960
+fűznünk a táblákat. Ugye sok-sok
+
+537
+00:24:39,279 --> 00:24:44,000
+kapcsolat, mivel neveket szeretnénk,
+
+538
+00:24:41,960 --> 00:24:46,600
+ezért szükségünk van a P1 táblára is,
+
+539
+00:24:44,000 --> 00:24:48,159
+meg a P2 tábára is. Bocsánat, a person
+
+540
+00:24:46,600 --> 00:24:52,600
+tábára kétszer van szükségünk, ugyanúgy,
+
+541
+00:24:48,159 --> 00:24:54,840
+mint az előbb. P1, P2 néven.
+
+542
+00:24:52,600 --> 00:24:56,760
+Tehát amit a nyilacskákkal értünk el itt
+
+543
+00:24:54,840 --> 00:24:59,600
+ezeknél a lekérdezéseknél
+
+544
+00:24:56,760 --> 00:25:02,640
+itt volt John barátai.
+
+545
+00:24:59,600 --> 00:25:05,640
+Azt most joinnal érjük el. Inner
+
+546
+00:25:02,640 --> 00:25:05,640
+joinnal.
+
+547
+00:25:06,960 --> 00:25:12,120
+Itt hát tényleg egy kicsit többet
+
+548
+00:25:09,080 --> 00:25:15,159
+kellett írni esetleg.
+
+549
+00:25:12,120 --> 00:25:17,760
+viszont ugyanez van a az ételmeknél
+
+550
+00:25:15,159 --> 00:25:20,320
+satöbbi satöbbi. De hogyha megnézzük,
+
+551
+00:25:17,760 --> 00:25:24,200
+hogy hogy például amikor már sok
+
+552
+00:25:20,320 --> 00:25:24,200
+csomópont megyünk keresztül,
+
+553
+00:25:26,640 --> 00:25:32,159
+na itt van például, hogy hogy akinek van
+
+554
+00:25:29,960 --> 00:25:34,000
+legalább egy olyan barátja, aki ugyan
+
+555
+00:25:32,159 --> 00:25:35,760
+szereti egy vagy kezd egy olyan
+
+556
+00:25:34,000 --> 00:25:39,120
+értelmet, ami ugyanárosban, ahol ő
+
+557
+00:25:35,760 --> 00:25:42,000
+lakik, hát akkor ugye már eléggé sok
+
+558
+00:25:39,120 --> 00:25:44,640
+join van. 1 2
+
+559
+00:25:42,000 --> 00:25:47,840
+3 n join ugye hiszen végig kell mennünk
+
+560
+00:25:44,640 --> 00:25:51,640
+ezen a ugye azért a az azért öt tábán
+
+561
+00:25:47,840 --> 00:25:53,679
+mert az egyik az kétszer szerepel
+
+562
+00:25:51,640 --> 00:25:57,679
+viszont azért eléggé követhető szerintem
+
+563
+00:25:53,679 --> 00:26:00,559
+a ez a logika iss
+
+564
+00:25:57,679 --> 00:26:03,159
+az egyik join az egyik lökhöly feltételt
+
+565
+00:26:00,559 --> 00:26:06,159
+azt itt a verdenen valósítjuk meg de
+
+566
+00:26:03,159 --> 00:26:09,120
+nyugodtan betehettük volna ezt mondjuk
+
+567
+00:26:06,159 --> 00:26:13,960
+valamelyik join feltétel részébe is ez
+
+568
+00:26:09,120 --> 00:26:13,960
+már itt tényleg rajtunk múlik.
+
+569
+00:26:14,159 --> 00:26:17,679
+Úgyhogy
+
+570
+00:26:15,640 --> 00:26:19,200
+hát, hogy hogy kinek melyik tetszik
+
+571
+00:26:17,679 --> 00:26:20,360
+jobban,
+
+572
+00:26:19,200 --> 00:26:23,840
+valószínűleg attól függ, hogy ki mit
+
+573
+00:26:20,360 --> 00:26:27,960
+szokott meg. Mindenesetre nem valós nem
+
+574
+00:26:23,840 --> 00:26:30,520
+valósították volna meg ezeket a
+
+575
+00:26:27,960 --> 00:26:32,360
+gráf adatbázis kiegészítéseket akkor,
+
+576
+00:26:30,520 --> 00:26:35,720
+hogyha nem lenne rá igény. Az egészen
+
+577
+00:26:32,360 --> 00:26:40,279
+biztos. Most egy SQS szerveres
+
+578
+00:26:35,720 --> 00:26:42,720
+adatbázisban abban csak egy gráf lehet.
+
+579
+00:26:40,279 --> 00:26:45,760
+Ez azt jelenti, hogy lehet akár gráftbla
+
+580
+00:26:42,720 --> 00:26:49,880
+meg meg
+
+581
+00:26:45,760 --> 00:26:52,960
+meg meg tábla, de az logikailag
+
+582
+00:26:49,880 --> 00:26:56,840
+egyetlen adatbázist alkot, vagy egy
+
+583
+00:26:52,960 --> 00:26:59,440
+egyetlen gráfot alkot.
+
+584
+00:26:56,840 --> 00:27:01,919
+Jó.
+
+585
+00:26:59,440 --> 00:27:06,440
+Akkor szerintem a
+
+586
+00:27:01,919 --> 00:27:12,200
+gráf adatbázisok ennyi elég volt. És és
+
+587
+00:27:06,440 --> 00:27:12,200
+van is itt egy kis önálló feladat, amit
+
+588
+00:27:13,600 --> 00:27:18,520
+Ja, bocsánat, ha már itt vagyunk, akkor
+
+589
+00:27:15,520 --> 00:27:20,640
+akkor akkor megmutatnám
+
+590
+00:27:18,520 --> 00:27:23,360
+a azt a sémát, amit amit most
+
+591
+00:27:20,640 --> 00:27:28,080
+felépítettünk reációsan. Tehát végül is
+
+592
+00:27:23,360 --> 00:27:28,080
+mi ezt a sémát építettük fel.
+
+593
+00:27:29,000 --> 00:27:33,240
+Tehát, hogy itt volt ez a person tábla,
+
+594
+00:27:31,399 --> 00:27:34,760
+saját magával volt egy sok-sok
+
+595
+00:27:33,240 --> 00:27:36,480
+kapcsolata,
+
+596
+00:27:34,760 --> 00:27:39,200
+és aztán itt volt, ez volt még egy még
+
+597
+00:27:36,480 --> 00:27:42,480
+egy sok-sok kapcsolat.
+
+598
+00:27:39,200 --> 00:27:45,120
+Ez ez lett a az évekből. És hát ugye
+
+599
+00:27:42,480 --> 00:27:47,320
+nyilván azt lehet tudni, hogy a hogy a
+
+600
+00:27:45,120 --> 00:27:50,679
+háttérben
+
+601
+00:27:47,320 --> 00:27:52,399
+a a gráfos táblákat is ugye reakciós
+
+602
+00:27:50,679 --> 00:27:54,320
+modell szerint valósítja meg az SQL
+
+603
+00:27:52,399 --> 00:27:55,919
+szerver. Na mindegy. Szóval van egy
+
+604
+00:27:54,320 --> 00:27:58,480
+olyan önálló feladat itt, hogyha ha
+
+605
+00:27:55,919 --> 00:28:00,919
+jegyzetbe valaki belenéz. Hogy most
+
+606
+00:27:58,480 --> 00:28:02,880
+prójuk megcsinálni.
+
+607
+00:28:00,919 --> 00:28:06,919
+Van egy sok-sok kapcsolata a Northind
+
+608
+00:28:02,880 --> 00:28:08,919
+adatbázisban is. A rendelési tehát a a
+
+609
+00:28:06,919 --> 00:28:11,399
+termékek és a rendelések kapcsolata,
+
+610
+00:28:08,919 --> 00:28:13,760
+hiszen minden rendelési tétel az egy
+
+611
+00:28:11,399 --> 00:28:16,360
+kapcsolatot valósít meg egy rendelés és
+
+612
+00:28:13,760 --> 00:28:18,640
+egy termék között. Próbáljuk megcsinálni
+
+613
+00:28:16,360 --> 00:28:20,960
+ezt a három táblát ilyen ilyen gráfos
+
+614
+00:28:18,640 --> 00:28:23,200
+adatbázis formájában.
+
+615
+00:28:20,960 --> 00:28:23,200
+És
+
+616
+00:28:23,600 --> 00:28:28,240
+és próbáljuk meg
+
+617
+00:28:25,960 --> 00:28:30,039
+ezt a gráfos adatbázist
+
+618
+00:28:28,240 --> 00:28:32,200
+feltölteni
+
+619
+00:28:30,039 --> 00:28:34,159
+a meglévő három távolla alapján, és
+
+620
+00:28:32,200 --> 00:28:36,480
+akkor rögtön érezni fogjuk a kettő
+
+621
+00:28:34,159 --> 00:28:37,960
+közötti különbséget.
+
+622
+00:28:36,480 --> 00:28:39,440
+Meg egyébként azt is meg kell próbálni,
+
+623
+00:28:37,960 --> 00:28:43,480
+hogy egy olyan megkérdezés, amit
+
+624
+00:28:39,440 --> 00:28:46,399
+szoktunk itt írni például, hogy
+
+625
+00:28:43,480 --> 00:28:48,120
+melyik
+
+626
+00:28:46,399 --> 00:28:50,120
+terméknek, vagy bocsánat, melyik
+
+627
+00:28:48,120 --> 00:28:53,640
+rendelésnek mennyi volt az összértéke
+
+628
+00:28:50,120 --> 00:28:57,480
+meg ilyesmiket, hogy ez hogy nézne ki
+
+629
+00:28:53,640 --> 00:28:59,960
+ilyen gráfos táblák használatával.
+
+630
+00:28:57,480 --> 00:29:03,440
+Jó, tehát ennyit akartam mondani a a
+
+631
+00:28:59,960 --> 00:29:03,440
+gráfos adatbázisokról.
+
+632
+00:29:04,679 --> 00:29:06,840
+K.
+

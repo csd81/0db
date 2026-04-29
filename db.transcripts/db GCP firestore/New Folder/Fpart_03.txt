@@ -1,0 +1,265 @@
+ hogyan működik ez az egész?
+Először is én azt mondom ilyenkor, hogy
+mindig az adab oldalról induljunk el,
+hogyha letöltötték a háttérokat, akkor
+ott látni fogják, hogy van egy egy
+script, amelyik
+ha polsgessel lefuttatják, akkor
+létrehozza
+azokat a táblákat, amiket az SQS
+szerveren használtuk a PSG táblákat.
+Mutatom, hogy ez hogy néz ki
+itt a PG admin. No, tehát ahhoz, hogy
+valaki ezt ezt itt tudja csinálni, ö
+ahhoz telepítenie kell ög
+szervert magának és és egy PG admin
+programot.
+egy közvetett megjegyzés, ugye, hogy
+most mi a a felhőre fogunk fejleszteni,
+de ezt nem úgy szokták csinálni, hogy
+én a felhő konzolra írogatom mindig a
+programot és út próbál dibagolni, hanem
+úgy, hogy hogy most most lokál hospon
+fejlesztünk, és amikor kész az
+alkalmazásunk és működik, akkor
+áttesszük a felelhő.
+Lehet másképp is csinálni, de ez ez
+nekünk most az egyszerű. Szóval lényeg
+az, hogy nekem van a local hoston egy
+egy Postg szerverem.
+Akinek esetleg ez nem sikerül, szerintem
+sikerülni fog ennánk a telepítésre, mert
+ötször meg kell n az oké gombot, aztán
+kész van.
+És akkor mindenképp lesz neki egy
+Postgress nevű adatbázisra és egy
+Postgress nevű userre. Tehát Postgess
+adatbázis, Postgess user. Itt van egy a
+toolsnál a query tool. Így indul ez el
+ez a kis konzol. Nézzük, hogy mit csinál
+ez a
+a
+mindenit! Há szóval mit csinál ez a
+script? Itt itt megint
+egy közvetett megjegyzés, hogy ugye ezt
+én át migráltam, és ez tengely migrálás
+volt SQS szerverről Postgeszre, ami azt
+jelenti, hogy időnként adatípusokat
+kellett módosítanom,
+időnként
+a szinttaxison kellett módosítanom,
+satöbbi, satöbbi. Erre vannak eszközök.
+Ebből ebből cégek jól megélnek. Tehát az
+egyik reációs technológiából, egy másik
+reációs technológiában, mondjuk
+Mysql-ről, SQL szerverre, arra lehet
+migrálni, akár tulajdonképpen
+automatizáltan is, mert mind a kettő
+relációs.
+Csak ismerni kell a technológiákat, és
+vannak bizony olyan olyan szoftverek,
+amik jó pénzért ezt megcsinálják. Hát
+nekem nem volt ilyen szoftverem, ezt én
+kézzel csináltam.
+Van egy products táblánk, abba beszúrok
+öt terméket insert utasításokkal.
+Aztán van egy customers táblánk, abba
+beszúrok három vásárlót. Művessz ennyi
+is egyébként, hogy miért ilyen kevés?
+Azért kérem szépen, mert a a felhőben
+nagyon keményen számláznak annak
+függvényében, hogy az ember mekkora
+adatforgalmat forgat. Tehát erre erre
+erre erre figyelni kell. Na és akkor itt
+van a három vásárlóm. És és van egy
+orders táblám, és itt felírná a
+figyelmet arra, hogy itt az identityt le
+kellett cserélnem egy egy sequencere,
+ami végülis hát semmi különös. És
+egyébként az SQS szerver is támogatja
+már a sequenceeket jó idő óta.
+Itt van egy egy ilyen default kitöltésű
+mezőm is.
+És kezdebben üres a rendeléstáblánk.
+Ugye ez két részből áll. Van egy order
+details meg egy meg egy meg egy orders
+tábla. És az egyik hivatkozik a másikra.
+Tehát itt van a a hivatkozási
+integritás. Ugye nem lehet olyan tétela,
+ami nem tudjuk, hogy hol mutat.
+a produkció nem lehet olyan tér, nem
+tudjuk, hogy melyik termékezették meg
+satöbbi, satöbbi. Na és ezen túlmenően
+egy reációs technológia még lehetővé
+teszi azt is, hogy logikát tároljunk a
+szerverre. Bármelyiket is mondom ezek
+közül. Mysq SQS szerver satöbbi,
+satöbbi. Opostgess. Itt látható egy
+olyan függvény, amit mindössze mondjuk
+hat nyolc sorba szépen meg van írva,
+hogy felveszi egy rendelést. Ö ráadásul
+ugye ez itt ez itt egy tranzakcióban
+fut,
+ami azt jelenti, hogy ennek az
+atomicitása biztosított. Beállíthatom az
+izolációs szintjét például, ha még
+emlékeznek ilyesm az adat B2 tárgyból
+tanultuk ezt.
+A az alkás igényeinek megfelelően, hogy
+milyen fajta rókai hibákat ö
+tudok
+tolerálni, vagy milyeneket. Nem. Itt van
+egy ellenőrzés, hogy van-e az életőnek
+elég pénze satöbbi, van-e elég a
+raktárkészleten. És ak utána itt a három
+1 2 3 4 adatmódosító utasítást látják.
+Hát a az atomicitásnak úgy kell
+működnie, hogy ezek vagy mind vagy pedig
+egyik se valósul meg. És ugye akkor még
+vannak a konkurenciá kapcsolatos
+kérdések, amik izolációval kezelhetők,
+hogy mi van akkor, hogyha valaki közben
+szintén ugye rendelt ebből és már
+negatívban menne a raktárkészlet. Most
+még egy dolgot hadd mondjak itt, mert
+tovább mennénk, hogy nézzék csak,
+amikor ezt a product táblát létrehoztuk,
+itt van meg a customers táblát, itt van
+egy checkint. Látjátok? Unit stock nem
+lehet nagyobb mint nulla.
+És a a customers táblában
+az egyenleg, bocsánat, nem lett kisebb,
+mint nulla, egyeneg sem kisebb, mint
+nulla. Na most ez azért érdekes, mert
+ugye nem muszáj csekkonszentot tenni egy
+reakciós adbázisba, de lehet, és azért
+tesszük bele, mert mint az
+immunrendszernek, nekünk is az a jó, ha
+több különböző védelmi vonalunk van
+egymás után. Ugye az első védelmi vonal
+az az, hogy maga az alkalmazásunk,
+ez itt
+egyszerűen nem kínál föl olyan dolgokat,
+amik nem léteznek. Ugye
+már itt az alkal a rendes feladásnál
+végezhetnénk egy szűrést alatkozónak,
+hogy ez a mennyiség ez nem leshez
+kieléghető. Aztán akkor itt van a
+a tárolt tejárásunk ellenőrzdésekkel
+kezdődik, és attól függően, hogy hogy
+hogy a logikai elemzéseknek megfelelünk
+vagy nem, attól függően egyet vagy
+nullát adunk vissza és csinálunk
+valamit, vagy nem. De még akkor is
+előforgatna, ugye, hogy alkalmazáshiba
+van, vagy vagy bármi egyéb probléma, ami
+miatt mégiscsak ráfutunk erre az ágra.
+vagy erőfö, hogy valaki
+illeték hozzáfészet az adás satöbbi,
+satöbbi, akkor sem fog tudni negatív
+egyenleget beírni, mert van egy check
+constraint is a táblán. Oké? Tehát ez ez
+most fölöslegeség tűnik, de higgyék el,
+hogy hogy ez ilyen nagyon
+o ilyen megnyugtató, biztonságos érzést
+tud adni annak, aki ezt aki ezt
+használja.
+No, akkor menjünk tovább. Szóval itt van
+ez a tárolt elérás. Ezt hívjuk meg. nem
+fogunk beleérni a Python kódba
+mindenféle
+SQ utasításokat összeeskábálni. Tehát
+ezt ugye dinamikus SQ-nek szokták hívni,
+amikor PAP, Python, Java satöbbi,
+satöbbi, és akkor ott ott rakosgatnak
+össze stringekből szelekt utasításokat,
+amiknek a persze a változói ugye azok
+azok programváltozókból jönnek.
+Ez a fajta megoldás, ez ez
+elég olvashatatlaná tudja tenni a kódot,
+ezért be szoktak tenni egy objektum
+reációs mapping réteget, egy OMR ORM
+réteget. Ez szokott lenni a megoldás. Az
+ORM rétegekkel és mindenféle bajok
+tudnak lenni. Gyakorlatilag
+ugye amit meg akarnak úszni, az az, hogy
+ne kelljen semmit esküábbe programozni,
+mert hát azt az azt nem tudják esetleg a
+fejlesztők, hogy hogy kell csinálni.
+És és aztán végül mégse lehet megúszni,
+mert a az, hogy az egész hatékonyan
+működjön, az ORM-et megfelelően fel kell
+paraméterezni. Szóval lényeg az, hogy
+hogy mi most itt azt a megoldást, tehát
+adatbális kérdésról van szó, azt a
+megoldást mutatjuk be, amikor a TN
+program csak a szelekt csillag, tehát a
+kombodózok feltöltésére használ
+beágyazott SQL-t, és a tényleges üzleti
+folyamatot azt a szerveroldalon végzi el
+ezzel a tároltájárással. Jó, hogyha ezt
+lefuttatják, itt itt van, hogy hogy kell
+letesztelni satöbbi, satöbbi. És még van
+egy view-unk is.
+Ez a view, ez adja vissza az utolsó öt
+rendelést. Itt van szépen a sorbrendezés
+satöbbi, satöbbi. Most ugye ennek, hogy
+itt itt van ez a view és nem a kliens
+programban állunk neki ott rendezgetni
+megkérdezni az utolsó ötöt. Hát most
+gondolják meg például, hogy ugye hogyha
+van egy millió rendelésünk, mará nem
+volna mindegy, hogy először lettöltök
+egy millió rekordot a a kliensre, aztán
+után showba rendezem őket és akkor
+eldobom abból az összeset kívül az
+utolsó ötöt, ugye? Tehát
+azért azért van ebben ráció ebben a
+szerveroldalon tárolt objektumokban.
+Arról is beszélve, hogy ha egy másik
+alkalmazást használják ugyanezt a ezt a
+ezt az adatbeházist, az is fogja tudni
+használni ugyanúgy ezt a ezt a view
+példát. Egyszer kellett jól megírni és
+gyakorlatilag kibővítettük az bázisz
+funkcionalitását.
+No hát akkor, hogyha most megnézzük ezek
+után, hogy mi az a a Python Flash COD,
+ami ezt ezt használni tudja,
+akkor itt van itt a a jegyzetben
+egyébként
+le van írva, hogy hogyan kell ezt a ezt
+ezt a rendszert beüzemelni. Tehát
+nézegessék azt a GCP jegyzet című
+pillanat. Ezt az a baj, hogy most ezt
+nem tudom megosztani, de de hát ott van
+önök előtt ez a ez ez a fáj. Akkor
+mondom, hogy most vagyunk a harmadik
+oldalnak az al vagy másik oldal alján.
+Jó, illetve most van a harmadik oldalon.
+És akkor most vagyunk ott, hogy a
+harmadik oldal közepén Python Flask
+alkalmazás készítése. Nem várom el azt,
+hogy bárki Python Flaskban otthon
+legyen. Nekem is életem első Python
+Flask alkalmazása volt ez. Hát Pythonnal
+foglalkoztam, de a flaska speciál nem.
+azért ezt választottam, mert ennél
+egyszerűbbet egyszerűen nem tudok
+elképzelni. Tehát ami úgy értem, hogy
+ami ami már tényleg csinál is valamit.
+És azt lehet mondani, hogy hogy egy
+kliens programot írtunk.
+Én ehhez az anakonda fejlesztőrendszert
+javaslom. Van rá egy link a a
+jegyzetben, öt perc alatt lehet
+telepíteni mindenféle gond nélkül. És
+aztán a későbbiek szempontjából fontos
+lesz az, hogy egy úgynevezett virtuális
+környezetben dolgozzunk.
+ami aminek itt
+leírtam, hogy hogyan lehet csinálni egy
+ilyen virtuális környezetet.
+És aztán hogyan lehet azt használni? A
+virtuális környezetet azt tulajdonképpen
+a a Python csomagoknak

@@ -1,0 +1,263 @@
+ciónem mind a kettőre
+ez volt érvényes a HTPT-re és a
+backgroundra is, hogy kilenc perc a
+maximális futás idő. Most a második
+generációban ez már másképp néz ki.
+függvény az akár egy óráig is
+futhat, tehát lehet vele
+interaktálni, de a háttér az maradt
+továbbra is a background függvénynél a
+kilenc perces korlán. Tehát ennyi időn
+belül el kell tudnia végezni a
+feldolgozási feladatot. Aztán a
+következő a a VM, amit használ
+az első generációban egy 8 gigamos két
+magos
+kis virtuális gép futtatja el ezeket a
+függvényeket. Második generáció majd egy
+picit erősebb lehet. 16 gig és négy
+magot tud használni. Akkor itt van a
+legérdekesebb eltérés a a
+konkurenciánál,
+hogy az első generációnál
+csak egyetlen egy kérés tud egy
+függvényt kiszolgálni. És ahogy mondtam,
+ennek viszonylag egyszerű biztonsági
+okai is voltak. viszont a második
+verzióban ezt kicsit lazították,
+és itt egy függvény ki tud szolgálni
+több kérést is, tehát mondja, hogy akár
+1000 konkurens kérést is egyetlen egy
+instanszal vagy téléánnyal ki tudunk
+szolgálni. Nyilván ez abból jön ki, hogy
+a HTTP függvény az ugye állapotmentes,
+tehát ugyanazt fogja csinálni mindegyik.
+Mert ha 1000 kliens írja meg ú azt a
+függvénybe, akkor ugyanazt az eredményt
+fogjuk adni. Miért ne lehetne ezeket
+akkor megosztani,
+vagy közösen végrehajtani ennyi függ,
+ennyi kérésre ugyanazt a függvényt. Ez
+nyilván erőforrás, spórolást,
+eredményezés,
+hatékonyság, növekedést.
+Jó, és akkor a következő az az
+eseménytípus, amit meg kell említeni.
+Tehát az első verziónál az a hét esemény
+használható, csak amit az előbb
+mutattam. A másodiknál pedig ez az event
+ark rendszer
+már használható, illetve a háttérben
+üzemel. És
+ugye nem emlékeztem BAS számra, tehát
+több mint 90 különböző esemény típust
+lehet használni.
+Jó, akkor itt az első generációban
+viszonylag limitált volt a a
+rantánoknak a k felhasználása. Ez már
+mind megszűnt, tehát most már bár ilyen
+nyelvet lehet használni.
+Jó, és az nem annyira érdekes.
+Update.
+Jó, tehát ennyit kell ezekről körülbelül
+tudni. És akkor kezdjük a sort egy kis
+gyakorlati HTTP függvény létrehozással.
+következőt szeretném mutatni nektek,
+aztán majd mindjárt átváltok én is a web
+konzolra,
+hogy itt egy JavaScript és egy Python
+implementációt láttok.
+Ilyesmit fogunk végrehajtani,
+hogy hogyan is néz ez ki.
+megírva. Tehát nézzük ebbe a
+javascriptet. Tehát itt megadjuk azt,
+hogy a Google Cloud Functions
+Frameworköt
+szeretnénk használni,
+és azon belül van ez a functions http
+típus, és itt van a függvénynek a
+törzse,
+ahol igazából kapunk egy kérést, ugye ez
+a request, és akkor beállítjuk a
+választ.
+Itt jelen esetben sima szöveges választ
+fogunk visszaküldeni, ami vagy egy hello
+world lesz, vagy ha van egy bemenő name
+paraméter, akkor azt a nevet fogjuk
+visszaküldeni, hogy helló akárki.
+Jó, a Python is nagyon hasonló. Itt is
+van egy egy functions framework, azon
+belül egy http.
+És akkor megadjuk, hogy a my http
+function az ami le kell, hogy fusson.
+Itt nincs kód. Ide kéne elhelyezni a
+kódot.
+És kész. Ez itt lefut. És még mutatok
+egyet. Ez pedig egy Java implementáció
+lenne. Ez már egy kicsit komplikáltabb.
+Itt van egy interfaceünk, egy HTTP
+function interface, ami ebből a com
+Google Cloud Functions
+package jön.
+És ennek egyetlen egy metódusa van, amit
+implementálnunk kell. Egy service,
+aminek van egy request response
+paramétere szokásos módon, és akkor
+végén ez is a response objektumon
+keresztül visszatüldi a választ, hogy
+minden oké. Jó, ezt nem fogjuk
+lefuttatni.
+mi most egy javascriptest fogunk
+megcsinálni.
+Most ez a link elvileg odavisz minket
+egyenesen, ahova kell, de én nem így
+fogom ezt leputtatni, hanem
+hanem úgy, hogy ne kelljen gépelni.
+És akkor ezt rögtön mutatom is nektek,
+hogy ezt hogy kellene csinálni.
+Ú, remélem látjátok a pénészőt.
+És akkor azt kérném, hogy mindenki
+lépjen a
+Google Consol
+be.
+És itt a kereső mezőben
+írjuk be, hogy function.
+Jó. És a cloud run function az, amit
+szeretnénk
+mi használni.
+A cloud runt elfelejtettem megemlíteni,
+tehát korábban ezek a cloud functionök
+önálló
+életet éltek,
+de ennek a szerverless
+architektúrának van egy ilyen gyűjtő,
+mondjuk így, szolgáltatás
+környezete, ami a a Google-nél a Cloud
+Run nevet viseli, és ez nem csak
+függvényeknek, tehát functionöknek a
+végre kihajtására alkalmas, hanem batch
+jobokat meg egyebeket is lehet vele
+futtatni. A lényeg az, hogy ez mind
+ilyen szerver lesz valami. Tehát nekünk
+nem kell az infrastruktúra vagy
+erőforrás menedzseléssel foglalkozni.
+Na, akkor rákattintok erre a cloud
+functionsre,
+akkor ez elvisz minket erre az oldalra,
+ami nektek valószínűleg egy üres oldal
+lesz. És
+akkor itt ha egy picit lejjebb
+dörgetünk, akkor megjelennek különböző
+lehetőségek. Tehát először is itt van,
+hogy deploya a web service. Tehát ezzel
+lehetne egy ilyen szerverless
+webszolgáltatást is létrehozni.
+Következő egy badge job.
+És akkor az utolsó az a write function.
+Na és ezt fogjuk mi megnézni.
+Jó, de mielőtt tovább megyek, egy gyors
+kérdés, hogy ez mindenkinél működik,
+hogyha valakinek nincs Google
+hozzáférése, az az esetleg jelezze.
+Nyilván akkor ő ezt nem fogja tudni
+megcsinálni, akkor csak annyit tudok
+kérni, hogy az én képernyőnek figyelje,
+és ha kell esetleg jegyzetelje, hogy
+milyen lépéseket hajtunk végre.
+Jó, senki nem jelez vissza, akkor ez
+remélem azt jelenti, hogy idáig mindenki
+mindent megtalált. É, akkor kattintsunk
+a Node JS mezőre.
+Jó, és itt a jobboldali
+doboz, a function, az, ami mi szeretnénk
+használni.
+És akkor itt adjunk meg a konfiguráció
+részben valamilyen nevet.
+Azt mondja, hogy
+tudom én legyen az, hogy my first
+function.
+Jó, itt egy régiót meg kell adni Európán
+belül bárhol. Ez jó lesz.
+És akkor kezdődnek a konfigurációs
+részek.
+Milyen futtatókörnyezet legyen? Hát
+látjuk. Kattintsatok ti is rá, hogy
+lássuk, hogy mik az elérhetők. Tehát
+DMT, GO, Java,
+Node, PHP, Python, Rubi.
+Jó, nyilván most nekünk egy 8s kell,
+biztos jó lesz a 24-es.
+Jó, a triggernél nem kell csinálnunk
+semmit.
+Hogyha itt rámegyünk a kérdőjre, akkor
+kiírja, hogy itt event ark triggereket
+lehet megadni. A hát esetért nem kell
+semmit sem csinálnunk.
+kattintsuk
+vagy válasszuk ki azt, hogy a public
+access az engedélyezve legyen, hogy
+kívülről elérhető legyen majd a
+függvény.
+Igen. Kicsit ha lejjebb megyünk, akkor
+itt következik a skálázhatóság
+rész, és az alapértelmezet az az
+automatikus skálázás,
+ahol beállíthatunk minimum és maximum a
+mértéket.
+Itt igazából most mindegy, hogy mit
+használunk, de azt nézzétek meg, hogy
+itt a a nulla alatt van egy
+szöveg,
+hogy azt mondja, hogy állítsuk egyre,
+hogyha a hideg indítást el akarjuk
+kerülni.
+Ugye a hideg indítás az kábé ugyanaz,
+mint a dízelautóknál,
+hogy hát bizony az úgy sokáig tart, amíg
+fölmelegszik a motor. Tehát ha azt
+szeretnénk, hogy a futtatókörnyezet azt
+készen álljon a a függvényünk azonnali
+futtatására, akkor a minimumot egybe
+kell állítani. Viszont ez azt jelenti,
+hogy akkor garantáltan mindig fizetnünk
+kell ezért az erőforrásért. a nullára
+állítjuk
+akkor
+amikor a függvényt senki nem használja,
+akkor az biztos, hogy nekünk nem kerül
+semmilyen pénzbe.
+A az árazásról nem beszéltem még, de az
+ezeknek a szerveress függvényeknek az a
+nagy előnye, hogy csak azért fizetünk,
+amíg fut a függvény.
+Tehát ha mondjuk itt ez nulla a minimum
+és
+nincsenek felhasználói kérések vagy
+események, amik elindítanák a
+függéninket, akkor biztos, hogy semmi
+pénzbe nem kerül ennek a használata. Ha
+viszont elindul a függvény, akkor a az a
+rövid idő, néhány perc, amíg lefut,
+azért kell majd fizetnünk. hogyha van
+minimum összeg, akkor ez egy kicsit
+változik, mert akkor ugye a
+rendelkezésre állás miatt van valami
+alapdíj, amit így fejből nem tudok, de
+azt ki kell fizetni és hát a maximumnál
+megadhatjuk, hogy valaminél több ne
+legyen, hogy lehet a költségeket
+kordában tartani. Másik lehetőség, hogy
+manuális skálázással váltunk és azt
+mondjuk, hogy nekünk a egy kell öt vagy
+10 satöbbi. Most például megpróbáltuk
+azt, hogy nekünk csak egy legyen, egy
+instance.
+Jó, azt mondja, hogy bejövő
+traffic, azzal nem kell foglalkoznunk.
+Jó, és akkor szerintem ez így rendben is
+van. Nyomjuk meg a create gombot, és ez
+létrehoz nekik egy függvényt.
+Jó. És akkor fönt láttuk, hogy volt a
+creating service lépés satöbbi satöbbi.
+És ez a Node létrehoz egy ilyen packages
+szerű valamit 

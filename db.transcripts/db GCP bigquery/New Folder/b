@@ -1,0 +1,1060 @@
+Jó, tehát a Google felhő platformon
+adatbázis, adattárolás címén nagyon sok
+lehetőség található. Most nézzék csak
+meg itt, hogyha egy egy most egy létező
+projektben
+megnézzük az ezzel kapcsolatos
+lehetőségeket,
+van először is olyan, hogy hogy storage.
+Hát ez leginkább fát tárolást jelent.
+Aztán vannak az adatbázisok, amikkel
+eddig mi foglalkoztunk.
+Ugye itt ezek közül eddig kettőt néztünk
+meg, az SQLt és a fire Storet.
+Itt szerepel például egy olyan, hogy Big
+Table,
+ami még egy egy teljesen más
+technológia. És aztán később lejjebb egy
+egy kicsit lejjebb haladva
+operations tools satöbbi, satöbbi, van
+egy olyan egy big data. Na ez is az adat
+kezésre, adattárolásra foglalkozik. Jó
+sok eszköz van itt. És itt van még egy
+olyan, ami a a big query. Hát aztán a
+többi azok inkább szolgáltatások, amik
+itt amik itt találhatók, de én még erről
+a kettőről szeretnék egy kicsit
+beszélni, egy kicsit megmutatni. Tehát a
+big table, illetve a big query, mert
+ezeket szokták a legtöbbet emlegetni,
+mint a a GCP-nek a
+az adatelőszolgáltat,
+adatárolás adatkezelő szolgáltatásai.
+Most nem véletlenül kezdődik mind a
+kettő úgy, hogy big. És az egyik
+ráadásul az itt a az itt a big data
+halmazban van.
+Ez a big data ez mostanában eléggé
+népszerű, illetve tulajdonképpen nép még
+már nem olyan népszerű, am néhány éve
+volt, de még az elég népszerű. És
+sok félreértés formája vagy vagy forrása
+az emberek azt hiszik, hogy ha
+üzemeltetnek egy közepésű Kft, akkor ők
+már big data mennyiségű adat képződik.
+Tehát nagyon sokszor használják a big
+data eszközeit olyan a dolgokra amire
+igazából nem való. és ezáltal az ágyúval
+övünk verébre esete áll elő. A big data
+az 100 milliós nagyságrendű
+rekordtalmazókat jelent és
+és olyan jellegű hogyha streaming
+adatról van szó, akkor pedig
+reakciós adatbázisok által már nem
+nagyon feldolgozható
+mennyiségű folyamatos adatfolyamot
+jelent. akkor van szükség ezekre a
+ezekre a technológiákra.
+De persze nyilván attól függetlenül
+nekünk ez érdekes lehet, legalább
+ismerjük meg, hogy hogy milyen elvek
+szerint működnek. Szóval egy néhány szót
+most fogok beszélni a a big table és a
+big queryről is, és aztán pedig a big
+queryt azt azt ki is fogjuk próbálni.
+Tehát a big table a azt szokták mondani,
+ez egy kulcsértéktár,
+de valójában
+hát azért nem egy közönséges
+kulcsértéktár, hogy a kulcsértéktárak
+azok úgy néznek ki, hogy van egy nagyon
+hosszú, akármilyen hosszú lista amit
+egyetlen kulcsal lehet címezni, azzal
+lehet benne keresni és akkor minden
+címhez tartozik valami, amit ki lehet
+belőle belőle venni. Tehát mit tudom én
+például
+blokbejegyzések vagy bármi.
+A big table ehhez képest annál ennél
+több, hogy itt is van egy kulcs, ami
+alapján lehet keresni egy ilyen
+táblában. Na persze a tábla az óriási
+lehet, akár Isten tudja hány milliárd
+rekord lehet benne.
+Viszont
+egy megcímett rekesztnek a tartalma az
+nem egyetlen érték, hanem a big tableek
+vannak mezői is, vagy oszlopai, úgy
+hírják, hogy colon. Akárhány oszlop
+lehet, nagyon sok oszlopa lehet neki.
+Sőt, ezeket az oszlopokat még
+csoportosítani is lehet. úgynevezett
+ilyen ö
+oszlop családokba, column familynek
+hívják ezt.
+És
+amikor egy
+amikor egy
+bizonyos rekeszt megcímek, akkor
+valamelyik
+ilyen ö oszlop családból veszem ki
+valamelyik oszlopnak a konkrét értékét.
+Ez például
+alkalmas lehet nagyon ezzel egy elég
+sokféleképeret alatott tárolni. Tehát
+például az egyik amit olvastam a Google
+dokumentációban,
+hogy Google-nek van egy saját másolata,
+mondjuk a webről, amiben benne van az
+összes weblap, és akkor ebben egy sor,
+egy weblap.
+Az oszlopokban pedig a weblapnak a
+különböző indexelési tulajdonságai
+vannak. Az egyik oszon pedig maga a
+weblap is ott van teljes egészében.
+Tehát például ilyesmire se lehet
+használni. Aztán például lehet egy
+mátiot is ábrázolni ilyen módon, olyan
+módon mégpedig, hogy van mondjuk egy
+kapcsolati háló, annyi sor van, ahány
+oszlopom, és a metszéspontokban
+vannak a kapcsolatok. Tehát hogyha
+ketten ismerik egyest akkor egy egyes
+például.
+Ez persze ugye elsőre egy ilyen
+borzasztó pazaló tárolásnak tűnik. Na de
+ez egy ez egy
+olyan, hogy hogy ez ez úgy van megoldva
+ez a ez a big tb, hogy a ki nem töltött
+cák azok nem foglalnak helyet. Tehát ez
+egy rendkívül hatékony tárolási mód.
+Úgy, úgy különben inkább az adat modell
+az az a a az az, ami érdekes.
+Szóval
+a big table-nek a feldolgozása az
+általában úgy történik, hogy keressünk
+benne például valamit, van nagyon sok
+rekordunk,
+sorunk, meg akarunk benne találni
+valamit,
+akkor ez ugye pázonosítva történik
+természetesen.
+ö a sorokat a sorokból kötegeket
+csinálnak, amit tabletnek szoktak hívni,
+és akkor ezeket a tableteket dolgozzák
+fel párhuzamosan a feldolgozó
+csomópontok. Nagyon jó skálázható egy
+ilyen big table, tehát nekem semmit nem
+kell tennem ahhoz, vagy alkalmazásokat
+nem kell módosítani ahhoz, hogyha
+mondjuk több feldolgozó csompontot
+akarok felhasználni.
+És egyébként magának a Big Tablenek a a
+sémáját is át lehet ugye akítani
+hozzátehetek még további
+oszlopokat például
+anélkül, hogy az alkalásokat akár csak
+újra is újra kéne indítani, hogy bármit
+kellene vele csinálnom. Hát a valóságban
+egyébként az történik, hogy hogy van a
+Google-nek egy egy Kolosszus nevű
+adattároló rendszere, és ez az egész big
+table ez tulajdonképpen csak így
+igazából mutatóknak a halmaza, amik erre
+a kolosszusra mutogatnak. Ezért amikor
+átkonfiguráljuk a big table, akkor akkor
+adat adat adatmozgatás nem történik.
+Hát ez a big tos ezt mire lehet
+használni? Hát például akkor, amikor
+innen mondjuk egy egy nagyon sok elmű
+idősort akarok feldolgozni, és azt
+valahova le kell tárolnom.
+De ennek ennek nem sok köze van, mondjuk
+úgy a hagyományos adatbáziskezeléshez.
+Például ugye a
+az adattípus, amit tároltok, az az csak
+string lehet.
+Mivel ez ez már tényleg elég
+specializált dolog, ezért én ezt most
+nem is akarom bemutatni, hanem inkább a
+a bigqueryt, mert az viszont tényleg
+előfordulhat, hogy akár valaki a saját
+kis projektjében is föl akarja
+használni.
+Szóval a a a bigquery az már egy egészen
+közönséges
+reakciós adattáblával is modellezhető.
+ugyanis a bigfit azt azért telták ki,
+hogy nem folyamat támogatás céljából,
+hanem inkább adatemzés döntés támogatás
+céljából
+hát táblákat lehessen benne letárolni.
+Tehát amit mi most itt csináltunk a
+flaszk alkalmazást, ez egy OLTP
+alkalmazás, ugye? Tehát az, amikor
+veszünk valamit a boltba, ez egy OLTP
+alkalmazás, amit megnéztünk
+egy dokumentumtárral is, meg egy
+reakciós adatbázissal is.
+A sok OETP adatbázis az pedig a forrása
+az adattárházaknak minden cégnél. Most
+erre van itt egy külön tárgyunk, az
+adattára technológiák.
+Itt ezen a kurzuson ez tényleg csak most
+itt lesz megemlítve egy kicsit ilen
+nagyon felszínesen
+adattára technológia az az azért
+lényegesen különbözik az OLTP
+technológiát mások a céljai tehát nem a
+tranzakciók gyors kiszolgálása izoláció
+meg
+ilyesmi a gyors adatmódosítás a célja
+hanem inkább egy nagy méretű historikus
+csak ö adatfeltöltést
+támogató adatmódosítást sokkal kevésbé
+támogató ö adattárház vagy adatbázis az
+amit adattárháznak hívnak, amibe so
+forrásból gyűlnek az adatok és a célja
+az pedig nem az, hogy a vevőinket
+kiszolgáljuk, hanem az, hogy a
+döntéshozók elemezzék a korábbi
+forgalmat, és az alapján
+bármilyen stratégiát kidolgozzanak.
+Tipikusan
+ezért az adat egyébként az adatázis
+attól függetlenül megvalósítható reációs
+technológiával csak egy kicsit más a
+szerkezete denormalizált tipikusan egy
+adattárház
+hiszen itt nem feltétlenül baj az hogyha
+redundánsan tállaljuk az adatokat a
+gyors lekérdezések mindennél fontosabbak
+enné ettől függetlenül
+ú
+ezért aztán
+a szépen szét normalizált normál
+formában lévő
+OLP adatbázisunk itt itt összeolvad
+sokkal kevesebb táblába, tipikusan egy
+adott tárházban.
+Na most a a big query úgy van megoldva,
+hogy neki van egy egy saját
+adattáló tároló rendszere, amit
+Dramelnek hívnak.
+És hát itt volt az egyik előző
+alkalommal szó arról, hogy a Microsoft
+SQL szerver hogyan támogatja az
+oszloptár indexelést és a
+particionálást.
+Ezek mind a kettő tipikusan adattárház
+technológiák, tehát az oszloptárindex
+is, meg a meg a meg a a
+tárlaparticionálás is. Hát mégpedig
+azért, mert az adatázakban
+van az tipikus, hogy nagyon sok mezős
+és nagyon nagy méretű táblák állnak elő,
+amiket egyébként egy UTP alkalmazásban
+azért nem nagyon találunk meg, mert
+akkor lassú volna az az OLTP alkalmazás,
+ami egy ilyen távra bármit akar
+csinálni. Ugye itt viszont ez egy adat,
+itt csak lekérdezünk, tehát
+el lehet úgy rendezni a partíciókat,
+hogy párhuzamosan tudjunk olvasni.
+satöbbi, satöbbi. És hát ugye az
+oszloptál, ami tulajdonképpen nem is egy
+index, hanem az egy az egy tárolási
+módszer, hogy oszloptál, amint azt már
+elmondtam, hogy hogyan működik. Szóval
+ez a ez a drés erre a két elvre épül rá.
+Föl lehet belölteni
+táblákat. Ezekből úgynevezett
+dataszetteket lehet létrehozni. A
+dataszetben lehet akárhány tábla, és egy
+projektben lehet akárhány dataszet.
+Ö és
+és akkor után egyként
+igen és utána ezeken lehet elemzéseket
+futtatni,
+de nem csak a saját, tehát igazából két
+részből áll ez a ez a bquery. ez az
+adtárolási rész, amire ő nyújt egy ilyen
+egy ilyen megoldást, és ezenkívül van
+neki egy egy lekkérdező, adatteremző
+része is,
+ahol nemcsak a saját Dremel adatárából
+tud elérni bármit, hanem máson és akár
+külső helyekről, akár a a Google
+felhő platformon belül máshonnan, tehát
+például Big Tableből is, amit itt az
+előbb az előbb mondtam, vagy pedig a
+ezekből a storage opció, amit itt
+szintén mutattam az előbb, ami szintén
+GCP része.
+A a big querynek a az alap lekérdező
+nyelve az SQL, tehát a jó öreg SQL,
+illetve az SQL-nek különböző
+kiterjesztései, amint ezt majd majd
+mindjárt fogjuk itt látni.
+És és hát ezeknek igazából itt a a nagy
+durranás az az, hogy hogy hát
+tulajdonképpen ugye amikor mi használunk
+egy egy adateskező rendszert, mondjuk a
+Postgress vagy az SQL szervert, akkor
+hát azt azt tudjuk, hogy ott ott abban
+nagyon sok mérnökév van, hogy hogy annak
+a
+az adobális motorja a rendelkezésre
+előforrásokat, hogy hány processzor
+gonfut, ö hány háttértár satöbbi,
+satöbbi. ö a lehető legjobban,
+leggyorsabban fusson le. A Google pedig
+ugye bár a Google-on is persze mi
+kibéreltünk egy SQS szerver példát egy
+irtáis gépen, ugye, és akkor ott ez
+megtörténik, és ott ott be lehet
+állítani, hogy hány magot szeretnénk,
+satöbbi, satöbbi. De a a BQU esetén
+viszont az történik, hogy ez az egész
+párzamos feldolgozás a felhőben történik
+meg, tehát nem egyetlen gépen belül.
+És a a az SQL lekkérdezésünk
+is szépen, párhuzamosan
+fog lefutni. Akit érdekel ez a dolog, a
+jegyzetben vannak erre linkek, hogy ez
+pontosan hogy megy. Hát minket persze
+elsősorban az érdekel, hogy akkor
+ténylegesen milyen teljesítményt tud ez
+ez nyújtani egy egy nagy táblánál.
+Na, akkor az legyen a tehát az az volt
+az én elképzelésem, hogy az egész
+koherens tegy, amit itt tanulunk, hogy
+van ez a North Indatbázisunk és a a
+Northind adatbázisból csinálunk egy
+adattárházat,
+és ezt az adattárházat föltöltjük a big
+querybe, aztán megnézzük, hogy mit
+tudunk vele kezdeni.
+Hát, hogy lehet egy adatbázb, egy
+adattárat csinálni? Az első kérdés az
+ugye, hogy hogyan lesz igazi
+adatbázisunk, mert ami nekünk most a a
+Northwindben van,
+most mutatom itt a itt a Northw
+adabbázist,
+tehát
+itt Isten igazából
+ugye nem voltak orders recordjaink,
+nem voltak order details recordjaink se,
+és és nem hoztuk át a
+hogy customers táblá Ánk volt. Az volt
+igen.
+De de hát hiányoznak itt ahhoz, hogy
+igaz adat értelme legyen építeni, ahhoz
+ugye tények kellenek. A tények egy
+ténytáblában vannak általában. És akkor
+a ténytáblához kapcsolanak a a
+dimenziótáblák. Most itt az eladás a
+tény ebben az esetben. És akkor milyen
+dimenziói vannak egy eladásnak? Hát az,
+hogy hogy például melyik országból ki
+vásárolta azt meg, aztán az, hogy mit
+vásárolt, hogy milyen terméket vásárolt,
+hogy mikor vásárolt. Tehát ez máris
+kapásból három dimenzió, de egyébként
+még lehetne egy csomó másik
+dimenzió is, akár 100 dimenzió is lehet
+egy adattárban, mondjuk támogatva.
+És
+hát ezeket
+denormalizáltan tároljuk. Most én
+megcsináltam azt itt háttérmunkaként,
+hogy ezzel ne kelljen itt sokat
+vesződni, hogy csináltam egy olyan
+scriptet, amelyik feltölti az összes
+terméket, tehát nem csak azt a hármat,
+ami korábban volt.
+Ugye az összes termléket feltölti a
+Northendásba, aztán az összes vásárlót
+feltölti,
+és aztán az összes rendelést és az
+összes rendelési tételt. Ugyanis
+hogyha nincsen egy pár ezer rekordunk,
+akkor egyáltalán nem tudunk ebből
+döntéstámogatást csinálni.
+Tehát ahhoz, hogy adattáznak lehessen
+hívni, át az három rekordonal nem lesz
+adattárház. Jó, hát hogyha ezt
+lefuttatjuk, én már lefuttattam.
+akkor lesz egy egy tisztességesebb
+adatbázisunk, és ebből úgy lesz,
+hát ez ugyanaz ugyanaz, mint a Northwin,
+csak ugye most nem az SQS szerveren van,
+hanem a PSG
+és hogyan ez adattára itt látható ez
+kérem szépen, hogy ezzel a select
+lekérdezéssel ezzel denorm
+denormalizáljuk az adatbázisunk. Hát az
+mit jelent? Az azt jelenti, hogy a
+táblákat joinnal összefűzzük,
+és kiválatjuk belül azokat a mezőket,
+amelyek úgy gondoljuk, hogy üzleti
+elemzés céljára hasznosak lehetnek.
+Tehát tipikusan nem a
+a termékazonosítót, ami egy integer,
+fogjuk majd elemezgetni üzletileg.
+Bár azt azt azt is kiválatjuk, de
+de tipikusan nem azt fogjuk, hanem
+azokat a mezőket, amelyek
+a vásárlásnak a független dimenziójaként
+szóba jöhetnek. Hát én itt arra
+gondoltam,
+hogy az az ország, hogy honnan
+vásárolták, hogy milyen terméktípus,
+tehát hogy például italt vettek, vagy
+játékot, vagy mit. Aztán az, hogy hogy h
+hogy milyen áru ez a ez a bizonyos
+dolog,
+és hogy és hogy van-e
+árengedmény,
+illetve még az idő is. Ugye úgy
+gondoljuk, hogy ezek mind
+befolyásolhatják azt, hogy az illető
+végül is
+mennyi pénzt költ el. És azt pedig, ami
+az eredmény kritérium, azt
+osztálycímkének is szokták hívni. Nem
+tudom, biztos páran már tanultak itt
+adatbányászatot vagy adatelemzést.
+Szóval van egy osztálycímkénk,
+amit én itt megcsináltam.
+Először is van egy numerikus
+osztálycimkénk, ami egész egyszerűen a a
+tételnek az ára itt átkonvertálva flow
+értékre, mert a különben gond van vele a
+másik oldalon.
+A a másik pedig ugyanez azonban
+kategorizálva, tehát hogy hogy low,
+middle és high három kategóriára osztva,
+hogy alacsony értékű rendelés, közepes
+vagy pedig magas értékű rendelés.
+Jó? Illetve van egy olyan is, hogy
+hogyha egyik semen mondjuk valami null,
+akkor pedig az n/ a értéket kapjuk.
+Hát hogyha ezt most lefuttatom ezt a
+lekérdezést,
+akkor
+akkor lehet látni, hogy itt kialakul. Ez
+ez itt a két osztály címking. Ez a value
+nomia és nominal és a value numeric. És
+aztán itt itt így jönnek jön az összes
+többi mező. És egyébként
+ugye ezt a kettőt akkor majd majd
+megjósolni. Az lesz a adatzunk a dönt a
+döntéstámogatási funkciója, hogy
+szeretnénk kitalálni azt, hogy egy
+bizonyos
+országból való
+vásárlónk
+az egy bizonyos kategóriájú termékből,
+amire bizonyos
+árengedményt adunk egy bizonyos évben.
+szóval, hogy ez mennyire határozta meg
+azt, hogy ő végül is ebből sokat tett
+vagy keveset.
+Ez lesz a hogy hogy hogy sok pénzt
+költölt vagy keveset. Ha ezt meg tudjuk
+jósolni, akkor ugye mondjuk sejtjük azt
+majd, mikor már valaki az adabálisunkban
+belép, hogy ez sok pénzt vagy kevés
+pénzt fog költeni. Tehát ilyen jellegű
+funkciói vannak a döntéstámogatásnak.
+Eléggé sok historikus adatunk van, akkor
+ezt fel lehet használni nagyon sok
+mindenre. az ilyen fajta információ.
+No most mindenesetre annyi történik,
+hogy én ezt itt betettem egy ilyen
+Northw DV adattáblába. Ugye ez lesz az
+adattáblázunk, mint data warehouse. És
+hogyha ezt most itt kiválasztom ennek a
+tartalmát, akkor ugye ugyanazt kapom,
+mint ami itt alul van. És és van egy
+ügyes gomb itt a a postgressen. Ez itt
+downloaders CSV. Szóval azért valamit
+tudnak a Postgasnél, mert mert ez
+például ez ilyen ilyen praktikus
+dolgokat időnként nagyon jól eltalálják.
+egy gombnyomással lehet ebből, ami itt
+alul van csinálni egy CSV-t. Tehát ugye
+az SQL szerveren hát egy hosszadalmas
+procedúra lenne.
+Tulajdonképpen egy DTS csomagot kell
+csinálni, és az azt tudja e egy mári
+idees táblába mentett
+tartalmat azt tud kitenni egy CVS-be.
+Itt még egy gombnyomás. Szóval
+megcsináltuk ezt a CVS-t, vagy bocsánat
+ezt a CSV-t, és ezt én közdé is tettem a
+a a weblapom,
+úgyhogy hát ennek ezek a mezői vannak,
+és ezt a CSV-t akarjuk most feltölteni a
+big querybe. Tehát ezzel kezdődik a a
+dolog,
+hogy hogy ezt ide feltöltjük, aztán
+akkor utána megpróbálunk majd le
+lefuttatni rajta egy egy adatteremzést,
+vagy valamifajta
+modellépítést.
+Szóval
+van ez a projektem.
+És akkor itt eljövök a
+a B a big queryhez, ami az adatbázisok
+alatt van.
+Ja, bocsánat, nem itt van. hanem a
+big data alatt van. Igen.
+És akkor az látható, hogy itt van van
+egy projektem, de egyébként nincsen még
+semmi, ugye? Tehát hogy hogy hogy
+nincsen ben még semmi. De hogyha erre
+most itt itt ráklikkelek, van itt egy
+ilyen kis menü is, akkor azt mondja,
+hogy hogy open. Akkor ezt itt akkor ezt
+itt meg lehet nyitni, és látjuk azt,
+hogy van egy ilyen lehetőség, hogy
+create dataset. Tehát azzal kell
+kezdeni, hogy mindenképpen csináljuk egy
+új adat egy ilyen adat
+almaszt, egy dataszetet. Jó.
+Aminek adnom kell egy nevet. Tehát most
+ezt itt itt meg is adom. Tehát ez lesz a
+ez csak a projekten belül kell, hogy
+egyet legyen, hála Istennek, nem az
+egész világon. Úgyhogy én most azt
+mondja, ez május 6, mondjuk talán május
+6-a van.
+És
+miért húztam rá? Na mindegy. Nem nem
+tudom azt rá.
+A ki lehet választani, hogy hova rakja.
+Nekünk ez teljesen mindegy.
+Tulajdonképpen be lehet állítani azt,
+hogy egy bizonyos számú nap után
+e ez járjon le és utána dobja ki a
+Google autoson törölje. Csak azért nem
+lényegtelen dolog ez, mert fizetni kell
+érte keményen, hogyha az ember adatott
+tárol. És akkor gondolják meg, hogy
+válni egy egy adattárház ugye az
+általában eléggé nagy méret. Tehát most
+nem a mienk, mert ez egy 1-2000 rekordos
+még így is, de hát hogyha itt itt ugye
+terabtokról van szó, akkor ez már nagyon
+lényeges. Hát most nem akarjuk ezt. És
+ugye minden adatot, amit a kolosszusban
+letárol a Google azt titkosítva tárolja
+le. Csak az a kérdés, hogy ez én adom a
+kulcsot, vagy ők adják a kulcsot? Hát
+itt most azt mondjuk, hogy a adják ők
+ugye emlékeznek rá, hogy hogy volt
+ilyen, hogy Always Encrypted a Microsoft
+SQS serveren is, tehát hogy az egy az
+egy elvárás egy felsőszolgáltatóval
+szemben, hogy
+hogy úgy tudjak adatot tárolni, hogy a
+felhő tulajdonosa sem fér hozzá. Tehát
+ilyen esetben arról lenne szó, hogy én
+adom a kulcsot. Na, akkor ezt most
+megcsináljuk, ezt az adat ezt az, ezt a
+dataszetet az a neve, hogy május 6.
+És hoppá!
+És akkor látható, hogy itt meg is jelent
+ez a ez a május 6 dataszet. Ebben most
+még egyelőre nincsen egyetlen adathalmaz
+sem.
+Vannak olyan adathalmazók, amelyek,
+bocsánat, igen, tehát nincsen egy tábla
+sem benne. Szóval vannak olyan olyan
+demó táblák, amiket a Google
+bocsátott rendelkezésre,
+hogy hogy gyakorolni lehessen rajta. A
+jegyzetbe be is tettem egy ilyet. Tehát
+például van egy ilyen, hogy mindjárt
+ezt ide másolom.
+Itt van egy ilyen lehetőségünk, hogy
+compose new query.
+És akkor
+látják, például van egy ilyen, hogy
+de egyébként sok ilyen van.
+Az írjon be azt, hogy limit 10, ugye ez
+a Postgasnek a s órák közis, ez a top
+10-nek felel meg, mert különben ez egy
+olyan 200 millió rekordos adathalmas. Ha
+ezt én elkérdezném, akkor akkor az
+bizony nagyon csúnya lenne.
+Úgyhogy
+aztja, hogy ha most ezt lefuttatom,
+akkor aztja, hogy
+itt is az eredmény.
+És és itt van az első 10 rekord, tehát
+látják azt, hogy ebben ez egy
+demográfiai odadás, ami az van benne,
+hogy ahhoz képest, hogy a papaam mama
+hány éves volt,
+meg milyen raszba szóból származnak,
+hogy mondjuk
+mi hány évesek satöbbi, satöbbi, akkor
+hány vagy milyen nehéz lesz a a
+kisbabának a súlya fontban mérve. Tehát
+ez ez péld egy ilyen klasszikus
+döntéstámogatás feladat. Próbál meg
+olyan modellt csinálni, mert meg lehet
+jósolni azt, hogy hogy mondjuk a nagyon
+kisúlyas születű gyerekek azok azok
+mikor fognak születni. Na most ez csak
+egy példa volt, tehát azt akartam
+bemutatni, hogy van egy dataszetünk,
+nincsen benne még egy táblánk se, de már
+mégis tudunk csinálni a a beépített demó
+táblákkal valami adatemzést. Most
+viszont csináljuk meg a vagy hogy
+töltsük be a mi saját adattálázunkat,
+ami úgy megy, hogy
+itt kiválasztom ezt a ezt ezt ezt
+nyugodtan be lehet csukni, ezt a
+ablakot,
+és
+tulajdonképpen ezt is.
+És akkor
+na
+nem így akartam. Egy pillanat.
+Itt látnom kéne ezt a májos 6atot, mert
+ezt akartam látni.
+Szóval amikor ezt itt megnyitjuk, akkor
+itt megjelenik egy új gomb. Ez a ez a
+kis plusz. Hát ez a leglényegesebb. ez a
+create table, tehát így lehet csinálni
+egy egy új táblát,
+ha ezt itt megnyomom,
+és hogy hogy mi a forrás, itt lehet
+látni, hogy van pár ötlete, hogy például
+driver-ról is lehet feltölteni, de mi
+itt azt választjuk, hogy upload
+egyébként kézlésbe lehetne vinni
+értékeket, szóval egy üres tát is
+lehetne csinálni. És akkor most itt rá
+fogok böngészni arra a CSő fára, amit az
+előbb elkészítettünk.
+Ez a
+ez az fölismert, hogy CS. Nagyon jó.
+Kell, hogy adjak neki nevet. Mondjuk az
+lesz a neve, hogy Northwin, csak hogy
+rövid legyen.
+Meg kell mondanom, hogy mi a sémája
+ennek. Bevatam, bevihetem egyenként
+kézzel, de ő bele is tud olvasni, és ki
+tudja találni
+particionást, és lehetne csinálni már
+most. Hát nem fogunk csinálni
+particionálást 2000 rekordnak. Azt
+mondjuk, hogy create table.
+És akkor most dolgozik. Azt mondja
+elkészült go to table,
+akkor látni fogjuk az eredményt.
+Mindjárt. Itt van. Hát ez az.
+Itt ugye három panel van. A sémát
+mutatja most, aztán be lehet nézni az
+adatokba. Hát ez úgy néz ki, ahogy ő
+felismerte az adattípusokat. Ugye
+próbálta kitalálni, hogy például ez a
+numericus flowat, ez pedig egy kitalálta
+azt is, hogy melyik a az az a dátum
+time stamp ugye. És ugye az egyik az
+abban van másodperc, másodperc dátum
+van, azért ez ez D típus lett. Na jó.
+Szóval lényeg az, hogy hogy a a sémát
+azt így elfogadhatjuk, ahogy ő ahogy ő
+kitalálta.
+Itt egyéb adatok vannak, és a previewba
+lehet megnézni, hogy hogy jó hozta be az
+adatokat. Hát nagyjából jó egyébként.
+Szóval szóval nincs ezzel semmi hiba,
+hála Istennek. Mondjuk ezek a típus
+konverziók, amiket itt itt mutattam,
+azok azért nem ment az elsőre ilyen
+szépen. Itt ezek a típus konverziókat el
+kellett végezni ahhoz, hogy ez ilyen
+normálisan átjöjjön.
+Szóval van egy van egy adattáblánk,
+és akkor mit lehet ezzel csinálni? Hát
+lehet persze itt itt nézegetni, de de
+ami minket most jobban érdekel, az az,
+hogy megpróbálunk építeni egy egy
+modellt. Tehát megpróbáljuk van olyan
+modell, amelyik numerikus értéket tud
+jósolni, tehát ezt a verő nyumeriket, és
+van olyan modelle, amelyik nominális
+értéket, tehát címként tud jósolni. Hát
+ezek eléggé standab adabbmányzati
+eszközök. Most aki már tanul
+adabbmányászatot tudja, hogy hogy ennek
+specializált eszközei és szoftvéi
+vannak. Általában a Microsoft SQL
+szerveren is belül is egy külön
+szolgáltatás csomag foglalkozik
+adabázattal, adatelemzéssel.
+Sőt még még van a Microsoftnak egy ilyen
+R engine nevű megoldása is, ami a teljes
+Air fejlesztői környezetet biztosítja.
+A Google ehhez képest nagyon nagyon
+minimalisztikus, tehát csak egy néhány
+módszert támogat.
+Viszont ezek a legjobbak és a
+leggyakrabban használtabbak, tehát vagy
+vagy leggyakrabban használt módszerek
+úgy vannak vele, hogy aki kutató, az
+nyilván nem a felhőben fogja ezt
+csinálni. A felhő az az arra való, hogy
+amikor nagy mennyiségű adatom van, és és
+egyszerűen nagyon drága volna azt a
+felhőből kihozni a saját gépen, és ott
+elvégezni az elemzést, ők ezt
+megcsinálják, ezt az egészet hatékonyan
+párhuzonosítottan a felhőben. De hát
+persze nyilván nem fognak minden
+különböző módszert támogatni, csak a
+legfontosabbakat.
+Amit most meg szeretném mutatni, az egy
+ilyen numerikus jóslás,
+mégpedig
+amit itt a
+a
+amit itt amit itt jeleztem is, hogy ezen
+mezők alapján akarjuk majd jósolni ezt a
+numerikus értéket. És ehhez egy
+úgynevezett
+regressziós modellt fogunk használni,
+egy lineáris regressziót, ami
+tulajdonképpen csak annyi, hogy
+megpróbáljuk kifejezni ennek a numerikus
+mezőnek az értékét
+úgy mint a a felhasznált egyéb
+változóknak egy ilyen lineáris
+kombinációja tulajdonképpen.
+És ezt úgy oldották meg itt a
+a GCP-ben, vagy itt a itt itt a BQyben,
+hogy egész egyszerűen az SQL szinttaxist
+kibővítették és és SQL-ben meg lehet
+csinálni ezt a modellt. Hát ehhez oda
+kell mennem, hogy hogy benegyek az adat
+készletembe, és azt mondom, hogy compose
+new query.
+Most én én kimásolom a jegyzetből ezt az
+összeállított queryt.
+Ezt egy kicsit majd valószínűleg
+módosítani kell.
+Szóval azzal kezdődik a dolog, hogy
+a
+az adatkészletemnek a neve az most az
+most nem az, hogy Northw, hanem az, hogy
+május 6. Tehát ezt itt át kell írnom.
+És ugye a táblá a tábla is ugyanaz a
+neve, hogy NV, de
+az adatkészlet az május hat. Egyébként
+ugye gyakorlatilag ez az adatkészlet ez
+a séma szerepét tölti. Ez ugyanaz, mint
+egy reakciós adatbázisban a séma. Tehát
+van a május hat séma, és akkor azon
+belül van ez a táblám.
+Jó és akkor nézzék, van egy van egy
+select utasítás.
+ami az háromkra érdekes mezőket sorolja
+fel,
+és az elé beteszünk egy olyat, hogy hogy
+create model, aminek adunk egy nevet.
+Ezzel szintentől kezdve a döntési modell
+neve. Az optionsnél meg kell adni, hogy
+milyen típusú legyen ez a modell,
+illetve, hogy mindegy olyan az
+osztálycím kell, mert lehetne egynél
+több is. Itt most itt itt most a value
+numeric,
+amit most használunk, azt úgy hívják,
+hogy ez a bigquery ml, tehát machine
+learning. Big query machine learning.
+És itt van egy becsésre, hogy ez
+körülbelül mennyi
+erőforrást fog felhasználni,
+csak azért, hogy hogy esetleg, ha
+fizetni akarunk érte, és futtassuk rá.
+Azért
+ennek el kéne készülnie, mit tudom én,
+fél percen belül.
+Tehát, hogyha igen, azért el is készült,
+hogyha ezt most egy ilyen ingyenes
+szoftverben, mint a Veca vagy más
+szoftverbe lefuttatják, hát azért csak
+egy-két másodpercsak.
+Szóval elkészült a modellem. Itt
+látható. Nézzük csak, ha kiválasztom
+azt, hogy open. Aztán meg is meg is
+nyitotta ezt a modellt. Igen. Akkor
+látják azt, hogy
+itt itt vannak ilyen alapadatok
+mikor készült, satöbbi, satöbbi. Itt van
+típusa.
+És hát ez a lost type, ez azt jelenti,
+hogy mennyire pontos a modellem. Ugye
+minél kisebb ez a loss, annál jobb.
+Hogyan hogyan tanítottuk be ezt a ezt
+ezt a modellt? Nem, ez nem túl
+informatív, de van, hogy evaluation,
+tehát ő maga hogy értékelte ki. És akkor
+itt van egy ilyen egy ilyen mean
+absolute error. Tehát ez az átlagos
+absolút hiba ennyivel lő mellé.
+Ha ugyanazon az adatkészleten
+tesztelem, mint amivel a modellt
+betanítottam. Egyébként aki
+fogalakozottés adatzés, az tudja, hogy
+hát ilyet nem csinálunk. Tehát tipikusan
+mindig félretesszük az adatoknak egy
+részét arra azért, hogy azon teszteljük
+a modellt és az adatoknak egy másik
+részével állítjuk elő a modellt. Tehát a
+kettő azért nem ugyanaz. Itt most ezzel
+ne foglalkoztunk ugyanaz a kettő, mert
+csak a technológiát szeretném bemutatni.
+Jó, hát hogyha most belenézünk ebbe a
+ebbe a táblába,
+tehát
+azt mondja, hogy
+mondjuk bocsánat, nem top az itt
+nincsen. Tehát chill from nv
+ja
+május 6.nv V
+aondja, hogy mondjuk limit 100
+és ezt lefuttatom,
+akkor azt nézzék meg, hogy hogy itt ez a
+bizonyos value numeric, amit
+megpróbáltunk megjósolni egy pillanat.
+Szóval ez ez úgy mondjuk nulla és és
+2000 között változik. Látható. Tehát,
+hogyha mi itt átlagosan 300 hibát
+követünk el, hát azért az az elég nagy
+hiba, ugye, ennek a megbecsülésére. Na
+most ez nem a
+a bigquery ML-nek a hibája.
+Ő arról nem tehet, hogy az adataink
+mondjuk
+ténylegesen mennyire jósolják ezt a
+mezőt, tehát mennyire lehet megjósolni
+ezt a mezőt a rendelkezésre álló egyéb
+paraméterekből, mint amilyen például az
+év meg a a szállítási ország meg
+ilyesmi.
+Na mindegy. De lényeg az, hogy most van
+egy van egy ilyen modellünk, és lehet
+kérni külön
+kiértékelést,
+ami azt jelenti, hogy ha van egy
+modellem és van mondjuk egy új egy új
+adatkészletem,
+akkor nézzük meg, hogy hogy az a az a
+modell, ugye sok modellem lehet, azon az
+adatkészleten
+mennyire pontosan tudja eltalálni azt a
+címkét, amit amit amit meg szeretnénk
+becsülni. Ugye hát ez ugye lényeges
+lehet. Képzelj csak el, hogy ezt milyen
+jól be lehet építeni mondjuk egy üzleti
+folyamatba. Most megint akkor kimásolok
+egy
+egy
+megkérdezést.
+Ez is az SQL-nek egy bővítése.
+Itt van egy olyan függvény, hogy ml.
+Tehát machine learning evalue. Megadom a
+modellemnek a nevét. Ugye most annak az
+a neve, hogy hogy
+május 6.
+Igen.
+És és hát a az a mondom az a modell
+tudja, hogy ő melyik mezőt akarja
+megbecsülni. Olyan sorend meg kell adnom
+a mezőket és kész le tudom futtatni.
+És akkor ez belőle egy ilyen egy ilyen
+evaluation.
+Az a probléma, hogy a
+northw not found persze ugye, mert ennek
+most itt az a neve, hogy május 6. NV.
+Ez még egy másik
+projekt volt. Most futtassuk le.
+És akkor itt itt látható a a hát ezek
+igazából számok. Adateremzésben jártas
+embereknek ezek mondanak valamit.
+Például ez az R2 score, hogy mennyire
+használható ez a modul ezeken az ez a ez
+a modell ezeken az adatokon. Hát
+tipikusan ugye, amint mondtam, nem
+ugyanarra az adatkészletre ha értékeljük
+ki, mint amelyik a modellt készítettük.
+De
+hogy mégis ennek a a bigquery machine
+learningnek az eszköztárát bemutassam,
+még egy dolgot szeretnék megmutatni.
+Ez pedig az, hogy most mi van akkor,
+hogyha hogyha jósolni szeretnénk belőle.
+Tehát ez azt jelenti, hogy most egy
+olyan adatkészletünk van, amelyik mellé
+nincs odatéve még az, hogy
+hogy hogy mi az osztálycímke. Tehát most
+tényleg jött egy új vásárló, mondjuk és
+szeretném megjósolni a modell alapján,
+hogy ő most mennyit fog költeni.
+Akkor egy pár lekkérzést itt itt itt
+becsukok, csak hogy elférjünk.
+Jó,
+ezt is.
+És akkor
+hát ez pedig a Nem, nem, ez még nem az.
+Elnézést,
+ezt már láttuk.
+Hopp,
+ez pedig a predict.
+Tehát
+tehát most jóslunk.
+És látható, ez egy olyan legkérdés, hát
+az SQL-t szépen lehet használni,
+ami amibe itt igazából be van ágyazva
+egy
+függvényhívás. Ez az ML predict
+ugyanis ez a ez az ML predict ez egy ez
+egy mezőt fog visszaadni, egy új mezőt
+tesz hozzá azokhoz a mezőkhöz, amik itt
+a ő neki paraméterként át van adva egy
+lékkérdezés. Látják ez itt
+így zár zárójelek között átad neki oda a
+paraméterk, hogy ezt a modellt erre a
+erre az adatra, erre a rekordhammazra
+értékelje ki.
+és annyit fog csinálni, hogy visszaadja
+ezeket a mezőket, plusz még egy mezőt
+hozzátesz, ami a predicted value numeric
+nevet fogja viselni. És akkor
+megnézhetjük azt, hogy hogy a valódi
+value numerichez képest a prediktív verő
+numeric mennyivel tér el.
+Itt tehát egyenként ki lehet majd
+számolni azt, hogy
+hogy mennyi a hiba konkrétan, amit
+elkövet az egyes lelkérzéseknél.
+Úgyhogy én ezért hozzátettem egy ilyen
+szűrőfeltételt,
+és vonjuk ki, hogy nézzük meg, mennyi a
+az a különbség abszolút értéke,
+és hány esetben fordul elő az, hogy ez
+ez a hiba, ez kisebb, mint 40%
+konkrétan ezekre az adatokra.
+Na nézzük csak meg, mi lesz.
+Hány ilyen rekord van? Hát 850 rekord
+van összesen, ugye? És így különben
+pedig
+a az adat az adatkészletünk az pedig az
+pedig hány rekordos
+Tehát ugye valahol a hát ugye a a az egy
+hallodánál valamivel több az, amit az
+amit itt kaptunk. És itt meg lehet
+nézni, hogy mennyi lett a hiba. K
+bocsánat a a a predikt érték, illetve a
+ö az a a valódi érték között
+mennyi a különbség az első és a második
+osztop, ugye? Na most ugye el lehet
+képzelni egy ilyen fajta
+döntéstámogatást, be lehet építeni egy
+üzleti folyamatba, mert mindaz, amit
+most itt elmondtam, ez automatizálható,
+akkor itt az adatfeltöltést is lehet
+ütemezni.
+Sőt, lehet streaming adatfeltöltést is
+csinálni. Ez egy külön technológia a
+GCP-n belül, tehát hogy folyamatosan
+jönnek a rekordjaim például mobiltelefon
+felhasználóktól, és azt én folyamatosan
+dolgozom fel, hogy jönnek be. Nem az
+van, hogy összevárom, amíg lesz 100
+millió ekkorom, és akkor elkezdek vele
+valamit csinálni.
+Arra is megvan a technológia. És ennek
+az eredményét vissza lehet csatolni egy
+egy egy üzleti folyamatba.
+Tehát fel lehet használni egy
+döntéstámogató modellt arra, hogy hogy
+megjósolják azt, hogy valaki mit fog
+csinálni például a következő percben egy
+konkrét alkalmazásban.
+Hát itt van hozzá a a technológia.
+Na hát én körülbelül ennyit szerettem
+volna mutatni. Vannak más modellek is.
+Itt igazából önálló feladatnak azt
+szeretném adni, hogy most amit itt
+mutattam, az a pillanat, az volt a
+a lineáris regresszió modell.
+Ezt ugye numerikust osztály címke vagy
+vagy numerikus érték jósására lehet
+használni, de hogyha kategorizált
+osztálycimkét szeretnék, nominális
+osztálycímkét szeretnék jósolni, akkor
+arra a mostanában nagyon népszerű és
+nagyon jól működő módszer az XBost 3
+használata. És hát a jegyzetbe le is
+írtam, hogy hogyan lehet ezt elindítani.
+Egyszerűen csak le kell cserélni itt ezt
+a kis címkét arra, hogy
+boosted tree classifier.
+És akkor akkor meg lehet nézni, hogy na
+azt azt mennyivel jobban tudjuk jósolni.
+Ugye egy háromértékű osztálycímkét azért
+valószínűleg jobban el fogunk találni,
+mint a amennyire itt a konkrét értéket
+elbírtuk találni ezek alapján.
+Jó. No hát kedves kollégák, en ennyit
+akartam mondani. Remélem, hogy hogy
+érdekes volt. És akkor
+azt ne felejtsék el, hogy minden ilyen
+esetben, amikor a
+a bikeryt vagy más hasonló technológiát
+használtak, akkor utána az adatokat
+gyorsan törölni, mert különben
+hát ugye itt már az adatt tárolásért,
+rendelkezésreállásért is fizetni kell.
+Úgyhogy ezt most úgy tudjuk megcsinálni,
+és hát ugye akkor akkor nagyon arra
+elfogy a a kreditünk, hogy hogy bizony
+be kell írni azt, hogy delete,
+és ezt így meg kell csinálni mindennel
+külön,
+az a biztos.
+Jó, aztán kitöröljük a
+a
+magát a datasetet is,
+illetve
+ugye még ebben a projektben
+van nekünk egy
+egy fire storeunk is.
+Hát magát a a Fire Store
+kollekciót, azt elérhetjük a Cloud
+Fireestore konzolról is, de elérhetjük
+a
+egy pillanat kicsit följebb,
+a mégpedig a database-nél lesz ez.
+Igen. Szóval firest
+ezeket itt hagyjuk.
+Itt pár figyelmeztetést kaptam. Szóval
+itt itt magát a kollekciót is ki lehet
+törölni.
+De hát ugye minden minden ilyen esetben
+megerősítést kérnek tőlünk, mert
+itt adatvesztés történik természetesen,
+tehát ez nem visszavonató művelet.
+Jó.
+És végül a products

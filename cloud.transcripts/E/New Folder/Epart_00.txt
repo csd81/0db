@@ -1,0 +1,220 @@
+Data Studio nevű szolgáltatást,
+amivel
+adatelemzéseket, jelentéseket,
+vizualizációkat lehet csinálni. Jó,
+tehát ez lenne a mai terv. Meglátjuk,
+hogy milyen
+sebességgel működnek majd ezek a kis
+gyakorlatok.
+Remélem, bele fog férni az időbe. Hogyha
+nem, akkor többit majd otthon
+megpróbálhatjátok ti is önállóan
+futtatni. Ha esetleg hamarabb végeznénk,
+akkor meg hamarabb végzünk. Jó,
+úgyhogy akkor kezdjük is a a big
+tableel.
+Tehát a neve azt hiszem elárulja, hogy
+itt miről van szó. Tehát ez egy olyan
+szolgáltatás, ami nagy adattáblákat tud
+kezelni. És hát a kérdés az, hogy ez
+mire jó, meg meg úgy általában mit
+kezdünk vele? Itt van egy-két ilyen
+dokumentációból kiemelt főbb jellemző,
+ami leírja ezt a szolgáltatást.
+Y picit
+itt horgonyozzunk le, hogy miért is van
+ezekre szükség és a többi és a többi.
+Tehát a az első pont az a fully managed,
+tehát hogy ez egy teljesen
+a Google által menedzselt szolgáltatás,
+ami már láttuk korábban a szerver lesz
+futtatási dolgoknál, hogy milyen
+előnyöket hordoz. Tehát nem nekünk kell
+azzal foglalkozni, hogy a szolgáltatás
+alatt levő hardver szoftver
+infrastruktúrát
+beüzemeljük, menedzseljük, hanem ezt
+mind megteszi helyettünk a szolgáltató.
+Tehát magyarán nekünk csak az adatra
+kell koncentrálni.
+scalable rész azt jelenti, hogy
+skálázható.
+Magyarán automatikusan képes a rendszer
+az igényeknek megfelelően
+változtatni a az alat levő
+infrastruktúrának a méretét, illetve a
+tábláknak a méretét. És megint csak
+ezzel nem nekünk kell foglalkozni. Majd
+ennek a részletes
+működési mecchanizmusáról mindjárt
+beszélni fogok.
+Na, a következő pont a
+ez a második, hogy
+milliárd
+méretű, tehát sor számú vagy sorméretű
+táblákat képes
+kezelni ez a rendszer. az igazából a a
+névnek a a big részére utal, tehát hogy
+ezt jelenti az, hogy big table, hogy itt
+tényleg hatalmas méretű táblákról van
+szó, és az oszlopszám is több 1000er
+lehet.
+És ennek a vége az, hogy itt terabtnyi
+vagy petabnyi adatokat lehet tárolni,
+ami azért elég
+komoly dolog.
+És jó, rögtön fölvetődik, hogy és akkor
+ezt hogy lehet tárolni hatékonyan.
+A bocsánat, a big table az ilyen
+kulcsértékpár
+szerű adattárolást használ, és ami
+nagyon lényeges itt, hogy ez egy
+úgynevezett ritka
+tábla tárolási adatszerkezetet használ.
+Tehát nem úgy kell elképzelni, mint a
+mondjuk egy Excelt, ahol akár van egy
+cellában érték, akár nem a azt tárolnunk
+kell, hanem itt csak azokat a cellákat
+tárolja a rendszer, amiben tényleg érték
+van. Tehát a spars az erre utal. Tehát
+nem mátrix adatformátumot tárol, hanem
+kulcsaértékpároknak a listáját.
+Ez részben azt is
+jelenti, hogy hogy emiatt könnyű a a
+táblákat is méretükben növelni, mert nem
+előre meghatározott mátrix
+adatszerkezeteket használ. Na és akkor
+most értünk el a lényegesebb dolgokhoz,
+hogy amellett, hogy nagyon nagy adatokat
+tud ez kezelni, van egy nagyon
+különleges tulajdonsága,
+mégpedig az, hogy
+valós idejű adatoknak a tárolására is
+képes, tehát nagyon kis késleetéssel
+vagy válaszidőkkel
+tud írási műveletekre
+reagálni. Tehát itt ugye azt látjuk,
+hogy néhány milliszekundumon belül lehet
+frissíteni a az értékeket a táblában.
+És hát biztos használtatok már
+ilyesmiket, de ha nem, akkor ez azért
+érdemes megemlíteni, hogy ugye a a
+klasszikus reációs adatbázisokat
+lekérdezésre optimalizálják.
+Tehát nagyon sok lekérdés lekérdezés
+van, annak kell gyorsnak lenni, és
+általában az update vagy a frissítési
+műveleteknek a frekvenciája az az
+alacsony, tehát annak nem kell annyira
+gyorsnak lenni. Ez ez a régi klasszikus
+adatbázis működési mód. Itt ez egy
+kicsit másképp van. Itt pont az update
+az, ami nagyon gyors kell, hogy legyen.
+És ezt szerencsére ez tudja is.
+Jó. És akkor következik itt az utolsó
+előtti pont, ez az adminisztráció rész.
+Hát igazából ez a fully managed-enek a a
+részleteit tartalmazza.
+Tehát amellett, hogy az egész
+infrastruktúra automatikusan megy, ennek
+a az adminisztrációja is természetesen
+szolgáltató oldalon történik. Tehát itt
+látjuk, hogy ez mit takar. Tehát, hogy
+ha esetleg a szoftvert updateelni
+kellene, ez automatikusan megy. Ha újra
+kell indítani a szolgáltatást, az is
+automatikusan megy. Nyilván úgy, hogy mi
+ebből nem veszünk észre semmit jó
+esetben.
+Automatikusan tud adat replikációt
+végezni, úgyhogy a különböző klusterek
+futnak a háttérben. ezeknek a
+klustereknek a méretét tudja változtatni
+úgy, hogy közben nincs szolgáltatás,
+kiesés
+és
+hát az utolsó sor kábé ugyanez még
+egyszer.
+És hát természetesen, mivel ez egy
+szolgáltatás, gyönyörű szépen integrálva
+van
+mindenféle vagy integrálható minden
+egyéb Google szolgáltatáshoz is, illetve
+különböző open source
+szoftverrendszerekhez.
+Jó, tehát ebből a lényeg az, hogy ilyen
+kulcsérték párokból tudunk terab, bet
+petab méretű
+adatmazokat, adatszerkezeteket építeni,
+és mindent automatikusan
+elvégezhelyettünk a rendszer. Most hol
+lehet ezt használni? Hát rövid válasz
+ugye az, hogy szinte bárhol, de mégis
+csak azért nézzük meg, hogy ilyen
+gondolatébresztőnek milyen területek
+azok, ahol ilyen gyorsan változó adatok
+előkerülhetnek.
+Ugye minden olyan hely, ahol idősor
+szerű adatunk van.
+Itt van egy-két példa
+informatika területéről
+hardverrendszereknek a monitorozása.
+Ugye CPU terhelés figyelése, memória
+hálózati forgalomnak a a vizsgálata, de
+természetesen ez lehet bármiféle más
+idősoros adat is. Látjátok lehéppan
+marketing meg
+pénzügyi adatok. Ott ugyanígy vannak
+természetesen idősoros adatok.
+Jó, hát nem biztos, hogy ezt nekem mind
+kell olvasni. Szerintem ti is el
+tudjátok képzelni. A az Internet of
+Thingsnél ugye bármiféle szenzoros
+feldolgozó rendszer
+ugye a szenzornak a fajtájától különböző
+alkalmazási területeket jelenthet. Tehát
+lehet ez akár
+környezeti monitorozás, levegőminőség,
+vízminőség,
+aztán
+a közlekedési
+helyzetnek a a monitorozása, vagy
+biztonsági kamerák, bármi.
+Jó, és akkor az utolsó, ami hát most már
+egy jó pár év a világ számára az egyik
+legizgalmasabb dolog sajnos az a
+hálózati adatok, tehát a
+hálózat alatt nem számítógépes hálózatot
+értek, hanem emberek közötti
+hálózatoknak az elemzése.
+Ugye a,
+hogy hívjuk magyarul a a
+social platformokat, tehát Facebook meg
+egyebeknek a
+használata alapján kinyerhető kapcsolati
+adatoknak az az elemzése és a többi és a
+többi. Tehát itt megint ilyen milliárdos
+csomópontméretű gráfokról beszélhetők,
+és ezeknek a tárolása elemzése azért nem
+triviális feladat.
+Hogy ez mennyire tesz jót nekünk, az egy
+másik kérdés, de mindenesetre
+erre is alkalmas a a rendszer.
+Na, akkor nézzük a a kicsit a
+részleteket,
+tehát hogy hogyan is épül fel ez a
+táblázat. Nyilván nagyon nagy meglepetés
+nem fog minket érni, tehát az alapegység
+az a táblázat, amiben vannak sorok és
+oszlopok.
+Ami fontos, hogy minden egyes sornak van
+egy egyedi kulcsa,
+de ez nem egy egyszerű
+egész szám, tehát mondjuk mint egy
+tipikusan egy adatbázis táblában, hanem
+ez egy kicsit komplexebb
+kulcs lehet. Majd erre mindjárt mutatok
+példákat, és majd arról is szó lesz,
+hogy a kulcsmeghatár, kulcsnak a
+kiválasztása az akár a teljesítményre is
+hatással l

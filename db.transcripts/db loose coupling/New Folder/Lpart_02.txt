@@ -1,0 +1,107 @@
+ nagyon nem jó,
+ugye? Tehát, hogy hogy addig, amíg a mi
+adatfel dolgozásunk tart, addig a
+kereskedő információs rendszerbe a
+rendésfelvétel homokórázik. Hát ez ez ez
+nem jó.
+És még rosszabb a helyzet, hogyha egy
+hibát is csinálunk. Mondjuk
+tudni. Ja, ezt most akkor szedjük ki
+ezt az eseményt, amit beletettünk.
+Mondjuk például itt az egyszerűség kedvé
+nullával osztunk,
+és ebben az esetben is
+elejtettem
+ezt lefuttatni.
+Most létrehozzuk újra. Szóval ebben az
+esetben is
+beszúrunk, megpróbálunk beszúrni
+rekordot. Mi történik? Először is ugye
+vált 10 másodpercig, ugye?
+És aztán utána
+a rendelés felvétel fut hibára. Látják?
+A rendelés felvétel pedig abb az
+információs rendszerben semmi hiba
+nincsen, csak a mi információs
+rendszerünkben van valami hiba, mert mi
+osztottunk nullával. Hát ez ez nagyon
+nagyon negatív.
+És ugye a legérdekesebb az egészben az,
+hogy ilyenkor az eredeti DML utasítást,
+ez az inzert, ez visszagördül, tehát nem
+történik meg a rendelés felvétele.
+Gyakorlatilag
+kilőttük a kereskedő információs
+rendszert ezzel a hibával
+meg is lehet nézni egyébként, hogy
+megvan a rekord, ugye?
+Hát nincsen. Tehát tehát be lett szúrva
+a a beszúrás után lefutott a trigger, de
+mi a hiber a trigger hibára futott,
+ezért visszagörült a beszúrás is. Na,
+ezért nem csinálunk,
+ezért nem csinálunk szoros csatolást.
+Remélem ez ennyi ellenpélda elég volt.
+Csak el ne felejtsük kitölni ezt a
+tigert, mert ugye egy tábán több trigger
+is lehet,
+és hajlamosak az emberek erről
+elfeledkezni, és aztán csodálkoznak,
+amikor furán viselkedik egy adatbázis,
+és nem jöttük, hogy miért.
+Don't forget. Jó. Na és akkor nézzük a a
+helyes megoldást.
+Szóval
+ez itt ez itt egy
+ez itt egy példa
+arra, hogy amikor
+az order details táblában valaki módosít
+egy mennyiséget, tehát mondjuk változik
+a rendelés, és nem két
+láda sört kérünk, hanem három láda sört,
+akkor automatikusan
+módosuljon
+a products táblában is a units stock.
+Hát ez mondjuk ez lehet, hogy
+már de lehetne működet így is egy
+információs rendszer, ugye, tehát hogy
+akkor automatikusan csökkentjük a
+raktárkészletet, mondaná, hogy akkor ezt
+onnan levesszük. Jó, hát most ezt nem
+kell feltétlenül létrehozni ezt a ezt a
+téget, ez csak egy ez csak egy demó.
+Mindenesetre ki lehet próbálni. Most
+ezzel nem töltjük itt az időt. Jó.
+És
+igazából inkább a a technológia
+bemutatására
+vonatkozik ez. Akinek esetleg a
+triggerek nem voltak meg, az azt az ezt
+nézze át.
+Akkor ugye arra is lehet gondolni,
+olyanok, hogyha több rekord változik
+egyszerre, az is csak egy véget fog
+kiváltani, de erre fel lehet készülni.
+Itt van a megoldás, ugye update
+frommalar van megoldva a dolog.
+Mert ugye itt amikor kiveszünk egyetlen
+rekordot,
+akkor ez a select, ez ebben az esten,
+hogyha több rekord változott meg, akkor
+az inate táblának több rekordja van, és
+ezt csak a legutolsóan fogja kivenni a
+productí. Oké, de ezt is ezt is meg
+lehet oldani.
+És akkor akkor nézzük. Itt itt vagyunk
+igazából a lazacsatolásnál.
+Tehát az első lépésünk az, hogy
+csinálunk egy olyan logtáblát, amiben
+majd tároljuk az eseményeket.
+Hát ez assiszem elég egyértelmű. Van egy
+egy identity kulcsunk,
+és mi akkor itt ugye mivel azt
+gondoljuk, hogy egy job fogja ezt
+feldolgozni, amelyik időnként lefut,
+ezért bizos logolást itt elvégzünk.
+Tehát, hogy mikor indult a az esemi
+feldo

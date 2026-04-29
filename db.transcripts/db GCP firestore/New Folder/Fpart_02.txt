@@ -1,0 +1,276 @@
+y csinálunk egy modellt az
+üzleti folyamatról, megértjük az üzleti
+folyamatot és
+aztán egy UML osztálymodellt,
+entitáskapcsolati modellt csinálunk, és
+ebből alakul ki akár automatizált
+eszközökkel a harmadik normál formájú
+adatbázis,
+amiből amiből ugye nincs redundancia,
+egy világos szerkezet.
+És az teljesen igaz egyébként, hogy
+akkor már, hogyha van egy orders
+táblánk, és abba mondjuk
+elfelejtettük beírni azt a mezőt, hogy
+hogy mit tudom én a sitemányak a súlya,
+akkor azt a mezőt nem lehet letárolni
+abba lábában, ahhoz bizony módosítani
+kell a
+a reációs struktúrát. Most persze itt
+azért azt hadd jegyezzem meg, hogy hogy
+azért ez sem olyan feketefehér, mert
+lehet olyan reációs szerkezetet
+csinálni.
+Amit úgy szoktak hívni, hogy a
+rekordorientált adatmodell, amibe
+nyugodtan föl lehet tenni modell
+módosítása nélkül is új mezőket.
+De hát mondjuk nem ez az alap
+hozzáállása a a modellzésben, hanem az,
+hogy egy attribútum megy mezőni.
+Na most csak azt akarom mondani, hogy ez
+ami egy megkötése a reációs
+technológiának, ez egyben védelmet is
+biztosít olyan szempontból, hogy egy
+reációs adásból mindig lehet azt tudni
+pontosan.
+hogy
+melyik mezőnek mi az értelme, mi a
+tartalma, hiszen az az adás
+dokumentációjában benne, hogy legyen.
+Ugye az ott van a a
+az új modellben. Ö egyrészt ugye,
+másrészt pedig
+egy
+egy csomó olyan
+hát
+plusz megkötést vagy kényszert lehet
+készíteni reációs adabra, amelyek
+mind-mind az adatbiztonságot
+szolgálják. Az egyik az mindjárt az,
+hogy harmadik normál formában van, ami
+azt jelenti, hogy nem nincs benne
+redundancia, ugye? Tehát nem lehet az,
+hogy ugyanarról az dologról az
+adatbázisnak két külön véleménye legyen
+egyszerre. Hát egy dokumentum tában
+azért az ilyesmi sokkal inkább elő tud
+fordulni. Majd fogok róla beszélni, hogy
+hogyan lehet-e egy dokumentum tárra is
+közelíteni a ezt a reációs szerkezetet.
+De egyébként
+még van egy csomó olyan dolog, amiket
+egyébként ez megint egy egy ilyen
+tévedés, amit úgy szoktak
+gondolni a reációs adásokkal
+kapcsolatban, hogy azt gondolják, hogy
+hát ott hát ott muszáj külső
+kulcskényszereket használ,
+kulcskényszereket használ nem muszáj,
+kérem szépen, nyugodtan lehet. És
+például a a az SP legjobb tudásom
+szerint nem használ kulcs és külső
+kulcskényszereket az alat adatbázisban.
+Szóval lehet olyan adis csinálni, nem
+használjuk ki ezeket. Ezek csak
+lehetőségek. Az csak egy lehetőség, hogy
+hivatkozási integritást biztosítsunk az
+adobárosunkban.
+És ez körülbelül olyan, mintha azt
+mondanám, hogy hogy egy programnyelvben
+nem engedünk meg null pointer
+hivatkozást, ugye? Tehát lehet azt
+mondani, hogy az egy az egy jó
+programjnyelv, amiben szabadon pointen
+hivatkozni. Lehet azt is mondani, hogy
+ne írjunk hibás programot. És itt is
+erről van szó. Tehát tehát az
+adattárolásnak a ezek a ö beépített és
+opcionális kényszerei ezek mind arra
+vonatkoznak, az az a céljuk, hogy az
+adataink nagyobb biztonságban legyenek,
+mert állati nagy baj lehet abból, hogyha
+például
+redundáns adatokat tárolunk, vagy állati
+nagy baj lehet abból például, hogyha nem
+tudjuk, hogy kinek, hogy hogy ki vett
+meg valamit, ugye például milyen
+kellemetlen, ugye ki van fizetve és nem
+tudjuk, hogy ki hogy hogy ki fizette ki.
+Szóval
+ezek a dolgok, ezek ezek olyanok, én azt
+szoktam erre mondani, mint a munkaruha.
+Tehát amikor az ember valami munkát
+végez, akkor felveszi egy megfelő
+munkarát, mondjuk hegesztéshez, más mint
+áshoz. És a jó munkaruha az olyan, hogy
+a munkát nem gátolja, viszont véd, tehát
+megvédi az embert a sérülésektől. A
+rossz munkaruha persze az olyan, ami
+gátolja a munkát, vagy pedig nem véd meg
+a sérülésektől, ugye, akkor minnek
+vettük föl. Tehát itt itt érteni kell
+hozzá. Na, az az egy, amire én nem tudok
+mentséget találni, hogyha valaki azért
+nem használ valamit, mert nem ért hozzá.
+Tehát arra arra arra mindig figyelni
+kell, hogy hogy van az a jelenség, az
+infantikan elég gyakran előfordul, hogy
+itt szokták ezt mondani, hogy hogy
+akinek csak kalapácsa van, az minden
+szögnek néz. Tehát ugye azért azért ne
+vessünk el valamit, mert nem tudjuk,
+hogy ez micsoda.
+Szóval visszatérve a a a Firestorra,
+itt tehát dokumentumok vannak
+kollekciókban, és hogyha hát most mi ezt
+fogjuk csinálni egyébként, hogy át
+fogunk migrálni egy adatbázist
+relációsból fájosztóba azért, mert mert
+ez egy ez egy ez egy ilyen neuralgikus
+pont egyébként. Tele van az internet
+ilyen kérdésekkel, hogy hogy jaj most a
+cégünk technológiát vált, migrálnunk
+kell Festore, Postgress vagy Postgress
+Fos hogy kell ezt csinálni, ugye? És
+akkor látni fogjuk, hogy hát ez ez ez
+nem egy olyan egyszerű dolog.
+A az eszközök ugye egészen mások a a két
+rendszerben, és a és a struktúra is más.
+Na most az alapvető
+különbség az az, hogy egy
+relációs adatbázist azt úgy tervezünk,
+hogy
+alapvetően a domén modellből
+levezethető. Ha jó a domén modell, abból
+levezethető.
+És egy olyan szerkezet lesz belőle, vagy
+ez a harmadik normál forma, amiből
+akármilyen lekérdezést ki lehet
+szolgálni. Aztán az egy másik kérdés, az
+a fizikai adatmodellés, hugye, hogy hogy
+egy bizonyos telkést típust szeretnénk
+gyorsítani, akkor jön ez a indexelés, ez
+meg az meg amaz. Hát erre évtizedek óta
+kidolgozott technológiák vannak.
+Na most ezzel szemben például egy
+dokumentumtál vagy egy kulcsértéktál
+esetén
+az, hogy hogy azt a bizonyos domén
+modellt én hogy valósítom meg, hogy
+milyen kollekciói lesznek
+például az
+az attól függ, hogy milyen alkalmazást
+akarok rátenni. Tehát
+sokkal inkább kötődik az alkalmazáshoz,
+és ez egyben veszélyt is jelent.
+Hiszen mi van, hogyha az hogyha holnap
+után egy másik alkalmazást akkor valaki
+ugyanarra a dokumentumárra írni? És
+akkor kiderül, hogy annak a mert az egy
+másik fajta lekkérdezése lesz az
+adodásnak, hogy úgy mondjam, hogy egy
+egyszerű példát mondjuk mondjak a a
+rendeléseket a termékek felől akarom
+megközelíteni, hogy melyik terméket
+hogyan rendelték, nem pedig az ügyfelek
+föl, hogy ki mit rendelt, értik? Tehát
+ilyen egyszerű dologról van szó. Ugye a
+egy eskola adatbázisban hát semmi
+problémát nem jelen. Meg kell írni egy
+másik szerekedést, az kész. Itt viszont
+ugye nincsen ilyen ilyen egységes
+lekérdező nyelv, mint az SQL. Itt
+mindent szépen le kell programozni abban
+a program nyelv, amit Kiki választ. Hát
+bármiben. Tehát most most mi a Pythont
+fogjuk itt nézni.
+De de lehetne bármi más. Tehát tényleg
+viszont ezt szépen el kell programozni,
+és akkor majd előfordulhat, hogy egy
+bizonyos legkérdezés az borzasztóan
+lassú, mert nem úgy lett tervezve a
+kollekció, nem úgy lett tervezve a ö ö
+azt látni fogjuk, hogy a neurologikus
+pont az a sok-sok kapcsolatok
+megvalósítása lesz. Tehát, hogy a
+reációs modellen sok-sok kapcsolat
+kapcsolatával valósítunk meg.
+És és például
+egy ilyen egy ilyen dokumentumtárban
+el kell döntenünk azt, döntést kell
+hoznunk, hogy soks-sok kapcsolatot
+melyik oldalra visszük el például
+ilyen beározó korrekció formájában.
+Jó, akkor
+olyan majd nem akarok sokat már
+beszélni, inkább inkább nézzünk valamit
+még annyit, hogy hogy illet majd a a
+fáztóra vissza fogok
+térni, amikor tényleg a fest
+megvalósítjuk. Jó, és akkor akkor akkor
+menjünk tovább. Van egy demo
+alkalmazásunk, hogyha megnyitották a a
+kereső, bocsánat, a feltöltött
+anyagokat, akkor látni fogják, hogy ez
+ez a ez a Northwind adatbázisra van
+építve.
+Én nekem az a az a véleményem, hogy
+hogy csak úgy van értelme
+beszélni egy adatbázisnak
+használatosságokat, hogyha van mellette
+egy konkrét kliensprogram is. Tehát
+mi egy mi egy szerintem az adatbális
+órákon is inkább úgy kellene tanulnunk,
+hogy hogy mindig mindig mindig kliens
+programot is írunk hozzá, mert különben
+nem érezzük azt, hogy mi igazából mit is
+csinálunk. Most itt nézzék, az az
+egyszerű kis szenárió van, hogy
+szeretnénk
+egy rendelést feladni a Noradásban.
+Azért ezt választottam, mert
+mert ez már egy tranzakció, tehát ez már
+több mint egy táblát érint.
+Tehát így néz ki ez a ez a ez a ez a kis
+alkalmazás,
+hogy
+megböngészük a a products táblát, onnan
+kiveszünk egy terméknévet, terméket
+mondjuk ezt a na ezt a nagymavásat,
+kiválasztjuk a vásárlótörzsünkből
+valamelyik vásárlót és megadunk egy
+mennyiséget és egytétes rendést hozunk
+létre. Ugye ez nem nem tűnik olyan
+eszeveszett nagy dolognak, ugye? Tehát
+mondjuk úgy, hogy ez egy alapvető kis
+alkalmazás. És akkor most elnyitom a
+megrendelést, akkor kiderül, hogy ezt
+meg tudjuk-e csinálni.
+Ez a
+ö ana truilló, granma satöbbi, satöbbi.
+Most ez sikeres volt. Ez azt jelenti,
+hogy volt az illetőenek elég pénze,
+volt elég a raktáron.
+És és és lévettük az újrendési tételt.
+De mondjuk, hogyha például ugyanőnek
+mondjuk ezt akarnánk venni, akkor az
+feltétlenül nem sikerül, mert nem lenne
+annyi a raktárom, és akkor sikerni.
+Látják? Tehát tehát ez az alap, ennyi az
+alkalmazásunk. Ez a két weboldal.
+Természetesen rögtön lehet azt látni,
+hogy hogy egy csomó minden hiányzik
+belőle. Nincs autentikáció, mit tudom
+én, egy csomó dolog, tényleg nincs menü
+és a többi, és a többi. De most mi nem
+webprogramozást tanulunk, hanem
+adatbáziskezelést. Tehát ezt én csak
+azért csináltam egyébként egy ilyen
+Python flask alkalmazást
+mert a azért
+azért azért a azért lássuk azt, hogy
+hogy tényleg mire van szükségünk.
+Jó és és ez a lap ez mindig az utolsó öt
+rendelést listázza itt ki.
+Na hát

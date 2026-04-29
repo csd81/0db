@@ -1,0 +1,87 @@
+Szóval a replikáció egy olyan
+mechanizmus, amivel más adatokat lehet
+készíteni adatokról automatizált módon
+és általában időzített módon. Ezt ezt
+minden komoly adatbázisk kezelő
+technológia támogatja
+kivétel nélkül és
+elég régóta támogatják már, tehát ez nem
+egy olyan nagyon új találmány.
+Mondhatom, hogy évtizedek óta van ennek
+ennek már technológiája. Többféle típusa
+van.
+Mi most ezzel fogunk foglalkozni.
+A az alapvető fogalmak itt a replikáción
+belül. Kezdjük először ezzel. A
+fő szereplői ennek a ennek a rendszernek
+van egy olyan résztvevő,
+aki a a publikáló vagy angolul
+publisher, amelyik meghirdet
+bizonyos publikációkat, amikre elő lehet
+hirdetni. egy ilyen publikáció az az egy
+vagy több cikket tartalmaz, és egy ilyen
+cikk az például egy lehet egy tábla,
+vagy a táblának egy bizonyos része,
+mondjuk megszűrve bizonyos szempont
+szerint. Szóval egy publikáció az az
+ilyen cikkeket tartalmaz, és akkor erre
+előfizetők
+feliratkozhatnak.
+Ezeket ugye subscribereknek hívják,
+tehát előfizetőknek.
+És akkor a mechanizmus az innentől
+kezdve gondoskodik róla.
+hogy ők
+ezeket ezeket a cikkeket megkapják az
+elején, tehát van egy ilyen
+inicializációs rész, és utána
+a replikáció beállít beállításaitól
+függően ütemezetten
+a változásokat is megkapják. Tehát ez az
+alapvető
+gondolat, vagy az alapvető mechanizmus,
+és hatékonysági okokból
+a az előfizető,
+az előfizetők, mert ugye a több
+előfizető is lehet ugyanarra a
+publikációra, és a publikálók között van
+még egy harmadik résztvevő is, aki a
+disztributor vagy elosztó. Hát ennek az
+oka, hogy
+tipikusan
+ugye a replikációt arra használjuk, hogy
+hogy üzlogikát támogassunk vele.
+Tehát például információs rendszereket
+tudunk összekapcsolni, vagy esetleg
+tudunk
+OLTP adatbázsból adattárházba
+mentéseket automatizálni.
+De mindenesetre
+a a lényeg az, hogy általában a
+publisher az egy OLTP rendszer, tehát
+egy olyan rendszer, ami éles üzemben
+fut. És
+az elsődleges célja, és ez mindennél
+fontosabb, az a tranzakciók
+kiszolgálása. Tehát ez az egész
+replikációs dolog, ez csak egy ilyen
+másodlagos szempont
+a publisher működésén. És ezért a
+publishert nem akarjuk terhelni
+semmivel, amivel nem feltétlenül muszáj.
+Tehát ezért a publishertől csak egy
+példányban mennek el az adatok egy
+elosztóhoz, egy distributorhoz, és majd
+a disztributor akár nagyon sok előfizető
+is lehet, ezzel a sok előfizetővel
+majd a többit letárgyalja, tehát
+gondoskodik arról, hogy eljussonak, hogy
+eljusson mindenkihez
+a módosult
+publikáció.
+Most a gyakorlatban ugye ezek különböző
+szerverek. Tehát itt a mi gépünkön,
+virtes gépünkön például három szerver
+instance van. Azért van három, hogy mind
+a három szerepet be tudjuk itt mutatni.
+A publikációnak több v

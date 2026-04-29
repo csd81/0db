@@ -1,0 +1,3404 @@
+1
+00:00:01,560 --> 00:00:06,759
+Szóval a replikáció egy olyan
+
+2
+00:00:03,919 --> 00:00:09,160
+mechanizmus, amivel más adatokat lehet
+
+3
+00:00:06,759 --> 00:00:12,040
+készíteni adatokról automatizált módon
+
+4
+00:00:09,160 --> 00:00:14,559
+és általában időzített módon. Ezt ezt
+
+5
+00:00:12,040 --> 00:00:17,199
+minden komoly adatbázisk kezelő
+
+6
+00:00:14,559 --> 00:00:19,480
+technológia támogatja
+
+7
+00:00:17,199 --> 00:00:21,519
+kivétel nélkül és
+
+8
+00:00:19,480 --> 00:00:24,240
+elég régóta támogatják már, tehát ez nem
+
+9
+00:00:21,519 --> 00:00:26,800
+egy olyan nagyon új találmány.
+
+10
+00:00:24,240 --> 00:00:29,480
+Mondhatom, hogy évtizedek óta van ennek
+
+11
+00:00:26,800 --> 00:00:30,400
+ennek már technológiája. Többféle típusa
+
+12
+00:00:29,480 --> 00:00:33,600
+van.
+
+13
+00:00:30,400 --> 00:00:37,079
+Mi most ezzel fogunk foglalkozni.
+
+14
+00:00:33,600 --> 00:00:41,840
+A az alapvető fogalmak itt a replikáción
+
+15
+00:00:37,079 --> 00:00:45,559
+belül. Kezdjük először ezzel. A
+
+16
+00:00:41,840 --> 00:00:49,719
+fő szereplői ennek a ennek a rendszernek
+
+17
+00:00:45,559 --> 00:00:52,840
+van egy olyan résztvevő,
+
+18
+00:00:49,719 --> 00:00:56,079
+aki a a publikáló vagy angolul
+
+19
+00:00:52,840 --> 00:00:59,120
+publisher, amelyik meghirdet
+
+20
+00:00:56,079 --> 00:01:02,120
+bizonyos publikációkat, amikre elő lehet
+
+21
+00:00:59,120 --> 00:01:05,600
+hirdetni. egy ilyen publikáció az az egy
+
+22
+00:01:02,120 --> 00:01:08,439
+vagy több cikket tartalmaz, és egy ilyen
+
+23
+00:01:05,600 --> 00:01:10,200
+cikk az például egy lehet egy tábla,
+
+24
+00:01:08,439 --> 00:01:11,799
+vagy a táblának egy bizonyos része,
+
+25
+00:01:10,200 --> 00:01:15,320
+mondjuk megszűrve bizonyos szempont
+
+26
+00:01:11,799 --> 00:01:17,880
+szerint. Szóval egy publikáció az az
+
+27
+00:01:15,320 --> 00:01:19,439
+ilyen cikkeket tartalmaz, és akkor erre
+
+28
+00:01:17,880 --> 00:01:21,439
+előfizetők
+
+29
+00:01:19,439 --> 00:01:23,240
+feliratkozhatnak.
+
+30
+00:01:21,439 --> 00:01:25,960
+Ezeket ugye subscribereknek hívják,
+
+31
+00:01:23,240 --> 00:01:27,799
+tehát előfizetőknek.
+
+32
+00:01:25,960 --> 00:01:29,880
+És akkor a mechanizmus az innentől
+
+33
+00:01:27,799 --> 00:01:32,079
+kezdve gondoskodik róla.
+
+34
+00:01:29,880 --> 00:01:35,159
+hogy ők
+
+35
+00:01:32,079 --> 00:01:36,200
+ezeket ezeket a cikkeket megkapják az
+
+36
+00:01:35,159 --> 00:01:39,640
+elején, tehát van egy ilyen
+
+37
+00:01:36,200 --> 00:01:42,200
+inicializációs rész, és utána
+
+38
+00:01:39,640 --> 00:01:44,759
+a replikáció beállít beállításaitól
+
+39
+00:01:42,200 --> 00:01:47,079
+függően ütemezetten
+
+40
+00:01:44,759 --> 00:01:49,759
+a változásokat is megkapják. Tehát ez az
+
+41
+00:01:47,079 --> 00:01:52,920
+alapvető
+
+42
+00:01:49,759 --> 00:01:55,640
+gondolat, vagy az alapvető mechanizmus,
+
+43
+00:01:52,920 --> 00:01:58,840
+és hatékonysági okokból
+
+44
+00:01:55,640 --> 00:02:00,200
+a az előfizető,
+
+45
+00:01:58,840 --> 00:02:02,240
+az előfizetők, mert ugye a több
+
+46
+00:02:00,200 --> 00:02:05,759
+előfizető is lehet ugyanarra a
+
+47
+00:02:02,240 --> 00:02:09,160
+publikációra, és a publikálók között van
+
+48
+00:02:05,759 --> 00:02:12,000
+még egy harmadik résztvevő is, aki a
+
+49
+00:02:09,160 --> 00:02:14,879
+disztributor vagy elosztó. Hát ennek az
+
+50
+00:02:12,000 --> 00:02:17,040
+oka, hogy
+
+51
+00:02:14,879 --> 00:02:19,680
+tipikusan
+
+52
+00:02:17,040 --> 00:02:24,160
+ugye a replikációt arra használjuk, hogy
+
+53
+00:02:19,680 --> 00:02:25,920
+hogy üzlogikát támogassunk vele.
+
+54
+00:02:24,160 --> 00:02:28,519
+Tehát például információs rendszereket
+
+55
+00:02:25,920 --> 00:02:30,160
+tudunk összekapcsolni, vagy esetleg
+
+56
+00:02:28,519 --> 00:02:33,120
+tudunk
+
+57
+00:02:30,160 --> 00:02:35,560
+OLTP adatbázsból adattárházba
+
+58
+00:02:33,120 --> 00:02:37,560
+mentéseket automatizálni.
+
+59
+00:02:35,560 --> 00:02:39,480
+De mindenesetre
+
+60
+00:02:37,560 --> 00:02:41,879
+a a lényeg az, hogy általában a
+
+61
+00:02:39,480 --> 00:02:44,000
+publisher az egy OLTP rendszer, tehát
+
+62
+00:02:41,879 --> 00:02:46,720
+egy olyan rendszer, ami éles üzemben
+
+63
+00:02:44,000 --> 00:02:49,159
+fut. És
+
+64
+00:02:46,720 --> 00:02:51,159
+az elsődleges célja, és ez mindennél
+
+65
+00:02:49,159 --> 00:02:52,680
+fontosabb, az a tranzakciók
+
+66
+00:02:51,159 --> 00:02:54,239
+kiszolgálása. Tehát ez az egész
+
+67
+00:02:52,680 --> 00:02:57,959
+replikációs dolog, ez csak egy ilyen
+
+68
+00:02:54,239 --> 00:02:59,879
+másodlagos szempont
+
+69
+00:02:57,959 --> 00:03:01,599
+a publisher működésén. És ezért a
+
+70
+00:02:59,879 --> 00:03:05,159
+publishert nem akarjuk terhelni
+
+71
+00:03:01,599 --> 00:03:08,879
+semmivel, amivel nem feltétlenül muszáj.
+
+72
+00:03:05,159 --> 00:03:11,000
+Tehát ezért a publishertől csak egy
+
+73
+00:03:08,879 --> 00:03:13,440
+példányban mennek el az adatok egy
+
+74
+00:03:11,000 --> 00:03:16,799
+elosztóhoz, egy distributorhoz, és majd
+
+75
+00:03:13,440 --> 00:03:19,760
+a disztributor akár nagyon sok előfizető
+
+76
+00:03:16,799 --> 00:03:21,319
+is lehet, ezzel a sok előfizetővel
+
+77
+00:03:19,760 --> 00:03:24,400
+majd a többit letárgyalja, tehát
+
+78
+00:03:21,319 --> 00:03:26,319
+gondoskodik arról, hogy eljussonak, hogy
+
+79
+00:03:24,400 --> 00:03:28,760
+eljusson mindenkihez
+
+80
+00:03:26,319 --> 00:03:30,519
+a módosult
+
+81
+00:03:28,760 --> 00:03:33,200
+publikáció.
+
+82
+00:03:30,519 --> 00:03:35,599
+Most a gyakorlatban ugye ezek különböző
+
+83
+00:03:33,200 --> 00:03:37,680
+szerverek. Tehát itt a mi gépünkön,
+
+84
+00:03:35,599 --> 00:03:39,280
+virtes gépünkön például három szerver
+
+85
+00:03:37,680 --> 00:03:43,239
+instance van. Azért van három, hogy mind
+
+86
+00:03:39,280 --> 00:03:45,920
+a három szerepet be tudjuk itt mutatni.
+
+87
+00:03:43,239 --> 00:03:47,879
+A publikációnak több vagy a
+
+88
+00:03:45,920 --> 00:03:49,439
+replikációnak több fajtája van. Most
+
+89
+00:03:47,879 --> 00:03:51,840
+három fő fajtával fogunk itt
+
+90
+00:03:49,439 --> 00:03:54,200
+foglalkozni.
+
+91
+00:03:51,840 --> 00:03:56,519
+A snapshot vagy ugye pillanatfénykép,
+
+92
+00:03:54,200 --> 00:03:59,439
+illetve a transzakcionális és a és a
+
+93
+00:03:56,519 --> 00:04:01,920
+merge vagy összefésüléses replikáció.
+
+94
+00:03:59,439 --> 00:04:04,560
+Ezek közül a snapshot a legegyszerűbb.
+
+95
+00:04:01,920 --> 00:04:08,280
+Itt ebben az esetben
+
+96
+00:04:04,560 --> 00:04:10,159
+egy másolat készül
+
+97
+00:04:08,280 --> 00:04:12,799
+a
+
+98
+00:04:10,159 --> 00:04:13,920
+a publikáltó objektumokról,
+
+99
+00:04:12,799 --> 00:04:16,280
+és
+
+100
+00:04:13,920 --> 00:04:19,919
+ez egy periodikus teljes másolat az
+
+101
+00:04:16,280 --> 00:04:21,919
+egész objektumról. És aztán ezek a
+
+102
+00:04:19,919 --> 00:04:25,360
+másolatok
+
+103
+00:04:21,919 --> 00:04:27,240
+ezekkel lecserélik az őfizetőknél
+
+104
+00:04:25,360 --> 00:04:29,280
+meglévő
+
+105
+00:04:27,240 --> 00:04:31,120
+korábbi tartalmat.
+
+106
+00:04:29,280 --> 00:04:35,280
+Tehát itt a itt a lényeg az abban, tehát
+
+107
+00:04:31,120 --> 00:04:38,080
+az a lényeg, hogy a a
+
+108
+00:04:35,280 --> 00:04:41,199
+az az első bemásolás után mondjuk
+
+109
+00:04:38,080 --> 00:04:43,199
+tegyük, ez egy tábla tartalma,
+
+110
+00:04:41,199 --> 00:04:47,320
+hogyha annak a táblának valami változása
+
+111
+00:04:43,199 --> 00:04:48,800
+van később a a publishernél
+
+112
+00:04:47,320 --> 00:04:51,440
+és
+
+113
+00:04:48,800 --> 00:04:54,320
+a snapshot frissíteni akarjuk, akkor az
+
+114
+00:04:51,440 --> 00:04:56,840
+előfizetőnél droppoljuk a táblát, tehát
+
+115
+00:04:54,320 --> 00:04:58,840
+megszüntetjük a táblát és újra
+
+116
+00:04:56,840 --> 00:05:00,960
+létrehozzuk és újra feltöltjük. Tehát ez
+
+117
+00:04:58,840 --> 00:05:02,919
+egy ilyen nagyon drasztikus megoldás, és
+
+118
+00:05:00,960 --> 00:05:05,600
+ezért ez csak olyankor alkalmazható,
+
+119
+00:05:02,919 --> 00:05:07,520
+vagy olyankor célszerű alkalmazni,
+
+120
+00:05:05,600 --> 00:05:10,320
+amikor viszonylag kis adatmennyiségről
+
+121
+00:05:07,520 --> 00:05:11,880
+van szó, aminek viszont minden minden
+
+122
+00:05:10,320 --> 00:05:13,400
+eleme valószínűleg változni fog. Tehát
+
+123
+00:05:11,880 --> 00:05:16,560
+hogyha mondjuk van ilyen millió rekordos
+
+124
+00:05:13,400 --> 00:05:18,639
+táblánk, és a legutóbbi frissítés óta
+
+125
+00:05:16,560 --> 00:05:20,000
+abban csak egy-két rekord változott, hát
+
+126
+00:05:18,639 --> 00:05:22,639
+akkor ez egy nagyon rossz hatékonyság
+
+127
+00:05:20,000 --> 00:05:25,360
+megoldás. Ugye az az érezhető. Viszont
+
+128
+00:05:22,639 --> 00:05:28,160
+ez a legegyszerűbb. Én klasszikus
+
+129
+00:05:25,360 --> 00:05:31,000
+példának azt szoktam mondani, amikor
+
+130
+00:05:28,160 --> 00:05:34,360
+például van egy árfolyam táblázat,
+
+131
+00:05:31,000 --> 00:05:37,160
+annak garantáltan minden
+
+132
+00:05:34,360 --> 00:05:39,360
+sora frissülni fog minden nap, és az egy
+
+133
+00:05:37,160 --> 00:05:41,440
+napig érvényes. Na na ezt például jól
+
+134
+00:05:39,360 --> 00:05:44,600
+szét lehet replikálni, snapshot
+
+135
+00:05:41,440 --> 00:05:46,360
+replikációval még a napi üzletmenet
+
+136
+00:05:44,600 --> 00:05:48,840
+kezdete előtt, ugye? Tehát ez erre
+
+137
+00:05:46,360 --> 00:05:51,160
+például nagyon jó.
+
+138
+00:05:48,840 --> 00:05:53,800
+Hát akkor akkor nézzük azt, hogy ez ez
+
+139
+00:05:51,160 --> 00:05:56,280
+hogyan működik, és akkor közben majd meg
+
+140
+00:05:53,800 --> 00:05:58,759
+fogunk ismerkedni a replikációt
+
+141
+00:05:56,280 --> 00:06:01,479
+megvalósító
+
+142
+00:05:58,759 --> 00:06:03,919
+folyamatokkal. Illetve talán azért még
+
+143
+00:06:01,479 --> 00:06:06,880
+annyit előzetesen hadd mondjak el, hogy
+
+144
+00:06:03,919 --> 00:06:09,479
+ugye a az eddigi esettanmányunkból már
+
+145
+00:06:06,880 --> 00:06:11,720
+tudjuk azt, mik azok a jobok, ezek is
+
+146
+00:06:09,479 --> 00:06:14,800
+jobok lesznek. Tehát ezek a replikáció
+
+147
+00:06:11,720 --> 00:06:17,160
+megolasító agensek, ezek tulajdonképpen
+
+148
+00:06:14,800 --> 00:06:20,280
+ütemezetten futó csúok, amiket
+
+149
+00:06:17,160 --> 00:06:23,280
+automatikusan hoz létre a replikáció
+
+150
+00:06:20,280 --> 00:06:25,520
+konfigurálása, amivel mi itt mi most
+
+151
+00:06:23,280 --> 00:06:28,199
+csak két agensről fogunk találkozni. Az
+
+152
+00:06:25,520 --> 00:06:32,599
+egyik az a az a snapshot
+
+153
+00:06:28,199 --> 00:06:34,960
+agens vagy snapshot job, amelyik a
+
+154
+00:06:32,599 --> 00:06:38,440
+másolatot elkészíti a publikációra és
+
+155
+00:06:34,960 --> 00:06:40,400
+beteszi egy erre a célra fenntartott
+
+156
+00:06:38,440 --> 00:06:42,680
+könyvtárba, egy mappába.
+
+157
+00:06:40,400 --> 00:06:46,400
+A másik az pedig egy distribution agent
+
+158
+00:06:42,680 --> 00:06:49,240
+nevű job, amelyik figyeli ezt a mappát,
+
+159
+00:06:46,400 --> 00:06:51,000
+és onnan periodikusan
+
+160
+00:06:49,240 --> 00:06:54,000
+másolgatja ki a tartalmat az
+
+161
+00:06:51,000 --> 00:06:54,000
+előfizetőhöz.
+
+162
+00:06:54,400 --> 00:07:00,840
+Na hát akkor nézzük, hogy ez hogy ez
+
+163
+00:06:55,800 --> 00:07:03,759
+hogyan működik. Itt azt kérem, hogy hogy
+
+164
+00:07:00,840 --> 00:07:08,280
+először is nézzék, hogy megy-e a primary
+
+165
+00:07:03,759 --> 00:07:08,280
+és a secondary szerverünk is.
+
+166
+00:07:08,800 --> 00:07:12,680
+Ezt tudját megnézni, hogy itt a
+
+167
+00:07:10,240 --> 00:07:14,479
+configuration managerbe
+
+168
+00:07:12,680 --> 00:07:15,879
+ez kis zöld háromszög van-e mellettük.
+
+169
+00:07:14,479 --> 00:07:17,599
+Hogyha nincs zöld háromszög, akkor
+
+170
+00:07:15,879 --> 00:07:19,599
+kérem, hogy indítsuk őket el, tehát hogy
+
+171
+00:07:17,599 --> 00:07:21,840
+legyen zöld háromszög, jobb oldali gomb,
+
+172
+00:07:19,599 --> 00:07:25,080
+start.
+
+173
+00:07:21,840 --> 00:07:27,280
+Azért szükséges ez, mert bár most csak
+
+174
+00:07:25,080 --> 00:07:30,240
+egy egyszer szerveres
+
+175
+00:07:27,280 --> 00:07:32,720
+replikációt fogok bemutatni,
+
+176
+00:07:30,240 --> 00:07:35,240
+de mégis a virtuális gépnek a a
+
+177
+00:07:32,720 --> 00:07:37,520
+jelenlegi állapota az hát ha jól
+
+178
+00:07:35,240 --> 00:07:40,240
+emlékszem, akkor olyan, hogy nincs
+
+179
+00:07:37,520 --> 00:07:42,360
+alaphelyzetben hagyva a replikáció, és
+
+180
+00:07:40,240 --> 00:07:44,680
+ezt először meg kell tennünk, tehát
+
+181
+00:07:42,360 --> 00:07:46,680
+reszetelnünk a replikációt ahhoz, hogy
+
+182
+00:07:44,680 --> 00:07:49,319
+aztán újra el tudjunk vele kezdeni
+
+183
+00:07:46,680 --> 00:07:50,960
+dolgozni és ehhez szükségünk lesz a
+
+184
+00:07:49,319 --> 00:07:53,800
+második szerverre is, tehát a second
+
+185
+00:07:50,960 --> 00:07:57,039
+serverre is.
+
+186
+00:07:53,800 --> 00:07:59,879
+Replikációs beállítások azok a az SQN
+
+187
+00:07:57,039 --> 00:08:04,039
+szerver egy ilyen replication
+
+188
+00:07:59,879 --> 00:08:06,560
+nevű funkciócsoportban vannak.
+
+189
+00:08:04,039 --> 00:08:09,680
+És hát itt lehet látni, hogy különféle
+
+190
+00:08:06,560 --> 00:08:12,120
+dolgokat be lehet állítani.
+
+191
+00:08:09,680 --> 00:08:13,720
+Hogyha ezt látják, hogy hogy publisher
+
+192
+00:08:12,120 --> 00:08:16,080
+properties,
+
+193
+00:08:13,720 --> 00:08:17,720
+az azt jelenti, meg azt, hogy disable
+
+194
+00:08:16,080 --> 00:08:18,960
+publishing distribution, az azt jelenti,
+
+195
+00:08:17,720 --> 00:08:21,639
+hogy már be van valami állítva, tehát
+
+196
+00:08:18,960 --> 00:08:23,280
+nincs alap helyzetben a rendszer. Most
+
+197
+00:08:21,639 --> 00:08:25,599
+például mi van beállítva? A publisher
+
+198
+00:08:23,280 --> 00:08:28,120
+propertiesnél? Az van beállítva, hogy
+
+199
+00:08:25,599 --> 00:08:31,639
+ennek a szervernek a distributora az a
+
+200
+00:08:28,120 --> 00:08:34,240
+second. Látják, a second szerver. És ezt
+
+201
+00:08:31,639 --> 00:08:35,680
+itt nem is nagyon tudom átállítani,
+
+202
+00:08:34,240 --> 00:08:37,959
+ugye? Tehát ez ez ez itt nem
+
+203
+00:08:35,680 --> 00:08:43,120
+szerkesztető.
+
+204
+00:08:37,959 --> 00:08:43,120
+A second serveren pedig
+
+205
+00:08:43,599 --> 00:08:49,720
+ugyanide eljövt
+
+206
+00:08:45,800 --> 00:08:51,800
+megnézzük a distributor propertiest,
+
+207
+00:08:49,720 --> 00:08:54,680
+akkor látjuk, hogy itt publishernek be
+
+208
+00:08:51,800 --> 00:08:57,560
+van állítva az első. Tehát ők már
+
+209
+00:08:54,680 --> 00:08:59,360
+megbeszélték egymással azt, hogy hogy az
+
+210
+00:08:57,560 --> 00:09:02,560
+első szervernek a distributorra a
+
+211
+00:08:59,360 --> 00:09:04,640
+második szerver lesz. Na, ezt akarjuk
+
+212
+00:09:02,560 --> 00:09:06,360
+most resettelni, tehát hogy ez ne így
+
+213
+00:09:04,640 --> 00:09:10,320
+legyen.
+
+214
+00:09:06,360 --> 00:09:13,800
+Ambben a ebben a jelenlegi kis demóban
+
+215
+00:09:10,320 --> 00:09:16,640
+az első szerver az a primary fog csak
+
+216
+00:09:13,800 --> 00:09:18,920
+szerepelni, és ő az egyik adatbázisából
+
+217
+00:09:16,640 --> 00:09:20,839
+egy másik adatbázisából fog saját
+
+218
+00:09:18,920 --> 00:09:21,959
+magának replikálni. Ez is lehetséges.
+
+219
+00:09:20,839 --> 00:09:25,360
+Tehát nem kell feltétlenül egy külön
+
+220
+00:09:21,959 --> 00:09:27,160
+szervernek lennie, amint azt az előbb
+
+221
+00:09:25,360 --> 00:09:29,880
+mondtam, hogy általában úgy van, de így
+
+222
+00:09:27,160 --> 00:09:31,680
+is fog művenni a dolog. Szóval ezért
+
+223
+00:09:29,880 --> 00:09:34,160
+aztán azt csináljuk, hogy ez alapotba
+
+224
+00:09:31,680 --> 00:09:36,440
+kerüljön. Itt a második szerveren a
+
+225
+00:09:34,160 --> 00:09:38,600
+replicationnél állasszuk ki azt, hogy
+
+226
+00:09:36,440 --> 00:09:40,560
+disable publishing and distribution.
+
+227
+00:09:38,600 --> 00:09:42,800
+Hogyha valaki nem ezt a menüt látja,
+
+228
+00:09:40,560 --> 00:09:45,800
+akkor őneki a virtuális gépén a lévő
+
+229
+00:09:42,800 --> 00:09:45,800
+konfiguráció
+
+230
+00:09:45,880 --> 00:09:49,959
+az tehát itt válaszuk azt, hogy yes
+
+231
+00:09:48,240 --> 00:09:53,040
+disable
+
+232
+00:09:49,959 --> 00:09:54,959
+distribution and satöbbi satöbbi. És
+
+233
+00:09:53,040 --> 00:09:56,560
+mondjuk mondjuk neki azt, hogy insta
+
+234
+00:09:54,959 --> 00:10:01,160
+finish. Hogyha valaki nem ezeket a
+
+235
+00:09:56,560 --> 00:10:05,079
+menüpontokat látja, akkor
+
+236
+00:10:01,160 --> 00:10:06,839
+akkor lehet, hogy ő neki
+
+237
+00:10:05,079 --> 00:10:09,160
+már alapállapotban volt a replikáció
+
+238
+00:10:06,839 --> 00:10:10,560
+gépén. Tehát semmi baj. Egy ilyen az
+
+239
+00:10:09,160 --> 00:10:11,760
+alapállapot, hogy configure
+
+240
+00:10:10,560 --> 00:10:13,920
+distribution. Tehát hogyha itt azt
+
+241
+00:10:11,760 --> 00:10:17,160
+látják, hogy configure distribution,
+
+242
+00:10:13,920 --> 00:10:18,760
+akkor nincsen semmi beállítva. Jó
+
+243
+00:10:17,160 --> 00:10:20,880
+most ezt itt megszüntettük ennek a
+
+244
+00:10:18,760 --> 00:10:23,760
+disztribúciós és ezek után eljöhetünk
+
+245
+00:10:20,880 --> 00:10:26,120
+ide is az első szerverrel.
+
+246
+00:10:23,760 --> 00:10:27,480
+És akkor látjuk, hogy hoppá, már itt is
+
+247
+00:10:26,120 --> 00:10:29,320
+megváltozott a menü, ugye? Tehát
+
+248
+00:10:27,480 --> 00:10:30,959
+megszűnt a kettő között ez a ez az
+
+249
+00:10:29,320 --> 00:10:32,720
+összecsatolás.
+
+250
+00:10:30,959 --> 00:10:34,560
+Na most, hogy állapotban vagyunk, akár
+
+251
+00:10:32,720 --> 00:10:36,560
+le is csatlakozhatunk a második
+
+252
+00:10:34,560 --> 00:10:39,120
+szerverről
+
+253
+00:10:36,560 --> 00:10:41,480
+és kezdjük el a beállításokat. Az első
+
+254
+00:10:39,120 --> 00:10:42,639
+beállítás az az amit lehetne talán
+
+255
+00:10:41,480 --> 00:10:44,200
+kicsit furcsa. Először azt kell
+
+256
+00:10:42,639 --> 00:10:46,360
+beállítanunk,
+
+257
+00:10:44,200 --> 00:10:49,360
+hogy ebből az új replikációba ki lesz a
+
+258
+00:10:46,360 --> 00:10:49,360
+distributor.
+
+259
+00:10:50,560 --> 00:10:53,839
+Tehát ezt, hogy hogy configured
+
+260
+00:10:52,160 --> 00:10:55,880
+distribution.
+
+261
+00:10:53,839 --> 00:10:57,279
+És itt az alapállapot az az látják, hogy
+
+262
+00:10:55,880 --> 00:10:58,680
+a primary server az saját maga
+
+263
+00:10:57,279 --> 00:11:01,680
+distributor lesz. Tehát ezt így is
+
+264
+00:10:58,680 --> 00:11:01,680
+hagyjuk.
+
+265
+00:11:02,120 --> 00:11:07,000
+Nem kell beállítanunk azt, hogy az esköz
+
+266
+00:11:04,360 --> 00:11:08,839
+automatikusan menjen,
+
+267
+00:11:07,000 --> 00:11:10,519
+hiszen mi kézzel is mindig el tudjuk
+
+268
+00:11:08,839 --> 00:11:12,480
+indítani.
+
+269
+00:11:10,519 --> 00:11:15,399
+És most meg kell adnunk, hogy hol lesz a
+
+270
+00:11:12,480 --> 00:11:19,480
+a fá rendszeren belül az a mappa, ahova
+
+271
+00:11:15,399 --> 00:11:23,399
+majd a snapshot agent másolgatja mindig
+
+272
+00:11:19,480 --> 00:11:26,040
+periodikusan a változott tárbatalmat.
+
+273
+00:11:23,399 --> 00:11:28,880
+Hát itt föl kell nekünk valamit, az úgy
+
+274
+00:11:26,040 --> 00:11:30,760
+jó is lesz. Diszribúciós adatbázis. A
+
+275
+00:11:28,880 --> 00:11:33,120
+snapshot repliká nincsen szükségünk
+
+276
+00:11:30,760 --> 00:11:35,839
+ilyen adatbázisra,
+
+277
+00:11:33,120 --> 00:11:37,200
+de majd a transzakcionálisnál lesz.
+
+278
+00:11:35,839 --> 00:11:40,279
+Tehát ez egy ez egy speciális
+
+279
+00:11:37,200 --> 00:11:42,839
+rendszeradatbázis, ahova például a
+
+280
+00:11:40,279 --> 00:11:44,399
+tranzakcionális replikációnál a a
+
+281
+00:11:42,839 --> 00:11:47,040
+követendő tranzakciók kerülnek
+
+282
+00:11:44,399 --> 00:11:50,600
+bemvásolásra. Attól függetlenül ez létre
+
+283
+00:11:47,040 --> 00:11:53,120
+fog jönni, hogy nem használjuk
+
+284
+00:11:50,600 --> 00:11:55,880
+és kész.
+
+285
+00:11:53,120 --> 00:11:57,639
+Jó, ha valaki esetleg elakadt, akkor
+
+286
+00:11:55,880 --> 00:12:02,320
+akkor szóljon. Jó, és akkor vissza tudok
+
+287
+00:11:57,639 --> 00:12:02,320
+menni, meg tudok ismételni egy lépést.
+
+288
+00:12:02,399 --> 00:12:06,519
+Most egy kicsit várjunk, hogy most
+
+289
+00:12:03,639 --> 00:12:08,200
+létrehoz a diszriúciós adapálést
+
+290
+00:12:06,519 --> 00:12:10,200
+satöbbi.
+
+291
+00:12:08,200 --> 00:12:12,000
+És a ha ez konfigurálva van, akkor már
+
+292
+00:12:10,200 --> 00:12:13,360
+ért tudunk hozni egy új publikációt.
+
+293
+00:12:12,000 --> 00:12:15,880
+Tehát itt látható, hogy local
+
+294
+00:12:13,360 --> 00:12:17,839
+publications, local subscriptions,
+
+295
+00:12:15,880 --> 00:12:19,320
+jobb oldali gomb, local publications
+
+296
+00:12:17,839 --> 00:12:21,079
+alatt. Először mindig publikálni kell
+
+297
+00:12:19,320 --> 00:12:23,399
+ahhoz, hogy erőhesen fizetni. Tehát ez
+
+298
+00:12:21,079 --> 00:12:26,680
+az első lépés.
+
+299
+00:12:23,399 --> 00:12:28,760
+Az new publication.
+
+300
+00:12:26,680 --> 00:12:30,680
+És most
+
+301
+00:12:28,760 --> 00:12:32,639
+a Northind adatbázisból fogjuk
+
+302
+00:12:30,680 --> 00:12:34,959
+replikálni az orders táblának egy
+
+303
+00:12:32,639 --> 00:12:38,199
+részét. Jól látják, hogy négyféle
+
+304
+00:12:34,959 --> 00:12:41,040
+replikáció van. Ezek közül a a snapshot
+
+305
+00:12:38,199 --> 00:12:43,639
+itt a legegyszerűbb azt választjuk ki
+
+306
+00:12:41,040 --> 00:12:46,320
+most.
+
+307
+00:12:43,639 --> 00:12:49,279
+És az objektumok közül kiválasztjuk az
+
+308
+00:12:46,320 --> 00:12:52,279
+orders táblát.
+
+309
+00:12:49,279 --> 00:12:54,160
+Látható, hogy annak minden mezője itt
+
+310
+00:12:52,279 --> 00:12:56,920
+van. lehetne azt is választani, hogy ne
+
+311
+00:12:54,160 --> 00:12:58,360
+minden mezőjé legyen replikálva, illetve
+
+312
+00:12:56,920 --> 00:13:00,480
+még itt még itt sok mindent be lehet
+
+313
+00:12:58,360 --> 00:13:03,320
+állítani egyébként,
+
+314
+00:13:00,480 --> 00:13:05,000
+tehát hogy hogy látják, nagyon finoman
+
+315
+00:13:03,320 --> 00:13:06,720
+hangolható egy ilyen replikációs
+
+316
+00:13:05,000 --> 00:13:08,360
+mechanizmus,
+
+317
+00:13:06,720 --> 00:13:11,880
+hogy hogy például amikor repliká, akkor
+
+318
+00:13:08,360 --> 00:13:14,760
+miket másoljon át, hogy átmásolja-e az
+
+319
+00:13:11,880 --> 00:13:18,480
+XML indexeket például, meg ilyeneket, a
+
+320
+00:13:14,760 --> 00:13:20,279
+bindingokat meg meg mindenfélét. A check
+
+321
+00:13:18,480 --> 00:13:22,399
+constraintekkel például az ugye
+
+322
+00:13:20,279 --> 00:13:24,519
+defultban nem másodódik át. Szóval a
+
+323
+00:13:22,399 --> 00:13:26,560
+replikációnál
+
+324
+00:13:24,519 --> 00:13:29,199
+tényleg akik ezt kidolgozták, azok
+
+325
+00:13:26,560 --> 00:13:30,760
+nagyon sok mindenre gondoltak. És hát
+
+326
+00:13:29,199 --> 00:13:32,760
+ugye amikor megcsináltuk ezt a laza
+
+327
+00:13:30,760 --> 00:13:34,920
+csatású esettulmányt, mi akkor is
+
+328
+00:13:32,760 --> 00:13:36,959
+tulajdonképpen egyfajta primitív
+
+329
+00:13:34,920 --> 00:13:39,920
+replikációt csináltunk, ugye egyik
+
+330
+00:13:36,959 --> 00:13:44,560
+rendszerből a másikba, de tehát mi nem
+
+331
+00:13:39,920 --> 00:13:44,560
+voltunk azért ennyire alaposak, ugye.
+
+332
+00:13:45,079 --> 00:13:50,160
+Jó. Szóval hát célszerű azért a profi
+
+333
+00:13:47,480 --> 00:13:51,120
+munkájára támaszkodni.
+
+334
+00:13:50,160 --> 00:13:53,519
+Most itt meg lehet adni egy
+
+335
+00:13:51,120 --> 00:13:56,880
+szűrőfeltételt, hogy milyen rekordok
+
+336
+00:13:53,519 --> 00:13:58,480
+menjenek át. És most azt választom, hogy
+
+337
+00:13:56,880 --> 00:14:01,680
+itt
+
+338
+00:13:58,480 --> 00:14:03,720
+a ez a ship pája,
+
+339
+00:14:01,680 --> 00:14:06,079
+vagy nem is az a ship country, tehát
+
+340
+00:14:03,720 --> 00:14:09,839
+hogy ahova küldik
+
+341
+00:14:06,079 --> 00:14:12,959
+a a az a rendelést, ship country az
+
+342
+00:14:09,839 --> 00:14:18,240
+legyen egyenlő USÁval.
+
+343
+00:14:12,959 --> 00:14:18,240
+USA egyszeres idézőjelbe. Jó,
+
+344
+00:14:18,399 --> 00:14:22,720
+itt van a szűrőfeltétel,
+
+345
+00:14:21,160 --> 00:14:25,399
+és akkor válasszuk ki azt, hogy most
+
+346
+00:14:22,720 --> 00:14:27,360
+rögtön létrejöjjön a a snapshotnak az
+
+347
+00:14:25,399 --> 00:14:29,519
+inicializálása,
+
+348
+00:14:27,360 --> 00:14:33,279
+és egyúttal ütemezzük is be, hogy ez
+
+349
+00:14:29,519 --> 00:14:35,920
+után is fusson le majd még többször,
+
+350
+00:14:33,279 --> 00:14:38,800
+mégpedig mondjuk egy percenként. Jó,
+
+351
+00:14:35,920 --> 00:14:41,800
+persze ez nem egy valóságos beállítás,
+
+352
+00:14:38,800 --> 00:14:41,800
+de
+
+353
+00:14:42,680 --> 00:14:46,639
+daily rendben van. Ocs every one
+
+354
+00:14:44,600 --> 00:14:49,079
+minutes.
+
+355
+00:14:46,639 --> 00:14:50,600
+Jó, láttunk már ilyen felületet, ugye?
+
+356
+00:14:49,079 --> 00:14:53,040
+Ez ugyanaz a felület, mint ami a jobnak
+
+357
+00:14:50,600 --> 00:14:56,519
+a az ütője, csak mi nem adhatunk nevet
+
+358
+00:14:53,040 --> 00:14:58,279
+ennek a ennek a schedulak, mert ő ad
+
+359
+00:14:56,519 --> 00:15:00,759
+neki nevet, meg a Jobnak is majd ő ad
+
+360
+00:14:58,279 --> 00:15:03,160
+nevet. Ez most percenként fogja mindig
+
+361
+00:15:00,759 --> 00:15:05,199
+csinálni máslatokat. kizárólag csak
+
+362
+00:15:03,160 --> 00:15:07,759
+dibagolási vagyis hát demonstrási
+
+363
+00:15:05,199 --> 00:15:10,759
+célból.
+
+364
+00:15:07,759 --> 00:15:10,759
+Jó.
+
+365
+00:15:12,240 --> 00:15:17,160
+Most jön az, hogy ennek a ennek a
+
+366
+00:15:14,720 --> 00:15:20,360
+jobnak, amelyik egyébként egy
+
+367
+00:15:17,160 --> 00:15:22,120
+parancssoros végrehajtható program,
+
+368
+00:15:20,360 --> 00:15:23,759
+ennek meg kell adnunk a futási
+
+369
+00:15:22,120 --> 00:15:25,880
+kontextusát, tehát hogy ez hogy ez
+
+370
+00:15:23,759 --> 00:15:29,440
+milyen loginnal hogy fog fog futni
+
+371
+00:15:25,880 --> 00:15:31,680
+egyáltalán ez a ez a ez a progi, és hogy
+
+372
+00:15:29,440 --> 00:15:34,319
+fog belépni a szerverre.
+
+373
+00:15:31,680 --> 00:15:36,560
+Úgyhogy itt a security settingsnél
+
+374
+00:15:34,319 --> 00:15:38,959
+állítsunk neki rendszergaz jogokat, hogy
+
+375
+00:15:36,560 --> 00:15:41,000
+ne legyen azzal gond, hogy például ennek
+
+376
+00:15:38,959 --> 00:15:44,519
+írnia kell tudni ugye ezt a snapshot
+
+377
+00:15:41,000 --> 00:15:47,279
+foldert oda másolja ki az adattartalmat.
+
+378
+00:15:44,519 --> 00:15:49,079
+Úgyhogy itt most ez itt ez a Windows
+
+379
+00:15:47,279 --> 00:15:51,880
+login ez rendszergazda. Ezt ide
+
+380
+00:15:49,079 --> 00:15:53,399
+bemásolom.
+
+381
+00:15:51,880 --> 00:15:55,959
+Persze lehetne finom szabályozni
+
+382
+00:15:53,399 --> 00:15:59,519
+természetesen hozzáférést. És akkor a
+
+383
+00:15:55,959 --> 00:15:59,519
+szokásos jelszó.
+
+384
+00:16:04,839 --> 00:16:09,600
+Ugye ugyanaz a rendszergazda jelszó is,
+
+385
+00:16:07,319 --> 00:16:11,800
+meg a
+
+386
+00:16:09,600 --> 00:16:13,759
+az SQS szervernek is az S a jelszó erre
+
+387
+00:16:11,800 --> 00:16:16,000
+a gépre,
+
+388
+00:16:13,759 --> 00:16:18,720
+és és ezt a logint fogja
+
+389
+00:16:16,000 --> 00:16:21,560
+megszemélyesíteni, mikor belép. Tehát a
+
+390
+00:16:18,720 --> 00:16:24,600
+a az a szerverhez, mikor hozzáfér, ugye
+
+391
+00:16:21,560 --> 00:16:26,759
+ugye le kell kérni az adatokat, akkor
+
+392
+00:16:24,600 --> 00:16:28,560
+nem SQS szerveres, hanem Windows
+
+393
+00:16:26,759 --> 00:16:30,480
+autentikáció használni. És mivel
+
+394
+00:16:28,560 --> 00:16:34,920
+rendszergazda, ezért sikerülni fog neki
+
+395
+00:16:30,480 --> 00:16:34,920
+a belépés. Jó,
+
+396
+00:16:35,720 --> 00:16:41,639
+és ez így rendben is van, és készen is
+
+397
+00:16:38,399 --> 00:16:43,800
+vagyunk. Adunk neki egy nevet.
+
+398
+00:16:41,639 --> 00:16:47,880
+Tehát orders lesz a publikációnak a
+
+399
+00:16:43,800 --> 00:16:47,880
+neve, amire majd előre lehet fizetni.
+
+400
+00:16:55,000 --> 00:17:01,279
+No hát akkor nézzük meg, hogy hogy mi
+
+401
+00:16:58,839 --> 00:17:05,760
+történt ennek hatására.
+
+402
+00:17:01,279 --> 00:17:07,439
+Itt a az a mappa, ahol a replikációs
+
+403
+00:17:05,760 --> 00:17:09,919
+objektumoknak
+
+404
+00:17:07,439 --> 00:17:14,039
+kéne lennie,
+
+405
+00:17:09,919 --> 00:17:16,640
+az a az SQL szervernek ugye a primary,
+
+406
+00:17:14,039 --> 00:17:20,039
+ez az analyszis szerver, ez itt az SQL
+
+407
+00:17:16,640 --> 00:17:24,559
+szerver és ezen belül van egy rap data
+
+408
+00:17:20,039 --> 00:17:27,760
+mappa. Unc unci és akkor ez az ugye
+
+409
+00:17:24,559 --> 00:17:32,640
+látják itt már a mappa neve a Northind
+
+410
+00:17:27,760 --> 00:17:34,640
+Order ez ez most jött létre és van benne
+
+411
+00:17:32,640 --> 00:17:38,280
+két almappa és nézzét csak mik vannak
+
+412
+00:17:34,640 --> 00:17:41,559
+benne ilyen ilyen BCP fálok a többi azok
+
+413
+00:17:38,280 --> 00:17:47,280
+meg index meg egyéb dolgok de a BCP az a
+
+414
+00:17:41,559 --> 00:17:47,280
+az a BK copy rövidítése tehát a
+
+415
+00:17:47,600 --> 00:17:53,799
+hát hogy mondjam alacs alacsony szintű
+
+416
+00:17:50,240 --> 00:17:54,760
+másolás. A B copy az egy olyan művelet,
+
+417
+00:17:53,799 --> 00:17:57,360
+amit
+
+418
+00:17:54,760 --> 00:17:59,600
+hát mondjuk hasonló műveleteket támogat
+
+419
+00:17:57,360 --> 00:18:01,799
+minden techn szerver konkrétan ez azt
+
+420
+00:17:59,600 --> 00:18:03,919
+jelenti,
+
+421
+00:18:01,799 --> 00:18:06,840
+hogy ez
+
+422
+00:18:03,919 --> 00:18:08,520
+ez végülis adattart másol be egy
+
+423
+00:18:06,840 --> 00:18:12,280
+táblába,
+
+424
+00:18:08,520 --> 00:18:13,960
+vagy másol ki egy táblából, viszont
+
+425
+00:18:12,280 --> 00:18:16,919
+ez megkerül a logolást, tehát ez
+
+426
+00:18:13,960 --> 00:18:19,000
+közvetlenül a fához fér hozzá, és ez egy
+
+427
+00:18:16,919 --> 00:18:20,520
+ez egy rendkívül hatékony és gyors,
+
+428
+00:18:19,000 --> 00:18:22,080
+tehát nagyon
+
+429
+00:18:20,520 --> 00:18:25,520
+nagyon nagy mennyiségű adatnak a gyors
+
+430
+00:18:22,080 --> 00:18:29,440
+másolására alkalmas művelet.
+
+431
+00:18:25,520 --> 00:18:31,120
+Jó, tehát ugye látható, hogy hoppá, idő
+
+432
+00:18:29,440 --> 00:18:34,480
+közel még egy mappa megjött közben, és
+
+433
+00:18:31,120 --> 00:18:36,799
+mindegyiknek mi ugyanaz a tartalma, ugye
+
+434
+00:18:34,480 --> 00:18:39,000
+ilyen ilyen balkopi fáok. Hát igen,
+
+435
+00:18:36,799 --> 00:18:42,559
+azért, mert ugye ez egy percenként fut.
+
+436
+00:18:39,000 --> 00:18:45,120
+Tehát itt itt lehet látni, hogy ez ez 4:
+
+437
+00:18:42,559 --> 00:18:47,080
+22-kor futott,
+
+438
+00:18:45,120 --> 00:18:49,799
+4:21-kor,
+
+439
+00:18:47,080 --> 00:18:51,520
+ugye 4: 20-kor. Tehát ez bizony itt van
+
+440
+00:18:49,799 --> 00:18:54,000
+egy job, ami ez percenként csinálgatja
+
+441
+00:18:51,520 --> 00:18:56,799
+ezeket a mappákat. Hogyha ez a job hol
+
+442
+00:18:54,000 --> 00:18:58,679
+van, azt is megnézhetjük.
+
+443
+00:18:56,799 --> 00:19:00,840
+Hogy mi ez a job? Hogyha ide
+
+444
+00:18:58,679 --> 00:19:03,039
+visszajövünk, itt az Esk server agentnél
+
+445
+00:19:00,840 --> 00:19:06,520
+vannak a jobok,
+
+446
+00:19:03,039 --> 00:19:10,720
+és látható, hogy hogy létrejött egy pár
+
+447
+00:19:06,520 --> 00:19:10,720
+új job, ami eddig nem is volt.
+
+448
+00:19:11,000 --> 00:19:16,799
+Konkrétan a snapshot job, tehát a
+
+449
+00:19:14,600 --> 00:19:19,159
+snapshot agent, az ez az ez a job. Itt
+
+450
+00:19:16,799 --> 00:19:22,159
+meg is lehet nézni egyébként, hogy a
+
+451
+00:19:19,159 --> 00:19:24,280
+például a az időzítése
+
+452
+00:19:22,159 --> 00:19:26,080
+az
+
+453
+00:19:24,280 --> 00:19:28,039
+az ilyen az ilyen egy perces. Itt
+
+454
+00:19:26,080 --> 00:19:30,360
+látható. Nem is kell továbbni, mert
+
+455
+00:19:28,039 --> 00:19:32,600
+kiírta nekünk, hogy everyday one
+
+456
+00:19:30,360 --> 00:19:35,120
+minutes. Every one minutes. Oké. Tehát
+
+457
+00:19:32,600 --> 00:19:36,720
+ez az ez a job, amit most hoztunk létre.
+
+458
+00:19:35,120 --> 00:19:39,120
+Aztán vannak még egyéb jobok, amikor
+
+459
+00:19:36,720 --> 00:19:41,120
+applikációval kapcsolatosak, mit tudom
+
+460
+00:19:39,120 --> 00:19:44,880
+én, ilyen takarítás meg egyéb dolgok.
+
+461
+00:19:41,120 --> 00:19:47,320
+Hát azokkal most nem kell foglalkoznunk.
+
+462
+00:19:44,880 --> 00:19:50,559
+Lényeg az, hogy ez szépen fut ez a drop.
+
+463
+00:19:47,320 --> 00:19:53,440
+És egyébként itt
+
+464
+00:19:50,559 --> 00:19:55,080
+bele is lehet nézni, hogy hogy eddig
+
+465
+00:19:53,440 --> 00:19:58,400
+hányszor futott le itt a historyban.
+
+466
+00:19:55,080 --> 00:20:03,760
+látható, hogy szépen percenként 23, 22,
+
+467
+00:19:58,400 --> 00:20:03,760
+2120, ez ez bizony mindig le fog futni.
+
+468
+00:20:04,640 --> 00:20:09,559
+egyébként van egy van egy olyan dolog
+
+469
+00:20:07,360 --> 00:20:12,559
+is, amit úgy hívnak itt a replikációnál,
+
+470
+00:20:09,559 --> 00:20:12,559
+hogy
+
+471
+00:20:13,080 --> 00:20:19,760
+hogy replication monitor itt launch
+
+472
+00:20:15,799 --> 00:20:21,799
+replication monitor lehet indítani.
+
+473
+00:20:19,760 --> 00:20:26,320
+Hát most itt itt ugye előfordulat az,
+
+474
+00:20:21,799 --> 00:20:28,360
+hogy nekünk sok publikációnk van meg meg
+
+475
+00:20:26,320 --> 00:20:31,159
+sok előfizetésünk,
+
+476
+00:20:28,360 --> 00:20:33,520
+de hát
+
+477
+00:20:31,159 --> 00:20:36,919
+most itt jelenleg ugye ez az egy
+
+478
+00:20:33,520 --> 00:20:39,919
+publikációnk van, ami aktív.
+
+479
+00:20:36,919 --> 00:20:42,240
+És akkor itt lehet látni, hogy ezt egy
+
+480
+00:20:39,919 --> 00:20:44,919
+agent kezeli. Most ugye előfizetés még
+
+481
+00:20:42,240 --> 00:20:48,320
+nincsen rá,
+
+482
+00:20:44,919 --> 00:20:50,120
+de a replikáció azért azért már működik.
+
+483
+00:20:48,320 --> 00:20:51,640
+Jó, egyébként még annyit esetleg, hogyha
+
+484
+00:20:50,120 --> 00:20:53,600
+most belenézünk még egyszer ebbe a
+
+485
+00:20:51,640 --> 00:20:55,480
+dropba itt
+
+486
+00:20:53,600 --> 00:20:57,039
+a tulajdonság közé is megnézzük azt,
+
+487
+00:20:55,480 --> 00:21:00,919
+hogy ténylegesen mit csinál, ugye az
+
+488
+00:20:57,039 --> 00:21:04,280
+első lépése az, ami ami az érdekes, ez a
+
+489
+00:21:00,919 --> 00:21:04,280
+run agent.
+
+490
+00:21:06,240 --> 00:21:13,000
+Szóval akkor azt látjuk, ez egy
+
+491
+00:21:08,280 --> 00:21:15,400
+replication snapshot típusú job, ami egy
+
+492
+00:21:13,000 --> 00:21:18,360
+exe, tehát ez egy végrehajtható
+
+493
+00:21:15,400 --> 00:21:20,640
+parancssoros program.
+
+494
+00:21:18,360 --> 00:21:23,039
+És a paraméterei vannak itt megadva
+
+495
+00:21:20,640 --> 00:21:24,960
+neki, látható komment néven. Tehát ezek
+
+496
+00:21:23,039 --> 00:21:26,720
+a paraméterek azok, amik meg vannak neki
+
+497
+00:21:24,960 --> 00:21:30,080
+adva,
+
+498
+00:21:26,720 --> 00:21:31,720
+hogy hova kell csatlakozni, meg ilyesmi.
+
+499
+00:21:30,080 --> 00:21:33,279
+Jó, hát most ez még csak a fele a
+
+500
+00:21:31,720 --> 00:21:36,159
+dolognak, ugye hát az adatoknak a
+
+501
+00:21:33,279 --> 00:21:38,640
+kimásolása megtörténik percenként. Most
+
+502
+00:21:36,159 --> 00:21:42,320
+nézzük meg azt, hogy hogyan lesz ebből
+
+503
+00:21:38,640 --> 00:21:42,320
+bemásolás valahová.
+
+504
+00:21:42,960 --> 00:21:48,559
+Ehhez jöjünk el ide a a replicationhez,
+
+505
+00:21:45,919 --> 00:21:53,679
+és válasszuk ki a local subscriptiont,
+
+506
+00:21:48,559 --> 00:21:55,720
+és ott a new subscriptiont válasszuk ki.
+
+507
+00:21:53,679 --> 00:21:58,200
+Ugye előfizetni csak erre tudunk,
+
+508
+00:21:55,720 --> 00:22:01,679
+úgyhogy ezt itt ezt már fel is kínálta
+
+509
+00:21:58,200 --> 00:22:04,400
+nekünk. Nagyon jó.
+
+510
+00:22:01,679 --> 00:22:06,279
+Most itt az, hogy hol futtatjuk a a
+
+511
+00:22:04,400 --> 00:22:09,440
+distributornél, vagy a subscribernél
+
+512
+00:22:06,279 --> 00:22:11,520
+futtatjuk a a disztribúciós éget
+
+513
+00:22:09,440 --> 00:22:13,039
+ügynököt vagy jobot, az ugye azért
+
+514
+00:22:11,520 --> 00:22:15,520
+mindegy, mert ez a kettő, ez ugyanaz
+
+515
+00:22:13,039 --> 00:22:18,120
+jelenleg ez a ez a pr szerver, de
+
+516
+00:22:15,520 --> 00:22:19,799
+különben egyébként feltehetőleg a
+
+517
+00:22:18,120 --> 00:22:23,120
+diszribútort választanák, hiszen
+
+518
+00:22:19,799 --> 00:22:26,120
+termeletesíteni akarjuk a publishert.
+
+519
+00:22:23,120 --> 00:22:26,120
+Jó.
+
+520
+00:22:31,200 --> 00:22:35,440
+Kérdés az, hogy hova kerüljenek be az
+
+521
+00:22:33,480 --> 00:22:38,000
+adatok. Itt meg kell adnunk azt, hogy
+
+522
+00:22:35,440 --> 00:22:40,720
+hogy mi lesz a célatbázis. Tehát ez a
+
+523
+00:22:38,000 --> 00:22:42,840
+subscription database.
+
+524
+00:22:40,720 --> 00:22:44,640
+Adhatnánk egyébként több előfizetét is,
+
+525
+00:22:42,840 --> 00:22:46,960
+előfizetőt is hozzá. Lehetne akár 100
+
+526
+00:22:44,640 --> 00:22:49,080
+szerver felé szétreplikálni a dolgokat.
+
+527
+00:22:46,960 --> 00:22:51,640
+Például ugye egy banknak lehetne egy
+
+528
+00:22:49,080 --> 00:22:54,039
+központi szerverre, ami 100 fiókhoz
+
+529
+00:22:51,640 --> 00:22:55,600
+replikálja szét az árfolyamot minden
+
+530
+00:22:54,039 --> 00:22:59,080
+éjszaka.
+
+531
+00:22:55,600 --> 00:23:00,600
+Na most itt válasszuk ki azt, hogy
+
+532
+00:22:59,080 --> 00:23:02,760
+hogy ugye ugyanebben ugyanezenzen a
+
+533
+00:23:00,600 --> 00:23:04,720
+szerveren egy új adatbázist hozunk
+
+534
+00:23:02,760 --> 00:23:09,000
+létre. Akkor itt jön egy ilyen kis
+
+535
+00:23:04,720 --> 00:23:11,360
+tervező, és az lesz neki a neve, hogy
+
+536
+00:23:09,000 --> 00:23:16,520
+hogy
+
+537
+00:23:11,360 --> 00:23:16,520
+snapshot az order táblára. Jó,
+
+538
+00:23:16,760 --> 00:23:21,039
+snapshot order tára. Én ma egy újatba is
+
+539
+00:23:19,320 --> 00:23:24,039
+létrehozok. Én mindig kiválaszom azt,
+
+540
+00:23:21,039 --> 00:23:26,320
+hogy milyen rekord múzeum módban legyen,
+
+541
+00:23:24,039 --> 00:23:29,279
+mert ezt
+
+542
+00:23:26,320 --> 00:23:31,480
+így helyes csinálni.
+
+543
+00:23:29,279 --> 00:23:33,200
+Létrejött az új adatbázis,
+
+544
+00:23:31,480 --> 00:23:35,799
+ebbe fog bekerülni majd az a bizonyos
+
+545
+00:23:33,200 --> 00:23:37,960
+tábla. És ugye most ennek a distribution
+
+546
+00:23:35,799 --> 00:23:40,880
+agentnek ez is egy paranc parancsos
+
+547
+00:23:37,960 --> 00:23:43,600
+utility. Ennek ugye először is hozzá
+
+548
+00:23:40,880 --> 00:23:47,120
+kell férnie az adatokhoz, ami azt
+
+549
+00:23:43,600 --> 00:23:50,120
+jelenti, hogy ezt a bizonyos mappát kell
+
+550
+00:23:47,120 --> 00:23:53,400
+tudni olvasni, amit az előbb mutattam.
+
+551
+00:23:50,120 --> 00:23:55,320
+Másrészt pedig az adatokkal
+
+552
+00:23:53,400 --> 00:23:58,080
+hozzá kell férnie, tehát el kell jutni
+
+553
+00:23:55,320 --> 00:24:02,480
+ezekkel az adatokkal az előfizetőhöz.
+
+554
+00:23:58,080 --> 00:24:03,840
+Most ugye ugyanaz a mind a két szerver,
+
+555
+00:24:02,480 --> 00:24:06,520
+viszont meg kell mondanunk azt, hogy
+
+556
+00:24:03,840 --> 00:24:10,880
+milyen kontextusba fusson ez. Úgyhogy
+
+557
+00:24:06,520 --> 00:24:10,880
+megint csak rendszergazda
+
+558
+00:24:12,200 --> 00:24:18,120
+és a jelszó. Ha valaki végképp nem akar
+
+559
+00:24:14,720 --> 00:24:19,760
+sokat gépelni, akkor másolja.
+
+560
+00:24:18,120 --> 00:24:22,600
+És ugyanezt tudjuk felhasználni mind a
+
+561
+00:24:19,760 --> 00:24:23,919
+két feladatra. Tehát most ugye a kettő
+
+562
+00:24:22,600 --> 00:24:28,480
+ugyanaz, a distributor és meg a
+
+563
+00:24:23,919 --> 00:24:28,480
+subscriber is ugyanaz. Jó.
+
+564
+00:24:28,520 --> 00:24:33,320
+Na most itt meg lehet adni egy
+
+565
+00:24:30,960 --> 00:24:35,919
+szinkronizációs
+
+566
+00:24:33,320 --> 00:24:37,520
+ö
+
+567
+00:24:35,919 --> 00:24:39,600
+időzítést.
+
+568
+00:24:37,520 --> 00:24:43,080
+Hát, hogy egy percenként jönnek létre az
+
+569
+00:24:39,600 --> 00:24:45,399
+új mentések. Most nyilván azt mondanánk,
+
+570
+00:24:43,080 --> 00:24:47,000
+hogy ez valóságos lenne,
+
+571
+00:24:45,399 --> 00:24:49,880
+hogy mondjuk a mentések minden éjjel
+
+572
+00:24:47,000 --> 00:24:52,840
+kettőkor jönnek ki ebbe a mappába, akkor
+
+573
+00:24:49,880 --> 00:24:54,320
+minden éjjel három-kor fusson ez le és
+
+574
+00:24:52,840 --> 00:24:56,320
+hozzáát az adatokat. Ugye ez van a
+
+575
+00:24:54,320 --> 00:24:58,840
+normális, de most nem akarunk itt
+
+576
+00:24:56,320 --> 00:25:00,159
+éjszakázni, úgyhogy hagyjuk ezen, hogy
+
+577
+00:24:58,840 --> 00:25:02,760
+rá continuous, ami azt jelenti, hogy
+
+578
+00:25:00,159 --> 00:25:06,440
+gyakorlatilag folyamatosan pólozni fogja
+
+579
+00:25:02,760 --> 00:25:08,480
+ezt a ezt a bizonyos
+
+580
+00:25:06,440 --> 00:25:10,440
+disztribúciós
+
+581
+00:25:08,480 --> 00:25:12,520
+hát ezt a ezt a snapshot foldert, ahova
+
+582
+00:25:10,440 --> 00:25:14,159
+a diszriúciók érkeznek, és hogyha van
+
+583
+00:25:12,520 --> 00:25:16,480
+egy új
+
+584
+00:25:14,159 --> 00:25:20,640
+változat, akkor azt akkor azt rögtön be
+
+585
+00:25:16,480 --> 00:25:22,840
+be fogja másolni. Jó, tehát ez demó
+
+586
+00:25:20,640 --> 00:25:28,360
+célra megfelelő ezt, és hogy most rögtön
+
+587
+00:25:22,840 --> 00:25:28,360
+induljon el, akkor kész. Finish.
+
+588
+00:25:33,640 --> 00:25:39,880
+Most jön létre az a job, ami ezt
+
+589
+00:25:36,360 --> 00:25:42,480
+csinálja. És most megfisítjük a jobokat,
+
+590
+00:25:39,880 --> 00:25:44,960
+akkor itt azt látnunk is kell. Látják,
+
+591
+00:25:42,480 --> 00:25:49,360
+ez a hosszú nevű. Na, ez a ez a
+
+592
+00:25:44,960 --> 00:25:49,360
+distribution agent lesz.
+
+593
+00:25:50,120 --> 00:25:54,399
+És akkor nézzük meg, hogy hogy tényleg
+
+594
+00:25:52,880 --> 00:25:57,279
+működik-e, vagy hogy vagy hogy mit
+
+595
+00:25:54,399 --> 00:25:57,279
+csinál. egyébként
+
+596
+00:26:00,399 --> 00:26:04,399
+a
+
+597
+00:26:02,039 --> 00:26:06,679
+itt a replikációnál az előbb azt hiszem,
+
+598
+00:26:04,399 --> 00:26:08,200
+hogy igen, hogy becsuktam
+
+599
+00:26:06,679 --> 00:26:12,840
+a
+
+600
+00:26:08,200 --> 00:26:12,840
+replikációs monitort, de most már
+
+601
+00:26:17,200 --> 00:26:22,240
+hogy látjuk ezt a rendelést. Igen, itt
+
+602
+00:26:20,200 --> 00:26:25,559
+van rá, hogy hogy itt van, hogy ez most
+
+603
+00:26:22,240 --> 00:26:29,880
+éppen fut. És az agentsnél a snapt agent
+
+604
+00:26:25,559 --> 00:26:32,559
+agent agentet látjuk most is. Jó,
+
+605
+00:26:29,880 --> 00:26:35,559
+akkor nézzük meg, hogy hogyan működik.
+
+606
+00:26:32,559 --> 00:26:38,559
+Tehát a az adatbázisok közül
+
+607
+00:26:35,559 --> 00:26:40,960
+kiválasztjuk ezt a Northwindet
+
+608
+00:26:38,559 --> 00:26:40,960
+és
+
+609
+00:26:41,399 --> 00:26:45,760
+válasszunk egy rendelést. De egy olyan
+
+610
+00:26:43,320 --> 00:26:49,600
+kell, amelyik amerikai, ugye, mert csak
+
+611
+00:26:45,760 --> 00:26:49,600
+az, mert csak az lesz átreplikálva.
+
+612
+00:26:52,760 --> 00:26:55,760
+orders
+
+613
+00:26:56,799 --> 00:27:01,960
+orders
+
+614
+00:26:58,960 --> 00:27:01,960
+igen
+
+615
+00:27:04,640 --> 00:27:08,000
+ship country
+
+616
+00:27:09,399 --> 00:27:13,840
+usa
+
+617
+00:27:12,279 --> 00:27:16,760
+jó
+
+618
+00:27:13,840 --> 00:27:20,399
+és itt az első annak az azonosít azt
+
+619
+00:27:16,760 --> 00:27:23,000
+hogy 10 262 tehát
+
+620
+00:27:20,399 --> 00:27:24,480
+Ez például egy ilyen rendelés, és majd
+
+621
+00:27:23,000 --> 00:27:30,399
+ezt fogjuk módosítani, és nézzük, hogy
+
+622
+00:27:24,480 --> 00:27:30,399
+átmegy a a másik oldalra. Tehát
+
+623
+00:27:34,360 --> 00:27:38,960
+na
+
+624
+00:27:36,640 --> 00:27:41,440
+az idt átírom, azt nagyon egyszerű
+
+625
+00:27:38,960 --> 00:27:44,919
+átírni.
+
+626
+00:27:41,440 --> 00:27:44,919
+Hatról 5re
+
+627
+00:27:46,720 --> 00:27:52,559
+orderidő.
+
+628
+00:27:48,559 --> 00:27:56,760
+És akkor az 10 262.
+
+629
+00:27:52,559 --> 00:27:56,760
+Most egyelőre viszont még öt.
+
+630
+00:27:57,799 --> 00:28:03,159
+És nyissunk egy másik kapcsolatot is.
+
+631
+00:28:00,880 --> 00:28:05,120
+Tulajdonképpen
+
+632
+00:28:03,159 --> 00:28:07,440
+ugye mivel ugyanaz a szerver, ezért ezt
+
+633
+00:28:05,120 --> 00:28:09,760
+egy usal meg tudod nem kell teljesen ami
+
+634
+00:28:07,440 --> 00:28:12,919
+kapcsolatot nyitnunk, csak ez lesz majd
+
+635
+00:28:09,760 --> 00:28:12,919
+a northw.
+
+636
+00:28:13,000 --> 00:28:17,320
+A másik az pedig hát az közben rész az
+
+637
+00:28:15,399 --> 00:28:19,799
+adapdást. Látják, ez a snapshot order
+
+638
+00:28:17,320 --> 00:28:22,360
+ugye magától hát a varázsból létrehozta
+
+639
+00:28:19,799 --> 00:28:24,840
+nekünk
+
+640
+00:28:22,360 --> 00:28:28,080
+snapshot order.
+
+641
+00:28:24,840 --> 00:28:28,080
+És akkor
+
+642
+00:28:29,240 --> 00:28:33,440
+most már itt vagyunk ebben az
+
+643
+00:28:30,440 --> 00:28:33,440
+adatbázisban
+
+644
+00:28:37,159 --> 00:28:40,080
+és
+
+645
+00:28:38,519 --> 00:28:41,640
+csak ezt a rendelést. hogyha először is
+
+646
+00:28:40,080 --> 00:28:44,960
+néznék, hogy milyen rendelések vannak
+
+647
+00:28:41,640 --> 00:28:46,720
+itt, ugye elvileg ebben az advezben csak
+
+648
+00:28:44,960 --> 00:28:48,679
+amerikaiak lehetnek, tehát hogy csak
+
+649
+00:28:46,720 --> 00:28:50,279
+azokat hoztuk át látják, hogy tényleg
+
+650
+00:28:48,679 --> 00:28:53,600
+csak azok vannak itt. Ez akkor rendben
+
+651
+00:28:50,279 --> 00:28:57,200
+van. És akkor ezt a szűrőfeltételt
+
+652
+00:28:53,600 --> 00:28:57,200
+tegyük át ide.
+
+653
+00:28:57,480 --> 00:29:04,279
+Akkor ha most megnézzük a tartalmát,
+
+654
+00:28:59,799 --> 00:29:06,919
+akkor hatos az employee ID. Jó. Na most
+
+655
+00:29:04,279 --> 00:29:08,519
+akkor ezt itt
+
+656
+00:29:06,919 --> 00:29:10,000
+módosítjuk.
+
+657
+00:29:08,519 --> 00:29:11,840
+Csak átmegyünk előssze a Northind
+
+658
+00:29:10,000 --> 00:29:14,279
+adatbázisbe. Azt ne felejtsük el. Most a
+
+659
+00:29:11,840 --> 00:29:17,399
+Northindon vagyok. Tehát a forrás
+
+660
+00:29:14,279 --> 00:29:20,600
+adatbázisról módosítom a tartalmat.
+
+661
+00:29:17,399 --> 00:29:22,279
+Utána jövök a másikra
+
+662
+00:29:20,600 --> 00:29:25,519
+és nézzük, hogy mi lesz. Most még mindig
+
+663
+00:29:22,279 --> 00:29:28,320
+hat. Hat hat. Most ezt itt pólozgatom és
+
+664
+00:29:25,519 --> 00:29:30,519
+nézem ugye egy percen belül
+
+665
+00:29:28,320 --> 00:29:33,799
+meg le kell futni a snapshot jobnak. És
+
+666
+00:29:30,519 --> 00:29:37,159
+az is lehet egyébként, hogy én pont
+
+667
+00:29:33,799 --> 00:29:40,360
+olyankor kapom el, amikor éppen nem
+
+668
+00:29:37,159 --> 00:29:44,279
+létezik a tábla,
+
+669
+00:29:40,360 --> 00:29:47,279
+mert hiszen ez egy ez egy drop recreate
+
+670
+00:29:44,279 --> 00:29:47,279
+utasítás.
+
+671
+00:29:48,120 --> 00:29:52,880
+Tehát droppoljuk és újra létrehozzuk a
+
+672
+00:29:50,039 --> 00:29:56,279
+táblát.
+
+673
+00:29:52,880 --> 00:29:56,279
+Na na,
+
+674
+00:29:58,080 --> 00:30:01,519
+még mindig hat.
+
+675
+00:30:01,919 --> 00:30:05,960
+Nézzük csak meg, hogy itt
+
+676
+00:30:09,240 --> 00:30:13,519
+igen. 10 262. Itt is hat. Azért hat,
+
+677
+00:30:12,200 --> 00:30:15,120
+mert ezt a sort elfelejtettem
+
+678
+00:30:13,519 --> 00:30:17,600
+valószínűleg lefuttatni ezt az update
+
+679
+00:30:15,120 --> 00:30:22,440
+orders. Jó, akkor pillanat. Nézzük csak
+
+680
+00:30:17,600 --> 00:30:25,200
+meg még egyszer, hogy hogy tényleg az
+
+681
+00:30:22,440 --> 00:30:27,279
+jó a 10 262-es.
+
+682
+00:30:25,200 --> 00:30:30,640
+Itt öt. Na, akkor viszont itt is meg
+
+683
+00:30:27,279 --> 00:30:32,679
+kell, hogy jöjjön az az öt előbb utóbb.
+
+684
+00:30:30,640 --> 00:30:34,320
+Jó.
+
+685
+00:30:32,679 --> 00:30:36,039
+Na, itt megjött. Hát közben akkor pont
+
+686
+00:30:34,320 --> 00:30:37,960
+akkor telt az egy perc, amikor a másikat
+
+687
+00:30:36,039 --> 00:30:40,000
+nézegettem. Na mindegy, már megjött.
+
+688
+00:30:37,960 --> 00:30:41,600
+Szóval szóval végig is megtörtént. Hát
+
+689
+00:30:40,000 --> 00:30:43,159
+ez az immediately azért az nem azt
+
+690
+00:30:41,600 --> 00:30:45,159
+jelenti, hogy egy egy 10 másodperc
+
+691
+00:30:43,159 --> 00:30:47,000
+alatt, amit beállítottunk, hanem az,
+
+692
+00:30:45,159 --> 00:30:49,080
+hogy valamennyi néhány másodperc
+
+693
+00:30:47,000 --> 00:30:52,039
+késeltetésre. Tehát egy percet várunk
+
+694
+00:30:49,080 --> 00:30:55,840
+arra, hogy a a
+
+695
+00:30:52,039 --> 00:30:57,840
+hogy a job megint fusson, amelyik a
+
+696
+00:30:55,840 --> 00:31:00,200
+snapshotot csinálja, és és utána pedig
+
+697
+00:30:57,840 --> 00:31:02,159
+majd valamikor le fog futni ennek a a
+
+698
+00:31:00,200 --> 00:31:04,799
+disztribúciója is. De egyébként ha most
+
+699
+00:31:02,159 --> 00:31:07,480
+itt vagyunk ezen a másik
+
+700
+00:31:04,799 --> 00:31:10,480
+adatbázison, tehát a subscribernél,
+
+701
+00:31:07,480 --> 00:31:12,279
+akkor azt azzal lehet próbálkozni, hogy
+
+702
+00:31:10,480 --> 00:31:15,039
+pont olyankor lekérdezni a tábla
+
+703
+00:31:12,279 --> 00:31:18,760
+tartalmát, amikor éppen frissül, és
+
+704
+00:31:15,039 --> 00:31:21,440
+akkor azt fogjuk kapni, hogy hogy invade
+
+705
+00:31:18,760 --> 00:31:24,840
+object name, tehát nincsen tábla.
+
+706
+00:31:21,440 --> 00:31:27,760
+Szóval ennek a fajta repet Hopp. Na most
+
+707
+00:31:24,840 --> 00:31:31,679
+bele belehúztam. Látják?
+
+708
+00:31:27,760 --> 00:31:31,679
+Tehát ennek a fajta replikációnak
+
+709
+00:31:31,760 --> 00:31:36,720
+ez ez egy ez egy nagy hátulütője. Tehát
+
+710
+00:31:34,480 --> 00:31:40,080
+gyakorlatilag
+
+711
+00:31:36,720 --> 00:31:43,760
+ha ez most egy ezen a subscriber oldalon
+
+712
+00:31:40,080 --> 00:31:45,600
+is egy üzleti folyamat volna, amit mi
+
+713
+00:31:43,760 --> 00:31:48,480
+amivel mi valamit csinálunk, ugye egy
+
+714
+00:31:45,600 --> 00:31:50,559
+másik információs rendszer, hát akkor az
+
+715
+00:31:48,480 --> 00:31:52,240
+ez ott ott ilyen hiba nem fordulhat elő,
+
+716
+00:31:50,559 --> 00:31:54,120
+ugye, hogy nem hogy nem létezik az a az
+
+717
+00:31:52,240 --> 00:31:56,480
+az objektum.
+
+718
+00:31:54,120 --> 00:31:58,240
+Ez ez sérti az adabek a hivatkozási
+
+719
+00:31:56,480 --> 00:32:00,720
+integritását. Időnként van az a tábla,
+
+720
+00:31:58,240 --> 00:32:04,159
+időnként még nincs, ugye?
+
+721
+00:32:00,720 --> 00:32:07,080
+Tehát tehát ez a fajta replikáció ilyen
+
+722
+00:32:04,159 --> 00:32:08,880
+esetekben, hogyha mi
+
+723
+00:32:07,080 --> 00:32:12,000
+azzal bármit szeretnénk csinálni abban
+
+724
+00:32:08,880 --> 00:32:13,360
+az időben, amikor replikáció folyik,
+
+725
+00:32:12,000 --> 00:32:16,320
+amikor az aktív, akkor ez nem
+
+726
+00:32:13,360 --> 00:32:19,519
+alkalmazható.
+
+727
+00:32:16,320 --> 00:32:23,000
+Lealkható például akkor, hogyha
+
+728
+00:32:19,519 --> 00:32:24,919
+ez egy ez egy éjszakai adatbázis, tehát
+
+729
+00:32:23,000 --> 00:32:27,440
+adattárházfeltöltés,
+
+730
+00:32:24,919 --> 00:32:30,159
+és csak bemásoljuk az adatokat és az
+
+731
+00:32:27,440 --> 00:32:33,279
+ottani ezt ugye úgy hívják ezt a dolgot,
+
+732
+00:32:30,159 --> 00:32:35,799
+hogy az extract transform load,
+
+733
+00:32:33,279 --> 00:32:39,200
+tehát ETL folyamat. Az extrak lépés az
+
+734
+00:32:35,799 --> 00:32:40,639
+az, hogy szedünk össze mindenhonnan és
+
+735
+00:32:39,200 --> 00:32:42,200
+bemásoljuk őket egy köztes
+
+736
+00:32:40,639 --> 00:32:44,840
+tárolóterületre.
+
+737
+00:32:42,200 --> 00:32:47,720
+Na most ott aztán tényleg nem vonatkozik
+
+738
+00:32:44,840 --> 00:32:49,960
+rá, nem hivatkozik rá semmiféle külső
+
+739
+00:32:47,720 --> 00:32:52,559
+kulcskényszer, nincs ilyen probléma,
+
+740
+00:32:49,960 --> 00:32:57,480
+akkor ez nem okoz gondot. De itt látják
+
+741
+00:32:52,559 --> 00:32:59,159
+azért ezzel ezzel vigyázni kell. Jó, hát
+
+742
+00:32:57,480 --> 00:33:04,360
+ennyit akartam mondani most a snapshot
+
+743
+00:32:59,159 --> 00:33:04,360
+replikációról. Ö még mielőtt ö
+
+744
+00:33:04,919 --> 00:33:09,159
+befejezném, azt azért megmutatnám,
+
+745
+00:33:07,720 --> 00:33:11,519
+hogy
+
+746
+00:33:09,159 --> 00:33:15,000
+van itt egy ilyen, hogy replication
+
+747
+00:33:11,519 --> 00:33:15,000
+generate scripts,
+
+748
+00:33:15,440 --> 00:33:18,000
+és
+
+749
+00:33:18,320 --> 00:33:23,480
+azt mondja, hogy igen, egy olyan
+
+750
+00:33:19,960 --> 00:33:26,039
+scriptet fog írni, amelyik megcsinálja
+
+751
+00:33:23,480 --> 00:33:28,720
+az összes komponenst
+
+752
+00:33:26,039 --> 00:33:33,000
+és megmondjuk azt, hogy hova tegye tegye
+
+753
+00:33:28,720 --> 00:33:33,000
+be egy új query ablak. ablakba.
+
+754
+00:33:33,039 --> 00:33:36,720
+És akkor ezt most be is csukom. Nézzék
+
+755
+00:33:34,880 --> 00:33:39,320
+meg, hogy ezt csinálták nekünk ezek a
+
+756
+00:33:36,720 --> 00:33:41,519
+kis wizardok, amit m mind megcsináltunk
+
+757
+00:33:39,320 --> 00:33:46,159
+volna kézzel is. Tehát ha mi ha mi
+
+758
+00:33:41,519 --> 00:33:49,519
+tudjuk, hogy mi az az distribution dbis,
+
+759
+00:33:46,159 --> 00:33:51,200
+ezek ez a három
+
+760
+00:33:49,519 --> 00:33:53,120
+rendszertárolt eljárás, ugye SP
+
+761
+00:33:51,200 --> 00:33:57,240
+áldozással kezdvik, tehát rendszertárolt
+
+762
+00:33:53,120 --> 00:33:59,480
+eljárás. Ez a három tárot eljárás, ez a
+
+763
+00:33:57,240 --> 00:34:02,840
+a konfiguráció táltja össze, tehát hogy
+
+764
+00:33:59,480 --> 00:34:05,880
+a a a primary server saját magnak a
+
+765
+00:34:02,840 --> 00:34:08,280
+distributora. Oké? És akkor utána jön
+
+766
+00:34:05,880 --> 00:34:10,599
+az, hogy na most akkor akkor csinálunk
+
+767
+00:34:08,280 --> 00:34:13,000
+egy replikációs adatbázist, amit most
+
+768
+00:34:10,599 --> 00:34:15,839
+egyébként nem is használtunk. És itt jön
+
+769
+00:34:13,000 --> 00:34:18,760
+az, hogy konfiguráljuk a
+
+770
+00:34:15,839 --> 00:34:21,280
+a az az új publikáció, az SP add
+
+771
+00:34:18,760 --> 00:34:23,240
+publication.
+
+772
+00:34:21,280 --> 00:34:27,280
+Aztán itt itt itt tehetjük be a jogokat,
+
+773
+00:34:23,240 --> 00:34:31,000
+hogy hogyan férjenek hozzá az agensek.
+
+774
+00:34:27,280 --> 00:34:33,240
+És itt van az, hogy mi a filter, ugye SP
+
+775
+00:34:31,000 --> 00:34:36,079
+article filter addict. Ez teszi be az
+
+776
+00:34:33,240 --> 00:34:38,480
+ordestáblát és akkor itt ennek lesz egy
+
+777
+00:34:36,079 --> 00:34:40,440
+olyan része valahol, hogy ship county
+
+778
+00:34:38,480 --> 00:34:42,960
+egyenlő usra. Ugye itt itt lehetett azt
+
+779
+00:34:40,440 --> 00:34:46,000
+látni és aztán itt van az, hogy
+
+780
+00:34:42,960 --> 00:34:49,280
+létrehoztunk egy subscriptiont.
+
+781
+00:34:46,000 --> 00:34:51,359
+Ugye ez ez a push ez mit jelent?
+
+782
+00:34:49,280 --> 00:34:53,599
+Ugye a kétféle fajta tőfizetés van, ezt
+
+783
+00:34:51,359 --> 00:34:55,240
+elfelejtettem mondani. Van a push és a
+
+784
+00:34:53,599 --> 00:34:58,760
+pull.
+
+785
+00:34:55,240 --> 00:35:01,760
+A push azt jelenti, hogy a distribúciós
+
+786
+00:34:58,760 --> 00:35:04,680
+ágens, tehát a a a változásokat
+
+787
+00:35:01,760 --> 00:35:07,400
+szétterjesztő job, az a disztribútoron
+
+788
+00:35:04,680 --> 00:35:09,160
+fut akkor és úgy, ahogy a disztributor
+
+789
+00:35:07,400 --> 00:35:12,320
+akarja. Tehát ott be van állítva egy
+
+790
+00:35:09,160 --> 00:35:14,800
+ütemezés és az távolról belép az
+
+791
+00:35:12,320 --> 00:35:17,240
+előfizetőre és belenyomja az adatot.
+
+792
+00:35:14,800 --> 00:35:19,000
+Tehát ezért push, a pull az pedig pedig
+
+793
+00:35:17,240 --> 00:35:20,560
+azt jelenti, hogy a diszriúcióság és az
+
+794
+00:35:19,000 --> 00:35:24,160
+előfizetőkön fut mindegyiken
+
+795
+00:35:20,560 --> 00:35:25,839
+külön-külön, ugye? És aztán az előfizető
+
+796
+00:35:24,160 --> 00:35:27,960
+dönti, hogy mikor akarja megkapni a
+
+797
+00:35:25,839 --> 00:35:29,880
+cikket. Hát ugye ha visszatérek erre a
+
+798
+00:35:27,960 --> 00:35:32,880
+kezdeti
+
+799
+00:35:29,880 --> 00:35:32,880
+hasonlatra
+
+800
+00:35:33,320 --> 00:35:37,760
+hogy az előfizető meg a például lehet
+
+801
+00:35:36,320 --> 00:35:39,240
+ezt úgy felfogni, hogyha én egy
+
+802
+00:35:37,760 --> 00:35:41,160
+folyóirat előfizetek, mondjuk egy
+
+803
+00:35:39,240 --> 00:35:43,040
+napiratra, Veszprém megyei napló
+
+804
+00:35:41,160 --> 00:35:45,599
+például,
+
+805
+00:35:43,040 --> 00:35:47,440
+akkor ugye annak van egy kiadója, na ez
+
+806
+00:35:45,599 --> 00:35:49,119
+a publisher
+
+807
+00:35:47,440 --> 00:35:52,760
+vagyok én mint előfizető, mondjuk sokan
+
+808
+00:35:49,119 --> 00:35:56,240
+mások és ezenkívül van a posta, aki a
+
+809
+00:35:52,760 --> 00:35:58,280
+distributor, aki ugye szétterjeszti
+
+810
+00:35:56,240 --> 00:36:00,319
+És ez egy pus előfizetés, mert bedobják
+
+811
+00:35:58,280 --> 00:36:02,520
+a postaládámba. Tehát nem megyek beérte
+
+812
+00:36:00,319 --> 00:36:06,560
+én a postaivatalba, amikor éppen kezdem,
+
+813
+00:36:02,520 --> 00:36:08,160
+hanem ők jönnek és bedobják és kész. Jó.
+
+814
+00:36:06,560 --> 00:36:10,040
+Tehát most meg lehet azt fontolni, hogy
+
+815
+00:36:08,160 --> 00:36:11,760
+mi ilyen utasításokkal és egy scriptel
+
+816
+00:36:10,040 --> 00:36:13,599
+is megcsináltuk volna ugyanazt, amit itt
+
+817
+00:36:11,760 --> 00:36:15,319
+klikkerésekkel csináltunk meg, csak ez
+
+818
+00:36:13,599 --> 00:36:17,480
+egy kicsit fáradtságosabb lett volna, és
+
+819
+00:36:15,319 --> 00:36:20,760
+hát nem is érdemes ennek a teljes
+
+820
+00:36:17,480 --> 00:36:22,680
+szintexisát mind itt fejből tudni. Most
+
+821
+00:36:20,760 --> 00:36:25,160
+mindenesetre, ha vissza akarjuk állítani
+
+822
+00:36:22,680 --> 00:36:28,359
+a kiinduló ápot, akkor először kézzel
+
+823
+00:36:25,160 --> 00:36:30,800
+szépen töröljük ki
+
+824
+00:36:28,359 --> 00:36:35,240
+az először az előfizetést,
+
+825
+00:36:30,800 --> 00:36:35,240
+ami itt van. Tehát delete,
+
+826
+00:36:35,440 --> 00:36:39,520
+utána a publikációt.
+
+827
+00:36:40,839 --> 00:36:44,960
+Azált, hogy kitöltük az előfizetést,
+
+828
+00:36:43,040 --> 00:36:47,319
+azáltal még az adatbázis nem tűnt el,
+
+829
+00:36:44,960 --> 00:36:50,520
+tehát a ami adatot átmásoltunk, az már
+
+830
+00:36:47,319 --> 00:36:50,520
+ott marad.
+
+831
+00:36:51,800 --> 00:36:57,440
+Ez ez az adatb és a teljes tartalmazó
+
+832
+00:36:53,680 --> 00:37:01,800
+snapshot order ez marad. És ezek után
+
+833
+00:36:57,440 --> 00:37:04,280
+ugye még attól függetlenül
+
+834
+00:37:01,800 --> 00:37:06,839
+ja ezáltal a pillanat a a jobjaink is
+
+835
+00:37:04,280 --> 00:37:10,680
+megfogyatkoztak. Nézzék csak meg. Tehát
+
+836
+00:37:06,839 --> 00:37:12,920
+az a az a két job, a snapshot job meg a
+
+837
+00:37:10,680 --> 00:37:15,440
+distribution job, azok eltűntek. De még
+
+838
+00:37:12,920 --> 00:37:18,119
+az replikációs beállítások megvannak.
+
+839
+00:37:15,440 --> 00:37:20,480
+Itt vannak ezek az egyéb replikációs
+
+840
+00:37:18,119 --> 00:37:23,720
+és hogyha resetelni akarjuk, akkor
+
+841
+00:37:20,480 --> 00:37:26,280
+eljövünk ide, és a disable publishing
+
+842
+00:37:23,720 --> 00:37:29,240
+distributiont fogjuk választani. Jó, itt
+
+843
+00:37:26,280 --> 00:37:32,119
+a yes-t ki kell választani, és akkor
+
+844
+00:37:29,240 --> 00:37:33,359
+ezáltal kerülünk vissza alaphelyzetbe.
+
+845
+00:37:32,119 --> 00:37:36,119
+Én azt javaslom, hogy mindig álltsák
+
+846
+00:37:33,359 --> 00:37:37,960
+vissza alaphelyzetbe a szervereket, hogy
+
+847
+00:37:36,119 --> 00:37:40,640
+legközelebb mikor leülnek a géperé,
+
+848
+00:37:37,960 --> 00:37:43,119
+akkor ne fogadja önöket vállatlan
+
+849
+00:37:40,640 --> 00:37:45,839
+meglepetés.
+
+850
+00:37:43,119 --> 00:37:49,560
+Jó, hát akkor akkor ennyi volt. Köszönöm
+
+851
+00:37:45,839 --> 00:37:49,560
+szépen mindenki figyelmét.
+

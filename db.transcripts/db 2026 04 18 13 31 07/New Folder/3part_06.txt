@@ -1,0 +1,451 @@
+hát és ez így mehet nem is
+tudom talán talán 100 mélységig. Szóval
+elég egész egészen mélyen mehet ez így
+ez a ez a ez a beányozás. Na most mi
+ebbe a
+az adásbe akarjuk átmigrálni a Northwin
+táblákat. Tehát ez lesz a feladatunk.
+Most ehhez kell nekünk egy
+adminisztratív interface, egy
+hozzáférés. Van itt egy olyan lehetőség,
+hogy service accounts itt a a
+fogaskeréknél.
+És
+hát tulajdonképpen kérünk egy egy
+tokent, kérünk egy egy hozzáférési
+kulcsot,
+ami most bekerült egy fába.
+Ez egy Jason file. Egyébként. Én ezt a
+mappát megnyitom és bemásolom
+innen. Tehát azt mondom, hogy cut
+bemásolom a webalkalmazásunknak a
+mappájába,
+ami itt a temp. És ugye nem a nem a
+flask, hanem a flask GCP filest. Ide
+másoljuk be. Jó.
+És azt mondja, hogy ped
+itt az előző futatásokból már vannak
+ilyen jasonok, azok korábbi tokenek,
+úgyhogy régit azt célszerű kitörölni.
+És ezt pedig átnevezem, amit most
+másoltam ide, átnevezem token Jasonnak.
+És akkor
+a forráskód meg majd token Jason néven
+fog rá hivatkozni. És hogyha valaki
+benéz, akkor látja, hogy hát van benne
+egy egy kulcs, amivel mi hozzá tudunk
+férni, bármit meg tudunk csinálni az
+adatbázissal. És akkor nézzük azt az
+alkalmazást, amelyik
+ugye mondtam, hogy programozottan lehet
+megoldani az adatvitelt. Olvasunk az
+egyikből, írunk a másikba. Ezt fogjuk
+csinálni. És ez az alkalmazás, ez az
+itteni ebben a FL GCP filest mappában
+lévő main. Alkalmazás lesz. Ö amit én
+már itt meg is nyitottam. Nézzük csak.
+Igen. F GP fá. Na na akkor mit csinál ez
+az alkalmazás? Tehát nézzük meg, hogy ez
+hogyan megy. Ö mielőtt tovább megyünk,
+azt ellenőrizni kell, hogy a virtuális
+gépnek az idője jólne beállítva,
+mert jól oké, mert ennek a a tokennek a
+generálsi ideje az nem lehet egy fals
+időkben nem fogunk hozzáférni a a
+felhőben lévő adatbázisunkhoz.
+Szóval
+hát itt ebben az esetben
+két kapcsolat lesz. lesz szükségünk.
+Egy kapcsolat ugye a a Postgesshez, egy
+kapcsolat pedig a Firestorehoz, és innen
+olvasunk, oda pedig írni fogunk. A
+postgasz kapcsolatot, azt már az előbb
+láttuk. Az ugye ilyen módon jön létre,
+hogy itt itt egy kurzorral vagy egy egy
+connection objektumot hozunk létre, amit
+aztán fel tudunk használni bárminek a
+végrehajtásához. A Filestore esetében
+ezt a Firestore admint könyvtárt kell
+felhasználnunk,
+és és ez a ebből a token JSből kiveszi a
+certificateet, és az lesz a kapcsolatnak
+az alapja. Onnantól kezdve ez a ez a DB
+lesz a a Festor irányába kapcsolat
+objektumunk.
+És akkor nézzük, hogy mit csinál maga a
+a scriptet, mi a lényegi a lényegi
+funkció. Miután csatlakoztunk
+a products táblából, a products táblát
+migráljuk először.
+Itt itt kivesszük az összes products
+recordot.
+Miért szorozzuk meg 100-zal unit
+price-t? Azért kérem szépen, mert a a
+Firestorebban nincsen típus, tehát nincs
+nincs decimális típus, hanem csak egész
+van például.
+És és ezért mi úgy szimuláljuk a a két
+tizéses decimális típust, hogy a
+100-szorozott értéket tároljuk és mindig
+amikor megintjük akkor elosztjuk
+100-zal. Hát ez egy eléggé egyszerű
+ugyan work around erre a erre a
+típusbeli hiányosságra.
+És akkor van egy egy kurzorunk, és utána
+itt első lépésben,
+hogy ez a script, ez újra futatható
+legyen. Ezért itt az első lépésben,
+ebben a ebben a ciklusban itt csak
+kitöröljük az összes olyan products
+dokumentumot, ami már esetleg ott lehet,
+ugye, de ha ha nincsen, akkor nem
+történik semmi. És utána ez ez pedig ez
+a második ciklus ez ami ami ami ami
+létrehozza az új dokumentumokat. Nagyon
+egyszerű filozófiája van a a
+filestornak.
+Hogyha hivatkozok egy olyan kollekcióra,
+ami még nem létezik, akkor az létre fog
+jönni. Tehát ez a ilyen egyszerű ez a ez
+van create helyett.
+Ha a kollekciómből hivatkozok egy olyan
+dokumentumra, ugye ID alapján hivatkozok
+rá, tehát van azonosítam minden
+dokumentum.
+az idő alapján egy olyan dokumentum
+hivatko amíg nincs, akkor é fog jönni
+egy új dokumentum azzal az idével. És
+ugye ezek után már csak arra szükségem,
+hogy és a dokumentumnak a az
+attribútumait azokat be tudjam írni.
+Erre pedig a set utasítás fog szolgálni.
+Tehát most most nézzét csak, ez a DB
+Collection Products. Itt tartunk, ha még
+nem volt products kollekció, létre fog
+jönni. De megyünk tovább. ebben a ez
+ezen a korrekleción belül egy ilyen
+ilyen azonosítójú
+dokumentum van-e. Ha nincs, akkor itt
+fog jönni. Hát persze, hogy nincsen,
+ugye, mert nálunk a a product az egy
+számmal van azonosítva azonosítva. Abbó
+most stringet csinálunk, mert számot nem
+lehet letárolni sajnos. Ugye itt a
+filosoztorba kulcsként. Létre fog jönni
+az egyes számú könyv és az egy egy
+referenciánkhez a dóc. És ennek aztán a
+set utasításra behetjük szépen a
+paramétereit. Ennyi. Mindjár ezt
+megcsináljuk a customersnél is. És aztán
+most egy kicsit érdekesebb rész, amikor
+a
+az ordert korrekciót akarjuk létrehozni.
+Így így ez kézi módszerekkel
+létrehozunk egy orders dokumentumot
+az egyes számú vásárlónak.
+És és ebbe beszúrunk két darab tételt.
+Ezt a
+pillanat. Igen. Igen. Tehát a a
+dokumentum belül egy details nevű
+kollekciót hozunk létre, és azon belül,
+hogyha nem adunk meg azonosítót a
+dokumentumnak, akkor egy automatan
+generált azonosítóval fog létrejönni egy
+egy új dokumentum, ami egyébként egy
+véletlen string. És ezt kétszer
+megcsináljuk. Tehát két rendési tétel
+lesz benne és kész. Hát ha minden igaz,
+akkor ennek mennie kellene, ugye,
+úgyhogy jöjjünk át a a
+a konzolunkra. Ezt ctrol c-vel meg lehet
+állítani.
+És akkor utána
+átmegyünk ebbe a mappába
+a
+plask.
+Na.
+Ez az ide. És akkor itt azt mondjuk,
+hogy
+python main. Pie,
+akkor
+talán le fog futni
+a scriptünk és feltölti az adatokat.
+Ebben bízunk legalábbis.
+Elvileg sikerül. De most megnézzük a a
+webes konzolunk konzolunkat,
+akkor itt ugye ez az ikonos szolg adatis
+elérésére. Akkor itt látnunk kell már a
+a két
+az az új rendelési tételt is.
+Ugye látható itt a generált azonosító.
+Azon belül van ez a ez a ez a details
+beáldozott korrekció. És itt van az
+egyik tétel
+meg ott itt itt itt van a másik is. És
+ugye lehetne még folytatni a
+bejányozást. Jó, hát mivel ezek a
+rendési tételek, ezek csak
+demóciából lettek beszól, ezért ezt
+töröljük itt ki, hogy ne kavarjon be az
+alkalmazásunknak, mert hiszen ugye egy
+alkalmazást szeretnénk mi ide
+ráéreszteni.
+Úgyhogy itt ezt a dokumentumot, itt van
+ez a három pöttyös menü, ezt töröljük
+ki. Delete document.
+Oké.
+És akkor készen van az adatbázisunk,
+tehát a adatokat átmigráltuk. Most jön
+az alkalmazásnak a migrálása. Hát ugye a
+logikát azt sajnos most meg kell
+valósítani. Tehát ami a tárolt
+eljárásban volt a szerveren, azt most
+meg kell írnunk Pythonban. ami a
+listáz volt a szerveren, egy egy view,
+ugye azt is meg kell írni Python-ban,
+de semmi gond, mert ez mert ez már
+megtörtént.
+Úgyhogy ha
+most itt kiválasztjuk a
+szintén ebből a a Flask GCP Firestore
+mappá vagyból a Northwind Pet, akkor itt
+látható
+az a
+az a megvalósítás, ami a az eredeti
+alkalmazásunkból lett.
+Tehát ez megfelel
+a
+ennek a northw-nak
+ugyanazt csinálja,
+csak ugye ez a reakciós is kapcsolódik,
+ez pedig a dokumentum tárra. Ugye ezt
+lehet látni egy ránézés és elég
+messziről is, hogy hogy hát sok
+funkciót, amit ugye a a szerverrelon
+SQL-ban oldottunk meg, azt itt most mind
+Pythonban kell megoldani. De van aki
+számára ez kifejezetten vonzó, mert
+akkor akkor akkor nem kell SQB-ben írnia
+semmit tulajdonképpen.
+És most először próbáljuk ezt ki, hogy
+tényleg működik-e.
+Itt mindenképpen ha van benne egy ilyen
+sor, hogy time seep, ezt kommentezzük
+ki, mert ez egy tesztkedő ért van benne.
+Úgyhogy úgyhogy ezt vegyük ki
+és ellenőrizzük azt, hogy a kapcsolat
+jól indul-e. Tehát itt ez a token Jason,
+ugyanazt a tokent be kell másolnunk ide
+is, amit az előbb létrehoztunk, hiszen
+az csak erre az adabra jó.
+Úgyhogy
+ja, ugyan ugyan ugyanba a mappába,
+amikor úgyhogy nem kell másolni semmit,
+ugyanaz a mappa, úgyhogy teljesen
+teljesen jó. Na és akkor nézzük, hogy
+hogy működik az alkalmazás. Jó, tehát
+nézzük meg ezt a ezt a kódot. Mit hogyan
+tudtunk megoldani.
+Hát ugye kezdődik azzal, hogy ki kell
+listáznunk a vagy hát fel kell töltenünk
+a kombókat. Igaz az első alkalmazásban.
+Hát ez nagyon hasonlít ahhoz, mint
+amikor a reációs adapdázit használtuk,
+ugye? Csak ott ott egy ott egy szereg
+csillag volt, most meg egy stream van.
+Tehát a DB Collection Product Stream, ez
+tulajdonképpen a ennek az ilyen nevű
+kollekciónak az összes dokumentumát egy
+streamben erhetővé teszi, amit végig
+lehet szépen iterálni ezzel a Dockin
+Docs iterátorral. És akkor ezt ezt a
+produkt listát, ami egy lista, ezt
+feltöltjük ezekkel az értékekkel. És
+aztán hát itt a a megjelenítést azt egy
+egy HTML template végzi.
+És hát tulajdéppen ebben ebben semmi
+különös nincsen, hanem nézzük meg a a
+tranzakciónak a lebonyolítását, hogy az
+hogyan megy.
+Hát ugye itt ezt bizony nekünk le kell
+programozni. Tehát amit a az előbb itt
+elintéztünk azzal, hogy hogy ez a ez a
+connection execute ugye
+azt itt
+el kell végeznünk ezeket a lépéseket,
+tehát le kell kérdeznünk a az a
+vásárlónak az egyenlegét, a
+raktárkészletet
+satöbbi. És akkor meg kell néznünk azt,
+hogy a
+a raktárkészlet elegendő-e, aztán utána
+azt, hogy a az egyenleg elegendő-e. És
+hogyha nem, akkor nem megyünk tovább,
+csak akkor akkor akkor megyünk tovább,
+hogyha ezek a feltétek teljesülnek. És
+akkor most van a transakció érdemi
+része. Ugye eddig a dokumentumokra
+láttuk a set utasítást, amivel
+beállítunk egy létrehozunk egy új
+attribútumot.
+Az update-tel azzal pedig egy meglévő
+attribútumot átírunk egy új értékre.
+Itt például a gyundicin stockot bejtjuk
+a stock mínusz a a mennyiségre.
+És aztán utána itt a végén itt viszont
+létrehozunk egy új rendelés objektumot.
+Látják ezzel a ugye nem adunk meg idét a
+dokumentumnak, ezért létre fog fog jönni
+egy új
+és utána
+be beszélünk hozzá egy darab rendési
+tétel. Tehát itt most ebben az
+alkalmazásban ugye minden rendésnek
+pontosan egy tétele van. Ez most ilyen
+ez az alkalmazás lehetne persze
+bonyolultabb is, de ez is elég bonyolult
+nekünk.
+És akkor utána van még egy
+egy érdekesség tulajdonképpen, az pedig
+az, hogy
+hogy aztán pedig szeretnénk kilistázni a
+a
+rendeléseket.
+Ugye itt erre volt ez a ez a ez a list
+orders nevű függvényünk, amin meghívott
+egy
+itt itt volt meg vagy hát tajképpen egy
+egy view-t
+egy viewból vették az összes select
+csillag from last orders de hát ilyen
+view ilyen viewk sincsen itt úgyhogy ezt
+meg kell lassítani. És ez nem is annyira
+egyszerű. Tehát itt itt látható, hogy
+hogy ez itt az SQL kód konkrétan ez az
+öt sor.
+És ez pedig ennek a megfelelője
+Pythonban, mert hát ugye itt mit kell
+csinálni? Itt végig kell iterálni itt
+Python objektumokat használva, hát
+mintogyha elvégeznénk a joinokat, ugye?
+Hát le kell programozni ezeket a
+joinokat gyakorlatilag
+nyilván el lehet azt képzelni, hogyha
+ha ha ezek ezek nagy táblák, akkor ez
+bizony elég lassú tud lenni.
+És hát nem véletlenül találták ki
+azobális kezelő rendszereket, mármint a
+reációs alabadás kezelőket, hogy ezt
+szerver odan hatékonyabban meghessen
+csinálni. Na de hát a mi esetünkben ugye
+mi csak öt rendést akarunk kivenni,
+úgyhogy hatékonysággal nem nagyon
+foglalkozunk. Ezt ezt ilyen módon meg
+lehet csinálni.
+Itt ezt a trükköt megint elkövetjük,
+ugye, hogy osztunk 100-zal, amikor
+valamit
+ki akarunk értékelni, mert hiszen a
+100szorosát tároltuk, és azt hiszem,
+hogy ebben nincs is több érdekesség.
+Úgyhogy tulajdonképpen ezt el is lehet
+indítani.
+Ezt a Csak előtte még még mentsük el,
+mert valamit változtattam rajta. Tehát a
+Northw Pet most már ebben a mappában
+indítsuk el, és akkor nézzük meg, hogy
+működik-e az alkalmazásunk.
+Ott már volt. Igen.
+Jó.
+Nendskérek, hogy ennyire lassú ez a
+virtuális gép, de itt ez már nagyon a
+halálán van. Mondjuk legalább nem
+rohanok annyira.
+Jó, és hogyha egyszer elindult, akkor
+most ugye elvileg a most már ugye ezen a
+porton, ez a 127 5000-es porton ezen
+most már ez az alkalmazás fog figyelni.
+Úgyhogy
+most ide átjövök.
+Akkor most már ez a ez most már a a
+felhőből jövő alkalmazás volt, tehát
+meg is meg is lehet frissíteni. És akkor
+ez most már már működik. Látják itt a
+háttérben mindig olvashatjuk is, hogy
+éppen éppen mi történik.
+Aztondja, hogy
+jó, rendeljünk valamit megint. Tehát
+ebből az enyé sirupból rendelünk ennek
+kettőt. Nézzük meg, hogy lefut-e a
+rendelés.
+És ak itt látod, updating stock, adding
+new order, minden lefutott szépen,
+rendben. Úgyhogy ez azt jelenti, hogy
+itt az adbdázisban meg kell, hogy
+jelenjen ez a ez a ez a ez ez az új
+rendelés.
+Mégpedig
+ugye
+egy rendési tétterre az alfkinak, amiben
+kettő mennyiség van a hármas számú
+productból.
+Jó, ez a hármas számú product, az pedig,
+hogyha visszajövünk ide egy kicsit,
+na még egyszer.
+Az az enised szirup, úgyhogy úgyhogy
+rend működik az alkalmazásunk,
+mondhatnánk.
+És tulajdonképpen ezzel ez a ez a
+migrációs demo, ez itt így véget is ért.
+Migráltuk az alkalmazást, működik ahogy
+ahogy akartuk satöbbi. És most kezdődik
+egy másik
+fejezet, ami
+ami a a dokument ennek a dokumentmutának
+a tranzakciós tulajdonságait próbálja
+vizsgálni.
+Egy pillanat, erről is van valami.
+Igen.
+Ja, erről már nincsen demó, úgy látom,
+illetve nem itt van. Pillanat.
+Nem, ez ez ez nem itt van.
+Jó, hát nem érdekes.
+Igazából
+egy egy olyan kis bevezető tartozik
+ehhez,
+hogy hogy miért olyan fontosak a a
+tranzakciók, tehát miért annyira
+lényegesek a az üzleti világban a a
+tranzakciók.
+Itt én el is kezdtem egy ilyen kis
+jegyzetet írni, ha minden igaz, példá.
+Igen, igen, igen. Jó,
+tranzakciók,
+hát ez a ezek a bizonyos
+éid
+elvek, hogy ezek, hogy ez hogy ez miért
+annyira fontos?
+Hát ugye azért, mert
+a
+a cégnek a a tőkének a jelentős része
+az az adatokban van, és és ezek az elvek
+ezek az adatoknak a a konzisztenciáját
+őrzik meg,
+függetlenül attól, hogy valaki
+dokumentumtárat használ, vagy pedig
+reakciós adatbázist, vagy vagy egy
+kockásfizetet. Teljesen mindegy.
+Egyébként a lényeg az, hogy hogy akkor
+is elvárjuk azt, hogyha például én
+utalok a az egyik számámra a másikra,
+akkor az ne fordulhasson elő semmilyen
+körülmények között. Az egyikről már
+eltűnt a pénz, de a másra meg nem
+érkezett meg, ugye? Tehát ezt ezt nem
+akarjuk megengedni. Ez most olyan
+természetesnek tűnik, ugye? Csak
+gondolják meg azt, hogy ez amit most
+elmondtam, ez mindkét banknak az
+információs rendszerében Isten tudja
+hány tábla módosítását jelenti. Tehát ez
+nem egy tábla módos�

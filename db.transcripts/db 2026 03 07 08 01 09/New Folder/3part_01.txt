@@ -1,0 +1,336 @@
+bizonyos rekordjait
+akarom repikálni. Ez mind-mind a a
+publikációnak a a specifikációja. És
+ugye a múlt alkalommal megnéztük azt,
+hogy mi az a Job. Egy időzített
+adatbordai feladat. No, ezeket a
+feladatokat, mint a disztribúció meg a
+publikáció, ezeket mind-mind jobok
+fogják elvégezni, amiket itt ágenseknek
+hívunk, vagy hát ügynököknek.
+És aszerint, hogy milyen típusú
+applikáció van szó, másmilyen típusú
+ünnökök vagyek fogják ezt
+elvégezni. Nos, az első replikációs
+típus, amit szeretnék mutatni, az a
+snapshot replikáció. Tehát a tehát ezt
+magyarul mondjuk pillanatfénykép vagy
+pillanatkép replikációnak lehetne hívni.
+Hát angol kicsit rövidebb a
+szakkifejezés. Na most ez
+ez ugye látni fogjuk, hogy egy egy
+nagyon rossz hatékonyságú replikáció.
+Azonban mindenfajta replikációs típus
+egy snapshot replikációval kell, hogy
+elkezdődjön, mivel ez az a ez az a
+lépés, vagy ez az a folyamat, aminek a
+során az előfizetők először megkapják a
+teljes objektumot. Ugye mondtam, hogy
+első lépés, teljes objektum megkapássa,
+utána pedig szinkronizációs folyamat.
+Tehát először mindig egy snapshootal
+kezdünk. Na most miért mondtam azt, hogy
+ez egy ez egy
+nem jó hatékonyságú
+replikáció a többihez képest? Hát azért
+mondtam, mert ennek az az alapgondolata,
+hogy ahányszor van egy szinkronizáció,
+annyiszor a előfizetőknél
+az egész publikációt eldobjuk,
+tehát drop, és utána újra létrehozzuk.
+És
+hát igen, szóval ez e ez miért miért
+problémás? Tehát először is nézzék,
+gondolják meg azt, hogyha ez a publikált
+objektum, ez egy nagy tábla, mondjuk van
+benne 10 millió rekord, és mondjuk
+óránként van szinkronizáció,
+de csak két rekord változott meg. Hát
+akkor én én teljesen fölöslegesen
+mozgat mozgatom át az egész 10 millió
+rekordot a hálózaton. Ugye először a
+publ a publishertől a distributorhoz,
+aztán meg a distributortól az
+előfizetőkhöz, ugye? Tehát ez teljesen
+fölösséges hálózati terhelés. A másik
+nagyobb probléma viszont az, hogyha ha
+meggondolják, hogyha visszajön ki az
+előző
+ábrához, hogy ezek a subscriberek itt a
+jobb oldalon ezek is OLTP szerverek,
+tehát ők is tranzakciókat futhatnak.
+És az a bizonyos objektum, amit ő
+hozzájuk elvittünk, az a tábla, mondjuk
+legegyszerűbb esetben, az a tábla az
+lehet egy tranzakció része. Na most egy
+tranzakciókat tudtató rendszerben az nem
+megengedhető,
+hogy egy olyan tábla, amit a transzakció
+használ az időnként eltűnik, mert ugye
+amikor frissítjük, akkor az drop és
+create és insert. Tehát ezt jelenti,
+hogy hogy akkor amíg ez ez folyik, az
+alatt a tábla nem elérhető.
+Eleve ugye külső kulcskényszer nem
+hivatkozhat rám, mert akkor nem lehet
+droppolni, nem lehet törölni a
+tartalmát. Ugye érték? Tehát ez ez egy
+üzlet logikai megszólításokat jelent.
+Azt nem sok replikáció. Ettől
+függetlenül
+vannak olyan szenáriók, amikor mégis jó
+megoldás ez, és önmagában snapshot
+replikáció elég, tehát nem kell a a
+jobbakat használni.
+És például itt itt itt van egy ilyen
+szárió, nem tudom, van aki hallgatta-e
+esetleg adattára technológiákat.
+Ott van egy
+az arattáznak a a feltöltését és
+karbonanttartásátnek
+szokták hívni. Itt ez az Xtech transform
+load. És akkor ott az Xtech lépés,
+amikor kinyerjük az adatokat a a
+különböző infláció farásokból, na erre
+például egész jó egy ilyen egy ilyen
+snapshot típusú replikáció,
+és aztán ugye azokat később
+feldolgozzuk. Vagy mondok egy másikat.
+Ha ha egy viszonylag kis adatkészletről
+van szó, aminek viszont biztos, hogy
+változik szinte mindig minden eleme
+egy árfolyamtáblázat,
+amit egy egy bank a világon lévő
+divízióihoz óránként juttat el. Mondjuk
+tegyük fog, hogy óránként fix áfolyammal
+dolgoznak a valutáltók. Hát akkor az
+összes áfolyamatot mindig frissíteni és
+egyszerűen el kell dobni a régi
+áfolyamtábázatot, ugye? Tehát ebben az
+esetben például egy borzasztó egyszerű
+megoldás egy snapshot replikáció
+alkalmazáson.
+Na most azért, hogy a hogy az adatok
+mozgatása azért hatékony legyen, ezért
+igazából nem inert utasításokat
+használunk, amikor föltöltjük a táblát,
+hanem úgynevezett bark copy
+utasításokat.
+B copy az egy olyan mechanizmus, ami
+alacsonyabb szinten másol adatokat,
+tehát már a forrástáblákból is ezzel a b
+copyval másoljuk ki az adatokat. Azt
+jelenti, hogy közvetlenül az adatbázis
+fából szedjük ki az adatokat.
+És ezek ilyen bináris formátumú
+lapok tulajdonképpen. És ezeket a
+lapokat aztán szintén alacsonyabb
+szinten tipikusan nem naplózott
+utasításokkal iesztjük be a a kliens
+oldalon a megfelelő tárlából. Tehát
+elről csak annyit kell tudni, hogy van
+egy ilyen bá copy és fá alapú az
+adatvétel. Tehát ilyen bák copy fálok
+fognak mozódni az egyik rendszertől a
+másik. Na és akkor már csak annyit
+szeretnék elmondani itt a bevezetésben,
+hogy hogy a snapshot replikációt
+az SQS szerveren két ágás valósítja meg,
+ami ugye a két jobot is jelent. Az egyik
+az egy snapshot job, amelyik időzített
+időpontokban rendszeresen csinál egy egy
+snapshot tábláról, tehát egy egy mentést
+tulajdonképpen a tábla tartalmáról,
+illetve hát a publikáció tartalmáról,
+nem csak távol lehet. És másrészt pedig
+van egy olyan distribution job, ami
+megfelelő mappába kimásolt
+adatfálokat,
+tehát bal copy fálokat
+beteszi a
+a kliens oldalon a megfelelő táblákba.
+És akkor most nézzünk meg egy egy demót.
+Jó, tehát nézzük meg, hogy hogyan
+működik mindez
+itt a a jegyzetben. Tehát most itt
+vagyunk.
+És
+ja igen, aki esetleg nem futtatta még le
+az adatbázisán ezt a két utasítást. Ja,
+hát igen. Na, na, kezdjük akkor azzal,
+hogy
+van ez a ez az SQS Server Configuration
+Manager. Itt ezzel a pirosságos dobozzal
+kihívható elő.
+Itt ellenőrizzék, hogy mind a három
+szerverünk fut. Tehát a primary,
+secondary és a surd is fut. Ha
+valamelyik nekik piros nézetet látnak,
+akkor jobb oldali gomb és start. Oké.
+És azt is ellenőrizzék, hogy a server
+agentek is futnak. Tehát ezek külön
+szolgáltatások is, mint a múltkor ezt
+említettem, remélem még valamennyire
+emlékeznek rá. Ezek a a felelősek a
+jobok futatásai, és hát itt jobokat
+fogunk futtatni, minden agent egy job
+lesz. Hát ez az első dolog. A másik az,
+hogy hogy indítsanak el egy management
+stúdiót és csatlakozzanak a primary
+szerverhez. Jó.
+És hát az lesz a a száriónk, hogy ezen a
+a primary serveren itt mondjuk a
+a Northwind adatbázisban
+a
+az Orders táblából akarjuk majd
+most itt nézzünk bele ebbe a táblába
+mondjuk az amerikai rendeléseket is a
+jegyzetben ez szerepel az amerikai
+rendéseket szeretnénk replikálni.
+Egyébként ugye a replika azt jelenti,
+hogy másolat, tehát egy latin kifejezés.
+Innen származik ez a szó. Szóval
+szóval itt látják, hogy hogy van egy
+ilyen, hogy hogy ship country. És akkor
+ahol a ship country ússal azokat a
+vendéseket akarjuk majd replikálni,
+mondjuk tegyük föl, hogy egy egy olyan
+divízió számára, ami kifejezetten
+Amerikába szállít. Tehát ez a igazából
+ez egy ilyen hipotetikus
+szárió. Jó. És akkor ehhez konfiguráljuk
+a replikációt. Most ebben az első
+demóban, ebben az egyszerűség kedért
+mind a három szerepet, tehát a
+publikáló, distributor és a subscriber,
+ugyanaz az egy szerver fogja vállalni,
+ugye? És egyik adatbázisban, a másikba
+fogunk replikálni. Jó, ez lesz a
+a száriók. Létre fogunk hozzni egy új
+adatbázist. Na, akkor kezdjük. Tehát a
+replikációs architektúrának a a
+beállítása
+az azzal kezdődik, hogy meg kell
+mondanunk a publikáló szerver számára,
+hogy ki lesz a distributor. Ez az első.
+Tehát konfigurálni kell a distributot.
+Most, hogyha nem csináltak még semmilyen
+applikációs műet a szerverükkel, akkor
+ez a replikációs menü, főmenü itt úgy
+néz ki, hogyha jobb oldali gombot
+nyomnak rá, hogy van egy ilyen menüpont,
+hogy configure distribution. Ez a majd
+meg fog változni akkor, hogyha már
+bekonfiguráltuk a replikációt. Most
+egyelőre válasszuk ki ezt. Jó.
+És az elsőt válasszák ki, ami azt
+jelenti, hogy a ez a prim server, ez a
+saját maga distribútorra lesz. Tehát
+tehát ő lesz a publisher és még a
+distributor is. Jó, és menjünk tovább.
+Itt viszont semmiképpen nem állszák ki
+azt, hogy yes, mert akkor megpróbálja
+elindítani majd ez a kis wizard az a
+server agentet, de nincs hozzá
+jogosultsága, hogy hibára fog futni.
+Tehát a másodikat tekintettel, hogy már
+úgy is elitottuk manuálisan a szerver
+agenteket, nem lesz ezzel probléma. Na
+most kell megmondani azt, hogy hol
+legyen az a mappa,
+ahova ezek a bal copy fálok be lesznek
+másolva. Hát ennek egy olyan fordának
+kell lennie, amit a szerver process tud
+írni, ugye? És ugye emlékeznek rá, hogy
+az kező rendszerek azok soha nem
+rendszergaz kontextusban futnak. Tehát
+őnekik csak annyi jogosultságuk van,
+hogy egy bizonyos mappát tudjanak írni,
+ami jelen esetben itt az MSSQL alatti
+terület, az alatti mappák. Úgyhogy
+semmiképpen ne egy olyan mapát adjanak
+meg, legszörből elfogadni a olyan mapát,
+amitok nem tudnak írni, legfogadni a a
+defaultot. Most diszriúciós adatbázis
+nem használunk még a Snapsot
+replikációval, de majd a követkőtípusban
+fogunk használni. Attól függetlenül ez
+is létre fog jönni, ha még nincsen
+megcsinálva.
+És ugye itt meg kell mondanunk azt, hogy
+hogy ki lesz a publisher. Hát ugye mi
+leszünk a publisherk, ugyanez a szerver
+és konfiguráljuk a a disztribúciót. Jó,
+tehát igazán most történik meg annak a
+ennek a bejtása ilyenkor
+hát tulajdonképpen amit a háttérre
+történik, tárol teások hívódnak meg.
+Mindezt, amit itt mi itt itt
+krickelgetünk, ezt meg lehetne csinálni
+egy SQTel is,
+de attól még nem futna sajnos
+gyorsabban. És
+ugye talán így így így jobban követhető,
+hogy hogy mi történik, de egyébként van
+arra lehetőség, hogy
+hogy ahelyett, hogy itt
+a az a scriptben, hogyha ebben ebben a
+varázslóban elindítanánk a scriptet,
+ahelyett
+csak egy scriptet generálunk és aztán
+azt a scriptet mi programozottan hajtjuk
+végre. Tehát elvileg az is nyugodtan elő
+előfordulhat,
+hogy hogy mi egy mi egy kliens
+programból konfigurálunk egy egy
+replikációt. Jó.
+Na hát akkor most egy kicsit erre
+erre erre várjunk. Az a helyzet, hogy az
+én irtás gépem az eléggé lassú. Sajnos
+meg ez a
+Teams is eléggé reteli a gépemet, de
+előbb-utóbb majd azért csak megtörténik
+a
+disztribúciónak a konfigurálása.
+Egy pillanatra kérdezhetek a nem tudom,
+hogy ez elhangzott-e korábban, de az
+órák felvételre kerülnek, vagy nem, mert
+jelenleg nem fut a felvétel.
+Nem, nem, nem. Én
+én én nem veszem fel az órákat, viszont
+a múdulapon találnak videókat
+amik magyar nyelvűek egyébként és hát
+ugyanezek a dolgok szépen végig vannak
+magyarázva, tehát én azokat ajánlom. Jó,
+az az a helyzet, hogy hogy
+ha felvenném, akkor utána meg is kéne
+vágnom, hogy abb egy kiadható anyag
+legyen. Tehát ez arra megnek nincsen
+energiám sajnos. Viszont ezek a videók,
+ezek úgy meg vannak szerkesztve, tehát
+azokat javaslom inkább. Jó,
+értem. Rendben, köszönöm.
+Jó. No, tehát tehát most akkor valamit
+sikerült itt beállítanunk. Most akkor
+ezek után ugye látják, hogy hogy itt
+már más a menü.
+És most ezekután publikálhatok valamit,
+válasszuk ki azt, hogy local
+publications és new publication. Tehát
+most egy új publikációt, ezeket az
+amerikai elrendeléseket szeretnénk majd
+beállítani.
+Először azt kell megmondan melyik
+adatbázisból, tehát Northw adatbázisból.
+És látják, négy fajta replikációs típus
+van. Hát remélem, hogy az idő megengedi,
+hogy ebből négyből legalább hármat itt
+tudjak demózni. Az első az tehát a
+snapshot lesz, amiről most mondtam,
+amiről eddig beszéltem. Tehát ezt
+hagyják kiválasztva
+ezt az opciót. És most meg kell
+mondanunk, hogy a publikációnak Igen, a
+publikációnak a az elemeit article
+hívják, tehát
+cikkeknek, hogy milyen cikkek va

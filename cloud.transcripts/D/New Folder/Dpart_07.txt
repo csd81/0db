@@ -1,0 +1,280 @@
+y kéne neki működni.
+És akkor ezt lehet használni arra, hogy
+tetszőleges
+komplex alkalmazást létrehozzunk.
+Nálatok is minden oké működött?
+Eljutottatok idáig?
+Igen.
+Szuper.
+Na hát akkor nézzünk egy érdekesebb
+dolgot. Jó.
+Ezt átugranám. Itt csak a a pool és a
+push közötti különbségek vannak.
+Szerintem sejtitek, hogy miről van szó.
+Majd később megnézitek.
+És
+itt a az első részen túl is vagyunk, és
+itt a harmadik részt szeretném nektek
+megmutatni,
+ami már több szolgáltatásnak meg
+függvénynek az össze kapcsolása.
+És
+itt egy régebbi példát szeretnék nek
+szeretnék megmutatni, ami most már
+nincsen a Google weboldalán.
+Tavaly még megvolt,
+és szerintem az egy nagyon szép kis
+példa, úgyhogy a az internet archívumban
+megtaláltam, és ott fogjuk majd ezt
+megnézni, de ez több szolgáltatást
+használ. Meg is mutatom, hogy miről van
+szó, de mielőtt az egészet majd
+megnézzük, külön-külön a a
+felhasznált felvő szolgáltatásokat
+megnézzük. Tehát ez egy olyan demo
+alkalmazás, ami úgy működik, hogy
+képeket töltünk be a storage
+szolgáltatásba.
+Amikor oda megérkezik egy fájl, akkor
+innen egy storage trigger
+elindítja az első függvényt, aminek az a
+feladata, hogy beolvassa a storage
+bucketból a kép fá, és azt utána átküldi
+a vision szolgáltatásba. Majd mindjárt
+megnézzük, hogy ez a vision micsoda,
+ami megnézi azt, hogy ezen a képen
+találhatóe szöveg,
+amit beküldtünk.
+Jó, hogyha ezt megtalálta, akkor ez egy
+újabb függvényt fog elindítani,
+ami lefordítja a megtalált szöveget
+valamilyen célnyelvre.
+Ezt konfigurálni lehet, hogy mire
+szeretnénk fordítani. Ehhez használni
+fog egy másik Google szolgáltatást, a a
+Translate
+szolgáltatást.
+És ha megtörtént a fordítás, akkor ez a
+függvény, ú bocsánat, egy újabb papszab,
+ezt elfelejtettem mondani, itt papszab
+üzenetek vannak a függvények között,
+tehát ilyen papszab triggerrel elindítja
+a harmadik függvényt, ami pedig az
+eredményeket egy másik storage pakitba
+szépen elmenti.
+Jó, tehát ez tulajdonképpen egy
+workflow,
+ami több lépésből áll. Az első a image
+fár beolvasása
+és a szövegdetektálás, utána a szövegnek
+a lefordítása, a harmadik lépés pedig
+elment és egy másik bakitba. De
+ahelyett, hogy ezt egyetlen egy
+program formájában
+fejlesztenénk ki és futtatnánk le, ez
+külön függvényekből áll, és ha bármit
+módosítani kell, akkor nekünk csak azt
+az egyfüggvényt kell kicserélni, és
+moduláris lesz az. alkalmazás, illetve
+ugye tetszőlegesen skálázható satöbbi.
+Jó, tehát ez egy szerintem egy nagyon
+szép kis példa. Mindjárt belenézünk majd
+a a forráskódba is,
+de most azt szeretném, hogy a
+böngészőtökbe írjátok be csak ezt, hogy
+cloudgoogle.com/vision.
+Jó,
+egy másik tabon pedig a Cloud Gogle.com
+translate
+valamit nyissátok meg.
+És akkor azt a pavisont mutatom itt
+nálam.
+Tehát ezek már ilyen mesterséges
+intelligenciaszolgáltatások,
+amik nagyon sok mindent tudnak. És azért
+szeretném, hogy ezt nézzük meg, mert itt
+nem csak szövegnek a detektálását lehet
+elvégezem rengeteg egyéb dolgot is.
+Úgyhogy nézzük meg, hogy hogy mi is ez
+az egész.
+És egy picit lejjebb görgetünk, akkor
+mindjárt látjuk, hogy mik vannak ebben.
+Tehát itt itt a különböző ilyen gépi
+látással kapcsolatos szolgáltatások
+vannak felsorolva. Tehát van ez a normal
+cloud vision,
+és akkor itt írja, hogy
+képnek a címkézése, tehát magyar
+objektum felismerése alkalmas. Arcokat,
+különböző
+ilyen mi a landmát magyarul,
+mindegy, azokat észre tudja venni. Az
+OCR az a karakterfelismerés,
+a save search az pedig, hogy valami
+bántó tartalom nincs-e a
+képen. Aztán van külön egy dokumentum
+felismerő rész, ami már ugye nyomtatott
+dokumentumokat tud szegmentálni, illetve
+megtalál bennük táblázatot satöbbi,
+satöbbi. Következő a videó feldolgozó
+rész, aztán
+az inspection, az ilyen hibakeresés
+gyártási rendszerekben lehet használni.
+vertex AI az már egy ilyen
+még még mesterségesebb intelligciás
+valami. És van az az image image imageén
+az meg a képgenerálás.
+satöbbi. Tehát, hogy nagyon gazdag a a
+tárháza ezeknek a dolgoknak.
+Na és akkor azt szerettem volna
+javasolni nektek, hogy ide pörgessetek
+le a legaljára, és hogyha ide feltöltünk
+valamilyen képet, akkor ezt ő rögtön
+ingyen és bérmentve elemezni fogja.
+Úgyhogy én ide behúzok gyorsan valamit,
+hogy ezt tudjam neki demontrálni.
+Milyen képet?
+Itt van egy londéz
+kezd.
+Na hát ez egy egészen okos kis valami.
+Tehát felismerte, hogy itt a háttérben
+van a angol nemzeti
+bank. Rögtön melléakta a térképet, hogy
+ez hol található.
+És akkor itt fölül a taboknál kicsit
+meg. Ja, hát nem
+van ez.
+Jó, tehát látjuk a különböző taboknál,
+hogy még mi egyebeket lehet látni. Tehát
+ezek a landmark dolgok. Ha itt helyjebb
+megyünk, akkor még találunk egyebeket.
+Azt mondja szobrot is talál.
+Welllington szobrát akkor háborús
+emlékműből.
+Az én nem tudom, hogy mi.
+Jó, tehát ezeket megelte
+talált arcokat,
+és az arcokon még akár érzelmeket is
+próbált
+detektálni. ez az első arc hát eléggé
+alacsony
+százalékban
+tud bármit is, de itt például van egy
+második arc, ami nem tudom, hogy melyik,
+ami szerinte egy nagyon
+vidám arc. És akkor van egy harmadik, az
+is többnyire az.
+Jó, és akkor még azt is mondja, hogy
+mennyire van elbillentenve az illetőnek
+a feje satöbbi.
+Egyéb objektumok. És akkor itt látjuk
+megint, hogy személy, kabát,
+esernyő,
+farmer, épületek.
+És ha itt rámegyek, akkor rögtön jelzi,
+hogy melyikről van szó.
+Cimkék
+valószínűségi százalékokkal ellátva.
+Akkor szöveg, amit esetleg
+felfedezett.
+Például itt van
+ezen a táskán egy felirat, amit
+megtalált.
+Ezt nem tudom, ez a 43-as blokk, ez hol
+van.
+Biztos olyan is van. Akkor a képnek a
+tulajdonságait jönnek a domináns színek,
+meg még egyéb ilyen akármik.
+Jó, save search. Azt mondja, nincs rajta
+erőszak meg ilyesmi orvosi dolgok sem.
+Jó, nagyon örülünk. Jó, tehát ilyesmi
+dolgokra képes ez a
+felismerő valami.
+És akkor a a másik volt a translate. Hát
+ezt gondolom mind ismeritek, hogy
+körülbelül
+miként működhet.
+ha gondoljátok még itt lehet játszorozni
+más képekkel is. Ha esetleg valakinek
+van valami dokumentuma,
+számla vagy ilyesmi, próbáljatok még azt
+is bedobni, hogy hogy azt hogyan tudja
+feldolgozni.
+Megkeresem azérben a
+szolgáltatást.
+Hát itt is nagyon sok mindent látunk.
+Például a médiát automatikusan tudja
+fordítani,
+feliratozni.
+Itt ezt mondja automatikusan weboldalt
+lehet fordítani, videót.
+Jó, és akkor itt látunk egy újabbat, ami
+megjelenik. Ez a speech to text, ahol a
+szöveget felismeri és át tudja, nem a
+szöveget, bocsán beszédet felismer és
+abból szöveget tudom
+létrehozni. Kicsit lejjebb megyünk, van
+a text to speech fordítva, tehát a
+szövegből tud beszédet generálni.
+A formázott dokumentumoknak a fordítása
+van.
+Szóval, hogy sok minden van itt megint.
+Hát azt mondja, próbáljunk ki valami
+fordítást.
+Hát ezt biztos már mint használtátok,
+tehát it körülöd ismerős, hogy
+mit kaphatunk itt.
+Szépen nem lehet ki azt kipróbálni
+úgyhogy
+Próbáljuk.
+Nem odavitt, ahol szerettem volna menni.
+Jó, ez most valami miatt nem odamegy,
+ahova szeretném. Akkor még egy dolgot
+próbáljatok meg, mert szerintem érdekes,
+de azt csak lokálisan tudjátok. A text
+to speech appit
+próbáljátok ki. Jó, itt csak annyit kell
+csinálni, hogy beírni valami szöveget és
+akkor felolvastatni
+a beszédszintátorral,
+de nem ide kellett volna.
+hanem a kipróbál részre.
+Na, ez lesz text to speech AI. És akkor
+itt van egy egy demo,
+ahol ezt mondjuk el tudjuk olvastatni.
+Én ezt megnyomom, de szerintem nem
+fogjátok hallani, amit az enyém beszél.
+Nem hallottátok ugye, amit beszélsz?
+Nem.
+Jó,
+nem, nem hallottam.
+Jó, próbáljátok meg. ti a sajátotokon.
+Jó, hogyha ha érdekel ez benneteket.
+Aztán utána visszatérünk a az
+alkalmazáshoz, és akkor megnézzük, hogy
+itt mi is történik.
+Hogy néz ki ez a
+összekötött
+kis példaalkalmazás.
+Berakom a
+linket.
+chatbe.
+És akkor azt kérem, hogy késátok ezt meg
+elment.
+Na hát elvileg ezt
+le is tudnánk futtatni. Meg is próbáljuk
+majd. Nem garantálom, hogy működik,
+mert én ezt idén még nem futtattam le.
+Akartam volna, csak nem volt rá időm.
+Remélhetőleg a kód az kompatibilis még
+most is mindennel.
+De amit szeretnénk, hogy először nézzük
+meg ennek az egésznek a belső
+felépítését,
+tehát az az érdekes, hogy ezt a három
+függvényt
+forráskódszinten,
+hogy lehet megírni, és ők hogyan
+használják ezeket az eseményeket,
+illetve a papszabb rendszert.
+Jó, és most legörd

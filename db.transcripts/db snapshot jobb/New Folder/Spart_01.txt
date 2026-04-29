@@ -1,0 +1,84 @@
+agy a
+replikációnak több fajtája van. Most
+három fő fajtával fogunk itt
+foglalkozni.
+A snapshot vagy ugye pillanatfénykép,
+illetve a transzakcionális és a és a
+merge vagy összefésüléses replikáció.
+Ezek közül a snapshot a legegyszerűbb.
+Itt ebben az esetben
+egy másolat készül
+a
+a publikáltó objektumokról,
+és
+ez egy periodikus teljes másolat az
+egész objektumról. És aztán ezek a
+másolatok
+ezekkel lecserélik az őfizetőknél
+meglévő
+korábbi tartalmat.
+Tehát itt a itt a lényeg az abban, tehát
+az a lényeg, hogy a a
+az az első bemásolás után mondjuk
+tegyük, ez egy tábla tartalma,
+hogyha annak a táblának valami változása
+van később a a publishernél
+és
+a snapshot frissíteni akarjuk, akkor az
+előfizetőnél droppoljuk a táblát, tehát
+megszüntetjük a táblát és újra
+létrehozzuk és újra feltöltjük. Tehát ez
+egy ilyen nagyon drasztikus megoldás, és
+ezért ez csak olyankor alkalmazható,
+vagy olyankor célszerű alkalmazni,
+amikor viszonylag kis adatmennyiségről
+van szó, aminek viszont minden minden
+eleme valószínűleg változni fog. Tehát
+hogyha mondjuk van ilyen millió rekordos
+táblánk, és a legutóbbi frissítés óta
+abban csak egy-két rekord változott, hát
+akkor ez egy nagyon rossz hatékonyság
+megoldás. Ugye az az érezhető. Viszont
+ez a legegyszerűbb. Én klasszikus
+példának azt szoktam mondani, amikor
+például van egy árfolyam táblázat,
+annak garantáltan minden
+sora frissülni fog minden nap, és az egy
+napig érvényes. Na na ezt például jól
+szét lehet replikálni, snapshot
+replikációval még a napi üzletmenet
+kezdete előtt, ugye? Tehát ez erre
+például nagyon jó.
+Hát akkor akkor nézzük azt, hogy ez ez
+hogyan működik, és akkor közben majd meg
+fogunk ismerkedni a replikációt
+megvalósító
+folyamatokkal. Illetve talán azért még
+annyit előzetesen hadd mondjak el, hogy
+ugye a az eddigi esettanmányunkból már
+tudjuk azt, mik azok a jobok, ezek is
+jobok lesznek. Tehát ezek a replikáció
+megolasító agensek, ezek tulajdonképpen
+ütemezetten futó csúok, amiket
+automatikusan hoz létre a replikáció
+konfigurálása, amivel mi itt mi most
+csak két agensről fogunk találkozni. Az
+egyik az a az a snapshot
+agens vagy snapshot job, amelyik a
+másolatot elkészíti a publikációra és
+beteszi egy erre a célra fenntartott
+könyvtárba, egy mappába.
+A másik az pedig egy distribution agent
+nevű job, amelyik figyeli ezt a mappát,
+és onnan periodikusan
+másolgatja ki a tartalmat az
+előfizetőhöz.
+Na hát akkor nézzük, hogy ez hogy ez
+hogyan működik. Itt azt kérem, hogy hogy
+először is nézzék, hogy megy-e a primary
+és a secondary szerverünk is.
+Ezt tudját megnézni, hogy itt a
+configuration managerbe
+ez kis zöld háromszög van-e mellettük.
+Hogyha nincs zöld háromszög, akkor
+kérem, hogy indítsuk őket el, teh

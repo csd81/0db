@@ -1,0 +1,459 @@
+zük meg ezt a scriptet. Hát ez a
+script, ez ez arra való, hogy
+engedélyezi egy adatbázis számára, hogy
+ebben memory optimizált tábra lehet
+legyen. Ehhez itt szükséges az, hogy
+ehhez kell csinálni
+egy új table space- tehát egy új
+hát itt file groupnak hívják, tehát egy
+olyan tárolóhelyet, ami a memória lesz
+tulajdonképpen. És akkor utána lehet
+ezt a
+ezzel az utasítással ez a alter database
+current set memory opt elevate snapshot
+on meg az alter database current set
+comp level ezek az utasításokkal
+bekapcsolni tulajdonképpen
+itt itt látható az az utasítás ami ami
+létrehoz
+egy egy új f groupot akkor hogyha még
+nem volt nem optimalizált
+és aztán Án szépen bekapcsoljuk,
+engedélyezzük az adabisnak, hogy ez hogy
+az egyetlen megtörtén. Különben nem fog
+menni. Jó, itt látható, hogy ezek a
+piros utasítások, amiket itt összeünk és
+és létrehozunk. Most ezt én én itt ezt
+már lefuttattam a testbázisomon, de
+futtassák le nyugodtan. Azt hiszem, hogy
+még egyszer lefutottam, abból se lehet
+nagyon baj. És akkor utána nézzük meg a
+másik
+táblát, ami a MOT Demo 2024.
+Ezt is beásolom ide.
+Hát nézzük meg ezt a ezt a kis scriptet.
+Ez egy demo script. a Microsoftnak a
+egyik tutorialjából vettem át. Tehát
+ugye van három táblánk, van egy SQL
+nevű, van egy HI, meg egy HC.
+különbség az ezek között, hogy itt itt
+többféle kombinációt is is ki fogunk
+próbálni. Lesz a hagyományos módszer,
+amikor egy egy hagyományos tárb egy
+hagyományos tároltából futni. Aztán lesz
+egy olyan, amikor
+egy egy memóri optimalizált táblán, de
+már egy memória már de de egy
+hagyományos tároltást fut. Ugye ebben az
+esetben, hogyha a táblan memória
+optimalizált, de a tároltá az az viszont
+nem, tehát nem nem natív,
+akkor ugye ez interpretált módban fut,
+tehát utasításonként
+futtatjuk le a tárást. És végül van egy
+olyan változat, amikor az emot-n egy
+natív tároltárás fut. És akkor megnézzük
+majd a sebességből különbségeket. Tehát
+látják itt ez nagyon egyszerű ez a kis
+progi. Van egy tábla C1, C2. A C2 az egy
+kicsit nagyobb tábla.
+És akkor ez a hagyományos tábla. És itt
+van a a memory optimalizált tábla.
+Látják, itt van itt itt itt kapcsoljuk
+be, hogy memory optimized egyenlő on.
+Nagyon jó, igaz? Ö és
+a másik az tök ugyanilyen egyébként,
+ugye?
+És van egy tároljáunk. Na most ez
+ez itt
+ez a tároljerás, ez már a native compil,
+tehát ez a
+forduló tárolt eljárás. Ez a hátt szépen
+megtörténik, tehát elindul a C fordító
+és és lefordítja ezt a tárolt eljárást.
+És mit csinál?
+beszúr rekordokat, tehát nem egy nagyon
+bonyolult logika, amit amit itt
+elkészít, mert paraméterre ez a ez a ez
+a ez a row count, látják?
+És akkor utána jönnek a tesztek,
+azt mondja, hogy a a a hard drive base
+table interpret
+ugye itt nincs tároltás, mer egyszerűen
+scriptünk van, de ugyanaz, mint a
+tároltás. És ezt a scriptet, ezt
+futtatjuk le valahányszor ezen a ezen a
+táblán, mégpedig 10000erszer. És ezt ezt
+szúrjuk be. Ez lesz az első mérésünk.
+Aztán kiírjuk, hogy hogy a hagyományos
+módszer az az hány milliszekund. Akkor a
+következő esetben
+Igen.
+Pillanat.
+Jó, ez itt ez itt ez itt levut lefut
+sokszor, és akkor utána
+Ja, igen, persze, persze. Itt itt az a
+különbség, látják, hogy ez az eset
+táblába szúr be, ez pedig a hely tábla,
+tehát ez már egy memory optimalizált
+tábla, viszont még mindig a az
+interpretált tároltárást tudjuk
+használni, tehát a hagyományosat. És a
+harmadik kombináció lesz az, amikor
+amikor itt meghívjuk ezt az NCSP-t,
+tehát natively compiled store procedet.
+És és ez lesz az, aminek a
+leggyorsabbnak kéne, és minden esetben
+kiírjuk a a futásidőt milliszekundumban.
+Hát akkor futtassuk le. Jó, tehát nézzük
+meg, hogy hogy mi lesz.
+Kicsit itt növeljük meg a szövegeknek a
+méretét, hogy
+Na hát kérem szépen, 771 586 193. Hát
+ugye erről beszélünk, tehát ez a ez a
+célja az egésznek.
+A másik, amit még akartam mutatni, az
+egy kicsit nagyobbetű dolog.
+Nem is biztos, hogy a végére élünk, de
+talán mindenesetre
+arról van szó, hogy mi van akkor, hogyha
+tényleg én egy egy adatbázisomból, ami
+most így készen van, ki akarom venni a a
+legfontosabb részt, és azt át akarom
+tenni a felhőbe, bocsánat, a a nem
+úrioptimizált táblába, és és ráadásul
+még egy tárolatást is át akarok írni,
+hogy hogy ennek megfeleljen.
+Hát
+ebből a célból egy másik demónk fog
+következni. Egy pillanat. Most
+visszajövök ide az előadáshoz.
+Szóval
+eléggé sok limitáció van ezekkel a
+ezekkel a memózá táblákkal. Nincs is itt
+minden felsorolva.
+Például nem lehet nincs értelme ugye
+kompressor, tehát össze tömöltést
+használni, hiszen hát hogy azt azért
+csináltuk, mert volt az a szűk
+keresztmetszet, ugye a replikáció is
+korlátozott satöbbi, satöbbi. Nem is
+kell ezt itt most mind felsorolni.
+Mindenesetre a a natív tártársoknak is
+nagyon sok korátozásuk van.
+Például mondjuk nem lehet
+printet használni, meg lákot, hát mert
+így tudták ezt megcsinálni. Jó, és ezek
+a ezek a ezek a natív társok, ezek csak
+memory tőzel táblákat használhatnak.
+Most akkor, amikor át akarunk tenni egy
+adatbázis részt ilyen memory
+optimalizáltba,
+akkor nagyon fontos, hogy ki tudjuk
+választani az adásnak a kritikus részét.
+És erre vannak mindenféle eszközök
+egyébként.
+Tehát erre erre vannak
+ilyen varázslók beépítve, hogy ezt
+azonosítsák. tranzakcionális napló
+alapján megnézik azt, hogy na melyik
+tábla az, amit nekünk valószínűleg
+érdemes volna. És ugye minden ilyen
+ezt ez ez már migráció egyébként az
+egyik ö hagyanyos támát áttenni emótéba,
+de mindenesetre minden ilyen esetben egy
+csomó átalakítást kell végeznünk. Tehát
+például
+újra létre kell hozni a a külső kulcs
+kényszereket.
+És ilyenek vannak, hogy
+egy tárolt első nem hivatkoztat másik
+adatbázis táblára, ami MOT.
+Na és hogyha ezt ezt végig akarjuk
+csinálni, erre is van egy egy demo. Itt
+a a jegyzetben van leírva ennek a ennek
+a menete.
+Pillanat.
+Egy kicsit a végére kell most ehhez
+ugornunk.
+Itt itt vagyunk most.
+Ez az a ez az a rész.
+Jó, tehát például azt meg lehet nézni,
+hogy egy bizonyos tábla esetén mondjuk
+itt a itt itt a customers táblát, hogyha
+megnézzük a North adatbázisban, akkor
+milyen problémák lennének,
+hogyha át akarnánk ezt tenni emotba.
+Úgyhogy egy pillanat jövök a
+a szerverre.
+Igen. Tehát a Northw adatbázis
+és
+akkor itt a customers távra,
+és van egy ilyen, hogy memory
+optimization advisor, látják.
+És akkor ez végez egy ilyen egy ilyen
+scant, és megapítja, hogy rengeteg
+probléma van.
+Hát csak itt van egy bag ebbe az
+adatbázisba. Ugyanaz a külső
+kulcskényszer 36-szor föl van véve.
+És ezeket ezeket mind el kell tüntetni
+ahhoz, és újra létre kell majd hozni,
+hogy hogy ez működhessen. Oké.
+Tehát
+úgy úgy Isten igazából
+nem olyan egyszerű ez a dolog. Itt a a
+mi a mi esetünkben az a legokosabb, amit
+tehetünk, hogyha vég akarjuk ezt a demót
+csinálni, hogy
+hogy először is töröljük ezt az adatbáz
+és újra egy dampból, ami egy egy jó damp
+létrehozzuk a Northund adatbázist.
+Próbáljuk meg. Jó, tehát ezeket itt itt
+be lehet csukni
+és
+töröljük.
+Lehet, hogy ehhez újra kell indítanunk
+majd a menedsment stúdiót, mert
+kizárságot nem tudunk hozzászerezni
+másképpen. Ez feltételezhető.
+Igen. Tehát ilyenkor ilyenkor ki kell
+újra kreditanunk a menzment stúdiót,
+de majd mindjárt újra indul.
+És addig is nézegessük meg azt a
+scriptet, ami azt a demót elvégzi. Tehát
+ez pedig szintén ebben a zip filban
+a
+a native
+a native new order store plots
+címmel fut. Native new order store
+címmel fut ez a dolog.
+Hát
+egy pillanat mindjárt megpróbálom ide
+áthozni.
+Szóval van egy olyan tárolt eljárásunk,
+ami egy üzleti tranzakciót hajt végre,
+egy új rendelést vesz fel a North
+adabrásban. Ez egy ilyen jó kis utasítás
+mix, tehát van benne lekkérdezés,
+adatmódosítás, mindenféle.
+És aztán ezt lehet itt is egy teszt
+során
+ezt többször futtatjuk le. Itt látható,
+hogy több párhuzamos kapcsolatban
+mondjuk 10000-szer futtatjuk le, és azt
+figyeljük, hogy ugye ez a ez a sok
+tranzakció mennyi ide mennyit fog várni
+egymásra, attól függően, hogy milyen
+izolációs szintek vannak. Tehát, hogy
+magasabb vagy alacsonyabb izolációs
+szint. És aztán ami a tesztnek a az
+érdekessé, hogy ugyanaztá aztán
+megpróbáljuk ezt a tároljárást átírni
+egy natívba. Ez itt a natív megfelelője
+ugyanak a tárolt eljárásnak.
+És akkor
+memory optimizált táblákat használva
+kiderül, hogy valami elképesztően jobb
+teljesítményt érünk el. Hát esetleg
+legalábbis kezdjük el csinálni, aztán
+lehet, hogy az időn el fogja megengedni,
+hogy befejezzük, de mindenesetre próbált
+meg elkezdeni. Tehát van itt a szintén
+ugyan a zipfába egy
+egy dump, ez a Northw create. Ezt most
+kérem szépen ctrol a ctrol cszuk
+létre ebből az új Northw adatbázist.
+Hát Northw.
+Jó.
+Na
+ja, persze,
+mert az előbb nem tudtam kitörölni.
+Először ki kell törölnöm szegény, és
+utána tudom létrehozni újra.
+Jó, tehát akkor akkor most hozzuk létre.
+Most már most már bankok nélkül.
+És
+a töltsük fel adatokkal. Az azt jelenti,
+hogy le kell futtatni ezt a scriptet.
+Jó, elvileg talán el is fog futni. Most
+elítottam a scriptnek a futását.
+És kész is van. Tehát megvan az új
+Northund adatbázisunk. És akkor egy
+másik ablakba pedig ezt a amit az előbb
+itt nézegettünk,
+a a native New Order Store, ezt ezt a
+scriptet vegyük ki.
+Vegyünk be ide.
+Jó,
+tehát most ez az első ez az első
+tesztünk, ez a hagyományos adatbázison
+történik. Ez az SP New Order,
+ez a ez az új tároljáunk
+egészen idáig.
+És
+igen, most eddig eddig eddig futtassuk
+csak le, és akkor utána beállítjuk a
+paraméterek, hogy legyen elég
+mindenkinek a
+a a pénze meg ilyesmi, hogy ne okozza ez
+a tranzicionak a leállását. testatokat
+kitöröljük,
+és utána három párhuzamos szersben
+futtatjuk
+ezzel a repeatable read magas izolációs
+szinttel ezt a tranzakciót.
+Ugye ez azt jelent a magas izolációs
+szint, hogyha egy tranzakciószer
+olvasott egy táblát, akkor azon rajta
+fogja hagyni az olvasási zárat. A a
+sheld lock az olvasási zárat egész
+addigi véget nem ér, és emiatt egy másik
+tranzakció nem fogja tudni módosítani
+ezt a ezt ezt a tábát, amíg ő végét nem
+ért. Hát ez így ezt repeatable readnek
+hát ismételtehető olvasásnak. Persze ez
+egy nagyon hiszen magas izolációs szint,
+viszont ugye ezáltal el lehet kerülni
+üzleti tranzakcionális hibákat, viszont
+emiatt a tranzakciók sokat várnak
+egymásra, ugye? Tehát ezenek a hátul
+üütője.
+Úgyhogy ezt a
+ezt a scriptet most én innen kivágom, és
+beteszem egy másik ablakba is,
+meg egy harmadikba is,
+és utána elindítom őket párhuzamosan.
+Jó. Aztongja, ezt melyik is volt a
+harmadik?
+Igen,
+jó. Erre erre nem lesz szükségem, mert
+ez csak az adatázist hozta létre.
+Tehát akkor egyik ablak, másik harmadik.
+És akkor próbáld meg. Ja, bocsánat. Ezt
+kommentezzük innen ki, tehát ezt a ezt a
+repeatable read izolációs szintet.
+Mindegyik ugyanaz az izolációs szinten
+fusson,
+és
+akkor futtassuk rá.
+Tehát futtatom itt,
+futtatom itt és futtatom itt.
+Csak most várjunk egy egy pár
+másodpercig,
+és aztán megnézhetjük, hogy hogy hány
+olyan hány rekord sikerült egyáltalán
+beszúrnunk a nagy egymás vállalkozások
+miatt.
+Szóval egy korábbi mérésem eredménye van
+itt,
+hogy
+hogy 15-20 percig tart
+mindegyik session, és egy csomó
+tranzakció közben visszagördül, mert
+holdpont juts egymásra vállalkozások
+miatt. Tehát mondjuk csináljuk azt, hogy
+ez most itt fut egy percig, és akkor
+utána viszont leállítam, és megnézem,
+hogy hány sikeres tranzakció volt. Jó,
+tehát ez most 56 most van vége az egy
+percnek, tehát ne is húzzuk ittába az
+időt vele. Ezt is leállítom,
+meg ezt is leállítom,
+meg ezt is leállítom.
+Na, akkor mi az, ami még itt fut?
+Ezt is, ezt is leállítom. Jó.
+Na most látják,
+rengeteg tranzakció
+deadlockolva van,
+mint mindegyik esetben.
+És és hogyha most hogyha most megnézzük,
+hogy hogy hány olyan rendelés van, amit
+egyáltalán sikerül beszúrnunk ennek a
+ennek az arutnak. Van erre biztos van
+itt egy select pillanat. Igen, igen,
+igen, igen.
+Ez lesz az
+from orders.
+Azi idő az csak ott null, ahol ahol mi
+matadolkodtunk most vele. És akkor
+mindjárt meglátjuk, hogy hány ilyen van.
+Tehát 8900
+kevesebb mint 9000.
+Tehát 8900.
+Jó, most akkor töröljük az összes.
+Visszatjuk a kezdő állapotot.
+Oké.
+és
+átállunk egy másik izolációs szintre.
+Tehát most itt azt fogjuk választani,
+hogy
+repeatiből read helyett azt, hogy read
+commited.
+A kettő között az a különbség, hogy a
+read commited esetén az olvasási zárak a
+a tranzakció során az olvasás után
+lekerülnek a a védett objektumról.
+És ezért aztán persze előfordulhatnak
+klikai hibák. Például, hogy egy bizonyos
+dolgot kétszer adunk el valakinek, majd
+majd lesz erre példa
+a Firestornál.
+Viszont
+sokkal gyorsabban fog végrehajtóni.
+Tehát read commited. Mindegyik ablakban
+ez van. Recomited. Nagyon jó.
+És
+akkor kezdjük el a futtatást. Amúgy
+megint egy percig fogom majd majd
+futtatni.
+Hát maximum egy percig.
+Még csak fél percnél vagyunk.
+És kérem szépen, mit tesz Isten 37
+másodperc alatt lefutott az egész.
+Látják,
+és egyetlen
+deathlock sem történt. Tehát ez azt
+jelenti, hogy most már gyakorlatilag
+azt várjuk, hogy
+hogy 300, igen, mert 3x 10000. Tehát
+mindegyik tranzakció szépen lefutott.
+Ilyen sokat számít mít az izolációs
+szín. Tehát ez ennek tényleg egy ára van
+ennek a dolognak. Na és most képzeljék
+el, hogyha ezt a tároltjárást ezt ezt
+átírjuk, hát itt igazából most most
+kéne egy kicsit szütyögni. Az összes
+érintett táblát egyenként át kéne tenni
+emotbe
+egy másik adatbázisba,
+és utána
+ezzel a ez a natív tároljárással
+ö
+kéne utána feldolgozni őket. És akkor
+hát most egyszerűen nincs időm, hogy ezt
+végigcsináljuk, azt már látom, de azt
+lát azt higgyék el nekem, hogy
+ilyen négy-5 másodperc alatt
+zajlik le, ami itt 37 másodperc volt. És
+mivel a snapshot izolációs szintet
+használjuk, ezért ott sincs semmiféle
+ilyen ilyen blokkolás meg meg várakozás,
+egymás vállalkozás. Szóval hát ezt most
+nem tudjuk végigcsinálni, de a házi
+feladat, hogy ez alapján csinálják
+végig, és akkor látni fogják, hogy hát
+van ennek bizony keresnivalója a piacon,
+hogy úgy mondjam.
+Ha valakinek egy olyan alkalmazása van,
+ahol ahol tényleg igény a nagy
+tranzakció ábcsárdási képesség, és ezért
+haladó áldozatokat vállalni, itt azért
+vannak áldozatok, amiket be kell
+vállalni, akkor ez egy akkor ez egy jó
+választás.
+Hát egy egy pillanat csak, hogy
+hogy
+hogy mégis
+mégis miket milyen áldozatokat kell
+bevállalni.

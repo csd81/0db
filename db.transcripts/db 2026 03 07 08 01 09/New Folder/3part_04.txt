@@ -1,0 +1,368 @@
+�. Jó.
+Na és akkor amíg ez itt fut,
+addig itt is akartam itt elmondani
+pillanat az előbb, hogy
+hogy azt mondja, hogy létrehoztuk a
+publikációt.
+Hm.
+Igen.
+Pedig pedig pedig pedig volt valami az
+eszembe, hogy mit akartam mondani.
+Nézzük csak meg a
+aztongja.
+Igen.
+Log.
+Hát
+nem tudom. Pedig pedig mondtam is, hogy
+mire vissza fogok térni. Nem emlékszik
+valaki, hogy hogy mi volt az, amit
+mondtam, vissza fogok rá térni? Hm.
+Esetleg. Na
+eddig article one of one.
+Na jó, mindegy, majd biztos eszembe jut.
+Mindenesetre most elvileg a publikációnk
+már megvan,
+és akkor most jön az érdekesség, hogy
+egy harmadik szerveren a
+Hopp, várjunk csak
+elítést. Itt én úgy látom, hogy hogy
+nekem itt itt megint a primhez sikerült
+csatlakoznom. Látják, nem a nem a
+secondhöz. Úgyhogy innen most én
+diszconnectálok
+és connectálok a harmadikhoz, ami a se
+szerver. Tehát itt válasszuk ki a search
+szervert.
+Szóval, hogy a harmadik szerveren fogjuk
+majd
+az előfizetést létrehozni.
+Ennek nem kell beállítani a
+diszributorát, tehát ez mivel ő nem fog
+publikálni, hanem egyszerűen csak ide
+rájövünk arra, hogy local subscriptions
+és hogy new subscription.
+Szóval a publisherné meg kell keresnünk,
+hogy hogy ki a publikáló, és az pedig a
+primary server lesz. De ezt válasszuk
+itt ki. És annak
+egy publikációja van. Ez az orre az ki
+is van már választva.
+Na ugye most el lehet dönteni, hogy hol
+legyenek a
+hogy hol fussanak.
+A, hogy hol fusson a diszriúciós dob.
+A logika azt kívánja, hogy ebben az
+esetben ennek a diszributoron kéne
+futnia, hiszen a a a search szerver is
+egy elő egy OLTP szerver, és azt sem
+akarjuk terhelni jobok futtatássalára.
+Tehát fusson minden job, csak szépen a
+second serveren, annak nincs más dolga,
+mint hogy jobokat futtasson. Jó, úgyhogy
+azért választottam ezt.
+Meg kell mondanunk, hogy hol legyenek az
+adataink, amiket replikálunk. Itt akkor
+hozzunk létre egy új adatbázist, mert
+valószínűleg nincs ezen a szerveren
+semmilyen adatbázis.
+Lehet ugyanaz az adatbázisnak a neve,
+mint ami a az előfizetős neve. Tehát ez
+a ez az order TR.
+És akkor amit még itt be kell
+állítanunk, az a szokásos biztonsági
+kontextus.
+Most ilyen esetben ugye a distribution
+agentnek a a biztonsági kontextusa
+oké.
+És hát, hogy a demo kedvéért ezt az
+agent schedule, ezt hagyjuk run
+continuously. Jó, itt is be lehetne
+állítani azt, hogy mit tudom én óránként
+futtass csak rá az új tranzakciókat.
+Viszont azt fogja csinálni, hogy vár egy
+pár másodperc, addig pihen, aztán utána
+megint megnézi a disciatbázist, hogy
+van-e új tranzakció.
+És
+hát ez gyakorlatilag úgy fog föltűnni,
+mintogyha folyamatosan futna.
+És most rögtön indítsuk a a
+az előfizetést. Tehát most ennek mennie
+kellene.
+Amíg ez amíg ez elkészül,
+addig
+azt elmondanám, hogy tehát ebben az
+esetben itt a
+itt a itt a second serveren jön létre
+egy olyan rendszeradatbázis,
+amit
+úgy hívnak, hogy distribution. Látják ez
+és ebben az adatbázisban lesznek a a
+tranzakcióink letárolva.
+És egyébként most megfrissítjük itt az
+SQS server agentnek a jobjait a second
+serveren.
+Tehát refresh.
+Na,
+akkor három új jobnak kell lennie. Ugye
+az egyik ez a rövid nevű, ez a snapshot,
+a másik az a az a log reader, a harmadik
+az pedig a
+distributor job
+és
+és meg kell azt jaj tudom mit akartam
+mondani, hogy a na majd mindjárt
+elmondom. az a lényeg, hogy a snapshot
+jobnak az a az újrafuttatása. Na, ezt
+akartam még elmondani. De addig is
+nézzük meg, hogy hogy itt a mi kliens
+adatbázisaink
+létrejöttek el.
+Ugye ezt az orders trayer tr-t hoztuk.
+Bocsánat, order tt hoztuk. Lést volt egy
+másik is. Össze ne keverjem őket, mert
+úgy látszik, itt már volt ilyen demo.
+Szóval order to dr. Ezt ezt csináltuk
+most.
+És
+ha minden igaz, akkor ebben most már
+benne kell lennie
+minket érintő
+táblának.
+Jó, tehát most nyolc az applo ID. És
+akkor most kérem szépen figyelem ezt a
+configured distribution. Ezt itt most
+becsukom
+és most vagyok a
+a Northwind Prim Northwen. Tehát ez itt
+a ez itt a forrástra adott belisunk.
+Úgyhogy átállítom a nyolcat mondjuk
+kilencre.
+Hoppá!
+Így.
+És ugye itt most már kilenc.
+És most jövök ide vissza. És itt is
+lefuttatom és már itt is kéne. Ezt
+látják? Tehát gyakorlatilag
+másfél két másodperc alatt mint lidt
+kapcsoltam, átpörgött az egész. Úgyhogy
+ez egy ez egy eléggé ez egy eléggé kis
+késreésű csatolást tud így most
+megvalósítani. És ugyanígy lehetne
+csinálni egy
+harmadik egy másik, egy harmadik
+előfizetés, és oda is így zúznának át a
+tranzakciók. Most annyit még akartam
+mondani a snapshot jobnak az
+időzítéséről, hogy mégis mégis miért
+volt az a lehetőségünk, hogy a snapshot
+jobot is ütemezetten futtassuk le.
+Úgy értem, hogy hogy nem csak egyszer az
+elején. Hát ugye azért, mert egy ilyen
+elosztott rendszerben, amiben
+sok adabális szerver van, mindenféle
+hiba előkészül, mindenféle hiba
+előfordulat. Persze ezt eléggé profik
+megcsinálták úgy, hogy robosztus legyen
+bármi áldozathi hiba esetén, de mégis
+abban van bizonyos bölcsesség, hogy
+azért mondjuk hetente egyszer küldjük át
+újra az egész táblát, ugye hasonlóképpen
+ahhoz, mintogyha azt mondja valaki, hogy
+egy focimeccset néz, és akkor időnként
+úgy ö valami hálózat hiba miatt
+ugye rossz lesz a kép egy-két
+másodpercig, mert ugye mi mindig csak a
+változásokat küldjük át az előző kép
+képkockához képest képest, de olyan a
+protokoll, hogy bizonyos képkockánként
+átküjuk megint az egész képet, és akkor
+ugye megint zöld lesz a fű. No, de ezt
+most akkor nem demózzuk itt tovább, mert
+van még egy replikációs típusunk, amit
+legalább fogalmi szinten mindenképpen
+szeretnék bemutatni. Azt hiszem, hogy
+sokkal többre itt nem is lesz lehetőség
+az idő miatt. Úgyhogy akkor akkor nézzük
+a a a merger applikációt. Ezt pedig itt
+nyugodtan
+le lehet állítani. Tehát ez azt jelenti,
+hogy itt a a local subscriptionnél
+szüntessük meg a
+a
+az előfizetést,
+és utána
+megszüntethetjük a publikációt is. Most
+itt van egy olyan lehetőség, hogy
+pillanat.
+Igen, ezt itt itt most local
+publication, amikor a amikor a
+publikációt kitöröljük, akkor a joboknak
+is törlődniük kell automatikusan,
+de az a beállításunk megmarad, hogy a
+hogy az az első szervernek a
+distribútorja a másodlagos szerver. És
+akkor nézzük a merge replikációt.
+Most ez egy kicsit más. Tehát ugye egész
+eddig arról volt szó, hogy a információ
+egy irányban halad a klienstől a a
+szerverig, vagy bocsánat, a a a
+publikációtól a a a az előfizetőkig.
+A merger applikációt, az majd
+kifejezetten elosztott adatbázis
+rendszereknek a
+céljából találták ki.
+adatbázis rendszer az azt jelenti, hogy
+logikailag egy adatbázist
+több különböző szerver, amik össze
+vannak kötve egymással egy hálózatba,
+tart karban és elvileg nekem a hálózat
+bármelyik pontján van lehetőség, adatot
+lekérdezni és adatot módosítani is. Ezt
+úgy, hogy ez egy ez egy distributed
+database system, egy elosztott adatbázis
+rendszer. Ennek van indokoltságos sok
+esetben, tehát vannak olyan szenárió,
+amikor amikor ezt akarjuk megvalósítani.
+Hát példa azért akarjuk ezt
+megvalósítani, hogy hogy robosztus
+legyen a megoldásunk, hogyha kilövik az
+egyik szerverünket, attól még az egész
+működni fog tovább.
+Na most egy ilyen elosztott adatbázis
+rendszerben
+vannak a mindenféle nehézségek merülnek
+fel. Alapvetően három
+elvárásunk van. egy ilyen rendszerrel
+szemben.
+Pillanat. Ezt megint ide jegyzett sorba
+írom.
+Ugye amit most mondok, az a az a
+nyomtatott jegyzetben a asszem a
+lábjegyzetben szerepel csak.
+Úgyhogy
+azért most itt és nem biztos, erről
+mindenki hallott, attól függ, hogy hol
+tanult adatbázis kezelést. Tehát a cap
+tétel
+cap tétel ugye,
+ami a a C az a az a consistency,
+aztán a az availability
+vagy accessibility
+és a partition tolerance.
+Ezek a elvárások
+egy elosztott adatbáziskezelő
+rendszerrel szemben.
+A konzisztencia az azt jelenti, hogy én
+bármelyik csontpontot kérdezem le,
+mondjuk arról, hogy mi a illetékes
+ordernek az előfizet, az állapota. Tehát
+egy adatot kérek le, akkor mindenhonnan
+ugyanazt az adatot kell megkapnom, vagy
+pedig egy olvasási hibát, ugye, hogy
+mondván, hogy nem tudjuk. Olvasási hiba.
+Az availability az azt jelenti,
+hogy bármelyik szervertől bárkit
+kérdezek le, mindenképpen kell kapnom az
+olvasási kérésemre választ, de az lehet,
+hogy nem mindegytől ugyanazt fogom
+kapni, ugyanazt a választ fogom kapni.
+Ugye láthatod, hogy itt a kettő között
+van szentét. A partiston tens pedig azt
+jelenti, hogy ennek a rendszernek
+működnie kell akkor is, hogyha
+akármilyen hálózati kommunikációs
+probléma előfordul a szerverek között.
+Tehát hogyha elvesztünk egy partíciót.
+Na most a captil az azt mondja ki, hogy
+a három közül,
+ha ezek az elvárságok vannak, maximum
+kettőt lehet teljesíteni egy rendszer.
+Nekem kell eldönteni, hogy melyik kettőt
+teljesítem, ugye? És tehát csak kettő
+teljesíthető.
+És akkor mivel a hálózati hibákat nem
+tudjuk kizárni az életünkből
+természetesen, ezért tulajdonképpen a
+konziszten és az availability közül kell
+választanunk. És a tipikus megoldás az
+az, hogy a konzisztencia helyett, a
+szigorú konzisztencia ugye az mi volt,
+az az, hogy hogy mindenhonnan ülok az
+adatokat kell kapnom, vagy olvasási
+hibát, hogy nem ezt ezt nem tudjuk
+teljesíteni, azt mondjuk a konszcia
+helyett event consistencyt választunk,
+ami azt jelenti, hogy hogy eventual
+consistency Szí
+sis. Bocsánat
+úgy lehetne fordítani, hogy
+milyen konzisztencia ez,
+hogy mondjuk késleltetett konzisztencia.
+Jó, tehát mondjuk késleltetett
+konzisztencia.
+Tényleg nem nem van nagyon van rá magyar
+megfelelés. És ez azt jelenti, hogy az
+lehet, hogy nem mindenhonnan ugyanazt az
+értéket fogom kapni egy adott
+pillanatban, de ha elég sokáig várok, és
+ez alatt az idő alatt nem történik új
+adatmódosítás az egész rendszerben,
+akkor viszont egy idő után már ugyanazt
+az értéket fogom kapni. Értik? Tehát ez
+egy kicsit lágyabb elvás, és ez már
+teljesíthető. Szóval a merge replikáció
+az alapvetően ezt valósítja meg. A merge
+applikációnak az a az a célkitűzése,
+hogy ha bárhol keletkezik adat a
+rendszerben,
+akkor azok a az adatok egy idő után
+szinkronizálva lesznek az összes többi
+komponenssen. Most ettől függetlenül a
+merge replicációnak is van egy
+publisherre
+attól, ahol úgy aminek van egy bizony
+fajta kitüntetett szerepe ebben a merch
+replikáció megvalósításban. Viszont azt
+ne felejtsük el, hogy ha egy adat
+keletkezik vagy módosul, akkor az tök
+mindegy a rendszer szempontjából, hogy a
+publishernek keletkezt, vagy pedig
+valamelyik
+kliensnél,
+valamelyik subscribernél be lehet úgy
+állítani ezt a rendszert, hogy hogy
+ilyen szempontból egyenrangúak legyenek
+a felek, és át fog terjedni a változás a
+a a publishertől, vagy vagy az egyik az
+egyik előfizetőtől, a másik sikerül
+fizetőjéig a publisheren keresztül. Most
+néhány ilyen fogalmat teszek a ezt már
+nem lesz időm demonstrálni sajnos be
+kell fejeznem itt a a dolgot 11:00-kor
+ugye. Szóval ezt ezt nem fogom tudni
+ezért ezért demonstrálni. Viszont
+viszont
+elmondom a az egésznek a a a működését.
+Szóval a
+azért, mert a
+az adatrekordjaink azok bárhol módosít
+módosulatnak és új rekordok is
+létrejöhetnek. Ugye gondoljuk el, hogyha
+egy táblának
+például egy identity kulcsa van, akkor
+előfor, hogy két különböző előfizetőnél
+is létrehozok egy egy új rekordot, és
+ugyanazt a kulcsértéket kapják, ugye? És
+akkor kulcsütközés lehet. Nem fogjuk
+tudni innentől kezdve, hogy most akkor
+melyik rekord micsoda. Most ezért be
+kell vezetni úgynevezett globális
+azonosítókat. Globally unique
+identifierek hívják. GUID a másik neve.
+És ezekkel a guidókkal kell azonosítani
+a rekordokat. Ezek hozzáadódnak a ha
+ilyen nincs még a táblán minden
+táblához.
+És ezeket a gúidókat használjuk aztán
+arra, hogy a váltásokat é

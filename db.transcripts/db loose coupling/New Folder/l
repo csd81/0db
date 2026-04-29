@@ -1,0 +1,1032 @@
+Szeretettel
+köszöntök mindenkit.
+A mai problémakörünk egy kis
+szerveroldali automatizálás lesz.
+Itt a
+az alappréma az úgy néz ki, a jegyzetben
+szépen le van írva egy ilyen szenárió,
+hogy
+különböző okok miatt adatbázis szinten
+kell csatolnunk két információs
+rendszert.
+például egy kereskedési információs
+rendszert, egy szállító információs
+rendszerre, vagy pedig egy
+termelőinációs rendszerre,
+amelyek ugyanazt az adázist használják.
+És egy laz csatorást szeretnénk
+készíteni,
+ami azt jelenti, hogy nagyon lényeges,
+hogy az egyik rendszerben keletkező
+esemény, azt úgy tudjuk feldolgozni a
+másik rendszerben, úgy kerüljön át oda
+az esemény, hogy lehető legkevésbé
+zavarjuk.
+a azt a rendszert, amiben az esemény
+keletkezik. Hát ennek az az oka, hogy
+ezt így csináljuk,
+ugye úgy értem, hogy a a laza csatolás
+mellett nagyon erős érv az az,
+hogy nagyon sok esetben nincsen
+befolyásunk,
+például egy másik cég gyártotta azt az
+információs rendszert, amibe át akarjuk
+venni az eseményt.
+És ilyenkor az a nagyon kellemetlen,
+hogy mi például bevezetünk egy új
+szoftvert egy vállalathoz,
+és
+ezen közben nemhogy az nem működik, amit
+mi csináltunk, de még ráadásul
+elmontottuk azt is, amit egy másik cég
+csinált, és szépen használtak már évek
+óta
+ami a szoros csatorásnál előfordulhat,
+mert hiszen hogyha egy eseménynek a
+feldolgozása közben a mi oldalunkon hiba
+történik,
+akkor az az eseményt generáló inflációs
+rendszerben is egy hibát okozhat.
+Erről a szárióról van egy áttekintés a
+jegyzetben, azt mindjárt
+ide m meg is próbálom behozni.
+No, tehát itt van
+van a rendelések tábla. Most a North
+Nabist használjuk ehhez a demóhoz. A
+rendőrség táma az egyik, tehát az egyik
+rendszer használja ezt a rendőrségt
+táblát, és például létrejön egy új
+rendelés, egy új rekord, vagy módosul
+egy meglévő rendelésrekord.
+Ezt egy táblára csatolt trigger
+észreveszi,
+és nem dolgozza fel azonban az esem,
+mint a másik információs rendszerben,
+azért, hogy laza csatolást valósítsunk
+meg, tehát hogy minden kevésbé legyen
+két rendszer összekötve, hanem csak egy
+logot készít, tehát ezt az eseményt ezt
+beírja egy logtblába, és semmi mást nem
+csinál. És aztán van egy ettől teljesen
+függetlenül futó ütemezett jobk, tehát
+egy egy végrehajtott, altratikusan
+végrehajtott
+feladat tulajdonképpen, amelyik időnként
+ránéz erre a lok távára, ha van benne új
+esemény, azt akkor kiveszi és
+feldolgozza
+és megcsinálja, amit amit kell ezzel a
+ezzel az eseménnyel. Tehát ez a az a
+csatolásnak az átnézete.
+Mindezt SQS szerver technológiával
+valósítjuk meg a virtuális gépen. Ö
+van aki tanul triggerekről, van aki nem
+tanul triggerekről.
+Tehát itt azt javasom, hogy a időnként
+belefér az VS-és anyag időnként nem fér
+bele, például tavaly nem fért bele. Itt
+a jegyzetben található erről egy egy kis
+áttekintés, amit javaslom, hogy aki nem
+tanulta, az az nézzen át. Hát most egész
+röviden
+ja meg fel fogom tenni majd a múlapra a
+DB2 jegyzetet is, hogy a egyszerűség
+kedvér. Szóval
+egész egész röviden a triggert úgy lehet
+felfogni, mint egy olyan kis tárolt
+eljárást, amelyet maga a rendszer indít
+el automatikusan, hogyha egy előre
+definiált esemény bekövetkezik. Ez az
+esemény lehet egy táblában való adat
+rekor beszúrás, módosítás vagy törlés.
+Ezeket úgy helyek, hogy hogy DML
+triggerek, tehát a DML eseményhez
+kötődő, tehát data manipulation
+language, ugye ez a DML ehhez ehhez
+ehhez kötődő
+triggerek. És egy ilyen triggeren belül
+hozzá tudunk férni, tehát le tudjuk
+kérdezni a trigger véghajtása közben,
+hogy milyen esemény okozta a trigger
+bekövetkezté. Ezáltal fel tudjuk
+dolgozni
+a az eseményt. Hát ezt itt javasol azért
+mindenki olvassa. Van egy néhány
+általános dolog a triggerekről itt a
+jegyzetben satöbbi satöbbi. Most nézzük
+a konkrét
+esettanulmányunkat.
+A jegyzetre be na múdul lapjára
+feltettem egy ilyet, hogy ja valaki
+kérte, hogy legyenek meg a North
+Damesnek a dampja az itt van. Illet van
+egy ilyen scriptek a jegyzetből. Tehát
+én ezt ezt javaslom, hogy ezt ezt ezt
+töltsük le, és és nyissuk meg
+például a tempatbázisba, vagy bárhov
+vagy temp mappá vagy bárhova. Jó, és
+akkor
+akkor nyissuk is meg. Ebben mindenféle
+van, nem csak a mai óraanyaga, de
+megtaláljuk a mai óraanyagát is benne.
+Aztongja, hogy
+nem itt elnézést, egy másik mappa.
+Ez a not examples. Jó, keressük meg ezt
+a részt. Egy kicsit lejjebb van, mert
+ugye bevezetés van az elején, ismétlés
+satöbbi, satöbbi, de valahol aztán ez
+elkezdődik.
+Itt van. Ö,
+tehát ugye azzal azzal kezdődik a dolog,
+hogy
+először nézzük azt, hogy mi van akkor,
+hogyha errettentő példaként, hogyha
+szorosan csatolunk két információs
+rendszert.
+No hát ez a ez a kis ez a kis demo a
+Northind adbázisban megy, úgyhogy
+lépjünk át oda.
+És itt egyben, aki még nem látott
+triggert, ilyen egyszerűen lehet egy
+triggert definiálni. Tehát megmondjuk,
+mi a neve. Most ez egy ez egy Bad
+trigger lesz. Tehát ellen példa it az
+ordersára rakunk, a for után mondjuk
+azt, hogy mikor süllyön el. testeny
+hatására sül el. És itt azt is lehet
+látni, hogy a triggeren belül hát ez
+olyan, mint egy tároljárás, lehetnek
+benne változók. És van egy speciális
+tábla. Ez Microsoft SQL szerver
+specifikus dolog, amit úgy hívjunk, hogy
+inserted,
+amit a rendszer tölt fel a trigger
+meghívásokból, és ebben az újonnan
+beszúrt, vagy pedig módosult rekordok
+vannak benne. Ezeket le lehet kérdezni,
+mintha ez egy tábla volna és
+lehet á reagálni. Most csak annyit
+csinálunk,
+hogy az ordes táblán lesz rajta. egy új
+recordot szúrtunk be, akkor sül és
+kivesszük a az orderét.
+Tehát ezt a mezőt egy változóba, és azt
+kiírjuk. Ennyit csinál ez a trigger
+mindössze. Úgyhogy futtassuk le,
+és nézzük meg, hogy hogyan működik.
+Tényleg működik-e?
+Ugye ez a ez az inzert, ez besúr egy
+beszúr egy sort, és látható, hogy
+tényleg az inger trigger elsült, mert
+ezt visszajírta nekünk. Hát ez rendben
+van.
+Na most mi van akkor, hogyha ezt a tég
+felhasználjuk arra,
+hogy az új rendelést a mi információs
+rendszerünkben feldolgozza, ami ugye az
+azt jelenti, hogy egy csomó logika
+satöbbi kód futhat emött, hogy amikor
+egy új rendbe is rögzítenek, akkor sok
+mindent kellet csinálni. Tegyük föl,
+hogy ez 10 másodpercig tart.
+Tehát most droppoljuk a triggeret, újra
+létrehozzuk, de most már 10 másodpercig
+fogjuk
+feldolgozni az eseményt, mondjuk úgy. És
+nézzük meg, hogy akkor akkor mi
+történik.
+Ja, de még előtte töröljük a tévesen
+bevitt rekordot.
+Na nézzük, mi történik. Nem történik
+semmi. Ugye
+ilyenkor az van, hogy 10 másodpercig
+homokórázik a a kedves felhasználó, és
+ráadásul nem a mi információs
+rendszerünkben, hanem abban, amelyikre
+csatolni akarunk. Hát ez nagyon nem jó,
+ugye? Tehát, hogy hogy addig, amíg a mi
+adatfel dolgozásunk tart, addig a
+kereskedő információs rendszerbe a
+rendésfelvétel homokórázik. Hát ez ez ez
+nem jó.
+És még rosszabb a helyzet, hogyha egy
+hibát is csinálunk. Mondjuk
+tudni. Ja, ezt most akkor szedjük ki
+ezt az eseményt, amit beletettünk.
+Mondjuk például itt az egyszerűség kedvé
+nullával osztunk,
+és ebben az esetben is
+elejtettem
+ezt lefuttatni.
+Most létrehozzuk újra. Szóval ebben az
+esetben is
+beszúrunk, megpróbálunk beszúrni
+rekordot. Mi történik? Először is ugye
+vált 10 másodpercig, ugye?
+És aztán utána
+a rendelés felvétel fut hibára. Látják?
+A rendelés felvétel pedig abb az
+információs rendszerben semmi hiba
+nincsen, csak a mi információs
+rendszerünkben van valami hiba, mert mi
+osztottunk nullával. Hát ez ez nagyon
+nagyon negatív.
+És ugye a legérdekesebb az egészben az,
+hogy ilyenkor az eredeti DML utasítást,
+ez az inzert, ez visszagördül, tehát nem
+történik meg a rendelés felvétele.
+Gyakorlatilag
+kilőttük a kereskedő információs
+rendszert ezzel a hibával
+meg is lehet nézni egyébként, hogy
+megvan a rekord, ugye?
+Hát nincsen. Tehát tehát be lett szúrva
+a a beszúrás után lefutott a trigger, de
+mi a hiber a trigger hibára futott,
+ezért visszagörült a beszúrás is. Na,
+ezért nem csinálunk,
+ezért nem csinálunk szoros csatolást.
+Remélem ez ennyi ellenpélda elég volt.
+Csak el ne felejtsük kitölni ezt a
+tigert, mert ugye egy tábán több trigger
+is lehet,
+és hajlamosak az emberek erről
+elfeledkezni, és aztán csodálkoznak,
+amikor furán viselkedik egy adatbázis,
+és nem jöttük, hogy miért.
+Don't forget. Jó. Na és akkor nézzük a a
+helyes megoldást.
+Szóval
+ez itt ez itt egy
+ez itt egy példa
+arra, hogy amikor
+az order details táblában valaki módosít
+egy mennyiséget, tehát mondjuk változik
+a rendelés, és nem két
+láda sört kérünk, hanem három láda sört,
+akkor automatikusan
+módosuljon
+a products táblában is a units stock.
+Hát ez mondjuk ez lehet, hogy
+már de lehetne működet így is egy
+információs rendszer, ugye, tehát hogy
+akkor automatikusan csökkentjük a
+raktárkészletet, mondaná, hogy akkor ezt
+onnan levesszük. Jó, hát most ezt nem
+kell feltétlenül létrehozni ezt a ezt a
+téget, ez csak egy ez csak egy demó.
+Mindenesetre ki lehet próbálni. Most
+ezzel nem töltjük itt az időt. Jó.
+És
+igazából inkább a a technológia
+bemutatására
+vonatkozik ez. Akinek esetleg a
+triggerek nem voltak meg, az azt az ezt
+nézze át.
+Akkor ugye arra is lehet gondolni,
+olyanok, hogyha több rekord változik
+egyszerre, az is csak egy véget fog
+kiváltani, de erre fel lehet készülni.
+Itt van a megoldás, ugye update
+frommalar van megoldva a dolog.
+Mert ugye itt amikor kiveszünk egyetlen
+rekordot,
+akkor ez a select, ez ebben az esten,
+hogyha több rekord változott meg, akkor
+az inate táblának több rekordja van, és
+ezt csak a legutolsóan fogja kivenni a
+productí. Oké, de ezt is ezt is meg
+lehet oldani.
+És akkor akkor nézzük. Itt itt vagyunk
+igazából a lazacsatolásnál.
+Tehát az első lépésünk az, hogy
+csinálunk egy olyan logtáblát, amiben
+majd tároljuk az eseményeket.
+Hát ez assiszem elég egyértelmű. Van egy
+egy identity kulcsunk,
+és mi akkor itt ugye mivel azt
+gondoljuk, hogy egy job fogja ezt
+feldolgozni, amelyik időnként lefut,
+ezért bizos logolást itt elvégzünk.
+Tehát, hogy mikor indult a az esemi
+feldolgozás, mennyi ideig tartott
+satöbbi. Itt a process gyűlés azért
+számított nező ugye kivonjuk a a tehát a
+megnézzük a kezdet és a végkülönbségét.
+És amit logolunk, az az, hogy milyen
+típusú esemény történt és hogy melyik
+rendeléssel.
+Magát az adatokat nem logoljuk ide,
+hiszen majd a feldogozó Job szépen ki
+tudja venni az orders táblából a
+megfelelő idejű eseményt, vagy vagy
+bocsánat rendelést, és el tudja dönteni,
+hogy mit csináljon vele. Tehát hozzuk
+létre ezt a táblát.
+Felté, hogy nincs már benne. Nézzük csak
+meg.
+Aztongja order log.
+Jó, nincsen benne. Akkor hozzuk létre.
+És most nézzük a triggert. Tehát
+igazából ez egy érdekes dolog, mi mit
+csinálunk. Ugye ez a trigger lehetőleg
+igyekszik nem hibára futni, mert akkora
+a rendésfelvétés hibára fog futni. Tehát
+ez nagyon egyszerű akar lenni.
+Először is mit csinálunk? A megnézzük
+azt, hogy hogy mi a rendelés idé, ami a
+a trigger elsülését okozta. És azt is
+lehet látni, hogy ez nem csak
+beszúrásra, hanem update-re is el fog
+sülni ez a trigger. Tehát hogyha
+módosítan egy rendést, akkor is elsül.
+És majd mi itt a triggerben eldöntjük,
+hogy melyik esemény történt. Lehetne azt
+is csinálni egyébként, hogy két triggert
+csinálunk, külön egyet az inzetre, külön
+egyet az update-re, de így jobban
+áttekinthető az egész, és végül is erre
+találták ki ezt a technológiát.
+Szóval
+itt van valami ilyen ilyen ilyen
+printüzenet. Mondjuk ez nem annyira
+lényeges. Ezek a printek a valóságban
+sehol nem jelennek meg, ugye? Tehát mi
+itt látjuk ezt a printet ezen a
+konzolon, de hogyha ez egy alkalmazás
+volna, mondjuk sárban írtak egy
+alkalmazást, akkor ezek a prininttel írt
+üzenetek, ezek nem jelennek meg a
+meg a kliens alkalmazásban.
+Úgyhogy ez csak a programozónak szól. Na
+nézzük. Van egy ilyen függő, hogy update
+és utána zárójelben egy mezőnév. Ez
+triggeren belül használható.
+SQL szerve specifikus. És ez akkor ad
+vissza igaz értéket, hogyha ugye ez egy
+update trigger és ez az order mező
+változott.
+Hogyha valamelyik másik mező változott,
+akkor hamis értéket ad vissza.
+Na most ha ugye az order id a az a
+táblának a kulcsa, a tábla kulcsa az nem
+változhat csak akkor, hogyha új report
+jön létre.
+Ugye ez a ez az alapötető ez a az az
+alapgondolat.
+Tehát innen tudjuk azt, hogy most
+igazából mi történt, update történt vagy
+inserzert? Hát ezek szerint itt ebben az
+esetben egy inzert történt. És akkor
+kiísjuk azt, hogy ez egy ez egy új
+rendelés. És ebben az esetben
+beszúrunk az order block táblába
+hát egy new order recordot. Most igaz
+szerint többet is beszúratunk, hogyha az
+inserted tábla többet tartom. Azt
+hiszem, hogyha több rekord
+többet több rendést vettek fel egyetlen
+insert utasítással,
+ugye, akkor ennek a szereknek több
+rekordja lesz. Na most ez persze nem
+túlságosan realisztikus,
+mert tip mert azért nem hiszem el, hogy
+egy egy kereskedő szoftver úgy van
+megírva, hogy ott egy oké gombra
+ráklikkeléskor egyszerre több rendést is
+fel lehet venni. Mindenesetre ezt csak
+úgy megjegyzem, hogy mi még erre is fel
+vagyunk készülve, hogyha esetleg ez
+történne, akkor mindegyiket fel tudjuk
+dolgozni. Tehát akkor nem egy rekordos a
+logban, hanem többet.
+Jó?
+És mindegyiknek a típusa az lesz, hogy
+new order. Na most, hogyha nem változott
+az order idé, akkor az azt jelenti, hogy
+most ez tényleg egy update utasítás
+volt, és ebben az esetben valami
+változott. Hát megnézzük, hogy mi
+változott. It kétféle két dolog
+készülünk fel. Az egyik az az, hogyha a
+rendési címváltozott, azt azt külön
+eseménynek tekintjük.
+Vagy pedig valami más változott ennél
+címet például ugye akkor a értesítjük a
+siteemási céget, hogy változott-e a
+kiszállítási cím. Jó, tehát ez a ez a
+trigger
+hozzuk létre,
+és most már működik.
+És
+nézzük meg azt, hogy hogy most milyen
+rendeléseink vannak. Most nincsen semmi
+ilyen tesztrendelés. Hát a
+tesztelintéseket onnan ismerjük fel,
+hogy az employee ID az null,
+mert ugye van benne egy csomó egyéb
+rendelés, de azok azok normális
+rendelések.
+Jó,
+és azért
+azért mindig csináljuk rendet magunk
+után, tehát egy ilyen tesztelgetés után
+törüljük ki a a téve a hát a teszt
+céljából felvitt rendeléseket. Most már
+megvan a
+a triggerünk. Tehát itt itt teszteljük,
+hogy fut-e.
+Jelenleg üres az orderlog táblánk.
+Sajnos az a helyzet, hogy a a mutató
+kurzorom az ebben a szöveges ablakban
+nem működik, úgy látszik. Csak hogyha
+Aha. másik húzom ki. Na mindegy, nem
+érdekes.
+És akkor most be beszúrunk egy új
+rendelésrekordot.
+Nem adunk hozzá ugye employee id
+akkor akkor mi fog történni? Látod, hogy
+elsült a triggerünk, kiírta ezt is, meg
+ezt is, és elta neki, hogy hogy ez egy
+új rendelés volt. Hogyha valaki nem
+akarja látni ezt, hogy one roll fact,
+ezeket a visszaírásokat, akkor be lehet
+azt írni, hogy
+set no count.
+És akkor most, hogyha lefuttatjuk újra,
+akkor ugye már ezt nem látjuk. Viszont
+most már akkor két rendelésnek kell
+lennie a loktál, és tényleg szépen ott
+is vannak. Tehát mi a rendelés száma?
+Ugye két új rendelést hoztunk létre.
+Jó, itt ez a másik péld azt mutatja,
+hogy mi hogyha kettőt szúrunk be.
+Nem túlságosan érdekes.
+És és nézd meg azt, hogy az update
+feldolgozásra is el se működik-e.
+Menjünk végig a triggernek minden ágán.
+Itt most ugye ez a 11081
+aongja az egyik rendelésünk.
+Mondjuk ennek
+változtatjuk meg a az egyik mezőjét.
+Tehát akkor el kéne sülnie. Ez egy új,
+ez egy új rendelésünk.
+És akkor ne rontsunk bele az
+adatbázisba.
+El kéne sülni az update részének a
+triggernek.
+És láttam other change történt ugye,
+mert a ship mezőt módosítottuk. Úgyhogy
+ha most megnézzük az oldalak trágát,
+akkor már kell, hogy legyen egy másik
+típusú esemény is. Tehát ez nagyon
+szépen működik.
+Jó, és most minden szépen visszaállítunk
+eredeti állapotba.
+Na jó, akkor ott tartunk most az
+információs rendszerünkben, hogy
+ugye elnézést, eddig van eddig van
+készen, ugye? Tehát ez van, ami most
+készen van, és most jön az, hogy
+feldolgozzuk a rendelést és csinálunk
+ebből egy jobot. Na most egy ilyen jobot
+úgy csinál az ember, hogy először csinál
+egy tárolt eljárást,
+azt szépen leteszteli, jól működik-e,
+és aztán utána készít egy jobot, ami
+elindítja ezt a tároló teárást
+ütemezetten. Tehát ezt ezt fogom
+megmutatni.
+Hát itt most egy kicsit realisztikusabb
+legyen ez az egész problématér. Ezért
+azt fogjuk csinálni, hogy a a hogy
+csinálunk egy olyan
+tárolteljárást, ami egy új rendelést
+ténylegesen feldolgoz, tehát módosítja
+az adatbázist.
+Egy új rendelés esetén mi aktualizálni
+fogjuk a products táblában a unit
+unitsin stocknak az értékét. Tehát az
+ugye a raktár készlet. Hát úgy fogjuk
+aktualizálni, hogy a az az új rendelés
+neek megnézzük, hogy mennyi a quantity
+mezője. Ugye az order details táblának
+van egy ilyen quantity mezője, és hát
+levonjuk a a raktárkész az új rendésnek
+az értékét.
+De ugye előfordulat az, hogy egy olyan
+rendést adtak fel
+ami nagyobb mennyiség mint amennyire
+aktálkészleten van. Már ugye ez egy
+logikai hiba, tehát ezt a lenést ezt nem
+szabad elfogadni akkor. Tehát hogyha
+csak mit tudom én három lágos sörünk
+van, akkor nem lehet négyet rendelni
+ugye most erre való itt ez a
+hibakezelés. Ugye mivel ezen a products
+táblán van egy check constraint,
+ez nem engedi meg, hogy a unitsin stalk
+az nullának kisebb értékű legyen. Ezért
+ebben az esetben ez update utasítás
+hibára fog futni. De mivel benne van egy
+ilyen tryákban, ezért át fog kerülni a
+catch ágba. Elkapjuk ezt a hibát. Van
+egy error message, de a lényeg az ugye
+hát most ez a ez a ez az error message.
+Hát ez a világű megy, ugye ez ez csak a
+programozónak
+információ,
+de nem ez a lényeg, hanem az, hogy ebben
+az esetben egyes eredményt adunk vissza,
+külön pedig nulla eredményt, ugye? Tehát
+ez egy olyan tárolt eljárás, aminek van
+egy kimeneti változója, egy output
+változója.
+Ugye egy tároltástnak akárhány ilyen
+output változója lehet, és ezt az
+eljárás meghívása után szépen el lehet
+kérdezni, hogy mennyi a járás által
+beállított értéke. Tehát itt vagy
+nullára állítjuk, vagy pedig egyre. Jó,
+ez viszont már megvolt. Úgyhogy
+úgyhogy akkor azért biztos, hogyan
+biztos hozzuk létre újra.
+Jó.
+És hát most itt ennek a tároltának a a
+tesztelgetése történik.
+Itt igazából ezzel nem húznám az időt.
+Szépen működik. Mű működik ahogy kell.
+Tehát hozza a hibát, hogyha hogyha
+negatív raktárkészletet állítunk be. Ezt
+végig lehet próbálgatni.
+Jó, és akkor most nézzük azt a azt a
+tárolt eljárást, amelyik
+a logót dolgozza fel. Na most ez
+tipikusan egy olyan eset, amikor ugye
+van egy táblánk, amiben vannak rekordok,
+és a rekordokon egyenként kell szépen
+végigépkedni, mivel
+minden rekorddal aszerint mást és mást
+kell csinálni.
+azerint kell mást és mást csinálni, hogy
+hogy milyen típusú esemény történt.
+Tehát teljesen mást kell csinálni
+mondjuk egy
+egy új rendelésnél, mint egy rendelés
+módosulása esetén. Tehát ilyenkor
+használunk egy kurzort, ilyenkor ez ugye
+tekintettel, hogy nem 1 millió rekordon
+lépkedünk végig, hanem csak mondjuk a
+tegnap óta felgyűlt rendeléseken. Tehát
+itt a kurzor kifejezetten
+javas javasolt megoldás ilyen esetekben.
+És akkor nézzük, ugye a a kurzorunk
+nagyon lényeges az order táblány végig,
+de csak a nullas státuszú rendeléseket.
+A nulla státusz az azt jelenti, hogy új
+rendelés. Meg különben, ha nem ezt
+elfelejtenénk, akkor ugye minden egyes
+alkalmunk lefut a job, újra és újra
+gyártásba adnánk mondjuk ugyanazt a
+rendelést. Tehát ez azért lényeges
+dolog, hogy mi majd jelezzük ezzel a
+státusszal, hogy oké, átvettük ezt az
+eseményt és feldolgoztuk, vagy pedig ha
+nem, akkor nulla, és akkor ez egy új
+esemény.
+Jó. És tehát van ez a kurzorunk, ez megy
+végig az új az új rendeléseken. A az
+exactt abort on az mit fog csinálni,
+hogyha hiba történik, akkor
+visszagörgeti a tranzakciót.
+És és egyébként a tranzakció majd itt
+fog belül elkezdődni a kurzoron belül.
+Tehát itt az a lényeg, hogy minden egyes
+új eseménynél kezdünk-e egy új
+tranzakciót.
+Ez így logikus, ugye? Tehát, hogy hogy
+azért, mert az egyik rendelést nem
+tudtuk feldolgozni, meg a másikat fel
+tudjuk dolgozni, ugye? Tehát ez ezek a
+dolgok egymástól függetlenek ebben az
+esetben ez ez ez így van megvalósítva.
+Szóval elindul a kurzor,
+kiveszi a következő új rendelésrekord,
+vagy eseményrekordot. Ezek események,
+lehet, hogy módosult, vagy újrelés. És
+azzal kezdjük, hogy beírjuk a logtáblába
+azt, hogy elkezdtük feldolgozni, mert
+lehet, hogy ez mondjuk mit tudom én, 10
+másodpercig tart. Na most ez egész úgy
+van elképzelve, hogy ugye ez
+automatizáltan fog futni ez a ez a egy
+egy jobban nem operátori felügyelet
+alatt. Tehát lehet, hogy mondjuk éjjel
+3-kor fog lefutni, mert akkor alacsony
+terheltségű a rendszer.
+És majd reggel, mikor bejön az operátor,
+akkor megnézi a loktáblát, és akkor
+fogja látni, hogy ej ha de furcsa, hogy
+milyen sokáig futott mondjuk egy
+rendelés felvétele. Utána tudod nézni,
+hogy mi történt. Tehát mi ezért logoljuk
+azt, mikor kezdtük el és mikor fejeztük
+be a az esemény feldolgozását. Jó.
+És akkor
+megnézzük, hogy mi az es most kezdjük a
+tranzakciót. Megnézzük, hogy mi az esény
+típusa, és aszerint mást és mást
+csinálunk. Most ezek közül itt van négy
+ág.
+Ezek közül
+három az ilyen dami, tehát csak ilyen
+szimulát, de az egyik ág az tényleg meg
+van valósítva, mert hiszen az új
+rendelésre mi csináltunk egy tárolt
+eljárást. Ezt az SP commit new order to
+inventory. És ezt tényleg meg is hívjuk
+az új az új rendelés esetén.
+A ebbe a rizált saját változónkba
+vesszük át az futás eredményét. Ugye ez
+egy output változó, itt jelölve is van.
+Tehát ha ez nullára van állítva, akkor
+oké. Ha egyre, akkor pedig valami hiba
+történt, akkor akkor akkor nem lehetett
+felvenni ezt az új rendelést.
+Más esetekben csak annyit csinálunk,
+hogy szimuláljuk az esély feldolgozását
+azzal, hogy várunk egy másodpercig.
+Tehát de azért kiírjuk azt, hogy igen,
+ez ez fel ez ez történt, vagy valami más
+történt.
+Ez a ez az unknown even type. Ez ez
+tulajdonképpen egyfajta hibajelzés. És
+ezért itt ugye egyet egy egyre állítjuk
+a rizálatot, mert itt valami valami nagy
+disznóság történt. Mi nem tudjuk
+feldolgozni ezt a típusú eseményt, csak
+a másik hármat. És akkor végül
+van egy visszajelzésünk arra
+vonatkozólag, hogy hogy oké, vagy pedig
+vagy baj van, és hogyha baj van, akkor
+rollbackeljük a tranzakciót. Tehát ez
+így ez így egy korrekt
+az üzlet szempontjából egy egy korrekt
+megvalósítás.
+Na most miután végeztünk a
+tranzakcióval,
+ugye, tehát most vagy commit, vagy
+rollback, de valamit csináltunk vele,
+utána a loktáblával visszaadjuk azt,
+hogy most hány óra van, tehát hogy
+mennyi ideig tartott és és van ennek egy
+ilyen egy ilyen státuszmezője ennek a
+loktáblának, azt beállítjuk vagy egyre,
+vagy kettőre. Azt jelenti, hogy
+sikerült-e feldolgozni. ugye nulla volt
+és egy vagy kettő lett. Úgyhogy ezáltal
+a rendszergazda vagy az operátor másnap
+reggel rögtön látja, hogyha a státusz az
+egybe kettő, akkor akkor mi az, amit
+amit amit nem sikerült neki? Milyen
+milyen eseménnyel volt hiba az éjszakas?
+Mondjuk tehát ez itt a tárolt
+eljárásunk,
+és már ez is megvolt. Úgyhogy
+akkor innentől kezdve hajtjuk végre.
+Biztos ami biztos. Cseréljük le, hogy
+megvolt.
+Jó. És hát akkor most
+lehet
+tesztelgetni.
+Na most ahhoz, hogy tesztelni tudjuk,
+ahhoz be kell szúrnunk, tehát
+létrehozzunk az az orderlog táblába
+valamit.
+ami azt jelenti, hogy el kell jönnünk
+ide, amikor
+a mondjuk ide,
+és
+mondjuk csinálunk megint egy új
+rendelést.
+Most megnézhetjük, hogy ennek mi lett a
+rendelési ideje. Ennek
+11084 és 11083.
+Ez a ez a két újrendelési idénk van.
+Tehát 84 és 83.
+esetén még csinálunk egy egy update-et
+is.
+Akkor most már három eseményünk lesz,
+illetve
+illetve azért azért nincs három,
+mert ugye itt még egy másik szerepel,
+tehát az volt amadtunk a 83-ashoz.
+az update nem csinált semmit. Iszon már
+fog csinálni.
+És
+és akkor ez három eseményünk.
+Jó.
+Na most ugye mi csak egy új order
+recordot szúrtunk be, de order detail.
+Márpedig ugye mennyiség csak abban van.
+Úgyhogy ha korrektek akarunk lenni,
+akkor
+itt a mondjuk a 11084-eshez,
+a 11084-eshez
+be fogunk szúrni
+egy
+egy új rendelési tételt is. Jó, tehát
+csak ennyit.
+És aztán hogy ez most tényleg
+kiíthető vagy nem? Nézzük csak meg. Azt
+mondja, hogy a
+a product,
+a 10-es product idnek
+a mennyisége az most 23.
+Jó.
+És akkor azt mondja, hogy
+tehát akkor a 10-es product,
+és mondjuk első lépésben 10-et fogunk
+venni belőle, az még kielégíthető. A
+unip discount az nem érdekes. Tehát most
+egy olyan rendes tétel rekordot szúrunk
+be, amelyik kielégíthető.
+Jó.
+BP10 a 84-eshez. Na és akkor most
+futtassuk le a tárolótályásunkat.
+Ezt én itt innen el is fogom lopni.
+Sőt, még ezt is.
+A tároltájásunk végére.
+Tehát most jöjjünk ide a
+a
+teszteléshez,
+tároltást teszteléséhez.
+És
+és akkor futtassuk le. Ugye most már a
+az az order, vagyis az az order táblánk
+szépen fel van készítve.
+Itt ezt az exet spo debord process.
+No hát ugye mit vártunk tőle, hogy
+háromszor fog lefutni, mert ugye három
+új esemény van. Az egyik new order és
+azt mondja, hogy oké, a másik se egy new
+order. Most ugye a a 081-nek volt
+rendési tétele is. Ennek nem volt
+rendési tétele, csak
+csak magában pő egy rendelés. Hát ez
+persze, hogy nem okozott hibát, de ez
+okozhatott volna hibát, hogyha a
+mennyiség nagyobb, mint amennyi a
+raktáron van. Ez pedig egy ilyen other
+change, ugye ez a ez a shipfája. Most
+ezek után már ha még egyszer
+lefuttatjuk,
+ugye mi nézzük meg,
+be lett állítva a státuszt mindegyikre
+kettőre, tehát hogy sikeresen fel lett
+dolgozva az esemény.
+Ezek után, hogyha még egyszer
+lefuttatjuk, akkor már nem fog csinálni
+semmit, mert hiszen nem talál nulla
+státuszú eseményt,
+ugye? Tehát semmi nem történik. Hogyha
+tovább akarjuk tesztelgetni, akkor most
+művi módon átállítjuk fel nem
+dolgozottra az eseményeket,
+és
+mondjuk kitöröm ezt az order details
+recordot. 110
+84-es volt.
+És most beszúrom úgy. Ugye most az
+értéke most már kevesebb lesz. 23 most
+13 lesz az értéke
+a amennyiségének. Igen. 13. Ugye
+lefutott az a az a tároltájárás, amit ez
+a ez az esény felgozó tároltást hívott
+meg.
+Ez az SP process New Order vagy valami
+hasonló.
+Mi van, hogyha most például 20-at akarok
+venni belőle? Az már nem fog sikerülni.
+Tehát most egy hibát kell majd kapnunk,
+amikor az új eseményeket feldolgozzuk.
+Jó, most megint jövök arra, hogy SP
+order process.
+És nézzük, mi lesz.
+Három új esemény.
+És akkor mi történik? Elkezdi az elsőre.
+Ez az a bizonyos, aminek van tétele. És
+ez, hogy invertory error, ez a
+beágyazott, tehát a ennek a tároltá
+által meghívott tárolótás belsejéből jön
+ki ez. Tehát ez ennek van egy ilyen
+hibaete. Hogyha valaki emlékszik rá ott
+a catch ágan, az a hibaüzenet került
+ide.
+amit egyébként a rendszer generált.
+Tehát
+innentől kezdve ez egyszerűen az SP,
+tehát ez az error messagebből van
+kivíve, amit a rendszer adott, hogy hogy
+ez egy checkpon szerintem ütközött. És
+azt, hogy even processing f, azt már mi
+írtuk vissza,
+mivel a a státusza ennek a az eseménynek
+nem
+ez a rezultátja ugye az az ennek
+köszönhetően
+ugye itt ezt a rizált alapot egyre
+állította be ez a tároljást.
+Következésképpen ha most megnézzük a az
+order táblát, akkor azt fogjuk látni,
+hogy ennek itt sajnos egy a státusza,
+tehát ennek sikertelen volt a
+feldolgozása. Hát készen van az
+információs rendszerünk, mondhatjuk ezt
+a dolgot.
+Alkalmasínt most megint állítsunk vissza
+mindent,
+tehát legyenek új eseményeink.
+És most nézzük meg, hogy mi történik,
+hogyha ezt nem kézzel akarjuk ugye ezt a
+tárolytást mindig futtatgatni,
+hanem automatizálni akarjuk. Tehát
+utolsó lépésünk az, hogy hogy készítünk
+egy jobot. Hogy kell egy jobot csinálni?
+Hát ez úgy néz ki, hogy a
+a jobokat egy olyan külön szolgáltatást
+futtatja, amit úgy hívnak itt, hogy SQS
+server agent.
+Ez hasonlít a Chrome Demonhoz, például
+Unix rendszereken,
+de hát itt itt tulajdonképpen nagyon
+szorosan össze van integrálódva az
+adobás kezelő rendszerrel. Hogy ez éppen
+fut-e, azt célszerű megnézni.
+Es server agent. Ugye a primerak nem
+fut. Látható, hogy piros. Tehát most így
+nem fogunk jobbot csinálni. Indítsuk el.
+Jó, most már fut.
+És hogyha fut, ugye mi most a primaryre
+vagyunk bejelentkezve, itt látható egy
+kis zöld háromszög lett belőle,
+akkor mi mindent lehet vele csinálni, is
+lehet satöbbi, satöbbi. Most egy jobot
+fogunk csinálni. Nézzük meg, hogy most
+milyen milyen jobok vannak.
+Hát ezek a dolgok
+a master data services miatt vannak
+benne, de mi most egy kézzel fogunk
+létrehozni egy jobot. Azt v neki, hogy
+new job. Adunk neki egy nevet, és ez
+lesz a Northwind
+Order
+Process.
+És ahhoz, hogy ebből legyen egy tényleg
+egy job, ahhoz legalább egy lépésre
+kell, hogy legyen. Most egy új lépést
+hozunk létre.
+New step. Kell neki nevet adni.
+Akkor
+process log. Ez lesz a neve. A típusa
+egy TSQL lesz.
+És az fontos, hogy melyik adatbázison
+fusson. Hát ez a Natbálison fog futni.
+Jó.
+És
+és a commandot be kell adnunk. Hát a
+command az ugyanaz lesz, mint ami ami
+ami itt volt.
+Tehát
+ez nincs paraméterünk, hiszen ezt ez
+tudja, hogy melyik táblába kell
+megnézni. Tudja, hogy melyik a loktábla.
+Ezt ide bemásolom.
+Mindösszes csak ennyi. En ennyit ennyit
+csinálunk.
+Jó.
+Van már egy lépésünk, most pedig kell
+adni neki egy időzítést. Hát ugye
+normális esetben az időzítés az úgy
+nézne ki, hogy
+hogy mondjuk éjszakánként fusson le
+éjjel 2-kor, de mi ezt nem tudnánk
+tesztelni. Tehát most azt fogjuk
+beállítani, hogy ez most folyamatosan
+mostantól kezdve egy percenként fusson
+le egyszer ez a drop. Hát ezt most
+persze valóságban ilyet nem csináljuk.
+Ezt csak tesztelési céljából.
+Egy perc ez lesz a neve.
+csináljuk tehát, hogy minden nap
+és
+és minden egyes percben ezt szépen be
+lehet itt állítani. Na azért nem
+másodpercben.
+Fusson le. Aztán majd majd ezt tesztelés
+végén kikapcsoljuk és kész. Ha azt
+mondom, hogy oké, innentől kezdve
+létrejön a job és már aktív is. Ez azt
+jelenti, hogy egy perc múlva le fog
+futni.
+Úgy nézegessük ezt az order block
+táblát.
+Ugye most még nulla a státusza. Az azt
+jelenti, hogy most még biztos nem futott
+le, de egy percen belül ennek ennek meg
+kell történni. És onnan vesszük majd azt
+részt, hogy megtörtént, hogy itt a
+státuszok átáltoznak kettőre.
+Amíg erre várunk, addig megnézhetjük azt
+is egyébként, hogy van itt egy ilyen,
+hogy egy history, tehát meg lehet nézni
+azt, hogy ennek a jobnak mi a futása
+történt. Még nem futott le egyszer se,
+ugye ezt ezt lehet látni, de itt van egy
+ilyen refresh gomb, amivel lehet nézni,
+hogy hogy hopp, és most lefutott
+egyszer. Látható, éppen most lett az egy
+perc, úgyhogy nézzünk bele most megint
+az orderloock támlába.
+És tényleg lefutott a Job szépen a
+háttérben. Tehát egy egy szót nem szólt,
+csak szépen megcsinálta, amit amit
+kértünk tőle.
+És hát tulajdonképpen
+ennyi. Most itt itt meg lehetne nézni
+azt egyébként, hogy hogy a joban
+működött. Most ugye ez az egyes számú
+lépés volt az, amit amit lefutottunk.
+A am am ami amit lefuttattunk. Meg lehet
+nézni, hogy az mi volt, de lehetne több
+lépése is egy jobnak.
+Azt viszont nem javaslom, hogy az egész
+process tároltást ide írjuk be, mert az
+sokkal nehezebben tesztelhető. Tehát a
+helyes gyakorlat az az, hogy azt
+megírjuk külön leteszteljük, és aztán
+itt pedig csak elindítjuk.
+Jó, de mondjuk lehetne valami más lépése
+is ennek a jobnak. Előfö az egyik egyik
+step az hibára fut, a másik nem satöbbi.
+Tehát lehet itt itt külön nézegetni,
+hogy melyikkel mi történt.
+Ö ennek utána lehet nézni. Hát kérem
+szépen, ennyi volt az a csatolású
+esettanulmány.
+És most nagyon ne felejtsük el, vagy
+kitörölni ezt a jobot, vagy pedig
+bocsánat, vagy kitörölni, vagy pedig
+disabledre állítani, de én inkább
+kitörölöm,
+mert
+mert különben ez most itt percenként fog
+futni az idők végezetéig, úgy lett
+beállítva.
+És és ezenkel amit még szintén érdemes
+nem elfelejteni, az az, hogy a a
+táblákról helyezett triggereket szintén,
+mert azok is szép csendben működnek a
+háttérben. Legközelebbi alkalommal
+próbál próbál csinálni majd a az ordes
+táblával és akkor esetleg maj fura
+eredményeket fogunk kapni. Szóval ezeket
+ne felejtsük el. Vissza is megyek a a
+triggerig.
+Ez a TR log order. Tehát én ezt is
+szépen kitörölöm,
+és
+akkor most lehetünk nyugodtak.
+Egyébként, hogy egy táblán milyen
+triggerek vannak, azt itt lehet látni.
+Most most jelen nincsen semmi.
+No, akkor az volna a feladat, hogy ennek
+fényében
+itt ez szépen meg van magyarázva
+ez a
+amit itt most elmondtam szóval.
+satöbbi, satöbbi. Szóval
+most egy olyan ennek fényében egy olyan
+rendszert próbál mindenki csinálni,
+ugyanez csak át kell írni a scriptet, de
+most a products táblára ültetjük a
+triggert és a attól függően, hogy
+a product tábla hogyan változik, ugye a
+nagykereskedőtől feltöltjük, tehát
+kiadunk egy új rendelést, hogy hogy
+hozzon. Mondjuk, hogyha nagyon első lett
+a wcpírra a raktában, akkor rendelünk
+wcpírt, és itt megvan, hogy a ez ugye a
+reorder level mezőben tároljuk azt,
+hogyha milyen alacsony lehessik a rakták
+készítet, mi az a szint, amikor már már
+újat kell rendelni. Ezt szépen végig
+lehet itt itt itt játszani. Hát
+körülbelül ilyen ez volt egy ilyen
+gyakorlati ZH feladat, tipikus egy
+ilyesmi amikor még itt nem
+önállóprojektet kellett csinálni.
+Jó, hát akkor köszönöm szépen mindenki
+figyelmét. Remélem, hogy nem lesz olyan
+nehéz ezt a felatot itt a virtuális
+gépen megoldani.

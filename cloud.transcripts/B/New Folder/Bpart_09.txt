@@ -1,0 +1,299 @@
+ssan befejezni
+a tárgyalást, hogy ez a metodusz mit is
+jelent.
+Tehát a név az onnan jön, hogy két
+lépése van alapvetően a adatfeldolgozó
+programnak. Van egy nettelési, ami
+leképezést jelent, fázis, és van egy
+reduce, ami pedig egy egy összegzés,
+mondjuk így fázis. Tehát a program az
+arra épül, hogy sok sok sok adat,
+mondjuk így, szegmenst kell
+feldolgoznunk,
+és az adat
+az valamiféle átalakítást
+vagy átalakításon megy át. lesz a
+leképezési fázis a feldolgozás során, és
+a reduce pedig a végeredményt fogja
+ebből előállítani.
+És a programozónak az a feladata, hogy
+ezt a két lépést leprogramozza, tehát
+hogy mi történik a map fázisban, meg mi
+történik a reduce fázisban.
+És az egésznek a futtatásáért pedig már
+maga a a Haduprendszer, illetve a
+Mapredus batch végrehajtó felelős.
+Tehát egy picit olyan ez, mintogyha
+mondjuk egy többszálas programra
+gondolunk,
+hogy
+mi megmondjuk, hogy a szál mit hajtson
+végre, de a szálnak a futtatásáért már a
+programrendszer a felelős. Jó, tehát mi
+mi csak úgy beleinjektáljuk a kis saját
+funkción, de minden mást leveznyel
+helyettünk a a rendszer. Amit még tudni
+kell erről, hogy ezek a fázisok,
+ezek mindig a fárendszerből veszik az
+adatot, és oda is rakják vissza az
+eredményeket.
+Tehát nem memóriában kommunikál
+egymással a map meg a reduse, hanem
+mindenki egy önálló függetlent majdnem
+egy program, ami fból olvas és fájba ír.
+Jó? És ezt dekoordinálja a a vezérlő
+szépen.
+És akkor mindjárt mutatok egy példát,
+hogy ez értelmet is nyerjen.
+Meg visszaugran előzőre,
+ahol látjuk ennek az egész megterelésnek
+a a az értelmét, vagy a a
+se jó kités. Hát ugye, hogy is kell
+gondolkodni egy programban erről. Tehát
+ez egy klasszikus példa, amit majd
+remélhetőleg mi is le tudunk kuttatni.
+Egy szokták mondani, hogy ez a mecsos
+hello world
+szó számol szószeszámolási példa.
+Tehát az a feladat, hogy van egy bemenő
+fájunk, amiben sok-sok szó van, és akkor
+megszámoljuk, hogy melyikből mennyi van.
+Tehát szófrekvenciát
+vagy eloszlást akarunk számolni.
+És az első lépés az, hogy ezt a nagy
+adatmaz felosztjuk kisebb részekre. Hát
+itt most nagyon pici minikben három szó
+lesz, de nyilván ez sokkal nagyobb lenne
+a valóságban.
+És ez megy be a map fázisba, mint bemenő
+adat.
+Jó. És akkor
+ebből
+ő ki fogja szedni az egyes szavakat.
+És a szó lesz a kulcs. Tehát
+kulcsértékpárok jönnek létre, és
+mindegyik szóhoz ad egy értéket, ami
+jelen esetben egy egyes lesz. Tehát
+amikor talál egy szót, akkor azt mondja,
+hogy igen, jelen van, tehát egy darab
+már ebből biztos, hogy lesz.
+És amikor ez a metelési lépés megvolt,
+akkor ezeket az eredményeket szétszórjuk
+véletlenszerűen a rendszerben, és utána
+jön a reduce
+rész, ahol összeszámoljuk,
+hogy az egyes szavakhoz összesen hány
+egyes érkezett. Ezt itt elfelejtettem
+mondani, hogy itt a szétszórásnál
+ugye szavanként kerülnek szétszórásra.
+Tehát nem az lesz, hogy össze-vissza
+küldünk minden mindenhová, hanem
+összegyűjtjük, hogy egy szóhoz
+kitől
+hány darab ilyen egyes érkezett. És ez a
+kulcsértékpár, az most egy szó és egy
+lista lesz. És a reduced lépés az
+egyszerűen csak összeszámolja a
+listában, hogy hány bejegyzés van. Akkor
+a végén kijön, hogy a maciból van kettő,
+az autóból három, satöbbi, satöbbi. Jó.
+ésőleg végén kikerül valamilyen végső
+adatszerkezetbe,
+illetve fájba, mint eredmény. Jó, tehát
+ez az egésznek a a lényege. És nyilván
+ez egy nagyon egyszerű kis példa, tehát
+ennél sokkal bonyolultabb dolgokat lehet
+csinálni a mentelési meg a reuse
+fázisban is, de az alapelvet szerintem
+elég jól illusztrálja. Na és ami miatt
+érdemes erről beszélni, vagy kell
+beszélni,
+az az, hogy ugye ezt a fajta
+végrehajtást mindegyik felhőszolgáltató
+támogatja.
+És miért miért pont a Hadóp az, ami
+érdekes? Hát azért, mert ez egy nyílt
+forráskódú rendszer, és ez jóval a felhő
+előtt megjelent. Tehát 2004-ről
+beszélünk, hogyha még emlékeztek a
+dátumra, amikor a Google erről először
+írt, tehát akkor még messze nem volt
+világszerte elérhető felhőszolgáltatás.
+Magyarán ezt nagyon sokan elkezdték
+lokális klasztereken használni. Rengeteg
+felhasználó van, akik már 10-15 éve akár
+saját klaszteren ilyen jellegű
+adatfeldolgozási programokat futtattak,
+és nyilván ők nem akarnak áttérni egy
+teljesen más rendszerre.
+Mindegyik felelhőszolgáltató egy ilyen
+haduk metus kompatibilis szolgáltatást
+üzemeltetett, ahová simán át lehet
+migrálni,
+vinni a programot meg az adatot, és
+akkor ott lehet szépen számolgatni, vagy
+adatot ellenezgetni. És a Google-nél ez
+a szolgáltatás, ez a data proc nevű
+szolgáltatás,
+ami megint csak egy ilyen managed
+szolgáltatás, tehát nem kell nekünk
+ezzel kíösképpen foglalkozni,
+kivéve azt, hogy létre kell hoznunk
+ebből egy klasszert, de hogyha az
+megvan, akkor utána automatikusan tud
+ilyen produce feladatokat futtatni. És
+ami még szép benne, hogy egy egyszerű
+kapcsolóval megadhatjuk azt, hogy hogy
+haduk jellegű programot futtasson, vagy
+olyan mechanizmus szerint rajtsa végő
+programot, vagy pedig a spark engin
+használja.
+Tehát nem kell külön egy másik
+szolgáltatást használnunk, hogyha
+esetleg sparkos valamit szeretnénk
+futni, hanem ugyanazzal a data proc
+szolgáltatással ez megoldható.
+Jó, és akkor befejezésképpen megmutatnám
+nektek ezt a a
+Google felhőben, hogy ez hol található.
+Hogyha
+a termékek között látszik a felhő
+területem.
+Igen, látszódik.
+Jó, köszönöm.
+Bocsánat, csak nem találom a kótalomat.
+Na, ez az analitika kategória, amit
+keresek.
+És itt látjuk a dataprck nevű
+managed abac spark hadub. És a spark is
+nyilvános vagy hogy publikus open source
+rendszer. Tehát egyiknél sincs az a
+veszély, hogy valamelyik szolgáltatónak
+az egyedi
+szoftverét használjuk, és utána nem
+tudunk menekülni tőlük.
+Jó, azt mondja most gyorsan
+engedélyezem, és akkor talán át tudunk
+lépni a
+data proc oldalra, és akkor azt még meg
+tudom mutatni gyorsan.
+Na, itt vagyunk. Tehát ez lenne a data
+proc. És akkor annyi feladatunk van,
+hogy csinálni kell egy klasszert. Nem
+fogom megcsinálni, csak így megmutatom,
+hogy körülbelül ez hogy néz ki.
+Én meg nagyon elégedett vagyok, főleg,
+hogyha lehet a
+Na most már jó. Tehát látjuk a
+klassznél, hogy van sima egy nodeos, van
+a stander cluster, ahol van egy vezérlő
+és n worker, és van egy ilyen hibatűrő
+nagyon megbízható valami, ahol több
+mester van replikálva, és azok
+irányítják ezeket a
+munkásokat. Megadhatjuk, hogy milyen
+oprendszer legyen.
+Egy egyéb opció szerintem a többi az
+minket nagyon nem érdekel.
+És
+ha kell külön szoftverrá, akkor azokat
+is föl tudja rakni.
+Igen. És akkor utána ha kell,
+konfigurálhatjuk még a nodeot satöbbi,
+de az most nem annyira érdekes.
+Létrehozzuk, és onnantól kezdve
+futtatható rajta ez a produce valami.
+Jó, és akkor ehhez ugyanúgy meglesz egy
+tutorial, amit föl fogok nektek rakni.
+ez a szó számolgatós, és én azt hiszem,
+hogy két hét múlva találkozunk, tehát jó
+lenne, hogyha
+addig mindenképpen a programozott
+meg a GCloudos virtuális gép storage
+feladatokat megcsinálnátok.
+Tehát az a legfontosabb,
+mindenképpen lássátok, hogy programból
+hogy lehet elérni. Tehát ez a RPC-s
+végrehajtási modell, ez hogy működik, és
+hogyha van időtök rá, meg kedvetek,
+akkor ezzel a data proc, mertogy biztos
+dologgal is el lehetne kezdeni
+barátkozni vagy ismerkedni.
+Jó, és akkor én itt megállnék, és
+kérdések
+vannak, hogy
+remélem nem volt nagyon rohanós a vége,
+de mindenképpen szerettem volna, hogy
+ezt
+átnézzük, mert hát tényleg nagyon
+fogunk találkozni, és hát egy csomó
+olyan dolog van, azt ti is látjátok,
+amit önállóan lehet csinálni a ezekkel a
+tutoriálokkal.
+Szem feltétlen mindig kellett
+futtatnunk.
+Szóval van-e kérdése valakinek?
+Pár úr, nekem technikai kérdésem lenne,
+hogy a következő alkalom személyes, hogy
+azt is fel tudná venni így Teamsen?
+Hát azt nem nagyon hiszem. Egy pillanat
+azt mondja, hogy
+következő mikor lesz?
+Hogy az harmadik 21
+és az lesz a PC nullában?
+Igen.
+Jó, azt nem hiszem. Ott ott nem fogok
+tudni fölvenni semmit,
+legalábbis nem. Nem nag nem ígérem.
+Tehát esetleg a a gyakorlatok,
+hát majd meglátjuk, ha olyan gyakorlat
+van, amit ti nem tudnátok megcsinálni
+nélkülem, akkor azt megpróbálom
+fölvenni, de magát az órát nem fogom
+tudni fölvenni, az szinte biztos.
+Ühüm.
+Hát mert hogyha be lenne egy laptop oda
+állítva, akkor akkor az mehetne akár
+akár csak a hangot, hogy majd az
+előadást fölvenni. Hát ez nagyon nagyon
+körülményes, és engem zavar. Tehát épp
+elég ezzel a felhővel harcolni nem kell
+még egyéb technikai malőr. Ráadásul ott
+hálózattal is baj van meg minden.
+Hide, hogy tényleg körülményes, és az a
+terem nem nagyon van erre felkészítve.
+Azért személyes, hogy mindenki próbáljon
+személyesen részt venni. Jó,
+hát az rendben van. Az rendben van. Csak
+olyan olyan ritkán vagyunk együtt, hogy
+gyertek és figyeljetek.
+Jó,
+rendben, köszönöm.
+Oké.
+Van más kérdés esetleg?
+Jó, ha nincs, akkor egy picit hamarabb
+fejeztjük be, de szerintem
+épp elég mára. Ennyi.
+Neked is jár egy kis szünet. Van még óra
+utána?
+Ezután lesinek már zenekünk nincs
+például. Jó, hát akkor akinek nincs, az
+hamarabb szabadult, szerintem örül neki.
+Akinek lesz, az meg még kap egy kis
+kávézünetet,
+extra idő. Rendben. Akkor
+a
+videókról a linket föl fogom rakni a
+udaloldalra,
+ezeket a diákat is, illetve plusz
+gyakorlatokat, mindent. Jó, tehát
+nézzétek meg, és amit lehet, csináljatok
+meg, hogy két hét múlva, amikor
+folytatjuk, akkor már mindenki képben
+legyen, és legalább ez ilyen alap
+dolgokat ne kelljen külön újra
+elmagyarázni. Jó, köszönöm szépen a
+figyelmet, meg az aktivitást és további
+jó hétvégét egyeteket.
+Hölgyeknek boldog nőnapot holnapra
+két év múlva találkozunk.

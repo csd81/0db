@@ -1,0 +1,227 @@
+l, hogy néhány tablet
+nagyon-nagyon kicsi, vagy nagyon ritkán
+kap kérést vagy lekérdezést, akkor azt
+megpróbálja a rendszer összevonni
+további ilyen ritkán
+megszólított tabletekkel,
+hogy
+a megint csak a lekezéseknek a
+frekvenciája az körülbelül kiegy hogy
+llítődjön. Jó. És ez mind automatikusan
+megy a a háttérben.
+És akkor itt eljutottunk a a kulcshoz,
+hogy itt
+ugye a sorokat célozza meg a a kulcs.
+És ugye itt a véletlenszerű
+eloszlás miatt az tűnik egy jó
+stratégiának, hogyha a kulcsok is
+tulajdonképpen véletlen szám alapján
+kerülnek legenerálásra.
+Hát akkor
+jön egy kérés, akkor biztos, hogy
+véletlenszerűen valamelyik sort fogjuk
+kiválasztani. Hogyha sor folytonosan
+neveznénk el növekvő indexszel ezeket a
+sorokat,
+akkor nehezebb ezt az egyenletességet
+biztosítani.
+Viszont ennek az ellenkezője is igaz,
+hogy néha meg pont olyan lekérdezések
+van, amikor pontosan egymás utáni
+sorokat szeretnénk lekérdezni. Hát
+ilyenkor ez a véletlenszerű
+kulcsgenerálás, ez nem annyira hasznos,
+akkor másképp kéne ezt megcsinálni. És
+ezt lehetővé teszi a
+kulcsnak a a legyártása. Majd erre lesz
+később egy példa.
+Tehát
+most elég csak annyi, hogy hogy úgy
+képzeljétek a kulcs kell a úgy
+képzeljétek el a kulcsot, hogy ez egy
+karaktersorozat és meghatározhatjuk,
+hogy ez milyen részekből áll, és ezek a
+részek fogják meghatározni, hogy hogyan
+címezzük meg a sorokat. A példáknál
+fogjátok ezt látni, mindjárt világossá
+válik.
+A további
+tulajdonképpen ilyen működési
+tulajdonságok
+vagy ilyen teljesítménybefolyásoló
+tényezők láthatók. Itt a
+talán a másodikkal kezdeném, tehát amit
+már említettem, hogy ha olyan cellánk
+van, ami nem tartalmaz
+egyáltalán értéket, vagy akár egy teljes
+oszlop, akkor az nem fog semmilyen
+helyet elfoglalni a rendszerben.
+Jó, a
+maga az adatformátum az egyszerű byte
+formátum, tehát by streameket tartalmaz.
+Az egyetlen kivétel az olyan értékek,
+amit inkrementálni kell vagy lehet. Ott
+integsereket
+tartalmaz a rendszer, 64 bites sintet,
+nem pedig bytokat,
+de általában mindenhol, csak ez úgy row
+byte formátumban, amit a felhasználás
+előtt nekünk kell átkonvertálni arra a
+típusra, amin dolgozni akarunk.
+Na most a nem létező
+cellák nem foglalnak helyet, ez teljesen
+világos. Na de mi van akkor, hogyha
+megváltozik a tábla? Tehát ha például
+törlünk belőle adatot, akkor akkor mi
+lesz?
+Az automatikusan törlődik vajon azonnal,
+vagy csak később, vagy soha? Szóval,
+hogy vajon ez hogy megy?
+Hát alapvetően nem azonnal törlődnek a
+dolgok, hanem a
+az értékek csak kapnak egy fleget, hogy
+ők már nincsenek benne a táblában. És
+ezek még egy darabig léteznek a a fá
+rendszerben, és időnként elindul egy
+egy ilyen úgynevezett compaction, tehát
+egy ilyen tömörítési
+művelet,
+amikor a rendszer kidobja ezeket a
+törölt értékeket.
+Aki emlékszik még a DNET-re vagy a
+Javára, ugye ott a memória kezelésnél
+van a garbage collection. Hát ez
+ugyanaz, csak ilyen tablet
+értékszinten lezajló valami. Tehát ez a
+fárendszerben fut. Időnként jön ez a
+kukásautó, és akkor elviszi a kidobott
+értékeinket.
+De a lényeg az, hogy amíg ez le nem fut,
+addig a megváltoztatott vagy kitörölt
+adataink is foglalják a a helyet.
+Tehát ez is
+lefordítva pénzre ugye pénzbe kerül. A
+az utolsó az a tömörítés, hogy minden
+olyan érték, ami tehát egy cella, ami 1
+megb-nál kisebb, azt ő tömöríteni fogja.
+Hogyha ennél nagyobb adatokat akarunk
+berakni, akkor ezt nekünk kell
+manuálisan
+tömöríteni. De ezzel itt mi nem fogunk
+találkozni. És a legvégén a biztonsági
+rész, minden adat ebben a big table meg
+általában minden más tárol tárolási
+szolgáltatásban
+tömörítve, bocsánat, nem tömörítve,
+hanem titkosítva van. Jó, tehát nyílt
+adat soha nincs tárolva a
+felhőrendszerben. Ezt ezt nem tudom
+eleget hangsúlyozni, mert még mindig van
+egy nagy félreértés a felhővel
+kapcsolatban, mikor attól félnek az
+emberek, hogy az adatuk nincs
+biztonságban.
+Tehát ezt meg kell érteni, hogy nincs
+olyan felhőszolgáltató, aki nem mindent
+titkosítva tárolna. Tehát akárki
+hozzáfér a tárolt adatokhoz, azzal nem
+nagyon tud mit kezdeni, mert nem tudja
+feltörni remélhetőleg a titkosítást.
+Tehát amikor adatszivárgás történik a
+felhőből, az soha nem a tárolt adatokból
+van, hanem a futóalkalmazásból,
+vagy pedig valamilyen ugye emberi
+mulasztásnak a
+az oka.
+Jó, tehát ne keverjük össze a
+felhőszolgáltatót
+a az alkalmazással, amit egy fejlesztő
+írt meg, és lehet, hogy ő elfelejtett
+valamit jól csinálni, és abból aztán
+szilvárókat kiadat, vagy kinyerhető
+véletlenül valami.
+Jó, azt hiszem, hogy ezeket itt mind
+végignéztük, tehát megvolt a az
+általános áttekintés, hogy hol lehet
+használni az architektúra
+memóriab security. Jó.
+És akkor jöjjön a gyakorlati rész.
+Be fogom másolni
+a
+az első példának a linkjét
+a chatbe, és azt szeretném kérni,
+bocsánat vissza.
+Jó, hát ezek most itt nem annyira
+érdekesek. További információ.
+Szóval az lenne a kérésem, hogy ezt
+próbáljátok meg önállóan.
+Na, bement
+remélhetőleg
+én is megnyitom azért.
+Ez nem az az oldal azt mondja.
+Jó, tehát egy ilyen oldal kellene, hogy
+megjelenjen nálatok is. Remélem ez
+látszik.
+ami egy parancsoros
+konzol kis példa program, az a lényeg,
+hogy hogy lehet létrehozni egy big table
+instance, és utána abba beleírni adatot.
+Jó, de még mielőtt ezt elkezdenétek
+végrehajtani, azt szeretném kérni, hogy
+lépjetek át a konzolba.
+Közben itt nem nem jó helyen vagyok,
+mert nem ezt akartam, hanem
+ide akartam jutni.
+Ja, ez nem az.
+Na mindegy, nem érdekes. Akkor itt fogom
+megmutatni.
+Tehát a konzolba
+lépjünk át. És itt ha kereső mezőbe
+beírjátok, hogy big table.
+Akkor ez elvisz minket a szolgáltatásnak
+a a kezdőoldalára.
+Hát pont nem ide akartam érkezni, ez
+elég fura, de mindegy.
+Akkor elmegyünk itt
+az adatbázison keresztül.
+Hát elnézést. Legutóbb úgy emlékszem,
+hogy nem ilyen
+oldal jött be, hanem volt egy általános
+leírás, ahol külön volt egy create table
+gomb. Akkor nem tudom, nálatok is ez
+jelenik-e meg,
+vagy pedig az, amit én keresek. Mindegy,
+visszalépek akkor a másikra,
+és akkor próbáljuk elkezdeni jó ezt a
+kis példafeladatot, aztán majd amikor
+létrejön a a big table, akkor
+megkeressük a
+a web dashboardon keresztül a
+szolgáltatást, és remélőleg fogjuk
+látni, hogy hogy ott ez létrejött, és
+nyilván ott is lehet elhelyezni adatot
+grafikus felületen keresztül, de most mi
+itt tudom parancsoron át fogjuk ezt
+megcsinálni.
+Jó, tehát itt azt írják, hogy ez kábé 10
+perc alatt lefuttatható ez a kis példa.
+Hát reméljük, hogy sikerül. Úgyhogy
+próbáljuk meg. Haradjatok nyugodtan a
+saját tempótokban, közben én is itt
+azért ezt megpróbálom lefuttatni,
+és akkor ha ha én végzek, akkor
+megkérdezem, hogy mindenki sikerrel
+végre tudta ezt hajtani, vagy sem. Jó,
+bár nem fogom kommentálni közben, hogy
+ne zavarjalak benneteket.
+Na, én elkészültem.
+Az utolsó lépés az, hogy letöröljük a
+táblát, de én most nem töröltem le
+azért, hogy látszódjon itt a lényeg.
+De először
+azt kérdezném, hogy ti kész vagytok-e,
+sikerült-e lefuttatni? Akinek igen, az
+nyomja meg a készfel tartó gombot. Jó,
+hogy lássam körülbelül,
+hogy állunk.
+Nekem még az I

@@ -1,0 +1,97 @@
+ogy mennyi a quantity
+mezője. Ugye az order details táblának
+van egy ilyen quantity mezője, és hát
+levonjuk a a raktárkész az új rendésnek
+az értékét.
+De ugye előfordulat az, hogy egy olyan
+rendést adtak fel
+ami nagyobb mennyiség mint amennyire
+aktálkészleten van. Már ugye ez egy
+logikai hiba, tehát ezt a lenést ezt nem
+szabad elfogadni akkor. Tehát hogyha
+csak mit tudom én három lágos sörünk
+van, akkor nem lehet négyet rendelni
+ugye most erre való itt ez a
+hibakezelés. Ugye mivel ezen a products
+táblán van egy check constraint,
+ez nem engedi meg, hogy a unitsin stalk
+az nullának kisebb értékű legyen. Ezért
+ebben az esetben ez update utasítás
+hibára fog futni. De mivel benne van egy
+ilyen tryákban, ezért át fog kerülni a
+catch ágba. Elkapjuk ezt a hibát. Van
+egy error message, de a lényeg az ugye
+hát most ez a ez a ez az error message.
+Hát ez a világű megy, ugye ez ez csak a
+programozónak
+információ,
+de nem ez a lényeg, hanem az, hogy ebben
+az esetben egyes eredményt adunk vissza,
+külön pedig nulla eredményt, ugye? Tehát
+ez egy olyan tárolt eljárás, aminek van
+egy kimeneti változója, egy output
+változója.
+Ugye egy tároltástnak akárhány ilyen
+output változója lehet, és ezt az
+eljárás meghívása után szépen el lehet
+kérdezni, hogy mennyi a járás által
+beállított értéke. Tehát itt vagy
+nullára állítjuk, vagy pedig egyre. Jó,
+ez viszont már megvolt. Úgyhogy
+úgyhogy akkor azért biztos, hogyan
+biztos hozzuk létre újra.
+Jó.
+És hát most itt ennek a tároltának a a
+tesztelgetése történik.
+Itt igazából ezzel nem húznám az időt.
+Szépen működik. Mű működik ahogy kell.
+Tehát hozza a hibát, hogyha hogyha
+negatív raktárkészletet állítunk be. Ezt
+végig lehet próbálgatni.
+Jó, és akkor most nézzük azt a azt a
+tárolt eljárást, amelyik
+a logót dolgozza fel. Na most ez
+tipikusan egy olyan eset, amikor ugye
+van egy táblánk, amiben vannak rekordok,
+és a rekordokon egyenként kell szépen
+végigépkedni, mivel
+minden rekorddal aszerint mást és mást
+kell csinálni.
+azerint kell mást és mást csinálni, hogy
+hogy milyen típusú esemény történt.
+Tehát teljesen mást kell csinálni
+mondjuk egy
+egy új rendelésnél, mint egy rendelés
+módosulása esetén. Tehát ilyenkor
+használunk egy kurzort, ilyenkor ez ugye
+tekintettel, hogy nem 1 millió rekordon
+lépkedünk végig, hanem csak mondjuk a
+tegnap óta felgyűlt rendeléseken. Tehát
+itt a kurzor kifejezetten
+javas javasolt megoldás ilyen esetekben.
+És akkor nézzük, ugye a a kurzorunk
+nagyon lényeges az order táblány végig,
+de csak a nullas státuszú rendeléseket.
+A nulla státusz az azt jelenti, hogy új
+rendelés. Meg különben, ha nem ezt
+elfelejtenénk, akkor ugye minden egyes
+alkalmunk lefut a job, újra és újra
+gyártásba adnánk mondjuk ugyanazt a
+rendelést. Tehát ez azért lényeges
+dolog, hogy mi majd jelezzük ezzel a
+státusszal, hogy oké, átvettük ezt az
+eseményt és feldolgoztuk, vagy pedig ha
+nem, akkor nulla, és akkor ez egy új
+esemény.
+Jó. És tehát van ez a kurzorunk, ez megy
+végig az új az új rendeléseken. A az
+exactt abort on az mit fog csinálni,
+hogyha hiba történik, akkor
+visszagörgeti a tranzakciót.
+És és egyébként a tranzakció majd itt
+fog belül elkezdődni a kurzoron belül.
+Tehát itt az a lényeg, hogy minden egyes
+új eseménynél kezdünk-e egy új
+tranzakciót.
+Ez így logikus, ugye? Tehát, hogy hogy
+azért

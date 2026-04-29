@@ -1,0 +1,343 @@
+szrevegyük. Na
+most a merch replikáció is egy
+snapshottal kezdődik, mert mint
+említettem, innen replikáció ezzel
+kezdődik. Azonban
+onnantól kezdve
+az történik, hogy ahány subscriber van,
+mindegyiknek van egy saját snapshot
+agentje,
+és ezenkívül automatikusan létrejönnek
+minden publikált, minden publikáció,
+minden replikáción részt résztvevő
+táblára. Tehát a az a a publishernél is,
+meg az előfizetőknél is ugye ott vannak
+ezek a táblák, és mindegyik objektumra
+létrejönnek olyan triggerek
+automatikusan, amelyek minden változás
+esetén elsülnek. Tehát három trigger,
+egy update, egy inzet, meg egy delete
+trigger létre minden táblára. És ezek a
+triggerek helyben lévő rendszertáblákba
+naplózzák az eseményeket, amiket az a
+kliens ott elkövetett azzal a azzal a
+táblával. Érthető? Tehát minden minden
+kliensnél vagy minden résztvevőnél, a
+rendszernek minden résztvevőjénél
+van egy helyi napozási mechanizmus. És
+egyébként megjegyzem, hogy ez pontosan
+az a napozási mechanizmus, amit mi ugye
+intuitíve föltaláltunk az első órán,
+hogy hát egy triggerrel naplózunk egy
+logtáblá. Pontosan ez történt, csak
+azzal a különséggel, hogy ez profi módon
+meg van csinálva. Hogyha ezt volna időnk
+beállítani, akkor látnák azt, hogy
+körülbelül 20 különböző tábla van arra
+használva, hogy hogy a változásokat
+naplózzuk. Csak a logolásra 20 különböző
+tábla.
+És
+akkor akkor hogyan működik ez a dolog?
+Hát van egy egy
+snapshot agent nevű, bocsánat, egy egy
+merge agent nevű job, ami minden egyes
+résztvevőnél fut, és ez időnként megnézi
+ezeket a logáblákat, hogy történt ami
+változás. És hogyha történt változás,
+akkor elkezd kommunikálni a többi
+résztvevőjébe a rendszernek. elsősorban
+megpróbál eljutni a disztribútorhoz
+és
+ezeket a változásokat érvényesíteni, de
+visszafele is történik egy képzelj, hogy
+egyszerre történnek a váltások. hogy az
+a nehéz egy azt a tulajdes köző
+rendszerből ott ott tényleg lehet, hogy
+a a a rendszer egyik meg a másik része
+között a kommunikációs késeltetés az
+mondjuk három másodperc, de az
+eseményeknek a a a az ideje közötti
+késettet is csak egy másodperc, értik?
+Tehát ez azt jelenti, hogy logikailag
+párhuzamosan történik két esemény. A az
+az egyik előfizető nem tudja azt, hogy a
+másik már ugyanezt a rekordot ugye ez a
+három másodperces kommunikációs ablakon
+belül módosított a másik oldalon. Értik?
+És ez azt jelenti, hogy konfliktus
+inkonzisztencia léphet fel a rendszerbe.
+Hogyha most megkérdezik a ezt a két
+klienst, ezt a két előfizetőt, hogy mi a
+rekordt tartalma, mást fognak
+válaszolni, ugye? Tehát erre mondjak
+azt, hogy hát nem konziszens ez a
+megoldás. Viszont azt mondjuk, hogy
+viszont késeltetetten konzisztens. Tehát
+hogyha most nem történik semmi a
+rendszerben, akkor előbb-utóbb az egyik
+előfizető meg fogja győzni a másikat
+arról,
+hogy mégis dobja az ő saját változását,
+és a másikét fogadja el. Az egész
+rendszerben el fog terjedni ugyanaz a
+vélemény. Hát hogyan történik ez meg?
+Ezt úgy hívják, ezt a folyamatot, hogy
+konfliktusfeloldás. Conflict resolution.
+És hát el lehet képzelni azt, hogy hát
+ez egy ez a ez az elosztott
+rendszereknek egy ilyen egy ilyen ősrégi
+és nagyon sokat tanulmányozott területe,
+hogy itt alapvetően tökéletes megoldás
+nincsen, hanem stratégiát kell
+választani. Tehát el kell döntenünk,
+amikor a merger replikációt
+konfiguráljuk, amikor létrehozzuk, hogy
+milyen konfliktus felos feloldási
+stratégiát fogunk választani. A default
+az egyébként, hogy
+hogy azt fog nyerni, amelyik először
+eljut a publisherig az a változás. Tehát
+mégis csak valami kidültetett szerepe a
+publishernek.
+A aki először eljut a publisherz,
+az onnantól kezdve az a változás az lesz
+szétterjesztve a rendszernek. Hiába
+történt ez alatt a rendszer másik részén
+is egy változás. Most itt ebben az
+esetben nincs nincs diszriúciós adatás,
+illetve hát van, de abban csak ilyen
+ilyen rendszerogok vannak. Tehát ez azt
+jelenti, hogy hogy minden adatmozgás
+aznek az agenteknek az egymással való
+kommunikációjával valósul meg. És
+egyébként teljesen a kezünkben van ennek
+a a vezérlése. Tehát ez azt jelenti,
+hogy
+hogy lehet más stratégiát is beállítani.
+Lehet
+például mondjuk tegyük föl, hogy ez egy
+mérőrendszer,
+ugye? Tehát, hogy ezek az adatforrásaim,
+ezek
+akár fizikai folyamatot, akár gazdasági
+folyamatot mérnek, és a konfliktus abból
+származik, hogy mást mértek.
+És akkor lehet például egy olyan
+konfliktusási stratégiát
+be betenni, hogy vegyük ezeknek az
+átlagát, vagy a minimumát, vagy a
+maximumát, és azt tervesszük szét az
+egész rendszerben. Nagyon sokféle
+stratégia van, tehát ezeket most nem
+fogom tudni bemutatni.
+De például van egy olyan is, hogy a a az
+egyes előfizetőkhöz egy frix prioritást
+rendelek, és azt mondom, hogy
+mindenképpen az egyik fog nyerni. Tehát
+hogyha konfliktus van, akkor
+mindenképpen az egyik fog nyerni. Ugye a
+konfliktus azt jelenti, hogy nálam
+történt egy változás, de amikor ezt a
+változást megpróbálom szétterjeszteni,
+akkor kapok egy visszaüzenet, hogy bocs,
+de már másút is történet egy változás,
+amióta legúton beszélgetünk. Ö és még az
+is előfordulhat egyébként, van ennek egy
+egy felügyeleti eszköze,
+hogy hogy az Isten szerepét játszva
+kézzel avatkozok ebbe be. Tehát van egy
+olyan replication monitor nevű eszköz,
+amivel lehet figyelni ennek a konfliktus
+kialakulásának a folyamatát, és ott
+kézzel el lehet választani, hogy
+elfogadom-e a rendszer döntését, ami a
+beállított
+stratégia szerint a a nyertest, tehát a
+winnert
+kijelölte, vagy pedig nem, és
+felülbírálom, és azt mondom, hogy hogy
+mégis csak a losernek, tehát a
+vesztesnek a változat ását kell
+szétterjeszteni a rendszerben. Jó, hát
+akkor azt hiszem, hogy igen, most ennyit
+tudtam erről mondani. Én azt javaslom,
+hogy hogy nagyon érdekes ez a ez a
+fejezet, tényleg csak hát ide most ez
+nem fért be demo szempontjából,
+hogy itt a
+a módul lapon
+nézzék meg ezt a ezt ezt a videót,
+hogyha hogyha ez a ez a merge replicát
+demo szinten érdekli önöket egyébként.
+Szerintem szerintem nagyon érdekes. Én
+én bízom benne, hogy hogy
+az elméletű anyagot így összefoglaltam
+annyit a merge replikációról érdemes
+tudni. Ja, még azt hadd mondjam el, hogy
+ebben az esetben tipikusan, tehát merger
+applikációnál tipikusan
+pull típus előfizetések vannak. Tehát ez
+azt jelenti, hogy hogy mivel mivel az
+egész szenári úgy merül föl, hogy a a
+kliensek, tehát a a rendszernek a a
+csomópontjai nem mindig vannak
+kapcsolatban egymással, ugye? Hát
+hálózathívábákról számítunk, egy
+elosztott ades kezelő rendszer számítunk
+hálózati hibákra.
+Ezért célszerű az, hogy a amikor a
+a kliens akarja, akkor történik meg a
+szinkronizáció és a és a snapshot
+agenteknek a egymás való kommunikációja.
+És és nem
+tehát hogy hogy hogy nincs egy ilyen
+központosított
+jobfuttató kijelölve erre. Jó. Na hát
+akkor köszönöm szépen a a figyelmet.
+Most egy 15 perc szünet következik.
+És akkor utána folytatom majd a az
+adatminőség szolgáltatásokkal.
+Hogyha valakinek van valami kérdése,
+akkor akkor akkor tegye fel nyugodtan.
+És egyébként egyé a replikációt a
+szokásos módon állít leállíthatják a
+szerveren. Jó.
+Köszönjük.
+Én
+nem teljesen részben,
+Na hát kedves kollégák, én akkor
+folytatnám És
+itt a következő fejezetünk
+az adatminőség lesz. Hát ugye azt
+látják, hogy ez a kurzus ez
+mozaikszerűen van eléggé összerakva.
+Tehát különböző témák kerülnek itt elő,
+amiket hát én úgy éreztem, hogy
+legfontosabbak
+a modern adatbáziskezelés szempontjából.
+És ez a téma,
+ez egy ilyen gyakran mellőzött téma.
+Viszont
+olyasmi ez, mint a mint a
+az adatbiztonság, ugye, hogy senki se
+szeret vele foglalkozni, de kell vele
+foglalkozni.
+Arról szó, hogy egy egy cégnek a
+a működés szempontjából az adatvagyona
+az a az adatvagyonának a tartalma és a
+minősége az összes üzleti folyalatnak a
+minőségét meghatározza tulajdonképpen.
+Tehát hiába van ezt, tehát önök is
+tapasztalták, hiába van egy remélkül
+megtevezett felhasználó felület,
+hogyha
+az adatok rosszak, amiket azon a
+felületen látunk, vagy
+rosszul vannak modellezve például,
+és
+és hát ez a ez a rész most itt azzal fog
+foglalkozni, hogy hogyan lehet
+tulajdonképpen
+mérni az adatoknak a minőségét, milyen
+tényezőnek az adatminőségek, és olyan
+javítani. Fogok erre mutatni egy egy
+technológiát a Microsoftnak, a SQL
+szervernek a data quality service
+szolgáltatását szeretném bemutatni.
+Hát akkor akkor nézzük, hogy milyen
+adatok keretkeznek
+egy egy szervezetnél.
+Hát mi általában adatnak a a struktúrált
+reációs adatbázsbani adatokat szoktuk
+nevet nevezni, de van még itt sok egyéb
+fajt másfajta adat is.
+Ugye van van olyan ami kifetten nemzési
+célra van leválasztva, ezt adattáháznak
+szokták hívni és és aztán vannak olyan
+adatforrások is, amik
+nem annyira strukturáltak, mint a mint a
+reakciós adatok, mert például XML vagy
+Jason, habár megjegyzem, hogy hogy
+igazából a a Jason és az XML is
+strukturált adatnak tekinthető
+hiszen
+sémát és jat
+lehet rendelni hozzájuk, de vannak aztán
+strukturáltan adatok is, például
+szövegek vagy PDF fályok, vagy pedig
+hasonló dolog. A a metaadata az az adat,
+metaadat, ami az adatokról szól, az adat
+ö ö
+hát data dictionary, tehát hogy hogy
+hogy milyen adatunk hol van, és mi mit
+értünk. A master adat az pedig hát ez
+képzel nagy cégeknél merül föl annak az
+igénye,
+hogy a a sok divíziónak a saját
+adatvagyonak közül a legfontosabb
+entitássokat, azokat központilag
+kezeljük.
+Például mondjuk a a vevőtörzset.
+Most az a fajta adatminőség ellenőrzési
+szögtársa, amit most mutatni fogok,
+abban nincsen master data managedment. A
+master data managedment az egy teljesen
+külön tudomány tulajdonképpen tudomány
+vagy a diszciplína.
+Tehát azt most nem fogom tudni
+demonstrálni, és éppen ezért a a
+jegyzetben sem szerepel részletesen,
+hanem most kifejezetten
+az ilyen kisebb vagy közepes cégek
+számára, de már nem nagyon kicsi cégek
+számára hasznos adatminőség,
+ellenőrzés, javítás szolgáltatást
+szeretném megmutatni. Szóval a lényeg
+az, hogy
+ennek vannak
+kemény és lágy dimenzió. Kemény dimenzió
+az az, amit lehet számszerűen mérni.
+A lágyanyai pedig hát értem, ami ami
+amit nem lehet, de azt még nagyon
+fontos,
+tehát a a kemény dimenziónál
+szerepel a a teljesség, tehát van-e
+adatunk valamiről.
+Ezt mondjuk például lehet a egy egy
+mezőnek a a nulla arányával mérni, tehát
+hogy azt a mezőt egy adatbázis táblában
+mennyire ismerjük egyáltalán.
+a pontosság az azt jelenti, hogy valami
+adatunk van, de kérdés az, hogy az az
+mennyire pontos. Tehát hogyha például a
+valakinek a nevét ismerjük, de az
+rosszul van leírva.
+Ez például problémát okozhat, hogyha a
+név szerint keresünk valamire. Ezt
+bizonyára önök is tapasztalták már
+párszor. Különösen azok a sorstársaim,
+akiknek ritka vezetéknevük van, hát nem
+egy-kétszer kellett már lebetűzniük ugye
+a a a vezetéknevüket, és nagyon sokszor
+rosszul írták.
+Ö és a konzisztencia pedig azt jelenti,
+hogy van adatunk és pontos az adat
+azonban ellentmond egy üzleti
+szabálynak, egy ellent egy üzleti
+szabálynak és ez így van tárva az
+adatás. Az azt jelenti, hogy hogy belső
+elátmondás van az adatok között. Hát
+milyen belső elátmondás lehet? Hát
+például egy egészségügyi adatbázisban
+azt találjuk valakiről, hogy habár
+férfi, de mégis három terhessége volt,
+ugye? Tehát ez ez így nyilvánvalóan nem
+lehet. Vagy például azt tapasztaljuk,
+hogy Magyarországról
+Szlovákiába kellett szállítani valamit,
+és ezt hajóval oldották meg. Tehát ez
+nyilván ez így ez így ez így ez így nem
+lehet. Ö úgyhogy
+ha ezekben a dimenziókban
+ezek mérhető dimenziók, ugy

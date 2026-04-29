@@ -1,0 +1,79 @@
+retnék megmutatni,
+az egy az a Microsoft SQL szervernek a a
+particionálása.
+múlt lapra tettem fel ezzel kapcsolatban
+egy kis kiegészítő jegyzetet, meg egy
+kis scriptet is, amit most itt meg is
+osztok. Egyébként
+igazából nem egy bonyolult dologról van
+itt szó.
+Arról van szó, hogy van egy particánsi
+függvényünk, amit már említettem,
+ami minden rekordra kiértékelhető.
+És ezenkívül van még egy particionsi
+séma is, ugye a a partíció az egy
+logikai fogalom, hogy most mit tudom én,
+például a a valamelyik év vagy
+valamelyik régió mondjuk
+de utána jön az, hogy ezt a partíciót én
+egy
+fizikai alattáróhoz rendelem hozzá.
+A az SQL szerveren ezeket file
+csoportoknak hívják, file groupnak.
+Mi eddig mindig csak a primary file
+groupot használtuk, ami legalább egy
+file group mindenképpen van, de lehet
+további file groupat is létrehozni.
+És és akkor ezeket most mutatom is, hogy
+ezt például hogyan nézné itt ki.
+Akkor ezeket a fá csoportokat
+aztán már rakhatom különböző helyekre.
+Látható, hogy ez a ez a primary ez ez
+mindenképpen van.
+És ugye egy fálcsoporton belül aztán
+aztán lehetnek különböző fáljaim. ö
+minimum ö egy ló és egy adatfál
+mindenképpen van egy adatbázishoz, de
+hát ugye nyugodtan mondhatom azt, hogy
+egy nagy táblával, amit szeretnék
+gyorsítani, azt ugye egy külön
+táblába teszem és
+egy egy bocsánat, egy egy külön fájba
+teszem és
+és igazából, hogy hogyha ez particíálva
+van, akkor minden partícióját tudom
+külön fájokba tenni, ami különböző fáj
+grupokon vannak. Tehát ilyen módon lehet
+megvalósítani azt a bizonyos
+ö tárolási szintű párhuzamosságot.
+Hát ez az, amit most itt lehet is látni.
+Tegyük fel, hogy van egy adattázunk.
+Egyébként van is ez, ami a DW van, ugye
+a virtuális gépen is szerepel.
+Ebben van egy egy ténytábla. Most ugye
+hát
+ez egy ilyen persze demó, tehát néhány
+ezer rekord van csak benne, de de tegyük
+fel, hogy mondjuk itt mondjuk 100 millió
+rekord van. Tehát ez egy olyan tábla,
+amit szeretnénk particionálni
+és aztán párhuzamosan elérni.
+Ö mi mivel idő szerint keresünk benne?
+Logikusan, hiszen itt eladásokról van
+szó.
+Ezért megnézzük azt, hogy mi az
+időtartomány itt.
+Tehát van
+öt évünk 10-től 14-ig
+vannak az az eladásti tranzakciók.
+És nekünk először mi bármit csinálnánk,
+definiálnunk kell a particionási
+függvényt és a és a sémát. Itt látható
+az az eskola utasítás.
+Most itt ugye azt lehet látni, hogy
+van egy van neki egy neve ennek a ennek
+a partenső függvénynek,
+és van neki egy egy visszatési
+adattípusa, tehát amit majd itt vissza
+fog adni.
+Mi ezt

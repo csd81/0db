@@ -1,0 +1,4570 @@
+hallanak.
+És
+hát akkor utolsó öomat
+kezdem itt meg a haladó adatbál és
+kezelés tárgy kapcsán.
+Itt egy pillanatra tekintsük át, hogy
+hogy mi is volt ez a félév, amit most
+megosztottam önökkel. Azon azon ezt
+lehet látni. Tehát ez a mai alkalm ugye
+6x 45 perc lett itt egybe rakva, ami
+nekem is egy kicsit sok. Tehát itt
+sikerült megcsinálni az órarendet. És
+ennek az első felében én nemcsak az In
+memory adatbázisokkal szeretnék
+foglalkozni, hanem itt közönség
+kívánatra vagy közkívánatra
+szeretnék mutatni valami felhő alapú
+adatbáziskelést is.
+És és aztán a második részben akkor
+akkor pedig dokumentumtárak adatbázis
+migrációi úgy általában véve és a
+Firestore, illetve a Firestor-nak a a
+tranzakciója lesz terítéken.
+Két tesztet fogunk írni a mai nap. az
+egyiket az első részben, csak meg másik
+részből, tehát olyan 15 óra előtt
+valamikor
+akkor lesz az első teszt, aztán a
+második az pedig a végén 18 óra után.
+Most tekintettel, hogy már nincs több
+alkalom hátra a projektbeszámolókig,
+ami ugye május 9-én, szombaton lesz itt
+személyes jelenlétel a PC0-ban, ezért
+arról szerintem mindenképp kell egy pár
+szót beszélni. Itt a múlt lapon
+megfrissítettem ezt a kiírást, tehát ez
+most a múlt lapon van.
+Hát ugye
+az egy aláírás követelmét, hogy mindenki
+készítsen egy egy személyes projektet
+egy vagy két fős csapatban, és ezt
+mutassa be
+valamelyik projektbeszámolón. Hát a az
+első projektbeszámoló az lesz május
+9ként, hogy valaki esetleg nem készül
+el, az nem probléma. Nyilván alást akkor
+nem tudok adni, de később meg fogom
+adni, amikor bemutatja. Tehát látják,
+hogy már az első pótberszámónak is
+kiírtam az időpontját.
+És hát remélem, hogy akkor mindenki be
+tud számolni, de ha esetleg nem, akkor
+lehet még egy pót pótbzámolót is
+tartani.
+Hát itt igyekeztem mindent leírni, ami
+kérdés lehet a beszámúval kapcsolatban.
+az értékelést is, aztán a dokumentációt.
+A dokumentációt szintén ide kellene
+feltölteni, és lesz közönségdíj is, ami
+ténylegesen beleszámít az értékelésbe.
+És hát aki aki nagyon ügyes, az ilyen
+módon túl tudja teljesíteni a kurzust
+105%-ra is.
+Hát természetesen
+az mindig szubjektív, hogy mi a szép
+kerekprojekt, és mi a mi a mi a
+komolyabb és mi a kevésbé komoly
+projekt. Itt ezt igyekeztem
+összefoglalni. Ha ha valaki úgy érzi,
+hogy hogy tényleg csak a minimumot tudja
+ebbe a tárgyba most beletenni, akkor azt
+az 50%-os részt olvassa el, és akkor az
+biztos jó lesz.
+Jó, tehát igazából ennyi a a projekt
+beszámolóról. Most megkérdezem, hogy
+van-e valakinek valami
+kérdése adminisztratív,
+akár a beszámolva, akár a tesztekkel
+kapcsolatban. Hm.
+Közben lehet
+ö szóval be lehet szólni az előbra, nem
+kell csak feltétlenül jelentkezni, mert
+nem fogom látni, hogyha valaki
+jelentkezik. Tehát tehát nyugodtan
+közben lehet kérdezni, miközben én
+beszélek. Jó.
+No, hát hogyha nincsen, akkor akkor én
+el is kezdeném itt a az első anyagrészt,
+ami konkrétan a
+a az in az in memory az in memóriában
+tartott adatbázisok,
+amit in memory databasnek szoktak hívni.
+Hát most fogok erő egy kicsit beszélni,
+aztán utána lesz demo a szokásos módon.
+Tehát ez a ez itt a menetrend.
+És hát ezt egy nagyon fontos témának
+értékelem ezt az immemory adatbázist.
+De
+igyekszem röviden összefoglalni.
+Szóval a
+mind, amit eddig tanultunk,
+OLTP adatbázis kezelésből,
+tehát üzleti adatbális kezelésből, az
+arra alapozott, hogy a a az adat az
+adatbális nem fér be a memóriába.
+Az egész rendszernek a a szűk
+keresztmetszete az az volt, amikor
+nekünk a a háttértárról most ez mindegy,
+hogy SSD vagy Merel, ez teljesen
+lényegtelen. Szóval, hogy onnan kellett
+adatokat behoznunk a databerbe, ahol
+egyébként minden műveltet végeztünk.
+Tehát az
+azt rögtön tisztázni kell, hogy minden
+adatbázis az in memory adatbázis, amit
+eddig használtunk, az is, csak nem arra
+van optimalizálva, hiszen ugye minden
+művetet a memóriában vé végez az adás
+eskedő rendszer, mindent.
+Viszont hogyha nincsen benne épp a
+databulferban az adat, akkor azt be kell
+oda hozni és ez az, ami az egész
+rendszert lassítja. Ö, az indexek, a az
+egész architektúra mind arról lett
+kitalálva a végrehajtási tervek, hogy
+minél kevesebb ilyen ilyen ilyen lap
+bebehozatal kell, hogy történjen. Tehát
+ez az egész teredésnek az alapja.
+Na most egészen megláttozik a helyzet
+akkor, hogyha egy tábla, ami mondjuk
+akár egy nagy tábla is teljes egészében
+befér a memóriába, és soha ezért aztán
+soha nem lesz rá szükségünk, hogy arra
+várjunk, hogy a a táblának valamelyik
+lapját a háttértárról be kell olvasni.
+Tehát erre mondjuk azt, hogy hogy ez egy
+folyamatosan memóriában tartott tábla.
+attól függetlenül, hogy ezt a táblát is
+perzisztáljuk. Tehát ez azt jelenti,
+hogy hogy a változásokat, amik történnek
+benne, azokat rendszeresen frissítjük
+frissítjük a háttértel. Tehát kifele
+írás történik,
+értik a dolgot, de az nem fordul elő,
+hogy a a táblának a a a az adatait
+kelljen a háttértárról beszélni, kivéve
+induláskor, tehát nyilván amikor hideg
+indulás van, akkor tehát be kell tölteni
+a memóriába.
+Hát mindez úgy vált lehetővé, hogy a
+memória ugye olcsóbb lett
+és persze a tárbametek is nőnek, de
+mindenesetre ez egy reális lehetőség
+most már annyira, hogy külön
+technológiák fejlődtek ki arra, amit
+tudjuk, hogy in memory adapális szerek,
+amik nem is támogatnak másmilyen
+táblatípust csak ilyet, tehát csak olyan
+táblákat,
+amelyeknek folyamatosan memóriában kell
+lennie az egész táblának.
+ezeket az SQS szerver úgy hívja, hogy
+memory optimiz vagy memory optimized
+table, tehát MOT,
+és nagyon sok minden más is
+ki lett fejlesztve, tehát nem csak az a
+különbség itt a memó optimiz table, hogy
+hát ez a memóriában van, hanem
+egészen más szoft aritektúra szolgálja
+ezeket ki, mint a mi a hagyományos
+táblákat. Ennek az oka, hogy hogy erős
+versenybe kerültek a hagyományos
+adabbázis
+szerverek, tehát mit tudom én például az
+Oracle és a Microsoft SQL szerver,
+mégpedig a nagyon magas
+tranzakció kiszogrási igényű
+alkalmazásokban. Tehát például a az
+online sportfogadás
+és ugye erre jöttek aztán létre a a
+teljesen memória optimalizáltás közelő
+szerendszerek megoldások, de fel kellett
+venni ezt a kezdőt hagymányos adalás
+kezdő rendszereknek is. És így születtek
+meg az Mot-k.
+Tehát ezek a tábakák, ezek teljesen
+másk, mivel hogy a memóriá vannak
+optimalizálva.
+Ezért itt most mindegy, hogy melyik
+rekordot címezzük, meg ugyannyi időt
+térjük el mindegyik rekordot. Hogyha
+mondjuk volt egy merev, hát ott ma
+borzasztóan nem volt mindegy, a rekordok
+fizikailag hogy jönnek ki egymás után.
+Igaz? Hát ezért találták ki a
+klaszterezett indexet. Fizikailag sorban
+vannak rakva a rekordok. Hát itt nincs
+értelem erről beszélni. Minden memory
+ugyanolyan gyorsan fogunk elérni. Van
+egy 8 byt-os memória pointerünk és kész,
+ott vagyunk a rekordnál.
+És ez az egyik a ugye emiatt aztán az
+indexések is másmilyenek lesznek. Majd
+látni fogjuk milyenek. Másik pedig az,
+hogy hogy hát ugye hogyan kezeljük az
+adatainkat? Hát úgy ugye, hogy a
+lekkérdezéshez csinálunk egy
+végrehajtási tervet, ami az
+adatbázismotornak a primitív művelő
+épül, például mondjuk egy hash joyra
+vagy valami ilyesmi, vagy egy
+full table scan, vagy ilyen művetek
+vannak benne.
+És ezekből össze van rakva egy terv,
+amit aztán utána végigrajta motor, és a
+motort azt nagyon okos emberek
+fejlesztették ki.
+Na most
+ez az egész
+végrehajtási terv
+meg adatbás motor, ez ez is arra az
+esetre lett kitalálva, amikor a táblának
+bizonyos lapja itt esetleg be kell hozni
+a háttértá, tehát nem a memory
+optimalizált táblákra. És ezért ezt az
+egészet újra csinálták. Ráadásul, hogy a
+hatékonyság jobb legyen,
+minden egyes táblához külön natív DLket
+fordítanak. Tehát gyakorlatilag
+a a tároltárása is natív délelek
+fordítva, tehát szépen megírják hozzá a
+C++ kódot és lefordítják. Most ennél
+hatékonyabb
+megoldást nem nagyon lehet elképzelni.
+Tehát van egy memóriában egy
+adatszerkezet, és azt mi direkt annak a
+kezelésére készített
+natív kóddal szolgáljuk ki. Hát erre
+mondják azt, hogy ez a adabes kezdésnek
+a Forma 1-ye, tehát ezt úgy úgy ezt ezt
+ezt már nem nagyon lehet megverni ennek
+ennek a sebességét.
+És ugye amit a az érdekesség
+tulajdonképpen van az újdonsága
+a konkurenciával szemben, az az, hogy
+például az esköz szer az meg tudja azt
+csinálni, hogy az adásnak egy része az
+ilyen memory optimizált meg natív
+kompilált
+egy másik része meg nem.
+Tehát, hogy mi csak azokat a táblákat
+meg azokat a tároltárásokat, üzlető
+foratokat tesszük át ebbe a nagy
+testítményű részbe, amik amik amiknél
+tényleg szükség van a nagy testítményre.
+És mondjuk olyan nagy táblákat, például
+adattárház táblákat, amiket nagyon
+ritkán használnak, azok viszont nem nem
+lesznek a megbes nem foglalják a helyet.
+Tehát így ki lehet venni a a a
+az az alkalmazásból, az OLTP
+alkalmazásból. a forró magot, ugye
+emlékeznek még erről, hogy a
+transzakcionciális középpont ugye, tehát
+ki lehet venni ezt a forró magagot és
+ezt be lehet tenni memory
+optimalizáltba, és ettől az egész
+alkalmazonás sokkal gyorsabb lesz.
+No, tehát akkor a a dia utolsó sora ugye
+most már értik, hogy az immemory
+adapbázis az nem azért gyors, mert a
+tábla a memóriában van.
+Meg a memória, az immemória adott bázis
+sem azért gyors, mert a memóriában van,
+mert minden adott bázis a memóriában
+van.
+Jó.
+Hát igen. Oké. Na hát akkor nézzünk egy
+kicsit konkrétabban.
+Ez most már kifejezetten az SQS
+szerveres MOT megvalósításra vonatkozik.
+Hát ha emlékeznek még rá, alapvetően két
+fajta indexszel találkoztunk. is biztos,
+hogy találkoztak vele, ugye akkor most
+mondom, hogy a az OLTP adaptestnek a
+default index típusa az a Bfa, az a B3
+index, ami egyformán jó, egyformán elég
+jó adatmódosítások
+esetén is és adatkeresések esetén is.
+Tehát nem viszony gyorsan karbonartható,
+gyorsan változtatható, de elég gyorsan
+kereshető, tartománykeresésekre is
+alkalmas. Na most ezenkívül vannak még
+úgynevezett H indexek, amik csak
+pontszerű keresésekre alkalmasak.
+És még van egy pár másik index típus is,
+de ami a lényeg, az az, hogy memory
+optimizál tábláknál ott az elsődleges
+kulcsot azt mindig egy hash indexszel
+fogjuk
+csak támogatni.
+Mondva, hogy a az elsődleges kulcsban
+nem fogunk range kereséseket végezni.
+Ugye az által egy egy azonosító.
+Klasszett indexről nincs értelme
+beszélni, ami ugye a a hagyományos OTP
+tábák esetén ha az ember egy kulcsot
+létrehoz, automatikusan létre egy
+klusterezett bfindex a kulcsra. Hát itt
+erről szó sincsen.
+És hát a joinokat hash joinokkal
+valósítjuk meg. Hát az micsoda? Azt most
+itt sajnos nincs
+alkalm elmondani, mert nagyon kevés az
+időnk. alapvetően a h függvényekre épülő
+jo kisebb feladatokra bontjuk le a
+joint. És még van egy érdekes
+tulajdonság itt a az MTkal kapcsolatban,
+hogy hogy lehet úgynevezett cash
+táblákat is csinálni, vagy itt úgy
+mondják, hogy hogy nonurable táblát, ami
+azt jelenti, hogy azt azt azt azt azt
+nem perzisztáljuk a tartalmát, csak a
+sémáját. Tehát ez tényleg egy
+memóriaként működik, mert az
+alkalmazásra nincsen szükség arra, hogy
+a a tábláját vagy a tartalmat is és
+perzisztáljuk, de olyan alkalmazásoknál,
+mint például az adatnál, az RTL fortnak
+az a a staging táblái, hát ott ez
+teljesen jó.
+Akkor fontos az, hogy attól, hogy valami
+memory optimizált, attól még az üzleti
+alkalmazása alkalmas. Tehát ez azt
+jelenti, hogy hogy transzakcionális
+támogatás van, és és pedig és
+tranzakcionális támogatás, tehát ez
+atomicitás, konzisencia, izoláció és
+tartóság.
+Amit ugye nagyon nehéz biztosítani, de
+mindez meg van oldva. egy csomó
+korlátozás majd. Látni fogjuk, hogy
+rengeteg korlátozása az általános
+tranzakció kezdéshez képest, de attól
+függetlenül meg lehet oldani. És hát egy
+egy nagyon érdekes izolációs ugye egy
+snapshot izolációt használnak, ami a a a
+row versioningre alapul. Hát én nem
+tudom, ki tanult ilyesmit BSC-s
+tanulmányai során. Itt elő fog kerülni
+még a másik következő témában is. Tehát
+alapvetően ugye négy izolációs szintet
+definiál az SQL szabály és ezek közül
+egyik sem a snapshot izoláció.
+Mivel a ezek az izolációs szintek ezek
+ezek nem tételezzük fel azt, hogy hogy
+egy rekordból több verzió is létezhet.
+Ezzel szemben a ez a fajta izolációs
+mód, amit egyébként azt hiszem, hogy az
+orak talált fel, ez pont erre épül,
+tehát hogy hogy nem kellene a transz
+egymásra várni olyan sokat, ezért aztán
+több verzió van minden minden rekordból,
+amit valaki
+módosítani akar.
+Jó, minden táró teásból lesz egy egy DL.
+És akkor nézzük, hogy mire lehet ezt
+használni. Tehát mik a tipikus
+alkalmazásai
+az az Mot-nek.
+Hát itt van négy felsorolva.
+Az első a legfontosabb,
+tehát hogy
+nagy átbocsátású,
+nagy átbocsátási képességű,
+párhuzamos,
+nagyon gyorsan futó tranzakció
+kiszolgási környezetre van szükségünk.
+Például ugye a tőzsdétranzakciók vagy
+ilyesmi,
+ahol ahol leheteg nem várnak egymással a
+tranzakciók sokat és marha gyorsan le
+megtik mindent. Másik alkalási terület,
+amikor például
+egyszerűen nagyon nagy mennyiségű adat
+keretkezik rövid időn belül sok
+forrásból, és
+azt el kell tudni venni, és kell tudni
+valamit csinálni. Hát erre ugye megint
+specializált architektúrákat
+használtak vagy használnak most is.
+Ilyen produce erő aritektákot szoktak el
+használni, de most már ugye hát illetve
+már egy idő óta beszállt ebbe a
+versenybe az MOT is.
+Például arról van szó, hogy hogy egy IoT
+rendszerben gyűjtünk szenrop adatokat.
+És ugye itt az a az a kulcsa a dolognak,
+hogy hogy ebből a memória optimizált
+táblából a régi adatokat azokat
+folyamatosan
+mentjük egy lassabb elérésű, nem memory
+optizált optimalizált adattáházba.
+Aztán említettem az adatas alkalmazást,
+amikor a az ETL folyatót szeretnénk
+gyorsítani. Tehát a ez az extract
+transform load alkalmazást kinyerjük az
+élő rendszerekbe az az adatázakba és hát
+lehet memória
+cashnek is használni. Gyakorlatilag egy
+ilyen kulcsértéktárnak is lehet
+használni. Na, akkor nézzünk egy demót.
+Most ezek a demók, ezek a
+egy pillanat, itt látnak egy ilyet, hogy
+memory optimized tables zip.
+És
+hogyha hogyha ezt megnyitják, akkor
+van egy ezt a ezt ezt a zip fát,
+akkor
+abban lesz egy
+ez az ez az előadás is benne van
+egyébként.
+Szóval, szóval abban van először is egy
+olyan script, aminek az a neve, hogy mod
+config
+Na, ezt akkor mindjárt ki is másolom,
+és és bemásolom ide a
+teszt adatbázisomba.
+Nézzük meg ezt a scriptet. Hát ez a
+script, ez ez arra való, hogy
+engedélyezi egy adatbázis számára, hogy
+ebben memory optimizált tábra lehet
+legyen. Ehhez itt szükséges az, hogy
+ehhez kell csinálni
+egy új table space- tehát egy új
+hát itt file groupnak hívják, tehát egy
+olyan tárolóhelyet, ami a memória lesz
+tulajdonképpen. És akkor utána lehet
+ezt a
+ezzel az utasítással ez a alter database
+current set memory opt elevate snapshot
+on meg az alter database current set
+comp level ezek az utasításokkal
+bekapcsolni tulajdonképpen
+itt itt látható az az utasítás ami ami
+létrehoz
+egy egy új f groupot akkor hogyha még
+nem volt nem optimalizált
+és aztán Án szépen bekapcsoljuk,
+engedélyezzük az adabisnak, hogy ez hogy
+az egyetlen megtörtén. Különben nem fog
+menni. Jó, itt látható, hogy ezek a
+piros utasítások, amiket itt összeünk és
+és létrehozunk. Most ezt én én itt ezt
+már lefuttattam a testbázisomon, de
+futtassák le nyugodtan. Azt hiszem, hogy
+még egyszer lefutottam, abból se lehet
+nagyon baj. És akkor utána nézzük meg a
+másik
+táblát, ami a MOT Demo 2024.
+Ezt is beásolom ide.
+Hát nézzük meg ezt a ezt a kis scriptet.
+Ez egy demo script. a Microsoftnak a
+egyik tutorialjából vettem át. Tehát
+ugye van három táblánk, van egy SQL
+nevű, van egy HI, meg egy HC.
+különbség az ezek között, hogy itt itt
+többféle kombinációt is is ki fogunk
+próbálni. Lesz a hagyományos módszer,
+amikor egy egy hagyományos tárb egy
+hagyományos tároltából futni. Aztán lesz
+egy olyan, amikor
+egy egy memóri optimalizált táblán, de
+már egy memória már de de egy
+hagyományos tároltást fut. Ugye ebben az
+esetben, hogyha a táblan memória
+optimalizált, de a tároltá az az viszont
+nem, tehát nem nem natív,
+akkor ugye ez interpretált módban fut,
+tehát utasításonként
+futtatjuk le a tárást. És végül van egy
+olyan változat, amikor az emot-n egy
+natív tároltárás fut. És akkor megnézzük
+majd a sebességből különbségeket. Tehát
+látják itt ez nagyon egyszerű ez a kis
+progi. Van egy tábla C1, C2. A C2 az egy
+kicsit nagyobb tábla.
+És akkor ez a hagyományos tábla. És itt
+van a a memory optimalizált tábla.
+Látják, itt van itt itt itt kapcsoljuk
+be, hogy memory optimized egyenlő on.
+Nagyon jó, igaz? Ö és
+a másik az tök ugyanilyen egyébként,
+ugye?
+És van egy tároljáunk. Na most ez
+ez itt
+ez a tároljerás, ez már a native compil,
+tehát ez a
+forduló tárolt eljárás. Ez a hátt szépen
+megtörténik, tehát elindul a C fordító
+és és lefordítja ezt a tárolt eljárást.
+És mit csinál?
+beszúr rekordokat, tehát nem egy nagyon
+bonyolult logika, amit amit itt
+elkészít, mert paraméterre ez a ez a ez
+a ez a row count, látják?
+És akkor utána jönnek a tesztek,
+azt mondja, hogy a a a hard drive base
+table interpret
+ugye itt nincs tároltás, mer egyszerűen
+scriptünk van, de ugyanaz, mint a
+tároltás. És ezt a scriptet, ezt
+futtatjuk le valahányszor ezen a ezen a
+táblán, mégpedig 10000erszer. És ezt ezt
+szúrjuk be. Ez lesz az első mérésünk.
+Aztán kiírjuk, hogy hogy a hagyományos
+módszer az az hány milliszekund. Akkor a
+következő esetben
+Igen.
+Pillanat.
+Jó, ez itt ez itt ez itt levut lefut
+sokszor, és akkor utána
+Ja, igen, persze, persze. Itt itt az a
+különbség, látják, hogy ez az eset
+táblába szúr be, ez pedig a hely tábla,
+tehát ez már egy memory optimalizált
+tábla, viszont még mindig a az
+interpretált tároltárást tudjuk
+használni, tehát a hagyományosat. És a
+harmadik kombináció lesz az, amikor
+amikor itt meghívjuk ezt az NCSP-t,
+tehát natively compiled store procedet.
+És és ez lesz az, aminek a
+leggyorsabbnak kéne, és minden esetben
+kiírjuk a a futásidőt milliszekundumban.
+Hát akkor futtassuk le. Jó, tehát nézzük
+meg, hogy hogy mi lesz.
+Kicsit itt növeljük meg a szövegeknek a
+méretét, hogy
+Na hát kérem szépen, 771 586 193. Hát
+ugye erről beszélünk, tehát ez a ez a
+célja az egésznek.
+A másik, amit még akartam mutatni, az
+egy kicsit nagyobbetű dolog.
+Nem is biztos, hogy a végére élünk, de
+talán mindenesetre
+arról van szó, hogy mi van akkor, hogyha
+tényleg én egy egy adatbázisomból, ami
+most így készen van, ki akarom venni a a
+legfontosabb részt, és azt át akarom
+tenni a felhőbe, bocsánat, a a nem
+úrioptimizált táblába, és és ráadásul
+még egy tárolatást is át akarok írni,
+hogy hogy ennek megfeleljen.
+Hát
+ebből a célból egy másik demónk fog
+következni. Egy pillanat. Most
+visszajövök ide az előadáshoz.
+Szóval
+eléggé sok limitáció van ezekkel a
+ezekkel a memózá táblákkal. Nincs is itt
+minden felsorolva.
+Például nem lehet nincs értelme ugye
+kompressor, tehát össze tömöltést
+használni, hiszen hát hogy azt azért
+csináltuk, mert volt az a szűk
+keresztmetszet, ugye a replikáció is
+korlátozott satöbbi, satöbbi. Nem is
+kell ezt itt most mind felsorolni.
+Mindenesetre a a natív tártársoknak is
+nagyon sok korátozásuk van.
+Például mondjuk nem lehet
+printet használni, meg lákot, hát mert
+így tudták ezt megcsinálni. Jó, és ezek
+a ezek a ezek a natív társok, ezek csak
+memory tőzel táblákat használhatnak.
+Most akkor, amikor át akarunk tenni egy
+adatbázis részt ilyen memory
+optimalizáltba,
+akkor nagyon fontos, hogy ki tudjuk
+választani az adásnak a kritikus részét.
+És erre vannak mindenféle eszközök
+egyébként.
+Tehát erre erre vannak
+ilyen varázslók beépítve, hogy ezt
+azonosítsák. tranzakcionális napló
+alapján megnézik azt, hogy na melyik
+tábla az, amit nekünk valószínűleg
+érdemes volna. És ugye minden ilyen
+ezt ez ez már migráció egyébként az
+egyik ö hagyanyos támát áttenni emótéba,
+de mindenesetre minden ilyen esetben egy
+csomó átalakítást kell végeznünk. Tehát
+például
+újra létre kell hozni a a külső kulcs
+kényszereket.
+És ilyenek vannak, hogy
+egy tárolt első nem hivatkoztat másik
+adatbázis táblára, ami MOT.
+Na és hogyha ezt ezt végig akarjuk
+csinálni, erre is van egy egy demo. Itt
+a a jegyzetben van leírva ennek a ennek
+a menete.
+Pillanat.
+Egy kicsit a végére kell most ehhez
+ugornunk.
+Itt itt vagyunk most.
+Ez az a ez az a rész.
+Jó, tehát például azt meg lehet nézni,
+hogy egy bizonyos tábla esetén mondjuk
+itt a itt itt a customers táblát, hogyha
+megnézzük a North adatbázisban, akkor
+milyen problémák lennének,
+hogyha át akarnánk ezt tenni emotba.
+Úgyhogy egy pillanat jövök a
+a szerverre.
+Igen. Tehát a Northw adatbázis
+és
+akkor itt a customers távra,
+és van egy ilyen, hogy memory
+optimization advisor, látják.
+És akkor ez végez egy ilyen egy ilyen
+scant, és megapítja, hogy rengeteg
+probléma van.
+Hát csak itt van egy bag ebbe az
+adatbázisba. Ugyanaz a külső
+kulcskényszer 36-szor föl van véve.
+És ezeket ezeket mind el kell tüntetni
+ahhoz, és újra létre kell majd hozni,
+hogy hogy ez működhessen. Oké.
+Tehát
+úgy úgy Isten igazából
+nem olyan egyszerű ez a dolog. Itt a a
+mi a mi esetünkben az a legokosabb, amit
+tehetünk, hogyha vég akarjuk ezt a demót
+csinálni, hogy
+hogy először is töröljük ezt az adatbáz
+és újra egy dampból, ami egy egy jó damp
+létrehozzuk a Northund adatbázist.
+Próbáljuk meg. Jó, tehát ezeket itt itt
+be lehet csukni
+és
+töröljük.
+Lehet, hogy ehhez újra kell indítanunk
+majd a menedsment stúdiót, mert
+kizárságot nem tudunk hozzászerezni
+másképpen. Ez feltételezhető.
+Igen. Tehát ilyenkor ilyenkor ki kell
+újra kreditanunk a menzment stúdiót,
+de majd mindjárt újra indul.
+És addig is nézegessük meg azt a
+scriptet, ami azt a demót elvégzi. Tehát
+ez pedig szintén ebben a zip filban
+a
+a native
+a native new order store plots
+címmel fut. Native new order store
+címmel fut ez a dolog.
+Hát
+egy pillanat mindjárt megpróbálom ide
+áthozni.
+Szóval van egy olyan tárolt eljárásunk,
+ami egy üzleti tranzakciót hajt végre,
+egy új rendelést vesz fel a North
+adabrásban. Ez egy ilyen jó kis utasítás
+mix, tehát van benne lekkérdezés,
+adatmódosítás, mindenféle.
+És aztán ezt lehet itt is egy teszt
+során
+ezt többször futtatjuk le. Itt látható,
+hogy több párhuzamos kapcsolatban
+mondjuk 10000-szer futtatjuk le, és azt
+figyeljük, hogy ugye ez a ez a sok
+tranzakció mennyi ide mennyit fog várni
+egymásra, attól függően, hogy milyen
+izolációs szintek vannak. Tehát, hogy
+magasabb vagy alacsonyabb izolációs
+szint. És aztán ami a tesztnek a az
+érdekessé, hogy ugyanaztá aztán
+megpróbáljuk ezt a tároljárást átírni
+egy natívba. Ez itt a natív megfelelője
+ugyanak a tárolt eljárásnak.
+És akkor
+memory optimizált táblákat használva
+kiderül, hogy valami elképesztően jobb
+teljesítményt érünk el. Hát esetleg
+legalábbis kezdjük el csinálni, aztán
+lehet, hogy az időn el fogja megengedni,
+hogy befejezzük, de mindenesetre próbált
+meg elkezdeni. Tehát van itt a szintén
+ugyan a zipfába egy
+egy dump, ez a Northw create. Ezt most
+kérem szépen ctrol a ctrol cszuk
+létre ebből az új Northw adatbázist.
+Hát Northw.
+Jó.
+Na
+ja, persze,
+mert az előbb nem tudtam kitörölni.
+Először ki kell törölnöm szegény, és
+utána tudom létrehozni újra.
+Jó, tehát akkor akkor most hozzuk létre.
+Most már most már bankok nélkül.
+És
+a töltsük fel adatokkal. Az azt jelenti,
+hogy le kell futtatni ezt a scriptet.
+Jó, elvileg talán el is fog futni. Most
+elítottam a scriptnek a futását.
+És kész is van. Tehát megvan az új
+Northund adatbázisunk. És akkor egy
+másik ablakba pedig ezt a amit az előbb
+itt nézegettünk,
+a a native New Order Store, ezt ezt a
+scriptet vegyük ki.
+Vegyünk be ide.
+Jó,
+tehát most ez az első ez az első
+tesztünk, ez a hagyományos adatbázison
+történik. Ez az SP New Order,
+ez a ez az új tároljáunk
+egészen idáig.
+És
+igen, most eddig eddig eddig futtassuk
+csak le, és akkor utána beállítjuk a
+paraméterek, hogy legyen elég
+mindenkinek a
+a a pénze meg ilyesmi, hogy ne okozza ez
+a tranzicionak a leállását. testatokat
+kitöröljük,
+és utána három párhuzamos szersben
+futtatjuk
+ezzel a repeatable read magas izolációs
+szinttel ezt a tranzakciót.
+Ugye ez azt jelent a magas izolációs
+szint, hogyha egy tranzakciószer
+olvasott egy táblát, akkor azon rajta
+fogja hagyni az olvasási zárat. A a
+sheld lock az olvasási zárat egész
+addigi véget nem ér, és emiatt egy másik
+tranzakció nem fogja tudni módosítani
+ezt a ezt ezt a tábát, amíg ő végét nem
+ért. Hát ez így ezt repeatable readnek
+hát ismételtehető olvasásnak. Persze ez
+egy nagyon hiszen magas izolációs szint,
+viszont ugye ezáltal el lehet kerülni
+üzleti tranzakcionális hibákat, viszont
+emiatt a tranzakciók sokat várnak
+egymásra, ugye? Tehát ezenek a hátul
+üütője.
+Úgyhogy ezt a
+ezt a scriptet most én innen kivágom, és
+beteszem egy másik ablakba is,
+meg egy harmadikba is,
+és utána elindítom őket párhuzamosan.
+Jó. Aztongja, ezt melyik is volt a
+harmadik?
+Igen,
+jó. Erre erre nem lesz szükségem, mert
+ez csak az adatázist hozta létre.
+Tehát akkor egyik ablak, másik harmadik.
+És akkor próbáld meg. Ja, bocsánat. Ezt
+kommentezzük innen ki, tehát ezt a ezt a
+repeatable read izolációs szintet.
+Mindegyik ugyanaz az izolációs szinten
+fusson,
+és
+akkor futtassuk rá.
+Tehát futtatom itt,
+futtatom itt és futtatom itt.
+Csak most várjunk egy egy pár
+másodpercig,
+és aztán megnézhetjük, hogy hogy hány
+olyan hány rekord sikerült egyáltalán
+beszúrnunk a nagy egymás vállalkozások
+miatt.
+Szóval egy korábbi mérésem eredménye van
+itt,
+hogy
+hogy 15-20 percig tart
+mindegyik session, és egy csomó
+tranzakció közben visszagördül, mert
+holdpont juts egymásra vállalkozások
+miatt. Tehát mondjuk csináljuk azt, hogy
+ez most itt fut egy percig, és akkor
+utána viszont leállítam, és megnézem,
+hogy hány sikeres tranzakció volt. Jó,
+tehát ez most 56 most van vége az egy
+percnek, tehát ne is húzzuk ittába az
+időt vele. Ezt is leállítom,
+meg ezt is leállítom,
+meg ezt is leállítom.
+Na, akkor mi az, ami még itt fut?
+Ezt is, ezt is leállítom. Jó.
+Na most látják,
+rengeteg tranzakció
+deadlockolva van,
+mint mindegyik esetben.
+És és hogyha most hogyha most megnézzük,
+hogy hogy hány olyan rendelés van, amit
+egyáltalán sikerül beszúrnunk ennek a
+ennek az arutnak. Van erre biztos van
+itt egy select pillanat. Igen, igen,
+igen, igen.
+Ez lesz az
+from orders.
+Azi idő az csak ott null, ahol ahol mi
+matadolkodtunk most vele. És akkor
+mindjárt meglátjuk, hogy hány ilyen van.
+Tehát 8900
+kevesebb mint 9000.
+Tehát 8900.
+Jó, most akkor töröljük az összes.
+Visszatjuk a kezdő állapotot.
+Oké.
+és
+átállunk egy másik izolációs szintre.
+Tehát most itt azt fogjuk választani,
+hogy
+repeatiből read helyett azt, hogy read
+commited.
+A kettő között az a különbség, hogy a
+read commited esetén az olvasási zárak a
+a tranzakció során az olvasás után
+lekerülnek a a védett objektumról.
+És ezért aztán persze előfordulhatnak
+klikai hibák. Például, hogy egy bizonyos
+dolgot kétszer adunk el valakinek, majd
+majd lesz erre példa
+a Firestornál.
+Viszont
+sokkal gyorsabban fog végrehajtóni.
+Tehát read commited. Mindegyik ablakban
+ez van. Recomited. Nagyon jó.
+És
+akkor kezdjük el a futtatást. Amúgy
+megint egy percig fogom majd majd
+futtatni.
+Hát maximum egy percig.
+Még csak fél percnél vagyunk.
+És kérem szépen, mit tesz Isten 37
+másodperc alatt lefutott az egész.
+Látják,
+és egyetlen
+deathlock sem történt. Tehát ez azt
+jelenti, hogy most már gyakorlatilag
+azt várjuk, hogy
+hogy 300, igen, mert 3x 10000. Tehát
+mindegyik tranzakció szépen lefutott.
+Ilyen sokat számít mít az izolációs
+szín. Tehát ez ennek tényleg egy ára van
+ennek a dolognak. Na és most képzeljék
+el, hogyha ezt a tároltjárást ezt ezt
+átírjuk, hát itt igazából most most
+kéne egy kicsit szütyögni. Az összes
+érintett táblát egyenként át kéne tenni
+emotbe
+egy másik adatbázisba,
+és utána
+ezzel a ez a natív tároljárással
+ö
+kéne utána feldolgozni őket. És akkor
+hát most egyszerűen nincs időm, hogy ezt
+végigcsináljuk, azt már látom, de azt
+lát azt higgyék el nekem, hogy
+ilyen négy-5 másodperc alatt
+zajlik le, ami itt 37 másodperc volt. És
+mivel a snapshot izolációs szintet
+használjuk, ezért ott sincs semmiféle
+ilyen ilyen blokkolás meg meg várakozás,
+egymás vállalkozás. Szóval hát ezt most
+nem tudjuk végigcsinálni, de a házi
+feladat, hogy ez alapján csinálják
+végig, és akkor látni fogják, hogy hát
+van ennek bizony keresnivalója a piacon,
+hogy úgy mondjam.
+Ha valakinek egy olyan alkalmazása van,
+ahol ahol tényleg igény a nagy
+tranzakció ábcsárdási képesség, és ezért
+haladó áldozatokat vállalni, itt azért
+vannak áldozatok, amiket be kell
+vállalni, akkor ez egy akkor ez egy jó
+választás.
+Hát egy egy pillanat csak, hogy
+hogy
+hogy mégis
+mégis miket milyen áldozatokat kell
+bevállalni. Itt itt van erről egy egy
+lista valahol.
+Pillanat. Na, itt van, látják.
+Tehát
+tehát például egy memóri jobb törtett
+távat nem lehet érni egy másik
+adatbázisból.
+Egy nemóri táblát nem lehet
+particionálni. Hát igen, igen, persze,
+mer particionást particionást is azért
+találtuk ki, hogy ezt a bizonyos
+szűketötet legyőzzük. Tehát azt nyilván
+nem nem fogjuk támogatni most, amire már
+nincsen szükség továbbá. Aztán sok
+memória kell, hogy legyen. Tehát itt van
+egy ilyen ökőszabály, hogy hogy legalább
+kétszer memória kell, mint amennyi a
+tábláknak a maximális mérete, amit oda
+akarunk tenni, mert
+ugye például a sorverziózáshoz is ott
+idegen tárakat kell létrehozni és így
+tovább. Tehát
+nyilván ezeket mind meg kell fontolni,
+és úgy lehet ezt megtervezni. Tehát ez
+egy ez egy ez egy komoly tervezési
+feladat. egy ilyen memory optimalizált
+adatbázist létrehozni. Jó, ennyit
+akartam erről mondani, és most gyorsan
+ugorjunk is a következő témára, mert
+borzasztóan fogy az időnk. Az pedig a a
+felhő, ugye, és ez egy nagyon népszerű
+téma volt. Úgyhogy úgyhogy ezért gyorsan
+ágjunk is bele. Hát itt most a virtuális
+gépre állok át, és a virtuális gépben
+egy pillanat
+jaj, nem is, elnézést,
+ez még nem is a virtuális gép, azt most
+gyorsan elindítom.
+illetve tulajdonképpen
+nem is kell nekünk a virtuális gép, csak
+egy egyszerű böngésző ablakkel meg lehet
+oldani ezt a virtuális gépünk nélkül is.
+Tehát ezt is egy tetszes böngészővel
+írjuk azt be, hogy hogy console cloud
+google.com. Tehát ez a GCP-nek a a
+vezérlő felülete.
+És ebben most csinálunk gyorsan egy egy
+új projektet. Jó, tehát van itt egy
+ilyen főmenü mindig a bal felső
+sorokban. Remélem mindenki tudta már
+aktiválni a a az 50 dollárját.
+Van egy olyan IAM és admi, hogyha nem
+találunk meg valamit, akkor á macskába,
+ha esetleg nem tudom, mert nagyon sok
+funkció meg alkalmazás van itt. Ide ide
+szépen be lehet írni. Tehát az például,
+hogy hogy i am és admin már be is írtam
+egyszer, és akkor hamar ott vagyunk.
+És
+azon belül is, ami nekünk kell, az a az
+a manage resources. Itt lehet egy új
+projektet csinálni. Create project. Én
+csinálok egy újat a mai nap
+tiszteletére. Az lesz neki a neve, hogy
+április 18
+és Vassanyi.
+Jó.
+És hát most egy egy amíg ez itt indul,
+addig egy pár kéretlen szót mondok ról,
+hogy felhő adatbázisok ugye általában
+véve. Sőt, van is erről
+egy
+kis összeállítás. Egy pillanat, mindjárt
+mindjárt megkeresem. Szóval van erről
+egy kis
+igen
+tehát
+miért van értelme egy felhelően mozgatni
+egy adobálést? Itt fel van sorolva a pár
+nagyon pozitív meg pár veszélyes
+tulajdonság ennek a lépésnek. Ez a
+platform As service PAAS, amiről most
+szó van. Tehát, hogy váti szervert saját
+üzenetetésből kiviszünk a a felhőbe.
+Ugye nagy rendelkezésreállás,
+nagyobb, mint a a saját üzletedés
+esetében, akkor onim, skálázzhatóság,
+tehát ahogy nő a az a terrés, úgy nőnek
+az erőforrások, és nem kell nagyon
+fenntartani egy nagy erőforrást
+lökkésszerűhések kiszolgálására.
+És aztán a felhőben van még rengeteg más
+is, nem csak az adatbális kezelés, hanem
+mindenféle egyéb felhőszolgáltatás. Aki
+a felhőprogramozás tárgyat hallgatja, az
+jól tudja, hogy miről beszélek, amiket
+mind föl lehet használni. Tehát az az
+egész céges szoftver infrastruktúrát meg
+lehet oldani egy felhőben tipikusan. Na
+most viszont van néhány
+probléma problémát okozható dolog is.
+Például az, hogy hogy hát a felhőben is,
+ha nem használunk valamit, akkor is
+fizetni kell érte. Tehát például
+adatbázist ott hagyni a felhőben csak
+úgy, úgy ott van. Saját gépünkön nem
+kerül semmi beó. Ott viszont igen, tehát
+ott egy virtuális gépen mi foglalunk,
+tárhelyet foglalunk.
+A másik probléma az az, hogy ami szokta
+akadni az elérzését, az az, hogy hát az
+adat fizikailag elhagyja a cégnek a
+a területét
+és érzékeny adatoknál, például
+egészségügyi adatoknál vagy
+banktikkoknál satöbbi. Hát ez ez
+probléma lehet. Na most erre rengeteg
+megoldás van, sőt van olyan is, amit a
+amit confidential computingnek hívnak,
+hogy hogy gyakorlatilag
+bizonyos értelemben a a cégnek az
+informatikai határa kiterjeszkedik a
+felhőbe, és ezért ez az adatvédelmi
+törvényeknek nem mond ellent. Tehát meg
+lehet ezt úgy csinálni, hogy bár
+szervezetileg
+az már nem a cég része, de
+informatikailag viszont igen.
+Szóval és a a legnagyobb kérdés mindig
+persze a költség, tehát hogy hogy vajon
+olcsóbb-e a szolgáltatástal fel
+üzenetni, vagy pedig egy házon belül.
+Egyes esetekben olyan is van, hogy
+privát felhőt használnak, ami azt
+jelenti, hogy ugyanazt a a szoftver
+infrastruktúrát, ami tulajdonképpen egy
+csomó erőforrást
+dinamikusan kapcsol össze, mer a
+az igényeknek megfelelően. Hát ezt a
+szoftver infrastruktúrát a saját
+gépeinken futatjuk. Eszélj úgy, hogy
+hogy privát felhő. Ugye például mondjuk
+egy egy atomerőműnek a működtetését azt
+nem akarjuk Amerikából intézni.
+A következő dolog az már egy másik
+dolog, a migráció arra nem most fogok
+visszatérni, tehát az egy az egy az egy
+dolog. Itt közben elkészült a a a
+projektünk, ez az április 18 jelenleg.
+És akkor ezek után most menjünk be a
+vagy hát keressük meg inkább az lesz az
+egyszerűbb.
+Tehát írjuk ide be azt, hogy database.
+És akkor azt mondja, hogy SQL databases.
+Hopp! Ez egy, elnézést, ez egy
+ez egy
+help lap lett. És én és én nem ezt
+akartam,
+hanem hanem én a database funkciósot
+akartam kiválasztani,
+ami itt itt egy kicsit lejjebb van. azt
+mondja, hogy itt a view products, és
+akkor
+akkor látni fogunk egy hosszú osztó is,
+tehát hogy mi minden van ebben a Google
+Cloud felhőben.
+És akkor itt van egy ilyen, hogy hogy
+databases.
+És látható, hogy hogy mindenféle dolog
+van itt, de a hagyományos
+OLTP prelációs adapásokból is van három
+fajta. Itt van a a a MySQL, PostG és az
+SQL szerver. Na most arra sajnos most
+nekünk nincs időnk, hogy
+végigkegessünk egy posztges elindítást
+itt, de higgyék el nekem, hogy egy mit
+tudom én 10 perc alatt körülbelül valaki
+kiválassza azt, hogy ő akar csinálni egy
+új poszt, az 50 dollárjából simán meg
+lehet csinálni. És az a posgress az
+ugyanúgy fog működni, tök ugyanúgy fog
+működni, mint ami a lockouton van.
+Annyira, hogy hogy igazából csak az IP
+címet kell átérni egy alpazásban, hogy
+most már a felhőve kommunikáljon. és és
+ne pedig aosta. Tehát a hagyományos
+adatb és közelő szolgáltatásokat
+minden további nélkül megtaláljuk a
+felhőben. Amit most mutatják, az nem ez,
+hanem egy olyan, ami csak a GCP-ben van.
+Ezt úgy hívják, hogy hogy big query. Big
+query. Tehát írjuk be ide azt, hogy big
+query.
+Azt mondja, hogy big q
+big query. És ezt a productot válasszuk
+itt ki. Jó.
+Hát ez a ez a big query ez egy
+tulajdonképpen egy egyfajta adattárházak
+a a lehetőségét adja itt meg nekünk. Na
+most itt nekem már vannak mindenfélék,
+de ez a másik projektem. Úgyhogy én most
+átmegyek az új projektembe, ami az APS
+és akkor feltetlen nem lesz semmi.
+Igen. Ö
+most azt próbáljuk meg megcsinálni, hogy
+ebbe a ebbe az adatárba tulajdonképpen
+egy demo adatkészletet betöltünk.
+És és azt szeretném megmutatni, hogy
+lehet ezen a demo adatkészleten
+például egy
+hát egy
+egy peditív modellt például elkészíteni.
+Tehát alapvetően a a a bquery az arra
+való, hogy különböző helyekről ide
+adatokat gyűjtünk össze, amiket
+dataszetekbe rendezünk el. A
+datasetekben vannak a táblák végül is.
+És
+és aztán ezeken a ezekkel a táblákkal,
+ez ezekkel sok mindent lehet csinálni,
+lehet őket vizualizálni
+kvázi olyan módon, mint ahogy ezt a
+Power BI megteszi. Meg amit most
+szeretném mutatni, az pedig az, hogy
+hogyan lehet majd egy
+modellt lefuttatni rajtuk. Na most azt
+próbáljuk ki, hogy itt vagyunk ebben a
+az április 18. Ez ez ez it ez itt az új
+projektünk.
+És
+és akkor itt van egy olyan lehetőség,
+hogy hogy create data set. Látják?
+Válasszuk ezt itt ki és csináljunk egy
+új datasetet. Ide be kell írni azt, hogy
+mi lesz a neve. Most én azt akarom
+megmutatni, hogy olyan kell egy adatot
+importálni. Úgyhogy ezért a Northin
+Adatbázist fogjuk beimportálni ideje,
+tehát annak a lényegesebb tábláit, még
+csak nem is azt, a lényegesebb távából
+készített view-t fogjuk beimportálni
+ide, ezért NV lesz neki a neve.
+Locationnek pedig hát ugye a felhőben
+nagyon sok helyen lehet, de ez a US
+multiple regions, ez teljesen megfelesz
+nekünk. És kész create data. Válasszuk
+ezt ki.
+És akkor már van egy
+itt látják, ez a ez ez az NV. Most még
+nincsen benne semmi,
+de itt lehet csinálni
+egy
+táblát.
+És
+itt válasszuk ki azt, hogy hogy egy
+scriptet töltünk fel, tehát egy upload,
+egy CSV-t fogunk feltölteni,
+CSV formátumot. És maga a CSV az pedig
+az pedig hol is van? A szintén a
+múdulapon.
+Egy pillanates
+itt
+itt
+És még egyelőre keresem a
+múd lapot.
+Na, akkor jöjjünk ide vissza.
+És
+aztongja, hogy a
+nem itt, hanem akkor kicsit följebb.
+Hm.
+Query all
+itt látják a április 23-nál van egy
+ilyen, hogy source of the data ver adat
+forrása csv. Tehát ez ez lenne az. Jó.
+Úgyhogy ezt kérem szépen, hogy hogy
+mentsük le.
+Igen. Tehát ez nekem a
+temp mappába lett. És akkor utána ugye
+visszajövünk a
+a create tablehöz itt, és kiválasszuk a
+a fánál ezt a ezt ezt a CSV-t. Jó.
+Ahova ezt elraktuk, annak ott kell
+lennie.
+Hát
+jó,
+én ezt már itt be is be is írtam. A
+tábának is lehet nyugodtan lehet az a
+neve, hogy NV. És hogyha belenézünk
+ebbe, akkor látni fogjuk, hogy ez
+igazából a Northw rendeléseknek, a
+tranzakcióknak a listát tartalmazza a
+termékeknek az adataival. A sémát
+válasszuk ki, hogy autó detetect legyen.
+Megpróbálják kitalálni, hogy melyik mező
+milyen típusú. Paticionást nem
+választunk, nem klaszterezünk. És akkor
+ezt egyszer csak azt választjuk ki, hogy
+create table. Jó,
+és el is készült, úgy látszik ez a ez a
+ez a Northw tábla.
+Látható, hogy milyen mezők vannak benne.
+Tehát a a rendesi tételeknek az
+adataihoz lett hozzávve minden.
+Ez a customer ID company name meg a a
+termékneve, mindenféle egyéb dolog ott
+van. És itt van egy ilyen ablak, hogy
+query.
+És itt hagyományos SQL típusú
+lelkedéseket lehet inni. Tehát hogyha
+beírok ide egy csillagot például, akkor
+az első 1000 rekordot meg lehet nézni
+ebből a táblából.
+És itt látható az első adat és 1000 adat
+és elég sok minden más is lehet vele
+csinálni. Tehát nem csak, hogy
+itt listázgatjuk őket, hanem sok minden
+egyebet. Tehát például itt az open
+in-nél látják, hogy hogy megnyithatjuk
+ezt adatokat egy ilyen data canvesen és
+hát most nem ezt akartam. Visszajövök a
+az NV-hez.
+Itt fönt lehet nézegetni őket.
+Szóval azt mondja, hogy pillanat.
+Igen, ez a ez a bizonyos data stúdió,
+amivel azokat elmezniet, azér itt Lukes
+stúdió néven fut. Most nevezték át egy
+egy hónapja.
+És
+és aztán van itt két olyan dolog, amit
+mi tanultunk ebben a tárgyban,
+a az adatprofiladás és az adatminőség.
+Megint csak nem tudjuk lefuttatni sajnos
+a a demót, mert nincs annyi időnk, de
+egyébként az történik, az adatprofilnál
+a az egyes mezőknek a a a profilodása
+történik. lehet megnézni azt, hogy ott
+mik a
+a az a szélső értékek, hisztogramok
+készülnek róluk
+és és a a az adatminőségnél pedig
+olyan üzleti szabályokat írhatunk be mi
+magunk, amiknek a a teljesülését akarjuk
+ellenőzni, és illetve ő maga is javasol
+nekünk üzlet szabályokat, hogy például
+úgy tűnik az értékek alapján, hogy a
+mondjuk a balance az sosem negatív
+Úgyhogy akkor csinálunk egyzályt, hogy
+ez hogy ez nem lehet negatív, értik?
+Tehát ez erre van kitalálva ez a ez a
+data profile, data quality. Tehát nagyon
+hasonló itt igazából a a data quality
+serviceshe az, amit a Microsoftnál
+láttunk. Na de most én nem ezt szeretném
+megmutatni, hanem menjünk el a
+a jegyzetben odáig, hogy
+ezelőtt
+ugye a Neo 4G előtt van ez a bizonyos
+a
+na
+hát a
+hányadik oldalon is azt most nem látom.
+Na, mindenesetre a 100. oldal környékén
+van. Oké. 100. oldal környékén.
+Hogyan lehet analitikára felhasználni
+ezt a ezt a ezt a big queryt?
+Itt van egy SQL utasítás create modell.
+Ezt vá vá vágjuk innen ki. Tehát Ctrl C
+és és visszajövünk a a big query
+ablakunkba.
+Van egy egy query
+de csináltunk egy egy új queryt is
+egyébként, hogy ezt is átírhatjuk. Tehát
+most ezt itt egyszerűen át fogom írni.
+Egy kicsit javítani kell nyilván, mert
+itt például lehet látni, hogy a a az
+objektumnek az első tagja az a
+datasetnek a neve, és az most nem north,
+hanem csak NW. Tehát ezt mindenképpen át
+kell írni,
+hogy ez lefusson.
+Továbbá itt van benne egy komment, amit
+nyugodtan ki lehet szedni
+innentől idáig.
+És akkor még ezt is át kell írni itt
+North Windre, vagy NW-re. És akkor
+nézzük, hogy ez mit fog csinálni. Ez egy
+modellt fog csinálni, mégpedig egy
+lineáris regressziós modellt fog
+csinálni,
+ami megpróbálja megjósolni a value
+numeric mezőnek az értékét.
+Mégpedig ezeknek a countrynek, a
+categoryek, a unit partnak, a disconnak
+meg a jnek a segítségével. Hát mi ez a
+lineáris regresszió? Ez egy olyan jósási
+módszer, ami feltételezi,
+hogy valamelyik függő változó az a
+független változónak valamilyen lineáris
+függvénye, és ehhez megpróbál
+tulajdonképpen együtthatókat keresni.
+Ha ezt most lefuttatjuk, akkor ezt lehet
+szépen futtani. Létre fog jönni egy
+ilyen egy ilyen modell, amit szintén a a
+a bigquery le tud itt tárolni.
+Most fut éppen van egy egy execution
+graph. Itt mutatja azt, hogy éppen mit
+csinál.
+És
+és még és még mindig fut. Igen. És akkor
+most elkészül. Sokféle modellt lehet
+csinálni. Lehet neurális három modellt
+is tanítani.
+Itt a itt a big belül. Oda legyünk, hogy
+go to model. Megnézhetjük azt, hogy hogy
+sikerült ezt ezt a jósást kiviteleznünk.
+Hát ugye itt itt teljesen magától
+felosztotta az adatokat
+tanító adatokra, illetve tesztadatokra,
+kértékű adatokra. És itt meg lehet
+nézni, hogy hogy sikerült a modellt
+elkészíteni. Hát a azt mondja, hogy a a
+az áttagos hiba az olyan az abszolút
+hiban 300 körüli, ami hát egy óriási
+hiba ahhoz képest, hogy a az érték az
+nem sokkal sz majdnem akkor, mint az
+érték. Úgyhogy ezért azt lehet mondani,
+hogy ez egy ez egy eléggé gyenge modal,
+amit mi készítettünk. Tehát nem nagyon
+lehet megjósolni a ö
+az értéket ezekből a változókból, amiket
+itt mi nézegettünk. Tehát, hogy ezek
+voltak a változóink, az az, hogy milyen
+ország, meg milyen termékkategória, meg
+milyen egységár, meg hogy mennyi a a
+melyik kévről van szó. Tehát ez csak egy
+technológiai demó volt. Igazából itt a
+jegyzetben egyébként vannak értelmesebb
+adatkészletek is. Tehát
+Ja, még azt is azt is meg lehet nézni,
+hogy hogy
+hog hogy akkor melyik rekordnál mekkora
+hiba volt. Itt erre vannak mindenféle
+függvények,
+amiket amiket ki lehet próbálgatni. Hát
+például
+nézzük meg ezt
+és
+és most egy ilyen egy ilyen új query
+ablakot nyitottam.
+Ugye az neki a neve, hogy NV.nv modell.
+Hát itt az történik, hogy itt ennek az
+eventjét fugének van egyrészt egy olyan
+bemenete, hogy
+hogy egy modell.
+Másrészt pedig van egy olyan bemenete,
+hogy a
+hogy mik azok az adatok, amin ezt a ezt
+a jós módot lefuttatjuk,
+és akkor mindig megkapjuk minden egyes
+rekordhoz, hogy arra arra mit jóslunk.
+Tehát nagyon tanulságos ezt a dolgot így
+így elkészíteni, vagy vagy megnézni.
+Most kell, hogy legyen egy olyan új
+mezőnk.
+azt mondja, hogy ja igen, ez még nem az,
+elnézést, ez az egész modellet egybe
+értékeli ki. Tehát azok az értékek az
+előbb ott a ott a a lapon láttunk, ezen
+az egyik az egyik
+menüpontban láttunk, hogy mennyi az
+abszolút hiba satöbbi. Az egész adat
+készletre nézve itt van kiértékelve, nem
+csak a teszt mintára van kiértékelve.
+És akkor következő lesz az, amikor meg
+tudjuk azt nézni, hogy rekordonként,
+mert ugye ez azért függvény, ez a
+ez a ez az egész modellt értékelte ki,
+de a predict az a függvény, amelyik a az
+egyes rekordokra mindegyikre jósol egy
+értéket a modell alapján,
+és odaírja mellé, és ez lesz igazán
+érdekes.
+Oké.
+És ez a ez a predicted value
+ez lesz az, ami amit ő elkészít
+tulajdonképpen a a modell elkészít. És
+megnézzük azt, hogy annak az aránya az
+igazi értékhez képest,
+tehát
+hol van 40%-nál nagyobb hiba
+tulajdonképpen, vagy csak a kisebb hiba.
+Elnézést, ez itt a ez itt a kisebb hiba
+lesz, hogy futtassuk le.
+Igen. Tehát ezek a többi-kevésbé jó
+becsléseink, hogy látod, hogy a 1923
+meg ilyesmit ezek, amikor nincsen nagy
+hiba. És azt mondja, hogy 850 ilyen eset
+volt tulajdonképpen.
+És hogyha mondjuk itt ezt csökkentem ezt
+az értékelt
+mondjuk hány olyan eset volt, amikor
+elnézést
+akkor 1365
+80% hiba.
+itt így vagyunk egy vagy vagy látunk egy
+ilyen egy ilyen általános kiértékelését
+a az az erő ennyire használható a
+modellünk. Nyilván itt itt ki lehet
+próbálni más függvényeket is. Tehát meg
+lehet nézni például a hogyha egy
+nominális címkénk van, akkor egy
+logisztikus regressziót is lehet nézni.
+Itt a a jegyzetben ezek ezeket így lehet
+szépen csinálni tovább. Vannak önálló
+feladatok is, úgyhogy akit és aztán be
+lehet tölteni demo adatkészleteket, mint
+például van ez a a babáknak a
+születésköri súlya
+és
+és abból is lehet tovább
+nézelődni, és akkor már tényleg valódi
+összefüggéseket is lehet találni. Ott
+ott ott ott ugye vannak ilyenek.
+Jó, hát
+kedves kollégák, én most igazából csak
+ennyit akartam bemutatni. Ja, még
+esetleg
+nem, most már nem lehet, akkor csak enny
+ennyit akartam bemutatni a a feljó
+adatbázásokkal kapcsolatban. Tehát ha
+valaki a projektjében szeretné használni
+a a bigqueryt
+vagy fer alapú reálosabbázést, a
+Firestorra a mai nap hátrő hátra levő
+részével fogunk foglalkozni, tehát az is
+mindjárt következik,
+akkor bátran.
+És által elég jól felfedezhetőek ezek a
+dolgok. Tehát nagyon sok dokumentáció
+van a jegyzetben. Találnak mindenféle
+linkeket. Itt a lapok alján szokott ez
+lenni. Pillan
+már ahol van
+itt mindenfélék
+a ami ahol tovább lehet nézelődni.
+Úgyhogy sok sikert kívánok hozzá. Most
+pedig szerintem szánjunk rá. Most van
+24. Akkor számjunk rá 10 percet, hogy az
+első tesztet megírjuk. Jó. Aminek a ez a
+memóriai optimalizálásos téma
+ez lesz a ez lesz a témája. Úgyhogy
+pillanat. Úgyhogy rögtön meg is keresem.
+azt mondja, hogy ez az á
+nem.
+Hát kedves ká a március 26-hoz kell
+lemenni bármilyen meglepő március 26-hoz
+és ott van egy olyan, hogy levelező
+ötödik rövid teszt 2026 április 18.
+Tehát ezt ezt keressék meg. És
+akkor
+akkor hát ez ez mondjuk legalább egy egy
+10 perc és utána tartsunk egy kis
+szünetet. Jó, mert
+elnézést, nem hallottam. Március
+hányadikáig?
+26. Március 26-a.
+Ja, oké.
+Megvan.
+Pillanat. Mindjárt mutatom itt a
+megosztáson. Tehát ezt kéne keresni.
+Mácius 26 Migration Postgress
+Fireestore. Jó.
+És
+tehát tartsuk egy kis szünetet,
+mert hát azért nekünk is áll egy kis
+szünet. Ugye azt mondja, hogy mondjuk
+3 óra, mondjuk 3 óra
+10 perckor be elkezdjük a ezt a
+postgress filestore témát. Jó,
+valakinek van közben kérdése, akkor
+akkor nyugodtan tegye fel.
+Nekem egy olyan kérdés lenne, hogy csak
+én nem látom magát a feladatcsort, tehát
+nem lehet, hogy csak a tanár úrnál van
+engedélyezve, és mi nálunk ez nem
+látható?
+Hát mindjárt, mindjárt
+nálam látszik. Én el is tudtam kezdeni.
+Frissíts rá.
+Igen. Tehát meg kell frissíteni a
+böngészőt.
+És akkor március 26-nál
+nem látszik.
+De most már megvan. Köszönöm.
+Ötödik rövid teszt. Na, jól van, akkor
+jól van. Oké. Hát öt kérdés
+ebből a témából.
+Jó, aztán ki fogom rakni a a múdulapra
+majd, hogy eddig ki melyik teszten hány
+pontot ért el. hogyha valaki esetleg
+akar javítani, akkor
+és nem emlékszik rá, akkor akkor meg
+tudja majd nézni.
+Elnézést, Tanárod, nekem lenne egy
+kérdésem.
+Igen, figyelek.
+Hogyha valaki nem tudja megírni az egyik
+tesztet,
+igen,
+mert nincs jelen, de az összesítésben
+megvan neki minimum ponthatár, akkor az
+az hogyan működik?
+Hát nem kell ezeket nem kötelező megni
+egyik tesztet sem.
+Ja, értem. Ó,
+tehát ez nem ez nem tehát hát nyilván az
+is lehet, hogy valaki már mit tudom én
+úgy gondolja, hogy ennyi pont neki elég,
+és akkor akkor akkor nem írja meg.
+ami amitás feltétel az a
+projektbeszámolónak a megtartása, tehát
+az a az a az a lényeg.
+Jó, rendben. Köszönöm szépen. Nagyon
+szívesen.
+Nekem egy olyan kérdésem lenne, hogy a a
+projekthez, hogyha van esetleg csináltam
+egy projektleírást, akkor azt el lehet
+küldeni előzetesen, hogy ez így
+megfelel-e a az elvárásoknak. Ö
+igen, persze, persze. Igen,
+természetesen.
+Jó, és akkor akkor lehet projektet Note
+4G-ben
+készített projektre csinálni?
+Mibent készített? Nemtöttem.
+Ilyen Neo 4G.
+Ilyen Neo forg. Ja, hát igen, persze,
+persze. Nyilván az a az előnyös, hogyha
+ott tényleg ki is használ valami olyan
+hogy ismerem csak funkciót, vagy
+megvosít olyan funkciót, ami aminek
+tényleg előnyös az, hogy hogy egy
+hálózatot használ, egy gráfot használ,
+pedig egy reációs adabist.
+Jó, akkor akkor küldöm majd. Köszönöm.
+Jó.
+Kedves kollégák, most egy
+új téma következik,
+mégpedig az adatbázis migráció, ami egy
+nagyon gyakran felmerülő probléma a
+mindennapokban, és ezért tényleg érdemes
+vele egy kicsit foglalkozni.
+Tehát ennek az általános problémáiról
+fogok most beszélni, melyik problémát
+hogy lehet megoldani? És aztán megnézzük
+majd, hogy közelebbről,
+hogyha egy reakciós adatbázisban, egy
+dokumentumtárba akarunk migrálni
+adatokat, az milyen problémákat vet fel,
+és ezt hogyan hogyan lehet megoldani.
+Erre lesz egy demo alkalmazásunk, amely
+egyúttal egy felhő adatbázis is lesz,
+tehát akkor egyúttal egy felhőben is
+gyakorlatot fogunk szerezni.
+És aztán végül megvizsgáljuk ennek a
+felhő adatbázisnak a transzakcionális
+tulajdonságait.
+Na hát kezdjük akkor az elejénél.
+Az adatbázis
+migráció az azt jelenti, hogy valamilyen
+ok miatt
+megváltozik
+egy adatbázisnak a technológiája.
+És
+hát át kell vinnünk az adatokat, át kell
+vinnünk a logikát.
+Miért változhat meg? Hát például
+gazdaságossági okokból, vagy az is
+lehet, hogy egy olyan új technológia
+szeretnénk áttérni, aminek van olyan
+funkcionalitása, amit a most használt
+technológia nem támogat. Most itt amikor
+azt mondom, hogy technológia, akkor
+eleve ugye három dolgot lehet mondani,
+mit nézünk
+technológiának. Hát én én fő
+technológiának hívom
+azt
+ami a vagy lehet akár architektak is
+hívni
+ami a a az adatbázisnak a a fő
+modellezési technológiája tehát van egy
+egy fő technológia ami a reációs
+adatbázis technológia akkor van egy egy
+olyan ami a dokumentál például akkor a a
+gráfatbázist is nyugodtan lehet egy fő
+technológiának hívni
+vagy a kulcsértéktárat. Hát igazából
+ezek a ezek a fő technológiák.
+Most mindegyik fő technológián belül
+vannak gyártók. Tehát például ugye a
+reációs adabázis fő technológián belül
+van a
+hostgress, van a Microsoft, SQL szerver,
+Oracle satöbbi. És akkor egy
+bizonyos főtecháon belül egy bizonyos
+gyártónak vannak külön verziói, tehát
+eléggé másképpen tud kinézni mondjuk egy
+PGnek a hetes vagy nyolcas verziója meg
+a 15-ös verziója.
+És a migráció az azt jelenti, hogy hogy
+egyik ilyen
+hát főtechnológia, gyártó verzió,
+kombináció egy másikba megyünk át. Most
+nyilván akkor, hogyha ha kicsi a
+változás, akkor kisebb a probléma. És
+ilyen szempontból az első menüpontunk az
+az, hogy amikor csak verziót váltunk
+milyen problémák merülhetnek itt fel. Ez
+attól függ, hogy mekkora a verziók
+közötti távolság,
+de általában véve azt várjuk, hogy
+feltehetőleg ugye a régebbi verzió az
+újabbra váltunk, és akkor az újabb az
+majd felülről kompatibil is lesz. Ez
+bizonyos határokig igaz. Aztán hogyha
+már túl nagy a verzok távolsága, akkor
+bizony előfordul, hogy egy vagy akár két
+tehát két vagy akár három lépésben lehet
+ezt csak megtenni. Tehát mondjuk a a
+hetest lehet migrálni a 10-esre, a 10-es
+meg a 15-ösre és így tovább. De azért
+ennek igazából a a gyártó által
+támogatottnak kellene lennie.
+Itt olyan olyan változások lehetnek,
+mintogy tényleg az adattípusok
+változnak, akkor bizonyos
+fűvényhívásokat már nem támogatnak,
+például modernizáltak satöbbi, satöbbi.
+Ö a következő szint az amikor egy
+főtechnológián belül, de különböző
+gyártók
+adatbázisek között kell migrálni
+adatokat.
+És ugye igazából nem is csak adatokat,
+nekünk egy információs rendszert kell
+migrálni. Tehát van egy működő
+információs rendszerünk és amögött le
+akarjuk cserélni az adatbázist
+valamilyen ok miatt.
+Például
+most valaki a Neptun információs
+rendszert az egyetemen le akarja cserni
+az menjen innentől kezdve poszgesen
+isten tudja ezért vagy azért hogy
+ilyenkor milyen problémák merülhetnek
+föl sokkal több probléma mint az első
+esetben. Természetesen itt is
+adottípusok közötti folyamatos
+különbségek vannak. Tehát onnan kezdjük,
+hogy amikor az adattáblákat akarjuk
+reprodukálni,
+akkor
+az rendációs ad mind a kettő, tehát ugye
+vannak benne táblák, kulcsok, külső
+kulcsok, adottípusok, kényszerek
+satöbbi. De a a reációs adatbázisban
+ugye van egy elég erős séma, és az
+adatípusokat egyeztetni egymásra. Ez nem
+mindig lehetséges, és egészen finom
+különbségek is vannak. Tehát például
+mondjuk a Microsoft SQS szerver az a
+mania adattípust azt 410-es egyig
+támogatja, de a Posg például csak
+kettőig. És ez adott esetben nem is okoz
+gondolot, csak akkor, amikor valaki az 1
+milliók rekordot akarja átvinni, aminár
+már négy 10-es eggyel kellene a
+támogatás. Tehát bizonyos
+nehézségek csak egy konkrét esetben
+jönnek egyáltalán elő. De hát például a
+a dátumidőadípusuk klasszikusan teljesen
+másnak megvalósítva a különböző
+gyártóknál és a többi. Most ezen
+túlmenőleg a ugye az adabbázisokat
+egyrészt a a kliens programok
+szinttaxissal érik el. Ö másrészt pedig
+hát az a script, ami az adatbázist
+létrehozza és feltöltészt dumpnak
+hívják, hát annak is van egy szintxis,
+egy eskoles szinttaxisa. Ez a szinttaxis
+ez radikálisan tud különbözni az egyes
+gyártók között. Erre fogunk majd látni
+példát.
+Tehát attól függetlenül, hogy mindenk
+SQL nyelven van, ez
+egészen érdekes különbségeket is tud
+jelenteni.
+Ennél nagyobb probléma az az, hogy
+hogyha az adatbázison van valamilyen
+tárolt logika, tehát például
+vannak felhasználva által definiált
+adattípusok,
+vagy vannak felhasznál függvények, vagy
+tárolt eljárások,
+esetleg vannak jobok satöbbi. Hát akkor
+ezeket gyakorlatilag teljesen újra kell
+implementálni.
+Tudéik
+mások a azok a azok a procedurális
+eskényerek, amiket amik ezeket
+használják, vagy amiket ezek használnak.
+Tehát ez mindenképpen egy egy újraírást
+jelent. Olyas, mintogyha az egyik
+programnyelvről a másikra portolnánk egy
+alkalmazást. És hát az ezen kívül még az
+autentikációs sémák is radikálisan
+mások. Tehát azt még újra kell tervezni.
+tehát a jogosultságokat,
+hogy egyáltalán
+a sémákhoz, az az objektumhoz ki és
+hogyan fér hozzá.
+Most milyen megoldások lehetségesek
+ezekre a problémákra? Hát ha csak
+egyetlen táblát kell átvinnünk az egyik
+az egyik
+technológiából a másikba, akkor arra a
+az adás kezdésnek az esperantója az a
+CSV tábla, tehát hogy a flat fnak is
+hívják, ami ami szöveges
+és
+és hát valahány mezőt tartalmaz, de
+azért írk flatnek, mert lapos, tehát ez
+azt jelenti, hogy hogy
+egy egy szintű struktúrát
+ázol. Tehát például egy egy sok
+kapcsolatot nem lehet egy célső fában,
+egyetlen célső fájban megossítani. És
+ezen kíkül problémátok okoz az, hogy a a
+mezők adattípusit úgy kell kitalálni,
+tehát az nincs benne a CS fő fájban.
+Általában ezt szokták támogatni, tehát
+hogy beleolvasunk az adatokba és
+megpróbáljuk kitalálni azt, hogy hogy ez
+milyen adattípus lehet például, vagy
+pedig ezt ezt kézzel editáltóvá tesszük
+ezt a ezt a dolgot.
+Most nagyon gyakran előfordul az, hogy
+az egyik gyártó az szeretne ügyfeleket
+elcsábítani a másik gyártótól,
+és ezért
+ilyen varázslókat hoznak létre,
+leépített
+modulokat,
+amik kifejezetten azért vannak, hogy
+adatokat
+táblákat, nem is csak egyet, egész
+adatbázisokat migrálnak a a másikból a
+cél technológiába.
+Ezek a vizardok, ezek úgy klasszikusan
+nem szoktak működni, csak a triviális
+esetek esetén működnek. Hát a triális
+eset azt jelenti, hogy ugye nagyon
+egyszerűek a kapcsolatok, adattípusok és
+satöbbi.
+Nincsen tárott logika, ilyesmi. Hát
+ennek talán az oka, hogy hogy ehhez
+ö mindkét félnek a valódi összefogására
+lenne szükség. Tehát a mondjuk például
+az Oracle, Microsoft klasszikusan
+ugye mindegyik szeretne ügyfeleket
+elhódítani, és ehhez az kellene, hogy
+hogy ezt a bizonyos vízadót
+gyakorlatilag ketten írják meg, de hát
+vagy egyik, vagy a másik írja, és ebből
+kifolyag, aztán
+nem fog ez sose működni. Ennek az az
+oka, hogy
+hogy ugye felelősséget vállalni ennek a
+működéséért
+csak mindkét fél egyszerre tudna. Ha
+most ez külön-külön valósul meg, akkor
+az nyilván vagy működik, vagy nem.
+Vannak olyan
+ö cégek, amik abból élnek, hogy ők
+mindkettőhöz elég jól értenek, és akkor
+ők megírják ezt a ezt a bizonyos
+wizardot, vagy vagy pedig converter
+programot. ami mondjuk sokkal jobb, mint
+az a wizard, ami a a az SQL szerverben
+vagy pedig az alakban megtalálható.
+Akkor van egy olyan lehetőség, hogy egy
+dampot készítünk, ugye reációs
+adatbázist, azt mindig le lehet, tehát
+az az abból mindig lehet készíteni egy
+egy olyan scriptet, ami két és inzett
+utasításokat tartalmaz.
+És hát tulajdonképpen egy
+dokumentumtárból is lehet ilyet
+készíteni. Szóval bármivől lehet ilyen
+szöveges dampot készíteni.
+És akkor az az opciók, mer ez a
+lehetőségünk van, hogy mi ezt a dumpot
+ezt programozottan vagy pedig manuális
+módszerekkel egyszerűen átalakítjuk egy
+olyan olyan módon, hogy aztán lefusson a
+a céltechnológiát. Tulajdonképpen ugye
+ezt csinálják ezek a belül említett
+eszközök is, mert végül is
+egy egy scriptet futtunk le mindig az
+adatbázis szerveren.
+Aztán hogyha ha ez sem megy, akkor az az
+jön az utolsó mencsvárunk, hogy írunk
+egy olyan
+alkalmazást,
+ami programozottan olvas rekordokat az
+egyik adatbázisból és ír a másikba, és
+közben megcsinálja, amit kell. Tehát,
+hogy rekordonként tulajdonképpen
+leprogramozzuk az adatvitelt.
+A legnehezebb eset pedig akkor van,
+amikor fő technológiaváltásra van
+szükség. Tehát például egy reakciós
+adatbázisból egy dokumentumtárba
+szeretnénk átvinni valamit,
+vagy egy dokumentum tárból egy
+gráfadatbázisba szól, akkor egy amikor
+egy fő technológia változik. Ilyenkor
+ugyanis az összes fenti edélyi
+nehézséghez még hozzáódik az is, hogy a
+a az adat a az adatmodellt is újra kell
+készíteni, újra kell modellezni a
+problémat előtt tulajdonképpen. Ugye a
+szematikai modell az ugyanaz, de már a
+logikai adatbázis modell az már egészen
+másképp néz ki akkor, hogyha az egy
+dokumentum tár, mint akkor, hogyha az
+egy
+reakciós adatbázis. Most erre fogunk
+látni itt itt itt mindjárt több példát.
+És ilyenkor ennek a megoldása az
+tipikusan az, hogy ez a ez az átmodellés
+ez kézzel történik.
+Mert nagyon gyakran az alkalmazástól is
+függ az, hogy melyik lesz a jó
+adatmodell.
+És az adat áthitel maga, az pedig
+programozottan történik egy egy
+alkalmazás segítségével.
+Hát akkor nézzünk erre egy példát. Itt
+van egy
+a múdulapom,
+de igazából pillanat nem is beszél ki a
+múdilap. A a virtuális gépet indítottam,
+mer az van most itt megosztva.
+És a virtuális gépen
+vannak
+vannak mappák.
+Pillat.
+Igen.
+Nem, ez tehát a temp és a a temp és a
+temp.
+Látod?
+Jó, hát akkor akkor igazság szerint
+a nem nincsen ide letöltve a virtuális
+gépre, viszont a virtuális gépen van egy
+Postgress szerverünk, és már be van
+töltve egy ilyen damp, úgyhogy ott is
+meg tudjuk ezt nézni.
+Ö a postg szervert azt el lehet indítani
+ezzel a ez az elefántos ikonnal. A PG
+admin hát a szerver megy, de ez csak a
+ez ez csak a a kliens hozzá a PG admin
+4-et. A a master jelszó, amit kér
+ilyenkor, az a szokásos jelszóunk. Tehát
+föl is írom ide.
+Hát h
+no. Tehát ezt a ezt a master fogja
+kérni.
+És
+akkor nézem közben a múlő lapot. Tehát a
+március 26-ai
+anyagoknál
+van egy ilyen, hogy postgress fires
+zip. Tehát ez egy zip fá és ezt
+meg lehet nyitni
+és ebben a zip fában
+pillanatos mutatom is. Mi minden van
+benne.
+Tehát ez az a ez az a ez az ép fá és ez
+a PG Script SQL tulajdonképpen ez az,
+amit most szeretnék megmutatni. Tehát ez
+egy ez egy damp, ami létrehoz egy
+adatbázist, mégpedig a Northw adatbáz
+hozza létre a posgressen.
+Ezt a ezt a scriptet én már be is
+töltöttem ide
+a
+PG adminba.
+Ugye itt egy adatbázis vagy egy egy
+adatbázis példányunk van, és azon egy
+séma ez a ez a public séma. És látják,
+így néz ki egy ilyen dump create table
+insert utasítások.
+De most mi tovább mennénk, nézzük meg
+azt, hogy pé ez a products tábla,
+hogy hogy ezt a hogy ez hogyan nézett ki
+eredetileg az SQL szerveren.
+Eljövünk ide az SQS szerverre, itt a
+products tábla. Jobb oldali gombbal
+generálunk hozzá egy egy scriptet.
+Create table, create to new query editor
+window. Tehát, hogy ez erőileg hogy
+nézett ki a Microsoft SQL szerveren,
+akkor rögtön szembesülünk a az első
+problémával. Így nézett ki.
+Hát igazából innen kezdődött ez a create
+table utasítás, ugye? És aztán még itt
+jöttek ezek a constraintek. Isten tudja
+hány constraint egymás után. Nem is fog
+mindet átozni, csak ezt az az elejét. Jó
+eddig, hogy hogy
+leadpad index satöbbi. Tehát most ezt
+kivágom innen és átjövök a PG adminba.
+Mi történt volna akkor, hogyha
+ezt akarom lefuttatni a PG adminba? Mit
+gondol? Mi történt volna?
+ezt a create table utasítást.
+Hát hát mit mondjak? azt hagyja, hogy
+hogy go utasítás nincsen ugye a PGPL
+nyelven, de ha most ezt megpróbál
+kutatni, bármilyen meglepéssel az F5 el
+kell indítani, milyen véletlen ugye
+akkor azt kapjuk, hogy hogy bad request.
+Ha ha ez a ha csak ezt a create table
+utasítást így eddig futtatom le mondjuk
+így a vid helyett
+eddig nézzük meg hogy akkor mi lesz
+belőle
+akkor sem bed questet kapunk hát hogy
+Isten igazából
+ez a szögetes zárójele ez már kapásból
+nem megengedett például a apa poszgöson
+egy ilyen utasárban, ami az eskel ugye
+védi az objektumokat aztán DBO az nem
+mondt semmit.
+Itt ugye public séma van. Aztán identity
+adott típus nincsen.
+Mondjuk int meg smallint van. A money az
+mondom az az megint cikis, mert az az
+egy kicsit más, mint az egyiknél, mint a
+másiknál. És így tovább, és így tovább.
+Hát nézzétek meg, hogy itt például ennek
+a megfelelője a a a Postgressnél
+ugye ide itt ide be tudtunk tenni egy
+ilyen egy ilyen check constintet és
+ennek is a a szinttaxisra egészen
+másmilyen az SQS szerver, mint a
+mint a PSG szerint jegyzetben van is
+erre egy példa. Mindjárt talán meg is
+tudom mutatni.
+Nézzük csak itt. Itt egy kicsit
+kinagyítom
+itt. Hát ez most épp egy épp egy default
+kényszernek a
+vagy egy defaultnak a megadása.
+Ez a Postgas, ez pedig a az SQL szerver.
+Hát most akkor ugye nyilván ez ezeket
+ezeket a dolgokat változtatni kell.
+Most ezt meg lehet csinálni mondom a
+programozót és már meg lehet csinálni
+kézzel is. És akkor a generált dumpból
+lesz egy olyan dampi már lefut. Ezt én
+le is ezt már le is van futtatva
+egyébként önöknél. Tehát a a poszg ott
+vannak ezek a táblák. Ha itt a táblákra
+rámegyünk, akkor lehet azt látni, hogy
+hogy már hogy már ott van.
+Ott van egy egy customers
+meg egy orders
+tábla, meg egy order details tábla.
+Na,
+lehet, hogy nekem is újra kell indítanom
+ezt a ezt a PG admint.
+Elképzelhető.
+Igen. Hát élveztettük a kapcsolatot a
+szerverre itt közben. Semmi probléma.
+Akkor
+nézzük csak. Aztondja postg 15.
+Van itt egy ilyen, hogy
+hogy aztongja, hogy
+a a a
+disconnect.
+Igen.
+És akkor
+próbáljuk meg újra.
+Tehát az neki a neve, hogy
+local host
+és
+a connection.
+Az pedig szintén lokal host.
+És a jelszó az pedig a TQ.
+Oké. Hát akkor sajnos újra kell
+nyítanunk az egész
+az egész PG admint, úgyhogy ezt itt be
+is lehet csukni.
+Yes.
+Igen. R.
+azt mondja, hogy admin.
+Na most az a demo, amit amit majd
+szeretnék mutatni, az az abból indul ki,
+hogy van egy egy web alkalmazásunk
+ami egyébként egy tranzakciót futtat le,
+egy ilyen ezen a Northing adatbázison
+egy rendelés felvételi tranzakciót. És
+ezt az alkalmazást szeretnénk átmigrálni
+úgy, ahogy van, tehát az alkalmazást is,
+meg az adatbázist is a Firestorra.
+Ami azt jelenti, hogy ugye most itt a SQ
+szerver Postgasz között történt egy
+gyártóváltás, most pedig egy
+főtechnológiaváltás fog történni. Igaz
+ennek a tanulságait szeretnék bemutatni.
+Ez a ami amit most csinálunk, az a
+a jegyzőben itt a 71. oldal környékén
+zajlik. És amíg ez itt elindul, addig
+addig mondok egy egy pár szót a a az
+adatmodellezésről. Jó, tehát
+ehhez esetleg fel fogom használni itt a
+az SQL szervernek a
+a konzolát.
+Szóval ugye van egy szemantikus modell,
+egy fogalmi modell,
+ami lehet
+egy újem osztálydiagram,
+aztán ha adatbázist tervezünk, akkor
+akkor lehet egy egy kiterjesztett
+entitás kapcsolati diagram, tehát egy e
+modell például. És ebből a szemetikus
+modellből tervezzünk aztán meg egy
+egy logikai adatbázismellt.
+adatbázismellt.
+És itt már mindenképpen egy fü
+technológiát kell választanunk. Tehát
+például azt mondjuk, hogy hogy például
+relációs.
+Most a szemantikus modellben, mondjuk
+egy ER modellben
+milyen kapcsolattípusok vannak? Igazából
+minket ez érdekel most a legjobban, hogy
+vannak ö osztályok vagy egyedípusok
+és
+és ezek között milyen kapcsolatípusok
+lehetnek? Hát lehet egy sok kapcsolat,
+lehet egy-eg egy kapcsolat
+és lehet sok-sok kapcsolat.
+az egy-egy kapcsolattal valósítjuk meg
+az a osztály főosztály speccializációt
+is. Ugye hát az is egy az is egy R is
+egy R kapcsolattípus.
+Amikor logika adapt modellt készítünk
+ebbe egy reációs modellt akkor ezeket a
+kapcsolatípusokat egy szűkebb eszköz
+rendszeret tudjuk már csak
+megvalósítani.
+Mégpedig azért mert a reakciós adatmel
+nem támogat mást. Tehát az egy-egy és az
+egy sok kapcsolatokat
+azokat meg tudjuk valósítani egy külső
+kulcskényszerrel.
+A sok-sok kapcsolat, az pedig egy
+kapcsolótáblával,
+igaz? És az egészet elvisszük harmadik
+normál formába. Harmadik normál forma,
+tehát hogy ne legyen benne redundancia.
+És ez egy ez egy univerzális modell, ami
+azt jelenti, hogy akármilyen alkalmazást
+is használhatunk erre a harmadik tomrá
+formára
+mindent
+le kérdezni belőle. Ugye ez volt neki a
+célja. Egy pillanat közben ide eljövök.
+Na.
+És
+akkor nézzük, hogy
+hogy mit látunk a szerverekből.
+Jó. És azt mondja, hogy sémák.
+Public séma. Igen. És akkor nézzük. Itt
+vannak a bizonyos táblák, amiket az
+előbb amiket az előbb említettem.
+És akkor most megint töltsük be ezt a
+scriptet is. Tehát itt a toolsnál
+válasszuk ki azt, hogy query tool.
+És ide másoljuk be ezt a scriptet. Jó,
+egy pillanat én is bemásolom.
+Tehát ezt innentől mondjuk
+mondjuk pillanat van itt egy egy
+fákezelő.
+Na
+oké.
+Tehát én ezt akkor a temp mapába be
+fogom másolni.
+Egyébként ott is volt, csak nem vettem
+észre az a PG script. Jó, nem is kellett
+volna bevásolnom. Na, szóval egyszer itt
+vagyok, akkor
+hát meg lehet nyitni ezt a fált,
+és akkor akkor betöltődik.
+Jó.
+Szóval ez ugye egy ez ugye a reációs
+adásunk, de akkor már hadd folytassam
+gondolmetet elkezdtem.
+Most mi történik akkor, hogyha mi innen
+szeretnénk átmenni egy másik adapdális
+főtechnológiába, tehát ami egy egy
+dokumentumtáb.
+Hát akkor ezt ezt újra kell
+modelleznünk, ezt a bizonyos reációs
+adatst. Milyen egy dokumentum tá? Van
+errő egy kis áttekintés itt mindjárt
+mutatom is.
+Szóval ezeket no SQL-nek szokták hívni,
+ami a not only SQL rövidétese volt. A
+lényeg az, hogy egyébként valóban
+általában véve
+nem SQLési felületeket lehet használni
+hozzá, hanem valamilyen magas szintű
+programvet, vagy látni fogjuk, hogy
+ennek vannak előnyei, hátrányai is, de
+alapvetően az a séma, hogy hogy
+dokumentum álló kollekciók vannak ezekbe
+a dokumentumtárakban.
+Tipikusan a a hasonló dokumentumok
+vannak egy kollekcióban,
+és egy dokumentum az hasonlít egy Jason
+filra.
+Tehát lehet neki belső struktúrája.
+Azonban az nem elvárás tipikusan, hogy
+ugyanabban a kollekcióban minden
+dokumentunak ugyanolyan legyen a sémája.
+Itt meg kell meg kell állnunk egy
+pillanatra. Van ez a fogalom, hogy hogy
+shéma on read és shéma on right. A
+dokumentum táraknál ez a séma read az
+ami ami létezik. A reació adapadan pedig
+a séma on right. Mi a különbség? Hát a
+séma az azt jelenti, hogy én megmondom
+azt, hogy egy bizonyos
+adatrekordnak milyen szerkezete kell,
+hogy legyen. A reciös adatbázisban egy
+táblának van egy fix sémája. Tudjuk azt,
+hogy milyen mezők vannak benne. Ö azok a
+mezők milyen típusúak.
+Nem lehet letárolni a táblába olyan
+értéket, ami egy egy nem létező mezőbe
+nem lehet értéket érni például, és nem
+lehet más típust sem beleírni. Tehát
+például nem lehet egy egész értékmezőbe
+egy stringet beleírni. Tehát ez hibát
+eredményes.
+Ez azt jelenti, hogy már íráskor, tehát
+séma már íráskor a séma erőltet van,
+kényszerítve van. Ezzel szemben a
+dokumentárból bele lehet írni. Tehát ott
+lehet csinálni majd csinálunk olyan
+dokumentumot, aminek a sémája egészen
+más lesz, mint ugyabba a kollekcióban
+egy másik dokumentumnak. Csak az a
+helyzet, hogy viszont az az alkalmazás,
+ami ezt a kollekciót használja valamire,
+például mondjuk könyveket tárolunk ebben
+a kollekcióban,
+az viszont várni fog egy bizonyos fajta
+attribútumnevet, attribútumtípust, és az
+viszont nem fog működni akkor, hogyha
+valami más van ott. Hadd mondjak egy
+példát, tegyük föl, hogy van egy
+kollekciónk a az alkalmazottakra. Az
+egyik dokumentumban az alkalmazottnak a
+neve az egymezőben van, és az az
+attribútunk neve, hogy név. Másik
+dokumentum pedig két mezőben van, hogy
+keresztnév, vezetéknév. Hát az
+alkalmazásunk az feltölteni vagy
+egyiket, vagy másikat fogja keresni és
+nem fog működni, hogyha egyikben így
+van, másikbaan pedig úgy van. Erre
+mondják azt, hogy séma read. Tehát, hogy
+azért olvasáskor már nem árt, hogyha van
+bizonyos sémánk. Ugyanakkor viszont
+olyan esetekben nagyon előnyös az a
+tulajdonság, hogy hogy nincsen fix séma,
+amikor például nem teljesen világos,
+mert nem annyira kiforrott ez az egész
+problématér,
+hogy hogy mi lesz majd a végleges
+specifikáció,
+vagy pedig ott dolog természetéből fakad
+az, hogy minden egyes dokumentumnak más
+és más attribútumai vannak. Vagy esetleg
+az is lehet, hogy nagyon sok
+attribútunk, lehetséges attribútunkból
+mindig csak egy párnak van értéke, és
+akkor csak azokat vesszük fel. Ugye a
+reációs adatbázisban ezeket a mezőket
+mind létre kellene hozni, és akkor null
+értéken kell feltölteni.
+Jó, tehát vannak a kollekciók, a
+kollekciókban vannak dokumentumok
+és a
+a az egyes dokumentumok ugye ezek
+testesítik meg a a a
+rekordokat.
+Tehát a
+az entitásainkat,
+ezek közötti kapcsolatokat hogyan lehet
+tábrázolni?
+Hát
+az egy egy és egy sok kapcsolatot azt
+viszonylag könnyen lehet ábrázolni,
+mivel be lehet ágyazni az egyik
+dokumentumb egy másik dokumentumot, vagy
+dokumentumnak egy egész sorozatát. Tehát
+például van egy egy sok kapcsolat, ugye
+a kiadó és az ő könyvei, akkor meg lehet
+azt csinálni, hogy a kiadó dokumentumba
+beágyazzuk az összes könyvet, mint a
+dokumentumokat, amiket ő adott ki. Ezzel
+nincs is semmi probléma. A probléma a a
+sok-sok kapcsolatokkal van, mert ugye
+ebben az esetben, ha nem akarunk
+redundás adattást végezni, márpedig azt
+nem akarunk, tehát redundás adattábást
+dokumentum tárb sem akarunk végezni, azt
+semmiképp sem akarunk.
+Attól, hogy hogy még valami
+dokumentumtár, azért még
+nem akarjuk, hogy hogy
+teljesen inkonzisztens legyen.
+Szóval akkor milyen lehetőségeink
+vannak? Ugye nem tudjuk a
+kapcsolótáblát, mondjuk úgy, mindkét
+kapcsolt dokumentum kollekcióval
+beágyazni. El kell döntenünk, hogy egyik
+vagy a másik ágyazzuk meg. És ez pedig
+tipikusan alkalmazáspecifikus.
+Mert
+mert a lekérdezéstől függ az, hogy hogy
+melyik
+korreklekció irányából akarom keresni
+azt a beányozott
+másik
+kollekciót. Majd mindjárt fogjuk látni
+ezt egy példá. És akkor a a másik irány
+kapcsolatot az pedig referenciákkal
+lehet, ami kvázi mintha egy külső kulcs
+lenne, referenciákkal lehet biztosítani,
+tehát olyan attribútumok, amit mutatnak
+valahová egy másik dokumentumra.
+És akkor most a a Fes
+szeretném bemutatni. Ezt fogjuk
+használni a a demóban. Rendkül népszerű.
+Bizonyos mértékig azért, mert ingyen
+és hitelkártyaszám megadása nélkül
+támogatja azt, hogy valaki
+adatokat tároljon, sőt webalkalmazásokat
+futtasson
+a a az a felhőben az ő közzeműködésüket.
+Na persze bizonyos keretek között, tehát
+bizonyos adatmennyiségig satöbbi
+satöbbi. Viszont nagyon népszerű emiatt
+és biztosan sokan fogják választani itt
+a a projektjüknek a a technológiájú és a
+filest azért is szerepel ebben a ebben a
+kurzusban.
+Szóval
+ezek már itt a a Firestornak az alapvető
+tulajdonságai.
+A dokumentumoknak kell, hogy legyen egy
+kulcsuk. Tehát ez egyébként szinte
+mindig
+ez mindig elvárás minden dokumentum
+tárban, ugyanis különben nem tudnánk,
+hogy most melyik dokumentot akarjuk
+kitöltni kitörölni. Tehát kell, hogy
+legyen egy egyedi kulcsa
+minden minden korrekciónak.
+A a filestore támogatja a hivatkozási
+integritást is úgynevezett security rúok
+segítsége. Ugye ez mondjuk mit
+jelenteni? Ez azt jelentené, hogy
+például van két kollekcióm, és az egyik
+hivatkozik a másikra, akkor ne lehessen
+egy olyan értéket törölni, ahogy valami
+hivatkozik, vagy neh olyan értéket
+felvenni, ami nem létezőre hivatkozik.
+Ugye ez hivatkozási integritás. Ezt
+ilyen úgynevezett biztonsági
+szabályokkal lehet garantálni, amit nem
+fogunk demózni, mégpedig azért nem, mert
+ez ez csak egy egy felhő alkalmazás
+esetében
+működnek ezek a szabályok is, mi az
+adminisztratív interfaceen fogunk
+hozzáférni, ezek ahol ezeket nem
+használják.
+Na most a kollekciókat nem lehet
+közvetlenül egymásba ágyazni a
+filosoztorban, viszont egy dokumentumba
+be lehet tenni egy kollekciót. Tehát egy
+kol vannak dokumentumok és a
+dokumentumon belül lehetnek
+alkollekciók. Hát mi ezt fogjuk
+kihasználni itt igazából,
+amikor ezt a North adatbázist
+átmigráljuk, ugyanis az lesz a
+megoldásunk, hogy a a az order, tehát
+rendelés dokumentumokba,
+minden rendésbe beletesszük egy
+alkollekcióba a rendési tételt.
+És ugye ezzel kőzeten meg tudunk
+valósítani egy egysok kapcsolatot a
+rendési tétel és a rendelés között.
+eléggé kevés adattípus támogat.
+Tehát például nincs mannípus,
+ezeknek lehetnek tömbjei is.
+És ami nagyon érdekes, hogy ők azt
+állítják, hogy hogy ők képesek ész
+tranzakciókat futatni. Hát ezt majd
+megnézzük, hogy mennyire tudnak tényleg
+futatni. Nem ezt miért mondják ők?
+azért, mert szeretnének belépni arra a
+piacra, ahol OLTP típusú adatbázis
+backendként is működik a a Firestore.
+Mondjuk a tradicionálisabb alkalmazása a
+dokumentum táraknak az az inkább egy
+olyan környezet, ahol ahol nincsen
+szükség tranzakcionális biztonságra.
+No, hát akkor akkor akkor nézzük most,
+hogy hogy is állunk. Tehát itt
+pillanat
+PG admin jöjjünk el a végére.
+Miből indulunk ki?
+Tehát
+van ez a ez a három táblánk.
+Jelenleg üres a rendelés tábla. Most van
+egy olyan
+függvényünk, ugye ez egy igaz tárol
+terrás, csak itt ezt függvénynek hívják
+a poszgnél, ami a rendelés felvételt
+valósítja meg, mégpedig ez egy
+klasszikus tranzakció, ami azt jelenti,
+hogy mindenféle feltételeket ellenőzünk.
+Itt nagyon hasonlít ez a ez a nyelv
+egyébként a a TSQR-hez, de hát ez a PGPR
+SQL nyelv, tehát sok minden másképp van
+benne. Például kell pontos fesztőt tenni
+a sorok végére, meg nem lehet kukac
+változónév elején satöbbi, satöbbi, de
+ezek lényegtelen különbségek igazából.
+Szóval, szóval ellenőrizünk bizonyos
+feltételeket.
+Itt megnézzük a a raktárkészletet,
+megnézzük az egységárat, eltesszük
+változókba,
+lekérdezzük a vásárlónak az egyenlegét,
+és utána megnézzük, hogy
+van-e a vásárlónak elég pénze
+és van-e elég a raktárkészleten. És
+hogyha igen, akkor megyünk tovább,
+különben egy hibőzenettel ki fogunk
+innen innen lépni.
+És az ellenőek után a második részben
+következik az, hogy hogy módosításokat
+hagytunk végre az adatbázison. Tehát
+módosítjuk a felhasználó egyenlegét itt
+ezzel az update utasítással.
+És ugye látható, hogy itt a az orders
+táblának ugye nincs identity típus,
+szekvenciák vannak eh. Tehát egy
+szekvenciából kérünk egy következő
+értéket és beszúrjuk az új rekordokat,
+majd pedig állítjuk a raktárkészletet.
+Tehát ennyi ez a ez a tárolt eljárás.
+siker esetén nullát fogunk visszaadni.
+És hát itt lehet is nézni, ez tényleg
+működik-e.
+Például
+itt
+a
+ennek a két
+Ja, igen, az volt a probléma, hogy innen
+lemaradt a pontos vessző.
+Egyenként is lehet kidézni ezeket a
+dolgokat.
+Tehát ennek most a
+a Unitin Stoke az csak egy, akkor ezt
+feltesszük itt 10-re.
+És ennek az alfkinak pedig beállítjuk a
+a balanszát mindössze kettőre,
+akkor
+akkor ebben az esetben, hogyha ez a
+bizonyos AFK ez vásárolni akar valamit,
+hát akkor nem eszn ki elég pénzzel.
+Tehát az egy ezt az egyet fogjuk vég
+visszakapni. Itt a messagesnél látják,
+két kész egy hiba. Ha viszont ad adunk
+neki több pénzt, akkor feltehetőleg már
+a menni fog a a tranzakciónk.
+És hát ugye ez tényleg egy tranzakció,
+tehát elvárjuk tőle, hogy hogy na itt
+akkor akkor mi a probléma vajon, hogy
+azt mondja pillanat, melyik melyik
+paraméter, melyik product és utána pedig
+a quantity. A product idant.
+Ja, igen, mert ugye itt 10 van a Unitin
+stock, és nekünk
+az volt a probléma, hogy csak
+hogy csak 10 volt, nem pedig a
+nem pedig a a az egyenlege volt kevés a
+kedves vásárlónak.
+Na
+és akkor ez már sikerrel zajlik le, ugye
+nulla visszaadott érték.
+Itt itt a tranzakció atomicitása az azt
+jelenti, hogyha például itt a az
+adatmosító utás utasítások között
+történik olyan hiba, akkor az is
+visszagördül, amit eddig már
+elvégeztünk. És hát ez ebben az esetben
+tényleg egy rendkívül fontos elvárás.
+Most van ezen kívül az adatlásban még
+egy view is, ami a az utolsó öt
+rendelést adja vissza.
+És
+akkor itt lehet látni, hogy ez is szépen
+összejoinolgatja a rekordokat. Most erre
+épül rá egy egy Python alkalmazás, egy
+Python flask alkalmazás, aminek szintén
+itt ebben a az ip fban ott van a
+forráskódja a flask mappában. Tehát,
+hogy hogy egy pillanat,
+na mindjárt
+mindig tudom behúzni ide ezt az ablakot
+most. Igen, tehát ebben ebben a flask
+mappában tárgyák a foryáskodot, de
+ugyanezek a mappák, ezek rajta vannak
+már a virtuális gépen is.
+Itt a tempyvtában. Tehát igazából ezeket
+a dolgokat meg lehet nézni. Most azzal
+kezdjük, hogy hogy beüzemeljük a az
+alkalmazásunkat
+először a postgresszel. Jó, tehát ez
+akkor ez akkor a flask mapa lesz. Itt
+látható, én ezt már megnyitottam, az
+anakconda
+keretrendszert használ ez a virtuális
+gép.
+És azon belül pedig ezt a flast devo
+virtuális
+környezetet, tehát esetleg azt azt azt
+érdemes
+pillanat
+Konda activate flast demoval be lehet,
+hogy ez a virtuálos környezet menjen.
+És hát maga a a Python alkalmazás az
+pedig itt a temp mappában található,
+vagy bocsánat, a temp és flask mappában.
+Ez pedig itt a spiderben, amihez itt itt
+találnak egy indítógombot. Én már meg is
+nyitottam.
+Aztondja, hogy a Northw P vagy Northw
+Flask alkalmazás. Na, hogy néz ki egy
+ilyen? Hát kérem szépen, van egy egy
+driverünk, ezt itt SkyC PG-nek hívják.
+Ezt a ezt a drivert, amire kapcsolódunk.
+A a host az a local host, a port az a
+default port, és akkor utána van ez a ez
+a ez ez a kurzorunk tulajdonképpen
+kurzor objektum a kapcsolatot testesíti
+meg az adatbázis szerverhez.
+És ez egy ez egy web alkalmazás, egy
+flask alkalmazás, aminek két végpontja
+van. Az egyik végpont az az, ami
+kilistázza a tehát ami lehetőség a
+rendésnek az elküldésére.
+És a másik az pedig az, amelyik a
+rendelést feldolgozza, tehát lefuttatja
+a tárolt eljárást.
+Ezt tulajdonképpen el is indíthatjuk ezt
+az alkmát és akkor teszteljük a
+működését. Tehát úgy indítjuk el, hogy
+beírjuk azt, hogy először is ebbe a
+mapába kell elmennünk, ahol ez van. C
+temp flask az nagyon jó. És akkor írjuk
+be azt, hogy
+Python North Northwind. F.
+Jó.
+Na most akkor elindult egy egy
+webszerre, egy webalkalmazás, és akkor
+utána egy böngészőben
+itt ezen a porton ki is lehet innen
+vágni ezt a portot. Látját ezen a porton
+itt ez ez figyel.
+Úgyhogy azt mondjuk, hogy copy
+és
+akkor egy webgészre van szükségünk.
+Majd mindjárt lesz egy egy
+webböngészőnk,
+amibe bemásoljuk ezt az URL-t.
+Szóval így néz ki az alkalmazás.
+Van egy kombónk, amiben a termékek
+vannak felsorolva, egy másik, amibe a
+a vásárlók, és akkor beírjuk a
+mennyiséget. Például most rendelünk
+kettőt az Alface Frutte Krista nevében,
+és megnyomjuk a submit gombot, akkor
+átkerülünk a rendelés feldolgozására.
+Itt itt lehet látni a dibagger ablakban,
+hogy a rendésfelvétel lefutott és és
+akkor kapunk egy visszaigazolást, még
+ezt a listázást. Tehát tulajdonképpen az
+történik, hogy hogy egy ez a ez a
+végpont ez feltöltötte a kombok
+tartalmát. A másik végpont ez az order
+procs, ez pedig mit csinál? Ez
+lefuttatja ezt a bizonyos függvényt, ezt
+a tárolest, ezt a select new order. Ugye
+ez volt az, amit amit az előbb
+megnéztünk, hogy mit is csinál ez a
+tranzakció igazából. Tehát itt most
+ebben az esetben a tranzakció, de az
+üzleti logika az ott van a szerveren.
+Igazából ez csak egy vékony kliens, ami
+egy ilyen távoli eljáráshívást használ.
+És akkor még utána
+a a rendésnek a kilistázására
+arra is egy kész view-t fog használni,
+mert hogyha megnézik, ez a list orders,
+ez ezt ezt a last orders nevű view-t
+fogja használni, ugye? Tehát ezt is a
+szerverrend készítettük el. Ez egy view,
+és abból csak lákérdezzük az adatokat.
+Tehát ez az alkalmazásunk
+és akkor most ezt akarjuk átmigrálni a
+Firestba. Hát az első kérdés az az, hogy
+hogy ugye a a fogalmi áttervezése a
+dolognak
+az adatbázist újra kell terveznünk. És
+itt itt azt a azt a döntést hozzuk,
+hogy
+ugye ennek a lökadok módje úgy néz ki,
+hogy van a a products
+és akkor a
+az order details
+és a és az orders,
+ami egy sok-sok kapcsolat a producció és
+az orders között. Ugye ez itt a
+kapcsolótábra. És az order det dnek
+vannak saját attribútumai is. Tehát
+például mit tudom én a quantity.
+És akkor ezt úgy oldjuk meg, hogy az
+orders kollekcióval beágyazzuk az order
+details kollekciót. Tehát ez lesz a
+megoldásunk. És az order details az az
+pedig egy hivatkozással, mondjuk úgy,
+egy külső kulccsal vagy referenciával
+fog hivatkozni a Product, hogy mégis
+melyik terméket tartalmazza az a
+rendelés. Tehát ez a ez az
+átalakításunk, hogy úgy mondjam.
+És
+tehát ebből mi lesz?
+Lesz egy egy orders és azon belül order
+details
+kollekció,
+meg ezt egy product kollekció.
+És akkor lesz még egy egy customized
+korreklekció.
+Ez hogy fog létrejönni? Hát ez úgy fog
+létrejönni, hogyha mi ezt programozottan
+létrehozzuk. Úgyhogy gyorsan vágjunk is
+bele, csináljunk magunknak egy egy új
+Fir store adatbázist. Ehhez kell nekünk
+egy böngésző. És hát itt az a szerencse,
+hogy igazából nem kell, hogy ne legyen
+nekünk GPC GCP-s kreditünk.
+anélkül is tök ingyen lehet firestrő
+adott bázist csinálni, mégpedig a hát
+úgy emlékszem legalábbis, hogy a
+a konszol
+firestol
+Google.com, de lehet, hogy firebase, ezt
+majd majd mindjárt megnézzük, vagy vagy
+akkor megnézzük a jegyzetből, hogy
+melyik is volt. Nem, akkor
+akkor Firebase esetleg.
+Igen, ez már ez már jobb.
+Jó, szóval itt
+itt itt konkrétan
+csináljunk egy új projektet.
+Ennek is kell adni egy nevet. Hát ennek
+most az lesz a neve, hogy az én
+esetemben, hogy április 18
+és
+Vanyi mondjuk. Aha. Hát igen, mivel ezz
+a Google-vel össze van integrálva, ezért
+ezért ez a projektnél már nem megfelelő,
+mert ilyenen már van.
+De egyébként azt is lehet csinálni.
+Szóval ez egy érdekes dolog. Lehet külön
+Fire Store projektet csinálni Google
+Projekt nélkül is. És itt látod, hogy
+hozzá is lehet adni a Firebase- egy
+Google Projekthez. Tehát ez
+igazából rajtunk múlik. Most nem tudom,
+hogy kinek van, vagy kinek nincs.
+Csináljunk egy teljesen új projektet, és
+akkor akkor akkor nem lesz az a
+probléma, hogy hogy hogy mi, hogy már
+van egy új, vagy pedig nincsen.
+Válasszuk ki azt, hogy Kantin most
+beletettem még egy még egy kötőjelet.
+Itt az egyszerűség kedvér nem lesz
+szükségünk a a Geminire, és nem lesz
+szükségünk a Google Analytikára sem.
+Csináljuk meg a projektet. Elég hamar el
+szokott készülni, tehát tényleg szinte
+másodpercek alatt,
+és mindez teljesen ingyen Itelkártyaszám
+nélkül. Szóval ezt azért értékelni kell.
+Nyomjuk a continue gombot.
+És akkor itt vagyunk tulajdonképpen.
+Mi most itt itt sok mindent lehet
+csinálni, tehát lehet például egy
+webalkalmazást is csinálni.
+Tehát itt ebben a környezetben meg lehet
+csinálni egy egészen teljesen ingyen
+egészen jól működő
+alkalmazást is. Na de hogyha itty
+beírjuk a a projektnek a vagyis az újnek
+a végére overview helyére azt, hogy
+stall,
+akkor ő úton át fogunk kerülni arra a
+helyre, ahol most egy adatbázist tudunk
+létrehozni, tehát egy dokumentumtárat.
+Ugye mi a különbség a Firebase meg a
+Firestore között? Története van a
+dolognak. Először volt a Firebase, aztán
+lett a Firestore.
+Vászuk azt, hogy ki, hogy create
+database.
+És akkor a standard edition. Igen.
+Fogadjuk el a default database database
+idt, locationnek pedig
+valamit ki kell választanunk.
+Na na.
+Jó.
+És válasszuk ki a test módot. Jó,
+nincsen szükségünk most a production
+módra.
+Oké. És látják, mindjárt itt vagyunk a
+kis dokumentumnak a tervező felületén,
+ahol akár kézzel
+elkezdhetünk valamit bevinni. Tehát ez
+tajképpen egy adatis konzol, csak hát
+mondjuk ez lesz a a Books nevű, vagy
+várjál akkor magyarul. Jó könyvek,
+kollekció
+nevű kollekció.
+Érdekes, hogy a itt a Firestor-ban az
+azonosítók, az idnek számok. Hát
+bármilyen furcsa, mindig megszoktuk,
+hogy az ID az egy szám. Na itt az nem
+lehet, csak string lehet. És akkor akkor
+lesz egy ilyen, hogy mondjuk a
+kell egy azonosítót adom. Mondjuk ez
+lesz a könyv egy, és akkor annak van egy
+egy szíme, ami egy string, és ez a
+háború és béke.
+Aztán lehet még továbbiakat hozzáadni,
+de ugye a az egésznek a a stílusát azt
+úgy látják, igaz, hogy ez ez ilyen. És
+be lehetne itt látják, van egy majd
+mindjárt látják, van egy könyvem. Itt ez
+a könyv egy. Ez itt már meg is van
+nyitva. És itt be lehetne szúrni a könyv
+egy dokumentum alá egy beágyazott
+korrekciót. Tehát és ez így mehet nem is
+tudom talán talán 100 mélységig. Szóval
+elég egész egészen mélyen mehet ez így
+ez a ez a ez a beányozás. Na most mi
+ebbe a
+az adásbe akarjuk átmigrálni a Northwin
+táblákat. Tehát ez lesz a feladatunk.
+Most ehhez kell nekünk egy
+adminisztratív interface, egy
+hozzáférés. Van itt egy olyan lehetőség,
+hogy service accounts itt a a
+fogaskeréknél.
+És
+hát tulajdonképpen kérünk egy egy
+tokent, kérünk egy egy hozzáférési
+kulcsot,
+ami most bekerült egy fába.
+Ez egy Jason file. Egyébként. Én ezt a
+mappát megnyitom és bemásolom
+innen. Tehát azt mondom, hogy cut
+bemásolom a webalkalmazásunknak a
+mappájába,
+ami itt a temp. És ugye nem a nem a
+flask, hanem a flask GCP filest. Ide
+másoljuk be. Jó.
+És azt mondja, hogy ped
+itt az előző futatásokból már vannak
+ilyen jasonok, azok korábbi tokenek,
+úgyhogy régit azt célszerű kitörölni.
+És ezt pedig átnevezem, amit most
+másoltam ide, átnevezem token Jasonnak.
+És akkor
+a forráskód meg majd token Jason néven
+fog rá hivatkozni. És hogyha valaki
+benéz, akkor látja, hogy hát van benne
+egy egy kulcs, amivel mi hozzá tudunk
+férni, bármit meg tudunk csinálni az
+adatbázissal. És akkor nézzük azt az
+alkalmazást, amelyik
+ugye mondtam, hogy programozottan lehet
+megoldani az adatvitelt. Olvasunk az
+egyikből, írunk a másikba. Ezt fogjuk
+csinálni. És ez az alkalmazás, ez az
+itteni ebben a FL GCP filest mappában
+lévő main. Alkalmazás lesz. Ö amit én
+már itt meg is nyitottam. Nézzük csak.
+Igen. F GP fá. Na na akkor mit csinál ez
+az alkalmazás? Tehát nézzük meg, hogy ez
+hogyan megy. Ö mielőtt tovább megyünk,
+azt ellenőrizni kell, hogy a virtuális
+gépnek az idője jólne beállítva,
+mert jól oké, mert ennek a a tokennek a
+generálsi ideje az nem lehet egy fals
+időkben nem fogunk hozzáférni a a
+felhőben lévő adatbázisunkhoz.
+Szóval
+hát itt ebben az esetben
+két kapcsolat lesz. lesz szükségünk.
+Egy kapcsolat ugye a a Postgesshez, egy
+kapcsolat pedig a Firestorehoz, és innen
+olvasunk, oda pedig írni fogunk. A
+postgasz kapcsolatot, azt már az előbb
+láttuk. Az ugye ilyen módon jön létre,
+hogy itt itt egy kurzorral vagy egy egy
+connection objektumot hozunk létre, amit
+aztán fel tudunk használni bárminek a
+végrehajtásához. A Filestore esetében
+ezt a Firestore admint könyvtárt kell
+felhasználnunk,
+és és ez a ebből a token JSből kiveszi a
+certificateet, és az lesz a kapcsolatnak
+az alapja. Onnantól kezdve ez a ez a DB
+lesz a a Festor irányába kapcsolat
+objektumunk.
+És akkor nézzük, hogy mit csinál maga a
+a scriptet, mi a lényegi a lényegi
+funkció. Miután csatlakoztunk
+a products táblából, a products táblát
+migráljuk először.
+Itt itt kivesszük az összes products
+recordot.
+Miért szorozzuk meg 100-zal unit
+price-t? Azért kérem szépen, mert a a
+Firestorebban nincsen típus, tehát nincs
+nincs decimális típus, hanem csak egész
+van például.
+És és ezért mi úgy szimuláljuk a a két
+tizéses decimális típust, hogy a
+100-szorozott értéket tároljuk és mindig
+amikor megintjük akkor elosztjuk
+100-zal. Hát ez egy eléggé egyszerű
+ugyan work around erre a erre a
+típusbeli hiányosságra.
+És akkor van egy egy kurzorunk, és utána
+itt első lépésben,
+hogy ez a script, ez újra futatható
+legyen. Ezért itt az első lépésben,
+ebben a ebben a ciklusban itt csak
+kitöröljük az összes olyan products
+dokumentumot, ami már esetleg ott lehet,
+ugye, de ha ha nincsen, akkor nem
+történik semmi. És utána ez ez pedig ez
+a második ciklus ez ami ami ami ami
+létrehozza az új dokumentumokat. Nagyon
+egyszerű filozófiája van a a
+filestornak.
+Hogyha hivatkozok egy olyan kollekcióra,
+ami még nem létezik, akkor az létre fog
+jönni. Tehát ez a ilyen egyszerű ez a ez
+van create helyett.
+Ha a kollekciómből hivatkozok egy olyan
+dokumentumra, ugye ID alapján hivatkozok
+rá, tehát van azonosítam minden
+dokumentum.
+az idő alapján egy olyan dokumentum
+hivatko amíg nincs, akkor é fog jönni
+egy új dokumentum azzal az idével. És
+ugye ezek után már csak arra szükségem,
+hogy és a dokumentumnak a az
+attribútumait azokat be tudjam írni.
+Erre pedig a set utasítás fog szolgálni.
+Tehát most most nézzét csak, ez a DB
+Collection Products. Itt tartunk, ha még
+nem volt products kollekció, létre fog
+jönni. De megyünk tovább. ebben a ez
+ezen a korrekleción belül egy ilyen
+ilyen azonosítójú
+dokumentum van-e. Ha nincs, akkor itt
+fog jönni. Hát persze, hogy nincsen,
+ugye, mert nálunk a a product az egy
+számmal van azonosítva azonosítva. Abbó
+most stringet csinálunk, mert számot nem
+lehet letárolni sajnos. Ugye itt a
+filosoztorba kulcsként. Létre fog jönni
+az egyes számú könyv és az egy egy
+referenciánkhez a dóc. És ennek aztán a
+set utasításra behetjük szépen a
+paramétereit. Ennyi. Mindjár ezt
+megcsináljuk a customersnél is. És aztán
+most egy kicsit érdekesebb rész, amikor
+a
+az ordert korrekciót akarjuk létrehozni.
+Így így ez kézi módszerekkel
+létrehozunk egy orders dokumentumot
+az egyes számú vásárlónak.
+És és ebbe beszúrunk két darab tételt.
+Ezt a
+pillanat. Igen. Igen. Tehát a a
+dokumentum belül egy details nevű
+kollekciót hozunk létre, és azon belül,
+hogyha nem adunk meg azonosítót a
+dokumentumnak, akkor egy automatan
+generált azonosítóval fog létrejönni egy
+egy új dokumentum, ami egyébként egy
+véletlen string. És ezt kétszer
+megcsináljuk. Tehát két rendési tétel
+lesz benne és kész. Hát ha minden igaz,
+akkor ennek mennie kellene, ugye,
+úgyhogy jöjjünk át a a
+a konzolunkra. Ezt ctrol c-vel meg lehet
+állítani.
+És akkor utána
+átmegyünk ebbe a mappába
+a
+plask.
+Na.
+Ez az ide. És akkor itt azt mondjuk,
+hogy
+python main. Pie,
+akkor
+talán le fog futni
+a scriptünk és feltölti az adatokat.
+Ebben bízunk legalábbis.
+Elvileg sikerül. De most megnézzük a a
+webes konzolunk konzolunkat,
+akkor itt ugye ez az ikonos szolg adatis
+elérésére. Akkor itt látnunk kell már a
+a két
+az az új rendelési tételt is.
+Ugye látható itt a generált azonosító.
+Azon belül van ez a ez a ez a details
+beáldozott korrekció. És itt van az
+egyik tétel
+meg ott itt itt itt van a másik is. És
+ugye lehetne még folytatni a
+bejányozást. Jó, hát mivel ezek a
+rendési tételek, ezek csak
+demóciából lettek beszól, ezért ezt
+töröljük itt ki, hogy ne kavarjon be az
+alkalmazásunknak, mert hiszen ugye egy
+alkalmazást szeretnénk mi ide
+ráéreszteni.
+Úgyhogy itt ezt a dokumentumot, itt van
+ez a három pöttyös menü, ezt töröljük
+ki. Delete document.
+Oké.
+És akkor készen van az adatbázisunk,
+tehát a adatokat átmigráltuk. Most jön
+az alkalmazásnak a migrálása. Hát ugye a
+logikát azt sajnos most meg kell
+valósítani. Tehát ami a tárolt
+eljárásban volt a szerveren, azt most
+meg kell írnunk Pythonban. ami a
+listáz volt a szerveren, egy egy view,
+ugye azt is meg kell írni Python-ban,
+de semmi gond, mert ez mert ez már
+megtörtént.
+Úgyhogy ha
+most itt kiválasztjuk a
+szintén ebből a a Flask GCP Firestore
+mappá vagyból a Northwind Pet, akkor itt
+látható
+az a
+az a megvalósítás, ami a az eredeti
+alkalmazásunkból lett.
+Tehát ez megfelel
+a
+ennek a northw-nak
+ugyanazt csinálja,
+csak ugye ez a reakciós is kapcsolódik,
+ez pedig a dokumentum tárra. Ugye ezt
+lehet látni egy ránézés és elég
+messziről is, hogy hogy hát sok
+funkciót, amit ugye a a szerverrelon
+SQL-ban oldottunk meg, azt itt most mind
+Pythonban kell megoldani. De van aki
+számára ez kifejezetten vonzó, mert
+akkor akkor akkor nem kell SQB-ben írnia
+semmit tulajdonképpen.
+És most először próbáljuk ezt ki, hogy
+tényleg működik-e.
+Itt mindenképpen ha van benne egy ilyen
+sor, hogy time seep, ezt kommentezzük
+ki, mert ez egy tesztkedő ért van benne.
+Úgyhogy úgyhogy ezt vegyük ki
+és ellenőrizzük azt, hogy a kapcsolat
+jól indul-e. Tehát itt ez a token Jason,
+ugyanazt a tokent be kell másolnunk ide
+is, amit az előbb létrehoztunk, hiszen
+az csak erre az adabra jó.
+Úgyhogy
+ja, ugyan ugyan ugyanba a mappába,
+amikor úgyhogy nem kell másolni semmit,
+ugyanaz a mappa, úgyhogy teljesen
+teljesen jó. Na és akkor nézzük, hogy
+hogy működik az alkalmazás. Jó, tehát
+nézzük meg ezt a ezt a kódot. Mit hogyan
+tudtunk megoldani.
+Hát ugye kezdődik azzal, hogy ki kell
+listáznunk a vagy hát fel kell töltenünk
+a kombókat. Igaz az első alkalmazásban.
+Hát ez nagyon hasonlít ahhoz, mint
+amikor a reációs adapdázit használtuk,
+ugye? Csak ott ott egy ott egy szereg
+csillag volt, most meg egy stream van.
+Tehát a DB Collection Product Stream, ez
+tulajdonképpen a ennek az ilyen nevű
+kollekciónak az összes dokumentumát egy
+streamben erhetővé teszi, amit végig
+lehet szépen iterálni ezzel a Dockin
+Docs iterátorral. És akkor ezt ezt a
+produkt listát, ami egy lista, ezt
+feltöltjük ezekkel az értékekkel. És
+aztán hát itt a a megjelenítést azt egy
+egy HTML template végzi.
+És hát tulajdéppen ebben ebben semmi
+különös nincsen, hanem nézzük meg a a
+tranzakciónak a lebonyolítását, hogy az
+hogyan megy.
+Hát ugye itt ezt bizony nekünk le kell
+programozni. Tehát amit a az előbb itt
+elintéztünk azzal, hogy hogy ez a ez a
+connection execute ugye
+azt itt
+el kell végeznünk ezeket a lépéseket,
+tehát le kell kérdeznünk a az a
+vásárlónak az egyenlegét, a
+raktárkészletet
+satöbbi. És akkor meg kell néznünk azt,
+hogy a
+a raktárkészlet elegendő-e, aztán utána
+azt, hogy a az egyenleg elegendő-e. És
+hogyha nem, akkor nem megyünk tovább,
+csak akkor akkor akkor megyünk tovább,
+hogyha ezek a feltétek teljesülnek. És
+akkor most van a transakció érdemi
+része. Ugye eddig a dokumentumokra
+láttuk a set utasítást, amivel
+beállítunk egy létrehozunk egy új
+attribútumot.
+Az update-tel azzal pedig egy meglévő
+attribútumot átírunk egy új értékre.
+Itt például a gyundicin stockot bejtjuk
+a stock mínusz a a mennyiségre.
+És aztán utána itt a végén itt viszont
+létrehozunk egy új rendelés objektumot.
+Látják ezzel a ugye nem adunk meg idét a
+dokumentumnak, ezért létre fog fog jönni
+egy új
+és utána
+be beszélünk hozzá egy darab rendési
+tétel. Tehát itt most ebben az
+alkalmazásban ugye minden rendésnek
+pontosan egy tétele van. Ez most ilyen
+ez az alkalmazás lehetne persze
+bonyolultabb is, de ez is elég bonyolult
+nekünk.
+És akkor utána van még egy
+egy érdekesség tulajdonképpen, az pedig
+az, hogy
+hogy aztán pedig szeretnénk kilistázni a
+a
+rendeléseket.
+Ugye itt erre volt ez a ez a ez a list
+orders nevű függvényünk, amin meghívott
+egy
+itt itt volt meg vagy hát tajképpen egy
+egy view-t
+egy viewból vették az összes select
+csillag from last orders de hát ilyen
+view ilyen viewk sincsen itt úgyhogy ezt
+meg kell lassítani. És ez nem is annyira
+egyszerű. Tehát itt itt látható, hogy
+hogy ez itt az SQL kód konkrétan ez az
+öt sor.
+És ez pedig ennek a megfelelője
+Pythonban, mert hát ugye itt mit kell
+csinálni? Itt végig kell iterálni itt
+Python objektumokat használva, hát
+mintogyha elvégeznénk a joinokat, ugye?
+Hát le kell programozni ezeket a
+joinokat gyakorlatilag
+nyilván el lehet azt képzelni, hogyha
+ha ha ezek ezek nagy táblák, akkor ez
+bizony elég lassú tud lenni.
+És hát nem véletlenül találták ki
+azobális kezelő rendszereket, mármint a
+reációs alabadás kezelőket, hogy ezt
+szerver odan hatékonyabban meghessen
+csinálni. Na de hát a mi esetünkben ugye
+mi csak öt rendést akarunk kivenni,
+úgyhogy hatékonysággal nem nagyon
+foglalkozunk. Ezt ezt ilyen módon meg
+lehet csinálni.
+Itt ezt a trükköt megint elkövetjük,
+ugye, hogy osztunk 100-zal, amikor
+valamit
+ki akarunk értékelni, mert hiszen a
+100szorosát tároltuk, és azt hiszem,
+hogy ebben nincs is több érdekesség.
+Úgyhogy tulajdonképpen ezt el is lehet
+indítani.
+Ezt a Csak előtte még még mentsük el,
+mert valamit változtattam rajta. Tehát a
+Northw Pet most már ebben a mappában
+indítsuk el, és akkor nézzük meg, hogy
+működik-e az alkalmazásunk.
+Ott már volt. Igen.
+Jó.
+Nendskérek, hogy ennyire lassú ez a
+virtuális gép, de itt ez már nagyon a
+halálán van. Mondjuk legalább nem
+rohanok annyira.
+Jó, és hogyha egyszer elindult, akkor
+most ugye elvileg a most már ugye ezen a
+porton, ez a 127 5000-es porton ezen
+most már ez az alkalmazás fog figyelni.
+Úgyhogy
+most ide átjövök.
+Akkor most már ez a ez most már a a
+felhőből jövő alkalmazás volt, tehát
+meg is meg is lehet frissíteni. És akkor
+ez most már már működik. Látják itt a
+háttérben mindig olvashatjuk is, hogy
+éppen éppen mi történik.
+Aztondja, hogy
+jó, rendeljünk valamit megint. Tehát
+ebből az enyé sirupból rendelünk ennek
+kettőt. Nézzük meg, hogy lefut-e a
+rendelés.
+És ak itt látod, updating stock, adding
+new order, minden lefutott szépen,
+rendben. Úgyhogy ez azt jelenti, hogy
+itt az adbdázisban meg kell, hogy
+jelenjen ez a ez a ez a ez ez az új
+rendelés.
+Mégpedig
+ugye
+egy rendési tétterre az alfkinak, amiben
+kettő mennyiség van a hármas számú
+productból.
+Jó, ez a hármas számú product, az pedig,
+hogyha visszajövünk ide egy kicsit,
+na még egyszer.
+Az az enised szirup, úgyhogy úgyhogy
+rend működik az alkalmazásunk,
+mondhatnánk.
+És tulajdonképpen ezzel ez a ez a
+migrációs demo, ez itt így véget is ért.
+Migráltuk az alkalmazást, működik ahogy
+ahogy akartuk satöbbi. És most kezdődik
+egy másik
+fejezet, ami
+ami a a dokument ennek a dokumentmutának
+a tranzakciós tulajdonságait próbálja
+vizsgálni.
+Egy pillanat, erről is van valami.
+Igen.
+Ja, erről már nincsen demó, úgy látom,
+illetve nem itt van. Pillanat.
+Nem, ez ez ez nem itt van.
+Jó, hát nem érdekes.
+Igazából
+egy egy olyan kis bevezető tartozik
+ehhez,
+hogy hogy miért olyan fontosak a a
+tranzakciók, tehát miért annyira
+lényegesek a az üzleti világban a a
+tranzakciók.
+Itt én el is kezdtem egy ilyen kis
+jegyzetet írni, ha minden igaz, példá.
+Igen, igen, igen. Jó,
+tranzakciók,
+hát ez a ezek a bizonyos
+éid
+elvek, hogy ezek, hogy ez hogy ez miért
+annyira fontos?
+Hát ugye azért, mert
+a
+a cégnek a a tőkének a jelentős része
+az az adatokban van, és és ezek az elvek
+ezek az adatoknak a a konzisztenciáját
+őrzik meg,
+függetlenül attól, hogy valaki
+dokumentumtárat használ, vagy pedig
+reakciós adatbázist, vagy vagy egy
+kockásfizetet. Teljesen mindegy.
+Egyébként a lényeg az, hogy hogy akkor
+is elvárjuk azt, hogyha például én
+utalok a az egyik számámra a másikra,
+akkor az ne fordulhasson elő semmilyen
+körülmények között. Az egyikről már
+eltűnt a pénz, de a másra meg nem
+érkezett meg, ugye? Tehát ezt ezt nem
+akarjuk megengedni. Ez most olyan
+természetesnek tűnik, ugye? Csak
+gondolják meg azt, hogy ez amit most
+elmondtam, ez mindkét banknak az
+információs rendszerében Isten tudja
+hány tábla módosítását jelenti. Tehát ez
+nem egy tábla módosítását jelenti, hogy
+én ott egy egy össze egy egy számlán
+csökkentem az összeget.
+És és ennek az egésznek egy tranzciót
+kell alkotni, és ezt úgy hívják, hogy
+atomicitás. Akkor a másik nehezen
+biztosított dolog az az izoláció, ami
+ugye azt jelenti, hogyha a konkurens
+környezetben több tranzakció fullt, és
+ugyanazt az erőforrást akarják
+használni, hogy akkor mi van? Ugye ezt
+mutattam már az előbb a
+a memória optimalizált táblák esetén,
+hogy a reációs világban
+ezt a a az izolációnak a a szintjét azt
+egyolációs
+Igen.
+Figyelek.
+Hogyha valaki kérdezett volna valamit,
+nyugodtan lehet kérdezni.
+Tartsuk egy kis szünetet esetleg.
+Szerintem véletlen volt tanár úr valaki.
+Szerintem véletlen bekapcsolt a
+mikrofon.
+Jó, tarthatunk egy 10 perc szünetet.
+Végül is megint elmúlt másfél óra. Jó,
+akkor tartsunk 10 perc szünetet és
+folytatom
+440-kor. Jó,
+ne aludjon be mindenki. Jó, akkor
+folytatjuk.
+16:40-kor
+ezzel a tranzakciós teal nagyon nagyon
+izgalmas lesz, úgyhogy úgyhogy egy kis
+kitartást kérek.
+No hát kedves kollégák, akkor ott
+tartottam, hogy hogy vannak ezek a
+bizonyos elvárások és ezt a reációs
+világban
+ezeket az elvárásokat egyrészt a
+tranzakciós naplóval, másrészt pedig
+zárolással oldják meg az izolációt
+zárolással. A többi három tulajdon pedig
+a tranzakciós napróval oldják meg. Na de
+hát most lássuk, hogy hogyan működik ez
+í, vagy milyen hibaford számot abból,
+hogyha esetleg nem működik. Most azt
+fogjuk csinálni, hogy megy a vegy a a a
+web alkalmazásunk
+és
+beállítunk
+három párhuzamos
+sessiont.
+Tehát ez itt a ez lesz az egyik.
+tulajdonképpen
+itt a back gombot megny visszakerülünk a
+főlapra
+és csinálunk még két másik ilyen
+ablakot.
+Azt mondjuk, hogy new window, de csak
+egy kicsit, hogy egymás mellett lássuk
+őket egyszerre.
+Igen,
+ezt is rájtjuk ugyanoda
+és egy harmadikat is.
+És egy olyan helyzetet fogunk
+előállítani,
+amiben
+ké jobban tesszük, hogyha ezt itt erről
+leválasztjuk, mert
+mert akkor látjuk, akkor akkor kicsiben
+is tudjuk nézni őket.
+Szóval
+egyik kliensünk,
+másik kliensünk
+és a harmadik kliensünk is van valahol,
+az pedig itt van emögött.
+Jó,
+tehát állítsuk be azt az esetet,
+amikor egy bizonyos terméknek, mondjuk
+az egyes számú terméknek
+a raktárkészlete az mondjuk három. Ezt
+itt szépen át lehet írni kézzel,
+tehát kilenc helyett csak három.
+És
+a vásárlóinknak mindegyiknek van elég
+elegendő egyenlege, tehát mondjuk
+bejtjük nekik a ugye meg kell szorozni
+100-zal
+a az értéket. Tehát még bejtjük
+10000-re, az azt jelenti, hogy hogy
+az biztos elég lesz neki. És
+mindenkinnek ugyaniry az egyen azért,
+hogy lássuk
+különbséget. Tehát 10000.
+A másik vásárló is 10000.
+Annak már most is annyi. És a
+harmadiknak
+annak is 100. Jó, akkor mindegyiknek
+10000 az egyenlege most. És akkor az
+egyes számú termék
+annak a az egység ára az 18. Tehát akkor
+most azt próbáljuk meg szimulálni, hogy
+mind a három vásárló kettőt akar venni
+ebből a bizonyos termékből.
+És
+hát most szimuláljuk a fizetést azzal,
+hogy a a tranzakció közepébe, tehát
+mielőtt végrehetnánk a tranzakciót, oda
+beteszünk egy kis egy kis késleltetést.
+Azt mondja, hogy
+ki is lehet másolni.
+Itt, itt láttam én egy ilyet. Pillanab.
+Order pro nem itt volt.
+Igen. Import time,
+checking the balance.
+És így tovább.
+Aha, ez nem az lesz,
+hanem ez.
+Igen.
+Jó. Tehát akkor írjuk be ide azt, hogy
+import time.
+És
+és ide
+az order procsba
+azt, hogy
+time plant
+sleep
+és 10, tehát hogy 10 másodpercné. Hát
+itt most azt szimuláljuk, hogy mondjuk
+fizetjük vagy fizetés közben terheljük a
+bankszámláját, hogy hálózati késeltetés
+történik. Jó,
+most ezt mentsük el.
+az alkalmazásunk ilyenkor elvileg
+automatikusan újraindul.
+Nem kell megállítanunk,
+de nem biztos, hogy most újra indult.
+Úgyhogy indítsuk el inkább akkor újra.
+A flask GCP Fire Stall.
+Jó,
+oké. És akkor az egyikbe beállítjuk a a
+mindegyikbe beállítjuk ugyanazt a
+terméket. egyes számú, tehát ott a
+Chite, ebben az Alfred futter küste
+lesz, a másikban a az a második vásárló
+lesz, és ez is kettőt akar venni belőle,
+és a harmadik bandon pedig a a harmadik
+vásáró lesz,
+és az is a csából akar venni kettő. Most
+nyilvánvaló, hogy ugye m összesen három
+van a raktáron,
+ezért a raktárkészlet ugye nem lehet
+negatív. Ezt ellenőrizzük, itt látják.
+Hát van egy elés, hogy nem lehet a
+raktákészlet negatív. Kérdés, hogy mi
+fog ténylegesen történni. Jó, nyomjuk
+meg a submit gombot itt is, itt is, itt
+is. Nézegessük a, hogy itt, hogy itt
+hogy itt mi történik.
+Az a helyzet,
+hogy a
+hogy hogy nem jó
+kódot futtattam le, mert már azt
+futattam le, ami már a megoldást
+tartalmazza. Elnézésüket kérem.
+Úgyhogy ezt rögtön meg is állítom.
+Összekevertem a a könyvtárok között a
+Camp Frask GCP Firestól. Nézzük csak.
+Igen, ez a Temp 2 volt, amit itt
+editálgattam, és ez pedig a temp,
+úgyhogy nem egészen ugyanaz. Úgyhogy át
+kell mennem a Temp 2-be. Jó, úgyhogy
+mintha nem történt volna semmi.
+Elnézést.
+Előttem a poént.
+És akkor megint
+és
+temp 2.
+És akkor ott megyünk a
+plask
+GCP file Storebal. Jó.
+Na és akkor most indítsuk el. Jó, de
+előtte visszajük az eredeti állapotot.
+Jó, ezeket ezeket back vissza,
+mindegyik visszamegy az eredeti lapra.
+És a
+a weblapon pedig beállítjük az ereti
+értékeket. Hát tehát, hogy a customers
+mindegyiknek ugyanaz az a 10000 legyen a
+az egyenlege.
+Ezt itt átírom 10000-re.
+Ja, ennek
+jó. És akkor a terméknek a
+raktárkészletét pedig háromra.
+Egy helyet háromra.
+Oké.
+Na és akkor próbálj próbál próbáljuk meg
+újra.
+Most már a temp 2 mappában lévőt indítom
+el.
+Azért is volt nekem gyanús, hogy nem
+indult újra, amikor módosítottuk, ugye?
+Na mindegy, mert nem azt módosítottuk.
+És akkor nyomjuk meg a submit gombot itt
+is, itt is, meg itt is. És akkor nézzük,
+hogy mi fog történni.
+Hopp! Aztongja.
+Ajjaj,
+itt valami autentikációs hiba van.
+Mindjárt meg is kell néznem. Ja igen, az
+a az az autentikációs hiba van, hogy ez
+egy másik mappa,
+ez a temp és oda ezt a tokent át kell
+másolnunk a FG CP fire stolból,
+ugye, mert ez egy másik token.
+Ide
+egyébként nagyon hasonlítanák egymásra,
+de
+jó.
+És akkor nézzük meg még azt is, hogy
+amit én itt próbálkozok, az az a Token
+Jason keresi-e?
+Igen. Tehát ezt még átírjuk Token
+Jasonnek.
+Na, még egyszer.
+És akkor most mentsük el.
+Na, ez most tényleg restarting. Ez
+nagyon jó.
+Most tényleg jó a webalkalmazás.
+Aztongja
+na.
+jó,
+ezt is meg kell állítanunk.
+Megfrissítjük.
+Aha.
+Ja, hát úgy látszik kicsit nehezen
+nálunk át az új demóra, de mindjárt
+össze fog jönni egy pillanat. Ezt is itt
+lerakjuk. És itt a harmadik,
+az pedig megint csak
+nyomunk egy back gombot.
+Na, akkor nézzük meg megint a futatási
+feltételeket.
+Customers aztongja.
+Tehát akkor ezt most átírom 10000-re,
+meg ezt is
+meg az outot is.
+A termék mennyiségét pedig
+háromra.
+Igen. És ezt akkor itt háromra.
+Na hát akkor remélem, hogy most már a jó
+alkalmazásunk van és mindenki azt
+használja, amit kell neki. Tehát ez
+kettő. Az alfate footter. Ennek is
+kettő. Enek is kettő. Na, akkor most
+nyomjuk meg.
+submit gombokat.
+Jó,
+és akkor most 10 10 másodperc kistettet
+is van mindegyikben
+egy idő után.
+Na hát azt tapasztaltuk, tehát ez ez
+volt az elvált demo, amit akartam
+mutatni, hogy mind a három sikeresen
+lefutott. Látják, tehát ez azt jelenti,
+hogy mind a három pozitív visszajelzést
+kapott.
+Mindegyiknek az egyenlege lecsökkent.
+Nézzék csak meg. Itt a customiz
+korrekció.
+És akkor ennek is csökkent az egyenle.
+Meg ennek is csökkent, meg ennek is
+csökkent. Igaz,
+de a termék mennyisége
+az ugye egy, tehát összesen kettőt
+adtunk el, tehát kettő csökkent a
+raktárkészletünk és mégis hatot
+fizetettünk ki, ugye? És ki lett ennek a
+szerencsés nyertese ennek a bizonyos
+a három közül ugye csak az egyik kapta
+ténylegesen meg, amit akart.
+Egy pillanat. A a rendelésekbe menjünk
+itt bele.
+A legutolsó rendelés az ez volt itt az
+Alfki. A másik kettő az be fog minket
+perelni, mert ugye nekik csökkentettük
+az egyenlegét és nem kaptak semmit. Most
+miért történt meg ez a ez a hiba? Pedig
+mi ellenőriztük a raktárkészletet. Igaz,
+tehát mi erre gondoltunk itt, hogy hogy
+ne megyünk akkor tovább, hogyha ha
+rakták észre túl alcsony lenne. Hát
+azért kérem szépen, mert a a a várakozás
+nem a list orders, hanem hanem itt ez a
+time sleep. Ez az után történt, hogy
+ellenőztük a raktárkészletet és az
+előtt, hogy változásokat csináltunk
+volna. Tehát ez egy ilyen klasszikus
+test and set típusú probléma.
+Ezt föl is írom ide. Az izolációt
+nézegetjük most itt ugye konkurens
+környezet, a test
+and
+set probléma.
+És ez egy ez egy általánosan ismert
+probléma minden konkurens környezetben.
+Hogyha a teszt és a ugyanazt a dolgot
+itt a raktárkészlet mennyiségét én
+tesztelem és utána be is állítom. Ez a
+két lépés, ez nem elválasztathat
+egymástól. Belé kell közben egy másik
+ugyanilyen folyamat, úgyhogy teszt,
+teszt, szett, szett. És aztán végül
+negatív a rakták és hogy ebben az
+esetben az történt, hogy hogy mindegyik
+egyre írta be, mert kiszámolta, hogy
+mennyire kell a végén beírni, és
+mindegyik beírta egyre. egymás után
+többször beírták egyre a rakták
+készletet, de az is lehetett volna egy
+olyan esetben, az is előforott volna,
+hogy mindegyik még csökkent kettő, akkor
+már akkor már negatívba akart volna
+menni a raktárkészlet, ugye? Tehát itt
+látható, hogy transzakcionális védelem
+nélkül
+hülyeségeket tud csinálni, hogy amúgy
+jól megírt webalkalmazás és logikai
+hibát okozhat az, hogy hogy hogy nincs
+tranzakcionális védelem. Na most ezért
+aztán természetesen gondoltak erre és
+csináltak transzcionális védelmet a
+a Fires Store-ba is. Az a bizonyos másik
+alkalmazás, amit
+amit az előbb mutattam volna,
+az transzakciókat használ. Itt ez a a
+Trans Demo nevű alkalmazás mutatja meg
+azt, hogy hogy is működik egy ilyen
+filosztó tranzakció, mégpedig
+a
+ez a temp mappa. Igen. És akkor a temp
+2-ben a FLX GCP filestól
+akkor
+akkor hol van ez a transmó? Ja, igen.
+Hát ez a ez a ez a múlt lapon van egy
+ilyen egy ilyen erőforrásunk, mindjárt
+mutatom is, hogy hol van. Jó, amit
+amit le lehet tölteni,
+és onnan onnan lehet kivenni ezt a ezt a
+megoldást. Tehát ez a március 26
+és
+a
+solution firestore 1, illetve a
+Postgas Firestore F zip abban mindjárt
+megnézem, hogy abban benne van-e.
+Nem ott van.
+Nem ott van.
+Pillanat,
+akkor az APS9-hez menjünk.
+Na, itt van. Ez az. Tehát amit amit most
+akarok mutatni, ez a ez az a
+transaction, ez a transaction demo app.
+Tehát ezt ez van itt nálam most
+megnyitva, tehát le lehet tölteni innen.
+És ez az a neve, hogy transdemo.
+Jó, mégpedig
+ez nálam itt a temp mappába másoltam be,
+a Temp Fusk GCP filestba. Jó, tehát oda
+fog majd átmenneni. Na hát ez egy nagyon
+picike kis program, ami azt mutatja meg,
+hogy hogy működik egy Firestore
+tranzakció.
+Az az ő ötletük az az, hogy
+ezeket a tesztend típusú problémákat
+verziózásra oldják meg. Ugyanúgy amit
+mondtam, hogy ez a mint ez a snapshot
+izoláció, amit a memory optimalizált
+táblák is használnak. Tehát ez azt
+jelenti, hogy ha ezzel a Firal
+nevű dekorátorral el van látva ez a ez a
+Python függvény, ez az update in
+transaction, akkor erre vonatkozik egy
+olyan extra szabály, hogyha
+ebben a függvényben, ebben a páb
+függvényben
+én olvasok egy
+tehát
+referenciát szerzek egy egy
+dokumentumhoz, olvasok egy dokumentumot,
+amelyet aztán ké és egy másik tranzakció
+módosít, akkor engem az és én még nem
+értem véget, még nem ért véget a
+végrehajtás, akkor engem az olvasó
+tranzakciót, a rendszer automatikusan
+vissza fog görgetni, az összes lépésen
+vissza fogja csinálni, és utána újra
+elindít, és akkor előbb-utóbb már a
+másik tranzakció végetér, és akkor
+kialakul az az eset, amikor nem követünk
+el ilyen logikai hibákat. Érthető a
+dolog, igaz? Tehát itt az volt a
+probléma, hogy én olvastam egy
+raktárkészletet, egy másik tranzakció
+megmódosította azt a raktárkészletet,
+mielőtt én még végetértem volna, és
+ezért én is hülyeségre módosítottam. Ha
+tudtam volna mást módosítani, akkor
+inkább visszagördülök.
+Na hát itt erre van egy ilyen kis egy
+ilyen kis demó.
+Azt mondja, hogy ehhez egy olyan
+customer recordot fogunk létrehozni,
+aminek teszt 2 a neve. Jó. És akkor
+mindjárt látni fogják, hogy ez hogy ez
+hogyan működik.
+Tehát ezt a
+a
+az adatbális böngészőbet tudjuk
+megcsinálni
+kézzel.
+Nem itt.
+Hát ez tulajdonképpen kicsit túlságosan
+is nagy.
+Jó. És akkor
+akkor itt el fogom érni ezt. Nem, ez meg
+még a Posges volt. Itt el fogom érni. De
+csinálunk egy olyan customert. akinek az
+a neve, hogy teszt 2. Jó?
+És és kell, hogy legyen legyen neki egy
+olyan
+mezője, hogy
+hogy balance, vagy balance. Igen.
+Aminek legyen egy egész értéke,
+és az értéke az pedig
+lesz kilenc. Jó.
+És
+és mit csinál ez a ez a ez egy olyan
+üzletó szavát próbálten demonstrálni,
+amikor
+megnöveljük valakinek a fizetését, de
+csak egy bizonyos küszöbig, 10 fölé nem
+mehet a fizetés.
+És
+egy kárzonos környezetben mi van akkor?
+Ugye, hogyha két tranzakció próbálja
+először lekérdezni, hogy most mennyi az
+illető fizetése, vagy egyenleg-e
+és mind a kettő megpróbálja megnövelni.
+Ugye ez pont az az eset, mint amit az
+előbb itt néztünk, csak ez kicsit más
+volt a környzet, de ez ilyen tesztendet
+típusú probléma. Nézzük csak, először is
+szerzünk egy
+egy egy referenciát ehhez az
+objektumhoz. Ehhez a tesztettő
+felhasználhoz. Ez a ez a customer
+reference.
+Itt itt igazából bekerülünk ebbe a
+tranzakciós környezetbe, és igazából itt
+amikor ezt a castref
+a ezt felhasználjuk és egy másik
+referenciát szerzünk hozzá, de most már
+a tranzakcionális környezetben itt
+jegyzi föl a futtatórendszer azt, hogy
+aá ez egy tranzakció, ami itt fut.
+És aztán ugye mivel ez
+mivel olvastuk ezt a ezt a dokumentumot,
+ezért hogyha valaki ezt a dokumentumot
+írni próbálja, miatt mi véget térnénk,
+akkor minket vissza fog görgetni. Na,
+tehát itt kiszámoljuk az új balanszot,
+hozzáadunk egyet ahhoz, ami van, utána
+alszunk egy kicsit és aztán megnézzük,
+hogy ez a balansz, amit amit
+kiszámoltunk, ez kisebb egyen mint 10.
+Hogyha igen, akkor akkor azt mondjuk,
+hogy update-eljük, hogyha nem, akkor nem
+updateeljük. Ez a ez a logika.
+És aztán ugye ezt ezt ezt ne is kell
+hívni, ezt a ezt a függvényt. Az update
+intration, ez a ez a neve. Szóval most
+állítsuk le ezt a webalkalmazást,
+és menjünk el a
+azt mondja, hogy a
+a temp mappába. Tehát akkor megint
+vissza a temp mappába.
+És
+itt a
+a flask.
+Ja, bocsánat. CD tempól
+és ugye ennek az a neve, hogy hogy
+trans demo p.
+És indítsuk ezt egy másik
+párzalos ablakban is. Tehát itt én most
+nyitok egy másik ablakot.
+Pillanat.
+majd mindjárt megnyílik.
+Jó.
+És
+akkor azt mondja, hogy ez a temp
+mappában ez lesz a könyvtárom.
+Úgyhogy ezt én egyszerűségre be fogom
+másolni.
+És akkor itt is elindítjuk ezt.
+Transát
+akkor nézzük. elindítottam ebben az
+ablakba, elindítottam ebben az ablakban
+is.
+És hogyha jól működik, akkor akkor kif
+akkor nem lesz az a hibánk, hogy végül
+11 lesz az üretőnek az egyenlege. Tehát
+az egyik tranzakciónak vissza kell
+gördülni, és azt kell kiírnia, hogy az
+egyenleg már maximális. Ugye ezt várjuk
+tőle. Szinkríz. Na ez teljesen elfutott.
+Ez a másik is lefutott, de még még nem
+teljesen.
+Még gondolkodik. Aha, látják.
+Tehát ez a második tranzakció,
+ez vissza lett görgetve. Ugye a rendszer
+egyszer visszagörgeti, és aztán
+elindította újra azt, és akkor másodszor
+elindította, akkor már amikor beolvasta
+a balanszot, akkor az már 10 volt, ugye?
+Tehát ez ez a ez a transzakcionális
+környezet, ez ez megvéd minket. Ez itt
+ez tudja izolálni a tranzakción. Nézzük
+akkor meg, hogy néz ki ennek a ennek a
+megvalósítása a a mi konkrét
+alkalmazásunk esetén.
+Hát ennek a
+ez a forráskód egy pillanat.
+mutatom, hogy hol van.
+Hát ez az április 9-nél van. Amit most
+megnéztünk, az ez volt. És
+és akkor itt ez a ez a ez a másik
+link, ez a completed fire firestore app
+with transaction control.
+Ez az, ami a tranzakció kezelésre
+kiegészítőt
+kiegészített alkalmazás. Úgyhogy
+ez nekem már szintén le van töltve,
+mégpedig
+amit az előbb véletlenültam, az az volt,
+mondjuk pedig a az a az a temp mappában
+lesz. Úgyhogy akkor mindjárt meg is
+nyitom. azongja, hogy a
+C temp.
+És akkor itt
+ez lesz a North Wind Pi, szerintem. Ez
+az.
+Igen. Na hát akkor nézzük, hogy hogyan
+van ez megoldva. Hát ugye az a lényeg,
+hogy a a annak a annak a függvénynek,
+Python függvénynek, amelyiket
+transakciós védelmekünk kell látni,
+annak ezt a filesztot transaction
+dekorátort kell viselnie.
+És ezt úgy tudjuk megoldani, hogy a
+tranzakció érdemi részét, tehát a az
+ellenőrzéseket és az admódosításokat,
+azt kivesszük az eredetű függvényből és
+betesszük egy ilyen perform transaction
+nevű
+én megpróbálom ezt
+nagyítani egy kicsit, hátha akkor jobban
+lehet majd látni.
+Szóval kivesszük és betesszük egy ilyen
+egy ilyen perform transaction nevű
+függvénybe.
+És ez ugye eleve azzal kezdődik, hogy ez
+kap egy transzakcionális környezetet a
+hívótól. A hívótól a hívó az pedig itt
+van. Tehát ez adt az eredeti order proc
+végpontból.
+Ez az order proc
+végpont. Ez itt létrehozza ezt a
+tranzicális környezetet. és akkor utána
+már át tudja adni ennek a perform
+transactionnek.
+Hát itt igazából ez csak egy referenciát
+szerez a a termékre, a vásárlóra,
+és azokat is átadja vele együtt. Meg meg
+hát a többi az pedig a HTTP kérésből
+jön. Tehát, hogy most
+mennyi mi a mennyiség meg
+ilyesmi, az már a meg melyik vásárról
+van szó, az már HTTP kérésből jön.
+És és ez a ez itt a a lelke
+tulajdonképpen a a dolognak. Tehát
+innentől kezdve
+megszerezzük ezeket a transzakcionális
+referenciákat a a dokument a
+dokumentuminkhoz.
+Ez a doc product snapshot például ez
+lesz az egyik ilyen egy ilyen
+referenciánk.
+Aztán a másik pedig a a doc customer
+snapshot lesz.
+Ugye látható itt, hogy itt a a a getnek
+van ez van egy ilyen tranzakció
+paramétere ez a ez a tranzakcionis
+objektum. És onnantól kezdve már nem azt
+mondjuk, hogy a a dokumentum update,
+hanem azt mondjuk, ennyiben változik ez,
+hogy hogy transaction update
+és
+pillanat,
+itt nekem most megállt a megállt a
+gépem. Na mindegy. Ez most ha már
+látjuk, akkor elmondom. Tehát, hogy
+transaction update
+és transaction set, ezekkel állítjuk be
+a
+az új objektumokat, illetve ezekkel
+hozzuk létre
+az új az új dokumentumokat.
+Jó, és akkor most próbáljuk ki. Tehát,
+hogyha minden stimmel, akkor hogyha ezt
+lefuttatjuk, ezt a temp mappában lévőt,
+visszatjuk az ereti érzetet, akkor azt
+kell tapasztalnunk, hogy minden tök
+ugyanúgy működik, de a három próbálkozó
+közül kettő az azt az üzenetet fogja
+kapni, hogy nincs még a raktárkészítet.
+Ez a helyes, logikailag ez a helyes
+működés.
+Be kell ide állítanunk ezt a ezt a 10
+másodperces késettetést.
+Jó, és
+és akkor nézzük meg, hogy jó-e a
+kapcsolat. A token Jason az nagyon jó.
+És a temp mappában
+kell lennie
+ennek azt mondja, hogy
+temp fpestore. Ez akkor ez ez a mappa ez
+jó.
+és a Northweg,
+megint enítjuk a web alkalmazást.
+Ezekkel visszamegyünk a a kiinduló
+oldalra
+egyikkel.
+És akkor nézzük meg, hogy a paraméterek
+jók-e. Tehát, hogy a
+hog mindegyiknek az egyenlege 10000
+legyen.
+Ez volt a hiba, hogy itt mindenkinek
+csökkent az egyenlege.
+Ennek is 10000
+meg ennek is.
+Ja, igen. És itt, hogy a a listázás ne
+fusson hibára,
+ezt a kézzel bevét
+rekordot
+vagy dokumentumot, ezt töröljük ki. Na,
+itt van ugye a
+séma on read, hogyha most lefuttatnánk
+ezt a
+ezt a ezt a létező webalkalmazást,
+amelyik a a customernél elvár egy
+bizonyos mezőt, egy bizonyos
+attribútumot, nem csak a balansot, hanem
+a nevét is, például a company névet,
+akkor bizony kapnánk egy futásidei
+hibát. Látják, mert a teszt van egy
+olyan dokumentum, amiben ez nincsen meg.
+Tehát ez amire azt mondják, hogy sé rid.
+Hogyha nem akarom futáside futásidei
+hibát kapni, akkor kérem szépen ezt
+bölcsön töröljük ki. Jó.
+Oké.
+És ráírtsuk be a terméknek a
+raktárkészletét háromra,
+és akkor minden készen á az újabb
+teszthez.
+Jó, update.
+Na, akkor ez is kettőt, az is kettőt. És
+ezt pedig egy kicsit följebb húzzuk.
+Oké. Anna, Alfred és around the horn.
+Na, akkor nézzük. Submit itt, submit itt
+és submit itt.
+És nézzük itt a a konzolt. Tehát
+mindegyik alfki anat arrow elindult. És
+most várnak mindegyik 10 másodpercig.
+Na, látják,
+valaki úgy érezte már, hogy kicsi a a
+stock.
+Igen. És itt a a vásárlókat írogatjuk
+ki. És mit tesz isten? Tényleg a három
+közül kettő alacsony rakták ezt a
+tésztát. Egy viszont
+sikerrel járt. És hogyha minden igaz,
+akkor valóban
+csak az egyiknek csökkentettük az
+egyenlét, a másik kettőnk viszont nem.
+Úgyhogy ezt ellenőrzzük azért most itt
+ugye a ez már stimmel, ez egy, de hogy
+ezek a ezek az egyenkek, ezek tényleg
+olyanok, ennek csökkentettük és akkor
+ennek 10000-nek kell még ennek is
+látják. Na, tehát megoldottuk. Hurá!
+De még nem vagyunk igazából a célál,
+mert még nem csak izolációt várunk el a
+tranzakcióktól, hanem hanem atomicitást
+is.
+Hát most például itt van ez a ez, amit
+eddig
+csiszolgattunk, ez a ez a Northind
+alkalmazás.
+És
+ebbe ebbe beleteszünk valami hibát.
+Hát például
+itt azt mondja, hogy a
+van egy
+egy updateünk például itt product. Nem,
+ez nem az.
+Azt mondja kicsit följebb.
+Time sleep. Igen.
+Na, mondjuk ide.
+Beteszünk egy hibát,
+azt, hogy 1/0.
+Jó,
+ugye, tehát módosítjuk a
+raktárkészletet, módosítjuk a balanszt.
+tehát az egyenleget, de a rendést még
+nem hoztuk létre.
+Jó.
+És akkor újra indul az alkalmazás.
+Remélhetőleg újraindult. Jó. Úgyhogy
+akkor most visszajövünk ezzel a
+kezdőlapra.
+És az alfkinak most mennyi az egyenlege?
+Az alfkinak most
+Oké.
+64 ugye? És rendelünk megint két ilyen
+csá neki.
+Ja igen, de már csak egy volt a rakták
+készlet. Háhá. Úgyhogy nem jutottunk rá
+a hibára.
+Ezt akkor elfelejtettem átállítani.
+Tehát raktárkészletet is állítsuk vissza
+háromra, hogy sikeres legyen a
+tranzakciónk.
+Jó,
+és akkor viszont a már az Alfinak is az
+egyenegét is bekállítunk megint
+10000-re. Időközben nagyon maradt ezt
+most nem most nem fizettünk neki. Ebből
+még ki kell jönnie a 36-nak ebből
+64-ből. Jó. Na akkor most
+menjünk vissza és most rendeljük meg,
+és akkor már rá kell jönnünk erre a
+hibaágra.
+Tehát persze a hibát mi nyilván elkapjuk
+itt a Pythonban.
+Na, itt látják, van egy transation
+processor processing errő division
+division by zero, ugye? Tehát ezt a
+hibát itt itt itt szépen elkaptuk, ugye?
+És tényleg sikerült elcsökkentenünk az ő
+egyenlegét. Ugye
+az ismel,
+meg az ismel, hogy a
+a a terméknek a raktárkészletét is
+nézzük csak meg. A csájnak a
+raktárkészletét.
+Igen, lecsökkentettük. Ez is nem r. Csak
+ugye az a probléma,
+hogy ugye volt egy hiba, ezért ugye ez a
+rendelés, ez még ez még nem az, hanem
+még egy korábbi rendelés, amit amit itt
+amit itt létrehoztunk.
+Igen, itt a dátumából látszik, hogy hogy
+ez
+igen 24
+pillanat.
+Akkor nézzük meg
+ezt.
+715. Na jó. Szóval, szóval nincs itt a
+rendelés, az a lényeg.
+Mert, mert mert a tranzakciónk itt,
+amikor hiba történt, akkor félbeszakadt.
+És ugye ilyenkor arra azt várnánk, hogy
+milyen hiba történik itt, itt egy nullál
+osztottunk, ezért az eddigi
+módosításaink visszagördülnek.
+A tranzakció nem valósulhat meg
+részlegessen, mert ez az ember ez ez az
+AFK, ez ideges lesz, hogy
+lecsökkentettük az egyenlegét és még nem
+jött létre az order record, ugye ezért
+aztán a futár nem kapta meg a rendés nem
+kapott semmit, ugye? Tehát ez ez megint
+egy ugyanaz az eset, mint ami az előbb
+volt, hogy hogy súlyos dolgok hibát
+vétettünk, mert az atomicitást nem
+tudtuk biztosítani. És az a helyzet,
+hogy ez a transaction környezet, ez ezt
+nem biztosítja, ezt nem erre tervezték,
+ezt csak az izoláció biztosítását tudja
+elérni. Tehát ez az atomicitást nem
+biztosítja. Érdekes, ugye a a reációs
+világban a tranzakció az azt jelenti, az
+tranzakció az biztosítja mind a négy
+tulajdonságot.
+Itt viszont ez csak az izolációra
+működik. Van megoldás az atomicitásra is
+egyébként,
+de azt nem tranzakciónak hívják, hanem
+azt mondják, hogy az egy az egy az egy
+az egy batched right, tehát egy egy
+tömbösített
+write, egy tömbösített írás.
+Pillanat. Mindjárt megnézem, hogy hogy
+mintogyha
+lenne erről valami
+valami
+ilyen
+pillanat. Lehet, hogy ebben a ebben a
+2 background minthogyha lenne még
+valami.
+Úgy emlékszem,
+de nem jól emlékeztem, nem érdekes.
+Szóval, szóval lényeg az, hogy hogy erre
+is van megoldás.
+És ezt ezt ezt ezt akkor feljegyezhetjük
+a a jegyzetünkbe tulajdonképpen egy
+pillanat
+itt az itteni jegyzetünkbe.
+Oké.
+Szóval, hogy erre a
+a transactional
+dekorátor alkalmas. Az atomicitásra
+pedig valami más, arra pedig a batch d.
+Hát ez igazából annyit jelent, hogy
+tudok csinálni egy köteget, amit
+becchnek hívnak, és abban a annak a
+kötegnek az atomicitását a szerver
+biztosítja. Tehát hogyha a kö közben
+ezek adott módosító utasítások, tehát ez
+azt jelenti, hogy update vagy vagy set,
+vagy pedig új dokumentum létrehozása.
+Hogyha akközben történik olyan hiba,
+akkor vissza fog gördülni szerencsésen a
+az egész badch.
+Erre is van egy demónk, azt mindjárt meg
+is nézhetjük egyébként.
+Mégpedig
+a
+ez a temp mappában
+a a
+Northwind Batch WR
+nevű
+script lesz az, ami ezt megpróbálja
+demonstrálni.
+Pillanat.
+Ja, tehát itt volt a itt itt volt a
+tranzakciónk.
+Ja, na jó. Oké.
+Szóval akkor nyissuk meg ezt is,
+ezt a Northwatchot.
+És nézzük meg, hogy ez hogyan néz ki a
+gyakorlatban.
+Tehát ugye először is nézik, hogy a
+kapcsolata az a token Jason keresi. Az
+jó, mert azt most is beállítottuk.
+Ugyanba a mappába vagyunk szerencsésen.
+És
+az a nagyon rossz hír van egyébként,
+hogy ez a ez a batch ez nem lehet egy
+tranzakcióban.
+Tehát ez azt jelenti, hogy vagy
+tranzakció, vagy batch van.
+El kell döntenünk itt a Firestonál, hogy
+hogy vagy az izolációt biztosítjuk
+egy ilyen snapshot izolációs szinten,
+vagy pedig a az atomicitást.
+Úgyhogy azért mondják rá, hogy snapsot
+izoláció, mert mert végül is azt
+történik, hogy hogy hogy minden
+tranzción, amikor belép ebbe a
+tranzicionális környezetbe, akkor lesz
+egy másolata arról a dokumentumról,
+amely amely az referenciát szerzett, és
+ő azzal dolgozik, ugye, és hogyha valaki
+más az eredeti dokumentumot módosítja,
+akkor gördülő vissza.
+Most nézzük meg, hogy hogy néz ki ez a
+ez a környezet. Tehát igazából csak
+annyi az egész, hogy hogy itt
+csinálunk egy új bel objektumot. Ugye
+tranzakció az itt nincsen, mert abba
+abba ez nem lehetne.
+És utána ahogy az előbb a transaction
+update szerepelt a product update
+helyett, most meg a batch update
+szerepelt. Tehát egy ez egy másik
+környezet. Ez egy batch környezet. A
+batch update szerepe a product update
+helyett. Meg a batch set helyez a
+szerepe a product update helyett. És
+viszont van egy ilyen, hogy batch kam,
+amivel jelezzük, hogy vége a batchnek.
+Hát ez egy érdekes egyerek
+tulajdonképpen, mert ugye a a reációs
+világban a tranzakciónak van komitja,
+itt meg a tranzakciónak nincs komitja,
+hanem a belcsnek van komitja, de azt nem
+lett a tranzakcióval kombinálni. Na
+mindegy.
+Mindenesetre a a belcs elkezdődik
+igazából az első adatmódosítósok
+utáutásá utasítása és befejeződik a
+komita.
+És ugye azt a előbb próbáltunk
+kiváltani, most is megpróbálhatjuk.
+Most itt a a a hiba az a unicin stock és
+a balance közé van betéve, hogy jobban
+lássuk ezt a dolgot, ugye? Tehát nem azt
+kell néznünk, hogy léőtt egy új
+objektum, hanem hogy
+ha ha jól működik a visszagörgetés,
+akkor a raktárkészített módosításnak is
+vissza kell állnia az eredeti értékere,
+és ugye ez már nem fog végigrajtódni.
+Hát próbáljuk ki. Jó, tehát most most
+beállítjuk a a futtatókörnyezetet.
+azt mondja, hogy megint csak az AFK
+beállítok 10000
+egyenleget,
+és a
+productnak pedig
+beállítunk hármat,
+csak azért, hogy ne legyen kevés.
+És akkor itt pedig megállítjuk az
+alkalmazást egy Ctrl C-vel
+és
+elindítjuk helyette
+ezt a Northwatch WR alkalmazást.
+Jó.
+Most átjövök az egyik futó ablakomba,
+és
+elően kiistáztuk a a az ügyfeleket,
+és akkor futtassuk
+Látod, hogy kaptunk egy kövér
+hibaüzenetet itt.
+Mondjuk ez rendben van. A kérdés az az,
+hogy mi van az adatbázisban. Tehát, hogy
+sikerült-e az atomicitást megőrizni.
+A terméknek a mennyisége továbbra is
+három látják, és a és a vásárlónak az
+egyenlege továbbra is 10000. Tehát ez
+bizony
+itt ez az utasítás,
+ez az update, ami a terméknek a
+mennyiségét állította,
+ez
+ez visszagördült szerencsésen, úgyhogy
+sikerült megőriznünk az atomicitást.
+Nagyon boldogok lehetünk.
+Most még azzal vagyok adós egyébként,
+bocsánat. azzal vagyok adós, hogy
+megnéztük a
+a Firestore oldali tranzakció kezelést,
+hogy vajon mi lett volna, hogyha ezt egy
+ezt egy reakciós adatbázissal csináljuk
+ezeket a dolgokat. És hát esetleg egy
+egy kis demót nézhetnénk ott is, tehát
+hogy ott ez ott ez hogyan néz ki. Jó,
+ezt itt most becsukom, vagy leállítom
+ezt az alkalmazást.
+És
+itt van nekünk ez a
+ez a poszgesses.
+Na
+igen, itt nekünk ez a ez a postgress
+függvényünk,
+amit itt amit itt meghívunk. És például
+megnézhetjük azt, hogy mi történik akkor
+ha amúgy jól fut a függvényünk.
+viszont történt benne egy hiba. Tehát
+azt mondja, hogy itt a ez a 1
+ez van 10 bens. Akkor ennek feletleg
+működnie kell. Most
+nézzük meg, hogy tényleg működik-e.
+Tehát ennyi ennyinek kéne lenni a
+raktárom.
+Igen, Remna lefutott rendesen. Ugye
+nulla visszatérési értékesztő onnan
+tudjuk.
+És na
+és akkor most mennyi a raktálkészlát?
+Azt mondja most nyolc, mert már egyszer
+lefutattuk az előbb. Oké. És most
+tegyünk be egy hibát
+ide, mit tudom én, az update után.
+Tehát a customernek az egyenlegét azt
+azt azt csökkentjük, de még a
+a raktárkészletet nem csökkentjük. És
+akkor ide beírunk egy ilyet, hogy
+perform.
+Nincsen s, csak perform.
+select mondjuk 1/0. Hát ez ugye ilyenkor
+megpróbál elvégezni egy egy hibás
+utasítást, és utána ez a create all
+replacel egyszerűen újra létzzuk a
+tárolt eljárást.
+Most már az új táró teás fog futni
+legközelebb.
+Aztongja,
+hogyan van ennek a szinttaxisa?
+Elnézést, erre nem emlékszem annyira
+pontosan. Talán így van.
+Nézzük meg.
+Oké. Ezek szerint így van.
+És akkor akkor most nézzük meg, hogy
+tényleg mennyis volt ennek az egyenek a
+vásárlónak.
+Jó, hát 1994.
+Rendben van.
+És akkor most hívjuk meg ezt. Ugye a
+rakták az még nyolc volt.
+Jó, nagyon jó. Kaptunk egy egy division
+by zero hibát.
+És most nézzük meg, hogy hogy mi lett a
+az az adabnek az állapota.
+Látják nyc,
+ugye? Tehát tehát valóban
+valóban az értékek nem láthatóak vagy
+azt jelenti, hogy ez az update, ez itt
+tényleg visszagült, csak úgy magától nem
+kell hozzá kormányrendelet. Ez ez így
+van kitalálva, hogy ez egy tranzakció és
+ez így egybe fut.
+az adat a a na
+az SQS szerveren egyébként
+még még jobban lehet ezt
+még jobb még könnyebben tudjuk ezt a ezt
+a ezt a dolgot demonstrálni. esetleg
+talán annyi időnk még van, hogy egy
+egy olyan demót is bemutassak, ahol az
+izolációs szinteket állítjuk.
+Pillanat.
+Ja, tehát ugyan ugyanezt a tranzakciót
+most megnézzük az SQSR-re. Ugye ez egy
+ez egy kicsit más.
+Az is egy reakciós adatbázis, de viszont
+kicsit másképp néz ki ez a script. És ez
+a
+ez a függvény egy pillanat, mindjárt
+mondom is, hogy igen. Tehát a van egy
+ilyen áp 9-nél, hogy MS SQL server
+snapshot Isolation. Tehát ez lenne, amit
+még esetleg miért mutatnék.
+Jó, tehát ezt
+ez is egy script, amit ki lehet másolni.
+És ezt most akkor az SQL szerverbe fogom
+betenni. Hát tulajdonképpen én már nem
+akarok több
+Python kódot mutatni itt, úgyhogy én ezt
+én ezt most be is csukom, mert marha
+lassú ez a gép különben is. Jó, tehát
+ezeket a dolgokat én most
+leállítom.
+Jó, egyszer
+másrészt ráom a PG admint is,
+mert abból is
+elég volt igazából ennyi.
+Hát ez nem eszik itt nekem sok
+erőforrást.
+És akkor nézzük az SQL szerver. Tehát
+itt itt megvan nekem a Northw
+adatbázisom. Ez ugye az újat Northw
+adatbázis.
+És nyissunk egy egy új queryt. ahova
+bemásoljuk ezt a ezt a scriptet.
+No
+hát nézzük meg, hogy hogy néz ki ugye ez
+a tranzakció
+az SQS szerverre megírva.
+Hát egy kicsit körülményesebben van
+megírva tulajdonképpen, mert egy ilyen
+egy ilyen státusz
+egy ilyen állapotot vezetünk végig ezen
+a ezen a scripten. Itt azért van egy-két
+érdekesség.
+Az egyik érdekesség az az ugye, hogy
+hogy itt programozottan kezeljük a
+tranzakciót, ami azt jelenti, hogy mi
+programozók mondjuk meg, hogy hol
+kezdődik, hol ér véget, mikor gördüljön
+vissza, és mikor komittáljon, tehát
+mikor érjen véget.
+A begin transaction iges szint ez így
+nézne ki szépen kív ez az utasítás az
+kezdi a transzakciót
+és aztán a a
+commit transaction
+az ami befejezi a transzakciót a
+rollback transaction az pedig
+visszagörgeti.
+Itt a PGESnél nekem nem kellett beírnom
+azt, hogy begin meg komitet, mivel
+egy
+egy függvényben lévő script az
+automatikusan egy tranzakcióban fog
+futni. Tehát ezt nekem nem nem is
+kellett beírnom, mondjuk úgy. Itt
+viszont ezt nekem be kell írnom. Tehát
+mi történik a a begin transaction után?
+Onnantól kezdve minden utasításom, a
+select is, meg az adatmódosítók is,
+mindegyik egy bizonyos zárolási
+stratégia szerint fog zárakat kérni és
+szerezni az objektumokhoz, és ha nem kap
+meg és ha nem kapja meg az árat, akkor
+várakozó állapotba kerül. Ugye ezt
+láttuk az előző demóban, amikor egy
+csomót vártak egymástól a tranzakciók,
+egy magasabb izolációs szinten,
+és ez megy egészen addig, amíg el nem
+érünk egy comité
+vagy egy rollbackig. A commit esetén az
+történik, hogy a
+a a tranzakciónak az összes zárja
+felszabadul.
+Tehát
+lehetett neki már egy magasabb izolációs
+szinten már a fél adatbázist
+lelockolhatta, mert olvasta a táblákat,
+de amikor egyszer végettél, ezek az
+árak, ezek mind megsemmisülnek és ezt a
+hát ezt a a futtató rendszert kezd ezek
+az áraknak el lehet képzelni, hogy hogy
+ez nem egy egyszerű dolog. Hát a az SQL
+szerveren több mint 20 féle zár van,
+tehát nem csak olvasás meg írási zárva
+van, hanem van még egy csomó fajta. És
+hát ugye mivel ezek a zárvások ezek a a
+rossz a nem elég nem elegendő zárás
+logikai hibához vezethet, a túlzott
+zárás pedig lassú
+tehát tehát nagyon sok blokkolás, nagyon
+sok várakozáshoz vezethet, alacsony
+átviteli sebességhez vezethet. Ezért
+aztán ezek nagyon alaposan ki vannak
+dolgozva ezek a ezek a záróási
+stratégiák.
+Mindenesetre
+itt itt mi kezeljük a ebben a ebben a
+ebben a tranzakció mi mi kezeljük a
+tranzakció elétnek a végét. És a
+rollback az tényleg abban különbözik a
+commit transactiontől,
+hogy még mielőtt felszabadítanánk a az
+ájainkat,
+előtte még visszagörgetjük az összes
+lépést, amit tettünk. Tehát
+gyakorlatilag helyreállítjuk a
+transakció futtatás előtti állapot. És
+hogyan lehet ezt visszagoletni? Hát úgy,
+hogy a reakciós adabásoknak az egyik
+alapja az úgynevezett right to head log,
+tehát a a right ahead
+log
+röviden ugye w
+tehát a a az a tranzakciós napló, amibe
+minden adatmódosító utasítás ehhez egy
+bejegyzést mé egy olyan bejegyzést, ami
+alapján azt az adatmódosítást
+azt
+vissza lehet csinálni és újra is le
+lehet játszani.
+Ezt is most már be lehet csukni.
+Mikor van szükség róla, hogy
+visszacsináljuk? Hát akkor, hogyha hogy
+ról bekerjük a tranzakciót. Most
+gondolják meg, hogyha az az
+adottmódosító utasítás az egy delete
+table volt egy táblának a törése, és ez
+a tábla az tartalmazott, mit tudom én 10
+millió rekordot, akkor mind a 10 millió
+rekordot vissza kell valahon állítani,
+és az a 10 millió rekord az benne van a
+tranzakciós logban. Tehát ez egy ez egy
+óriási nagyon erőfes igényes dolog.
+A például az atomicitásnak a
+biztosítása, el tudják ugye ezt ezt a
+dolgot képzelni, hogy igen, ez ez bizony
+nagyon tehát a trakciós ló az nagyobb
+lehet, mint az adatbázis a a méretét
+tekintve ebből kifolyólag.
+Viszont szükség van rá.
+És mikor kell előrefeleget? Tehát újra
+játszani a tranzakciót. Például mondjuk
+beinzertáltam egy táblába 100 millió
+rekordot,
+akkor a 100 millió rekordnak benne kell
+lenni a transzakciós log megfelelő
+bejegyzésében. Hát például akkor, hogyha
+elvesztettem az adabális fáat és a
+logból újra kell újra le kell játszanom,
+ezt roll forwardnak hívják, újra le kell
+játszanom a tranzakciókat, akkor pedig
+előrefele játszuk, és akkor akkor ilyen
+irányba zajlik le a tranzakció. Jó,
+tehát akkor itt látják tulajdonképpen a
+lényeg az, hogy ha volt egy begin
+transaction itt az elején
+valahol itt volt, akkor mindenképpen rá
+kell futnunk vagy egy komitra, vagy egy
+rollbackra. Ez a lényeg. Különben nagy
+baj van. Akkor a rendszer azt hiszi,
+hogy folyamatosan futtattunk egy
+tranzakciót, és az előforrásaink
+foglalatak maradnak.
+És akkor itt van még egy érdekesség. Van
+egy ilyen környezeti paraméter, hogy
+exact abort on, ami azt jelenti, hogy ha
+bármi hiba történik akárhol itt futás
+közben, mit tudom én nullával osztunk,
+vagy bármi,
+akkor a tranzakció vissza fog gördülni
+automatikusan.
+Tehát ez a ez a ha ez onra nightra,
+akkor hátis ez az elvárt működés, ugye?
+Tehát ezt szeretnénk, hogy az atomicitás
+ne sérüljön meg.
+Úgyhogy ezt ki is lehet próbálni.
+Most
+létrehozzuk ezt az új tároltájárást a a
+Northlben.
+És
+ugye ez volt a
+a környezetünkbe átöttuk háromra
+a Unitin stockot.
+És
+ez a három kedves vásárló vetélkezett
+érte.
+Ez pedig a
+korábbi tesztekordok törlésére szolgál.
+És hát most igazából azt tudom
+bemutatni, hogy hogyha három tranzakció
+van, és mindegyik meg akarja venni,
+mindegyik kettőt akar ebből rendelni.
+Egy pillanat az valahol
+itt lesz egy ilyen. Ez az. Igen.
+Tehát ez lesz az egyik egyik
+tranzakciónk.
+És a megfelelő izolációs szintet
+használjuk. Tehát most akkor nem a read
+commitidet használjuk, hanem a
+repeatable readet.
+Viszont table le
+nem table, hanem table ismételhető
+olvasás.
+És ezt most két másik ablakba is
+beteszem.
+Tehát ez a ez lesz akkor az alf key.
+Jó. És akkor még lesz egy harmadik is.
+Az pedig Arut, Alf és Kisfot harmadik.
+Jaj, Istenem.
+Igen.
+Anatr, Anatr volt a harmadik.
+Anatra.
+Oké, tehát egyik, másik, harmadik,
+és beteszünk ide szokásunk szerint 10
+másodperc késeltetést.
+Itt van ez a weight for delay. Na, azért
+azért olyan nagyon sok nem kell.
+Pillanat, ezt nyugodtan ki lehet innen
+szedni.
+Az update customer
+set balance.
+Igen, inkább inkább ide tegyük be ezt a
+késtettetést. Jó, egy pillanat.
+Tehát
+tehát a customer balance után, tehát
+hogy már csökkentettük, hát az előző
+példában is így csináltuk, ugye, hogy
+már csökkentettük a az egyető
+egyenlegét, viszont
+még nem hoztuk létre rendelést és nem is
+változtattuk meg a raktárkészletet sem.
+Ez volt a új logikai hibánk.
+Úgyhogy akkor most megcsináljuk újra. Jó
+ezzel a módosítással a tárolteljárást.
+Jó, idáig.
+Oké. És akkor most
+le lehet futtatni ezt a három párhuzamos
+akciót. Tehát ez az egyik,
+ezt futtatom itt.
+Ez a másik. Ezt is futtatom. És ez pedig
+a harmadik. Ezt is akkor futtatom.
+És nézzük meg, hogy mi lesz belőle.
+Hát ugye 10 másodpercet mindenképp
+válniuk kell, de most még most már 104
+másodpercnél tartunk,
+és akkor látják, hogy itt itt volt még
+négy másodperc futás idő valami másra.
+Az egyik pedig pedig végetért helyesen.
+Tehát igazából ugye azt akartuk tényleg,
+hogy a három közül csak egy futhasson
+le, mert akkor nincs logikai hiba. És a
+többivel pedig az történt, hogy amikor
+egy egy tranzakció, ez itt például ez a
+második, ami is le lett lőve, ez
+lejutott oda, hogy updateelni akart itt
+valamit.
+Itt a 10 másodperc volt a a késettetés.
+Tehát
+ehhez az inzerthez itt neki kellett
+volna
+egy írási zár, de azt nem kapta meg,
+mert a másik tranzikció rajta felejtette
+a saját olvasási zárját, azért mert ugye
+egy repeatable readizolációs szinten
+voltunk és már akkor azzó állapotba
+került.
+Aztán a harmadik az meg már a második
+tranzakciótól került várakozó állapotba.
+Tehát egymásra kezdtek várni a
+tranzakciók, és ezeket az egymás
+vállalkozásokat a rendszer észrevette,
+és egy bizonyos stratégia szerint
+feloldotta, tehát egy kör alakult ki
+vállalkozási grábban, és ezt a rendszer
+feloldotta,
+és kiválasztott valamelyik tranzakciót,
+amelyik a
+ugye deadlocknak hívják, Holtonnak
+hívják ezt, amelyik a deadlock victim
+látják a őt a Deadlock victim és lelőtte
+és ezek után tehát visszagörgette
+automatikusan és ezek után, hogyha még
+mindig volt
+kör a vállalakozási gráfbal,
+akkor megint kiválasztotta egy
+tranzakciót, és ezt addig csinálta, amíg
+a kör el nem tűnt. Ilyen esetben ugye
+hárman vártak egymással, kettőt kellett
+visszagörgetnie, hogy hogy egy maradjon
+csak a a piacon, de ez ugye látható,
+hogy ez 12 másodperc után történt meg,
+ez pedig 15 másodperc után, pedig csak
+10 másodperc tartott a tranzakciónk.
+Igen, mert a rendszer várt egy darabig,
+hogy hát hogyha ha magától valamelyik
+tranzakció meggondolja magát és és
+leveszi az árját, hogy valami történik
+vele. Tehát ezért volt ez a pluszül.
+No hát kedves kollégák, remélem, hogy
+tetszett. Én itt a szakmai anyag végére
+értem és tulajdonképpen
+nincs is más hátra, mint mint van még
+egy tesztünk. használják egészséggel a a
+felhő adta lehetőségeket. Tehát
+javaslom, hogy
+nyugodtan használják a a filest is, meg
+a meg a a GCP-nek az egyéb
+szolgáltatásait is. Még egy-egy évig
+nyugodtan lehet használni, azt hiszem
+a az egyenlégüket azt azt azt azért nem
+árt figyelmeg kis. Na ezt még esetleg
+megmutatom. Jó, hogy azt hogy azt hol
+lehet látni, mert ez egy húsbavágó
+kérdés, ugye. Pillanat.
+És még az nekem megvan
+itt. Igen.
+Igen.
+Szóval azt nem itt fogjuk látni, hanem
+hanem a
+konszol
+Google Chrome oldalon.
+Akkor mi volt annak a neve?
+Pillanat.
+Consol Cloud a macska bajszát mi annak a
+a websitnak? Mindjárt megnézem. Jó, egy
+másodperc türelem.
+Console cloud Google.com.
+Igen, az volt a probléma itt mindössze,
+hogy hogy ide nem tettem egy pontot.
+Jó, és akkor most már menni fog a dolog.
+Szóval, hogyha van egy van egy projektem
+most konkrétan ez minden lehetne egy
+másik is például, akkor
+van egy ilyen biling, és ebbe azt lehet
+látni, hogy hogy mennyit költöttem el
+eddig.
+Na most
+az viszont
+na majd mindjárt
+minden projekt hozzá van kötve egy egy
+ilyen egy ilyen billing account
+számlázási számla tulajdonképpen
+itt látható az mennyi volt a a költségem
+de vigyázat, mert a költségek azok csak
+egy pár nap késéssel jelennek még itt
+nektünk. ma mai költségem az majd holnap
+vagy holnap után fog megjelenni. Szóval
+ezzel ezzel vigyázni kell. És azt
+viszont itt nem lehet látni, hogy hogy
+hogy hogy mennyi hitelem van még náluk.
+Most ez úgy van megcsinálva, hogy hogy
+be van állítva mindenkinek 50 dollárnyi
+kredit, és a költség amíg az kisebb,
+mint 50 dollár, addig az addig az menni
+fog. A krediteket itt lehet megnézni,
+látják, itt a a billing overviewen van
+egy olyan kredit.
+És akkor itt van végig az, ami nekünk
+kell, hogy nekem 100 dollárt adtak, és
+van 97,75 dollárom. Tehát ez az, ami
+amit én most használok jelenleg. Oké?
+Úgyhogy úgy ezt kell nézegetni, és akkor
+abból látszik, hogy nyújtózkodhat még az
+ember.
+No, akkor egy pillanat.
+Hát március
+26-nál
+kéne megnézni a múdlapon. Van egy
+hatodik rövid teszt
+2026. április 18.
+Jó, hát ezt a tesztet próbált még
+megoldani, és akkor én meg is köszönöm
+mára a figyelmet,
+és további kelles hétvégét kívánok
+mindenkinek.
+Elnézést. Melyik dátumon?
+Március 26.
+Március 26. Jó, köszönöm.
+Bocsánat, az ötödiket már megcsináltuk.
+Én csak én kapcsoltam be.
+Tessék?
+Ötödiket már megcsináltuk.
+Igen, igen, igen. Most most a most a
+hatodikat kell pillanat. Azt akkor akkor
+el is
+és ha én később kapcsoltam be az
+ötödiket, még meg tudom csinálni.
+Hát
+hát ne most. Jó, most most a hatodikat
+csinálja. Jó, azt azt kérném. Jó,
+rendem.
+y

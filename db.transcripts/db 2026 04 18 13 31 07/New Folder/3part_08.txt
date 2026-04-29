@@ -1,0 +1,488 @@
+los ablakban is. Tehát itt én most
+nyitok egy másik ablakot.
+Pillanat.
+majd mindjárt megnyílik.
+Jó.
+És
+akkor azt mondja, hogy ez a temp
+mappában ez lesz a könyvtárom.
+Úgyhogy ezt én egyszerűségre be fogom
+másolni.
+És akkor itt is elindítjuk ezt.
+Transát
+akkor nézzük. elindítottam ebben az
+ablakba, elindítottam ebben az ablakban
+is.
+És hogyha jól működik, akkor akkor kif
+akkor nem lesz az a hibánk, hogy végül
+11 lesz az üretőnek az egyenlege. Tehát
+az egyik tranzakciónak vissza kell
+gördülni, és azt kell kiírnia, hogy az
+egyenleg már maximális. Ugye ezt várjuk
+tőle. Szinkríz. Na ez teljesen elfutott.
+Ez a másik is lefutott, de még még nem
+teljesen.
+Még gondolkodik. Aha, látják.
+Tehát ez a második tranzakció,
+ez vissza lett görgetve. Ugye a rendszer
+egyszer visszagörgeti, és aztán
+elindította újra azt, és akkor másodszor
+elindította, akkor már amikor beolvasta
+a balanszot, akkor az már 10 volt, ugye?
+Tehát ez ez a ez a transzakcionális
+környezet, ez ez megvéd minket. Ez itt
+ez tudja izolálni a tranzakción. Nézzük
+akkor meg, hogy néz ki ennek a ennek a
+megvalósítása a a mi konkrét
+alkalmazásunk esetén.
+Hát ennek a
+ez a forráskód egy pillanat.
+mutatom, hogy hol van.
+Hát ez az április 9-nél van. Amit most
+megnéztünk, az ez volt. És
+és akkor itt ez a ez a ez a másik
+link, ez a completed fire firestore app
+with transaction control.
+Ez az, ami a tranzakció kezelésre
+kiegészítőt
+kiegészített alkalmazás. Úgyhogy
+ez nekem már szintén le van töltve,
+mégpedig
+amit az előbb véletlenültam, az az volt,
+mondjuk pedig a az a az a temp mappában
+lesz. Úgyhogy akkor mindjárt meg is
+nyitom. azongja, hogy a
+C temp.
+És akkor itt
+ez lesz a North Wind Pi, szerintem. Ez
+az.
+Igen. Na hát akkor nézzük, hogy hogyan
+van ez megoldva. Hát ugye az a lényeg,
+hogy a a annak a annak a függvénynek,
+Python függvénynek, amelyiket
+transakciós védelmekünk kell látni,
+annak ezt a filesztot transaction
+dekorátort kell viselnie.
+És ezt úgy tudjuk megoldani, hogy a
+tranzakció érdemi részét, tehát a az
+ellenőrzéseket és az admódosításokat,
+azt kivesszük az eredetű függvényből és
+betesszük egy ilyen perform transaction
+nevű
+én megpróbálom ezt
+nagyítani egy kicsit, hátha akkor jobban
+lehet majd látni.
+Szóval kivesszük és betesszük egy ilyen
+egy ilyen perform transaction nevű
+függvénybe.
+És ez ugye eleve azzal kezdődik, hogy ez
+kap egy transzakcionális környezetet a
+hívótól. A hívótól a hívó az pedig itt
+van. Tehát ez adt az eredeti order proc
+végpontból.
+Ez az order proc
+végpont. Ez itt létrehozza ezt a
+tranzicális környezetet. és akkor utána
+már át tudja adni ennek a perform
+transactionnek.
+Hát itt igazából ez csak egy referenciát
+szerez a a termékre, a vásárlóra,
+és azokat is átadja vele együtt. Meg meg
+hát a többi az pedig a HTTP kérésből
+jön. Tehát, hogy most
+mennyi mi a mennyiség meg
+ilyesmi, az már a meg melyik vásárról
+van szó, az már HTTP kérésből jön.
+És és ez a ez itt a a lelke
+tulajdonképpen a a dolognak. Tehát
+innentől kezdve
+megszerezzük ezeket a transzakcionális
+referenciákat a a dokument a
+dokumentuminkhoz.
+Ez a doc product snapshot például ez
+lesz az egyik ilyen egy ilyen
+referenciánk.
+Aztán a másik pedig a a doc customer
+snapshot lesz.
+Ugye látható itt, hogy itt a a a getnek
+van ez van egy ilyen tranzakció
+paramétere ez a ez a tranzakcionis
+objektum. És onnantól kezdve már nem azt
+mondjuk, hogy a a dokumentum update,
+hanem azt mondjuk, ennyiben változik ez,
+hogy hogy transaction update
+és
+pillanat,
+itt nekem most megállt a megállt a
+gépem. Na mindegy. Ez most ha már
+látjuk, akkor elmondom. Tehát, hogy
+transaction update
+és transaction set, ezekkel állítjuk be
+a
+az új objektumokat, illetve ezekkel
+hozzuk létre
+az új az új dokumentumokat.
+Jó, és akkor most próbáljuk ki. Tehát,
+hogyha minden stimmel, akkor hogyha ezt
+lefuttatjuk, ezt a temp mappában lévőt,
+visszatjuk az ereti érzetet, akkor azt
+kell tapasztalnunk, hogy minden tök
+ugyanúgy működik, de a három próbálkozó
+közül kettő az azt az üzenetet fogja
+kapni, hogy nincs még a raktárkészítet.
+Ez a helyes, logikailag ez a helyes
+működés.
+Be kell ide állítanunk ezt a ezt a 10
+másodperces késettetést.
+Jó, és
+és akkor nézzük meg, hogy jó-e a
+kapcsolat. A token Jason az nagyon jó.
+És a temp mappában
+kell lennie
+ennek azt mondja, hogy
+temp fpestore. Ez akkor ez ez a mappa ez
+jó.
+és a Northweg,
+megint enítjuk a web alkalmazást.
+Ezekkel visszamegyünk a a kiinduló
+oldalra
+egyikkel.
+És akkor nézzük meg, hogy a paraméterek
+jók-e. Tehát, hogy a
+hog mindegyiknek az egyenlege 10000
+legyen.
+Ez volt a hiba, hogy itt mindenkinek
+csökkent az egyenlege.
+Ennek is 10000
+meg ennek is.
+Ja, igen. És itt, hogy a a listázás ne
+fusson hibára,
+ezt a kézzel bevét
+rekordot
+vagy dokumentumot, ezt töröljük ki. Na,
+itt van ugye a
+séma on read, hogyha most lefuttatnánk
+ezt a
+ezt a ezt a létező webalkalmazást,
+amelyik a a customernél elvár egy
+bizonyos mezőt, egy bizonyos
+attribútumot, nem csak a balansot, hanem
+a nevét is, például a company névet,
+akkor bizony kapnánk egy futásidei
+hibát. Látják, mert a teszt van egy
+olyan dokumentum, amiben ez nincsen meg.
+Tehát ez amire azt mondják, hogy sé rid.
+Hogyha nem akarom futáside futásidei
+hibát kapni, akkor kérem szépen ezt
+bölcsön töröljük ki. Jó.
+Oké.
+És ráírtsuk be a terméknek a
+raktárkészletét háromra,
+és akkor minden készen á az újabb
+teszthez.
+Jó, update.
+Na, akkor ez is kettőt, az is kettőt. És
+ezt pedig egy kicsit följebb húzzuk.
+Oké. Anna, Alfred és around the horn.
+Na, akkor nézzük. Submit itt, submit itt
+és submit itt.
+És nézzük itt a a konzolt. Tehát
+mindegyik alfki anat arrow elindult. És
+most várnak mindegyik 10 másodpercig.
+Na, látják,
+valaki úgy érezte már, hogy kicsi a a
+stock.
+Igen. És itt a a vásárlókat írogatjuk
+ki. És mit tesz isten? Tényleg a három
+közül kettő alacsony rakták ezt a
+tésztát. Egy viszont
+sikerrel járt. És hogyha minden igaz,
+akkor valóban
+csak az egyiknek csökkentettük az
+egyenlét, a másik kettőnk viszont nem.
+Úgyhogy ezt ellenőrzzük azért most itt
+ugye a ez már stimmel, ez egy, de hogy
+ezek a ezek az egyenkek, ezek tényleg
+olyanok, ennek csökkentettük és akkor
+ennek 10000-nek kell még ennek is
+látják. Na, tehát megoldottuk. Hurá!
+De még nem vagyunk igazából a célál,
+mert még nem csak izolációt várunk el a
+tranzakcióktól, hanem hanem atomicitást
+is.
+Hát most például itt van ez a ez, amit
+eddig
+csiszolgattunk, ez a ez a Northind
+alkalmazás.
+És
+ebbe ebbe beleteszünk valami hibát.
+Hát például
+itt azt mondja, hogy a
+van egy
+egy updateünk például itt product. Nem,
+ez nem az.
+Azt mondja kicsit följebb.
+Time sleep. Igen.
+Na, mondjuk ide.
+Beteszünk egy hibát,
+azt, hogy 1/0.
+Jó,
+ugye, tehát módosítjuk a
+raktárkészletet, módosítjuk a balanszt.
+tehát az egyenleget, de a rendést még
+nem hoztuk létre.
+Jó.
+És akkor újra indul az alkalmazás.
+Remélhetőleg újraindult. Jó. Úgyhogy
+akkor most visszajövünk ezzel a
+kezdőlapra.
+És az alfkinak most mennyi az egyenlege?
+Az alfkinak most
+Oké.
+64 ugye? És rendelünk megint két ilyen
+csá neki.
+Ja igen, de már csak egy volt a rakták
+készlet. Háhá. Úgyhogy nem jutottunk rá
+a hibára.
+Ezt akkor elfelejtettem átállítani.
+Tehát raktárkészletet is állítsuk vissza
+háromra, hogy sikeres legyen a
+tranzakciónk.
+Jó,
+és akkor viszont a már az Alfinak is az
+egyenegét is bekállítunk megint
+10000-re. Időközben nagyon maradt ezt
+most nem most nem fizettünk neki. Ebből
+még ki kell jönnie a 36-nak ebből
+64-ből. Jó. Na akkor most
+menjünk vissza és most rendeljük meg,
+és akkor már rá kell jönnünk erre a
+hibaágra.
+Tehát persze a hibát mi nyilván elkapjuk
+itt a Pythonban.
+Na, itt látják, van egy transation
+processor processing errő division
+division by zero, ugye? Tehát ezt a
+hibát itt itt itt szépen elkaptuk, ugye?
+És tényleg sikerült elcsökkentenünk az ő
+egyenlegét. Ugye
+az ismel,
+meg az ismel, hogy a
+a a terméknek a raktárkészletét is
+nézzük csak meg. A csájnak a
+raktárkészletét.
+Igen, lecsökkentettük. Ez is nem r. Csak
+ugye az a probléma,
+hogy ugye volt egy hiba, ezért ugye ez a
+rendelés, ez még ez még nem az, hanem
+még egy korábbi rendelés, amit amit itt
+amit itt létrehoztunk.
+Igen, itt a dátumából látszik, hogy hogy
+ez
+igen 24
+pillanat.
+Akkor nézzük meg
+ezt.
+715. Na jó. Szóval, szóval nincs itt a
+rendelés, az a lényeg.
+Mert, mert mert a tranzakciónk itt,
+amikor hiba történt, akkor félbeszakadt.
+És ugye ilyenkor arra azt várnánk, hogy
+milyen hiba történik itt, itt egy nullál
+osztottunk, ezért az eddigi
+módosításaink visszagördülnek.
+A tranzakció nem valósulhat meg
+részlegessen, mert ez az ember ez ez az
+AFK, ez ideges lesz, hogy
+lecsökkentettük az egyenlegét és még nem
+jött létre az order record, ugye ezért
+aztán a futár nem kapta meg a rendés nem
+kapott semmit, ugye? Tehát ez ez megint
+egy ugyanaz az eset, mint ami az előbb
+volt, hogy hogy súlyos dolgok hibát
+vétettünk, mert az atomicitást nem
+tudtuk biztosítani. És az a helyzet,
+hogy ez a transaction környezet, ez ezt
+nem biztosítja, ezt nem erre tervezték,
+ezt csak az izoláció biztosítását tudja
+elérni. Tehát ez az atomicitást nem
+biztosítja. Érdekes, ugye a a reációs
+világban a tranzakció az azt jelenti, az
+tranzakció az biztosítja mind a négy
+tulajdonságot.
+Itt viszont ez csak az izolációra
+működik. Van megoldás az atomicitásra is
+egyébként,
+de azt nem tranzakciónak hívják, hanem
+azt mondják, hogy az egy az egy az egy
+az egy batched right, tehát egy egy
+tömbösített
+write, egy tömbösített írás.
+Pillanat. Mindjárt megnézem, hogy hogy
+mintogyha
+lenne erről valami
+valami
+ilyen
+pillanat. Lehet, hogy ebben a ebben a
+2 background minthogyha lenne még
+valami.
+Úgy emlékszem,
+de nem jól emlékeztem, nem érdekes.
+Szóval, szóval lényeg az, hogy hogy erre
+is van megoldás.
+És ezt ezt ezt ezt akkor feljegyezhetjük
+a a jegyzetünkbe tulajdonképpen egy
+pillanat
+itt az itteni jegyzetünkbe.
+Oké.
+Szóval, hogy erre a
+a transactional
+dekorátor alkalmas. Az atomicitásra
+pedig valami más, arra pedig a batch d.
+Hát ez igazából annyit jelent, hogy
+tudok csinálni egy köteget, amit
+becchnek hívnak, és abban a annak a
+kötegnek az atomicitását a szerver
+biztosítja. Tehát hogyha a kö közben
+ezek adott módosító utasítások, tehát ez
+azt jelenti, hogy update vagy vagy set,
+vagy pedig új dokumentum létrehozása.
+Hogyha akközben történik olyan hiba,
+akkor vissza fog gördülni szerencsésen a
+az egész badch.
+Erre is van egy demónk, azt mindjárt meg
+is nézhetjük egyébként.
+Mégpedig
+a
+ez a temp mappában
+a a
+Northwind Batch WR
+nevű
+script lesz az, ami ezt megpróbálja
+demonstrálni.
+Pillanat.
+Ja, tehát itt volt a itt itt volt a
+tranzakciónk.
+Ja, na jó. Oké.
+Szóval akkor nyissuk meg ezt is,
+ezt a Northwatchot.
+És nézzük meg, hogy ez hogyan néz ki a
+gyakorlatban.
+Tehát ugye először is nézik, hogy a
+kapcsolata az a token Jason keresi. Az
+jó, mert azt most is beállítottuk.
+Ugyanba a mappába vagyunk szerencsésen.
+És
+az a nagyon rossz hír van egyébként,
+hogy ez a ez a batch ez nem lehet egy
+tranzakcióban.
+Tehát ez azt jelenti, hogy vagy
+tranzakció, vagy batch van.
+El kell döntenünk itt a Firestonál, hogy
+hogy vagy az izolációt biztosítjuk
+egy ilyen snapshot izolációs szinten,
+vagy pedig a az atomicitást.
+Úgyhogy azért mondják rá, hogy snapsot
+izoláció, mert mert végül is azt
+történik, hogy hogy hogy minden
+tranzción, amikor belép ebbe a
+tranzicionális környezetbe, akkor lesz
+egy másolata arról a dokumentumról,
+amely amely az referenciát szerzett, és
+ő azzal dolgozik, ugye, és hogyha valaki
+más az eredeti dokumentumot módosítja,
+akkor gördülő vissza.
+Most nézzük meg, hogy hogy néz ki ez a
+ez a környezet. Tehát igazából csak
+annyi az egész, hogy hogy itt
+csinálunk egy új bel objektumot. Ugye
+tranzakció az itt nincsen, mert abba
+abba ez nem lehetne.
+És utána ahogy az előbb a transaction
+update szerepelt a product update
+helyett, most meg a batch update
+szerepelt. Tehát egy ez egy másik
+környezet. Ez egy batch környezet. A
+batch update szerepe a product update
+helyett. Meg a batch set helyez a
+szerepe a product update helyett. És
+viszont van egy ilyen, hogy batch kam,
+amivel jelezzük, hogy vége a batchnek.
+Hát ez egy érdekes egyerek
+tulajdonképpen, mert ugye a a reációs
+világban a tranzakciónak van komitja,
+itt meg a tranzakciónak nincs komitja,
+hanem a belcsnek van komitja, de azt nem
+lett a tranzakcióval kombinálni. Na
+mindegy.
+Mindenesetre a a belcs elkezdődik
+igazából az első adatmódosítósok
+utáutásá utasítása és befejeződik a
+komita.
+És ugye azt a előbb próbáltunk
+kiváltani, most is megpróbálhatjuk.
+Most itt a a a hiba az a unicin stock és
+a balance közé van betéve, hogy jobban
+lássuk ezt a dolgot, ugye? Tehát nem azt
+kell néznünk, hogy léőtt egy új
+objektum, hanem hogy
+ha ha jól működik a visszagörgetés,
+akkor a raktárkészített módosításnak is
+vissza kell állnia az eredeti értékere,
+és ugye ez már nem fog végigrajtódni.
+Hát próbáljuk ki. Jó, tehát most most
+beállítjuk a a futtatókörnyezetet.
+azt mondja, hogy megint csak az AFK
+beállítok 10000
+egyenleget,
+és a
+productnak pedig
+beállítunk hármat,
+csak azért, hogy ne legyen kevés.
+És akkor itt pedig megállítjuk az
+alkalmazást egy Ctrl C-vel
+és
+elindítjuk helyette
+ezt a Northwatch WR alkalmazást.
+Jó.
+Most átjövök az egyik futó ablakomba,
+és
+elően kiistáztuk a a az ügyfeleket,
+és akkor futtassuk
+Látod, hogy kaptunk egy kövér
+hibaüzenetet itt.
+Mondjuk ez rendben van. A kérdés az az,
+hogy mi van az adatbázisban. Tehát, hogy
+sikerült-e az atomicitást megőrizni.
+A terméknek a mennyisége továbbra is
+három látják, és a és a vásárlónak az
+egyenlege továbbra is 10000. Tehát ez
+bizony
+itt ez az utasítás,
+ez az update, ami a terméknek a
+mennyiségét állította,
+ez
+ez visszagördült szerencsésen, úgyhogy
+sikerült megőriznünk az atomicitást.
+Nagyon boldogok lehetünk.
+Most még azzal vagyok adós egyébként,
+bocsánat. azzal vagyok adós, hogy
+megnéztük a
+a Firestore oldali tranzakció kezelést,
+hogy vajon mi lett volna, hogyha ezt egy
+ezt egy reakciós adatbázissal csináljuk
+ezeket a dolgokat. És hát esetleg egy
+egy kis demót nézhetnénk ott is, tehát
+hogy ott ez ott ez hogyan néz ki. Jó,
+ezt itt most becsukom, vagy leállítom
+ezt az alkalmazást.
+És
+itt van nekünk ez a
+ez a poszgesses.
+Na
+igen, itt nekünk ez a ez a postgress
+függvényünk,
+amit itt amit itt meghívunk. És például
+megnézhetjük azt, hogy mi történik akkor
+ha amúgy jól fut a függvényünk.
+viszont történt benne egy hiba. Teh

@@ -1,0 +1,258 @@
+kkor ugye van egy ilyen deploy
+rész,
+és
+bekonfiguráljuk, hogy milyen eseményre
+fog ő reagálni. Onnantól kezdve nekünk
+ezzel nincs dolgunk. Tehát amikor megjön
+az esemény, akkor a függvényt
+automatikusan egy futtatókörnyezet
+elindítja, lefuttatja, mindent
+megcsinál. De nézzük, hogy milyen
+futtatókörnyezetek lehetnek a háttérben.
+Tehát ez nem a teljes környezet, csak
+néhány példa.
+Itt látjátok fölül, hogy milyen
+runtime-ok vannak. Tehát például a Node
+S-ből többféle verzió,
+ez szerintem egy nem is annyira friss
+táblázat, ettől vannak újabbak is már.
+És az összes JavaScript az ebben fog
+futni.
+Valamilyen operációs rendszerű. Ez
+kőesebb nem érdekes. Pythonnál
+három plusz balahas verzió. Go, aztán
+Csar, Java, C++ minden. Tehát a lényeg
+az, hogy mindegyik mögött van egy
+futtató runtime,
+amit
+nekünk azért meg kell majd a
+telepítéskért telepítéskor mondani, hogy
+min szeretnénk futtatni a rendszerünket.
+Majd ezt mindjárt megnézzük a gyakorlati
+részben.
+Na most milyen megkötések vannak a
+függvényekkel kapcsolatban? Hát az egyik
+legfontosabb az, hogy ezeknek a
+függvényeknek állapotmentesnek kell
+lenni.
+Ugye hagyományos
+programozásra ezt lefordítjuk,
+akkor azt jelenti, hogy csak lokális
+változója lehet a függvénynek. És amikor
+kilépünk a függvényből, ez elvész, tehát
+az az adat vagy ilyesmi, amit a függő
+közben létrehozott, az eltűnik. És
+hogyha egy következő hívása lesz a
+függvénynek, az ugyanúgy fog működni,
+mint korábban. Tehát a hívási sorrendnek
+nincs jelentősége, nem tárolja a
+végrehajtási állapotokat,
+vagy a ugye a state információt, a
+rendszer. Nyilván ebből következnek
+problémák is. Tehát ha mondjuk egy
+valamilyen workflowt akarunk
+implementálni, akkor ott nagyon gyakran
+kellene az, hogy az a workflow egy belső
+állapotot tároljon. tudjuk, hogy éppen
+mi készült el, hol tartunk satöbbi. Ezt
+maga a függvény nem tudja megtenni, de
+ehhez felhasználhatunk egy egy
+háttértároló szolgáltatást,
+ahova berakhatjuk ezt az állapot
+információt. És akkor ezt mindegyik
+függvény
+aki részt vesz a workflowban,
+beolvashatja induláskor és megnézi, hogy
+állapotfüggően neki mit kell csinálni.
+Tehát egy kis kerülővel ezeket meg lehet
+oldani, de alapvetően mindegyik
+állapotmentes.
+Na most a következő megkötés, és ez most
+főleg a a korai függvényimplementációkra
+vonatkozik, majd erről ugye beszélek,
+hogy vannak már újabb módosított
+változatok is. Tehát a koraiaknál az
+volt, hogy
+amikor egy függvény elindul, az egyetlen
+egy felhasználói kérést tud kiszolgálni.
+És itt a lényeg az volt, hogy ezek
+izoláltak legyenek, tehát hogy
+véletlenül se keveredjen össze két
+különböző független kérés egy
+függvényben,
+mert akkor nem tudnánk esetleg
+biztosítani azt, hogy hogy adatszivágás
+ne történjen satöbbi.
+Ha ha több kérés van, akkor nyilván több
+függvény fog elindulni, és ez igazából
+automatikus skálázhatóságot is
+eredményez. Tehát ha nagyon sokat
+használják, vagy nagyon sokan hívják meg
+ugyanazt a függvényt, akkor egyszerűen
+csak nagyon sok példán fog elindulni
+automatikusan.
+A a következő az, hogy milyen
+végrehajtási garanciáink vannak.
+Ugye ez a a szemantikai kérdés.
+És itt két különböző módon működő
+végrehajtásról beszélünk. A HTTP
+függvények, tehát amik ilyen frontend
+jellegű valamik, azoknál az atmost on
+szemantika érvényes. Tehát magyarán
+maximum egyszer fogjuk ezeket a
+függvényeket meghívni.
+Ugye az appost on az azt jelenti, hogy
+lehet, hogy egyszer sem indul el,
+de egynél többször biztos, hogy nem fog.
+A tehát ez a bestön
+egy HTTP kérés, reméljük, hogy elindul.
+A háttérnél ez már nem így van. Ott az
+at least once, tehát ott addig
+próbálkozik a rendszer, amíg legalább
+egyszer végre nem hajtja azt a
+függvényt. És ha belegondoltok, ez
+teljesen logikus, hogy http kérés az
+ugye a a felhasználóalról, a klienstől
+érkezik. Nekün nincs behatásunk arra,
+hogy a kliens
+ha nem érkezik meg a kérés, akkor azt
+valahogyan újra küldje. Ezt nem tudjuk
+irányítani. Tehát ezért van az, hogy
+eljön a kérés, aztán ha megérkezik,
+akkor végrehajtjuk. Ha nem érkezik meg
+valami miatt, akkor nem hajtjuk végre.
+De ha ez egy háttérfüggvény,
+akkor ez szorosabban van integrálva a
+felhőfuttató környezetbe,
+és a az esemény
+továbbító mechanizmus az tudja azt
+figyelni, hogy az az esemény valóban
+megérkezett-e a célba, vagy sem, és ha
+nem, akkor újra tudja küldeni, és addig
+küldi újra, amíg legalább egyszer oda
+nem ér, és akkor automatikusan
+meghívódik. a függő. Tehát ennek a
+megkülönböztetésnek ez az oka, hogy a a
+background függvény esetében van rá
+hatásunk a ismételt kiküldés a másik
+esetben nincs.
+Jó, itt még van egy-két apróság, hogy
+nyilván vannak hibák.
+Figyelnünk kell, hogy időben lefut-e
+valami. Majd ezek mindjárt a következő
+dián fogok beszélni.
+És mindegyik függvénynek
+lehet egy saját belső kis fárendszere,
+ami csak a a futás idejéig érhető el, és
+nyilván globális internet elérés, főleg
+a a HTP
+ívények esetén.
+Jó, és akkor hát miből áll egy ilyen
+függvénynek a
+használata? Szokásos lépések. Nyilván
+meg kell írnunk a függvényt, amikor
+telepítjük, akkor föl kell
+konfigurálnunk, hogy milyen runtime-ot
+használjon, illetve milyen eseményekre
+reagáljon.
+Hogyha ezek az események bekövetkeznek,
+akkor jön a harmadik lépés, függvény
+végrehajtása.
+És ha nagyon akarjuk, akkor ezeket futás
+közben lehet monitorozni is. Tehát
+megnézhetjük, hogy szépen halad-e előre
+a futás vagy sem. Mikor ezzel
+megérkeztünk oda, hogy hogyan lehet
+ezeket
+létrehozni, illetve feltölteni a
+felhőbe. Hát mint minden a felhőnél, ez
+is többféleképpen oldható meg. Itt
+kékkel
+szedtem a
+legfontosabb
+stratégiákat. Tehát az első az az, hogy
+a parancsorból is meg lehet ezt
+csinálni, akár a saját gépünkről, akár a
+Clar Shellből, a Gcard parancsal
+megadhatjuk, hogy egy bizonyos nevű, itt
+a name helyére be kell írni a függvény
+nevét, azt telepíteni akarjuk, és akkor
+a rantime kapcsoló után pedig megadjuk,
+hogy milyen runtime-ot használjunk, és
+milyen triggert, vagyis milyen eseményre
+induljon el.
+Jó, tehát ez az egyik lehetőség. A van
+olyan lehetőség is, hogy a valamilyen
+repozitóriumból
+automatikusan töltse le a rendszer
+felhőbe a kódunkat. Itt ezt látjuk. Itt
+annyi plusz van, hogy van egy source
+kapcsoló, és utána egy HTTP URL-lel meg
+van adva, hogy honnan kell ezt a forrást
+letölteni, illetve van a harmadik,
+amikor a böngészőn keresztül konzolból
+lehet ugyanezt megcsinálni.
+nyilván lehet programozottan is, de
+azért
+függvényt azt nem kell nagyon sokszor
+telepíteni, tehát ez valószínűleg
+egyszerűben megoldható egy ilyen külső
+screből. Jó, majd mi a a C-t fogjuk
+használni, tehát a a
+miért akartam mondani, tehát a böngészőn
+keresztül a konzolból fogunk először
+létrehozni egy ilyen ütényt.
+Ez lesz a az egyik példánk, és
+aztán majd lesz egy olyan is, ami a J
+Cloud fogja használni.
+Jó, a következő lépés, hogy mikre is tud
+reagálni egy ilyen függvény. Ugye a
+HTTP-ről már volt szó, és mondtam úgy
+általánosságban, hogy vannak az
+események, amire tud reagálni. De most
+az eseményeknek sokféle fajtája van.
+Amit itt láttok, ez a a
+Google Cloud Function egyes verziójának
+a
+engedélyezett esemény halmaza. Tehát hét
+különböző eseményre tud reagálni egy
+ilyen függvény. A HTTP-n kívül van
+storage esemény,
+Papsab, amiről majd később beszélünk.
+Firestoreból érkező esemény Firebase,
+többi mint Firebase. Tehát ez volt az
+első nekifutás úgymond
+a függvényeknél.
+Aztán ez kiegészült
+és megjelent egy
+második verzió. Ezt lehet, hogy oda is
+kellett volna írnom,
+hogy ez itt a egyes verzió.
+Gyorsan még kiegészítem,
+hogy biztosan nyoma legyen.
+Tehát ez a V1-re vonatkozik. A B2 az egy
+kibővített eseményító
+architektúrát használ, és ott nem is
+tudom
+több 10 vagy talán 100 különböző
+eseményt is lehet használni vagy
+generálni.
+Na most ha már így szóba került ez az
+első és második generáció,
+akkor nézzük meg azt, hogy milyen
+fizikai megkötések érvényesek a
+függvényekre.
+Nyilván nem akarjuk azt például, hogy
+egy függvény véletlenül be kerüljön egy
+végtelen ciklusba, és örökkön örökké
+fusson, és csak számlázza nekünk a
+sok-sok pénzt.
+Tehát az első és legfontosabb, hogy
+mindegyiknek van egy maximális futási
+ideje. Itt láthatjuk ezt a második
+pontban,
+a request time, tehát ha mondjuk egy
+http függvényt használunk,
+akkor
+a
+igen az első generá

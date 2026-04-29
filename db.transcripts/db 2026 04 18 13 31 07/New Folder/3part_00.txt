@@ -1,0 +1,429 @@
+hallanak.
+És
+hát akkor utolsó öomat
+kezdem itt meg a haladó adatbál és
+kezelés tárgy kapcsán.
+Itt egy pillanatra tekintsük át, hogy
+hogy mi is volt ez a félév, amit most
+megosztottam önökkel. Azon azon ezt
+lehet látni. Tehát ez a mai alkalm ugye
+6x 45 perc lett itt egybe rakva, ami
+nekem is egy kicsit sok. Tehát itt
+sikerült megcsinálni az órarendet. És
+ennek az első felében én nemcsak az In
+memory adatbázisokkal szeretnék
+foglalkozni, hanem itt közönség
+kívánatra vagy közkívánatra
+szeretnék mutatni valami felhő alapú
+adatbáziskelést is.
+És és aztán a második részben akkor
+akkor pedig dokumentumtárak adatbázis
+migrációi úgy általában véve és a
+Firestore, illetve a Firestor-nak a a
+tranzakciója lesz terítéken.
+Két tesztet fogunk írni a mai nap. az
+egyiket az első részben, csak meg másik
+részből, tehát olyan 15 óra előtt
+valamikor
+akkor lesz az első teszt, aztán a
+második az pedig a végén 18 óra után.
+Most tekintettel, hogy már nincs több
+alkalom hátra a projektbeszámolókig,
+ami ugye május 9-én, szombaton lesz itt
+személyes jelenlétel a PC0-ban, ezért
+arról szerintem mindenképp kell egy pár
+szót beszélni. Itt a múlt lapon
+megfrissítettem ezt a kiírást, tehát ez
+most a múlt lapon van.
+Hát ugye
+az egy aláírás követelmét, hogy mindenki
+készítsen egy egy személyes projektet
+egy vagy két fős csapatban, és ezt
+mutassa be
+valamelyik projektbeszámolón. Hát a az
+első projektbeszámoló az lesz május
+9ként, hogy valaki esetleg nem készül
+el, az nem probléma. Nyilván alást akkor
+nem tudok adni, de később meg fogom
+adni, amikor bemutatja. Tehát látják,
+hogy már az első pótberszámónak is
+kiírtam az időpontját.
+És hát remélem, hogy akkor mindenki be
+tud számolni, de ha esetleg nem, akkor
+lehet még egy pót pótbzámolót is
+tartani.
+Hát itt igyekeztem mindent leírni, ami
+kérdés lehet a beszámúval kapcsolatban.
+az értékelést is, aztán a dokumentációt.
+A dokumentációt szintén ide kellene
+feltölteni, és lesz közönségdíj is, ami
+ténylegesen beleszámít az értékelésbe.
+És hát aki aki nagyon ügyes, az ilyen
+módon túl tudja teljesíteni a kurzust
+105%-ra is.
+Hát természetesen
+az mindig szubjektív, hogy mi a szép
+kerekprojekt, és mi a mi a mi a
+komolyabb és mi a kevésbé komoly
+projekt. Itt ezt igyekeztem
+összefoglalni. Ha ha valaki úgy érzi,
+hogy hogy tényleg csak a minimumot tudja
+ebbe a tárgyba most beletenni, akkor azt
+az 50%-os részt olvassa el, és akkor az
+biztos jó lesz.
+Jó, tehát igazából ennyi a a projekt
+beszámolóról. Most megkérdezem, hogy
+van-e valakinek valami
+kérdése adminisztratív,
+akár a beszámolva, akár a tesztekkel
+kapcsolatban. Hm.
+Közben lehet
+ö szóval be lehet szólni az előbra, nem
+kell csak feltétlenül jelentkezni, mert
+nem fogom látni, hogyha valaki
+jelentkezik. Tehát tehát nyugodtan
+közben lehet kérdezni, miközben én
+beszélek. Jó.
+No, hát hogyha nincsen, akkor akkor én
+el is kezdeném itt a az első anyagrészt,
+ami konkrétan a
+a az in az in memory az in memóriában
+tartott adatbázisok,
+amit in memory databasnek szoktak hívni.
+Hát most fogok erő egy kicsit beszélni,
+aztán utána lesz demo a szokásos módon.
+Tehát ez a ez itt a menetrend.
+És hát ezt egy nagyon fontos témának
+értékelem ezt az immemory adatbázist.
+De
+igyekszem röviden összefoglalni.
+Szóval a
+mind, amit eddig tanultunk,
+OLTP adatbázis kezelésből,
+tehát üzleti adatbális kezelésből, az
+arra alapozott, hogy a a az adat az
+adatbális nem fér be a memóriába.
+Az egész rendszernek a a szűk
+keresztmetszete az az volt, amikor
+nekünk a a háttértárról most ez mindegy,
+hogy SSD vagy Merel, ez teljesen
+lényegtelen. Szóval, hogy onnan kellett
+adatokat behoznunk a databerbe, ahol
+egyébként minden műveltet végeztünk.
+Tehát az
+azt rögtön tisztázni kell, hogy minden
+adatbázis az in memory adatbázis, amit
+eddig használtunk, az is, csak nem arra
+van optimalizálva, hiszen ugye minden
+művetet a memóriában vé végez az adás
+eskedő rendszer, mindent.
+Viszont hogyha nincsen benne épp a
+databulferban az adat, akkor azt be kell
+oda hozni és ez az, ami az egész
+rendszert lassítja. Ö, az indexek, a az
+egész architektúra mind arról lett
+kitalálva a végrehajtási tervek, hogy
+minél kevesebb ilyen ilyen ilyen lap
+bebehozatal kell, hogy történjen. Tehát
+ez az egész teredésnek az alapja.
+Na most egészen megláttozik a helyzet
+akkor, hogyha egy tábla, ami mondjuk
+akár egy nagy tábla is teljes egészében
+befér a memóriába, és soha ezért aztán
+soha nem lesz rá szükségünk, hogy arra
+várjunk, hogy a a táblának valamelyik
+lapját a háttértárról be kell olvasni.
+Tehát erre mondjuk azt, hogy hogy ez egy
+folyamatosan memóriában tartott tábla.
+attól függetlenül, hogy ezt a táblát is
+perzisztáljuk. Tehát ez azt jelenti,
+hogy hogy a változásokat, amik történnek
+benne, azokat rendszeresen frissítjük
+frissítjük a háttértel. Tehát kifele
+írás történik,
+értik a dolgot, de az nem fordul elő,
+hogy a a táblának a a a az adatait
+kelljen a háttértárról beszélni, kivéve
+induláskor, tehát nyilván amikor hideg
+indulás van, akkor tehát be kell tölteni
+a memóriába.
+Hát mindez úgy vált lehetővé, hogy a
+memória ugye olcsóbb lett
+és persze a tárbametek is nőnek, de
+mindenesetre ez egy reális lehetőség
+most már annyira, hogy külön
+technológiák fejlődtek ki arra, amit
+tudjuk, hogy in memory adapális szerek,
+amik nem is támogatnak másmilyen
+táblatípust csak ilyet, tehát csak olyan
+táblákat,
+amelyeknek folyamatosan memóriában kell
+lennie az egész táblának.
+ezeket az SQS szerver úgy hívja, hogy
+memory optimiz vagy memory optimized
+table, tehát MOT,
+és nagyon sok minden más is
+ki lett fejlesztve, tehát nem csak az a
+különbség itt a memó optimiz table, hogy
+hát ez a memóriában van, hanem
+egészen más szoft aritektúra szolgálja
+ezeket ki, mint a mi a hagyományos
+táblákat. Ennek az oka, hogy hogy erős
+versenybe kerültek a hagyományos
+adabbázis
+szerverek, tehát mit tudom én például az
+Oracle és a Microsoft SQL szerver,
+mégpedig a nagyon magas
+tranzakció kiszogrási igényű
+alkalmazásokban. Tehát például a az
+online sportfogadás
+és ugye erre jöttek aztán létre a a
+teljesen memória optimalizáltás közelő
+szerendszerek megoldások, de fel kellett
+venni ezt a kezdőt hagymányos adalás
+kezdő rendszereknek is. És így születtek
+meg az Mot-k.
+Tehát ezek a tábakák, ezek teljesen
+másk, mivel hogy a memóriá vannak
+optimalizálva.
+Ezért itt most mindegy, hogy melyik
+rekordot címezzük, meg ugyannyi időt
+térjük el mindegyik rekordot. Hogyha
+mondjuk volt egy merev, hát ott ma
+borzasztóan nem volt mindegy, a rekordok
+fizikailag hogy jönnek ki egymás után.
+Igaz? Hát ezért találták ki a
+klaszterezett indexet. Fizikailag sorban
+vannak rakva a rekordok. Hát itt nincs
+értelem erről beszélni. Minden memory
+ugyanolyan gyorsan fogunk elérni. Van
+egy 8 byt-os memória pointerünk és kész,
+ott vagyunk a rekordnál.
+És ez az egyik a ugye emiatt aztán az
+indexések is másmilyenek lesznek. Majd
+látni fogjuk milyenek. Másik pedig az,
+hogy hogy hát ugye hogyan kezeljük az
+adatainkat? Hát úgy ugye, hogy a
+lekkérdezéshez csinálunk egy
+végrehajtási tervet, ami az
+adatbázismotornak a primitív művelő
+épül, például mondjuk egy hash joyra
+vagy valami ilyesmi, vagy egy
+full table scan, vagy ilyen művetek
+vannak benne.
+És ezekből össze van rakva egy terv,
+amit aztán utána végigrajta motor, és a
+motort azt nagyon okos emberek
+fejlesztették ki.
+Na most
+ez az egész
+végrehajtási terv
+meg adatbás motor, ez ez is arra az
+esetre lett kitalálva, amikor a táblának
+bizonyos lapja itt esetleg be kell hozni
+a háttértá, tehát nem a memory
+optimalizált táblákra. És ezért ezt az
+egészet újra csinálták. Ráadásul, hogy a
+hatékonyság jobb legyen,
+minden egyes táblához külön natív DLket
+fordítanak. Tehát gyakorlatilag
+a a tároltárása is natív délelek
+fordítva, tehát szépen megírják hozzá a
+C++ kódot és lefordítják. Most ennél
+hatékonyabb
+megoldást nem nagyon lehet elképzelni.
+Tehát van egy memóriában egy
+adatszerkezet, és azt mi direkt annak a
+kezelésére készített
+natív kóddal szolgáljuk ki. Hát erre
+mondják azt, hogy ez a adabes kezdésnek
+a Forma 1-ye, tehát ezt úgy úgy ezt ezt
+ezt már nem nagyon lehet megverni ennek
+ennek a sebességét.
+És ugye amit a az érdekesség
+tulajdonképpen van az újdonsága
+a konkurenciával szemben, az az, hogy
+például az esköz szer az meg tudja azt
+csinálni, hogy az adásnak egy része az
+ilyen memory optimizált meg natív
+kompilált
+egy másik része meg nem.
+Tehát, hogy mi csak azokat a táblákat
+meg azokat a tároltárásokat, üzlető
+foratokat tesszük át ebbe a nagy
+testítményű részbe, amik amik amiknél
+tényleg szükség van a nagy testítményre.
+És mondjuk olyan nagy táblákat, például
+adattárház táblákat, amiket nagyon
+ritkán használnak, azok viszont nem nem
+lesznek a megbes nem foglalják a helyet.
+Tehát így ki lehet venni a a a
+az az alkalmazásból, az OLTP
+alkalmazásból. a forró magot, ugye
+emlékeznek még erről, hogy a
+transzakcionciális középpont ugye, tehát
+ki lehet venni ezt a forró magagot és
+ezt be lehet tenni memory
+optimalizáltba, és ettől az egész
+alkalmazonás sokkal gyorsabb lesz.
+No, tehát akkor a a dia utolsó sora ugye
+most már értik, hogy az immemory
+adapbázis az nem azért gyors, mert a
+tábla a memóriában van.
+Meg a memória, az immemória adott bázis
+sem azért gyors, mert a memóriában van,
+mert minden adott bázis a memóriában
+van.
+Jó.
+Hát igen. Oké. Na hát akkor nézzünk egy
+kicsit konkrétabban.
+Ez most már kifejezetten az SQS
+szerveres MOT megvalósításra vonatkozik.
+Hát ha emlékeznek még rá, alapvetően két
+fajta indexszel találkoztunk. is biztos,
+hogy találkoztak vele, ugye akkor most
+mondom, hogy a az OLTP adaptestnek a
+default index típusa az a Bfa, az a B3
+index, ami egyformán jó, egyformán elég
+jó adatmódosítások
+esetén is és adatkeresések esetén is.
+Tehát nem viszony gyorsan karbonartható,
+gyorsan változtatható, de elég gyorsan
+kereshető, tartománykeresésekre is
+alkalmas. Na most ezenkívül vannak még
+úgynevezett H indexek, amik csak
+pontszerű keresésekre alkalmasak.
+És még van egy pár másik index típus is,
+de ami a lényeg, az az, hogy memory
+optimizál tábláknál ott az elsődleges
+kulcsot azt mindig egy hash indexszel
+fogjuk
+csak támogatni.
+Mondva, hogy a az elsődleges kulcsban
+nem fogunk range kereséseket végezni.
+Ugye az által egy egy azonosító.
+Klasszett indexről nincs értelme
+beszélni, ami ugye a a hagyományos OTP
+tábák esetén ha az ember egy kulcsot
+létrehoz, automatikusan létre egy
+klusterezett bfindex a kulcsra. Hát itt
+erről szó sincsen.
+És hát a joinokat hash joinokkal
+valósítjuk meg. Hát az micsoda? Azt most
+itt sajnos nincs
+alkalm elmondani, mert nagyon kevés az
+időnk. alapvetően a h függvényekre épülő
+jo kisebb feladatokra bontjuk le a
+joint. És még van egy érdekes
+tulajdonság itt a az MTkal kapcsolatban,
+hogy hogy lehet úgynevezett cash
+táblákat is csinálni, vagy itt úgy
+mondják, hogy hogy nonurable táblát, ami
+azt jelenti, hogy azt azt azt azt azt
+nem perzisztáljuk a tartalmát, csak a
+sémáját. Tehát ez tényleg egy
+memóriaként működik, mert az
+alkalmazásra nincsen szükség arra, hogy
+a a tábláját vagy a tartalmat is és
+perzisztáljuk, de olyan alkalmazásoknál,
+mint például az adatnál, az RTL fortnak
+az a a staging táblái, hát ott ez
+teljesen jó.
+Akkor fontos az, hogy attól, hogy valami
+memory optimizált, attól még az üzleti
+alkalmazása alkalmas. Tehát ez azt
+jelenti, hogy hogy transzakcionális
+támogatás van, és és pedig és
+tranzakcionális támogatás, tehát ez
+atomicitás, konzisencia, izoláció és
+tartóság.
+Amit ugye nagyon nehéz biztosítani, de
+mindez meg van oldva. egy csomó
+korlátozás majd. Látni fogjuk, hogy
+rengeteg korlátozása az általános
+tranzakció kezdéshez képest, de attól
+függetlenül meg lehet oldani. És hát egy
+egy nagyon érdekes izolációs ugye egy
+snapshot izolációt használnak, ami a a a
+row versioningre alapul. Hát én nem
+tudom, ki tanult ilyesmit BSC-s
+tanulmányai során. Itt elő fog kerülni
+még a másik következő témában is. Tehát
+alapvetően ugye négy izolációs szintet
+definiál az SQL szabály és ezek közül
+egyik sem a snapshot izoláció.
+Mivel a ezek az izolációs szintek ezek
+ezek nem tételezzük fel azt, hogy hogy
+egy rekordból több verzió is létezhet.
+Ezzel szemben a ez a fajta izolációs
+mód, amit egyébként azt hiszem, hogy az
+orak talált fel, ez pont erre épül,
+tehát hogy hogy nem kellene a transz
+egymásra várni olyan sokat, ezért aztán
+több verzió van minden minden rekordból,
+amit valaki
+módosítani akar.
+Jó, minden táró teásból lesz egy egy DL.
+És akkor nézzük, hogy mire lehet ezt
+használni. Tehát mik a tipikus
+alkalmazásai
+az az Mot-nek.
+Hát itt van négy felsorolva.
+Az első a legfontosabb,
+tehát hogy
+nagy átbocsátású,
+nagy átbocsátási képességű,
+párhuzamos,
+nagyon gyorsan futó tranzakció
+kiszolgási környezetre van szükségünk.
+Például ugye a tőzsdétranzakciók vagy
+ilyesmi,
+ahol ahol leheteg nem várnak egymással a
+tranzakciók sokat és marha gyorsan le
+megtik mindent. Másik alkalási terület,
+amikor például
+egyszerűen nagyon nagy mennyiségű adat
+keretkezik rövid időn belül sok
+forrásból, és
+azt el kell tudni venni, és kell tudni
+valamit csinálni. Hát erre ugye megint
+specializált architektúrákat
+használtak vagy használnak most is.
+Ilyen produce erő aritektákot szoktak el
+használni, de most már ugye hát illetve
+már egy idő óta beszállt ebbe a
+versenybe az MOT is.
+Például arról van szó, hogy hogy egy IoT
+rendszerben gyűjtünk szenrop adatokat.
+És ugye itt az a az a kulcsa a dolognak,
+hogy hogy ebből a memória optimizált
+táblából a régi adatokat azokat
+folyamatosan
+mentjük egy lassabb elérésű, nem memory
+optizált optimalizált adattáházba.
+Aztán említettem az adatas alkalmazást,
+amikor a az ETL folyatót szeretnénk
+gyorsítani. Tehát a ez az extract
+transform load alkalmazást kinyerjük az
+élő rendszerekbe az az adatázakba és hát
+lehet memória
+cashnek is használni. Gyakorlatilag egy
+ilyen kulcsértéktárnak is lehet
+használni. Na, akkor nézzünk egy demót.
+Most ezek a demók, ezek a
+egy pillanat, itt látnak egy ilyet, hogy
+memory optimized tables zip.
+És
+hogyha hogyha ezt megnyitják, akkor
+van egy ezt a ezt ezt a zip fát,
+akkor
+abban lesz egy
+ez az ez az előadás is benne van
+egyébként.
+Szóval, szóval abban van először is egy
+olyan script, aminek az a neve, hogy mod
+config
+Na, ezt akkor mindjárt ki is másolom,
+és és bemásolom ide a
+teszt adatbázisomba.
+Néz

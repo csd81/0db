@@ -1,0 +1,76 @@
+ülön erre a célra készített fálban van.
+Itt van a neve, ez az LDF.
+És
+először is csinálunk a a úgy
+inicializáljuk a a logshippinget, hogy
+csinálunk egy másodot az adatbázisról
+a másik szerveren nyilván.
+És utána
+van egy olyan folyamat, egy egy olyan
+job, amelyik folyamatosan nézi a
+forrásadatbázisnak, mondjuk itt a
+Northwinnek a tranzakciós logját,
+és amikor abban csinálunk valamit, akkor
+minden tranzakciót onnan szépen fog és
+kimásol valahova,
+és
+aztán van egy másik job, ami ezeket a
+kimásolt tranzakciókat futtat. Ja, le
+folyamatosan bizonyos késeltetéssel a
+célatbázison.
+Még van egy harmadik job is egyébként,
+ami a kettőt összeköti, egy másoló job,
+mégpedig azért, mert hát ugye tipikusan
+ak értelme ennek az egésznek, hogyha ez
+fizikailag egy másik szerver, ugye,
+tehát úgy értem a a az a az, amelyik a
+céladatbázist futtatja, tehát egy másik
+szervergép, nem csak egy másik adatbáz
+szerver példa, egy másik szervergép, és
+az egyik szerverről át kell vinni a
+tranzakciós log backupokat egy másik
+szerver gépre, vagy ugye egy vállalati
+hálózati tárhelyre, tehát egy ilyen
+storage-ra, a most a mi szempontunkból,
+mindegy. Tehát igazából van még olyan
+két jobot összekötő harmadik job, ami
+egy ami ugye egy copy, tehát egy ilyen
+másoló job.
+És akkor, hogyha a mi szerveünket
+kilövik,
+akkor egész egyszerűen átrántjuk, ugye
+éré tesszük a másik adatbázist, ami
+úgynevezett ilyen warm standby
+állapotban van, tehát csak olvasható
+állapotban van az a szerver,
+am a a az a az az adatbázis, azt akkor
+élessé tesszük és áthetjük el a
+forgalmat. Most még egy dolgot szeretnék
+mondani, mielőtt ezt megmutatom, az
+pedig az, hogy itt ugye van egyfajta
+késeltetés
+az éles adatbázis, tehát most a Northw
+Doll TP adatbázis és a a másik adatbázis
+között, amit secondarynak is szoktak
+hívni,
+tehát amelyik a amelyik a warm standby
+adatbázis,
+tehát a a
+meleg tartalék, mondjuk úgy.
+És ez időnként jó is lehet. Tehát akkor
+például, hogyha
+valaki
+egy komoly hibát
+komoly adatvesztést okozó hibát követel
+az éles OLTP szerveren, mondjuk Isten
+tudja miért, akár támadásból, akár
+véletlenül szoftveriba, satöbbi,
+satöbbi, valaki kitör az ügyféltörzset
+és kész. Na most ugye akkor ne hát akkor
+leáll a szolgáltatás. Na most
+viszont mivel van mondjuk tegyük fel 10
+perc késleltetés
+az OLTP adatbázisunk és a secondary,
+tehát a meleg tartalék között. Ezért ha
+ezt 10 percennél rövidebb idő alatt
+észrevesszük ezt a hib�

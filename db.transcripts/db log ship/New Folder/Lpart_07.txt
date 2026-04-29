@@ -1,0 +1,81 @@
+t beállítás,
+hogy ha nem tudom mennyi ideig nem
+sikerül megcsinálni a dolgokat, akkor
+akkor legyen egy
+egy riasztás.
+Na most, hogyha belenézünk ebbe az
+adatbázisba,
+akkor
+akkor azt látjuk, hogy
+hogy ott van a teljes northw adatbázis,
+ami ugye várható volt, tehát miért
+backup és restore történt, ez ez
+éppenséggel logikus.
+És nézzük meg azt viszont, hogy hogy
+hogy mi van most a mappáinkban, amiket
+ahonnan vagy ahová és ahonnan másoljuk
+az adatokat, amiket ott létrehoztunk és
+megosztottunk. Tehát elvileg azt várjuk,
+hogy
+hopp, nézzük csak, ez éppen a logs
+mappánk, a ship logs.
+Egy percenként, tehát 28, 29, 30 valóban
+egy percenként jönnek ide ezek a ez ezek
+ezek ezek a TRN kiterjesztések, ezek a
+tranzakciós lognak a bekapjai. De ha
+most visszajövünk a Ja, igen. Szóval ez
+ez itt a a tranzakciós log backupnak a
+mappája. Ide készülnek mindig percenként
+a az az új mentések. Aztán innen a copy
+job másolja át a destination mappába.
+Eddig egyet másolt át, ugye? Mégpedig
+azért, mer hogy ez is csak percenként
+fut le. És aztán majd ebből a
+destination mappából fogja a harmadik
+drop, a helyreállító vinni lefutatni
+a a
+meleg
+másolaton a tranzakciókat.
+Szóval próbáljuk akkor most ki, hogy
+tényleg ez működik-e.
+A teszt adatbázis, bocsánat, a
+Nintendbázisal rácsatlakozunk.
+Jó, tehát egy egy új query ablakot fogok
+nyitni ide,
+és valami módosítások, aztán megnézzük,
+ez tényleg átkerül-e a WM backupba. Jó.
+Igen,
+az vegyünk ki egy
+mondjuk 10 248.
+És itt mondjuk itt itt fogjuk átállítani
+majd az employ idt valami másra.
+Menjünk háromra.
+Hogyha esetleg nem tudják követni, akkor
+kérem, hogy szóljanak. Jó,
+tehát ez lesz a ez lesz a módus, és ez
+ez egy egy olyan tranzakció, aminek be
+kell kerülni a tranzakciós logba.
+Ja, bocsánat, még amit elfelejtettem
+mondani,
+hogy ez az egész mechanizmus, amit most
+mutat mutatok, ez akkor fog működni,
+hogyha a forrásadatbázisnak a a recovery
+modellje az full, nem pedig simple.
+Tehát ezt ugye itt itt lehet megnézni,
+hogy properties és options.
+Ez a requiry model, ez full kell, hogy
+legyen. Ha valaki még emlékszik rá, hogy
+ez mit jelent, vagy ha nem emlékszik, na
+ha valaki nem emlékszik, annak a
+kedvéért elmondom,
+hogy ez azt jelenti,
+hogy ilyenkor
+a lognak az úgynevezett inaktív részeit
+azt nem dobjuk el
+a checkpointok esetén.
+Ö a lognak az inaktív része az, hogy a
+már komitált lefutott tranzakciókat
+tartalmazza.
+És
+ugye a simple módban ezeket eldobjuk,
+hogy a log ne növekedjen óriásir

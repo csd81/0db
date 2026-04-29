@@ -1,0 +1,293 @@
+degyikben
+kiválasztható ilyen, hogy high CPU vagy
+standard, vagy high men meg a mem. Tehát
+ezek különböző kategóriák a CPU vagy a
+memória részre. Jó, most ezeket nem kell
+feltétlen végigolvasni,
+csak egy ilyen kis bevezető fogalmi
+rész, hogy
+lássátok, hogy majd ilyennel foglalkozni
+kell. És itt megjelenik ez a VCPU, ami
+ugye virtuális CPU-t jelent. Ez
+valószágban mindig egy magot jelent,
+tehát egy CPU mag. És akkor
+ezt nem is
+szerintem itt valamit elírtam.
+Ez az 13 GBC.
+Ez oké. Viszont a magok száma az meg nem
+látszik. Jó, ezt majd meg fogom nézni
+még egyszer is, hogyha elírtam volna,
+akkor kijavítom. Jó, ahol memória van,
+azok jók. Tehát mondjuk a Highmannél
+látszik, hogy 71 GB memóriát lehet
+magonként kérni. Tehát ha mondjuk van
+nyolc mag, akkor ugy az 8x 12 lehet a
+maximális
+memorijen abban a virtuális gépen.
+Jó, és akkor egy újabb szint, hogy ha
+már a CPU-nál tartunk, akkor milyen CPU
+legyen kigyártsa. Tehát Intel vagy AMD
+processzort akarunk, azon belül is
+milyen típust, vagy valamilyen ARM
+architektúrájú
+CP-t szeretnénk használni.
+Jó, aztán vannak további opciók.
+Eldönthetjük,
+hogy
+milyen
+háttértár, illetve milyen kapacitású
+háttértár legyen a virtuális gépben.
+Akarunk-e hozzá esetleg 4 plus tárolót
+rakni, az hagyományos, meredy SSD.
+Itt lejött valami csipogás. Remélem,
+hogy csak valaki megérkeztetett és meg
+valami hiba van.
+Jó. És
+be is engedtük.
+Jó, szuper, köszönöm. És akkor van még
+itt egy ilyen érdekes dolog, amiről
+érdemes beszélni. Az utolsó pont. Tehát
+itt ez a sherd vagy a isolated virtuális
+gép.
+A sherd az egy olyan kategória,
+ami azt jelenti, hogy egy olyan
+virtuális gépet kapunk, ami
+másokkal megosztott fizikai hardveren
+fut.
+És ez azt is jelentheti, hogy akár a
+virtuális gépünket időre meg is
+állíthatják, felfyeztetik, mert esetleg
+átrakják egy másik gépröbbi. Tehát ez
+egy ilyen
+nem nagyon stabil és megbízható működést
+ad, de ez a legolcsóbb. Nyilván ez
+ilyen lukakat tömköd be a azokon a
+gépeken, ahol éppen nincs teljes
+terhelés. És van egy isolated VM, ami
+viszont azt jelenti, hogy hogy nem csak
+simán egy VM-et kapunk, hanem
+garantáltan
+ez egy ilyen
+többiektől teljesen burokban
+elválasztott gép lesz. Tehát, hogy még
+véletlenül sem osztozkodhat a hardwen
+velünk senki. Van még egy magasabb
+szint, ami már egy ilyen titkosított VM,
+de most azzal nem foglalkozunk. Tehát
+ezek is még külön opciók, amiket be
+lehet állítani. Itt megint van egy link
+lejjebb, ezt majd esetleg érdemes
+megnézni,
+ahol
+a Google leírja, hogy ők különböző
+feladatokhoz milyen virtuális gépeket
+ajánlanak.
+Jó, és akkor ezzel lassan elértünk a
+végére. És akkor még annyit kell tudni,
+hogy nyilván ez a virtuális gép, ez is
+egy szolgáltatás, tehát ennek is lehet
+egy életciklusa,
+különböző állapotokban lehet, és ez majd
+a számlázásnál nagyon lényeges lesz
+számunkra. És itt egy elég bonyolult
+folyamatábrát láthattok, ami nem tudom,
+olvasható-e vagy sem,
+de majd feltöltött
+anyagból meg tudjátok nézni részletesen.
+Úgyhogy a lényeg az, hogy itt valahol az
+elején elindul a folyamat, hogy
+létrehozunk egy virtuális gépet. Most
+csak a függőleges ágat nézzük,
+és amikor ezt létrehozzuk, akkor ugye
+ezt
+itt úgy híják, hogy provisioning, ami
+azt jelenti, hogy felkonfigurálják ezt
+az egész rendszert, és utána elkezdik
+elindítani.
+És ennek a staging nevű állapota a
+jelzője. Tehát ez az, amikor már
+elindul a virtuális gépnek a a bútolási
+folyamata, de még nem feltétlenül
+használható. És amikor rendesen bebūt,
+mint egy normál gép, akkor ugye a
+futóállapotba kerül, azt használjuk
+ameddig kell, és utána ha már nincs
+nincs szükség rá, akkor leállítjuk,
+és utána a terminál apodba is kerül,
+tehát teljesen ilyen sabdánal le lehet
+állítani.
+Jó, tehát ez a normál működés. Na most
+itt közben vannak ilyen elágazások, hogy
+lehet valami baj,
+és akkor itt egy ilyen javítás beindul,
+vagy fel lehet függeszteni a virtuális
+gépnek a futtatását, aztán abból
+visszamehet futóállapotba.
+Ezek már bonyolultabb dolgok, de ez most
+minket nem annyira érint. Az a lényeg,
+hogy a starttól, tehát amikor itt a
+createet mi
+elindítjuk, onnantól a a stop állapotig
+ez a virtuális gép használatban van, és
+ezért fognak nekünk számlázni. Minket
+leginkább a stop érdekel, mert
+elindítani nagyon könnyű valamit,
+viszont nagyon gyakoran elfelejtjük
+leállítani, még akkor is, hogyha nincs
+rá szükségünk. Jó, tehát azt mindenki
+nagyon jegyezze meg, hogy nem az a
+lényeg, hogy fut-e valami a virtuális
+gépen, hanem hogy a virtuális gép fut,
+mert azért fizetünk. Jó, tehát nagyon
+fontos, hogy amikor befejezünk egy
+gyakorlatot, akkor mindenki
+állítsa le a virtuális gépet, merthogy
+ez a háttérben futva marad, akkor bizony
+folyamatosan számlázni fognak, és egy
+idő után elfogy a pénzünk, és nem tartja
+a fél év végéig. Jó, tehát ezt fontos
+megszokni, hogy soha semmi nem tadjon
+futó állapotban.
+Nyilván aki csinált már ilyet, annak ez
+nem újdonság, de aki most találkozik
+ezzel először, az az nem biztos, hogy
+ezt automatikusan
+tudja, vagy hogy vagy ez a felhasználás
+gyakorlata.
+Na és akkor hogyan kell érte fizetni?
+Ugye mondtam, hogy számlázni fognak.
+Régen
+talán erről meséltem az első alkalommal,
+mikor a m a Sun bevezette ezt az első
+ilyen konténer alapú szerver
+szolgáltatását, akkor egy CP óra volt 1
+dollár.
+Mindig egy órát azt minimum két ki
+kellett fizetni. Most azóta azért sokat
+változott a világ, tehát már nem
+óránként számláznak, hanem
+másodpercenként.
+Annyi van, hogy az első egy percet azt
+mindenképpen ki kell fizetni. Tehát ha
+birtásgépet elindítunk, akkor minimum
+egy percig biztos, hogy fizetünk, de
+utána már csak a használat alapján
+másodpercénként megy. Tehát ha másfél
+perc lesz, akkor másfél perc fizetünk.
+Hogyha kettő, akkor kettő. Jó, de most
+mennyit fizetünk? Nyilván ez a kérdés.
+Ez viszont attól függ,
+hogy milyen virtuális gép konfigurációt
+állítottunk össze, tehát milyen hardware
+van mögötte és a többi sebi.
+Jó, és itt azt látjátok, hogy elég
+erősen szór a az ár. Tehát az óránkénti
+ár itt látszik, hogy 7 centől akár 25
+dollárig is terjedhet. Tehát nagyon nem
+mindegy, hogy melyiket választjuk.
+Például mi 50 dollárt kaptunk, tehát
+hogyha a legdrágábbat választanánk,
+akkor két óra alatt elszállt a pénzünk.
+Úgyhogy nem azt fogjuk választani.
+Nyilván a többség az olyan két két-három
+dollár között van, de én azt mondanám,
+hogy amiket mi fogunk használni, az
+mindegy dollár alatt van.
+Úgyhogy nem nem fogjuk mi azért
+kihasználni azt az 50 dollár keretet,
+mert nyilván nem fogjuk folyamatosan
+futni a virtuális gépeket.
+Jó, megint egy jó tanács
+a lehető legkisebb méretű virtuális gép
+hardértelemben
+válasszátok mind. Jó, tehát nem nem kell
+menőzni, hogy hú, én el tudtam indíteni
+egy 80 magos virtuális gépet, mert
+nagyon hirtelen vissza fogja hűtni, és
+utána már semmit nem tudunk elindítani.
+Jó, itt van egy-két példa.
+Van egy ilyen megosztott DM, ami szinte
+semmibe nem kerül két maggal. Van
+középen egy
+egy izmosabb CPU 48 maggal, az már 2
+dollár. És akkor van egy olyan, amire
+nagyon sok memória van, de csak 16 mag,
+az meg 1,2 dollár. Jó, tehát úgy
+látszik, hogy ilyen 1 dollár körül meg
+lehet állni. Tehát az a korábbi
+1 dollár/ óra, amit a SAN csinált, az
+nincs is olyan messze a a mostani
+valóságtól sem. Az érdekes ugye, hogy
+nem lett olcsóbb a szolgáltatás,
+pedig valószínűleg a hardware azóta
+olcsóbb,
+de hát ez van.
+Jó, és akkor egy két három példa arra,
+hogy mit jelentenek ezek a az árak egy
+egyhónapos folyamatos üzemben.
+És hát bizony eléggé
+más dolgokat látunk. Tehát a
+legolcsóbbal tényleg a 50 dollárunk az
+egy teljes hónapig kitartana, hogyha
+nonstop üzemeltetünk valamit. Viszont a
+B esetben már 1500 dollár majd.
+Nagyon nagyon gyorsan el lehet sok pénzt
+költeni.
+Jó. Na most azért kicsit jobb száízzel
+fejezzük be ezt a részt. Van sok
+kedvezmény.
+Például minden erőforrásra van egy
+kezdeti kez kedvezmény. Tehát egy
+bizonyos limitet, amíg nem érünk el,
+addig mondjuk nem számláznak. vagy lehet
+minden hónapban egy bizonyos kapacitás,
+amiért nem kell fizetnünk. Plusz a
+használat alapján is lehetnek
+különböző
+kedvezmények. Ezt majd a
+tárolásnál is fogjuk látni.
+Jó, de ez ezek bonyolultak. Itt a a
+virtuális gépné legegyszerűbb az, hogyha
+valaki hosszabb időre leköti a
+kapacitást, tehát azt mondja, hogy egy
+évre vagy két évre bérli ezeket, akkor
+eleve fog valami kedvezményt kapni, mert
+ugye nem nem az lesz, hogy váltakozó
+terhelést jelent ez a felhő
+szolgáltatlanak, hanem akkor ők arra
+tudnak tervezni, stabil üzemeltetés és
+stabil bevétel lesz.
+Jó, és akkor ugornánk át a tárolásra,
+ami ugye a másik lényeges dolog, tehát
+számolni akarunk, meg adat tárolni, ez
+az infrastruktúrának a két legfontosabb
+része.
+A cloud storage az a terméknek a neve,
+amit mi használni fogunk,
+és ez egy ilyen globális tároló
+szolgáltatás.
+Ez ugye infrastruktúra szín
+ként jelenik meg, mert bináris adatokat
+fogunk benne tárolni, de a valóság az,
+hogy nem nekünk kell foglalkozni ennek a
+menedzselésével.
+Tehát valóságban ez már egy szoftver, ez
+a service jellegű valami, de azért mégis
+az infrastruktúrán szoktuk besorolni.
+Jó, ez erre a maned managed szó utal. A
+manage az mindig azt jelenti, hogy a
+felhő szolgáltató menedzseri a
+szolgáltatást helyettünk. Tehát nem
+nekünk kell magát tároló szolgáltatást
+elindítani satöbbi satöbbi, hanem az fut
+mindig. Nekünk csak az adatokat kell oda
+fölpakolni
+vagy levenni.
+Elvileg nincsenek kapacitáslimitek meg
+hozzáférési
+frekvenciimit,
+de nyilván fizetni kell, kivéve ezeket
+az első ilyen
+belépési limiteket. Tehát az első 5 GB
+az minden hónapban ingyenes lesz. Az
+első 5

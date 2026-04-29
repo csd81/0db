@@ -1,0 +1,442 @@
+lekérdezéstől függ az, hogy hogy
+melyik
+korreklekció irányából akarom keresni
+azt a beányozott
+másik
+kollekciót. Majd mindjárt fogjuk látni
+ezt egy példá. És akkor a a másik irány
+kapcsolatot az pedig referenciákkal
+lehet, ami kvázi mintha egy külső kulcs
+lenne, referenciákkal lehet biztosítani,
+tehát olyan attribútumok, amit mutatnak
+valahová egy másik dokumentumra.
+És akkor most a a Fes
+szeretném bemutatni. Ezt fogjuk
+használni a a demóban. Rendkül népszerű.
+Bizonyos mértékig azért, mert ingyen
+és hitelkártyaszám megadása nélkül
+támogatja azt, hogy valaki
+adatokat tároljon, sőt webalkalmazásokat
+futtasson
+a a az a felhőben az ő közzeműködésüket.
+Na persze bizonyos keretek között, tehát
+bizonyos adatmennyiségig satöbbi
+satöbbi. Viszont nagyon népszerű emiatt
+és biztosan sokan fogják választani itt
+a a projektjüknek a a technológiájú és a
+filest azért is szerepel ebben a ebben a
+kurzusban.
+Szóval
+ezek már itt a a Firestornak az alapvető
+tulajdonságai.
+A dokumentumoknak kell, hogy legyen egy
+kulcsuk. Tehát ez egyébként szinte
+mindig
+ez mindig elvárás minden dokumentum
+tárban, ugyanis különben nem tudnánk,
+hogy most melyik dokumentot akarjuk
+kitöltni kitörölni. Tehát kell, hogy
+legyen egy egyedi kulcsa
+minden minden korrekciónak.
+A a filestore támogatja a hivatkozási
+integritást is úgynevezett security rúok
+segítsége. Ugye ez mondjuk mit
+jelenteni? Ez azt jelentené, hogy
+például van két kollekcióm, és az egyik
+hivatkozik a másikra, akkor ne lehessen
+egy olyan értéket törölni, ahogy valami
+hivatkozik, vagy neh olyan értéket
+felvenni, ami nem létezőre hivatkozik.
+Ugye ez hivatkozási integritás. Ezt
+ilyen úgynevezett biztonsági
+szabályokkal lehet garantálni, amit nem
+fogunk demózni, mégpedig azért nem, mert
+ez ez csak egy egy felhő alkalmazás
+esetében
+működnek ezek a szabályok is, mi az
+adminisztratív interfaceen fogunk
+hozzáférni, ezek ahol ezeket nem
+használják.
+Na most a kollekciókat nem lehet
+közvetlenül egymásba ágyazni a
+filosoztorban, viszont egy dokumentumba
+be lehet tenni egy kollekciót. Tehát egy
+kol vannak dokumentumok és a
+dokumentumon belül lehetnek
+alkollekciók. Hát mi ezt fogjuk
+kihasználni itt igazából,
+amikor ezt a North adatbázist
+átmigráljuk, ugyanis az lesz a
+megoldásunk, hogy a a az order, tehát
+rendelés dokumentumokba,
+minden rendésbe beletesszük egy
+alkollekcióba a rendési tételt.
+És ugye ezzel kőzeten meg tudunk
+valósítani egy egysok kapcsolatot a
+rendési tétel és a rendelés között.
+eléggé kevés adattípus támogat.
+Tehát például nincs mannípus,
+ezeknek lehetnek tömbjei is.
+És ami nagyon érdekes, hogy ők azt
+állítják, hogy hogy ők képesek ész
+tranzakciókat futatni. Hát ezt majd
+megnézzük, hogy mennyire tudnak tényleg
+futatni. Nem ezt miért mondják ők?
+azért, mert szeretnének belépni arra a
+piacra, ahol OLTP típusú adatbázis
+backendként is működik a a Firestore.
+Mondjuk a tradicionálisabb alkalmazása a
+dokumentum táraknak az az inkább egy
+olyan környezet, ahol ahol nincsen
+szükség tranzakcionális biztonságra.
+No, hát akkor akkor akkor nézzük most,
+hogy hogy is állunk. Tehát itt
+pillanat
+PG admin jöjjünk el a végére.
+Miből indulunk ki?
+Tehát
+van ez a ez a három táblánk.
+Jelenleg üres a rendelés tábla. Most van
+egy olyan
+függvényünk, ugye ez egy igaz tárol
+terrás, csak itt ezt függvénynek hívják
+a poszgnél, ami a rendelés felvételt
+valósítja meg, mégpedig ez egy
+klasszikus tranzakció, ami azt jelenti,
+hogy mindenféle feltételeket ellenőzünk.
+Itt nagyon hasonlít ez a ez a nyelv
+egyébként a a TSQR-hez, de hát ez a PGPR
+SQL nyelv, tehát sok minden másképp van
+benne. Például kell pontos fesztőt tenni
+a sorok végére, meg nem lehet kukac
+változónév elején satöbbi, satöbbi, de
+ezek lényegtelen különbségek igazából.
+Szóval, szóval ellenőrizünk bizonyos
+feltételeket.
+Itt megnézzük a a raktárkészletet,
+megnézzük az egységárat, eltesszük
+változókba,
+lekérdezzük a vásárlónak az egyenlegét,
+és utána megnézzük, hogy
+van-e a vásárlónak elég pénze
+és van-e elég a raktárkészleten. És
+hogyha igen, akkor megyünk tovább,
+különben egy hibőzenettel ki fogunk
+innen innen lépni.
+És az ellenőek után a második részben
+következik az, hogy hogy módosításokat
+hagytunk végre az adatbázison. Tehát
+módosítjuk a felhasználó egyenlegét itt
+ezzel az update utasítással.
+És ugye látható, hogy itt a az orders
+táblának ugye nincs identity típus,
+szekvenciák vannak eh. Tehát egy
+szekvenciából kérünk egy következő
+értéket és beszúrjuk az új rekordokat,
+majd pedig állítjuk a raktárkészletet.
+Tehát ennyi ez a ez a tárolt eljárás.
+siker esetén nullát fogunk visszaadni.
+És hát itt lehet is nézni, ez tényleg
+működik-e.
+Például
+itt
+a
+ennek a két
+Ja, igen, az volt a probléma, hogy innen
+lemaradt a pontos vessző.
+Egyenként is lehet kidézni ezeket a
+dolgokat.
+Tehát ennek most a
+a Unitin Stoke az csak egy, akkor ezt
+feltesszük itt 10-re.
+És ennek az alfkinak pedig beállítjuk a
+a balanszát mindössze kettőre,
+akkor
+akkor ebben az esetben, hogyha ez a
+bizonyos AFK ez vásárolni akar valamit,
+hát akkor nem eszn ki elég pénzzel.
+Tehát az egy ezt az egyet fogjuk vég
+visszakapni. Itt a messagesnél látják,
+két kész egy hiba. Ha viszont ad adunk
+neki több pénzt, akkor feltehetőleg már
+a menni fog a a tranzakciónk.
+És hát ugye ez tényleg egy tranzakció,
+tehát elvárjuk tőle, hogy hogy na itt
+akkor akkor mi a probléma vajon, hogy
+azt mondja pillanat, melyik melyik
+paraméter, melyik product és utána pedig
+a quantity. A product idant.
+Ja, igen, mert ugye itt 10 van a Unitin
+stock, és nekünk
+az volt a probléma, hogy csak
+hogy csak 10 volt, nem pedig a
+nem pedig a a az egyenlege volt kevés a
+kedves vásárlónak.
+Na
+és akkor ez már sikerrel zajlik le, ugye
+nulla visszaadott érték.
+Itt itt a tranzakció atomicitása az azt
+jelenti, hogyha például itt a az
+adatmosító utás utasítások között
+történik olyan hiba, akkor az is
+visszagördül, amit eddig már
+elvégeztünk. És hát ez ebben az esetben
+tényleg egy rendkívül fontos elvárás.
+Most van ezen kívül az adatlásban még
+egy view is, ami a az utolsó öt
+rendelést adja vissza.
+És
+akkor itt lehet látni, hogy ez is szépen
+összejoinolgatja a rekordokat. Most erre
+épül rá egy egy Python alkalmazás, egy
+Python flask alkalmazás, aminek szintén
+itt ebben a az ip fban ott van a
+forráskódja a flask mappában. Tehát,
+hogy hogy egy pillanat,
+na mindjárt
+mindig tudom behúzni ide ezt az ablakot
+most. Igen, tehát ebben ebben a flask
+mappában tárgyák a foryáskodot, de
+ugyanezek a mappák, ezek rajta vannak
+már a virtuális gépen is.
+Itt a tempyvtában. Tehát igazából ezeket
+a dolgokat meg lehet nézni. Most azzal
+kezdjük, hogy hogy beüzemeljük a az
+alkalmazásunkat
+először a postgresszel. Jó, tehát ez
+akkor ez akkor a flask mapa lesz. Itt
+látható, én ezt már megnyitottam, az
+anakconda
+keretrendszert használ ez a virtuális
+gép.
+És azon belül pedig ezt a flast devo
+virtuális
+környezetet, tehát esetleg azt azt azt
+érdemes
+pillanat
+Konda activate flast demoval be lehet,
+hogy ez a virtuálos környezet menjen.
+És hát maga a a Python alkalmazás az
+pedig itt a temp mappában található,
+vagy bocsánat, a temp és flask mappában.
+Ez pedig itt a spiderben, amihez itt itt
+találnak egy indítógombot. Én már meg is
+nyitottam.
+Aztondja, hogy a Northw P vagy Northw
+Flask alkalmazás. Na, hogy néz ki egy
+ilyen? Hát kérem szépen, van egy egy
+driverünk, ezt itt SkyC PG-nek hívják.
+Ezt a ezt a drivert, amire kapcsolódunk.
+A a host az a local host, a port az a
+default port, és akkor utána van ez a ez
+a ez ez a kurzorunk tulajdonképpen
+kurzor objektum a kapcsolatot testesíti
+meg az adatbázis szerverhez.
+És ez egy ez egy web alkalmazás, egy
+flask alkalmazás, aminek két végpontja
+van. Az egyik végpont az az, ami
+kilistázza a tehát ami lehetőség a
+rendésnek az elküldésére.
+És a másik az pedig az, amelyik a
+rendelést feldolgozza, tehát lefuttatja
+a tárolt eljárást.
+Ezt tulajdonképpen el is indíthatjuk ezt
+az alkmát és akkor teszteljük a
+működését. Tehát úgy indítjuk el, hogy
+beírjuk azt, hogy először is ebbe a
+mapába kell elmennünk, ahol ez van. C
+temp flask az nagyon jó. És akkor írjuk
+be azt, hogy
+Python North Northwind. F.
+Jó.
+Na most akkor elindult egy egy
+webszerre, egy webalkalmazás, és akkor
+utána egy böngészőben
+itt ezen a porton ki is lehet innen
+vágni ezt a portot. Látját ezen a porton
+itt ez ez figyel.
+Úgyhogy azt mondjuk, hogy copy
+és
+akkor egy webgészre van szükségünk.
+Majd mindjárt lesz egy egy
+webböngészőnk,
+amibe bemásoljuk ezt az URL-t.
+Szóval így néz ki az alkalmazás.
+Van egy kombónk, amiben a termékek
+vannak felsorolva, egy másik, amibe a
+a vásárlók, és akkor beírjuk a
+mennyiséget. Például most rendelünk
+kettőt az Alface Frutte Krista nevében,
+és megnyomjuk a submit gombot, akkor
+átkerülünk a rendelés feldolgozására.
+Itt itt lehet látni a dibagger ablakban,
+hogy a rendésfelvétel lefutott és és
+akkor kapunk egy visszaigazolást, még
+ezt a listázást. Tehát tulajdonképpen az
+történik, hogy hogy egy ez a ez a
+végpont ez feltöltötte a kombok
+tartalmát. A másik végpont ez az order
+procs, ez pedig mit csinál? Ez
+lefuttatja ezt a bizonyos függvényt, ezt
+a tárolest, ezt a select new order. Ugye
+ez volt az, amit amit az előbb
+megnéztünk, hogy mit is csinál ez a
+tranzakció igazából. Tehát itt most
+ebben az esetben a tranzakció, de az
+üzleti logika az ott van a szerveren.
+Igazából ez csak egy vékony kliens, ami
+egy ilyen távoli eljáráshívást használ.
+És akkor még utána
+a a rendésnek a kilistázására
+arra is egy kész view-t fog használni,
+mert hogyha megnézik, ez a list orders,
+ez ezt ezt a last orders nevű view-t
+fogja használni, ugye? Tehát ezt is a
+szerverrend készítettük el. Ez egy view,
+és abból csak lákérdezzük az adatokat.
+Tehát ez az alkalmazásunk
+és akkor most ezt akarjuk átmigrálni a
+Firestba. Hát az első kérdés az az, hogy
+hogy ugye a a fogalmi áttervezése a
+dolognak
+az adatbázist újra kell terveznünk. És
+itt itt azt a azt a döntést hozzuk,
+hogy
+ugye ennek a lökadok módje úgy néz ki,
+hogy van a a products
+és akkor a
+az order details
+és a és az orders,
+ami egy sok-sok kapcsolat a producció és
+az orders között. Ugye ez itt a
+kapcsolótábra. És az order det dnek
+vannak saját attribútumai is. Tehát
+például mit tudom én a quantity.
+És akkor ezt úgy oldjuk meg, hogy az
+orders kollekcióval beágyazzuk az order
+details kollekciót. Tehát ez lesz a
+megoldásunk. És az order details az az
+pedig egy hivatkozással, mondjuk úgy,
+egy külső kulccsal vagy referenciával
+fog hivatkozni a Product, hogy mégis
+melyik terméket tartalmazza az a
+rendelés. Tehát ez a ez az
+átalakításunk, hogy úgy mondjam.
+És
+tehát ebből mi lesz?
+Lesz egy egy orders és azon belül order
+details
+kollekció,
+meg ezt egy product kollekció.
+És akkor lesz még egy egy customized
+korreklekció.
+Ez hogy fog létrejönni? Hát ez úgy fog
+létrejönni, hogyha mi ezt programozottan
+létrehozzuk. Úgyhogy gyorsan vágjunk is
+bele, csináljunk magunknak egy egy új
+Fir store adatbázist. Ehhez kell nekünk
+egy böngésző. És hát itt az a szerencse,
+hogy igazából nem kell, hogy ne legyen
+nekünk GPC GCP-s kreditünk.
+anélkül is tök ingyen lehet firestrő
+adott bázist csinálni, mégpedig a hát
+úgy emlékszem legalábbis, hogy a
+a konszol
+firestol
+Google.com, de lehet, hogy firebase, ezt
+majd majd mindjárt megnézzük, vagy vagy
+akkor megnézzük a jegyzetből, hogy
+melyik is volt. Nem, akkor
+akkor Firebase esetleg.
+Igen, ez már ez már jobb.
+Jó, szóval itt
+itt itt konkrétan
+csináljunk egy új projektet.
+Ennek is kell adni egy nevet. Hát ennek
+most az lesz a neve, hogy az én
+esetemben, hogy április 18
+és
+Vanyi mondjuk. Aha. Hát igen, mivel ezz
+a Google-vel össze van integrálva, ezért
+ezért ez a projektnél már nem megfelelő,
+mert ilyenen már van.
+De egyébként azt is lehet csinálni.
+Szóval ez egy érdekes dolog. Lehet külön
+Fire Store projektet csinálni Google
+Projekt nélkül is. És itt látod, hogy
+hozzá is lehet adni a Firebase- egy
+Google Projekthez. Tehát ez
+igazából rajtunk múlik. Most nem tudom,
+hogy kinek van, vagy kinek nincs.
+Csináljunk egy teljesen új projektet, és
+akkor akkor akkor nem lesz az a
+probléma, hogy hogy hogy mi, hogy már
+van egy új, vagy pedig nincsen.
+Válasszuk ki azt, hogy Kantin most
+beletettem még egy még egy kötőjelet.
+Itt az egyszerűség kedvér nem lesz
+szükségünk a a Geminire, és nem lesz
+szükségünk a Google Analytikára sem.
+Csináljuk meg a projektet. Elég hamar el
+szokott készülni, tehát tényleg szinte
+másodpercek alatt,
+és mindez teljesen ingyen Itelkártyaszám
+nélkül. Szóval ezt azért értékelni kell.
+Nyomjuk a continue gombot.
+És akkor itt vagyunk tulajdonképpen.
+Mi most itt itt sok mindent lehet
+csinálni, tehát lehet például egy
+webalkalmazást is csinálni.
+Tehát itt ebben a környezetben meg lehet
+csinálni egy egészen teljesen ingyen
+egészen jól működő
+alkalmazást is. Na de hogyha itty
+beírjuk a a projektnek a vagyis az újnek
+a végére overview helyére azt, hogy
+stall,
+akkor ő úton át fogunk kerülni arra a
+helyre, ahol most egy adatbázist tudunk
+létrehozni, tehát egy dokumentumtárat.
+Ugye mi a különbség a Firebase meg a
+Firestore között? Története van a
+dolognak. Először volt a Firebase, aztán
+lett a Firestore.
+Vászuk azt, hogy ki, hogy create
+database.
+És akkor a standard edition. Igen.
+Fogadjuk el a default database database
+idt, locationnek pedig
+valamit ki kell választanunk.
+Na na.
+Jó.
+És válasszuk ki a test módot. Jó,
+nincsen szükségünk most a production
+módra.
+Oké. És látják, mindjárt itt vagyunk a
+kis dokumentumnak a tervező felületén,
+ahol akár kézzel
+elkezdhetünk valamit bevinni. Tehát ez
+tajképpen egy adatis konzol, csak hát
+mondjuk ez lesz a a Books nevű, vagy
+várjál akkor magyarul. Jó könyvek,
+kollekció
+nevű kollekció.
+Érdekes, hogy a itt a Firestor-ban az
+azonosítók, az idnek számok. Hát
+bármilyen furcsa, mindig megszoktuk,
+hogy az ID az egy szám. Na itt az nem
+lehet, csak string lehet. És akkor akkor
+lesz egy ilyen, hogy mondjuk a
+kell egy azonosítót adom. Mondjuk ez
+lesz a könyv egy, és akkor annak van egy
+egy szíme, ami egy string, és ez a
+háború és béke.
+Aztán lehet még továbbiakat hozzáadni,
+de ugye a az egésznek a a stílusát azt
+úgy látják, igaz, hogy ez ez ilyen. És
+be lehetne itt látják, van egy majd
+mindjárt látják, van egy könyvem. Itt ez
+a könyv egy. Ez itt már meg is van
+nyitva. És itt be lehetne szúrni a könyv
+egy dokumentum alá egy beágyazott
+korrekciót. Te

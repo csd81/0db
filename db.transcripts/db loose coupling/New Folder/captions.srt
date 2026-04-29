@@ -1,0 +1,4128 @@
+1
+00:00:00,000 --> 00:00:05,040
+Szeretettel
+
+2
+00:00:02,720 --> 00:00:07,480
+köszöntök mindenkit.
+
+3
+00:00:05,040 --> 00:00:12,400
+A mai problémakörünk egy kis
+
+4
+00:00:07,480 --> 00:00:12,400
+szerveroldali automatizálás lesz.
+
+5
+00:00:13,240 --> 00:00:18,279
+Itt a
+
+6
+00:00:16,000 --> 00:00:21,039
+az alappréma az úgy néz ki, a jegyzetben
+
+7
+00:00:18,279 --> 00:00:23,320
+szépen le van írva egy ilyen szenárió,
+
+8
+00:00:21,039 --> 00:00:25,519
+hogy
+
+9
+00:00:23,320 --> 00:00:27,199
+különböző okok miatt adatbázis szinten
+
+10
+00:00:25,519 --> 00:00:28,599
+kell csatolnunk két információs
+
+11
+00:00:27,199 --> 00:00:33,200
+rendszert.
+
+12
+00:00:28,599 --> 00:00:35,320
+például egy kereskedési információs
+
+13
+00:00:33,200 --> 00:00:36,360
+rendszert, egy szállító információs
+
+14
+00:00:35,320 --> 00:00:39,920
+rendszerre, vagy pedig egy
+
+15
+00:00:36,360 --> 00:00:42,360
+termelőinációs rendszerre,
+
+16
+00:00:39,920 --> 00:00:44,079
+amelyek ugyanazt az adázist használják.
+
+17
+00:00:42,360 --> 00:00:45,800
+És egy laz csatorást szeretnénk
+
+18
+00:00:44,079 --> 00:00:48,160
+készíteni,
+
+19
+00:00:45,800 --> 00:00:50,800
+ami azt jelenti, hogy nagyon lényeges,
+
+20
+00:00:48,160 --> 00:00:53,440
+hogy az egyik rendszerben keletkező
+
+21
+00:00:50,800 --> 00:00:55,199
+esemény, azt úgy tudjuk feldolgozni a
+
+22
+00:00:53,440 --> 00:00:56,840
+másik rendszerben, úgy kerüljön át oda
+
+23
+00:00:55,199 --> 00:00:58,640
+az esemény, hogy lehető legkevésbé
+
+24
+00:00:56,840 --> 00:01:01,320
+zavarjuk.
+
+25
+00:00:58,640 --> 00:01:04,920
+a azt a rendszert, amiben az esemény
+
+26
+00:01:01,320 --> 00:01:06,920
+keletkezik. Hát ennek az az oka, hogy
+
+27
+00:01:04,920 --> 00:01:09,040
+ezt így csináljuk,
+
+28
+00:01:06,920 --> 00:01:12,840
+ugye úgy értem, hogy a a laza csatolás
+
+29
+00:01:09,040 --> 00:01:15,080
+mellett nagyon erős érv az az,
+
+30
+00:01:12,840 --> 00:01:16,640
+hogy nagyon sok esetben nincsen
+
+31
+00:01:15,080 --> 00:01:18,880
+befolyásunk,
+
+32
+00:01:16,640 --> 00:01:20,439
+például egy másik cég gyártotta azt az
+
+33
+00:01:18,880 --> 00:01:22,400
+információs rendszert, amibe át akarjuk
+
+34
+00:01:20,439 --> 00:01:24,600
+venni az eseményt.
+
+35
+00:01:22,400 --> 00:01:26,880
+És ilyenkor az a nagyon kellemetlen,
+
+36
+00:01:24,600 --> 00:01:29,240
+hogy mi például bevezetünk egy új
+
+37
+00:01:26,880 --> 00:01:30,799
+szoftvert egy vállalathoz,
+
+38
+00:01:29,240 --> 00:01:32,640
+és
+
+39
+00:01:30,799 --> 00:01:34,159
+ezen közben nemhogy az nem működik, amit
+
+40
+00:01:32,640 --> 00:01:36,000
+mi csináltunk, de még ráadásul
+
+41
+00:01:34,159 --> 00:01:37,920
+elmontottuk azt is, amit egy másik cég
+
+42
+00:01:36,000 --> 00:01:39,840
+csinált, és szépen használtak már évek
+
+43
+00:01:37,920 --> 00:01:41,960
+óta
+
+44
+00:01:39,840 --> 00:01:44,079
+ami a szoros csatorásnál előfordulhat,
+
+45
+00:01:41,960 --> 00:01:48,040
+mert hiszen hogyha egy eseménynek a
+
+46
+00:01:44,079 --> 00:01:49,600
+feldolgozása közben a mi oldalunkon hiba
+
+47
+00:01:48,040 --> 00:01:51,600
+történik,
+
+48
+00:01:49,600 --> 00:01:55,320
+akkor az az eseményt generáló inflációs
+
+49
+00:01:51,600 --> 00:01:58,039
+rendszerben is egy hibát okozhat.
+
+50
+00:01:55,320 --> 00:02:01,680
+Erről a szárióról van egy áttekintés a
+
+51
+00:01:58,039 --> 00:02:06,079
+jegyzetben, azt mindjárt
+
+52
+00:02:01,680 --> 00:02:08,479
+ide m meg is próbálom behozni.
+
+53
+00:02:06,079 --> 00:02:10,920
+No, tehát itt van
+
+54
+00:02:08,479 --> 00:02:13,160
+van a rendelések tábla. Most a North
+
+55
+00:02:10,920 --> 00:02:15,599
+Nabist használjuk ehhez a demóhoz. A
+
+56
+00:02:13,160 --> 00:02:17,040
+rendőrség táma az egyik, tehát az egyik
+
+57
+00:02:15,599 --> 00:02:18,920
+rendszer használja ezt a rendőrségt
+
+58
+00:02:17,040 --> 00:02:21,239
+táblát, és például létrejön egy új
+
+59
+00:02:18,920 --> 00:02:24,080
+rendelés, egy új rekord, vagy módosul
+
+60
+00:02:21,239 --> 00:02:27,120
+egy meglévő rendelésrekord.
+
+61
+00:02:24,080 --> 00:02:30,120
+Ezt egy táblára csatolt trigger
+
+62
+00:02:27,120 --> 00:02:30,120
+észreveszi,
+
+63
+00:02:30,680 --> 00:02:35,280
+és nem dolgozza fel azonban az esem,
+
+64
+00:02:33,120 --> 00:02:37,040
+mint a másik információs rendszerben,
+
+65
+00:02:35,280 --> 00:02:38,560
+azért, hogy laza csatolást valósítsunk
+
+66
+00:02:37,040 --> 00:02:41,879
+meg, tehát hogy minden kevésbé legyen
+
+67
+00:02:38,560 --> 00:02:44,120
+két rendszer összekötve, hanem csak egy
+
+68
+00:02:41,879 --> 00:02:45,879
+logot készít, tehát ezt az eseményt ezt
+
+69
+00:02:44,120 --> 00:02:48,400
+beírja egy logtblába, és semmi mást nem
+
+70
+00:02:45,879 --> 00:02:51,440
+csinál. És aztán van egy ettől teljesen
+
+71
+00:02:48,400 --> 00:02:54,239
+függetlenül futó ütemezett jobk, tehát
+
+72
+00:02:51,440 --> 00:02:56,480
+egy egy végrehajtott, altratikusan
+
+73
+00:02:54,239 --> 00:02:58,879
+végrehajtott
+
+74
+00:02:56,480 --> 00:03:01,280
+feladat tulajdonképpen, amelyik időnként
+
+75
+00:02:58,879 --> 00:03:02,760
+ránéz erre a lok távára, ha van benne új
+
+76
+00:03:01,280 --> 00:03:04,599
+esemény, azt akkor kiveszi és
+
+77
+00:03:02,760 --> 00:03:07,040
+feldolgozza
+
+78
+00:03:04,599 --> 00:03:09,120
+és megcsinálja, amit amit kell ezzel a
+
+79
+00:03:07,040 --> 00:03:12,799
+ezzel az eseménnyel. Tehát ez a az a
+
+80
+00:03:09,120 --> 00:03:12,799
+csatolásnak az átnézete.
+
+81
+00:03:12,959 --> 00:03:20,360
+Mindezt SQS szerver technológiával
+
+82
+00:03:15,400 --> 00:03:22,680
+valósítjuk meg a virtuális gépen. Ö
+
+83
+00:03:20,360 --> 00:03:24,680
+van aki tanul triggerekről, van aki nem
+
+84
+00:03:22,680 --> 00:03:28,280
+tanul triggerekről.
+
+85
+00:03:24,680 --> 00:03:30,560
+Tehát itt azt javasom, hogy a időnként
+
+86
+00:03:28,280 --> 00:03:34,120
+belefér az VS-és anyag időnként nem fér
+
+87
+00:03:30,560 --> 00:03:37,799
+bele, például tavaly nem fért bele. Itt
+
+88
+00:03:34,120 --> 00:03:40,599
+a jegyzetben található erről egy egy kis
+
+89
+00:03:37,799 --> 00:03:43,040
+áttekintés, amit javaslom, hogy aki nem
+
+90
+00:03:40,599 --> 00:03:44,840
+tanulta, az az nézzen át. Hát most egész
+
+91
+00:03:43,040 --> 00:03:48,080
+röviden
+
+92
+00:03:44,840 --> 00:03:50,920
+ja meg fel fogom tenni majd a múlapra a
+
+93
+00:03:48,080 --> 00:03:54,360
+DB2 jegyzetet is, hogy a egyszerűség
+
+94
+00:03:50,920 --> 00:03:56,480
+kedvér. Szóval
+
+95
+00:03:54,360 --> 00:03:58,400
+egész egész röviden a triggert úgy lehet
+
+96
+00:03:56,480 --> 00:04:01,959
+felfogni, mint egy olyan kis tárolt
+
+97
+00:03:58,400 --> 00:04:04,599
+eljárást, amelyet maga a rendszer indít
+
+98
+00:04:01,959 --> 00:04:06,280
+el automatikusan, hogyha egy előre
+
+99
+00:04:04,599 --> 00:04:09,280
+definiált esemény bekövetkezik. Ez az
+
+100
+00:04:06,280 --> 00:04:12,560
+esemény lehet egy táblában való adat
+
+101
+00:04:09,280 --> 00:04:14,120
+rekor beszúrás, módosítás vagy törlés.
+
+102
+00:04:12,560 --> 00:04:16,759
+Ezeket úgy helyek, hogy hogy DML
+
+103
+00:04:14,120 --> 00:04:19,519
+triggerek, tehát a DML eseményhez
+
+104
+00:04:16,759 --> 00:04:21,880
+kötődő, tehát data manipulation
+
+105
+00:04:19,519 --> 00:04:24,919
+language, ugye ez a DML ehhez ehhez
+
+106
+00:04:21,880 --> 00:04:29,720
+ehhez kötődő
+
+107
+00:04:24,919 --> 00:04:31,280
+triggerek. És egy ilyen triggeren belül
+
+108
+00:04:29,720 --> 00:04:33,199
+hozzá tudunk férni, tehát le tudjuk
+
+109
+00:04:31,280 --> 00:04:34,720
+kérdezni a trigger véghajtása közben,
+
+110
+00:04:33,199 --> 00:04:36,680
+hogy milyen esemény okozta a trigger
+
+111
+00:04:34,720 --> 00:04:39,360
+bekövetkezté. Ezáltal fel tudjuk
+
+112
+00:04:36,680 --> 00:04:41,919
+dolgozni
+
+113
+00:04:39,360 --> 00:04:43,199
+a az eseményt. Hát ezt itt javasol azért
+
+114
+00:04:41,919 --> 00:04:45,440
+mindenki olvassa. Van egy néhány
+
+115
+00:04:43,199 --> 00:04:48,800
+általános dolog a triggerekről itt a
+
+116
+00:04:45,440 --> 00:04:51,440
+jegyzetben satöbbi satöbbi. Most nézzük
+
+117
+00:04:48,800 --> 00:04:53,960
+a konkrét
+
+118
+00:04:51,440 --> 00:04:58,639
+esettanulmányunkat.
+
+119
+00:04:53,960 --> 00:05:00,600
+A jegyzetre be na múdul lapjára
+
+120
+00:04:58,639 --> 00:05:01,919
+feltettem egy ilyet, hogy ja valaki
+
+121
+00:05:00,600 --> 00:05:04,440
+kérte, hogy legyenek meg a North
+
+122
+00:05:01,919 --> 00:05:08,560
+Damesnek a dampja az itt van. Illet van
+
+123
+00:05:04,440 --> 00:05:10,479
+egy ilyen scriptek a jegyzetből. Tehát
+
+124
+00:05:08,560 --> 00:05:14,759
+én ezt ezt javaslom, hogy ezt ezt ezt
+
+125
+00:05:10,479 --> 00:05:17,720
+töltsük le, és és nyissuk meg
+
+126
+00:05:14,759 --> 00:05:21,080
+például a tempatbázisba, vagy bárhov
+
+127
+00:05:17,720 --> 00:05:23,600
+vagy temp mappá vagy bárhova. Jó, és
+
+128
+00:05:21,080 --> 00:05:26,280
+akkor
+
+129
+00:05:23,600 --> 00:05:28,039
+akkor nyissuk is meg. Ebben mindenféle
+
+130
+00:05:26,280 --> 00:05:31,880
+van, nem csak a mai óraanyaga, de
+
+131
+00:05:28,039 --> 00:05:35,440
+megtaláljuk a mai óraanyagát is benne.
+
+132
+00:05:31,880 --> 00:05:35,440
+Aztongja, hogy
+
+133
+00:05:35,479 --> 00:05:43,400
+nem itt elnézést, egy másik mappa.
+
+134
+00:05:39,400 --> 00:05:44,919
+Ez a not examples. Jó, keressük meg ezt
+
+135
+00:05:43,400 --> 00:05:47,240
+a részt. Egy kicsit lejjebb van, mert
+
+136
+00:05:44,919 --> 00:05:48,919
+ugye bevezetés van az elején, ismétlés
+
+137
+00:05:47,240 --> 00:05:50,960
+satöbbi, satöbbi, de valahol aztán ez
+
+138
+00:05:48,919 --> 00:05:54,520
+elkezdődik.
+
+139
+00:05:50,960 --> 00:05:58,240
+Itt van. Ö,
+
+140
+00:05:54,520 --> 00:06:01,240
+tehát ugye azzal azzal kezdődik a dolog,
+
+141
+00:05:58,240 --> 00:06:01,240
+hogy
+
+142
+00:06:01,440 --> 00:06:08,039
+először nézzük azt, hogy mi van akkor,
+
+143
+00:06:03,000 --> 00:06:09,840
+hogyha errettentő példaként, hogyha
+
+144
+00:06:08,039 --> 00:06:12,840
+szorosan csatolunk két információs
+
+145
+00:06:09,840 --> 00:06:12,840
+rendszert.
+
+146
+00:06:13,960 --> 00:06:19,759
+No hát ez a ez a kis ez a kis demo a
+
+147
+00:06:17,000 --> 00:06:23,479
+Northind adbázisban megy, úgyhogy
+
+148
+00:06:19,759 --> 00:06:23,479
+lépjünk át oda.
+
+149
+00:06:26,639 --> 00:06:30,199
+És itt egyben, aki még nem látott
+
+150
+00:06:28,520 --> 00:06:31,919
+triggert, ilyen egyszerűen lehet egy
+
+151
+00:06:30,199 --> 00:06:34,479
+triggert definiálni. Tehát megmondjuk,
+
+152
+00:06:31,919 --> 00:06:37,039
+mi a neve. Most ez egy ez egy Bad
+
+153
+00:06:34,479 --> 00:06:39,120
+trigger lesz. Tehát ellen példa it az
+
+154
+00:06:37,039 --> 00:06:40,960
+ordersára rakunk, a for után mondjuk
+
+155
+00:06:39,120 --> 00:06:43,800
+azt, hogy mikor süllyön el. testeny
+
+156
+00:06:40,960 --> 00:06:45,720
+hatására sül el. És itt azt is lehet
+
+157
+00:06:43,800 --> 00:06:47,720
+látni, hogy a triggeren belül hát ez
+
+158
+00:06:45,720 --> 00:06:50,599
+olyan, mint egy tároljárás, lehetnek
+
+159
+00:06:47,720 --> 00:06:53,039
+benne változók. És van egy speciális
+
+160
+00:06:50,599 --> 00:06:55,479
+tábla. Ez Microsoft SQL szerver
+
+161
+00:06:53,039 --> 00:06:57,280
+specifikus dolog, amit úgy hívjunk, hogy
+
+162
+00:06:55,479 --> 00:06:59,080
+inserted,
+
+163
+00:06:57,280 --> 00:07:01,960
+amit a rendszer tölt fel a trigger
+
+164
+00:06:59,080 --> 00:07:04,280
+meghívásokból, és ebben az újonnan
+
+165
+00:07:01,960 --> 00:07:07,400
+beszúrt, vagy pedig módosult rekordok
+
+166
+00:07:04,280 --> 00:07:10,680
+vannak benne. Ezeket le lehet kérdezni,
+
+167
+00:07:07,400 --> 00:07:12,080
+mintha ez egy tábla volna és
+
+168
+00:07:10,680 --> 00:07:13,599
+lehet á reagálni. Most csak annyit
+
+169
+00:07:12,080 --> 00:07:15,680
+csinálunk,
+
+170
+00:07:13,599 --> 00:07:17,360
+hogy az ordes táblán lesz rajta. egy új
+
+171
+00:07:15,680 --> 00:07:20,360
+recordot szúrtunk be, akkor sül és
+
+172
+00:07:17,360 --> 00:07:22,280
+kivesszük a az orderét.
+
+173
+00:07:20,360 --> 00:07:24,479
+Tehát ezt a mezőt egy változóba, és azt
+
+174
+00:07:22,280 --> 00:07:29,720
+kiírjuk. Ennyit csinál ez a trigger
+
+175
+00:07:24,479 --> 00:07:29,720
+mindössze. Úgyhogy futtassuk le,
+
+176
+00:07:30,479 --> 00:07:36,080
+és nézzük meg, hogy hogyan működik.
+
+177
+00:07:33,759 --> 00:07:38,560
+Tényleg működik-e?
+
+178
+00:07:36,080 --> 00:07:41,240
+Ugye ez a ez az inzert, ez besúr egy
+
+179
+00:07:38,560 --> 00:07:43,039
+beszúr egy sort, és látható, hogy
+
+180
+00:07:41,240 --> 00:07:44,639
+tényleg az inger trigger elsült, mert
+
+181
+00:07:43,039 --> 00:07:45,759
+ezt visszajírta nekünk. Hát ez rendben
+
+182
+00:07:44,639 --> 00:07:47,440
+van.
+
+183
+00:07:45,759 --> 00:07:50,080
+Na most mi van akkor, hogyha ezt a tég
+
+184
+00:07:47,440 --> 00:07:53,199
+felhasználjuk arra,
+
+185
+00:07:50,080 --> 00:07:55,800
+hogy az új rendelést a mi információs
+
+186
+00:07:53,199 --> 00:07:57,919
+rendszerünkben feldolgozza, ami ugye az
+
+187
+00:07:55,800 --> 00:08:00,080
+azt jelenti, hogy egy csomó logika
+
+188
+00:07:57,919 --> 00:08:01,759
+satöbbi kód futhat emött, hogy amikor
+
+189
+00:08:00,080 --> 00:08:03,800
+egy új rendbe is rögzítenek, akkor sok
+
+190
+00:08:01,759 --> 00:08:06,479
+mindent kellet csinálni. Tegyük föl,
+
+191
+00:08:03,800 --> 00:08:09,000
+hogy ez 10 másodpercig tart.
+
+192
+00:08:06,479 --> 00:08:10,840
+Tehát most droppoljuk a triggeret, újra
+
+193
+00:08:09,000 --> 00:08:12,680
+létrehozzuk, de most már 10 másodpercig
+
+194
+00:08:10,840 --> 00:08:15,599
+fogjuk
+
+195
+00:08:12,680 --> 00:08:17,039
+feldolgozni az eseményt, mondjuk úgy. És
+
+196
+00:08:15,599 --> 00:08:18,840
+nézzük meg, hogy akkor akkor mi
+
+197
+00:08:17,039 --> 00:08:21,960
+történik.
+
+198
+00:08:18,840 --> 00:08:24,919
+Ja, de még előtte töröljük a tévesen
+
+199
+00:08:21,960 --> 00:08:27,440
+bevitt rekordot.
+
+200
+00:08:24,919 --> 00:08:29,400
+Na nézzük, mi történik. Nem történik
+
+201
+00:08:27,440 --> 00:08:31,039
+semmi. Ugye
+
+202
+00:08:29,400 --> 00:08:34,399
+ilyenkor az van, hogy 10 másodpercig
+
+203
+00:08:31,039 --> 00:08:36,000
+homokórázik a a kedves felhasználó, és
+
+204
+00:08:34,399 --> 00:08:38,839
+ráadásul nem a mi információs
+
+205
+00:08:36,000 --> 00:08:41,680
+rendszerünkben, hanem abban, amelyikre
+
+206
+00:08:38,839 --> 00:08:44,920
+csatolni akarunk. Hát ez nagyon nem jó,
+
+207
+00:08:41,680 --> 00:08:48,120
+ugye? Tehát, hogy hogy addig, amíg a mi
+
+208
+00:08:44,920 --> 00:08:50,360
+adatfel dolgozásunk tart, addig a
+
+209
+00:08:48,120 --> 00:08:53,560
+kereskedő információs rendszerbe a
+
+210
+00:08:50,360 --> 00:08:55,279
+rendésfelvétel homokórázik. Hát ez ez ez
+
+211
+00:08:53,560 --> 00:08:56,519
+nem jó.
+
+212
+00:08:55,279 --> 00:09:00,360
+És még rosszabb a helyzet, hogyha egy
+
+213
+00:08:56,519 --> 00:09:04,800
+hibát is csinálunk. Mondjuk
+
+214
+00:09:00,360 --> 00:09:08,959
+tudni. Ja, ezt most akkor szedjük ki
+
+215
+00:09:04,800 --> 00:09:08,959
+ezt az eseményt, amit beletettünk.
+
+216
+00:09:09,880 --> 00:09:15,720
+Mondjuk például itt az egyszerűség kedvé
+
+217
+00:09:12,279 --> 00:09:15,720
+nullával osztunk,
+
+218
+00:09:16,680 --> 00:09:21,160
+és ebben az esetben is
+
+219
+00:09:22,760 --> 00:09:25,760
+elejtettem
+
+220
+00:09:26,120 --> 00:09:31,360
+ezt lefuttatni.
+
+221
+00:09:28,200 --> 00:09:34,200
+Most létrehozzuk újra. Szóval ebben az
+
+222
+00:09:31,360 --> 00:09:35,720
+esetben is
+
+223
+00:09:34,200 --> 00:09:38,360
+beszúrunk, megpróbálunk beszúrni
+
+224
+00:09:35,720 --> 00:09:41,600
+rekordot. Mi történik? Először is ugye
+
+225
+00:09:38,360 --> 00:09:44,640
+vált 10 másodpercig, ugye?
+
+226
+00:09:41,600 --> 00:09:48,519
+És aztán utána
+
+227
+00:09:44,640 --> 00:09:51,800
+a rendelés felvétel fut hibára. Látják?
+
+228
+00:09:48,519 --> 00:09:53,120
+A rendelés felvétel pedig abb az
+
+229
+00:09:51,800 --> 00:09:55,160
+információs rendszerben semmi hiba
+
+230
+00:09:53,120 --> 00:09:56,560
+nincsen, csak a mi információs
+
+231
+00:09:55,160 --> 00:09:59,640
+rendszerünkben van valami hiba, mert mi
+
+232
+00:09:56,560 --> 00:10:01,560
+osztottunk nullával. Hát ez ez nagyon
+
+233
+00:09:59,640 --> 00:10:03,720
+nagyon negatív.
+
+234
+00:10:01,560 --> 00:10:06,279
+És ugye a legérdekesebb az egészben az,
+
+235
+00:10:03,720 --> 00:10:08,920
+hogy ilyenkor az eredeti DML utasítást,
+
+236
+00:10:06,279 --> 00:10:10,839
+ez az inzert, ez visszagördül, tehát nem
+
+237
+00:10:08,920 --> 00:10:13,279
+történik meg a rendelés felvétele.
+
+238
+00:10:10,839 --> 00:10:15,959
+Gyakorlatilag
+
+239
+00:10:13,279 --> 00:10:18,200
+kilőttük a kereskedő információs
+
+240
+00:10:15,959 --> 00:10:20,760
+rendszert ezzel a hibával
+
+241
+00:10:18,200 --> 00:10:23,800
+meg is lehet nézni egyébként, hogy
+
+242
+00:10:20,760 --> 00:10:28,120
+megvan a rekord, ugye?
+
+243
+00:10:23,800 --> 00:10:30,720
+Hát nincsen. Tehát tehát be lett szúrva
+
+244
+00:10:28,120 --> 00:10:32,680
+a a beszúrás után lefutott a trigger, de
+
+245
+00:10:30,720 --> 00:10:34,959
+mi a hiber a trigger hibára futott,
+
+246
+00:10:32,680 --> 00:10:37,200
+ezért visszagörült a beszúrás is. Na,
+
+247
+00:10:34,959 --> 00:10:39,399
+ezért nem csinálunk,
+
+248
+00:10:37,200 --> 00:10:41,279
+ezért nem csinálunk szoros csatolást.
+
+249
+00:10:39,399 --> 00:10:42,720
+Remélem ez ennyi ellenpélda elég volt.
+
+250
+00:10:41,279 --> 00:10:45,000
+Csak el ne felejtsük kitölni ezt a
+
+251
+00:10:42,720 --> 00:10:46,680
+tigert, mert ugye egy tábán több trigger
+
+252
+00:10:45,000 --> 00:10:48,000
+is lehet,
+
+253
+00:10:46,680 --> 00:10:50,360
+és hajlamosak az emberek erről
+
+254
+00:10:48,000 --> 00:10:55,120
+elfeledkezni, és aztán csodálkoznak,
+
+255
+00:10:50,360 --> 00:10:57,600
+amikor furán viselkedik egy adatbázis,
+
+256
+00:10:55,120 --> 00:11:00,079
+és nem jöttük, hogy miért.
+
+257
+00:10:57,600 --> 00:11:03,440
+Don't forget. Jó. Na és akkor nézzük a a
+
+258
+00:11:00,079 --> 00:11:06,440
+helyes megoldást.
+
+259
+00:11:03,440 --> 00:11:06,440
+Szóval
+
+260
+00:11:08,320 --> 00:11:13,959
+ez itt ez itt egy
+
+261
+00:11:10,760 --> 00:11:16,680
+ez itt egy példa
+
+262
+00:11:13,959 --> 00:11:19,800
+arra, hogy amikor
+
+263
+00:11:16,680 --> 00:11:22,440
+az order details táblában valaki módosít
+
+264
+00:11:19,800 --> 00:11:25,279
+egy mennyiséget, tehát mondjuk változik
+
+265
+00:11:22,440 --> 00:11:28,000
+a rendelés, és nem két
+
+266
+00:11:25,279 --> 00:11:30,079
+láda sört kérünk, hanem három láda sört,
+
+267
+00:11:28,000 --> 00:11:31,639
+akkor automatikusan
+
+268
+00:11:30,079 --> 00:11:34,720
+módosuljon
+
+269
+00:11:31,639 --> 00:11:38,800
+a products táblában is a units stock.
+
+270
+00:11:34,720 --> 00:11:41,480
+Hát ez mondjuk ez lehet, hogy
+
+271
+00:11:38,800 --> 00:11:43,040
+már de lehetne működet így is egy
+
+272
+00:11:41,480 --> 00:11:44,920
+információs rendszer, ugye, tehát hogy
+
+273
+00:11:43,040 --> 00:11:47,200
+akkor automatikusan csökkentjük a
+
+274
+00:11:44,920 --> 00:11:50,639
+raktárkészletet, mondaná, hogy akkor ezt
+
+275
+00:11:47,200 --> 00:11:52,920
+onnan levesszük. Jó, hát most ezt nem
+
+276
+00:11:50,639 --> 00:11:55,279
+kell feltétlenül létrehozni ezt a ezt a
+
+277
+00:11:52,920 --> 00:11:57,399
+téget, ez csak egy ez csak egy demó.
+
+278
+00:11:55,279 --> 00:12:02,560
+Mindenesetre ki lehet próbálni. Most
+
+279
+00:11:57,399 --> 00:12:04,600
+ezzel nem töltjük itt az időt. Jó.
+
+280
+00:12:02,560 --> 00:12:06,320
+És
+
+281
+00:12:04,600 --> 00:12:08,040
+igazából inkább a a technológia
+
+282
+00:12:06,320 --> 00:12:09,639
+bemutatására
+
+283
+00:12:08,040 --> 00:12:12,000
+vonatkozik ez. Akinek esetleg a
+
+284
+00:12:09,639 --> 00:12:14,320
+triggerek nem voltak meg, az azt az ezt
+
+285
+00:12:12,000 --> 00:12:15,760
+nézze át.
+
+286
+00:12:14,320 --> 00:12:17,600
+Akkor ugye arra is lehet gondolni,
+
+287
+00:12:15,760 --> 00:12:19,120
+olyanok, hogyha több rekord változik
+
+288
+00:12:17,600 --> 00:12:20,959
+egyszerre, az is csak egy véget fog
+
+289
+00:12:19,120 --> 00:12:22,600
+kiváltani, de erre fel lehet készülni.
+
+290
+00:12:20,959 --> 00:12:26,279
+Itt van a megoldás, ugye update
+
+291
+00:12:22,600 --> 00:12:28,519
+frommalar van megoldva a dolog.
+
+292
+00:12:26,279 --> 00:12:30,720
+Mert ugye itt amikor kiveszünk egyetlen
+
+293
+00:12:28,519 --> 00:12:33,120
+rekordot,
+
+294
+00:12:30,720 --> 00:12:34,600
+akkor ez a select, ez ebben az esten,
+
+295
+00:12:33,120 --> 00:12:37,480
+hogyha több rekord változott meg, akkor
+
+296
+00:12:34,600 --> 00:12:39,639
+az inate táblának több rekordja van, és
+
+297
+00:12:37,480 --> 00:12:43,160
+ezt csak a legutolsóan fogja kivenni a
+
+298
+00:12:39,639 --> 00:12:44,959
+productí. Oké, de ezt is ezt is meg
+
+299
+00:12:43,160 --> 00:12:47,360
+lehet oldani.
+
+300
+00:12:44,959 --> 00:12:50,560
+És akkor akkor nézzük. Itt itt vagyunk
+
+301
+00:12:47,360 --> 00:12:53,320
+igazából a lazacsatolásnál.
+
+302
+00:12:50,560 --> 00:12:55,160
+Tehát az első lépésünk az, hogy
+
+303
+00:12:53,320 --> 00:12:58,920
+csinálunk egy olyan logtáblát, amiben
+
+304
+00:12:55,160 --> 00:12:58,920
+majd tároljuk az eseményeket.
+
+305
+00:12:59,320 --> 00:13:04,120
+Hát ez assiszem elég egyértelmű. Van egy
+
+306
+00:13:01,800 --> 00:13:06,480
+egy identity kulcsunk,
+
+307
+00:13:04,120 --> 00:13:07,680
+és mi akkor itt ugye mivel azt
+
+308
+00:13:06,480 --> 00:13:11,040
+gondoljuk, hogy egy job fogja ezt
+
+309
+00:13:07,680 --> 00:13:12,920
+feldolgozni, amelyik időnként lefut,
+
+310
+00:13:11,040 --> 00:13:15,000
+ezért bizos logolást itt elvégzünk.
+
+311
+00:13:12,920 --> 00:13:17,199
+Tehát, hogy mikor indult a az esemi
+
+312
+00:13:15,000 --> 00:13:18,839
+feldolgozás, mennyi ideig tartott
+
+313
+00:13:17,199 --> 00:13:22,160
+satöbbi. Itt a process gyűlés azért
+
+314
+00:13:18,839 --> 00:13:26,720
+számított nező ugye kivonjuk a a tehát a
+
+315
+00:13:22,160 --> 00:13:28,480
+megnézzük a kezdet és a végkülönbségét.
+
+316
+00:13:26,720 --> 00:13:30,320
+És amit logolunk, az az, hogy milyen
+
+317
+00:13:28,480 --> 00:13:33,320
+típusú esemény történt és hogy melyik
+
+318
+00:13:30,320 --> 00:13:35,279
+rendeléssel.
+
+319
+00:13:33,320 --> 00:13:37,079
+Magát az adatokat nem logoljuk ide,
+
+320
+00:13:35,279 --> 00:13:38,720
+hiszen majd a feldogozó Job szépen ki
+
+321
+00:13:37,079 --> 00:13:40,600
+tudja venni az orders táblából a
+
+322
+00:13:38,720 --> 00:13:43,800
+megfelelő idejű eseményt, vagy vagy
+
+323
+00:13:40,600 --> 00:13:45,279
+bocsánat rendelést, és el tudja dönteni,
+
+324
+00:13:43,800 --> 00:13:48,839
+hogy mit csináljon vele. Tehát hozzuk
+
+325
+00:13:45,279 --> 00:13:48,839
+létre ezt a táblát.
+
+326
+00:13:49,360 --> 00:13:54,320
+Felté, hogy nincs már benne. Nézzük csak
+
+327
+00:13:51,320 --> 00:13:54,320
+meg.
+
+328
+00:13:55,519 --> 00:14:04,720
+Aztongja order log.
+
+329
+00:13:59,160 --> 00:14:04,720
+Jó, nincsen benne. Akkor hozzuk létre.
+
+330
+00:14:04,880 --> 00:14:08,720
+És most nézzük a triggert. Tehát
+
+331
+00:14:06,519 --> 00:14:11,639
+igazából ez egy érdekes dolog, mi mit
+
+332
+00:14:08,720 --> 00:14:13,880
+csinálunk. Ugye ez a trigger lehetőleg
+
+333
+00:14:11,639 --> 00:14:16,079
+igyekszik nem hibára futni, mert akkora
+
+334
+00:14:13,880 --> 00:14:20,120
+a rendésfelvétés hibára fog futni. Tehát
+
+335
+00:14:16,079 --> 00:14:20,120
+ez nagyon egyszerű akar lenni.
+
+336
+00:14:22,199 --> 00:14:28,079
+Először is mit csinálunk? A megnézzük
+
+337
+00:14:24,440 --> 00:14:29,920
+azt, hogy hogy mi a rendelés idé, ami a
+
+338
+00:14:28,079 --> 00:14:30,800
+a trigger elsülését okozta. És azt is
+
+339
+00:14:29,920 --> 00:14:32,440
+lehet látni, hogy ez nem csak
+
+340
+00:14:30,800 --> 00:14:34,639
+beszúrásra, hanem update-re is el fog
+
+341
+00:14:32,440 --> 00:14:36,839
+sülni ez a trigger. Tehát hogyha
+
+342
+00:14:34,639 --> 00:14:38,920
+módosítan egy rendést, akkor is elsül.
+
+343
+00:14:36,839 --> 00:14:41,199
+És majd mi itt a triggerben eldöntjük,
+
+344
+00:14:38,920 --> 00:14:42,800
+hogy melyik esemény történt. Lehetne azt
+
+345
+00:14:41,199 --> 00:14:44,800
+is csinálni egyébként, hogy két triggert
+
+346
+00:14:42,800 --> 00:14:46,360
+csinálunk, külön egyet az inzetre, külön
+
+347
+00:14:44,800 --> 00:14:48,880
+egyet az update-re, de így jobban
+
+348
+00:14:46,360 --> 00:14:51,480
+áttekinthető az egész, és végül is erre
+
+349
+00:14:48,880 --> 00:14:53,560
+találták ki ezt a technológiát.
+
+350
+00:14:51,480 --> 00:14:55,800
+Szóval
+
+351
+00:14:53,560 --> 00:14:57,440
+itt van valami ilyen ilyen ilyen
+
+352
+00:14:55,800 --> 00:14:59,480
+printüzenet. Mondjuk ez nem annyira
+
+353
+00:14:57,440 --> 00:15:01,000
+lényeges. Ezek a printek a valóságban
+
+354
+00:14:59,480 --> 00:15:03,399
+sehol nem jelennek meg, ugye? Tehát mi
+
+355
+00:15:01,000 --> 00:15:06,000
+itt látjuk ezt a printet ezen a
+
+356
+00:15:03,399 --> 00:15:08,000
+konzolon, de hogyha ez egy alkalmazás
+
+357
+00:15:06,000 --> 00:15:11,160
+volna, mondjuk sárban írtak egy
+
+358
+00:15:08,000 --> 00:15:14,440
+alkalmazást, akkor ezek a prininttel írt
+
+359
+00:15:11,160 --> 00:15:16,839
+üzenetek, ezek nem jelennek meg a
+
+360
+00:15:14,440 --> 00:15:18,320
+meg a kliens alkalmazásban.
+
+361
+00:15:16,839 --> 00:15:20,120
+Úgyhogy ez csak a programozónak szól. Na
+
+362
+00:15:18,320 --> 00:15:23,000
+nézzük. Van egy ilyen függő, hogy update
+
+363
+00:15:20,120 --> 00:15:25,680
+és utána zárójelben egy mezőnév. Ez
+
+364
+00:15:23,000 --> 00:15:28,399
+triggeren belül használható.
+
+365
+00:15:25,680 --> 00:15:31,000
+SQL szerve specifikus. És ez akkor ad
+
+366
+00:15:28,399 --> 00:15:33,639
+vissza igaz értéket, hogyha ugye ez egy
+
+367
+00:15:31,000 --> 00:15:35,600
+update trigger és ez az order mező
+
+368
+00:15:33,639 --> 00:15:38,440
+változott.
+
+369
+00:15:35,600 --> 00:15:42,800
+Hogyha valamelyik másik mező változott,
+
+370
+00:15:38,440 --> 00:15:48,360
+akkor hamis értéket ad vissza.
+
+371
+00:15:42,800 --> 00:15:50,680
+Na most ha ugye az order id a az a
+
+372
+00:15:48,360 --> 00:15:53,040
+táblának a kulcsa, a tábla kulcsa az nem
+
+373
+00:15:50,680 --> 00:15:55,040
+változhat csak akkor, hogyha új report
+
+374
+00:15:53,040 --> 00:15:57,199
+jön létre.
+
+375
+00:15:55,040 --> 00:15:58,959
+Ugye ez a ez az alapötető ez a az az
+
+376
+00:15:57,199 --> 00:16:00,560
+alapgondolat.
+
+377
+00:15:58,959 --> 00:16:02,560
+Tehát innen tudjuk azt, hogy most
+
+378
+00:16:00,560 --> 00:16:05,399
+igazából mi történt, update történt vagy
+
+379
+00:16:02,560 --> 00:16:07,560
+inserzert? Hát ezek szerint itt ebben az
+
+380
+00:16:05,399 --> 00:16:09,040
+esetben egy inzert történt. És akkor
+
+381
+00:16:07,560 --> 00:16:12,720
+kiísjuk azt, hogy ez egy ez egy új
+
+382
+00:16:09,040 --> 00:16:16,759
+rendelés. És ebben az esetben
+
+383
+00:16:12,720 --> 00:16:20,000
+beszúrunk az order block táblába
+
+384
+00:16:16,759 --> 00:16:22,480
+hát egy new order recordot. Most igaz
+
+385
+00:16:20,000 --> 00:16:24,040
+szerint többet is beszúratunk, hogyha az
+
+386
+00:16:22,480 --> 00:16:26,880
+inserted tábla többet tartom. Azt
+
+387
+00:16:24,040 --> 00:16:29,079
+hiszem, hogyha több rekord
+
+388
+00:16:26,880 --> 00:16:31,120
+többet több rendést vettek fel egyetlen
+
+389
+00:16:29,079 --> 00:16:34,279
+insert utasítással,
+
+390
+00:16:31,120 --> 00:16:35,600
+ugye, akkor ennek a szereknek több
+
+391
+00:16:34,279 --> 00:16:38,079
+rekordja lesz. Na most ez persze nem
+
+392
+00:16:35,600 --> 00:16:39,880
+túlságosan realisztikus,
+
+393
+00:16:38,079 --> 00:16:42,319
+mert tip mert azért nem hiszem el, hogy
+
+394
+00:16:39,880 --> 00:16:43,959
+egy egy kereskedő szoftver úgy van
+
+395
+00:16:42,319 --> 00:16:46,240
+megírva, hogy ott egy oké gombra
+
+396
+00:16:43,959 --> 00:16:48,639
+ráklikkeléskor egyszerre több rendést is
+
+397
+00:16:46,240 --> 00:16:50,319
+fel lehet venni. Mindenesetre ezt csak
+
+398
+00:16:48,639 --> 00:16:51,880
+úgy megjegyzem, hogy mi még erre is fel
+
+399
+00:16:50,319 --> 00:16:53,560
+vagyunk készülve, hogyha esetleg ez
+
+400
+00:16:51,880 --> 00:16:55,720
+történne, akkor mindegyiket fel tudjuk
+
+401
+00:16:53,560 --> 00:16:59,120
+dolgozni. Tehát akkor nem egy rekordos a
+
+402
+00:16:55,720 --> 00:17:00,720
+logban, hanem többet.
+
+403
+00:16:59,120 --> 00:17:02,800
+Jó?
+
+404
+00:17:00,720 --> 00:17:06,079
+És mindegyiknek a típusa az lesz, hogy
+
+405
+00:17:02,800 --> 00:17:08,160
+new order. Na most, hogyha nem változott
+
+406
+00:17:06,079 --> 00:17:09,839
+az order idé, akkor az azt jelenti, hogy
+
+407
+00:17:08,160 --> 00:17:11,640
+most ez tényleg egy update utasítás
+
+408
+00:17:09,839 --> 00:17:13,120
+volt, és ebben az esetben valami
+
+409
+00:17:11,640 --> 00:17:14,880
+változott. Hát megnézzük, hogy mi
+
+410
+00:17:13,120 --> 00:17:17,600
+változott. It kétféle két dolog
+
+411
+00:17:14,880 --> 00:17:19,839
+készülünk fel. Az egyik az az, hogyha a
+
+412
+00:17:17,600 --> 00:17:22,400
+rendési címváltozott, azt azt külön
+
+413
+00:17:19,839 --> 00:17:25,880
+eseménynek tekintjük.
+
+414
+00:17:22,400 --> 00:17:28,280
+Vagy pedig valami más változott ennél
+
+415
+00:17:25,880 --> 00:17:30,600
+címet például ugye akkor a értesítjük a
+
+416
+00:17:28,280 --> 00:17:33,000
+siteemási céget, hogy változott-e a
+
+417
+00:17:30,600 --> 00:17:36,000
+kiszállítási cím. Jó, tehát ez a ez a
+
+418
+00:17:33,000 --> 00:17:39,280
+trigger
+
+419
+00:17:36,000 --> 00:17:42,799
+hozzuk létre,
+
+420
+00:17:39,280 --> 00:17:42,799
+és most már működik.
+
+421
+00:17:45,080 --> 00:17:47,440
+És
+
+422
+00:17:48,760 --> 00:17:53,320
+nézzük meg azt, hogy hogy most milyen
+
+423
+00:17:51,080 --> 00:17:54,840
+rendeléseink vannak. Most nincsen semmi
+
+424
+00:17:53,320 --> 00:17:56,320
+ilyen tesztrendelés. Hát a
+
+425
+00:17:54,840 --> 00:17:59,799
+tesztelintéseket onnan ismerjük fel,
+
+426
+00:17:56,320 --> 00:18:01,039
+hogy az employee ID az null,
+
+427
+00:17:59,799 --> 00:18:02,799
+mert ugye van benne egy csomó egyéb
+
+428
+00:18:01,039 --> 00:18:04,360
+rendelés, de azok azok normális
+
+429
+00:18:02,799 --> 00:18:06,520
+rendelések.
+
+430
+00:18:04,360 --> 00:18:08,360
+Jó,
+
+431
+00:18:06,520 --> 00:18:09,720
+és azért
+
+432
+00:18:08,360 --> 00:18:11,600
+azért mindig csináljuk rendet magunk
+
+433
+00:18:09,720 --> 00:18:14,720
+után, tehát egy ilyen tesztelgetés után
+
+434
+00:18:11,600 --> 00:18:16,960
+törüljük ki a a téve a hát a teszt
+
+435
+00:18:14,720 --> 00:18:20,320
+céljából felvitt rendeléseket. Most már
+
+436
+00:18:16,960 --> 00:18:22,720
+megvan a
+
+437
+00:18:20,320 --> 00:18:24,720
+a triggerünk. Tehát itt itt teszteljük,
+
+438
+00:18:22,720 --> 00:18:29,320
+hogy fut-e.
+
+439
+00:18:24,720 --> 00:18:29,320
+Jelenleg üres az orderlog táblánk.
+
+440
+00:18:31,080 --> 00:18:37,159
+Sajnos az a helyzet, hogy a a mutató
+
+441
+00:18:35,039 --> 00:18:40,360
+kurzorom az ebben a szöveges ablakban
+
+442
+00:18:37,159 --> 00:18:43,640
+nem működik, úgy látszik. Csak hogyha
+
+443
+00:18:40,360 --> 00:18:45,440
+Aha. másik húzom ki. Na mindegy, nem
+
+444
+00:18:43,640 --> 00:18:47,280
+érdekes.
+
+445
+00:18:45,440 --> 00:18:49,280
+És akkor most be beszúrunk egy új
+
+446
+00:18:47,280 --> 00:18:52,280
+rendelésrekordot.
+
+447
+00:18:49,280 --> 00:18:54,480
+Nem adunk hozzá ugye employee id
+
+448
+00:18:52,280 --> 00:18:56,679
+akkor akkor mi fog történni? Látod, hogy
+
+449
+00:18:54,480 --> 00:18:59,120
+elsült a triggerünk, kiírta ezt is, meg
+
+450
+00:18:56,679 --> 00:19:00,919
+ezt is, és elta neki, hogy hogy ez egy
+
+451
+00:18:59,120 --> 00:19:03,320
+új rendelés volt. Hogyha valaki nem
+
+452
+00:19:00,919 --> 00:19:05,080
+akarja látni ezt, hogy one roll fact,
+
+453
+00:19:03,320 --> 00:19:08,600
+ezeket a visszaírásokat, akkor be lehet
+
+454
+00:19:05,080 --> 00:19:08,600
+azt írni, hogy
+
+455
+00:19:09,600 --> 00:19:17,080
+set no count.
+
+456
+00:19:12,559 --> 00:19:18,919
+És akkor most, hogyha lefuttatjuk újra,
+
+457
+00:19:17,080 --> 00:19:21,080
+akkor ugye már ezt nem látjuk. Viszont
+
+458
+00:19:18,919 --> 00:19:23,799
+most már akkor két rendelésnek kell
+
+459
+00:19:21,080 --> 00:19:28,679
+lennie a loktál, és tényleg szépen ott
+
+460
+00:19:23,799 --> 00:19:33,240
+is vannak. Tehát mi a rendelés száma?
+
+461
+00:19:28,679 --> 00:19:33,240
+Ugye két új rendelést hoztunk létre.
+
+462
+00:19:33,840 --> 00:19:38,919
+Jó, itt ez a másik péld azt mutatja,
+
+463
+00:19:36,440 --> 00:19:41,559
+hogy mi hogyha kettőt szúrunk be.
+
+464
+00:19:38,919 --> 00:19:44,080
+Nem túlságosan érdekes.
+
+465
+00:19:41,559 --> 00:19:46,000
+És és nézd meg azt, hogy az update
+
+466
+00:19:44,080 --> 00:19:48,559
+feldolgozásra is el se működik-e.
+
+467
+00:19:46,000 --> 00:19:53,720
+Menjünk végig a triggernek minden ágán.
+
+468
+00:19:48,559 --> 00:19:53,720
+Itt most ugye ez a 11081
+
+469
+00:19:56,200 --> 00:20:03,600
+aongja az egyik rendelésünk.
+
+470
+00:20:00,799 --> 00:20:06,280
+Mondjuk ennek
+
+471
+00:20:03,600 --> 00:20:08,600
+változtatjuk meg a az egyik mezőjét.
+
+472
+00:20:06,280 --> 00:20:11,919
+Tehát akkor el kéne sülnie. Ez egy új,
+
+473
+00:20:08,600 --> 00:20:13,120
+ez egy új rendelésünk.
+
+474
+00:20:11,919 --> 00:20:15,880
+És akkor ne rontsunk bele az
+
+475
+00:20:13,120 --> 00:20:17,960
+adatbázisba.
+
+476
+00:20:15,880 --> 00:20:20,960
+El kéne sülni az update részének a
+
+477
+00:20:17,960 --> 00:20:20,960
+triggernek.
+
+478
+00:20:22,400 --> 00:20:28,000
+És láttam other change történt ugye,
+
+479
+00:20:24,840 --> 00:20:29,880
+mert a ship mezőt módosítottuk. Úgyhogy
+
+480
+00:20:28,000 --> 00:20:31,520
+ha most megnézzük az oldalak trágát,
+
+481
+00:20:29,880 --> 00:20:33,120
+akkor már kell, hogy legyen egy másik
+
+482
+00:20:31,520 --> 00:20:36,440
+típusú esemény is. Tehát ez nagyon
+
+483
+00:20:33,120 --> 00:20:36,440
+szépen működik.
+
+484
+00:20:37,039 --> 00:20:41,240
+Jó, és most minden szépen visszaállítunk
+
+485
+00:20:39,120 --> 00:20:43,760
+eredeti állapotba.
+
+486
+00:20:41,240 --> 00:20:47,400
+Na jó, akkor ott tartunk most az
+
+487
+00:20:43,760 --> 00:20:50,960
+információs rendszerünkben, hogy
+
+488
+00:20:47,400 --> 00:20:52,600
+ugye elnézést, eddig van eddig van
+
+489
+00:20:50,960 --> 00:20:54,320
+készen, ugye? Tehát ez van, ami most
+
+490
+00:20:52,600 --> 00:20:56,960
+készen van, és most jön az, hogy
+
+491
+00:20:54,320 --> 00:20:58,880
+feldolgozzuk a rendelést és csinálunk
+
+492
+00:20:56,960 --> 00:21:01,080
+ebből egy jobot. Na most egy ilyen jobot
+
+493
+00:20:58,880 --> 00:21:03,919
+úgy csinál az ember, hogy először csinál
+
+494
+00:21:01,080 --> 00:21:07,240
+egy tárolt eljárást,
+
+495
+00:21:03,919 --> 00:21:10,279
+azt szépen leteszteli, jól működik-e,
+
+496
+00:21:07,240 --> 00:21:11,679
+és aztán utána készít egy jobot, ami
+
+497
+00:21:10,279 --> 00:21:13,400
+elindítja ezt a tároló teárást
+
+498
+00:21:11,679 --> 00:21:16,400
+ütemezetten. Tehát ezt ezt fogom
+
+499
+00:21:13,400 --> 00:21:16,400
+megmutatni.
+
+500
+00:21:16,520 --> 00:21:20,919
+Hát itt most egy kicsit realisztikusabb
+
+501
+00:21:18,400 --> 00:21:25,120
+legyen ez az egész problématér. Ezért
+
+502
+00:21:20,919 --> 00:21:27,240
+azt fogjuk csinálni, hogy a a hogy
+
+503
+00:21:25,120 --> 00:21:31,880
+csinálunk egy olyan
+
+504
+00:21:27,240 --> 00:21:34,000
+tárolteljárást, ami egy új rendelést
+
+505
+00:21:31,880 --> 00:21:35,679
+ténylegesen feldolgoz, tehát módosítja
+
+506
+00:21:34,000 --> 00:21:38,640
+az adatbázist.
+
+507
+00:21:35,679 --> 00:21:41,320
+Egy új rendelés esetén mi aktualizálni
+
+508
+00:21:38,640 --> 00:21:43,440
+fogjuk a products táblában a unit
+
+509
+00:21:41,320 --> 00:21:46,799
+unitsin stocknak az értékét. Tehát az
+
+510
+00:21:43,440 --> 00:21:52,159
+ugye a raktár készlet. Hát úgy fogjuk
+
+511
+00:21:46,799 --> 00:21:54,400
+aktualizálni, hogy a az az új rendelés
+
+512
+00:21:52,159 --> 00:21:57,320
+neek megnézzük, hogy mennyi a quantity
+
+513
+00:21:54,400 --> 00:21:59,799
+mezője. Ugye az order details táblának
+
+514
+00:21:57,320 --> 00:22:02,480
+van egy ilyen quantity mezője, és hát
+
+515
+00:21:59,799 --> 00:22:04,159
+levonjuk a a raktárkész az új rendésnek
+
+516
+00:22:02,480 --> 00:22:06,039
+az értékét.
+
+517
+00:22:04,159 --> 00:22:08,360
+De ugye előfordulat az, hogy egy olyan
+
+518
+00:22:06,039 --> 00:22:11,200
+rendést adtak fel
+
+519
+00:22:08,360 --> 00:22:12,600
+ami nagyobb mennyiség mint amennyire
+
+520
+00:22:11,200 --> 00:22:14,240
+aktálkészleten van. Már ugye ez egy
+
+521
+00:22:12,600 --> 00:22:16,600
+logikai hiba, tehát ezt a lenést ezt nem
+
+522
+00:22:14,240 --> 00:22:19,240
+szabad elfogadni akkor. Tehát hogyha
+
+523
+00:22:16,600 --> 00:22:21,679
+csak mit tudom én három lágos sörünk
+
+524
+00:22:19,240 --> 00:22:23,400
+van, akkor nem lehet négyet rendelni
+
+525
+00:22:21,679 --> 00:22:26,559
+ugye most erre való itt ez a
+
+526
+00:22:23,400 --> 00:22:29,200
+hibakezelés. Ugye mivel ezen a products
+
+527
+00:22:26,559 --> 00:22:31,039
+táblán van egy check constraint,
+
+528
+00:22:29,200 --> 00:22:33,400
+ez nem engedi meg, hogy a unitsin stalk
+
+529
+00:22:31,039 --> 00:22:35,200
+az nullának kisebb értékű legyen. Ezért
+
+530
+00:22:33,400 --> 00:22:37,559
+ebben az esetben ez update utasítás
+
+531
+00:22:35,200 --> 00:22:39,559
+hibára fog futni. De mivel benne van egy
+
+532
+00:22:37,559 --> 00:22:41,880
+ilyen tryákban, ezért át fog kerülni a
+
+533
+00:22:39,559 --> 00:22:44,120
+catch ágba. Elkapjuk ezt a hibát. Van
+
+534
+00:22:41,880 --> 00:22:46,720
+egy error message, de a lényeg az ugye
+
+535
+00:22:44,120 --> 00:22:48,600
+hát most ez a ez a ez az error message.
+
+536
+00:22:46,720 --> 00:22:50,520
+Hát ez a világű megy, ugye ez ez csak a
+
+537
+00:22:48,600 --> 00:22:52,400
+programozónak
+
+538
+00:22:50,520 --> 00:22:53,799
+információ,
+
+539
+00:22:52,400 --> 00:22:56,440
+de nem ez a lényeg, hanem az, hogy ebben
+
+540
+00:22:53,799 --> 00:22:58,320
+az esetben egyes eredményt adunk vissza,
+
+541
+00:22:56,440 --> 00:23:00,679
+külön pedig nulla eredményt, ugye? Tehát
+
+542
+00:22:58,320 --> 00:23:02,960
+ez egy olyan tárolt eljárás, aminek van
+
+543
+00:23:00,679 --> 00:23:05,720
+egy kimeneti változója, egy output
+
+544
+00:23:02,960 --> 00:23:07,440
+változója.
+
+545
+00:23:05,720 --> 00:23:09,520
+Ugye egy tároltástnak akárhány ilyen
+
+546
+00:23:07,440 --> 00:23:12,159
+output változója lehet, és ezt az
+
+547
+00:23:09,520 --> 00:23:14,240
+eljárás meghívása után szépen el lehet
+
+548
+00:23:12,159 --> 00:23:16,039
+kérdezni, hogy mennyi a járás által
+
+549
+00:23:14,240 --> 00:23:21,039
+beállított értéke. Tehát itt vagy
+
+550
+00:23:16,039 --> 00:23:21,039
+nullára állítjuk, vagy pedig egyre. Jó,
+
+551
+00:23:25,799 --> 00:23:31,000
+ez viszont már megvolt. Úgyhogy
+
+552
+00:23:29,480 --> 00:23:34,520
+úgyhogy akkor azért biztos, hogyan
+
+553
+00:23:31,000 --> 00:23:36,200
+biztos hozzuk létre újra.
+
+554
+00:23:34,520 --> 00:23:41,240
+Jó.
+
+555
+00:23:36,200 --> 00:23:45,080
+És hát most itt ennek a tároltának a a
+
+556
+00:23:41,240 --> 00:23:45,080
+tesztelgetése történik.
+
+557
+00:23:51,200 --> 00:23:57,440
+Itt igazából ezzel nem húznám az időt.
+
+558
+00:23:54,679 --> 00:24:00,120
+Szépen működik. Mű működik ahogy kell.
+
+559
+00:23:57,440 --> 00:24:02,679
+Tehát hozza a hibát, hogyha hogyha
+
+560
+00:24:00,120 --> 00:24:05,760
+negatív raktárkészletet állítunk be. Ezt
+
+561
+00:24:02,679 --> 00:24:08,400
+végig lehet próbálgatni.
+
+562
+00:24:05,760 --> 00:24:12,159
+Jó, és akkor most nézzük azt a azt a
+
+563
+00:24:08,400 --> 00:24:15,600
+tárolt eljárást, amelyik
+
+564
+00:24:12,159 --> 00:24:18,360
+a logót dolgozza fel. Na most ez
+
+565
+00:24:15,600 --> 00:24:20,559
+tipikusan egy olyan eset, amikor ugye
+
+566
+00:24:18,360 --> 00:24:22,240
+van egy táblánk, amiben vannak rekordok,
+
+567
+00:24:20,559 --> 00:24:25,240
+és a rekordokon egyenként kell szépen
+
+568
+00:24:22,240 --> 00:24:27,880
+végigépkedni, mivel
+
+569
+00:24:25,240 --> 00:24:29,720
+minden rekorddal aszerint mást és mást
+
+570
+00:24:27,880 --> 00:24:33,000
+kell csinálni.
+
+571
+00:24:29,720 --> 00:24:34,640
+azerint kell mást és mást csinálni, hogy
+
+572
+00:24:33,000 --> 00:24:35,960
+hogy milyen típusú esemény történt.
+
+573
+00:24:34,640 --> 00:24:39,120
+Tehát teljesen mást kell csinálni
+
+574
+00:24:35,960 --> 00:24:40,880
+mondjuk egy
+
+575
+00:24:39,120 --> 00:24:42,919
+egy új rendelésnél, mint egy rendelés
+
+576
+00:24:40,880 --> 00:24:45,520
+módosulása esetén. Tehát ilyenkor
+
+577
+00:24:42,919 --> 00:24:47,159
+használunk egy kurzort, ilyenkor ez ugye
+
+578
+00:24:45,520 --> 00:24:49,120
+tekintettel, hogy nem 1 millió rekordon
+
+579
+00:24:47,159 --> 00:24:51,799
+lépkedünk végig, hanem csak mondjuk a
+
+580
+00:24:49,120 --> 00:24:55,080
+tegnap óta felgyűlt rendeléseken. Tehát
+
+581
+00:24:51,799 --> 00:24:59,200
+itt a kurzor kifejezetten
+
+582
+00:24:55,080 --> 00:25:01,440
+javas javasolt megoldás ilyen esetekben.
+
+583
+00:24:59,200 --> 00:25:04,159
+És akkor nézzük, ugye a a kurzorunk
+
+584
+00:25:01,440 --> 00:25:06,960
+nagyon lényeges az order táblány végig,
+
+585
+00:25:04,159 --> 00:25:08,440
+de csak a nullas státuszú rendeléseket.
+
+586
+00:25:06,960 --> 00:25:10,799
+A nulla státusz az azt jelenti, hogy új
+
+587
+00:25:08,440 --> 00:25:12,960
+rendelés. Meg különben, ha nem ezt
+
+588
+00:25:10,799 --> 00:25:16,200
+elfelejtenénk, akkor ugye minden egyes
+
+589
+00:25:12,960 --> 00:25:18,320
+alkalmunk lefut a job, újra és újra
+
+590
+00:25:16,200 --> 00:25:20,039
+gyártásba adnánk mondjuk ugyanazt a
+
+591
+00:25:18,320 --> 00:25:21,399
+rendelést. Tehát ez azért lényeges
+
+592
+00:25:20,039 --> 00:25:23,960
+dolog, hogy mi majd jelezzük ezzel a
+
+593
+00:25:21,399 --> 00:25:25,960
+státusszal, hogy oké, átvettük ezt az
+
+594
+00:25:23,960 --> 00:25:27,679
+eseményt és feldolgoztuk, vagy pedig ha
+
+595
+00:25:25,960 --> 00:25:30,600
+nem, akkor nulla, és akkor ez egy új
+
+596
+00:25:27,679 --> 00:25:33,320
+esemény.
+
+597
+00:25:30,600 --> 00:25:36,279
+Jó. És tehát van ez a kurzorunk, ez megy
+
+598
+00:25:33,320 --> 00:25:38,159
+végig az új az új rendeléseken. A az
+
+599
+00:25:36,279 --> 00:25:39,200
+exactt abort on az mit fog csinálni,
+
+600
+00:25:38,159 --> 00:25:42,520
+hogyha hiba történik, akkor
+
+601
+00:25:39,200 --> 00:25:44,679
+visszagörgeti a tranzakciót.
+
+602
+00:25:42,520 --> 00:25:46,840
+És és egyébként a tranzakció majd itt
+
+603
+00:25:44,679 --> 00:25:49,159
+fog belül elkezdődni a kurzoron belül.
+
+604
+00:25:46,840 --> 00:25:51,039
+Tehát itt az a lényeg, hogy minden egyes
+
+605
+00:25:49,159 --> 00:25:53,240
+új eseménynél kezdünk-e egy új
+
+606
+00:25:51,039 --> 00:25:56,000
+tranzakciót.
+
+607
+00:25:53,240 --> 00:25:58,000
+Ez így logikus, ugye? Tehát, hogy hogy
+
+608
+00:25:56,000 --> 00:25:59,600
+azért, mert az egyik rendelést nem
+
+609
+00:25:58,000 --> 00:26:01,960
+tudtuk feldolgozni, meg a másikat fel
+
+610
+00:25:59,600 --> 00:26:04,240
+tudjuk dolgozni, ugye? Tehát ez ezek a
+
+611
+00:26:01,960 --> 00:26:06,760
+dolgok egymástól függetlenek ebben az
+
+612
+00:26:04,240 --> 00:26:09,559
+esetben ez ez ez így van megvalósítva.
+
+613
+00:26:06,760 --> 00:26:11,840
+Szóval elindul a kurzor,
+
+614
+00:26:09,559 --> 00:26:15,120
+kiveszi a következő új rendelésrekord,
+
+615
+00:26:11,840 --> 00:26:17,799
+vagy eseményrekordot. Ezek események,
+
+616
+00:26:15,120 --> 00:26:20,559
+lehet, hogy módosult, vagy újrelés. És
+
+617
+00:26:17,799 --> 00:26:22,799
+azzal kezdjük, hogy beírjuk a logtáblába
+
+618
+00:26:20,559 --> 00:26:24,919
+azt, hogy elkezdtük feldolgozni, mert
+
+619
+00:26:22,799 --> 00:26:27,200
+lehet, hogy ez mondjuk mit tudom én, 10
+
+620
+00:26:24,919 --> 00:26:29,240
+másodpercig tart. Na most ez egész úgy
+
+621
+00:26:27,200 --> 00:26:32,120
+van elképzelve, hogy ugye ez
+
+622
+00:26:29,240 --> 00:26:34,640
+automatizáltan fog futni ez a ez a egy
+
+623
+00:26:32,120 --> 00:26:36,120
+egy jobban nem operátori felügyelet
+
+624
+00:26:34,640 --> 00:26:38,440
+alatt. Tehát lehet, hogy mondjuk éjjel
+
+625
+00:26:36,120 --> 00:26:40,559
+3-kor fog lefutni, mert akkor alacsony
+
+626
+00:26:38,440 --> 00:26:43,159
+terheltségű a rendszer.
+
+627
+00:26:40,559 --> 00:26:45,240
+És majd reggel, mikor bejön az operátor,
+
+628
+00:26:43,159 --> 00:26:47,360
+akkor megnézi a loktáblát, és akkor
+
+629
+00:26:45,240 --> 00:26:48,760
+fogja látni, hogy ej ha de furcsa, hogy
+
+630
+00:26:47,360 --> 00:26:50,799
+milyen sokáig futott mondjuk egy
+
+631
+00:26:48,760 --> 00:26:52,559
+rendelés felvétele. Utána tudod nézni,
+
+632
+00:26:50,799 --> 00:26:54,679
+hogy mi történt. Tehát mi ezért logoljuk
+
+633
+00:26:52,559 --> 00:26:59,399
+azt, mikor kezdtük el és mikor fejeztük
+
+634
+00:26:54,679 --> 00:27:02,000
+be a az esemény feldolgozását. Jó.
+
+635
+00:26:59,399 --> 00:27:03,760
+És akkor
+
+636
+00:27:02,000 --> 00:27:05,240
+megnézzük, hogy mi az es most kezdjük a
+
+637
+00:27:03,760 --> 00:27:07,000
+tranzakciót. Megnézzük, hogy mi az esény
+
+638
+00:27:05,240 --> 00:27:09,159
+típusa, és aszerint mást és mást
+
+639
+00:27:07,000 --> 00:27:10,520
+csinálunk. Most ezek közül itt van négy
+
+640
+00:27:09,159 --> 00:27:12,720
+ág.
+
+641
+00:27:10,520 --> 00:27:14,480
+Ezek közül
+
+642
+00:27:12,720 --> 00:27:16,159
+három az ilyen dami, tehát csak ilyen
+
+643
+00:27:14,480 --> 00:27:18,520
+szimulát, de az egyik ág az tényleg meg
+
+644
+00:27:16,159 --> 00:27:20,960
+van valósítva, mert hiszen az új
+
+645
+00:27:18,520 --> 00:27:23,039
+rendelésre mi csináltunk egy tárolt
+
+646
+00:27:20,960 --> 00:27:25,360
+eljárást. Ezt az SP commit new order to
+
+647
+00:27:23,039 --> 00:27:29,399
+inventory. És ezt tényleg meg is hívjuk
+
+648
+00:27:25,360 --> 00:27:29,399
+az új az új rendelés esetén.
+
+649
+00:27:29,520 --> 00:27:34,200
+A ebbe a rizált saját változónkba
+
+650
+00:27:32,240 --> 00:27:36,480
+vesszük át az futás eredményét. Ugye ez
+
+651
+00:27:34,200 --> 00:27:39,200
+egy output változó, itt jelölve is van.
+
+652
+00:27:36,480 --> 00:27:41,320
+Tehát ha ez nullára van állítva, akkor
+
+653
+00:27:39,200 --> 00:27:42,960
+oké. Ha egyre, akkor pedig valami hiba
+
+654
+00:27:41,320 --> 00:27:46,279
+történt, akkor akkor akkor nem lehetett
+
+655
+00:27:42,960 --> 00:27:48,080
+felvenni ezt az új rendelést.
+
+656
+00:27:46,279 --> 00:27:50,200
+Más esetekben csak annyit csinálunk,
+
+657
+00:27:48,080 --> 00:27:51,880
+hogy szimuláljuk az esély feldolgozását
+
+658
+00:27:50,200 --> 00:27:54,640
+azzal, hogy várunk egy másodpercig.
+
+659
+00:27:51,880 --> 00:27:57,200
+Tehát de azért kiírjuk azt, hogy igen,
+
+660
+00:27:54,640 --> 00:27:59,480
+ez ez fel ez ez történt, vagy valami más
+
+661
+00:27:57,200 --> 00:28:01,480
+történt.
+
+662
+00:27:59,480 --> 00:28:03,720
+Ez a ez az unknown even type. Ez ez
+
+663
+00:28:01,480 --> 00:28:06,440
+tulajdonképpen egyfajta hibajelzés. És
+
+664
+00:28:03,720 --> 00:28:08,279
+ezért itt ugye egyet egy egyre állítjuk
+
+665
+00:28:06,440 --> 00:28:10,320
+a rizálatot, mert itt valami valami nagy
+
+666
+00:28:08,279 --> 00:28:12,840
+disznóság történt. Mi nem tudjuk
+
+667
+00:28:10,320 --> 00:28:17,600
+feldolgozni ezt a típusú eseményt, csak
+
+668
+00:28:12,840 --> 00:28:18,880
+a másik hármat. És akkor végül
+
+669
+00:28:17,600 --> 00:28:21,480
+van egy visszajelzésünk arra
+
+670
+00:28:18,880 --> 00:28:23,120
+vonatkozólag, hogy hogy oké, vagy pedig
+
+671
+00:28:21,480 --> 00:28:26,080
+vagy baj van, és hogyha baj van, akkor
+
+672
+00:28:23,120 --> 00:28:29,120
+rollbackeljük a tranzakciót. Tehát ez
+
+673
+00:28:26,080 --> 00:28:31,559
+így ez így egy korrekt
+
+674
+00:28:29,120 --> 00:28:33,440
+az üzlet szempontjából egy egy korrekt
+
+675
+00:28:31,559 --> 00:28:35,399
+megvalósítás.
+
+676
+00:28:33,440 --> 00:28:37,480
+Na most miután végeztünk a
+
+677
+00:28:35,399 --> 00:28:39,640
+tranzakcióval,
+
+678
+00:28:37,480 --> 00:28:41,679
+ugye, tehát most vagy commit, vagy
+
+679
+00:28:39,640 --> 00:28:43,559
+rollback, de valamit csináltunk vele,
+
+680
+00:28:41,679 --> 00:28:45,240
+utána a loktáblával visszaadjuk azt,
+
+681
+00:28:43,559 --> 00:28:49,000
+hogy most hány óra van, tehát hogy
+
+682
+00:28:45,240 --> 00:28:51,080
+mennyi ideig tartott és és van ennek egy
+
+683
+00:28:49,000 --> 00:28:54,480
+ilyen egy ilyen státuszmezője ennek a
+
+684
+00:28:51,080 --> 00:28:55,679
+loktáblának, azt beállítjuk vagy egyre,
+
+685
+00:28:54,480 --> 00:28:57,519
+vagy kettőre. Azt jelenti, hogy
+
+686
+00:28:55,679 --> 00:29:00,200
+sikerült-e feldolgozni. ugye nulla volt
+
+687
+00:28:57,519 --> 00:29:02,559
+és egy vagy kettő lett. Úgyhogy ezáltal
+
+688
+00:29:00,200 --> 00:29:04,919
+a rendszergazda vagy az operátor másnap
+
+689
+00:29:02,559 --> 00:29:07,240
+reggel rögtön látja, hogyha a státusz az
+
+690
+00:29:04,919 --> 00:29:10,000
+egybe kettő, akkor akkor mi az, amit
+
+691
+00:29:07,240 --> 00:29:12,360
+amit amit nem sikerült neki? Milyen
+
+692
+00:29:10,000 --> 00:29:15,120
+milyen eseménnyel volt hiba az éjszakas?
+
+693
+00:29:12,360 --> 00:29:18,120
+Mondjuk tehát ez itt a tárolt
+
+694
+00:29:15,120 --> 00:29:18,120
+eljárásunk,
+
+695
+00:29:19,799 --> 00:29:28,159
+és már ez is megvolt. Úgyhogy
+
+696
+00:29:23,600 --> 00:29:29,919
+akkor innentől kezdve hajtjuk végre.
+
+697
+00:29:28,159 --> 00:29:32,919
+Biztos ami biztos. Cseréljük le, hogy
+
+698
+00:29:29,919 --> 00:29:32,919
+megvolt.
+
+699
+00:29:33,440 --> 00:29:36,720
+Jó. És hát akkor most
+
+700
+00:29:37,120 --> 00:29:40,120
+lehet
+
+701
+00:29:41,840 --> 00:29:45,159
+tesztelgetni.
+
+702
+00:29:43,559 --> 00:29:47,320
+Na most ahhoz, hogy tesztelni tudjuk,
+
+703
+00:29:45,159 --> 00:29:49,399
+ahhoz be kell szúrnunk, tehát
+
+704
+00:29:47,320 --> 00:29:52,399
+létrehozzunk az az orderlog táblába
+
+705
+00:29:49,399 --> 00:29:52,399
+valamit.
+
+706
+00:29:56,640 --> 00:30:02,960
+ami azt jelenti, hogy el kell jönnünk
+
+707
+00:29:58,559 --> 00:30:02,960
+ide, amikor
+
+708
+00:30:03,279 --> 00:30:10,080
+a mondjuk ide,
+
+709
+00:30:07,080 --> 00:30:10,080
+és
+
+710
+00:30:11,880 --> 00:30:16,200
+mondjuk csinálunk megint egy új
+
+711
+00:30:13,200 --> 00:30:16,200
+rendelést.
+
+712
+00:30:24,039 --> 00:30:29,399
+Most megnézhetjük, hogy ennek mi lett a
+
+713
+00:30:25,600 --> 00:30:33,080
+rendelési ideje. Ennek
+
+714
+00:30:29,399 --> 00:30:36,440
+11084 és 11083.
+
+715
+00:30:33,080 --> 00:30:40,480
+Ez a ez a két újrendelési idénk van.
+
+716
+00:30:36,440 --> 00:30:43,279
+Tehát 84 és 83.
+
+717
+00:30:40,480 --> 00:30:46,279
+esetén még csinálunk egy egy update-et
+
+718
+00:30:43,279 --> 00:30:46,279
+is.
+
+719
+00:30:48,159 --> 00:30:52,840
+Akkor most már három eseményünk lesz,
+
+720
+00:30:57,880 --> 00:31:03,960
+illetve
+
+721
+00:31:00,519 --> 00:31:06,399
+illetve azért azért nincs három,
+
+722
+00:31:03,960 --> 00:31:10,360
+mert ugye itt még egy másik szerepel,
+
+723
+00:31:06,399 --> 00:31:12,639
+tehát az volt amadtunk a 83-ashoz.
+
+724
+00:31:10,360 --> 00:31:15,840
+az update nem csinált semmit. Iszon már
+
+725
+00:31:12,639 --> 00:31:15,840
+fog csinálni.
+
+726
+00:31:16,039 --> 00:31:20,919
+És
+
+727
+00:31:18,120 --> 00:31:22,519
+és akkor ez három eseményünk.
+
+728
+00:31:20,919 --> 00:31:24,840
+Jó.
+
+729
+00:31:22,519 --> 00:31:27,760
+Na most ugye mi csak egy új order
+
+730
+00:31:24,840 --> 00:31:30,679
+recordot szúrtunk be, de order detail.
+
+731
+00:31:27,760 --> 00:31:34,240
+Márpedig ugye mennyiség csak abban van.
+
+732
+00:31:30,679 --> 00:31:37,240
+Úgyhogy ha korrektek akarunk lenni,
+
+733
+00:31:34,240 --> 00:31:37,240
+akkor
+
+734
+00:31:37,760 --> 00:31:41,760
+itt a mondjuk a 11084-eshez,
+
+735
+00:31:43,080 --> 00:31:48,559
+a 11084-eshez
+
+736
+00:31:45,039 --> 00:31:48,559
+be fogunk szúrni
+
+737
+00:31:49,200 --> 00:31:52,200
+egy
+
+738
+00:31:54,000 --> 00:32:00,440
+egy új rendelési tételt is. Jó, tehát
+
+739
+00:31:57,600 --> 00:32:04,519
+csak ennyit.
+
+740
+00:32:00,440 --> 00:32:04,519
+És aztán hogy ez most tényleg
+
+741
+00:32:07,240 --> 00:32:11,399
+kiíthető vagy nem? Nézzük csak meg. Azt
+
+742
+00:32:09,399 --> 00:32:13,039
+mondja, hogy a
+
+743
+00:32:11,399 --> 00:32:17,159
+a product,
+
+744
+00:32:13,039 --> 00:32:17,159
+a 10-es product idnek
+
+745
+00:32:19,000 --> 00:32:25,200
+a mennyisége az most 23.
+
+746
+00:32:22,200 --> 00:32:25,200
+Jó.
+
+747
+00:32:26,360 --> 00:32:34,919
+És akkor azt mondja, hogy
+
+748
+00:32:30,720 --> 00:32:37,120
+tehát akkor a 10-es product,
+
+749
+00:32:34,919 --> 00:32:40,279
+és mondjuk első lépésben 10-et fogunk
+
+750
+00:32:37,120 --> 00:32:42,240
+venni belőle, az még kielégíthető. A
+
+751
+00:32:40,279 --> 00:32:44,440
+unip discount az nem érdekes. Tehát most
+
+752
+00:32:42,240 --> 00:32:49,639
+egy olyan rendes tétel rekordot szúrunk
+
+753
+00:32:44,440 --> 00:32:52,240
+be, amelyik kielégíthető.
+
+754
+00:32:49,639 --> 00:32:54,440
+Jó.
+
+755
+00:32:52,240 --> 00:32:57,360
+BP10 a 84-eshez. Na és akkor most
+
+756
+00:32:54,440 --> 00:33:02,159
+futtassuk le a tárolótályásunkat.
+
+757
+00:32:57,360 --> 00:33:04,840
+Ezt én itt innen el is fogom lopni.
+
+758
+00:33:02,159 --> 00:33:08,880
+Sőt, még ezt is.
+
+759
+00:33:04,840 --> 00:33:08,880
+A tároltájásunk végére.
+
+760
+00:33:10,440 --> 00:33:16,039
+Tehát most jöjjünk ide a
+
+761
+00:33:14,000 --> 00:33:17,840
+a
+
+762
+00:33:16,039 --> 00:33:21,320
+teszteléshez,
+
+763
+00:33:17,840 --> 00:33:23,600
+tároltást teszteléséhez.
+
+764
+00:33:21,320 --> 00:33:23,600
+És
+
+765
+00:33:26,240 --> 00:33:31,720
+és akkor futtassuk le. Ugye most már a
+
+766
+00:33:28,519 --> 00:33:34,679
+az az order, vagyis az az order táblánk
+
+767
+00:33:31,720 --> 00:33:40,880
+szépen fel van készítve.
+
+768
+00:33:34,679 --> 00:33:40,880
+Itt ezt az exet spo debord process.
+
+769
+00:33:41,000 --> 00:33:45,000
+No hát ugye mit vártunk tőle, hogy
+
+770
+00:33:43,279 --> 00:33:49,120
+háromszor fog lefutni, mert ugye három
+
+771
+00:33:45,000 --> 00:33:51,880
+új esemény van. Az egyik new order és
+
+772
+00:33:49,120 --> 00:33:55,360
+azt mondja, hogy oké, a másik se egy new
+
+773
+00:33:51,880 --> 00:33:56,919
+order. Most ugye a a 081-nek volt
+
+774
+00:33:55,360 --> 00:33:59,760
+rendési tétele is. Ennek nem volt
+
+775
+00:33:56,919 --> 00:34:01,519
+rendési tétele, csak
+
+776
+00:33:59,760 --> 00:34:02,960
+csak magában pő egy rendelés. Hát ez
+
+777
+00:34:01,519 --> 00:34:04,240
+persze, hogy nem okozott hibát, de ez
+
+778
+00:34:02,960 --> 00:34:05,360
+okozhatott volna hibát, hogyha a
+
+779
+00:34:04,240 --> 00:34:08,119
+mennyiség nagyobb, mint amennyi a
+
+780
+00:34:05,360 --> 00:34:10,280
+raktáron van. Ez pedig egy ilyen other
+
+781
+00:34:08,119 --> 00:34:12,839
+change, ugye ez a ez a shipfája. Most
+
+782
+00:34:10,280 --> 00:34:14,359
+ezek után már ha még egyszer
+
+783
+00:34:12,839 --> 00:34:16,599
+lefuttatjuk,
+
+784
+00:34:14,359 --> 00:34:19,119
+ugye mi nézzük meg,
+
+785
+00:34:16,599 --> 00:34:20,760
+be lett állítva a státuszt mindegyikre
+
+786
+00:34:19,119 --> 00:34:24,000
+kettőre, tehát hogy sikeresen fel lett
+
+787
+00:34:20,760 --> 00:34:24,919
+dolgozva az esemény.
+
+788
+00:34:24,000 --> 00:34:26,320
+Ezek után, hogyha még egyszer
+
+789
+00:34:24,919 --> 00:34:28,000
+lefuttatjuk, akkor már nem fog csinálni
+
+790
+00:34:26,320 --> 00:34:30,079
+semmit, mert hiszen nem talál nulla
+
+791
+00:34:28,000 --> 00:34:32,399
+státuszú eseményt,
+
+792
+00:34:30,079 --> 00:34:35,280
+ugye? Tehát semmi nem történik. Hogyha
+
+793
+00:34:32,399 --> 00:34:37,679
+tovább akarjuk tesztelgetni, akkor most
+
+794
+00:34:35,280 --> 00:34:41,480
+művi módon átállítjuk fel nem
+
+795
+00:34:37,679 --> 00:34:41,480
+dolgozottra az eseményeket,
+
+796
+00:34:41,960 --> 00:34:44,960
+és
+
+797
+00:34:46,800 --> 00:34:52,760
+mondjuk kitöröm ezt az order details
+
+798
+00:34:48,760 --> 00:34:52,760
+recordot. 110
+
+799
+00:34:52,839 --> 00:34:56,919
+84-es volt.
+
+800
+00:34:58,079 --> 00:35:02,520
+És most beszúrom úgy. Ugye most az
+
+801
+00:35:00,119 --> 00:35:06,200
+értéke most már kevesebb lesz. 23 most
+
+802
+00:35:02,520 --> 00:35:08,880
+13 lesz az értéke
+
+803
+00:35:06,200 --> 00:35:12,520
+a amennyiségének. Igen. 13. Ugye
+
+804
+00:35:08,880 --> 00:35:15,280
+lefutott az a az a tároltájárás, amit ez
+
+805
+00:35:12,520 --> 00:35:16,520
+a ez az esény felgozó tároltást hívott
+
+806
+00:35:15,280 --> 00:35:19,440
+meg.
+
+807
+00:35:16,520 --> 00:35:21,240
+Ez az SP process New Order vagy valami
+
+808
+00:35:19,440 --> 00:35:22,720
+hasonló.
+
+809
+00:35:21,240 --> 00:35:24,839
+Mi van, hogyha most például 20-at akarok
+
+810
+00:35:22,720 --> 00:35:28,079
+venni belőle? Az már nem fog sikerülni.
+
+811
+00:35:24,839 --> 00:35:32,200
+Tehát most egy hibát kell majd kapnunk,
+
+812
+00:35:28,079 --> 00:35:32,200
+amikor az új eseményeket feldolgozzuk.
+
+813
+00:35:32,720 --> 00:35:37,640
+Jó, most megint jövök arra, hogy SP
+
+814
+00:35:35,000 --> 00:35:39,960
+order process.
+
+815
+00:35:37,640 --> 00:35:42,200
+És nézzük, mi lesz.
+
+816
+00:35:39,960 --> 00:35:44,480
+Három új esemény.
+
+817
+00:35:42,200 --> 00:35:47,240
+És akkor mi történik? Elkezdi az elsőre.
+
+818
+00:35:44,480 --> 00:35:49,960
+Ez az a bizonyos, aminek van tétele. És
+
+819
+00:35:47,240 --> 00:35:53,400
+ez, hogy invertory error, ez a
+
+820
+00:35:49,960 --> 00:35:55,720
+beágyazott, tehát a ennek a tároltá
+
+821
+00:35:53,400 --> 00:35:58,160
+által meghívott tárolótás belsejéből jön
+
+822
+00:35:55,720 --> 00:35:59,880
+ki ez. Tehát ez ennek van egy ilyen
+
+823
+00:35:58,160 --> 00:36:02,680
+hibaete. Hogyha valaki emlékszik rá ott
+
+824
+00:35:59,880 --> 00:36:04,079
+a catch ágan, az a hibaüzenet került
+
+825
+00:36:02,680 --> 00:36:06,680
+ide.
+
+826
+00:36:04,079 --> 00:36:08,240
+amit egyébként a rendszer generált.
+
+827
+00:36:06,680 --> 00:36:10,079
+Tehát
+
+828
+00:36:08,240 --> 00:36:11,640
+innentől kezdve ez egyszerűen az SP,
+
+829
+00:36:10,079 --> 00:36:14,359
+tehát ez az error messagebből van
+
+830
+00:36:11,640 --> 00:36:16,960
+kivíve, amit a rendszer adott, hogy hogy
+
+831
+00:36:14,359 --> 00:36:18,680
+ez egy checkpon szerintem ütközött. És
+
+832
+00:36:16,960 --> 00:36:21,280
+azt, hogy even processing f, azt már mi
+
+833
+00:36:18,680 --> 00:36:24,880
+írtuk vissza,
+
+834
+00:36:21,280 --> 00:36:26,400
+mivel a a státusza ennek a az eseménynek
+
+835
+00:36:24,880 --> 00:36:29,280
+nem
+
+836
+00:36:26,400 --> 00:36:32,280
+ez a rezultátja ugye az az ennek
+
+837
+00:36:29,280 --> 00:36:32,280
+köszönhetően
+
+838
+00:36:32,599 --> 00:36:37,040
+ugye itt ezt a rizált alapot egyre
+
+839
+00:36:34,359 --> 00:36:39,400
+állította be ez a tároljást.
+
+840
+00:36:37,040 --> 00:36:42,440
+Következésképpen ha most megnézzük a az
+
+841
+00:36:39,400 --> 00:36:46,079
+order táblát, akkor azt fogjuk látni,
+
+842
+00:36:42,440 --> 00:36:47,599
+hogy ennek itt sajnos egy a státusza,
+
+843
+00:36:46,079 --> 00:36:49,520
+tehát ennek sikertelen volt a
+
+844
+00:36:47,599 --> 00:36:51,119
+feldolgozása. Hát készen van az
+
+845
+00:36:49,520 --> 00:36:54,200
+információs rendszerünk, mondhatjuk ezt
+
+846
+00:36:51,119 --> 00:36:54,200
+a dolgot.
+
+847
+00:36:54,760 --> 00:37:01,119
+Alkalmasínt most megint állítsunk vissza
+
+848
+00:36:58,760 --> 00:37:04,160
+mindent,
+
+849
+00:37:01,119 --> 00:37:05,720
+tehát legyenek új eseményeink.
+
+850
+00:37:04,160 --> 00:37:07,640
+És most nézzük meg, hogy mi történik,
+
+851
+00:37:05,720 --> 00:37:10,160
+hogyha ezt nem kézzel akarjuk ugye ezt a
+
+852
+00:37:07,640 --> 00:37:11,520
+tárolytást mindig futtatgatni,
+
+853
+00:37:10,160 --> 00:37:14,599
+hanem automatizálni akarjuk. Tehát
+
+854
+00:37:11,520 --> 00:37:17,040
+utolsó lépésünk az, hogy hogy készítünk
+
+855
+00:37:14,599 --> 00:37:20,680
+egy jobot. Hogy kell egy jobot csinálni?
+
+856
+00:37:17,040 --> 00:37:23,599
+Hát ez úgy néz ki, hogy a
+
+857
+00:37:20,680 --> 00:37:26,680
+a jobokat egy olyan külön szolgáltatást
+
+858
+00:37:23,599 --> 00:37:28,880
+futtatja, amit úgy hívnak itt, hogy SQS
+
+859
+00:37:26,680 --> 00:37:32,720
+server agent.
+
+860
+00:37:28,880 --> 00:37:36,079
+Ez hasonlít a Chrome Demonhoz, például
+
+861
+00:37:32,720 --> 00:37:37,760
+Unix rendszereken,
+
+862
+00:37:36,079 --> 00:37:39,680
+de hát itt itt tulajdonképpen nagyon
+
+863
+00:37:37,760 --> 00:37:42,359
+szorosan össze van integrálódva az
+
+864
+00:37:39,680 --> 00:37:46,319
+adobás kezelő rendszerrel. Hogy ez éppen
+
+865
+00:37:42,359 --> 00:37:46,319
+fut-e, azt célszerű megnézni.
+
+866
+00:37:50,880 --> 00:37:54,839
+Es server agent. Ugye a primerak nem
+
+867
+00:37:53,200 --> 00:37:59,680
+fut. Látható, hogy piros. Tehát most így
+
+868
+00:37:54,839 --> 00:37:59,680
+nem fogunk jobbot csinálni. Indítsuk el.
+
+869
+00:38:04,200 --> 00:38:08,800
+Jó, most már fut.
+
+870
+00:38:06,880 --> 00:38:10,960
+És hogyha fut, ugye mi most a primaryre
+
+871
+00:38:08,800 --> 00:38:14,960
+vagyunk bejelentkezve, itt látható egy
+
+872
+00:38:10,960 --> 00:38:18,359
+kis zöld háromszög lett belőle,
+
+873
+00:38:14,960 --> 00:38:19,800
+akkor mi mindent lehet vele csinálni, is
+
+874
+00:38:18,359 --> 00:38:21,599
+lehet satöbbi, satöbbi. Most egy jobot
+
+875
+00:38:19,800 --> 00:38:26,040
+fogunk csinálni. Nézzük meg, hogy most
+
+876
+00:38:21,599 --> 00:38:26,040
+milyen milyen jobok vannak.
+
+877
+00:38:26,960 --> 00:38:30,640
+Hát ezek a dolgok
+
+878
+00:38:33,160 --> 00:38:39,240
+a master data services miatt vannak
+
+879
+00:38:36,359 --> 00:38:43,400
+benne, de mi most egy kézzel fogunk
+
+880
+00:38:39,240 --> 00:38:45,599
+létrehozni egy jobot. Azt v neki, hogy
+
+881
+00:38:43,400 --> 00:38:48,599
+new job. Adunk neki egy nevet, és ez
+
+882
+00:38:45,599 --> 00:38:50,359
+lesz a Northwind
+
+883
+00:38:48,599 --> 00:38:53,200
+Order
+
+884
+00:38:50,359 --> 00:38:55,560
+Process.
+
+885
+00:38:53,200 --> 00:38:57,960
+És ahhoz, hogy ebből legyen egy tényleg
+
+886
+00:38:55,560 --> 00:39:00,119
+egy job, ahhoz legalább egy lépésre
+
+887
+00:38:57,960 --> 00:39:02,880
+kell, hogy legyen. Most egy új lépést
+
+888
+00:39:00,119 --> 00:39:07,760
+hozunk létre.
+
+889
+00:39:02,880 --> 00:39:09,520
+New step. Kell neki nevet adni.
+
+890
+00:39:07,760 --> 00:39:13,119
+Akkor
+
+891
+00:39:09,520 --> 00:39:16,480
+process log. Ez lesz a neve. A típusa
+
+892
+00:39:13,119 --> 00:39:18,319
+egy TSQL lesz.
+
+893
+00:39:16,480 --> 00:39:22,200
+És az fontos, hogy melyik adatbázison
+
+894
+00:39:18,319 --> 00:39:24,560
+fusson. Hát ez a Natbálison fog futni.
+
+895
+00:39:22,200 --> 00:39:27,560
+Jó.
+
+896
+00:39:24,560 --> 00:39:27,560
+És
+
+897
+00:39:27,960 --> 00:39:31,240
+és a commandot be kell adnunk. Hát a
+
+898
+00:39:29,440 --> 00:39:33,640
+command az ugyanaz lesz, mint ami ami
+
+899
+00:39:31,240 --> 00:39:35,480
+ami itt volt.
+
+900
+00:39:33,640 --> 00:39:38,440
+Tehát
+
+901
+00:39:35,480 --> 00:39:39,920
+ez nincs paraméterünk, hiszen ezt ez
+
+902
+00:39:38,440 --> 00:39:43,359
+tudja, hogy melyik táblába kell
+
+903
+00:39:39,920 --> 00:39:46,079
+megnézni. Tudja, hogy melyik a loktábla.
+
+904
+00:39:43,359 --> 00:39:47,800
+Ezt ide bemásolom.
+
+905
+00:39:46,079 --> 00:39:49,839
+Mindösszes csak ennyi. En ennyit ennyit
+
+906
+00:39:47,800 --> 00:39:51,720
+csinálunk.
+
+907
+00:39:49,839 --> 00:39:53,720
+Jó.
+
+908
+00:39:51,720 --> 00:39:55,480
+Van már egy lépésünk, most pedig kell
+
+909
+00:39:53,720 --> 00:39:57,200
+adni neki egy időzítést. Hát ugye
+
+910
+00:39:55,480 --> 00:40:00,359
+normális esetben az időzítés az úgy
+
+911
+00:39:57,200 --> 00:40:02,079
+nézne ki, hogy
+
+912
+00:40:00,359 --> 00:40:04,319
+hogy mondjuk éjszakánként fusson le
+
+913
+00:40:02,079 --> 00:40:05,319
+éjjel 2-kor, de mi ezt nem tudnánk
+
+914
+00:40:04,319 --> 00:40:07,000
+tesztelni. Tehát most azt fogjuk
+
+915
+00:40:05,319 --> 00:40:09,680
+beállítani, hogy ez most folyamatosan
+
+916
+00:40:07,000 --> 00:40:11,480
+mostantól kezdve egy percenként fusson
+
+917
+00:40:09,680 --> 00:40:13,319
+le egyszer ez a drop. Hát ezt most
+
+918
+00:40:11,480 --> 00:40:16,720
+persze valóságban ilyet nem csináljuk.
+
+919
+00:40:13,319 --> 00:40:19,160
+Ezt csak tesztelési céljából.
+
+920
+00:40:16,720 --> 00:40:22,440
+Egy perc ez lesz a neve.
+
+921
+00:40:19,160 --> 00:40:25,240
+csináljuk tehát, hogy minden nap
+
+922
+00:40:22,440 --> 00:40:27,560
+és
+
+923
+00:40:25,240 --> 00:40:28,880
+és minden egyes percben ezt szépen be
+
+924
+00:40:27,560 --> 00:40:31,119
+lehet itt állítani. Na azért nem
+
+925
+00:40:28,880 --> 00:40:35,079
+másodpercben.
+
+926
+00:40:31,119 --> 00:40:39,000
+Fusson le. Aztán majd majd ezt tesztelés
+
+927
+00:40:35,079 --> 00:40:40,359
+végén kikapcsoljuk és kész. Ha azt
+
+928
+00:40:39,000 --> 00:40:44,319
+mondom, hogy oké, innentől kezdve
+
+929
+00:40:40,359 --> 00:40:46,599
+létrejön a job és már aktív is. Ez azt
+
+930
+00:40:44,319 --> 00:40:48,880
+jelenti, hogy egy perc múlva le fog
+
+931
+00:40:46,599 --> 00:40:50,599
+futni.
+
+932
+00:40:48,880 --> 00:40:52,560
+Úgy nézegessük ezt az order block
+
+933
+00:40:50,599 --> 00:40:55,000
+táblát.
+
+934
+00:40:52,560 --> 00:40:56,440
+Ugye most még nulla a státusza. Az azt
+
+935
+00:40:55,000 --> 00:40:59,960
+jelenti, hogy most még biztos nem futott
+
+936
+00:40:56,440 --> 00:41:01,359
+le, de egy percen belül ennek ennek meg
+
+937
+00:40:59,960 --> 00:41:04,079
+kell történni. És onnan vesszük majd azt
+
+938
+00:41:01,359 --> 00:41:07,839
+részt, hogy megtörtént, hogy itt a
+
+939
+00:41:04,079 --> 00:41:09,960
+státuszok átáltoznak kettőre.
+
+940
+00:41:07,839 --> 00:41:12,319
+Amíg erre várunk, addig megnézhetjük azt
+
+941
+00:41:09,960 --> 00:41:15,680
+is egyébként, hogy van itt egy ilyen,
+
+942
+00:41:12,319 --> 00:41:17,280
+hogy egy history, tehát meg lehet nézni
+
+943
+00:41:15,680 --> 00:41:19,079
+azt, hogy ennek a jobnak mi a futása
+
+944
+00:41:17,280 --> 00:41:21,119
+történt. Még nem futott le egyszer se,
+
+945
+00:41:19,079 --> 00:41:23,319
+ugye ezt ezt lehet látni, de itt van egy
+
+946
+00:41:21,119 --> 00:41:26,400
+ilyen refresh gomb, amivel lehet nézni,
+
+947
+00:41:23,319 --> 00:41:29,079
+hogy hogy hopp, és most lefutott
+
+948
+00:41:26,400 --> 00:41:30,960
+egyszer. Látható, éppen most lett az egy
+
+949
+00:41:29,079 --> 00:41:33,960
+perc, úgyhogy nézzünk bele most megint
+
+950
+00:41:30,960 --> 00:41:36,000
+az orderloock támlába.
+
+951
+00:41:33,960 --> 00:41:38,480
+És tényleg lefutott a Job szépen a
+
+952
+00:41:36,000 --> 00:41:40,079
+háttérben. Tehát egy egy szót nem szólt,
+
+953
+00:41:38,480 --> 00:41:43,319
+csak szépen megcsinálta, amit amit
+
+954
+00:41:40,079 --> 00:41:45,720
+kértünk tőle.
+
+955
+00:41:43,319 --> 00:41:47,480
+És hát tulajdonképpen
+
+956
+00:41:45,720 --> 00:41:50,000
+ennyi. Most itt itt meg lehetne nézni
+
+957
+00:41:47,480 --> 00:41:53,839
+azt egyébként, hogy hogy a joban
+
+958
+00:41:50,000 --> 00:41:57,640
+működött. Most ugye ez az egyes számú
+
+959
+00:41:53,839 --> 00:41:59,079
+lépés volt az, amit amit lefutottunk.
+
+960
+00:41:57,640 --> 00:42:01,800
+A am am ami amit lefuttattunk. Meg lehet
+
+961
+00:41:59,079 --> 00:42:04,560
+nézni, hogy az mi volt, de lehetne több
+
+962
+00:42:01,800 --> 00:42:07,680
+lépése is egy jobnak.
+
+963
+00:42:04,560 --> 00:42:10,359
+Azt viszont nem javaslom, hogy az egész
+
+964
+00:42:07,680 --> 00:42:11,880
+process tároltást ide írjuk be, mert az
+
+965
+00:42:10,359 --> 00:42:13,119
+sokkal nehezebben tesztelhető. Tehát a
+
+966
+00:42:11,880 --> 00:42:14,960
+helyes gyakorlat az az, hogy azt
+
+967
+00:42:13,119 --> 00:42:17,079
+megírjuk külön leteszteljük, és aztán
+
+968
+00:42:14,960 --> 00:42:18,880
+itt pedig csak elindítjuk.
+
+969
+00:42:17,079 --> 00:42:21,599
+Jó, de mondjuk lehetne valami más lépése
+
+970
+00:42:18,880 --> 00:42:25,000
+is ennek a jobnak. Előfö az egyik egyik
+
+971
+00:42:21,599 --> 00:42:27,280
+step az hibára fut, a másik nem satöbbi.
+
+972
+00:42:25,000 --> 00:42:29,800
+Tehát lehet itt itt külön nézegetni,
+
+973
+00:42:27,280 --> 00:42:33,319
+hogy melyikkel mi történt.
+
+974
+00:42:29,800 --> 00:42:36,920
+Ö ennek utána lehet nézni. Hát kérem
+
+975
+00:42:33,319 --> 00:42:38,760
+szépen, ennyi volt az a csatolású
+
+976
+00:42:36,920 --> 00:42:42,400
+esettanulmány.
+
+977
+00:42:38,760 --> 00:42:44,319
+És most nagyon ne felejtsük el, vagy
+
+978
+00:42:42,400 --> 00:42:46,520
+kitörölni ezt a jobot, vagy pedig
+
+979
+00:42:44,319 --> 00:42:49,079
+bocsánat, vagy kitörölni, vagy pedig
+
+980
+00:42:46,520 --> 00:42:51,599
+disabledre állítani, de én inkább
+
+981
+00:42:49,079 --> 00:42:53,119
+kitörölöm,
+
+982
+00:42:51,599 --> 00:42:55,800
+mert
+
+983
+00:42:53,119 --> 00:42:57,480
+mert különben ez most itt percenként fog
+
+984
+00:42:55,800 --> 00:42:59,040
+futni az idők végezetéig, úgy lett
+
+985
+00:42:57,480 --> 00:43:02,599
+beállítva.
+
+986
+00:42:59,040 --> 00:43:04,760
+És és ezenkel amit még szintén érdemes
+
+987
+00:43:02,599 --> 00:43:06,800
+nem elfelejteni, az az, hogy a a
+
+988
+00:43:04,760 --> 00:43:08,520
+táblákról helyezett triggereket szintén,
+
+989
+00:43:06,800 --> 00:43:11,280
+mert azok is szép csendben működnek a
+
+990
+00:43:08,520 --> 00:43:13,520
+háttérben. Legközelebbi alkalommal
+
+991
+00:43:11,280 --> 00:43:15,920
+próbál próbál csinálni majd a az ordes
+
+992
+00:43:13,520 --> 00:43:19,520
+táblával és akkor esetleg maj fura
+
+993
+00:43:15,920 --> 00:43:22,760
+eredményeket fogunk kapni. Szóval ezeket
+
+994
+00:43:19,520 --> 00:43:25,720
+ne felejtsük el. Vissza is megyek a a
+
+995
+00:43:22,760 --> 00:43:27,599
+triggerig.
+
+996
+00:43:25,720 --> 00:43:30,960
+Ez a TR log order. Tehát én ezt is
+
+997
+00:43:27,599 --> 00:43:30,960
+szépen kitörölöm,
+
+998
+00:43:32,200 --> 00:43:35,280
+és
+
+999
+00:43:33,480 --> 00:43:37,480
+akkor most lehetünk nyugodtak.
+
+1000
+00:43:35,280 --> 00:43:39,480
+Egyébként, hogy egy táblán milyen
+
+1001
+00:43:37,480 --> 00:43:43,000
+triggerek vannak, azt itt lehet látni.
+
+1002
+00:43:39,480 --> 00:43:44,760
+Most most jelen nincsen semmi.
+
+1003
+00:43:43,000 --> 00:43:47,760
+No, akkor az volna a feladat, hogy ennek
+
+1004
+00:43:44,760 --> 00:43:47,760
+fényében
+
+1005
+00:43:48,720 --> 00:43:53,559
+itt ez szépen meg van magyarázva
+
+1006
+00:43:51,760 --> 00:43:56,520
+ez a
+
+1007
+00:43:53,559 --> 00:44:00,800
+amit itt most elmondtam szóval.
+
+1008
+00:43:56,520 --> 00:44:00,800
+satöbbi, satöbbi. Szóval
+
+1009
+00:44:01,440 --> 00:44:04,640
+most egy olyan ennek fényében egy olyan
+
+1010
+00:44:03,280 --> 00:44:06,559
+rendszert próbál mindenki csinálni,
+
+1011
+00:44:04,640 --> 00:44:08,280
+ugyanez csak át kell írni a scriptet, de
+
+1012
+00:44:06,559 --> 00:44:14,680
+most a products táblára ültetjük a
+
+1013
+00:44:08,280 --> 00:44:17,200
+triggert és a attól függően, hogy
+
+1014
+00:44:14,680 --> 00:44:19,520
+a product tábla hogyan változik, ugye a
+
+1015
+00:44:17,200 --> 00:44:22,720
+nagykereskedőtől feltöltjük, tehát
+
+1016
+00:44:19,520 --> 00:44:25,079
+kiadunk egy új rendelést, hogy hogy
+
+1017
+00:44:22,720 --> 00:44:27,599
+hozzon. Mondjuk, hogyha nagyon első lett
+
+1018
+00:44:25,079 --> 00:44:30,400
+a wcpírra a raktában, akkor rendelünk
+
+1019
+00:44:27,599 --> 00:44:32,200
+wcpírt, és itt megvan, hogy a ez ugye a
+
+1020
+00:44:30,400 --> 00:44:33,960
+reorder level mezőben tároljuk azt,
+
+1021
+00:44:32,200 --> 00:44:36,040
+hogyha milyen alacsony lehessik a rakták
+
+1022
+00:44:33,960 --> 00:44:38,480
+készítet, mi az a szint, amikor már már
+
+1023
+00:44:36,040 --> 00:44:40,000
+újat kell rendelni. Ezt szépen végig
+
+1024
+00:44:38,480 --> 00:44:42,160
+lehet itt itt itt játszani. Hát
+
+1025
+00:44:40,000 --> 00:44:44,119
+körülbelül ilyen ez volt egy ilyen
+
+1026
+00:44:42,160 --> 00:44:47,079
+gyakorlati ZH feladat, tipikus egy
+
+1027
+00:44:44,119 --> 00:44:50,400
+ilyesmi amikor még itt nem
+
+1028
+00:44:47,079 --> 00:44:52,400
+önállóprojektet kellett csinálni.
+
+1029
+00:44:50,400 --> 00:44:54,839
+Jó, hát akkor köszönöm szépen mindenki
+
+1030
+00:44:52,400 --> 00:44:56,480
+figyelmét. Remélem, hogy nem lesz olyan
+
+1031
+00:44:54,839 --> 00:44:59,240
+nehéz ezt a felatot itt a virtuális
+
+1032
+00:44:56,480 --> 00:44:59,240
+gépen megoldani.
+

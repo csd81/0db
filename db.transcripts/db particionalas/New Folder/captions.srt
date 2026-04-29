@@ -1,0 +1,3064 @@
+1
+00:00:02,639 --> 00:00:07,879
+No, tehát a mostani alkalommal
+
+2
+00:00:06,240 --> 00:00:09,800
+a
+
+3
+00:00:07,879 --> 00:00:12,559
+relációs adatbárisoknak a
+
+4
+00:00:09,800 --> 00:00:14,040
+particionálásával, illetve egy ezzel
+
+5
+00:00:12,559 --> 00:00:16,400
+ehhez az egy kapcsolódó téma az
+
+6
+00:00:14,040 --> 00:00:18,640
+oszloptár indexelésről lesz szó, ugye
+
+7
+00:00:16,400 --> 00:00:21,080
+ezek tehát olyan technológiák,
+
+8
+00:00:18,640 --> 00:00:24,720
+amelyekkel különös adatokban
+
+9
+00:00:21,080 --> 00:00:26,240
+találkozunk, ahol nagy méretű
+
+10
+00:00:24,720 --> 00:00:29,560
+tehát sok
+
+11
+00:00:26,240 --> 00:00:32,759
+mezős és nagyon sok rekordot tartalmazó
+
+12
+00:00:29,560 --> 00:00:34,800
+tá táblák vannak itt. A sok rekord az
+
+13
+00:00:32,759 --> 00:00:38,840
+azt jelenti, hogy mondjuk több mint
+
+14
+00:00:34,800 --> 00:00:42,559
+néhány millió, tehát egy-két 10-es
+
+15
+00:00:38,840 --> 00:00:45,000
+rekorménység az az nem számít soknak.
+
+16
+00:00:42,559 --> 00:00:48,160
+Ez az a terület egyébként, ahol a
+
+17
+00:00:45,000 --> 00:00:49,760
+reakciós technológiát bizonyos esetekben
+
+18
+00:00:48,160 --> 00:00:53,640
+kihívja
+
+19
+00:00:49,760 --> 00:00:57,000
+a a NO SQL technológia. Tehát ahol a
+
+20
+00:00:53,640 --> 00:00:59,000
+például a dokumentumtárakban
+
+21
+00:00:57,000 --> 00:01:03,519
+kevesebb strukturális információ van,
+
+22
+00:00:59,000 --> 00:01:05,720
+meg ugye hát nyilván a ö a
+
+23
+00:01:03,519 --> 00:01:10,280
+különböző hivatkozási, integritási,
+
+24
+00:01:05,720 --> 00:01:13,320
+egyéb ö szabályok mellőzésével.
+
+25
+00:01:10,280 --> 00:01:15,119
+viszont nagyon nagy mennyiségű
+
+26
+00:01:13,320 --> 00:01:18,159
+rekordot szeretnénk vagy dokumentumot
+
+27
+00:01:15,119 --> 00:01:20,799
+szeretnék tárolni. Most azt a módszert
+
+28
+00:01:18,159 --> 00:01:22,880
+mutatom, ami a hát mondhatni, hogy
+
+29
+00:01:20,799 --> 00:01:27,680
+tradicionális
+
+30
+00:01:22,880 --> 00:01:30,720
+OLT vagy OLTP vagy nem OLTP adattárház
+
+31
+00:01:27,680 --> 00:01:32,960
+adatbázisoknak a
+
+32
+00:01:30,720 --> 00:01:36,720
+a sajátossága.
+
+33
+00:01:32,960 --> 00:01:40,200
+Ez ez már azok, ez ez egy olyan
+
+34
+00:01:36,720 --> 00:01:43,240
+feature, vagy egy olyan szolgáltatás,
+
+35
+00:01:40,200 --> 00:01:46,079
+ami már általában fizetős mindenhol és
+
+36
+00:01:43,240 --> 00:01:50,799
+általában elég sokba is kerül.
+
+37
+00:01:46,079 --> 00:01:54,479
+Tipikusan arról van szó, hogy amíg a a
+
+38
+00:01:50,799 --> 00:01:57,280
+az adatbázis kicsi, amíg a az elvárt
+
+39
+00:01:54,479 --> 00:01:59,439
+lekérdezési teljesítmény kicsi, addig
+
+40
+00:01:57,280 --> 00:02:02,840
+nincs ilyenekre szükség. Aztán ugye ez
+
+41
+00:01:59,439 --> 00:02:05,240
+növekedik, akkor egyre inkább előtébre
+
+42
+00:02:02,840 --> 00:02:07,759
+kerülnek ezek a dolgok. Itt igazából az
+
+43
+00:02:05,240 --> 00:02:10,080
+alapgondolat az az a particionálisnál, a
+
+44
+00:02:07,759 --> 00:02:13,840
+particionálásnál,
+
+45
+00:02:10,080 --> 00:02:17,680
+hogy a a nagyméretű táblát
+
+46
+00:02:13,840 --> 00:02:20,000
+nem egyszerre próbáljuk kezelni, hanem
+
+47
+00:02:17,680 --> 00:02:22,239
+partíciókra bontjuk fel. Igyekszünk
+
+48
+00:02:20,000 --> 00:02:26,280
+minél több párhuzamosságot belevinni a
+
+49
+00:02:22,239 --> 00:02:28,879
+tábla feldolgozásába is. Ha valahogy
+
+50
+00:02:26,280 --> 00:02:31,080
+szét tudjuk bontani kisebb, hát ugye egy
+
+51
+00:02:28,879 --> 00:02:33,959
+táblaz végül is egy rekord halmaz,
+
+52
+00:02:31,080 --> 00:02:36,720
+szóval kisebb halmazokra akkor ezekkel
+
+53
+00:02:33,959 --> 00:02:39,599
+halmazokkal külön-külön tudunk bánni.
+
+54
+00:02:36,720 --> 00:02:41,640
+Ugye ez egy
+
+55
+00:02:39,599 --> 00:02:44,400
+sok processzoros és
+
+56
+00:02:41,640 --> 00:02:46,120
+és több párhuzamos adattárót tartalmazó
+
+57
+00:02:44,400 --> 00:02:49,239
+rendszerben.
+
+58
+00:02:46,120 --> 00:02:52,080
+Jó, ez végülis skálázhatóvá teszi a
+
+59
+00:02:49,239 --> 00:02:54,440
+megoldásunkat.
+
+60
+00:02:52,080 --> 00:02:57,640
+Itt tehát két fajta párhuzamosság van,
+
+61
+00:02:54,440 --> 00:03:00,760
+azt azért látni kell. Az egyik tehát a a
+
+62
+00:02:57,640 --> 00:03:04,120
+legkérdezésnek a végrehajtása, hogy az
+
+63
+00:03:00,760 --> 00:03:07,080
+több szálon futhat. A a másik pedig az
+
+64
+00:03:04,120 --> 00:03:09,799
+adatok elővételete tárolása, hogy több
+
+65
+00:03:07,080 --> 00:03:12,599
+fizikai adattáró lehet, amelyek
+
+66
+00:03:09,799 --> 00:03:15,159
+egymással pár azonosan működnek.
+
+67
+00:03:12,599 --> 00:03:18,000
+Most nyilván, hogyha
+
+68
+00:03:15,159 --> 00:03:19,560
+ha nekem egy egy hatalmas táblában
+
+69
+00:03:18,000 --> 00:03:21,560
+meg kell keresnem mondjuk egy maximum
+
+70
+00:03:19,560 --> 00:03:24,000
+értékét egy mezőnek, az az egész táblára
+
+71
+00:03:21,560 --> 00:03:26,920
+szükség van, ugye? Tehát ez ez világos,
+
+72
+00:03:24,000 --> 00:03:29,080
+de ugye ebben az esetben is megkeresetem
+
+73
+00:03:26,920 --> 00:03:32,879
+párhuzamosan a mondjuk tegyük, hogy négy
+
+74
+00:03:29,080 --> 00:03:34,720
+részre van bontva a négy allrésznek a
+
+75
+00:03:32,879 --> 00:03:36,799
+maximált, és azoknak vehetem aztán még a
+
+76
+00:03:34,720 --> 00:03:41,480
+maximát. Szóval nagyon sok műveletet
+
+77
+00:03:36,799 --> 00:03:44,439
+lehet okosan, párhuzamosan végrehajtani.
+
+78
+00:03:41,480 --> 00:03:48,480
+A particionálásnak
+
+79
+00:03:44,439 --> 00:03:51,599
+azt nevezik, amikor valamilyen adott
+
+80
+00:03:48,480 --> 00:03:54,680
+szabály vagy függvény szerint minden a
+
+81
+00:03:51,599 --> 00:03:58,079
+táblába irányított rekordot egy ilyen
+
+82
+00:03:54,680 --> 00:03:59,599
+particionok nevezett alhalmazba sorolunk
+
+83
+00:03:58,079 --> 00:04:02,879
+be.
+
+84
+00:03:59,599 --> 00:04:05,720
+Ez a ez a par ez a particionál függvény,
+
+85
+00:04:02,879 --> 00:04:07,519
+ez lehet tulajdonképpen bármi.
+
+86
+00:04:05,720 --> 00:04:10,040
+A lényeg az, hogy kihessen értékelni a
+
+87
+00:04:07,519 --> 00:04:12,200
+rekordra.
+
+88
+00:04:10,040 --> 00:04:14,400
+Természetesen
+
+89
+00:04:12,200 --> 00:04:16,479
+a leggyakoribb megoldás az üzleti
+
+90
+00:04:14,400 --> 00:04:18,479
+logikából fakadóan
+
+91
+00:04:16,479 --> 00:04:20,600
+vagy térbeli vagy időbeli felbontást
+
+92
+00:04:18,479 --> 00:04:23,360
+jelent. Tehát például mondhatom azt,
+
+93
+00:04:20,600 --> 00:04:26,000
+hogyha van egy egy hívás adatbázis,
+
+94
+00:04:23,360 --> 00:04:28,800
+mondjuk a mobiltelefon szolgáltatónál,
+
+95
+00:04:26,000 --> 00:04:30,600
+akkor országonként van egy partíkm,
+
+96
+00:04:28,800 --> 00:04:33,520
+például Magyarországól, kezdeményezett
+
+97
+00:04:30,600 --> 00:04:35,919
+hívások, aztán a Szlovákiából satöbbi,
+
+98
+00:04:33,520 --> 00:04:38,880
+satöbbi, illetve azt is lehet mondani,
+
+99
+00:04:35,919 --> 00:04:42,600
+hogy időbeli particionálást használok,
+
+100
+00:04:38,880 --> 00:04:46,639
+az is nagyon gyakori. Tehát például én
+
+101
+00:04:42,600 --> 00:04:48,880
+én úgy tudom, hogy a a NEAK
+
+102
+00:04:46,639 --> 00:04:51,120
+adattárházában,
+
+103
+00:04:48,880 --> 00:04:52,759
+tehát a TB adat adat adat adatbázisban,
+
+104
+00:04:51,120 --> 00:04:54,400
+ott például egy olyan arak adatbázis
+
+105
+00:04:52,759 --> 00:04:57,000
+van, ahol időbeli particionást
+
+106
+00:04:54,400 --> 00:04:58,440
+használnak. Tehát évente
+
+107
+00:04:57,000 --> 00:05:00,919
+vannak
+
+108
+00:04:58,440 --> 00:05:02,960
+szétbontva tulajdonképpen a a jelentett
+
+109
+00:05:00,919 --> 00:05:05,680
+esetek, és mindegyik év egy külön
+
+110
+00:05:02,960 --> 00:05:07,919
+partíciót jelent.
+
+111
+00:05:05,680 --> 00:05:11,960
+Hát, hogyha ez így van megvalósítva,
+
+112
+00:05:07,919 --> 00:05:14,400
+akkor ennek bizony előnyei vannak.
+
+113
+00:05:11,960 --> 00:05:16,320
+Gondolját csak meg például, hogy ha
+
+114
+00:05:14,400 --> 00:05:19,840
+általában időszerint keresnek egy
+
+115
+00:05:16,320 --> 00:05:22,680
+időszerint particionált táblában, akkor
+
+116
+00:05:19,840 --> 00:05:25,160
+ugye egy ilyen lekkérdezésnél
+
+117
+00:05:22,680 --> 00:05:28,400
+elegendő azt az egy partíciót egyáltalán
+
+118
+00:05:25,160 --> 00:05:30,039
+elérni, amelyikről szó van.
+
+119
+00:05:28,400 --> 00:05:34,199
+És hát ez azt jelenti, hogy a hogy a
+
+120
+00:05:30,039 --> 00:05:36,160
+feladat mérete le fog csökkenni.
+
+121
+00:05:34,199 --> 00:05:38,440
+Arról nem is beszélve, hogyha hogyha
+
+122
+00:05:36,160 --> 00:05:41,520
+tényleg párhuzamosan
+
+123
+00:05:38,440 --> 00:05:45,479
+sikerül megoldani a tárolást, tehát nem
+
+124
+00:05:41,520 --> 00:05:49,479
+arról van szó, hogy hogy
+
+125
+00:05:45,479 --> 00:05:52,039
+ugyanazon a fizikai adattárolón vannak a
+
+126
+00:05:49,479 --> 00:05:55,479
+a partíciók, hanem több több adattároló,
+
+127
+00:05:52,039 --> 00:05:57,400
+akkor gyakorlatilag minden műveltő
+
+128
+00:05:55,479 --> 00:06:00,800
+valamilyen szinten páronosítható. Bár
+
+129
+00:05:57,400 --> 00:06:03,280
+azt megjegyzem, hogy hogy ez kétségkívül
+
+130
+00:06:00,800 --> 00:06:06,199
+nem egy egyszerű feladat. Én én
+
+131
+00:06:03,280 --> 00:06:09,840
+konkrétan azt hallottam az oraknek az
+
+132
+00:06:06,199 --> 00:06:13,560
+egyik ilyen vezető fejlesztőjétől, hogy
+
+133
+00:06:09,840 --> 00:06:15,919
+hogy a a create index utasítás ugye hát
+
+134
+00:06:13,560 --> 00:06:18,080
+az egy az egy az egy nagyon gyakran
+
+135
+00:06:15,919 --> 00:06:21,560
+használt utasítás, amikor idétozunk egy
+
+136
+00:06:18,080 --> 00:06:23,319
+indexet egy táblához, hogy ezen a ennek
+
+137
+00:06:21,560 --> 00:06:28,160
+a megosításán
+
+138
+00:06:23,319 --> 00:06:30,720
+egy mind harver táralás, mind pedig
+
+139
+00:06:28,160 --> 00:06:33,560
+énés végületes szempontjából párhuzamos
+
+140
+00:06:30,720 --> 00:06:35,520
+környezetben egy ilyen zsenikből álló
+
+141
+00:06:33,560 --> 00:06:38,080
+csapat másfél évig dolgozott. Tehát
+
+142
+00:06:35,520 --> 00:06:39,919
+azért ez ez tényleg nem egy egyszerű
+
+143
+00:06:38,080 --> 00:06:43,599
+dolog, hogy ez hogy ez hogyan működik
+
+144
+00:06:39,919 --> 00:06:45,479
+hatékonyan jól. És ezek az emberek
+
+145
+00:06:43,599 --> 00:06:47,560
+írják és olvassák
+
+146
+00:06:45,479 --> 00:06:50,479
+a
+
+147
+00:06:47,560 --> 00:06:53,599
+különféle tudán folyóatokba a
+
+148
+00:06:50,479 --> 00:06:56,800
+legkomolyabb cikkeket. Szóval ez egy ez
+
+149
+00:06:53,599 --> 00:07:00,680
+egy kutatási terület, amivel az
+
+150
+00:06:56,800 --> 00:07:03,199
+informatika összes
+
+151
+00:07:00,680 --> 00:07:06,759
+elérhető eszközét felhasználják. Most
+
+152
+00:07:03,199 --> 00:07:10,440
+amit én szeretnék megmutatni,
+
+153
+00:07:06,759 --> 00:07:12,840
+az egy az a Microsoft SQL szervernek a a
+
+154
+00:07:10,440 --> 00:07:14,599
+particionálása.
+
+155
+00:07:12,840 --> 00:07:17,599
+A
+
+156
+00:07:14,599 --> 00:07:19,800
+múlt lapra tettem fel ezzel kapcsolatban
+
+157
+00:07:17,599 --> 00:07:22,720
+egy kis kiegészítő jegyzetet, meg egy
+
+158
+00:07:19,800 --> 00:07:25,840
+kis scriptet is, amit most itt meg is
+
+159
+00:07:22,720 --> 00:07:27,599
+osztok. Egyébként
+
+160
+00:07:25,840 --> 00:07:29,160
+igazából nem egy bonyolult dologról van
+
+161
+00:07:27,599 --> 00:07:32,080
+itt szó.
+
+162
+00:07:29,160 --> 00:07:34,879
+Arról van szó, hogy van egy particánsi
+
+163
+00:07:32,080 --> 00:07:38,360
+függvényünk, amit már említettem,
+
+164
+00:07:34,879 --> 00:07:40,960
+ami minden rekordra kiértékelhető.
+
+165
+00:07:38,360 --> 00:07:43,360
+És ezenkívül van még egy particionsi
+
+166
+00:07:40,960 --> 00:07:46,680
+séma is, ugye a a partíció az egy
+
+167
+00:07:43,360 --> 00:07:49,039
+logikai fogalom, hogy most mit tudom én,
+
+168
+00:07:46,680 --> 00:07:51,840
+például a a valamelyik év vagy
+
+169
+00:07:49,039 --> 00:07:55,759
+valamelyik régió mondjuk
+
+170
+00:07:51,840 --> 00:07:57,280
+de utána jön az, hogy ezt a partíciót én
+
+171
+00:07:55,759 --> 00:08:02,039
+egy
+
+172
+00:07:57,280 --> 00:08:02,039
+fizikai alattáróhoz rendelem hozzá.
+
+173
+00:08:02,080 --> 00:08:08,280
+A az SQL szerveren ezeket file
+
+174
+00:08:05,000 --> 00:08:10,759
+csoportoknak hívják, file groupnak.
+
+175
+00:08:08,280 --> 00:08:12,840
+Mi eddig mindig csak a primary file
+
+176
+00:08:10,759 --> 00:08:15,360
+groupot használtuk, ami legalább egy
+
+177
+00:08:12,840 --> 00:08:17,919
+file group mindenképpen van, de lehet
+
+178
+00:08:15,360 --> 00:08:20,759
+további file groupat is létrehozni.
+
+179
+00:08:17,919 --> 00:08:23,560
+És és akkor ezeket most mutatom is, hogy
+
+180
+00:08:20,759 --> 00:08:27,400
+ezt például hogyan nézné itt ki.
+
+181
+00:08:23,560 --> 00:08:30,800
+Akkor ezeket a fá csoportokat
+
+182
+00:08:27,400 --> 00:08:34,640
+aztán már rakhatom különböző helyekre.
+
+183
+00:08:30,800 --> 00:08:37,360
+Látható, hogy ez a ez a primary ez ez
+
+184
+00:08:34,640 --> 00:08:39,440
+mindenképpen van.
+
+185
+00:08:37,360 --> 00:08:42,560
+És ugye egy fálcsoporton belül aztán
+
+186
+00:08:39,440 --> 00:08:46,600
+aztán lehetnek különböző fáljaim. ö
+
+187
+00:08:42,560 --> 00:08:48,519
+minimum ö egy ló és egy adatfál
+
+188
+00:08:46,600 --> 00:08:50,680
+mindenképpen van egy adatbázishoz, de
+
+189
+00:08:48,519 --> 00:08:52,640
+hát ugye nyugodtan mondhatom azt, hogy
+
+190
+00:08:50,680 --> 00:08:56,080
+egy nagy táblával, amit szeretnék
+
+191
+00:08:52,640 --> 00:08:59,279
+gyorsítani, azt ugye egy külön
+
+192
+00:08:56,080 --> 00:09:01,560
+táblába teszem és
+
+193
+00:08:59,279 --> 00:09:04,760
+egy egy bocsánat, egy egy külön fájba
+
+194
+00:09:01,560 --> 00:09:07,040
+teszem és
+
+195
+00:09:04,760 --> 00:09:08,839
+és igazából, hogy hogyha ez particíálva
+
+196
+00:09:07,040 --> 00:09:11,160
+van, akkor minden partícióját tudom
+
+197
+00:09:08,839 --> 00:09:13,760
+külön fájokba tenni, ami különböző fáj
+
+198
+00:09:11,160 --> 00:09:15,920
+grupokon vannak. Tehát ilyen módon lehet
+
+199
+00:09:13,760 --> 00:09:22,360
+megvalósítani azt a bizonyos
+
+200
+00:09:15,920 --> 00:09:22,360
+ö tárolási szintű párhuzamosságot.
+
+201
+00:09:22,640 --> 00:09:27,880
+Hát ez az, amit most itt lehet is látni.
+
+202
+00:09:25,519 --> 00:09:30,720
+Tegyük fel, hogy van egy adattázunk.
+
+203
+00:09:27,880 --> 00:09:33,760
+Egyébként van is ez, ami a DW van, ugye
+
+204
+00:09:30,720 --> 00:09:36,600
+a virtuális gépen is szerepel.
+
+205
+00:09:33,760 --> 00:09:38,120
+Ebben van egy egy ténytábla. Most ugye
+
+206
+00:09:36,600 --> 00:09:40,240
+hát
+
+207
+00:09:38,120 --> 00:09:42,399
+ez egy ilyen persze demó, tehát néhány
+
+208
+00:09:40,240 --> 00:09:44,200
+ezer rekord van csak benne, de de tegyük
+
+209
+00:09:42,399 --> 00:09:45,839
+fel, hogy mondjuk itt mondjuk 100 millió
+
+210
+00:09:44,200 --> 00:09:48,920
+rekord van. Tehát ez egy olyan tábla,
+
+211
+00:09:45,839 --> 00:09:52,000
+amit szeretnénk particionálni
+
+212
+00:09:48,920 --> 00:09:55,399
+és aztán párhuzamosan elérni.
+
+213
+00:09:52,000 --> 00:09:57,360
+Ö mi mivel idő szerint keresünk benne?
+
+214
+00:09:55,399 --> 00:09:59,279
+Logikusan, hiszen itt eladásokról van
+
+215
+00:09:57,360 --> 00:10:01,079
+szó.
+
+216
+00:09:59,279 --> 00:10:04,839
+Ezért megnézzük azt, hogy mi az
+
+217
+00:10:01,079 --> 00:10:08,120
+időtartomány itt.
+
+218
+00:10:04,839 --> 00:10:12,720
+Tehát van
+
+219
+00:10:08,120 --> 00:10:12,720
+öt évünk 10-től 14-ig
+
+220
+00:10:13,079 --> 00:10:20,399
+vannak az az eladásti tranzakciók.
+
+221
+00:10:17,720 --> 00:10:22,279
+És nekünk először mi bármit csinálnánk,
+
+222
+00:10:20,399 --> 00:10:25,079
+definiálnunk kell a particionási
+
+223
+00:10:22,279 --> 00:10:27,680
+függvényt és a és a sémát. Itt látható
+
+224
+00:10:25,079 --> 00:10:32,480
+az az eskola utasítás.
+
+225
+00:10:27,680 --> 00:10:34,880
+Most itt ugye azt lehet látni, hogy
+
+226
+00:10:32,480 --> 00:10:38,639
+van egy van neki egy neve ennek a ennek
+
+227
+00:10:34,880 --> 00:10:41,360
+a partenső függvénynek,
+
+228
+00:10:38,639 --> 00:10:43,639
+és van neki egy egy visszatési
+
+229
+00:10:41,360 --> 00:10:45,560
+adattípusa, tehát amit majd itt vissza
+
+230
+00:10:43,639 --> 00:10:49,000
+fog adni.
+
+231
+00:10:45,560 --> 00:10:49,000
+Mi ezt a négy
+
+232
+00:10:49,040 --> 00:10:56,639
+értéket definiáljuk, hogy 10 11 13 azért
+
+233
+00:10:53,839 --> 00:10:59,000
+csak ilyen tájnényt értéket használunk.
+
+234
+00:10:56,639 --> 00:11:01,959
+hogy nem az egész évet tároljuk el, csak
+
+235
+00:10:59,000 --> 00:11:06,200
+az utolsó két számjegyét, tehát 2010,
+
+236
+00:11:01,959 --> 00:11:08,000
+2011 121, mert ugye ez a time int ez
+
+237
+00:11:06,200 --> 00:11:11,120
+tulajdonképpen csak egy bytot foglal el,
+
+238
+00:11:08,000 --> 00:11:13,680
+és ezt ezt végülis minden rekorddal
+
+239
+00:11:11,120 --> 00:11:15,920
+kapcsolatban nyilván kell tartanunk. Még
+
+240
+00:11:13,680 --> 00:11:18,880
+annyit mondanék, hogy ez a left, ez itt
+
+241
+00:11:15,920 --> 00:11:23,880
+azt jelenti, hogy balról
+
+242
+00:11:18,880 --> 00:11:25,440
+lesz tagja a rekord ezeknek a
+
+243
+00:11:23,880 --> 00:11:27,360
+partícióknak.
+
+244
+00:11:25,440 --> 00:11:31,880
+Tehát
+
+245
+00:11:27,360 --> 00:11:33,680
+a 2010-es év az a
+
+246
+00:11:31,880 --> 00:11:37,079
+2010-zel egyenlő, vagy annál kisebb
+
+247
+00:11:33,680 --> 00:11:41,680
+értékeket tartalmazza. Vagy ez a 2011-es
+
+248
+00:11:37,079 --> 00:11:45,399
+partíció az akkor ezek szerint a 2000
+
+249
+00:11:41,680 --> 00:11:49,920
+14. január 1jétől december 31-ig
+
+250
+00:11:45,399 --> 00:11:49,920
+terjedéket tartalmazza és így tovább.
+
+251
+00:11:50,399 --> 00:11:55,200
+És akkor a másik, amit létre kell
+
+252
+00:11:51,800 --> 00:11:56,560
+hoznunk, az pedig a particionális séma.
+
+253
+00:11:55,200 --> 00:12:00,040
+ami azt mondja meg, hogy melyik
+
+254
+00:11:56,560 --> 00:12:03,160
+partíciót melyik fágrouphoz rendeljük
+
+255
+00:12:00,040 --> 00:12:05,320
+hozzá. Hát itt ugye mivel ebbe az adatba
+
+256
+00:12:03,160 --> 00:12:07,680
+is csak egy fouunk van, ugye lehetne
+
+257
+00:12:05,320 --> 00:12:09,839
+több is, csak igazából nem tudnánk
+
+258
+00:12:07,680 --> 00:12:11,920
+demonstrálni a azt a bizonyos
+
+259
+00:12:09,839 --> 00:12:14,480
+gyorsulást, mert mert harv szinten nem
+
+260
+00:12:11,920 --> 00:12:17,000
+fog nem ne nem tudnánk párhuzalmasságot
+
+261
+00:12:14,480 --> 00:12:18,079
+bebiztosítani vagy biztosítani. Szóval
+
+262
+00:12:17,000 --> 00:12:19,920
+itt ezért mi azt mondjuk, hogy
+
+263
+00:12:18,079 --> 00:12:22,480
+mindegyiket, tehát all to primary
+
+264
+00:12:19,920 --> 00:12:25,160
+mindegyiket a primaryre tesszük rá. De
+
+265
+00:12:22,480 --> 00:12:26,639
+egyébként mondom, itt lehetne különböző
+
+266
+00:12:25,160 --> 00:12:29,639
+fácsoportokhoz ho szó hozzáani a
+
+267
+00:12:26,639 --> 00:12:29,639
+partíciókat.
+
+268
+00:12:30,399 --> 00:12:35,279
+Na most
+
+269
+00:12:32,600 --> 00:12:37,560
+a következő lépés az az, hogy ezt a ezt
+
+270
+00:12:35,279 --> 00:12:41,560
+a fact internet sales táblát szeretnénk
+
+271
+00:12:37,560 --> 00:12:43,639
+ugye particionálni, aminek van egy
+
+272
+00:12:41,560 --> 00:12:47,720
+bizonyos szerkezete. Ezt meg is lehet
+
+273
+00:12:43,639 --> 00:12:49,639
+nézni. Egyébként az igazság, hogy hogy
+
+274
+00:12:47,720 --> 00:12:52,440
+sokkal több mezője van neki. Itt
+
+275
+00:12:49,639 --> 00:12:54,279
+látszik.
+
+276
+00:12:52,440 --> 00:12:57,560
+látható. Tehát azért itt jó sok mező
+
+277
+00:12:54,279 --> 00:13:00,279
+van. Most mi nem mindegyiket akarjuk itt
+
+278
+00:12:57,560 --> 00:13:03,199
+tárolni. A legfontosabbakat a sales
+
+279
+00:13:00,279 --> 00:13:05,000
+amount ezeket választottuk ki, illetve
+
+280
+00:13:03,199 --> 00:13:09,480
+ezek tulajdonképpen
+
+281
+00:13:05,000 --> 00:13:12,440
+külső kulcsok, amik egy adattáházásban a
+
+282
+00:13:09,480 --> 00:13:16,160
+dimenzió táblákra mutatnak, de most a az
+
+283
+00:13:12,440 --> 00:13:18,360
+egyszerűsítés kedvéért ezeket egyszerűen
+
+284
+00:13:16,160 --> 00:13:19,800
+átvesszük majd a fent affective intens
+
+285
+00:13:18,360 --> 00:13:21,880
+táblára, és nem kötjük dimenzió
+
+286
+00:13:19,800 --> 00:13:26,480
+táblákhoz.
+
+287
+00:13:21,880 --> 00:13:29,040
+Szóval ennek volt egy olyan kulcsa ennek
+
+288
+00:13:26,480 --> 00:13:31,560
+a táblának,
+
+289
+00:13:29,040 --> 00:13:33,639
+úgy eredetileg két mezős kulcsa volt, az
+
+290
+00:13:31,560 --> 00:13:36,600
+a sales order number, sales order line
+
+291
+00:13:33,639 --> 00:13:38,639
+number. Most ehelyett
+
+292
+00:13:36,600 --> 00:13:41,360
+mi mi csinálunk egy olyan kulcsot, ami
+
+293
+00:13:38,639 --> 00:13:44,079
+két mezőből áll.
+
+294
+00:13:41,360 --> 00:13:46,760
+Az egyik ez az internet sal ke, ami egy
+
+295
+00:13:44,079 --> 00:13:51,040
+identitate típusú mező. A másik pedig az
+
+296
+00:13:46,760 --> 00:13:53,399
+a mező, amelyik a partíció azonosítót
+
+297
+00:13:51,040 --> 00:13:57,160
+tartalmazza. Tehát ez ugye ez azért tin,
+
+298
+00:13:53,399 --> 00:14:02,440
+mert ez lesz majd a 10 11 12 vagy 13 ez
+
+299
+00:13:57,160 --> 00:14:05,199
+a ez ez a mező. És akkor a a partíón
+
+300
+00:14:02,440 --> 00:14:08,519
+belül fog tulajdonképpen futni ez a ez
+
+301
+00:14:05,199 --> 00:14:12,120
+az identity futósorszám. Jó, akkor
+
+302
+00:14:08,519 --> 00:14:15,199
+ezeket közben futassuk is le. Tehát én
+
+303
+00:14:12,120 --> 00:14:17,079
+megcsinálom ezt a particionáló
+
+304
+00:14:15,199 --> 00:14:22,320
+függvényt,
+
+305
+00:14:17,079 --> 00:14:25,639
+meg ezt a sémát. Egyébként ezeket itt
+
+306
+00:14:22,320 --> 00:14:28,240
+itt lehet a storagenél lehet látni,
+
+307
+00:14:25,639 --> 00:14:30,560
+milyen objektumokat hoztunk létre. Hát
+
+308
+00:14:28,240 --> 00:14:34,399
+itt
+
+309
+00:14:30,560 --> 00:14:34,399
+jelennek ezek meg,
+
+310
+00:14:36,440 --> 00:14:42,160
+amiket most most létrehoztunk. És akkor
+
+311
+00:14:39,240 --> 00:14:45,560
+ezek után létrehozhatjuk a az internet
+
+312
+00:14:42,160 --> 00:14:45,560
+sales táblát.
+
+313
+00:14:46,160 --> 00:14:50,680
+És itt van a végén ugye látják azt, hogy
+
+314
+00:14:49,279 --> 00:14:52,000
+nem az van a vége, hogy on primary.
+
+315
+00:14:50,680 --> 00:14:53,279
+Eddig mindig az volt a vége, hogy on
+
+316
+00:14:52,000 --> 00:14:54,959
+primary, igaz, amikor egy táblát
+
+317
+00:14:53,279 --> 00:14:59,160
+létrehoztunk, vagy semmi, ugye, ami
+
+318
+00:14:54,959 --> 00:15:02,880
+ugyanaz, hanem az van, hogy on után
+
+319
+00:14:59,160 --> 00:15:04,720
+szerepel ez a particionális séma, ami
+
+320
+00:15:02,880 --> 00:15:06,399
+megmondja, hogy melyik rekord melyik
+
+321
+00:15:04,720 --> 00:15:08,800
+fouba
+
+322
+00:15:06,399 --> 00:15:11,639
+kerüljön bele. És ugye ennek egy
+
+323
+00:15:08,800 --> 00:15:13,600
+paramétere az, hogy mi a particionálsi
+
+324
+00:15:11,639 --> 00:15:16,000
+kulcs, amit pedig ebbe a mezőbe
+
+325
+00:15:13,600 --> 00:15:19,160
+helyezünk el, ugye? Tehát az, hogy a
+
+326
+00:15:16,000 --> 00:15:22,360
+12-es, az akkor majd
+
+327
+00:15:19,160 --> 00:15:25,480
+ide megy vagy odamegy. Jó, ezt is, ezt
+
+328
+00:15:22,360 --> 00:15:25,480
+is létrehozzuk.
+
+329
+00:15:28,600 --> 00:15:31,920
+Na most ez az utasítás, ez
+
+330
+00:15:29,920 --> 00:15:34,319
+tulajdonképpen akár el is hagyható
+
+331
+00:15:31,920 --> 00:15:37,360
+lenne, mert az egész táblát majd
+
+332
+00:15:34,319 --> 00:15:39,079
+oszloptár indexzel fogjuk indexelni, de
+
+333
+00:15:37,360 --> 00:15:41,279
+azért nem árt, ha itt van, hogy halljunk
+
+334
+00:15:39,079 --> 00:15:44,639
+erről is.
+
+335
+00:15:41,279 --> 00:15:44,639
+Van egy olyan
+
+336
+00:15:45,600 --> 00:15:50,040
+módszer,
+
+337
+00:15:47,199 --> 00:15:53,720
+amit hát kifejezetten nagy táblák esetén
+
+338
+00:15:50,040 --> 00:15:56,720
+használnak. Ö a
+
+339
+00:15:53,720 --> 00:15:59,680
+az adabblokkotok a tömörítése.
+
+340
+00:15:56,720 --> 00:16:02,079
+Ugye ha az adblokkok kisebbek, akkor
+
+341
+00:15:59,680 --> 00:16:06,000
+több adabblok befér egyszer a memóriába.
+
+342
+00:16:02,079 --> 00:16:07,319
+Nyilván ugye ez egy kétű fegyver, hiszen
+
+343
+00:16:06,000 --> 00:16:09,279
+azt akkor ki kell csomagolni, hogyha
+
+344
+00:16:07,319 --> 00:16:13,440
+művetet akarunk rajta végezni, illetve
+
+345
+00:16:09,279 --> 00:16:16,279
+hogyha esetleg módosítjuk, akkor
+
+346
+00:16:13,440 --> 00:16:18,880
+akkor meg utána a azt még át kell nyomni
+
+347
+00:16:16,279 --> 00:16:21,639
+a tömörítésen is.
+
+348
+00:16:18,880 --> 00:16:23,839
+adattárházakban Isten igazából inkább
+
+349
+00:16:21,639 --> 00:16:26,000
+csak olvassunk, tehát sokkal kevesebbet
+
+350
+00:16:23,839 --> 00:16:31,240
+módosítunk
+
+351
+00:16:26,000 --> 00:16:33,759
+és ez a ez a ez az utasítás ez egy lapú
+
+352
+00:16:31,240 --> 00:16:36,480
+kompressziót vagy tömörítést hajt végre,
+
+353
+00:16:33,759 --> 00:16:39,600
+ami azt jelenti, hogy hogy blokkonként
+
+354
+00:16:36,480 --> 00:16:43,040
+vég végzünk egy tömörítést.
+
+355
+00:16:39,600 --> 00:16:45,319
+Na és akkor itt van az a az az utasítás,
+
+356
+00:16:43,040 --> 00:16:49,199
+amelyik azt mutatja, az az a az az
+
+357
+00:16:45,319 --> 00:16:51,399
+inzert, amelyik azt mutatja meg, hogy
+
+358
+00:16:49,199 --> 00:16:55,720
+hogyan tudunk egy egy particionált
+
+359
+00:16:51,399 --> 00:16:55,720
+táblába adatokat betölteni.
+
+360
+00:16:55,959 --> 00:17:00,240
+Meg kell határoznunk
+
+361
+00:16:58,160 --> 00:17:02,519
+a particionálási kulcsolt, ezt a
+
+362
+00:17:00,240 --> 00:17:05,640
+particionási függvényértéket. Itt
+
+363
+00:17:02,519 --> 00:17:09,679
+látható ez a ez a szép hosszú kifejezés.
+
+364
+00:17:05,640 --> 00:17:13,520
+Ez ennek az értéke lesz majd 10, 11, 12
+
+365
+00:17:09,679 --> 00:17:17,799
+vagy 13. Egy kicsit zavaros ez a dolog
+
+366
+00:17:13,520 --> 00:17:21,400
+egyébként, hogy ez hogy is van. Ög ez a
+
+367
+00:17:17,799 --> 00:17:24,439
+ez az fes tábla, ez a fact internet
+
+368
+00:17:21,400 --> 00:17:26,640
+sales tábla, és ennek van egy egy order
+
+369
+00:17:24,439 --> 00:17:28,760
+date key nevű
+
+370
+00:17:26,640 --> 00:17:32,240
+mezője. De hogyha ezt megnézzük, ezt az
+
+371
+00:17:28,760 --> 00:17:34,320
+order date keyt, akkor
+
+372
+00:17:32,240 --> 00:17:38,000
+akkor azt látjuk,
+
+373
+00:17:34,320 --> 00:17:40,559
+hogy bármilyen furcsa, de ennek az
+
+374
+00:17:38,000 --> 00:17:42,520
+adattípusa int látható. Nem is az a
+
+375
+00:17:40,559 --> 00:17:44,720
+fenét. Itt itt van. Szóval int az
+
+376
+00:17:42,520 --> 00:17:47,360
+adattípusa. Pedig ez egy dátum. Hogyha
+
+377
+00:17:44,720 --> 00:17:49,919
+belenézünk ebbe a táblába, akkor akkor
+
+378
+00:17:47,360 --> 00:17:51,640
+azt fogjuk látni, hogy hogy ez egy ez
+
+379
+00:17:49,919 --> 00:17:55,960
+igazából egy dátum kéne, hogy legyen.
+
+380
+00:17:51,640 --> 00:17:55,960
+Nem, mert time time stamp nem.
+
+381
+00:17:56,120 --> 00:17:58,039
+Mi ez itt?
+
+382
+00:17:57,760 --> 00:17:59,440
+Nem,
+
+383
+00:17:58,039 --> 00:18:02,760
+nem az nem.
+
+384
+00:17:59,440 --> 00:18:06,880
+Na, ez itt amire most utalok, az az
+
+385
+00:18:02,760 --> 00:18:09,960
+order date key. Ez látják ez a mező.
+
+386
+00:18:06,880 --> 00:18:11,400
+Oké, tehát ennek int az adattípusa. Na
+
+387
+00:18:09,960 --> 00:18:13,600
+de nézzünk bele a táblába, és akkor
+
+388
+00:18:11,400 --> 00:18:16,559
+látjuk, hogy ez tényleg egy intértétték,
+
+389
+00:18:13,600 --> 00:18:19,360
+mert ez itt például azt mondja, hogy ez
+
+390
+00:18:16,559 --> 00:18:22,080
+201229.
+
+391
+00:18:19,360 --> 00:18:24,000
+Igaz, ez egy intérték.
+
+392
+00:18:22,080 --> 00:18:29,080
+Igen, ez egy intérték. Viszont lehet
+
+393
+00:18:24,000 --> 00:18:31,760
+dátumnak is olvasni 2010 12-ő 29. Igaz?
+
+394
+00:18:29,080 --> 00:18:34,039
+Tehát ez egy trükk. Ezt a trükköt azért
+
+395
+00:18:31,760 --> 00:18:37,000
+csinálták ebbe az adatbázisba, mert
+
+396
+00:18:34,039 --> 00:18:40,400
+hogyha itt van három ilyen mező is,
+
+397
+00:18:37,000 --> 00:18:40,400
+hogyha ezek
+
+398
+00:18:41,039 --> 00:18:45,200
+date time vagy akár csak date típusú
+
+399
+00:18:42,760 --> 00:18:47,440
+értékek lettek volna, akkor sokkal több
+
+400
+00:18:45,200 --> 00:18:51,000
+itot foglalnak el, mint egy int. Ennyi
+
+401
+00:18:47,440 --> 00:18:53,039
+az egész. Az már a mi dolgunk, hogy ezt
+
+402
+00:18:51,000 --> 00:18:55,039
+hogyan hogyan értelmezzük, hogyan
+
+403
+00:18:53,039 --> 00:18:57,280
+dolgozzuk fel. Hát így értelmezzük, ami
+
+404
+00:18:55,039 --> 00:19:01,039
+ami itt látható,
+
+405
+00:18:57,280 --> 00:19:04,240
+hogy először is átalakítjuk
+
+406
+00:19:01,039 --> 00:19:06,600
+őket, átkosztoljuk karakterré, aztán
+
+407
+00:19:04,240 --> 00:19:09,840
+sengingel kivesszük belőlük az első két,
+
+408
+00:19:06,600 --> 00:19:12,039
+vagy bocsánat a a harmadik, negyedik
+
+409
+00:19:09,840 --> 00:19:15,679
+karaktert, ugye hát világos és akkor
+
+410
+00:19:12,039 --> 00:19:18,000
+megvan a a az év 10-11 vagy 12 vagy 13.
+
+411
+00:19:15,679 --> 00:19:21,440
+Oké? Tehát ilyen módon tudjuk
+
+412
+00:19:18,000 --> 00:19:25,799
+előállítani a particionásnak a kulcsát.
+
+413
+00:19:21,440 --> 00:19:25,799
+Ezt itt bele is írtam egy kommentbe.
+
+414
+00:19:26,480 --> 00:19:31,520
+Most egyelőre csak 2013-ig töltjük föl,
+
+415
+00:19:29,919 --> 00:19:33,360
+tehát ez azt jelent 13-as már nem lesz
+
+416
+00:19:31,520 --> 00:19:34,880
+benne. Itt van egy ilyen szűrőfeltétel,
+
+417
+00:19:33,360 --> 00:19:40,440
+látható. Ez azt jelenti, hogy mit
+
+418
+00:19:34,880 --> 00:19:42,919
+töltünk föl 2010-et, a 11-et meg a 12-t.
+
+419
+00:19:40,440 --> 00:19:45,000
+És több dolgunk nincs is. Tehát itt ebbe
+
+420
+00:19:42,919 --> 00:19:46,679
+az üzlet utasításba nekünk nem kell
+
+421
+00:19:45,000 --> 00:19:49,280
+foglalkoznunk most már azzal, hogy mi
+
+422
+00:19:46,679 --> 00:19:51,440
+ennek a táblának a particensási sémája
+
+423
+00:19:49,280 --> 00:19:54,240
+meg a függvénye, mert azt már a táblánál
+
+424
+00:19:51,440 --> 00:19:57,480
+rögzítettük. Nekünk itt csak ezt a mezőt
+
+425
+00:19:54,240 --> 00:20:00,240
+kell helyesen beállítanunk, ezt a ezt a
+
+426
+00:19:57,480 --> 00:20:02,159
+PC-t. Ez a partitioning column az a PC
+
+427
+00:20:00,240 --> 00:20:04,320
+annak a ülítése. Csak ezt a mezőt kell
+
+428
+00:20:02,159 --> 00:20:06,039
+jól beállítanunk. És akkor az a
+
+429
+00:20:04,320 --> 00:20:08,159
+megfelelő rekordok automatikusan
+
+430
+00:20:06,039 --> 00:20:11,720
+megfelelő particba fognak belekerülni.
+
+431
+00:20:08,159 --> 00:20:14,039
+Na akkor nézzük meg.
+
+432
+00:20:11,720 --> 00:20:15,799
+Hát persze ugye ez igényel bizonyos
+
+433
+00:20:14,039 --> 00:20:17,520
+logikát,
+
+434
+00:20:15,799 --> 00:20:21,159
+hiszen ezt mindig ki kell értékelni ezt
+
+435
+00:20:17,520 --> 00:20:22,799
+a függvényt. Itt világos,
+
+436
+00:20:21,159 --> 00:20:24,960
+de ha egyszer benne van, akkor ugye
+
+437
+00:20:22,799 --> 00:20:28,360
+szétszágtuk a problémát. Most akkor jel
+
+438
+00:20:24,960 --> 00:20:30,320
+jelen jelek szerint hány problémára? Itt
+
+439
+00:20:28,360 --> 00:20:32,679
+ezzel a
+
+440
+00:20:30,320 --> 00:20:35,400
+megkérdezéssel meg tudom nézni, hogy
+
+441
+00:20:32,679 --> 00:20:39,799
+melyik partícióban hány rekord van. Ugye
+
+442
+00:20:35,400 --> 00:20:39,799
+itt látható kettesbe például 2216.
+
+443
+00:20:40,080 --> 00:20:46,760
+Ez egy ez egy ez ez egy rendszertáblából
+
+444
+00:20:42,559 --> 00:20:49,000
+veszi ki a rekordszámokat, de nagyon
+
+445
+00:20:46,760 --> 00:20:52,840
+hasznos az, hogy van egy ilyen Dollar
+
+446
+00:20:49,000 --> 00:20:56,159
+Partition nevű függvény,
+
+447
+00:20:52,840 --> 00:20:59,159
+ami minden egyes rekordnál lekérdezhető.
+
+448
+00:20:56,159 --> 00:20:59,159
+Tehát
+
+449
+00:20:59,400 --> 00:21:03,919
+ha egy particionált táblába
+
+450
+00:21:02,360 --> 00:21:05,640
+ezt a függvényt én meghívom, akkor
+
+451
+00:21:03,919 --> 00:21:09,960
+megmondja, hogy az a bizonyos rekord az
+
+452
+00:21:05,640 --> 00:21:09,960
+melyik be a partícióban van benne.
+
+453
+00:21:12,679 --> 00:21:17,640
+Hát látható, hogy ugye ez a három
+
+454
+00:21:15,120 --> 00:21:20,039
+partícióban van egyáltalán rekord, ugye
+
+455
+00:21:17,640 --> 00:21:24,240
+a a negyedikben még még még nincsen
+
+456
+00:21:20,039 --> 00:21:24,240
+semmi. Oké.
+
+457
+00:21:27,480 --> 00:21:31,679
+No most próbáljuk ki azt, ami a másul,
+
+458
+00:21:29,880 --> 00:21:35,360
+amit szeretnék mutatni. Tehát ez mind a
+
+459
+00:21:31,679 --> 00:21:37,760
+két technológia, amit most mutatok, az
+
+460
+00:21:35,360 --> 00:21:40,480
+hát az ilyen ilyen nagyobb teljesítményű
+
+461
+00:21:37,760 --> 00:21:43,039
+adattárház technológia, és kettő úgy
+
+462
+00:21:40,480 --> 00:21:46,200
+általában együtt van alkalmazva.
+
+463
+00:21:43,039 --> 00:21:47,880
+A másik az az oszloptárindex.
+
+464
+00:21:46,200 --> 00:21:50,279
+Az oszloptárindex az egy hát
+
+465
+00:21:47,880 --> 00:21:52,360
+tulajdonképpen az nem index, hanem az
+
+466
+00:21:50,279 --> 00:21:55,600
+egy speciális adattárolási módszer. csak
+
+467
+00:21:52,360 --> 00:21:59,000
+így hívják, hogy calm store index.
+
+468
+00:21:55,600 --> 00:22:01,760
+Ott igazából arról van szó, hogy hogy
+
+469
+00:21:59,000 --> 00:22:03,480
+ugye mindig a reációs adatbázisokban
+
+470
+00:22:01,760 --> 00:22:06,080
+ugye úgy tanultuk azt, hogy a rekordok
+
+471
+00:22:03,480 --> 00:22:09,440
+szépen le vannak pakolva egymás után a
+
+472
+00:22:06,080 --> 00:22:10,840
+háttértáron. És akkor ott ha keressek
+
+473
+00:22:09,440 --> 00:22:13,919
+valatok, akkor kell olvasni egyik
+
+474
+00:22:10,840 --> 00:22:15,520
+rekordot a másik után és aztán csináltok
+
+475
+00:22:13,919 --> 00:22:18,320
+velük valamit. Ugye egy adabblokban a
+
+476
+00:22:15,520 --> 00:22:20,840
+rekordok úgy jönnek egymás után.
+
+477
+00:22:18,320 --> 00:22:23,679
+Ez a ez a fajta hagyományos megközítés,
+
+478
+00:22:20,840 --> 00:22:26,000
+ez nagyon rossz hatékonyságú akkor,
+
+479
+00:22:23,679 --> 00:22:27,520
+hogyha az egyes rekordok eléggé nagy
+
+480
+00:22:26,000 --> 00:22:30,039
+méretűek,
+
+481
+00:22:27,520 --> 00:22:32,200
+tehát sok mezőből állnak.
+
+482
+00:22:30,039 --> 00:22:33,919
+Lehet akár mondjuk tipikusan megint csak
+
+483
+00:22:32,200 --> 00:22:35,159
+egy adattá az alkalmazásban akár 1000
+
+484
+00:22:33,919 --> 00:22:38,159
+mezője is lehet mondjuk egy
+
+485
+00:22:35,159 --> 00:22:38,159
+ténytáblának.
+
+486
+00:22:38,440 --> 00:22:42,760
+És nekem a lekkérdezésemben nem kell az
+
+487
+00:22:41,440 --> 00:22:46,360
+összes mező, hanem csak mondjuk egy
+
+488
+00:22:42,760 --> 00:22:48,799
+kettő az 1000-ből. Hát akkor annak a
+
+489
+00:22:46,360 --> 00:22:50,200
+rekordnak adatmennyiségek én beolvasok,
+
+490
+00:22:48,799 --> 00:22:53,559
+csak egy nagyon kis részét használom
+
+491
+00:22:50,200 --> 00:22:57,440
+egyáltalán bármire. Érthető a probléma?
+
+492
+00:22:53,559 --> 00:23:00,159
+Márpedig azt tudni kell, hogy a a a az
+
+493
+00:22:57,440 --> 00:23:02,799
+adat feldolgozásnak a szűk
+
+494
+00:23:00,159 --> 00:23:05,400
+keresztmedzete az mindig a az adatoknak
+
+495
+00:23:02,799 --> 00:23:06,799
+az elérése és és bemozgatása például a
+
+496
+00:23:05,400 --> 00:23:08,799
+memóriával. Tehát ez a ez amit
+
+497
+00:23:06,799 --> 00:23:10,840
+szeretnénk minimalizálni. Kitalálták
+
+498
+00:23:08,799 --> 00:23:13,559
+tehát
+
+499
+00:23:10,840 --> 00:23:16,440
+a az oszloptárindexet.
+
+500
+00:23:13,559 --> 00:23:19,080
+Az az elgondásnak az alapja,
+
+501
+00:23:16,440 --> 00:23:23,000
+hogy nem rekordonként tároljuk a nagy
+
+502
+00:23:19,080 --> 00:23:25,360
+táblát, hanem mezőnként. Tehát kvázi úgy
+
+503
+00:23:23,000 --> 00:23:28,919
+néz ki, mintogyha minden mező mondjuk
+
+504
+00:23:25,360 --> 00:23:30,919
+tegyük föl egy egy külön állomány lenne.
+
+505
+00:23:28,919 --> 00:23:33,240
+És
+
+506
+00:23:30,919 --> 00:23:35,360
+és egyébként a rekordok sorrendjében a
+
+507
+00:23:33,240 --> 00:23:36,840
+mezőértékek vannak benne felsorolva.
+
+508
+00:23:35,360 --> 00:23:39,600
+Most gondoljuk meg, hogyha ez egy olyan
+
+509
+00:23:36,840 --> 00:23:42,360
+mező, aminek
+
+510
+00:23:39,600 --> 00:23:44,600
+nem túlságosan nagy az értékészlete.
+
+511
+00:23:42,360 --> 00:23:46,559
+Mondjuk például hát vannak szélsőos
+
+512
+00:23:44,600 --> 00:23:48,600
+esetek, mondjuk az, hogy valaki férfi
+
+513
+00:23:46,559 --> 00:23:51,039
+vagy nő, ugye, vagy mondjuk van három
+
+514
+00:23:48,600 --> 00:23:53,400
+értéke egy mezőnek, hát akkor hogy fog
+
+515
+00:23:51,039 --> 00:23:57,880
+kinézni egy ilyen egy ilyen és van
+
+516
+00:23:53,400 --> 00:24:01,400
+mondjuk 100 millió rekordom. Ö ez egy
+
+517
+00:23:57,880 --> 00:24:03,039
+ilyen ö-két
+
+518
+00:24:01,400 --> 00:24:05,520
+értékből álló, nagyon hosszú vektor
+
+519
+00:24:03,039 --> 00:24:08,760
+lesz, igaz? Tehát minden minden mezőből
+
+520
+00:24:05,520 --> 00:24:12,240
+lesz egy vektor, és különösen azokból a
+
+521
+00:24:08,760 --> 00:24:14,640
+a mezőkből amelyek kevés értéket
+
+522
+00:24:12,240 --> 00:24:16,480
+tartalmaznak, ugye kevés különböző
+
+523
+00:24:14,640 --> 00:24:18,320
+értéket tartalmaznak, azokból rendkívül
+
+524
+00:24:16,480 --> 00:24:20,120
+jól tömöríthető vektorok lesznek. Hát el
+
+525
+00:24:18,320 --> 00:24:22,320
+tudják azt képzelni, hogy hogy milyen
+
+526
+00:24:20,120 --> 00:24:26,960
+elképesztő tömörítési hatékonyságot
+
+527
+00:24:22,320 --> 00:24:30,960
+lehet elérni ilyen esetekben, ugye?
+
+528
+00:24:26,960 --> 00:24:34,039
+Tehát ezzel a fajta adattárulással
+
+529
+00:24:30,960 --> 00:24:36,640
+sok egyetünk egy csapásra. Először is az
+
+530
+00:24:34,039 --> 00:24:39,080
+egyik az az, hogy
+
+531
+00:24:36,640 --> 00:24:41,480
+amikor egy lekkérdezést végrehajtunk, és
+
+532
+00:24:39,080 --> 00:24:43,520
+nincsen szükségünk minden mezőre, csak
+
+533
+00:24:41,480 --> 00:24:45,440
+néhány a sok közül, akkor meg se
+
+534
+00:24:43,520 --> 00:24:46,760
+mozdítjuk azokat a mezőket, amelyekre
+
+535
+00:24:45,440 --> 00:24:48,080
+nincsen szükségünk, amelyekre nem
+
+536
+00:24:46,760 --> 00:24:50,440
+szűrünk, vagy az értékükkel nem
+
+537
+00:24:48,080 --> 00:24:53,159
+csinálunk semmit. Hát ez egy óriási
+
+538
+00:24:50,440 --> 00:24:56,679
+hozadék lehet.
+
+539
+00:24:53,159 --> 00:24:58,799
+Persze természetesen van ennek ára.
+
+540
+00:24:56,679 --> 00:25:01,440
+Tudnunk kell azt, hogy most ha például
+
+541
+00:24:58,799 --> 00:25:03,520
+ugye egy egy rekordmező összetartoznak
+
+542
+00:25:01,440 --> 00:25:05,159
+most is, tehát nem mindegy, hogy a hogy
+
+543
+00:25:03,520 --> 00:25:07,279
+a a
+
+544
+00:25:05,159 --> 00:25:09,000
+valakinek a nevéhez akkor milyen nem
+
+545
+00:25:07,279 --> 00:25:11,320
+tartozik. Hát azt nyilván kell
+
+546
+00:25:09,000 --> 00:25:13,360
+tartanunk, hogy hanyadik értéknél
+
+547
+00:25:11,320 --> 00:25:14,960
+vagyunk például egy ilyen egy egy ilyen
+
+548
+00:25:13,360 --> 00:25:16,799
+vektorban.
+
+549
+00:25:14,960 --> 00:25:19,279
+Tehát bizonyos adminisztációt ez jelent.
+
+550
+00:25:16,799 --> 00:25:21,240
+Viszont még egyszer mondom, a mezőknek
+
+551
+00:25:19,279 --> 00:25:24,279
+egy jelentős részét nem kell
+
+552
+00:25:21,240 --> 00:25:25,760
+megmozdítanunk. A másik pedig az, és hát
+
+553
+00:25:24,279 --> 00:25:28,840
+ugye itt el lehet képzelni, hogy komoly
+
+554
+00:25:25,760 --> 00:25:30,760
+kutatások vannak emögött, tehát ez és és
+
+555
+00:25:28,840 --> 00:25:33,960
+nem is nem is tegnap találták ki, hanem
+
+556
+00:25:30,760 --> 00:25:36,919
+már sokkal korábban,
+
+557
+00:25:33,960 --> 00:25:39,279
+hogy az össze, tehát a a ezeket a
+
+558
+00:25:36,919 --> 00:25:41,520
+vektorokat tömörítjük,
+
+559
+00:25:39,279 --> 00:25:43,520
+és a műveleteknek a jelentős részét
+
+560
+00:25:41,520 --> 00:25:46,399
+tömörített ápodban is el lehet végezni.
+
+561
+00:25:43,520 --> 00:25:49,559
+Ez nagyon lényeges. Tudnilik
+
+562
+00:25:46,399 --> 00:25:50,679
+az egy nagyon nagy ö ö
+
+563
+00:25:49,559 --> 00:25:53,880
+hát
+
+564
+00:25:50,679 --> 00:25:55,840
+ár, hogy ki kell tömörítenem egy ilyen
+
+565
+00:25:53,880 --> 00:25:57,399
+egy ilyen nagy rektort, egy egy ilyen
+
+566
+00:25:55,840 --> 00:25:59,279
+nagy vektort, hogy tudjak vele végezni
+
+567
+00:25:57,399 --> 00:26:01,480
+valamit, valami például egy keresést el
+
+568
+00:25:59,279 --> 00:26:03,320
+tudjam benne végezni, vagy mondjuk meg
+
+569
+00:26:01,480 --> 00:26:05,880
+tudjam számolni, hogy hogy hány férfi
+
+570
+00:26:03,320 --> 00:26:07,760
+van, meg hány nő, meg ilyesmi,
+
+571
+00:26:05,880 --> 00:26:09,880
+és aztán meg vissza kell esetleg
+
+572
+00:26:07,760 --> 00:26:11,440
+csomagolnom. Arról is beszélve, hogyha
+
+573
+00:26:09,880 --> 00:26:12,880
+hogyha ki kell csomagolnom, akkor ugye
+
+574
+00:26:11,440 --> 00:26:16,039
+nagyon nagy helyet fog elfoglalni
+
+575
+00:26:12,880 --> 00:26:18,360
+kapásból. Szóval arra ment ki a kutatás,
+
+576
+00:26:16,039 --> 00:26:20,360
+hogy hogy olyan tömörítő algoritmusokat
+
+577
+00:26:18,360 --> 00:26:22,360
+kellett kitalálni,
+
+578
+00:26:20,360 --> 00:26:23,960
+amelyeken a nekünk szükséges műveleteket
+
+579
+00:26:22,360 --> 00:26:26,840
+legalábbis tömét tápadó is el lehet
+
+580
+00:26:23,960 --> 00:26:29,080
+végezni, és ezt megoldották. Ezért aztán
+
+581
+00:26:26,840 --> 00:26:30,799
+ezek a kaltore indexek, ezek valami
+
+582
+00:26:29,080 --> 00:26:33,480
+kegyetlenül
+
+583
+00:26:30,799 --> 00:26:35,880
+gyorsak a hagyományos indexekhez képest.
+
+584
+00:26:33,480 --> 00:26:38,320
+Természetesen olyan esetekben, amikor
+
+585
+00:26:35,880 --> 00:26:41,320
+ezt érdemes használni a mi esetünkben.
+
+586
+00:26:38,320 --> 00:26:44,720
+Tehát amikor sok rekord van,
+
+587
+00:26:41,320 --> 00:26:47,120
+so mező van és a
+
+588
+00:26:44,720 --> 00:26:50,480
+lekkérdezés szerkezete olyan, hogy hogy
+
+589
+00:26:47,120 --> 00:26:54,600
+nincs minden mezőre szükségünk.
+
+590
+00:26:50,480 --> 00:26:56,520
+Na most ezt a colum store-t, ezt a
+
+591
+00:26:54,600 --> 00:26:58,799
+az SQL szerver támogatja. Így kell
+
+592
+00:26:56,520 --> 00:27:00,600
+csinálni.
+
+593
+00:26:58,799 --> 00:27:02,039
+Ez a Calumstore index. Ide beírjuk csak
+
+594
+00:27:00,600 --> 00:27:05,000
+ennyit, hogy kalst és akkor az lesz
+
+595
+00:27:02,039 --> 00:27:09,840
+belőle. És innentől kezdve megváltozik a
+
+596
+00:27:05,000 --> 00:27:09,840
+tábla tároásának a szerkezete.
+
+597
+00:27:11,799 --> 00:27:17,360
+Most ugye itt van a végén megint ez a on
+
+598
+00:27:15,559 --> 00:27:19,360
+rész.
+
+599
+00:27:17,360 --> 00:27:21,760
+Tehát itt itt minden partícióhoz külön
+
+600
+00:27:19,360 --> 00:27:23,520
+fognak elkészülni ezek ezek a cumstore
+
+601
+00:27:21,760 --> 00:27:26,720
+indexek,
+
+602
+00:27:23,520 --> 00:27:30,480
+vagy hát oszloptárak pontosabban szólva.
+
+603
+00:27:26,720 --> 00:27:34,000
+Tehát mind a négy partícióhoz lesz egy
+
+604
+00:27:30,480 --> 00:27:36,760
+oszloptár a a customer DV keyek, a
+
+605
+00:27:34,000 --> 00:27:38,399
+produkt keynek meg az ord mindegyiknek.
+
+606
+00:27:36,760 --> 00:27:40,000
+Jó,
+
+607
+00:27:38,399 --> 00:27:42,799
+hát ez így szépen működik és be is
+
+608
+00:27:40,000 --> 00:27:44,960
+tudjuk szurkálni az adatokat.
+
+609
+00:27:42,799 --> 00:27:47,559
+De most nézzük azt, ami szintén ehhez az
+
+610
+00:27:44,960 --> 00:27:50,960
+esettommányhoz hozzátartozik,
+
+611
+00:27:47,559 --> 00:27:52,960
+hogy hogy szeretnénk új értékeket
+
+612
+00:27:50,960 --> 00:27:55,480
+betölteni.
+
+613
+00:27:52,960 --> 00:27:57,320
+Például szeretnénk hozzátölteni a
+
+614
+00:27:55,480 --> 00:27:59,919
+2013-as évet, hiszen ugye az eddig még
+
+615
+00:27:57,320 --> 00:28:01,960
+nem volt benne.
+
+616
+00:27:59,919 --> 00:28:04,480
+Most, hogyha ezt
+
+617
+00:28:01,960 --> 00:28:06,960
+ezt ilyen indutasítások sorozatával
+
+618
+00:28:04,480 --> 00:28:09,760
+tesszük meg, tulajdonképpen mindegy az,
+
+619
+00:28:06,960 --> 00:28:13,360
+hogy egyetlen inzert utasítással szúrunk
+
+620
+00:28:09,760 --> 00:28:15,240
+be sok rekordot, vagy pedig sok inzert
+
+621
+00:28:13,360 --> 00:28:18,559
+utasítással.
+
+622
+00:28:15,240 --> 00:28:21,600
+A lényeg az, hogy hogy
+
+623
+00:28:18,559 --> 00:28:23,200
+a az inzet utasításnak
+
+624
+00:28:21,600 --> 00:28:25,240
+ugye van az a hátránya, hogy minden
+
+625
+00:28:23,200 --> 00:28:27,880
+rekordó el kell döntenünk, hogy melyik
+
+626
+00:28:25,240 --> 00:28:29,559
+partícióba kerül.
+
+627
+00:28:27,880 --> 00:28:31,720
+És van egy van egy egyszerű vagy egy
+
+628
+00:28:29,559 --> 00:28:33,519
+elegánsabb megoldás,
+
+629
+00:28:31,720 --> 00:28:36,080
+amit itt most tulajdonképpen ezt
+
+630
+00:28:33,519 --> 00:28:39,399
+szeretném demonstrálni, ami kifejezetten
+
+631
+00:28:36,080 --> 00:28:41,640
+ezzel a particionálisi technikával
+
+632
+00:28:39,399 --> 00:28:43,880
+működik jól együtt. Igazából arról van
+
+633
+00:28:41,640 --> 00:28:45,760
+szó, hogy ha én tudom, hogy a hogy a
+
+634
+00:28:43,880 --> 00:28:49,360
+rekordjaim egy bizonyos partícióba
+
+635
+00:28:45,760 --> 00:28:52,399
+fognak kerülni, akkor
+
+636
+00:28:49,360 --> 00:28:55,240
+egy partíált, tehát egy partíciónak a
+
+637
+00:28:52,399 --> 00:28:57,760
+hovatartozását, azt egyetlen utasítással
+
+638
+00:28:55,240 --> 00:29:01,039
+át lehet állítani,
+
+639
+00:28:57,760 --> 00:29:02,840
+és és nincsen szükség arra, hogy hogy
+
+640
+00:29:01,039 --> 00:29:05,360
+abba a táblába egyenként beszurkáljuk a
+
+641
+00:29:02,840 --> 00:29:07,240
+rekordokat. Hát itt látható, hogy most
+
+642
+00:29:05,360 --> 00:29:09,519
+mi csinálunk egy olyan árnyéktáblát,
+
+643
+00:29:07,240 --> 00:29:12,440
+aminek tök ugyanolyan szerkezete, mint a
+
+644
+00:29:09,519 --> 00:29:14,760
+a rendes táblánknak ennek az internet
+
+645
+00:29:12,440 --> 00:29:16,519
+salesnek,
+
+646
+00:29:14,760 --> 00:29:18,440
+csak abban különbözik, hogy van benne
+
+647
+00:29:16,519 --> 00:29:21,880
+egy olyan check constint it, hogy ez a
+
+648
+00:29:18,440 --> 00:29:24,440
+13-as évre fog csak működni.
+
+649
+00:29:21,880 --> 00:29:27,080
+Hát persze nem kellene bele, de hogy
+
+650
+00:29:24,440 --> 00:29:29,399
+biztos biztos ne keveredjenek össze a
+
+651
+00:29:27,080 --> 00:29:31,000
+rekordjaink. Jó,
+
+652
+00:29:29,399 --> 00:29:34,320
+és
+
+653
+00:29:31,000 --> 00:29:34,320
+ezt most létrehozzuk.
+
+654
+00:29:35,640 --> 00:29:38,039
+És
+
+655
+00:29:41,320 --> 00:29:46,120
+és akkor most van egy egy nagyon hasonló
+
+656
+00:29:44,519 --> 00:29:48,840
+utasítás, nagyon hasonló insert
+
+657
+00:29:46,120 --> 00:29:51,559
+utasítás, mint ami a fenti, csak azzal a
+
+658
+00:29:48,840 --> 00:29:53,320
+különbséggel, hogy hogy itt a 13-as évet
+
+659
+00:29:51,559 --> 00:29:56,480
+fogjuk csak betölteni, és ezt ebből az
+
+660
+00:29:53,320 --> 00:29:56,480
+új táblába.
+
+661
+00:29:57,120 --> 00:30:01,360
+Most itt még van egy olyan olyan trükk
+
+662
+00:29:58,840 --> 00:30:03,159
+is, amit úgy ide is írtam, hogy abban az
+
+663
+00:30:01,360 --> 00:30:05,640
+esetben, hogy a tábla tök üres volt,
+
+664
+00:30:03,159 --> 00:30:08,159
+tehát nem volt még benne semmi,
+
+665
+00:30:05,640 --> 00:30:10,240
+akkor ezt az inzet utasítást nem fogják
+
+666
+00:30:08,159 --> 00:30:11,840
+logolni, és ezért aztán sokkal gyorsabb
+
+667
+00:30:10,240 --> 00:30:14,279
+lesz. Tehát ez kicsit olyan ugye a
+
+668
+00:30:11,840 --> 00:30:17,440
+logolás az azt jelenti, hogy hogy
+
+669
+00:30:14,279 --> 00:30:19,440
+különben egy reakciós adatbázisban
+
+670
+00:30:17,440 --> 00:30:22,760
+egy esk utasítás egy ez egy implicit
+
+671
+00:30:19,440 --> 00:30:25,240
+tranzakció, tehát visszagörgetőnek kell
+
+672
+00:30:22,760 --> 00:30:27,159
+lennie és például ez az inzet esertén
+
+673
+00:30:25,240 --> 00:30:29,000
+azt jelenti,
+
+674
+00:30:27,159 --> 00:30:31,039
+visszagetőnek és újra játszhatónak kell
+
+675
+00:30:29,000 --> 00:30:33,519
+lennie, hogyha én beszúrok 1 millió
+
+676
+00:30:31,039 --> 00:30:34,760
+rekordot például egy üzlet utasítással,
+
+677
+00:30:33,519 --> 00:30:37,760
+akkor a transzakciós lobban le kell
+
+678
+00:30:34,760 --> 00:30:40,000
+tárnom azt az 1 millió rekordot
+
+679
+00:30:37,760 --> 00:30:41,440
+hogy újra játszható legyen a tranzakció,
+
+680
+00:30:40,000 --> 00:30:43,399
+ugye? Tehát most ebben az esbő viszont
+
+681
+00:30:41,440 --> 00:30:47,080
+nem történik meg ez a logolás, mert ez
+
+682
+00:30:43,399 --> 00:30:47,080
+egy üres tábla volt.
+
+683
+00:30:49,840 --> 00:30:56,279
+És ugye ebben az évben már van 52000
+
+684
+00:30:52,200 --> 00:30:59,600
+tranzakciónk, tehát ez lényegesen top.
+
+685
+00:30:56,279 --> 00:31:02,600
+És megcsináljuk ehhez is a calm store
+
+686
+00:30:59,600 --> 00:31:02,600
+indexet.
+
+687
+00:31:07,320 --> 00:31:11,840
+És akkor ez a igazából erre ment ki ez a
+
+688
+00:31:09,760 --> 00:31:14,200
+ez az egész erre a switch utasításra.
+
+689
+00:31:11,840 --> 00:31:16,279
+Tehát van a az SQL szerverenek egy
+
+690
+00:31:14,200 --> 00:31:18,600
+támogatása,
+
+691
+00:31:16,279 --> 00:31:20,760
+hogy hogy tulajdonképpen azt a
+
+692
+00:31:18,600 --> 00:31:23,320
+tartalmat, ami most az Internet Sales
+
+693
+00:31:20,760 --> 00:31:26,720
+New táblában van, azt ezzel az elegáns
+
+694
+00:31:23,320 --> 00:31:29,440
+kis kapcsolóval átdobjuk az internet
+
+695
+00:31:26,720 --> 00:31:31,720
+sales táblának a negyedik partíciójába.
+
+696
+00:31:29,440 --> 00:31:35,679
+Tehát mostantól kezdve
+
+697
+00:31:31,720 --> 00:31:38,039
+az oda fog tartozni,
+
+698
+00:31:35,679 --> 00:31:43,399
+és ezzel egyidejűleg
+
+699
+00:31:38,039 --> 00:31:43,399
+ez az internet sales new tábla kiürül.
+
+700
+00:31:46,760 --> 00:31:52,639
+Hogyha most lekérdezzük a partíciókat,
+
+701
+00:31:49,080 --> 00:31:55,080
+akkor akkor látni fogjuk, hogy megjelent
+
+702
+00:31:52,639 --> 00:31:57,519
+ez az 52000 rekord. Itt látják, itt van
+
+703
+00:31:55,080 --> 00:32:00,480
+a a negyedik partíciójában ennek a
+
+704
+00:31:57,519 --> 00:32:00,480
+táblának.
+
+705
+00:32:01,120 --> 00:32:05,440
+Hát ez tulajdonképpen
+
+706
+00:32:03,360 --> 00:32:08,120
+azt mutatja, hogy nagy táblákkal kicsit
+
+707
+00:32:05,440 --> 00:32:10,279
+másképpen kell bánni, mint mint a kis
+
+708
+00:32:08,120 --> 00:32:12,840
+táblákkal, azért, hogy ne kelljen
+
+709
+00:32:10,279 --> 00:32:14,600
+mondjuk egy-egy ilyen utasításra másfél
+
+710
+00:32:12,840 --> 00:32:17,240
+órát válni. Pár persze most itt nekünk
+
+711
+00:32:14,600 --> 00:32:18,639
+nyilván ilyen kis táblákon ezt a
+
+712
+00:32:17,240 --> 00:32:20,880
+különbséget most nem tudtam volna
+
+713
+00:32:18,639 --> 00:32:24,919
+demonstrálni.
+
+714
+00:32:20,880 --> 00:32:27,399
+Jó. És hát ami amit mondtam, hogy hogy
+
+715
+00:32:24,919 --> 00:32:31,360
+most pedig ez a tábla ezért ezért
+
+716
+00:32:27,399 --> 00:32:34,840
+kiürült, tehát ami ebben volt, az az oda
+
+717
+00:32:31,360 --> 00:32:34,840
+került át.
+
+718
+00:32:36,799 --> 00:32:41,960
+Anyival
+
+719
+00:32:39,600 --> 00:32:44,440
+még adós vagyok itt a itt a végén ennek
+
+720
+00:32:41,960 --> 00:32:45,320
+a kis demónak,
+
+721
+00:32:44,440 --> 00:32:48,960
+hogy
+
+722
+00:32:45,320 --> 00:32:48,960
+ugye itt azért eléggé
+
+723
+00:32:49,120 --> 00:32:54,960
+hát mit mondjak? úgy, úgy úgy bele
+
+724
+00:32:51,720 --> 00:32:59,200
+kellett mennünk a a részletekbe ahhoz,
+
+725
+00:32:54,960 --> 00:33:01,799
+hogy hogy meg tudjunk csinálni egy
+
+726
+00:32:59,200 --> 00:33:03,760
+többi-kevésbé skálázható megoldást.
+
+727
+00:33:01,799 --> 00:33:05,960
+Tehát például nekünk meg kell tervezni a
+
+728
+00:33:03,760 --> 00:33:07,320
+particionási függvényt meg ilyesmi,
+
+729
+00:33:05,960 --> 00:33:09,480
+ugye? Tehát ezt nekünk kézzel meg kell
+
+730
+00:33:07,320 --> 00:33:12,679
+adni.
+
+731
+00:33:09,480 --> 00:33:16,000
+Ez ugye sokkal ö barátságosabb volna,
+
+732
+00:33:12,679 --> 00:33:17,840
+hogyha automatikusan menne ez a dolog.
+
+733
+00:33:16,000 --> 00:33:20,279
+Tehát hogyha nekem ezzel nem kellene
+
+734
+00:33:17,840 --> 00:33:22,320
+foglalkoznom, hogy hogy ahogy a
+
+735
+00:33:20,279 --> 00:33:25,760
+táblamérete nő egyszer csak az már több
+
+736
+00:33:22,320 --> 00:33:27,120
+darabban legyen. Hát ezek azok a
+
+737
+00:33:25,760 --> 00:33:29,960
+tulajdonságok, vagy ezek azok a
+
+738
+00:33:27,120 --> 00:33:32,480
+szolgáltatások, ahol
+
+739
+00:33:29,960 --> 00:33:34,960
+a például a a felhő adatbázis
+
+740
+00:33:32,480 --> 00:33:36,480
+technológiák azok azok nagyon
+
+741
+00:33:34,960 --> 00:33:38,159
+kompetitívek.
+
+742
+00:33:36,480 --> 00:33:40,000
+Tehát
+
+743
+00:33:38,159 --> 00:33:43,120
+egyrészt a fel, másrészt pedig a nok
+
+744
+00:33:40,000 --> 00:33:46,000
+adális technikák is. Tehát például a a
+
+745
+00:33:43,120 --> 00:33:50,440
+mongo dbben
+
+746
+00:33:46,000 --> 00:33:52,440
+ez a ez a particionálás ez ez teljesen
+
+747
+00:33:50,440 --> 00:33:54,760
+automatikusan meg van oldva. Nekem
+
+748
+00:33:52,440 --> 00:33:57,639
+igazából nem kell vele csinálnom semmit.
+
+749
+00:33:54,760 --> 00:34:00,320
+Az is igaz persze, hogy ugye a Mongol
+
+750
+00:33:57,639 --> 00:34:02,639
+DB-ben
+
+751
+00:34:00,320 --> 00:34:05,440
+mi dokumentumokkal dolgozunk, amiknek
+
+752
+00:34:02,639 --> 00:34:08,000
+olyan nagyon nem szükséges foglalkozunk
+
+753
+00:34:05,440 --> 00:34:11,119
+egyértelmű a belső struktúrájuk. Ehhez
+
+754
+00:34:08,000 --> 00:34:12,599
+képest itt itt bizony a a
+
+755
+00:34:11,119 --> 00:34:15,399
+struktúr és a nyugatkozások nagyon
+
+756
+00:34:12,599 --> 00:34:19,440
+fontosak, tehát ezért is lehet azt ott
+
+757
+00:34:15,399 --> 00:34:19,440
+olyan szépen megcsinálni automatikusan.
+
+758
+00:34:19,800 --> 00:34:25,839
+Jó, hát akkor ennyi volt itt a a demo.
+
+759
+00:34:22,159 --> 00:34:29,040
+Van a a jegyzet végén, akit ez akinek ez
+
+760
+00:34:25,839 --> 00:34:30,800
+tetszett, nézze meg. Van a jegyzet végén
+
+761
+00:34:29,040 --> 00:34:34,200
+egy ilyen
+
+762
+00:34:30,800 --> 00:34:36,480
+önálló feladat, hogy egy hasonlóenses
+
+763
+00:34:34,200 --> 00:34:40,560
+sémást csináljunk meg egy másik
+
+764
+00:34:36,480 --> 00:34:40,560
+ténytáblán ebben az adattárásban.
+
+765
+00:34:40,679 --> 00:34:46,960
+Jó, és én igazából ennyit szerettem
+
+766
+00:34:43,200 --> 00:34:46,960
+volna most mutatni.
+

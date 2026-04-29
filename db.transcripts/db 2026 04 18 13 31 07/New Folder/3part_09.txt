@@ -1,0 +1,465 @@
+át
+azt mondja, hogy itt a ez a 1
+ez van 10 bens. Akkor ennek feletleg
+működnie kell. Most
+nézzük meg, hogy tényleg működik-e.
+Tehát ennyi ennyinek kéne lenni a
+raktárom.
+Igen, Remna lefutott rendesen. Ugye
+nulla visszatérési értékesztő onnan
+tudjuk.
+És na
+és akkor most mennyi a raktálkészlát?
+Azt mondja most nyolc, mert már egyszer
+lefutattuk az előbb. Oké. És most
+tegyünk be egy hibát
+ide, mit tudom én, az update után.
+Tehát a customernek az egyenlegét azt
+azt azt csökkentjük, de még a
+a raktárkészletet nem csökkentjük. És
+akkor ide beírunk egy ilyet, hogy
+perform.
+Nincsen s, csak perform.
+select mondjuk 1/0. Hát ez ugye ilyenkor
+megpróbál elvégezni egy egy hibás
+utasítást, és utána ez a create all
+replacel egyszerűen újra létzzuk a
+tárolt eljárást.
+Most már az új táró teás fog futni
+legközelebb.
+Aztongja,
+hogyan van ennek a szinttaxisa?
+Elnézést, erre nem emlékszem annyira
+pontosan. Talán így van.
+Nézzük meg.
+Oké. Ezek szerint így van.
+És akkor akkor most nézzük meg, hogy
+tényleg mennyis volt ennek az egyenek a
+vásárlónak.
+Jó, hát 1994.
+Rendben van.
+És akkor most hívjuk meg ezt. Ugye a
+rakták az még nyolc volt.
+Jó, nagyon jó. Kaptunk egy egy division
+by zero hibát.
+És most nézzük meg, hogy hogy mi lett a
+az az adabnek az állapota.
+Látják nyc,
+ugye? Tehát tehát valóban
+valóban az értékek nem láthatóak vagy
+azt jelenti, hogy ez az update, ez itt
+tényleg visszagült, csak úgy magától nem
+kell hozzá kormányrendelet. Ez ez így
+van kitalálva, hogy ez egy tranzakció és
+ez így egybe fut.
+az adat a a na
+az SQS szerveren egyébként
+még még jobban lehet ezt
+még jobb még könnyebben tudjuk ezt a ezt
+a ezt a dolgot demonstrálni. esetleg
+talán annyi időnk még van, hogy egy
+egy olyan demót is bemutassak, ahol az
+izolációs szinteket állítjuk.
+Pillanat.
+Ja, tehát ugyan ugyanezt a tranzakciót
+most megnézzük az SQSR-re. Ugye ez egy
+ez egy kicsit más.
+Az is egy reakciós adatbázis, de viszont
+kicsit másképp néz ki ez a script. És ez
+a
+ez a függvény egy pillanat, mindjárt
+mondom is, hogy igen. Tehát a van egy
+ilyen áp 9-nél, hogy MS SQL server
+snapshot Isolation. Tehát ez lenne, amit
+még esetleg miért mutatnék.
+Jó, tehát ezt
+ez is egy script, amit ki lehet másolni.
+És ezt most akkor az SQL szerverbe fogom
+betenni. Hát tulajdonképpen én már nem
+akarok több
+Python kódot mutatni itt, úgyhogy én ezt
+én ezt most be is csukom, mert marha
+lassú ez a gép különben is. Jó, tehát
+ezeket a dolgokat én most
+leállítom.
+Jó, egyszer
+másrészt ráom a PG admint is,
+mert abból is
+elég volt igazából ennyi.
+Hát ez nem eszik itt nekem sok
+erőforrást.
+És akkor nézzük az SQL szerver. Tehát
+itt itt megvan nekem a Northw
+adatbázisom. Ez ugye az újat Northw
+adatbázis.
+És nyissunk egy egy új queryt. ahova
+bemásoljuk ezt a ezt a scriptet.
+No
+hát nézzük meg, hogy hogy néz ki ugye ez
+a tranzakció
+az SQS szerverre megírva.
+Hát egy kicsit körülményesebben van
+megírva tulajdonképpen, mert egy ilyen
+egy ilyen státusz
+egy ilyen állapotot vezetünk végig ezen
+a ezen a scripten. Itt azért van egy-két
+érdekesség.
+Az egyik érdekesség az az ugye, hogy
+hogy itt programozottan kezeljük a
+tranzakciót, ami azt jelenti, hogy mi
+programozók mondjuk meg, hogy hol
+kezdődik, hol ér véget, mikor gördüljön
+vissza, és mikor komittáljon, tehát
+mikor érjen véget.
+A begin transaction iges szint ez így
+nézne ki szépen kív ez az utasítás az
+kezdi a transzakciót
+és aztán a a
+commit transaction
+az ami befejezi a transzakciót a
+rollback transaction az pedig
+visszagörgeti.
+Itt a PGESnél nekem nem kellett beírnom
+azt, hogy begin meg komitet, mivel
+egy
+egy függvényben lévő script az
+automatikusan egy tranzakcióban fog
+futni. Tehát ezt nekem nem nem is
+kellett beírnom, mondjuk úgy. Itt
+viszont ezt nekem be kell írnom. Tehát
+mi történik a a begin transaction után?
+Onnantól kezdve minden utasításom, a
+select is, meg az adatmódosítók is,
+mindegyik egy bizonyos zárolási
+stratégia szerint fog zárakat kérni és
+szerezni az objektumokhoz, és ha nem kap
+meg és ha nem kapja meg az árat, akkor
+várakozó állapotba kerül. Ugye ezt
+láttuk az előző demóban, amikor egy
+csomót vártak egymástól a tranzakciók,
+egy magasabb izolációs szinten,
+és ez megy egészen addig, amíg el nem
+érünk egy comité
+vagy egy rollbackig. A commit esetén az
+történik, hogy a
+a a tranzakciónak az összes zárja
+felszabadul.
+Tehát
+lehetett neki már egy magasabb izolációs
+szinten már a fél adatbázist
+lelockolhatta, mert olvasta a táblákat,
+de amikor egyszer végettél, ezek az
+árak, ezek mind megsemmisülnek és ezt a
+hát ezt a a futtató rendszert kezd ezek
+az áraknak el lehet képzelni, hogy hogy
+ez nem egy egyszerű dolog. Hát a az SQL
+szerveren több mint 20 féle zár van,
+tehát nem csak olvasás meg írási zárva
+van, hanem van még egy csomó fajta. És
+hát ugye mivel ezek a zárvások ezek a a
+rossz a nem elég nem elegendő zárás
+logikai hibához vezethet, a túlzott
+zárás pedig lassú
+tehát tehát nagyon sok blokkolás, nagyon
+sok várakozáshoz vezethet, alacsony
+átviteli sebességhez vezethet. Ezért
+aztán ezek nagyon alaposan ki vannak
+dolgozva ezek a ezek a záróási
+stratégiák.
+Mindenesetre
+itt itt mi kezeljük a ebben a ebben a
+ebben a tranzakció mi mi kezeljük a
+tranzakció elétnek a végét. És a
+rollback az tényleg abban különbözik a
+commit transactiontől,
+hogy még mielőtt felszabadítanánk a az
+ájainkat,
+előtte még visszagörgetjük az összes
+lépést, amit tettünk. Tehát
+gyakorlatilag helyreállítjuk a
+transakció futtatás előtti állapot. És
+hogyan lehet ezt visszagoletni? Hát úgy,
+hogy a reakciós adabásoknak az egyik
+alapja az úgynevezett right to head log,
+tehát a a right ahead
+log
+röviden ugye w
+tehát a a az a tranzakciós napló, amibe
+minden adatmódosító utasítás ehhez egy
+bejegyzést mé egy olyan bejegyzést, ami
+alapján azt az adatmódosítást
+azt
+vissza lehet csinálni és újra is le
+lehet játszani.
+Ezt is most már be lehet csukni.
+Mikor van szükség róla, hogy
+visszacsináljuk? Hát akkor, hogyha hogy
+ról bekerjük a tranzakciót. Most
+gondolják meg, hogyha az az
+adottmódosító utasítás az egy delete
+table volt egy táblának a törése, és ez
+a tábla az tartalmazott, mit tudom én 10
+millió rekordot, akkor mind a 10 millió
+rekordot vissza kell valahon állítani,
+és az a 10 millió rekord az benne van a
+tranzakciós logban. Tehát ez egy ez egy
+óriási nagyon erőfes igényes dolog.
+A például az atomicitásnak a
+biztosítása, el tudják ugye ezt ezt a
+dolgot képzelni, hogy igen, ez ez bizony
+nagyon tehát a trakciós ló az nagyobb
+lehet, mint az adatbázis a a méretét
+tekintve ebből kifolyólag.
+Viszont szükség van rá.
+És mikor kell előrefeleget? Tehát újra
+játszani a tranzakciót. Például mondjuk
+beinzertáltam egy táblába 100 millió
+rekordot,
+akkor a 100 millió rekordnak benne kell
+lenni a transzakciós log megfelelő
+bejegyzésében. Hát például akkor, hogyha
+elvesztettem az adabális fáat és a
+logból újra kell újra le kell játszanom,
+ezt roll forwardnak hívják, újra le kell
+játszanom a tranzakciókat, akkor pedig
+előrefele játszuk, és akkor akkor ilyen
+irányba zajlik le a tranzakció. Jó,
+tehát akkor itt látják tulajdonképpen a
+lényeg az, hogy ha volt egy begin
+transaction itt az elején
+valahol itt volt, akkor mindenképpen rá
+kell futnunk vagy egy komitra, vagy egy
+rollbackra. Ez a lényeg. Különben nagy
+baj van. Akkor a rendszer azt hiszi,
+hogy folyamatosan futtattunk egy
+tranzakciót, és az előforrásaink
+foglalatak maradnak.
+És akkor itt van még egy érdekesség. Van
+egy ilyen környezeti paraméter, hogy
+exact abort on, ami azt jelenti, hogy ha
+bármi hiba történik akárhol itt futás
+közben, mit tudom én nullával osztunk,
+vagy bármi,
+akkor a tranzakció vissza fog gördülni
+automatikusan.
+Tehát ez a ez a ha ez onra nightra,
+akkor hátis ez az elvárt működés, ugye?
+Tehát ezt szeretnénk, hogy az atomicitás
+ne sérüljön meg.
+Úgyhogy ezt ki is lehet próbálni.
+Most
+létrehozzuk ezt az új tároltájárást a a
+Northlben.
+És
+ugye ez volt a
+a környezetünkbe átöttuk háromra
+a Unitin stockot.
+És
+ez a három kedves vásárló vetélkezett
+érte.
+Ez pedig a
+korábbi tesztekordok törlésére szolgál.
+És hát most igazából azt tudom
+bemutatni, hogy hogyha három tranzakció
+van, és mindegyik meg akarja venni,
+mindegyik kettőt akar ebből rendelni.
+Egy pillanat az valahol
+itt lesz egy ilyen. Ez az. Igen.
+Tehát ez lesz az egyik egyik
+tranzakciónk.
+És a megfelelő izolációs szintet
+használjuk. Tehát most akkor nem a read
+commitidet használjuk, hanem a
+repeatable readet.
+Viszont table le
+nem table, hanem table ismételhető
+olvasás.
+És ezt most két másik ablakba is
+beteszem.
+Tehát ez a ez lesz akkor az alf key.
+Jó. És akkor még lesz egy harmadik is.
+Az pedig Arut, Alf és Kisfot harmadik.
+Jaj, Istenem.
+Igen.
+Anatr, Anatr volt a harmadik.
+Anatra.
+Oké, tehát egyik, másik, harmadik,
+és beteszünk ide szokásunk szerint 10
+másodperc késeltetést.
+Itt van ez a weight for delay. Na, azért
+azért olyan nagyon sok nem kell.
+Pillanat, ezt nyugodtan ki lehet innen
+szedni.
+Az update customer
+set balance.
+Igen, inkább inkább ide tegyük be ezt a
+késtettetést. Jó, egy pillanat.
+Tehát
+tehát a customer balance után, tehát
+hogy már csökkentettük, hát az előző
+példában is így csináltuk, ugye, hogy
+már csökkentettük a az egyető
+egyenlegét, viszont
+még nem hoztuk létre rendelést és nem is
+változtattuk meg a raktárkészletet sem.
+Ez volt a új logikai hibánk.
+Úgyhogy akkor most megcsináljuk újra. Jó
+ezzel a módosítással a tárolteljárást.
+Jó, idáig.
+Oké. És akkor most
+le lehet futtatni ezt a három párhuzamos
+akciót. Tehát ez az egyik,
+ezt futtatom itt.
+Ez a másik. Ezt is futtatom. És ez pedig
+a harmadik. Ezt is akkor futtatom.
+És nézzük meg, hogy mi lesz belőle.
+Hát ugye 10 másodpercet mindenképp
+válniuk kell, de most még most már 104
+másodpercnél tartunk,
+és akkor látják, hogy itt itt volt még
+négy másodperc futás idő valami másra.
+Az egyik pedig pedig végetért helyesen.
+Tehát igazából ugye azt akartuk tényleg,
+hogy a három közül csak egy futhasson
+le, mert akkor nincs logikai hiba. És a
+többivel pedig az történt, hogy amikor
+egy egy tranzakció, ez itt például ez a
+második, ami is le lett lőve, ez
+lejutott oda, hogy updateelni akart itt
+valamit.
+Itt a 10 másodperc volt a a késettetés.
+Tehát
+ehhez az inzerthez itt neki kellett
+volna
+egy írási zár, de azt nem kapta meg,
+mert a másik tranzikció rajta felejtette
+a saját olvasási zárját, azért mert ugye
+egy repeatable readizolációs szinten
+voltunk és már akkor azzó állapotba
+került.
+Aztán a harmadik az meg már a második
+tranzakciótól került várakozó állapotba.
+Tehát egymásra kezdtek várni a
+tranzakciók, és ezeket az egymás
+vállalkozásokat a rendszer észrevette,
+és egy bizonyos stratégia szerint
+feloldotta, tehát egy kör alakult ki
+vállalkozási grábban, és ezt a rendszer
+feloldotta,
+és kiválasztott valamelyik tranzakciót,
+amelyik a
+ugye deadlocknak hívják, Holtonnak
+hívják ezt, amelyik a deadlock victim
+látják a őt a Deadlock victim és lelőtte
+és ezek után tehát visszagörgette
+automatikusan és ezek után, hogyha még
+mindig volt
+kör a vállalakozási gráfbal,
+akkor megint kiválasztotta egy
+tranzakciót, és ezt addig csinálta, amíg
+a kör el nem tűnt. Ilyen esetben ugye
+hárman vártak egymással, kettőt kellett
+visszagörgetnie, hogy hogy egy maradjon
+csak a a piacon, de ez ugye látható,
+hogy ez 12 másodperc után történt meg,
+ez pedig 15 másodperc után, pedig csak
+10 másodperc tartott a tranzakciónk.
+Igen, mert a rendszer várt egy darabig,
+hogy hát hogyha ha magától valamelyik
+tranzakció meggondolja magát és és
+leveszi az árját, hogy valami történik
+vele. Tehát ezért volt ez a pluszül.
+No hát kedves kollégák, remélem, hogy
+tetszett. Én itt a szakmai anyag végére
+értem és tulajdonképpen
+nincs is más hátra, mint mint van még
+egy tesztünk. használják egészséggel a a
+felhő adta lehetőségeket. Tehát
+javaslom, hogy
+nyugodtan használják a a filest is, meg
+a meg a a GCP-nek az egyéb
+szolgáltatásait is. Még egy-egy évig
+nyugodtan lehet használni, azt hiszem
+a az egyenlégüket azt azt azt azért nem
+árt figyelmeg kis. Na ezt még esetleg
+megmutatom. Jó, hogy azt hogy azt hol
+lehet látni, mert ez egy húsbavágó
+kérdés, ugye. Pillanat.
+És még az nekem megvan
+itt. Igen.
+Igen.
+Szóval azt nem itt fogjuk látni, hanem
+hanem a
+konszol
+Google Chrome oldalon.
+Akkor mi volt annak a neve?
+Pillanat.
+Consol Cloud a macska bajszát mi annak a
+a websitnak? Mindjárt megnézem. Jó, egy
+másodperc türelem.
+Console cloud Google.com.
+Igen, az volt a probléma itt mindössze,
+hogy hogy ide nem tettem egy pontot.
+Jó, és akkor most már menni fog a dolog.
+Szóval, hogyha van egy van egy projektem
+most konkrétan ez minden lehetne egy
+másik is például, akkor
+van egy ilyen biling, és ebbe azt lehet
+látni, hogy hogy mennyit költöttem el
+eddig.
+Na most
+az viszont
+na majd mindjárt
+minden projekt hozzá van kötve egy egy
+ilyen egy ilyen billing account
+számlázási számla tulajdonképpen
+itt látható az mennyi volt a a költségem
+de vigyázat, mert a költségek azok csak
+egy pár nap késéssel jelennek még itt
+nektünk. ma mai költségem az majd holnap
+vagy holnap után fog megjelenni. Szóval
+ezzel ezzel vigyázni kell. És azt
+viszont itt nem lehet látni, hogy hogy
+hogy hogy mennyi hitelem van még náluk.
+Most ez úgy van megcsinálva, hogy hogy
+be van állítva mindenkinek 50 dollárnyi
+kredit, és a költség amíg az kisebb,
+mint 50 dollár, addig az addig az menni
+fog. A krediteket itt lehet megnézni,
+látják, itt a a billing overviewen van
+egy olyan kredit.
+És akkor itt van végig az, ami nekünk
+kell, hogy nekem 100 dollárt adtak, és
+van 97,75 dollárom. Tehát ez az, ami
+amit én most használok jelenleg. Oké?
+Úgyhogy úgy ezt kell nézegetni, és akkor
+abból látszik, hogy nyújtózkodhat még az
+ember.
+No, akkor egy pillanat.
+Hát március
+26-nál
+kéne megnézni a múdlapon. Van egy
+hatodik rövid teszt
+2026. április 18.
+Jó, hát ezt a tesztet próbált még
+megoldani, és akkor én meg is köszönöm
+mára a figyelmet,
+és további kelles hétvégét kívánok
+mindenkinek.
+Elnézést. Melyik dátumon?
+Március 26.
+Március 26. Jó, köszönöm.
+Bocsánat, az ötödiket már megcsináltuk.
+Én csak én kapcsoltam be.
+Tessék?
+Ötödiket már megcsináltuk.
+Igen, igen, igen. Most most a most a
+hatodikat kell pillanat. Azt akkor akkor
+el is
+és ha én később kapcsoltam be az
+ötödiket, még meg tudom csinálni.
+Hát
+hát ne most. Jó, most most a hatodikat
+csinálja. Jó, azt azt kérném. Jó,
+rendem.
+y

@@ -1,0 +1,103 @@
+Szeretettel
+köszöntök mindenkit.
+A mai problémakörünk egy kis
+szerveroldali automatizálás lesz.
+Itt a
+az alappréma az úgy néz ki, a jegyzetben
+szépen le van írva egy ilyen szenárió,
+hogy
+különböző okok miatt adatbázis szinten
+kell csatolnunk két információs
+rendszert.
+például egy kereskedési információs
+rendszert, egy szállító információs
+rendszerre, vagy pedig egy
+termelőinációs rendszerre,
+amelyek ugyanazt az adázist használják.
+És egy laz csatorást szeretnénk
+készíteni,
+ami azt jelenti, hogy nagyon lényeges,
+hogy az egyik rendszerben keletkező
+esemény, azt úgy tudjuk feldolgozni a
+másik rendszerben, úgy kerüljön át oda
+az esemény, hogy lehető legkevésbé
+zavarjuk.
+a azt a rendszert, amiben az esemény
+keletkezik. Hát ennek az az oka, hogy
+ezt így csináljuk,
+ugye úgy értem, hogy a a laza csatolás
+mellett nagyon erős érv az az,
+hogy nagyon sok esetben nincsen
+befolyásunk,
+például egy másik cég gyártotta azt az
+információs rendszert, amibe át akarjuk
+venni az eseményt.
+És ilyenkor az a nagyon kellemetlen,
+hogy mi például bevezetünk egy új
+szoftvert egy vállalathoz,
+és
+ezen közben nemhogy az nem működik, amit
+mi csináltunk, de még ráadásul
+elmontottuk azt is, amit egy másik cég
+csinált, és szépen használtak már évek
+óta
+ami a szoros csatorásnál előfordulhat,
+mert hiszen hogyha egy eseménynek a
+feldolgozása közben a mi oldalunkon hiba
+történik,
+akkor az az eseményt generáló inflációs
+rendszerben is egy hibát okozhat.
+Erről a szárióról van egy áttekintés a
+jegyzetben, azt mindjárt
+ide m meg is próbálom behozni.
+No, tehát itt van
+van a rendelések tábla. Most a North
+Nabist használjuk ehhez a demóhoz. A
+rendőrség táma az egyik, tehát az egyik
+rendszer használja ezt a rendőrségt
+táblát, és például létrejön egy új
+rendelés, egy új rekord, vagy módosul
+egy meglévő rendelésrekord.
+Ezt egy táblára csatolt trigger
+észreveszi,
+és nem dolgozza fel azonban az esem,
+mint a másik információs rendszerben,
+azért, hogy laza csatolást valósítsunk
+meg, tehát hogy minden kevésbé legyen
+két rendszer összekötve, hanem csak egy
+logot készít, tehát ezt az eseményt ezt
+beírja egy logtblába, és semmi mást nem
+csinál. És aztán van egy ettől teljesen
+függetlenül futó ütemezett jobk, tehát
+egy egy végrehajtott, altratikusan
+végrehajtott
+feladat tulajdonképpen, amelyik időnként
+ránéz erre a lok távára, ha van benne új
+esemény, azt akkor kiveszi és
+feldolgozza
+és megcsinálja, amit amit kell ezzel a
+ezzel az eseménnyel. Tehát ez a az a
+csatolásnak az átnézete.
+Mindezt SQS szerver technológiával
+valósítjuk meg a virtuális gépen. Ö
+van aki tanul triggerekről, van aki nem
+tanul triggerekről.
+Tehát itt azt javasom, hogy a időnként
+belefér az VS-és anyag időnként nem fér
+bele, például tavaly nem fért bele. Itt
+a jegyzetben található erről egy egy kis
+áttekintés, amit javaslom, hogy aki nem
+tanulta, az az nézzen át. Hát most egész
+röviden
+ja meg fel fogom tenni majd a múlapra a
+DB2 jegyzetet is, hogy a egyszerűség
+kedvér. Szóval
+egész egész röviden a triggert úgy lehet
+felfogni, mint egy olyan kis tárolt
+eljárást, amelyet maga a rendszer indít
+el automatikusan, hogyha egy előre
+definiált esemény bekövetkezik. Ez az
+esemény lehet egy táblában való adat
+rekor beszúrás, módosítás vagy törlés.
+Ezeket úgy helyek, hogy hogy DML
+triggerek

@@ -1,0 +1,264 @@
+�n, amikor szóba került az
+adattam, akkor említettem a KAF
+rendszert, talán emlékeztek rá, és azt,
+hogy hogy az egy ilyen topic alapú
+adat, vagy vagy eseményt továbbító
+rendszer, és valami ilyesmi található
+ebben a Pub Subicben. a nevét a publish
+subscribról kapta.
+Tehát ez egy ilyen ugye tehát
+elosztott rendszerekben ez a klasszikus
+producer consumer típusú vagy
+termelőfogyasztó
+típusú architektúrát
+feltételezi vagy sugalja.
+És ez egy ez a Google-nek egy
+szolgáltatása, ami kimondottan arra lett
+kitalálva, hogy például így függvények
+között tudjunk ilyen eseményeket vagy
+akár adatot is üldözgetni.
+És
+ennek a alapfelépítését meg a
+használatát szeretném most nektek
+megmutatni, vagy vagy áttekinteni, és
+utána megnézünk, hogy ezzel hogyan lehet
+létrehozni komplexebb függvény
+rendszereket, vagy vagy gráfokat.
+Jó, tehát itt néhány általános fogalom
+van megindítva először, tehát hogy ez
+alkalmas ilyen valós idejű esemény és
+adat kézbesítésre
+különböző forrásokból tud adatot
+fogadni, illetve oda továbbítani.
+És itt megint nagyon lényeges, hogy
+automatikus skálázás van, tehát ez is
+egy managed
+szolgáltatás.
+Tehát a a Google felhő minden megcsinál
+helytünk.
+Nyilván valamilyen klaszteren fog ez
+majd futni, de miéről nem látunk semmit,
+és annyi erőforrást rak alá a rendszer,
+amennyi ahhoz kell, hogy biztonságosan
+és megbízhatóan ki tudja szolgálni a
+kéréseket.
+biztonságos, ezt nyilván elvárjuk,
+illetve független a programozási
+nyelvektől, tehát hogy ezt bármilyen
+rendszerből lehet használni.
+És akkor itt van egy áttekintő ábra,
+hogy hogy is kell ezt elképzelni. Ugye a
+múltkor beszéltünk a data flowról,
+de a többi részből annyira nem. Na és
+itt van egy példa arra, hogy ez a cloud
+papab szolgáltatás, ez például
+használható arra, hogy akármilyen
+forrásból valós idejű adatot
+folyamatosan
+gyűjtsünk, és azt továbbítsuk ilyen
+kvázi esemény formában a cloud data flow
+szolgáltatásnak.
+Tehát például itt nem konkrétan
+függvények összekötésére használnák ezt,
+hanem adott továbbítása,
+de ugyanígy eseményt is tud küldeni, és
+akkor a függvények tudnak erre reagálni.
+Na és ez lenne a lényegi rész, amiről
+beszélni szeretnék, hogy ez a publish
+subscribe dolog, ez mit is jelent.
+Tehát a
+rendszer középpontjában
+ez az úgynevezett topik van, amit úgy
+lehetne legegyszerűben elképzelni, hogy
+ez egy ez egy várakozási sor,
+tehát egy adattár, ahova egymás után
+érkeznek be
+adatok.
+És
+aki beküldi az adatot, de ő lesz a
+publisher, tehát aki
+termeli az adatokat,
+ő a topicnak a nevét fogja használni a
+címzésre.
+Tehát a papsab rendszeren belül, hogyha
+azt mondja, hogy szeretnék adatot
+küldeni az ilyen és ilyen nevű topikra,
+akkor az automatikusan a megfelelő
+várakozási sorba fogja berakni majd ezt
+az üzenetet.
+A másik oldalon vannak a subscriberek,
+tehát a a adatra várakozó
+kliensek,
+akik szintén feliratkoznak egy topikra.
+És a feliratkozás az ő esetükben azt
+jelenti, hogy onnan fognak tudni olvasni
+adatokat.
+És
+az, hogy hogyan olvassák az adatot,
+az a feliratkozás mondjuk úgy módjától
+függ, mert kétféle kézbesítési
+stratégiát lehet választani. Az egyik a
+push típusú, a másik a pull.
+Ugye a a pool, gondolom ezzel mind
+tisztában vagytok, tehát a pool az
+mindig azt jelenti, hogy a kliensnek
+kell kezdeményezni
+a az akciót, tehát jelen esetben a
+kiolvasást.
+Tehát nekem kell megkérdezni a Papsab
+Service, hogy érkezett-e számomra üzenet
+vagy adat a megadott topik van.
+A push az nyilván az pedig ennek az
+ellentéte, ahol a szolgáltatás fogja
+automatikusan nekem kinyomni, vagy
+kitolni az üzenetet,
+és akkor a pliensnek nem kell
+folyamatosan ellenőrizni, hogy jött-e
+új, jött-e úgy, vagy satöbbi, hanem
+automatikusan ezt meg fogjuk kapni.
+Nyilván ehhez megfelelő infrastruktúra
+támogatás kell, tehát ez nem minden
+eszközön működőképes,
+de ahol van, ott ott gyorsabb és
+egyszerűbb lehet. Ugye gondoljatok
+mondjuk egy ilyen
+messaging szolgáltatásra, akár a
+Messenger vagy valami hasonló.
+Tehát ez kábé ugyanerről szól,
+hogy
+a topik az mondjuk az egyik barátunknak
+a neve. Ha neki akarok küldeni egy
+üzenetet, akkor én szépen kívánasztom az
+ő nevét, elküldöm az üzenetet,
+és a túloldalon, ha az eszköz engedi,
+akkor egy pussal automatikusan
+megérkezik. Hogyha nem, akkor a kliens
+programnak kell bizonyos időközönként
+frissíteni
+a saját állapotát. Le kell kérdezni,
+jött-e új. Ha igen, akkor azt le kell
+tölteni.
+És ugye nagyon fontos az, hogy jó lenne
+tudni, hogy valóban megérkezett ez
+üzenet.
+Tehát ennek az egész rendszer működésnek
+egy fontos lépése az acknowledge rész,
+hogy a címzet
+az vissza kell, hogy jelezzzen a
+szolgáltatásnak, hogy igen, ezt a
+bizonyos üzenetet megkaptam.
+Ugyanis a szolgáltatás minden üzenetet
+perszisztens tárban tárol azért, hogy ne
+legyen üzenetvesztés.
+Ugye itt megint bejön az üzenet
+továbbítási szemantika.
+Tehát, hogy vagy azt mondjuk, hogy itt
+legalább az at least once, vagy pedig az
+atmost once szemantika kell, hogy
+érvényesüljön. Tehát az a
+bocsánat, az exactly ones, tehát az at
+most ones, az nem jó, mert az azt
+mondja, hogy lehet, hogy egyszer sem
+érkezik meg az üzenet, azt nem nagyon
+szeretetnénk.
+Tehát minimum egyszer vagy többször ez a
+két lehetőség
+van, vagy csak egyszer és nem többször.
+És ennek a fontos lépése az, hogy
+jeleznünk kell, hogy igen, megérkezett,
+és akkor már a pzistens tárból törölheti
+a szolgáltatás azt a bizonyos üzeneket.
+Jó, tehát ez az alap felépítés, tehát
+van a topik, és akkor
+arra
+vagy valaki feliratkozik, mint üzenet
+vagy adat forrás, vagy pedig mint
+fogyasztó.
+Na de hát ez csak ugye egy ilyen
+pontpont kommunikációt tesz lehetővé,
+úgyhogy nézzünk egy kicsit bonyolultabb
+eseteket is, hogy hogy lehet ezekből
+majd tetszőleges
+gráfokat felépíteni. Hát nyilván azt
+kell, hogy akkor ne csak pontpont
+legyen, hanem egyebek is. És akkor itt
+látjuk a
+a három további kategóriát. Ugye a bal
+szélen van a many to one, tehát hogy
+több
+hívjuk őket termelőnek most, hogy
+magyarul lehessen erről is beszélni.
+Tehát többen ugyanarra a topikra
+küldenek üzeneteket,
+és van egy
+címzettünk,
+és ő folyamatosan ugye ezeket valamilyen
+sorrend meg fogja kapni. Ez viszonylag
+egyszerű. A másik oldalon, a jobb
+oldalon ennek a fordítottja van ugye a
+one to many, ahol egy publisher vagy
+termelő van, küldi be egymás után a
+különböző üzeneteket.
+Viszont több feliratkozónk van az üzenet
+fogadására, és látjuk, hogy ugyanazokat
+az üzeneteket
+fogják mind megkapni. Tehát ez egy ilyen
+broadcast jellegű kommunikáció.
+Ugye a menit vannál
+ott
+különböző üzenetek jönnek és a annak a
+a
+meg tudjuk ezt mondjuk nem a szubáját,
+hanem a a kollektív üzenethalmaszt fogja
+megkapni a címzet. És akkor középen van
+a teljesen általános eset, amikor a many
+to many, tehát a több kapcsolat
+létrehozásáról van szó. Tehát több
+forrás küldhet be üzeneteket,
+és
+több
+címzettünk lehet, akik feliratkoznak
+arra a topikra,
+de itt érdekes módon nem broadcastként
+jelenik meg a értesítés, hanem különböző
+üzenetek fognak menni különböző
+felhasználókra. Ez, ha jól emlékszem,
+egy külön opció, meg lehet adni, hogy
+milyen típusú üzenetekre vagyunk
+kíváncsiak. Tehát még a topik mellett
+egy ilyen alkategória is van.
+És hát ezekből tényleg aztán a végén
+mindent
+föl lehet építeni,
+illetve nyilván még az is benne van,
+hogy
+a topikok számát is lehet növelni. Tehát
+még a több-több kapcsolat az még a több
+topikkal bővülhet. Tehát lehet az, hogy
+egy forrás az több topikra is küldi,
+vagy egy címzet vagy fogyasztó, az több
+topikra is föl van iratkozva, és akkor
+onnan is érkezem neki az üzenetet.
+Jó, és akkor itt van még egy példa,
+hogy ez itt hogyan működik.
+Szerintem ezt már nem kell nagyon
+túlmagyarázni. Tehát van egy olyan
+címzettünk, aki
+a a az A és a B típusú üzeneteket is
+szeretné kapni. A másik kettőnél pedig
+ez mind is meg. Tehát az egyik csak az
+A, a másik a B típusú fogja fogadni, és
+ha ezek megjönnek, akkor mindenki örül.
+Na és akkor nézzük, hogy mi mire is jó
+ez a egész papszabb dolog. Tehát mit
+lehet ezzel kezdeni?
+És ez egy picikét hasonlít a a múltkori
+adatstream feldolgozási eset tanulmányra
+vagy eset felhasználási esetekre.
+Gyorsan fussunk rajta vég. Jó, csak
+azért, hogy egy kicsit talán a a
+fantáziátokat megmozgassa.
+Tehát minden olyan esetben ez jól
+használható, ahol
+folyamatosan jönnek információk, és
+annak hatására valamit csinálnunk 

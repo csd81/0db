@@ -1,0 +1,3128 @@
+1
+00:00:03,480 --> 00:00:08,320
+Tehát a logshipping az ugye szó szerint
+
+2
+00:00:06,000 --> 00:00:10,559
+azt jelenti,
+
+3
+00:00:08,320 --> 00:00:15,200
+hogy a lognak, itt a tranzakciós logra
+
+4
+00:00:10,559 --> 00:00:17,960
+kell gondolni, a lognak a továbbítása,
+
+5
+00:00:15,200 --> 00:00:19,720
+az a log elküldése szó szerint ezt ezt
+
+6
+00:00:17,960 --> 00:00:23,240
+jelenti.
+
+7
+00:00:19,720 --> 00:00:25,400
+És a az öföt mechanizmus az úgy működik,
+
+8
+00:00:23,240 --> 00:00:28,199
+hogy ugye minden
+
+9
+00:00:25,400 --> 00:00:30,640
+relációs OLTP adatbázisnak van egy
+
+10
+00:00:28,199 --> 00:00:32,279
+tranzakciós logja.
+
+11
+00:00:30,640 --> 00:00:34,239
+ek köré épül tajdonképpen az egész
+
+12
+00:00:32,279 --> 00:00:36,200
+adatbázis.
+
+13
+00:00:34,239 --> 00:00:37,879
+Ez teszi lehetővé az például, hogy egy
+
+14
+00:00:36,200 --> 00:00:40,200
+tranzakciót visszaessen görgetni, vagy
+
+15
+00:00:37,879 --> 00:00:42,480
+éppenségel újra lehessen futtatni.
+
+16
+00:00:40,200 --> 00:00:44,520
+Ez a roll back, roll forward.
+
+17
+00:00:42,480 --> 00:00:46,800
+Most beszél.
+
+18
+00:00:44,520 --> 00:00:49,800
+Igen,
+
+19
+00:00:46,800 --> 00:00:52,520
+mintogyha valaki mondott volna valamit.
+
+20
+00:00:49,800 --> 00:00:57,559
+Nem jó, rendben van.
+
+21
+00:00:52,520 --> 00:01:00,079
+Szóval van ez a ez a tranzakciós log, és
+
+22
+00:00:57,559 --> 00:01:04,760
+az az alapvető gondolat, hogy az nagyon
+
+23
+00:01:00,079 --> 00:01:06,360
+jót tenne a mi rendszerünk
+
+24
+00:01:04,760 --> 00:01:08,560
+tehát a mi szolgáltatásunk
+
+25
+00:01:06,360 --> 00:01:10,600
+megbízhatóságának,
+
+26
+00:01:08,560 --> 00:01:13,880
+hogyha az adatbázis szerver kiesése
+
+27
+00:01:10,600 --> 00:01:17,040
+esetén minimális idővel vissza tudnánk
+
+28
+00:01:13,880 --> 00:01:18,960
+állítani a szolgáltatást. Hát például
+
+29
+00:01:17,040 --> 00:01:20,680
+ugye
+
+30
+00:01:18,960 --> 00:01:22,560
+Neptun rendszer mögött van egy Oracle
+
+31
+00:01:20,680 --> 00:01:24,520
+adatbázis.
+
+32
+00:01:22,560 --> 00:01:26,240
+Oracle adatbázsnak valami problémája
+
+33
+00:01:24,520 --> 00:01:29,200
+van.
+
+34
+00:01:26,240 --> 00:01:31,119
+Mondjuk például az oraköz szerver valami
+
+35
+00:01:29,200 --> 00:01:33,240
+miatt leáll,
+
+36
+00:01:31,119 --> 00:01:36,479
+akkor aztán leáll a Neptun is. Ugye most
+
+37
+00:01:33,240 --> 00:01:38,759
+ez egy egy nagyobb cégnél borzasztóan
+
+38
+00:01:36,479 --> 00:01:41,840
+nagy problémákat okozhat. Például a luft
+
+39
+00:01:38,759 --> 00:01:44,399
+hanzának volt, vagy nem is bocsánat, a
+
+40
+00:01:41,840 --> 00:01:46,159
+British Elvznek volt még egy olyan
+
+41
+00:01:44,399 --> 00:01:48,360
+másfél éve, vagy mikor egy ilyen két
+
+42
+00:01:46,159 --> 00:01:51,119
+napos leállása,
+
+43
+00:01:48,360 --> 00:01:53,280
+és akkor én nem tudom hány ezer ember
+
+44
+00:01:51,119 --> 00:01:55,439
+alud különféle raptereken, mert a
+
+45
+00:01:53,280 --> 00:01:57,759
+gépeket nem tudták elindítani. Szóval ez
+
+46
+00:01:55,439 --> 00:02:00,520
+távolról sem tréfa dolog.
+
+47
+00:01:57,759 --> 00:02:03,159
+Nyilván itt a
+
+48
+00:02:00,520 --> 00:02:06,399
+ennek a ezt egy disaster recoverynek
+
+49
+00:02:03,159 --> 00:02:09,080
+hívják ezt a dolgot, tehát a a
+
+50
+00:02:06,399 --> 00:02:11,760
+katasztrófából való
+
+51
+00:02:09,080 --> 00:02:14,400
+felépülésnek, vagy a katasztrófa
+
+52
+00:02:11,760 --> 00:02:17,640
+elhárításnak.
+
+53
+00:02:14,400 --> 00:02:19,000
+Szóval ennek különböző szintjei vannak.
+
+54
+00:02:17,640 --> 00:02:20,239
+Valamit már mi is most meg tudunk
+
+55
+00:02:19,000 --> 00:02:21,360
+csinálni. Ezt mer ezt meg tudjuk
+
+56
+00:02:20,239 --> 00:02:23,400
+csinálni, ugye, hogy fogunk egy
+
+57
+00:02:21,360 --> 00:02:25,680
+adatbázist
+
+58
+00:02:23,400 --> 00:02:25,680
+és
+
+59
+00:02:29,640 --> 00:02:33,959
+mondjuk itt a Nort adatben, és csak azt
+
+60
+00:02:31,560 --> 00:02:37,200
+mondjuk, hogy
+
+61
+00:02:33,959 --> 00:02:39,760
+backup, ugye, tehát aki egyébként
+
+62
+00:02:37,200 --> 00:02:41,720
+esetleg
+
+63
+00:02:39,760 --> 00:02:44,480
+érdeklődik az adatbis adminisztráció
+
+64
+00:02:41,720 --> 00:02:46,560
+iránt és nem hallgatta a korszer
+
+65
+00:02:44,480 --> 00:02:47,640
+adatbázisok kurzust,
+
+66
+00:02:46,560 --> 00:02:49,519
+az
+
+67
+00:02:47,640 --> 00:02:52,200
+itt a a tárgynak a múlt idő alapján
+
+68
+00:02:49,519 --> 00:02:53,879
+talál,
+
+69
+00:02:52,200 --> 00:02:55,480
+megtalálja ezt a jegyzetet, és ennek
+
+70
+00:02:53,879 --> 00:02:58,560
+utána nézhet, hogy ez hogy ezek hogyan
+
+71
+00:02:55,480 --> 00:03:00,720
+mennek. Szóval csinálunk egy egy
+
+72
+00:02:58,560 --> 00:03:04,400
+bekapolt egy mentést az adatbázisról
+
+73
+00:03:00,720 --> 00:03:06,879
+időnként, ugye mondjuk naponta, és
+
+74
+00:03:04,400 --> 00:03:10,000
+hogyha katasztrófa van, mondjuk a
+
+75
+00:03:06,879 --> 00:03:13,560
+szerver leáll, meghibásodik, satöbbi,
+
+76
+00:03:10,000 --> 00:03:13,560
+belecsap a villám,
+
+77
+00:03:13,840 --> 00:03:18,680
+akkor ezt a bekapót, ami ugye nyilván
+
+78
+00:03:16,239 --> 00:03:21,440
+nem azon a szerveren volt tárolva
+
+79
+00:03:18,680 --> 00:03:23,400
+okosan, hanem másról, ezt elővesszük,
+
+80
+00:03:21,440 --> 00:03:24,879
+előkapunk egy másik szervert, ezt a
+
+81
+00:03:23,400 --> 00:03:27,000
+bekapott helyreállítjuk azon a
+
+82
+00:03:24,879 --> 00:03:28,519
+szerveren, hogy ez a restore művelet
+
+83
+00:03:27,000 --> 00:03:31,280
+helyreállítás
+
+84
+00:03:28,519 --> 00:03:33,439
+és utána átítjuk a forgalmat arra a
+
+85
+00:03:31,280 --> 00:03:35,360
+szerverre. Ugye persze az nyilván az
+
+86
+00:03:33,439 --> 00:03:37,000
+adatbázisunk egy kicsit régebbi lesz,
+
+87
+00:03:35,360 --> 00:03:38,840
+meg lesznek problémák, meg az egész
+
+88
+00:03:37,000 --> 00:03:41,040
+művelet, hát ez ugye ez ez egy eléggé
+
+89
+00:03:38,840 --> 00:03:43,319
+manuális művelet, amit most elmondtam.
+
+90
+00:03:41,040 --> 00:03:45,680
+Tehát ez ez mondjuk egy-két órát biztos
+
+91
+00:03:43,319 --> 00:03:49,799
+eltart, mire ez úgy tényleg meg megint
+
+92
+00:03:45,680 --> 00:03:49,799
+működik a szolgál a szolgáltatás.
+
+93
+00:03:50,080 --> 00:03:55,920
+És nyilván az ide az volna, hogyha ez ez
+
+94
+00:03:53,799 --> 00:03:59,280
+minél kisebb kiesést okozna egy ilyen
+
+95
+00:03:55,920 --> 00:04:00,959
+egy ilyen katasztrófa.
+
+96
+00:03:59,280 --> 00:04:02,680
+Az ideális eset az lenne, hogyha
+
+97
+00:04:00,959 --> 00:04:05,799
+egyáltalán nem lehetne észrevenni azt,
+
+98
+00:04:02,680 --> 00:04:08,040
+hogy hogy kiesett egy szerver. Tehát ez
+
+99
+00:04:05,799 --> 00:04:10,680
+ez az ideális, hogy gyakorlatilag
+
+100
+00:04:08,040 --> 00:04:12,439
+legfeljebb annyit, hogy hogy egy picit
+
+101
+00:04:10,680 --> 00:04:14,239
+mondjuk épp akkor, amikor ez a kiesés
+
+102
+00:04:12,439 --> 00:04:16,079
+történik, valamelyik tranzakció tovább
+
+103
+00:04:14,239 --> 00:04:21,359
+fut, vagy valami ilyesmi, de igazából
+
+104
+00:04:16,079 --> 00:04:22,919
+semmi. Tehát ez a idees eset és a a
+
+105
+00:04:21,359 --> 00:04:25,720
+attól függően, hogy mennyire el vagyunk
+
+106
+00:04:22,919 --> 00:04:28,479
+táves esettől, mondjuk azt, hogy hogy
+
+107
+00:04:25,720 --> 00:04:31,960
+hot vagy pedig warm, tehát hogy forró
+
+108
+00:04:28,479 --> 00:04:34,199
+vagy meleg vagy langyos
+
+109
+00:04:31,960 --> 00:04:36,039
+backapjaink vannak, vagy vagy fallback
+
+110
+00:04:34,199 --> 00:04:40,039
+szervereknek hísiák ezeket. Tehát azok a
+
+111
+00:04:36,039 --> 00:04:42,600
+szerverek vagy az a azok a megoldások,
+
+112
+00:04:40,039 --> 00:04:46,120
+amikre hiba esetén
+
+113
+00:04:42,600 --> 00:04:48,160
+vissza lehet vagy át lehet lépni.
+
+114
+00:04:46,120 --> 00:04:50,560
+Tehát az, amit most fogok mutatni, az
+
+115
+00:04:48,160 --> 00:04:52,440
+egy ilyen warm bekap, tehát nem egy hot.
+
+116
+00:04:50,560 --> 00:04:56,520
+A warm az azt jelenti, hogy azért
+
+117
+00:04:52,440 --> 00:04:58,440
+igényel még kézi munkát, de nagyon
+
+118
+00:04:56,520 --> 00:05:02,840
+keveset. Tehát
+
+119
+00:04:58,440 --> 00:05:05,360
+tényleg ö látni lehet majd, hogy hát
+
+120
+00:05:02,840 --> 00:05:08,840
+egy-két perc alatt meg lehet csinálni a
+
+121
+00:05:05,360 --> 00:05:11,560
+az a a adott esetben az átállást. És
+
+122
+00:05:08,840 --> 00:05:13,120
+tulajdonképpen a kieső forgal ami
+
+123
+00:05:11,560 --> 00:05:15,639
+elveszik,
+
+124
+00:05:13,120 --> 00:05:18,000
+az is majd látni fogjuk, hogy igazából
+
+125
+00:05:15,639 --> 00:05:19,639
+szabályozható, hogy mennyi legyen, hogy
+
+126
+00:05:18,000 --> 00:05:22,600
+mondjuk azt mondjuk, hogy öt perc
+
+127
+00:05:19,639 --> 00:05:24,319
+forgalmunk elveszthet például, vagy egy
+
+128
+00:05:22,600 --> 00:05:26,400
+perc forgalmunk, vagy egy óra, mindegy.
+
+129
+00:05:24,319 --> 00:05:28,479
+Ezt ez lényeg az, hogy ez a ez a mi
+
+130
+00:05:26,400 --> 00:05:30,440
+kezünkben van.
+
+131
+00:05:28,479 --> 00:05:31,840
+Ugyanúgy, ahogy ahogy a amikor kézzel
+
+132
+00:05:30,440 --> 00:05:33,479
+csináltuk a bekapot, akkor is azt
+
+133
+00:05:31,840 --> 00:05:36,160
+mondtuk, hogy naponta csinálunk északkal
+
+134
+00:05:33,479 --> 00:05:38,720
+egy bekapot. Akkor ezzel azt mondtuk,
+
+135
+00:05:36,160 --> 00:05:42,680
+hogy na hát hogyha mondjuk reggel 8-tól
+
+136
+00:05:38,720 --> 00:05:45,199
+délután 5-ig van üzleti idő, akkor a a
+
+137
+00:05:42,680 --> 00:05:48,199
+legrosszabb esetben, tehát hogy egy ha
+
+138
+00:05:45,199 --> 00:05:48,199
+mondjuk
+
+139
+00:05:48,319 --> 00:05:53,280
+épp úgy megy, úgy száll az adatunk, hogy
+
+140
+00:05:50,600 --> 00:05:55,080
+még a backup előtt, akkor egy napja
+
+141
+00:05:53,280 --> 00:05:57,440
+forgalot veszthetünk el. Ugye ebben ez
+
+142
+00:05:55,080 --> 00:05:59,759
+volt benne.
+
+143
+00:05:57,440 --> 00:06:02,880
+Itt is itt itt itt is azt mondhatjuk,
+
+144
+00:05:59,759 --> 00:06:05,639
+hogy mi az illető jobok ütemezésé azt
+
+145
+00:06:02,880 --> 00:06:08,360
+állítjuk be, hogy hogy mennyi az az
+
+146
+00:06:05,639 --> 00:06:09,960
+elvesz az elveszeszíthető
+
+147
+00:06:08,360 --> 00:06:12,280
+forgalom.
+
+148
+00:06:09,960 --> 00:06:14,479
+Szóval akkor a mecchanizmus úgy úgy úgy
+
+149
+00:06:12,280 --> 00:06:16,000
+konkrétan úgy néz ki, hogy van egy
+
+150
+00:06:14,479 --> 00:06:19,039
+transzakciós logunk. Ugye azt itt
+
+151
+00:06:16,000 --> 00:06:21,199
+egyébként meg is lehet nézni
+
+152
+00:06:19,039 --> 00:06:23,400
+egy adatbázis kapcsán. Ez a ez a
+
+153
+00:06:21,199 --> 00:06:25,880
+bizonyos tranzakciós log itt a fil-nál
+
+154
+00:06:23,400 --> 00:06:29,240
+itt látható, hogy hogy ez hogy ez egy
+
+155
+00:06:25,880 --> 00:06:33,759
+külön erre a célra készített fálban van.
+
+156
+00:06:29,240 --> 00:06:36,039
+Itt van a neve, ez az LDF.
+
+157
+00:06:33,759 --> 00:06:38,199
+És
+
+158
+00:06:36,039 --> 00:06:40,280
+először is csinálunk a a úgy
+
+159
+00:06:38,199 --> 00:06:43,599
+inicializáljuk a a logshippinget, hogy
+
+160
+00:06:40,280 --> 00:06:47,160
+csinálunk egy másodot az adatbázisról
+
+161
+00:06:43,599 --> 00:06:49,240
+a másik szerveren nyilván.
+
+162
+00:06:47,160 --> 00:06:52,560
+És utána
+
+163
+00:06:49,240 --> 00:06:56,080
+van egy olyan folyamat, egy egy olyan
+
+164
+00:06:52,560 --> 00:06:57,840
+job, amelyik folyamatosan nézi a
+
+165
+00:06:56,080 --> 00:07:02,680
+forrásadatbázisnak, mondjuk itt a
+
+166
+00:06:57,840 --> 00:07:05,360
+Northwinnek a tranzakciós logját,
+
+167
+00:07:02,680 --> 00:07:07,479
+és amikor abban csinálunk valamit, akkor
+
+168
+00:07:05,360 --> 00:07:10,240
+minden tranzakciót onnan szépen fog és
+
+169
+00:07:07,479 --> 00:07:11,599
+kimásol valahova,
+
+170
+00:07:10,240 --> 00:07:13,680
+és
+
+171
+00:07:11,599 --> 00:07:16,160
+aztán van egy másik job, ami ezeket a
+
+172
+00:07:13,680 --> 00:07:18,800
+kimásolt tranzakciókat futtat. Ja, le
+
+173
+00:07:16,160 --> 00:07:21,680
+folyamatosan bizonyos késeltetéssel a
+
+174
+00:07:18,800 --> 00:07:23,840
+célatbázison.
+
+175
+00:07:21,680 --> 00:07:26,160
+Még van egy harmadik job is egyébként,
+
+176
+00:07:23,840 --> 00:07:30,639
+ami a kettőt összeköti, egy másoló job,
+
+177
+00:07:26,160 --> 00:07:33,120
+mégpedig azért, mert hát ugye tipikusan
+
+178
+00:07:30,639 --> 00:07:35,120
+ak értelme ennek az egésznek, hogyha ez
+
+179
+00:07:33,120 --> 00:07:38,240
+fizikailag egy másik szerver, ugye,
+
+180
+00:07:35,120 --> 00:07:40,240
+tehát úgy értem a a az a az, amelyik a
+
+181
+00:07:38,240 --> 00:07:42,440
+céladatbázist futtatja, tehát egy másik
+
+182
+00:07:40,240 --> 00:07:44,560
+szervergép, nem csak egy másik adatbáz
+
+183
+00:07:42,440 --> 00:07:47,919
+szerver példa, egy másik szervergép, és
+
+184
+00:07:44,560 --> 00:07:50,000
+az egyik szerverről át kell vinni a
+
+185
+00:07:47,919 --> 00:07:53,639
+tranzakciós log backupokat egy másik
+
+186
+00:07:50,000 --> 00:07:55,479
+szerver gépre, vagy ugye egy vállalati
+
+187
+00:07:53,639 --> 00:07:58,479
+hálózati tárhelyre, tehát egy ilyen
+
+188
+00:07:55,479 --> 00:08:00,280
+storage-ra, a most a mi szempontunkból,
+
+189
+00:07:58,479 --> 00:08:02,400
+mindegy. Tehát igazából van még olyan
+
+190
+00:08:00,280 --> 00:08:04,000
+két jobot összekötő harmadik job, ami
+
+191
+00:08:02,400 --> 00:08:07,080
+egy ami ugye egy copy, tehát egy ilyen
+
+192
+00:08:04,000 --> 00:08:10,159
+másoló job.
+
+193
+00:08:07,080 --> 00:08:11,759
+És akkor, hogyha a mi szerveünket
+
+194
+00:08:10,159 --> 00:08:14,159
+kilövik,
+
+195
+00:08:11,759 --> 00:08:16,319
+akkor egész egyszerűen átrántjuk, ugye
+
+196
+00:08:14,159 --> 00:08:18,720
+éré tesszük a másik adatbázist, ami
+
+197
+00:08:16,319 --> 00:08:21,840
+úgynevezett ilyen warm standby
+
+198
+00:08:18,720 --> 00:08:24,240
+állapotban van, tehát csak olvasható
+
+199
+00:08:21,840 --> 00:08:28,400
+állapotban van az a szerver,
+
+200
+00:08:24,240 --> 00:08:30,199
+am a a az a az az adatbázis, azt akkor
+
+201
+00:08:28,400 --> 00:08:31,879
+élessé tesszük és áthetjük el a
+
+202
+00:08:30,199 --> 00:08:34,039
+forgalmat. Most még egy dolgot szeretnék
+
+203
+00:08:31,879 --> 00:08:36,839
+mondani, mielőtt ezt megmutatom, az
+
+204
+00:08:34,039 --> 00:08:38,919
+pedig az, hogy itt ugye van egyfajta
+
+205
+00:08:36,839 --> 00:08:41,399
+késeltetés
+
+206
+00:08:38,919 --> 00:08:46,240
+az éles adatbázis, tehát most a Northw
+
+207
+00:08:41,399 --> 00:08:49,120
+Doll TP adatbázis és a a másik adatbázis
+
+208
+00:08:46,240 --> 00:08:51,480
+között, amit secondarynak is szoktak
+
+209
+00:08:49,120 --> 00:08:54,120
+hívni,
+
+210
+00:08:51,480 --> 00:08:55,680
+tehát amelyik a amelyik a warm standby
+
+211
+00:08:54,120 --> 00:08:58,240
+adatbázis,
+
+212
+00:08:55,680 --> 00:09:01,760
+tehát a a
+
+213
+00:08:58,240 --> 00:09:01,760
+meleg tartalék, mondjuk úgy.
+
+214
+00:09:02,160 --> 00:09:09,360
+És ez időnként jó is lehet. Tehát akkor
+
+215
+00:09:06,360 --> 00:09:12,079
+például, hogyha
+
+216
+00:09:09,360 --> 00:09:14,480
+valaki
+
+217
+00:09:12,079 --> 00:09:17,160
+egy komoly hibát
+
+218
+00:09:14,480 --> 00:09:20,000
+komoly adatvesztést okozó hibát követel
+
+219
+00:09:17,160 --> 00:09:22,399
+az éles OLTP szerveren, mondjuk Isten
+
+220
+00:09:20,000 --> 00:09:24,040
+tudja miért, akár támadásból, akár
+
+221
+00:09:22,399 --> 00:09:27,360
+véletlenül szoftveriba, satöbbi,
+
+222
+00:09:24,040 --> 00:09:30,399
+satöbbi, valaki kitör az ügyféltörzset
+
+223
+00:09:27,360 --> 00:09:33,880
+és kész. Na most ugye akkor ne hát akkor
+
+224
+00:09:30,399 --> 00:09:36,560
+leáll a szolgáltatás. Na most
+
+225
+00:09:33,880 --> 00:09:38,880
+viszont mivel van mondjuk tegyük fel 10
+
+226
+00:09:36,560 --> 00:09:42,040
+perc késleltetés
+
+227
+00:09:38,880 --> 00:09:45,720
+az OLTP adatbázisunk és a secondary,
+
+228
+00:09:42,040 --> 00:09:47,959
+tehát a meleg tartalék között. Ezért ha
+
+229
+00:09:45,720 --> 00:09:50,839
+ezt 10 percennél rövidebb idő alatt
+
+230
+00:09:47,959 --> 00:09:53,279
+észrevesszük ezt a hibát, akkor gyorsan
+
+231
+00:09:50,839 --> 00:09:57,000
+leállítjuk a logshippinget, és hogyha
+
+232
+00:09:53,279 --> 00:09:59,120
+akkor átítjuk a forgalmat a a meleg
+
+233
+00:09:57,000 --> 00:10:01,680
+tartalékra, akkor semmi baj nem történt,
+
+234
+00:09:59,120 --> 00:10:04,800
+mert ott még az a bizonyos törlés
+
+235
+00:10:01,680 --> 00:10:09,920
+tranzakció az nem futott le. Érthető?
+
+236
+00:10:04,800 --> 00:10:13,160
+Tehát ebből a ebből a késteltetésből
+
+237
+00:10:09,920 --> 00:10:15,920
+erényt is lehet kovácsolni.
+
+238
+00:10:13,160 --> 00:10:17,519
+És ugye az a az, ami a forró bekap
+
+239
+00:10:15,920 --> 00:10:19,959
+lenne,
+
+240
+00:10:17,519 --> 00:10:22,519
+olyan olyan olyan technológiát most itt
+
+241
+00:10:19,959 --> 00:10:25,600
+én nem tudok mutatni, mert ahhoz az
+
+242
+00:10:22,519 --> 00:10:28,800
+igényelne, az ahhoz arra volna szükség,
+
+243
+00:10:25,600 --> 00:10:32,560
+hogy fizikailag több szervergépet
+
+244
+00:10:28,800 --> 00:10:34,440
+használjunk, és abból lehetne
+
+245
+00:10:32,560 --> 00:10:36,639
+egy ilyen
+
+246
+00:10:34,440 --> 00:10:38,200
+klustert
+
+247
+00:10:36,639 --> 00:10:40,160
+készíteni.
+
+248
+00:10:38,200 --> 00:10:41,600
+De hát ezt itt ugye demonstrálni nem
+
+249
+00:10:40,160 --> 00:10:43,600
+tudom, ezért ennek ennek csak a
+
+250
+00:10:41,600 --> 00:10:45,519
+lehetőségét mondom, hogy hogy lehet
+
+251
+00:10:43,600 --> 00:10:47,040
+ilyet is csinálni Windows szerverekkel.
+
+252
+00:10:45,519 --> 00:10:49,360
+Meg persze ugyanezt, amit most
+
+253
+00:10:47,040 --> 00:10:51,000
+elmondtam, ezt megcsinálja bármelyik
+
+254
+00:10:49,360 --> 00:10:54,079
+másik adis technológia is. Csak azt kell
+
+255
+00:10:51,000 --> 00:10:55,760
+még ezekről tudni, hogy ezek már
+
+256
+00:10:54,079 --> 00:10:57,079
+általában elég sokba kerülnek. Tehát
+
+257
+00:10:55,760 --> 00:11:00,000
+ezek a dolgok, amiket már tényleg
+
+258
+00:10:57,079 --> 00:11:03,000
+fizetni kell. Poszgasznél is, Oracle is,
+
+259
+00:11:00,000 --> 00:11:04,800
+mindenhol.
+
+260
+00:11:03,000 --> 00:11:08,079
+Úgyhogy meg meg ugye ezek a load
+
+261
+00:11:04,800 --> 00:11:10,959
+balancing megoldások, hogy a egy ilyen
+
+262
+00:11:08,079 --> 00:11:13,760
+egy ilyen egy ilyen klusterben a terhés
+
+263
+00:11:10,959 --> 00:11:15,680
+növekedésé átadják a
+
+264
+00:11:13,760 --> 00:11:16,839
+terhelést egyik szer a másiknak. És ugye
+
+265
+00:11:15,680 --> 00:11:19,839
+itt jön majd be a felhő
+
+266
+00:11:16,839 --> 00:11:22,320
+szolgáltatásoknak a nagy előnye, hogy
+
+267
+00:11:19,839 --> 00:11:24,160
+egy felhőben mindezekkel nem nekünk kell
+
+268
+00:11:22,320 --> 00:11:27,279
+foglalkozni, csak fizetni kell. Azt
+
+269
+00:11:24,160 --> 00:11:30,720
+viszont az viszont kell.
+
+270
+00:11:27,279 --> 00:11:34,079
+No, tehát akkor akkor nézzük meg a
+
+271
+00:11:30,720 --> 00:11:34,079
+a logshippinget,
+
+272
+00:11:34,760 --> 00:11:40,240
+és tegyük fel azt első lépésben, hogy a
+
+273
+00:11:38,079 --> 00:11:42,839
+hogy a North Indatbázist
+
+274
+00:11:40,240 --> 00:11:42,839
+szeretnénk
+
+275
+00:11:42,880 --> 00:11:49,160
+hát másolni, vagy
+
+276
+00:11:47,360 --> 00:11:50,720
+ennek szeretnénk az adatbiztonságát
+
+277
+00:11:49,160 --> 00:11:53,160
+növelni egy ilyen szerveg kiesés
+
+278
+00:11:50,720 --> 00:11:54,880
+esetére. Hát az első lépés az az kell,
+
+279
+00:11:53,160 --> 00:11:57,160
+hogy legyen, hogy megcsináljuk azt a
+
+280
+00:11:54,880 --> 00:12:00,800
+táróhelyet, ahova majd a tranzakciós
+
+281
+00:11:57,160 --> 00:12:00,800
+logok kerülnek.
+
+282
+00:12:01,639 --> 00:12:04,639
+És
+
+283
+00:12:04,720 --> 00:12:09,480
+hát akkor most megcsinálom ezt én én
+
+284
+00:12:06,519 --> 00:12:12,240
+újra. Jó, mert itt itt egy korábbi talán
+
+285
+00:12:09,480 --> 00:12:15,880
+a az önök virtuális gépén is megvan, de
+
+286
+00:12:12,240 --> 00:12:15,880
+tegyük föl, hogy nincsen.
+
+287
+00:12:16,120 --> 00:12:19,880
+Úgyhogy úgyhogy csináljuk meg újra. A
+
+288
+00:12:18,160 --> 00:12:22,160
+lényeg az, hogy hogy most amit
+
+289
+00:12:19,880 --> 00:12:24,000
+demonstrálni fogok, ugye csak egy egy
+
+290
+00:12:22,160 --> 00:12:26,920
+fizikai szerverünk van. Ez ez a
+
+291
+00:12:24,000 --> 00:12:29,480
+virtuális gép.
+
+292
+00:12:26,920 --> 00:12:32,399
+És és ezért aztán azt fogjuk csinálni,
+
+293
+00:12:29,480 --> 00:12:35,000
+hogy itt a szerveren belül alakítunk ki
+
+294
+00:12:32,399 --> 00:12:36,560
+egy olyan mappát, amit majd megosztottá
+
+295
+00:12:35,000 --> 00:12:40,639
+teszünk.
+
+296
+00:12:36,560 --> 00:12:42,839
+És a a jobok ezen keresztül fognak
+
+297
+00:12:40,639 --> 00:12:46,079
+adatot cserélni.
+
+298
+00:12:42,839 --> 00:12:49,360
+Jó, tehát egy olyan mappa lesz, aminek
+
+299
+00:12:46,079 --> 00:12:51,920
+most legyen az a neve, hogy hogy ship
+
+300
+00:12:49,360 --> 00:12:56,079
+vagy locksi ship, vagy valami hasonló.
+
+301
+00:12:51,920 --> 00:12:57,720
+És ezen belül is két alappa lesz,
+
+302
+00:12:56,079 --> 00:12:59,600
+mert ugye van egy olyan copy drop, ami
+
+303
+00:12:57,720 --> 00:13:01,639
+az egyik helyről, a másikra másról, mint
+
+304
+00:12:59,600 --> 00:13:02,959
+említettem. Most ezt így fogjuk
+
+305
+00:13:01,639 --> 00:13:04,240
+szimulálni, hogy egyik szerverről a
+
+306
+00:13:02,959 --> 00:13:06,480
+másikra átisszük, hogy itt egyik
+
+307
+00:13:04,240 --> 00:13:07,920
+mappából a másikba fogja ápásolni a
+
+308
+00:13:06,480 --> 00:13:10,000
+dolgokat.
+
+309
+00:13:07,920 --> 00:13:13,360
+Úgyhogy
+
+310
+00:13:10,000 --> 00:13:16,079
+az, ahova a a logok gyűlnek, annak
+
+311
+00:13:13,360 --> 00:13:20,320
+legyen az a neve, hogy logs.
+
+312
+00:13:16,079 --> 00:13:22,839
+És az, ahova ahova majd másolunk át,
+
+313
+00:13:20,320 --> 00:13:26,560
+annak például legyen az a neve, hogy
+
+314
+00:13:22,839 --> 00:13:26,560
+des, hogy destination.
+
+315
+00:13:27,000 --> 00:13:31,440
+Jó, tehát a
+
+316
+00:13:29,440 --> 00:13:35,920
+a
+
+317
+00:13:31,440 --> 00:13:38,519
+log reader jobunk az ide fog másolni.
+
+318
+00:13:35,920 --> 00:13:40,399
+És ez még nem, ez még nem elég, mert ezt
+
+319
+00:13:38,519 --> 00:13:43,880
+az egész logshippinget, ezt hasonlképpen
+
+320
+00:13:40,399 --> 00:13:46,920
+a replikációhoz ilyen parancssoros exe
+
+321
+00:13:43,880 --> 00:13:49,440
+utilityk vezénylik le itt a Microsoft QS
+
+322
+00:13:46,920 --> 00:13:54,720
+szerver esetén, amiknek hozzá kell tudni
+
+323
+00:13:49,440 --> 00:13:59,320
+férni az adatbázishoz is, meg ezekhez a
+
+324
+00:13:54,720 --> 00:14:01,680
+mappákhoz is. Na most az nem jó, hogyha
+
+325
+00:13:59,320 --> 00:14:04,399
+a
+
+326
+00:14:01,680 --> 00:14:06,360
+ugye itt ezeket a jobokat az SQL Sver
+
+327
+00:14:04,399 --> 00:14:09,079
+agent irányítja, az nem jó, hogyha az
+
+328
+00:14:06,360 --> 00:14:11,079
+SQL Sver agentnek a kontextusában futnak
+
+329
+00:14:09,079 --> 00:14:12,839
+ezek a jobok. Itt pedig azért, mert az
+
+330
+00:14:11,079 --> 00:14:14,600
+SQL Sver agentnek semmiféle joga nincsen
+
+331
+00:14:12,839 --> 00:14:17,560
+ahhoz például, hogy ezt a temp mappát
+
+332
+00:14:14,600 --> 00:14:21,000
+olvassa vagy írja. Ugye hát ennek ennek
+
+333
+00:14:17,560 --> 00:14:23,440
+ennek van oka. Ö az adablis szerver
+
+334
+00:14:21,000 --> 00:14:25,160
+szolgáltatásnak sincsen joga ahhoz, hogy
+
+335
+00:14:23,440 --> 00:14:27,639
+a saját mappáján kívül bármelyiket
+
+336
+00:14:25,160 --> 00:14:29,959
+olvassa, vagy írja a gépen. Ez ezek
+
+337
+00:14:27,639 --> 00:14:31,920
+direkt vannak így beállítva. És ez a ez
+
+338
+00:14:29,959 --> 00:14:34,480
+a helyes gyakorlat. Tehát ez azért van
+
+339
+00:14:31,920 --> 00:14:36,120
+ez a ez a gyakorlati,
+
+340
+00:14:34,480 --> 00:14:41,000
+mert
+
+341
+00:14:36,120 --> 00:14:41,000
+mi tulajdonképpen védjük a szervert
+
+342
+00:14:42,959 --> 00:14:49,920
+ezzel, hogyha esetleg egy támadó az SQL
+
+343
+00:14:46,800 --> 00:14:53,320
+szervert fölött
+
+344
+00:14:49,920 --> 00:14:55,600
+hát az hozzáfér és szerez, akkor attól
+
+345
+00:14:53,320 --> 00:14:57,240
+még az a az egész szervergéphez nem fog
+
+346
+00:14:55,600 --> 00:14:59,519
+hozzáférés szerezni. Na most viszont
+
+347
+00:14:57,240 --> 00:15:00,920
+emiatt ugye ez egy biztonsági előírás,
+
+348
+00:14:59,519 --> 00:15:03,000
+hogy úgy mondjam.
+
+349
+00:15:00,920 --> 00:15:05,160
+Emiatt viszont itt nekünk most erre
+
+350
+00:15:03,000 --> 00:15:08,120
+gondolnunk kell, hogy ezek a ezek a
+
+351
+00:15:05,160 --> 00:15:10,800
+mappák majd ennek a az Eskver Agent
+
+352
+00:15:08,120 --> 00:15:16,600
+kontextusában futó utilitynek iratoksató
+
+353
+00:15:10,800 --> 00:15:16,600
+legyenek. Szóval osszuk őket meg. Jó.
+
+354
+00:15:17,199 --> 00:15:20,519
+A propertiesnél
+
+355
+00:15:20,800 --> 00:15:25,120
+válasszuk ki azt, hogy
+
+356
+00:15:23,440 --> 00:15:27,519
+sharing.
+
+357
+00:15:25,120 --> 00:15:29,079
+És hát itt itt felkínál egy egy ösvényt,
+
+358
+00:15:27,519 --> 00:15:32,920
+hogy legyen ez a neve. Legyen ez a neve.
+
+359
+00:15:29,079 --> 00:15:37,079
+Akkor azt mondjuk, hogy hogy shell.
+
+360
+00:15:32,920 --> 00:15:39,120
+És itt most meg kell adnunk, hogy kikkel
+
+361
+00:15:37,079 --> 00:15:40,920
+akarjuk megosztani. Ha azt adom meg,
+
+362
+00:15:39,120 --> 00:15:44,759
+hogy
+
+363
+00:15:40,920 --> 00:15:44,759
+hogy everyone,
+
+364
+00:15:46,959 --> 00:15:52,120
+akkor az azt jelenti, hogy mindenkivel.
+
+365
+00:15:48,720 --> 00:15:54,920
+Tehát most ez a ez a legegyszerűbb.
+
+366
+00:15:52,120 --> 00:15:57,120
+Bárki tudja írni, olvasni ezt a ezt a
+
+367
+00:15:54,920 --> 00:16:00,040
+mappát.
+
+368
+00:15:57,120 --> 00:16:00,040
+Jó.
+
+369
+00:16:02,560 --> 00:16:07,000
+Itt látható, hogy
+
+370
+00:16:05,319 --> 00:16:09,600
+megkaptunk egy ilyen egy ilyen
+
+371
+00:16:07,000 --> 00:16:12,720
+megosztást. Tehát ez azt jelenti, hogy
+
+372
+00:16:09,600 --> 00:16:14,680
+ha valaki úgy távolról a ehhez a szerz
+
+373
+00:16:12,720 --> 00:16:16,160
+hozzá akar csatlakozni a file sharingen
+
+374
+00:16:14,680 --> 00:16:18,880
+keresztül, akkor ilyen néven fogja
+
+375
+00:16:16,160 --> 00:16:21,279
+elérni. Az elején van a két per után a
+
+376
+00:16:18,880 --> 00:16:23,000
+szerver neve, utána pedig a megosztásnak
+
+377
+00:16:21,279 --> 00:16:26,120
+a neve.
+
+378
+00:16:23,000 --> 00:16:28,399
+Esetleg ezt ezt érdemes kimásolni egy
+
+379
+00:16:26,120 --> 00:16:31,639
+szövegfába. Ja, én már ki is másoltam,
+
+380
+00:16:28,399 --> 00:16:35,120
+csak ugye az az érdekes, hogy ezek itt
+
+381
+00:16:31,639 --> 00:16:35,120
+ezek itt backslashek.
+
+382
+00:16:38,880 --> 00:16:43,920
+Hát attól függő, hogy milyen rendszerben
+
+383
+00:16:40,680 --> 00:16:46,399
+vagyunk, de itt a Windowson ez
+
+384
+00:16:43,920 --> 00:16:51,360
+backslash, tehát ez ez a ez a
+
+385
+00:16:46,399 --> 00:16:51,360
+megosztásnak a neve. Jó.
+
+386
+00:16:54,720 --> 00:17:00,839
+És akkor csináljuk meg ezt a a logsnál
+
+387
+00:16:57,839 --> 00:17:00,839
+is.
+
+388
+00:17:09,360 --> 00:17:13,600
+Tehát megint beírom azt, hogy everyone
+
+389
+00:17:15,760 --> 00:17:21,439
+és read az lényeges, mert hiszen ugye
+
+390
+00:17:21,640 --> 00:17:26,160
+ide új fálokat is bele fogunk rakni, és
+
+391
+00:17:24,199 --> 00:17:29,360
+ennek úgy a neve csak az a vége, hogy
+
+392
+00:17:26,160 --> 00:17:29,360
+hogy logs.
+
+393
+00:17:30,760 --> 00:17:36,520
+Jó, meg van osztva. Nagyon jó.
+
+394
+00:17:36,720 --> 00:17:42,400
+Na most akkor elkezdhetjük a
+
+395
+00:17:39,360 --> 00:17:44,160
+logshippinget konfigurálni.
+
+396
+00:17:42,400 --> 00:17:47,840
+Itt a jobb oldali, bocsánat, az
+
+397
+00:17:44,160 --> 00:17:49,640
+adatbázis fölött egy jobb oldali gombbal
+
+398
+00:17:47,840 --> 00:17:52,000
+van egy ilyen, hogy hogy ship
+
+399
+00:17:49,640 --> 00:17:55,280
+transaction logs.
+
+400
+00:17:52,000 --> 00:17:55,280
+Ezt kell kiválasztani.
+
+401
+00:17:58,280 --> 00:18:02,679
+Ő lesz a primary.
+
+402
+00:18:00,760 --> 00:18:05,440
+Az első jobnak az ütemezését adhatjuk
+
+403
+00:18:02,679 --> 00:18:08,000
+itt meg. Tehát amelyik a transaction
+
+404
+00:18:05,440 --> 00:18:11,000
+logot fogja
+
+405
+00:18:08,000 --> 00:18:11,000
+menteni.
+
+406
+00:18:11,240 --> 00:18:16,960
+Itt kell megadnunk azt, hogy hova
+
+407
+00:18:12,960 --> 00:18:20,559
+mentse. És pedig a a
+
+408
+00:18:16,960 --> 00:18:24,559
+a megosztásnak a nevét. Tehát ez a
+
+409
+00:18:20,559 --> 00:18:24,559
+ez a logs végül lesz.
+
+410
+00:18:29,679 --> 00:18:37,919
+Ez lesz a log backup jobnak a célja, de
+
+411
+00:18:35,159 --> 00:18:41,760
+meg kell adnunk azt is, hogy ez most
+
+412
+00:18:37,919 --> 00:18:41,760
+konkrétan milyen könyvtár.
+
+413
+00:18:42,760 --> 00:18:46,360
+Az pedig,
+
+414
+00:18:44,559 --> 00:18:49,039
+hogyha itt itt itt itt vagyok,
+
+415
+00:18:46,360 --> 00:18:52,360
+belemegyek ebbe, akkor innen szépen ki
+
+416
+00:18:49,039 --> 00:18:52,360
+tudom másolni.
+
+417
+00:18:56,640 --> 00:19:01,679
+Jó,
+
+418
+00:18:58,679 --> 00:19:03,880
+és itt itt kell megadnom azt ennek a
+
+419
+00:19:01,679 --> 00:19:06,640
+backup jobbnak minden az ütemezése. Most
+
+420
+00:19:03,880 --> 00:19:09,720
+tényleg a demók kedvér állítjuk állítsuk
+
+421
+00:19:06,640 --> 00:19:10,960
+be azt, hogy ez egy perces legyen.
+
+422
+00:19:09,720 --> 00:19:13,360
+Tehát, hogy egy percenként fog
+
+423
+00:19:10,960 --> 00:19:17,120
+folyamatosan futni. Hát ez egy ilyen
+
+424
+00:19:13,360 --> 00:19:22,159
+eléggé eléggé meleg backup lesz akkor
+
+425
+00:19:17,120 --> 00:19:26,720
+ugye vagy kapcsolat.
+
+426
+00:19:22,159 --> 00:19:30,039
+És kész. Ennyi. Elkezdődik a backup, és
+
+427
+00:19:26,720 --> 00:19:33,720
+ez menni fog
+
+428
+00:19:30,039 --> 00:19:36,960
+egy percenként folyamatosan.
+
+429
+00:19:33,720 --> 00:19:40,520
+Akkor nézzük a következőt, hogy hogy
+
+430
+00:19:36,960 --> 00:19:42,679
+mire, hogy mi lesz a célja a
+
+431
+00:19:40,520 --> 00:19:46,280
+logshippingnek.
+
+432
+00:19:42,679 --> 00:19:48,760
+Ide egy szervert kell először megadnunk,
+
+433
+00:19:46,280 --> 00:19:50,720
+és
+
+434
+00:19:48,760 --> 00:19:52,159
+most itt ugyanez lesz a cél szerverünk
+
+435
+00:19:50,720 --> 00:19:55,240
+is. Tehát ugyanezzel a szerveren belől
+
+436
+00:19:52,159 --> 00:19:58,240
+egy másik adatbázisról fogjuk küldeni az
+
+437
+00:19:55,240 --> 00:19:58,240
+adatokat.
+
+438
+00:20:00,240 --> 00:20:05,960
+Most ha ide beírunk egy másik adás az
+
+439
+00:20:02,200 --> 00:20:09,159
+étre fog jönni magától. Tehát northw
+
+440
+00:20:05,960 --> 00:20:12,159
+shap lesz most akkor vagy warm vagy warm
+
+441
+00:20:09,159 --> 00:20:12,159
+backup.
+
+442
+00:20:13,159 --> 00:20:18,520
+Ez lesz a neve. És ak itt elég sok
+
+443
+00:20:15,159 --> 00:20:21,559
+mindent be kell majd most állítanunk. Az
+
+444
+00:20:18,520 --> 00:20:23,880
+egyik az az, hogy
+
+445
+00:20:21,559 --> 00:20:27,320
+hogy
+
+446
+00:20:23,880 --> 00:20:29,679
+inicializáljuk-e ezt a logshippinget.
+
+447
+00:20:27,320 --> 00:20:31,320
+Azt mondja, hogy igen.
+
+448
+00:20:29,679 --> 00:20:34,039
+Tehát ez azt jelenti, hogy hogy
+
+449
+00:20:31,320 --> 00:20:35,799
+készítsünk egy
+
+450
+00:20:34,039 --> 00:20:38,000
+egy egy full bekapót, mert még nem
+
+451
+00:20:35,799 --> 00:20:40,520
+létezik ez az adabbázis, ugye? Tehát ez
+
+452
+00:20:38,000 --> 00:20:43,120
+az első lépés. először létrekhozni, és
+
+453
+00:20:40,520 --> 00:20:44,360
+utána lehet majd a már létező adatbon
+
+454
+00:20:43,120 --> 00:20:45,960
+futtatni mindig a megfelelő
+
+455
+00:20:44,360 --> 00:20:50,799
+tranzakciókat.
+
+456
+00:20:45,960 --> 00:20:52,600
+A másik az az lenne, hogy
+
+457
+00:20:50,799 --> 00:20:57,600
+már létezik az adatbázis. Na, akkor
+
+458
+00:20:52,600 --> 00:21:01,400
+menjünk egyel tovább. Ez a copy files.
+
+459
+00:20:57,600 --> 00:21:04,400
+Itt ugye ez a ez a ez a más jobnak a
+
+460
+00:21:01,400 --> 00:21:04,400
+beállítása.
+
+461
+00:21:04,559 --> 00:21:10,400
+Itt ide kell megadnom azt, hogy hova
+
+462
+00:21:07,159 --> 00:21:12,440
+másoljál. Tehát akkor itt most
+
+463
+00:21:10,400 --> 00:21:16,279
+ezt a
+
+464
+00:21:12,440 --> 00:21:19,600
+foldert kell megadnom.
+
+465
+00:21:16,279 --> 00:21:23,080
+Destination folder,
+
+466
+00:21:19,600 --> 00:21:23,080
+ami a deskt.
+
+467
+00:21:23,640 --> 00:21:29,240
+Oké. Itt mondja is, hogy hogy read and
+
+468
+00:21:27,080 --> 00:21:32,000
+write permission van fix, tehát olvas
+
+469
+00:21:29,240 --> 00:21:34,240
+olvasás írási hozzáféréshez.
+
+470
+00:21:32,000 --> 00:21:36,760
+Itt mondja, hogy milyen jobot fog
+
+471
+00:21:34,240 --> 00:21:40,200
+létrehozni. Ez lesz a jobnak a neve.
+
+472
+00:21:36,760 --> 00:21:42,120
+egyébként át lehetne írni. És hogyan
+
+473
+00:21:40,200 --> 00:21:44,080
+legyen ez ütve? Hát ők itt ugye 15
+
+474
+00:21:42,120 --> 00:21:47,520
+percet javasolják, az már eléggé meleg,
+
+475
+00:21:44,080 --> 00:21:49,320
+de mi most ezt átállítjuk egy percre.
+
+476
+00:21:47,520 --> 00:21:51,760
+Ugye
+
+477
+00:21:49,320 --> 00:21:53,600
+itt látják, hogy mindenütt 15 perc az
+
+478
+00:21:51,760 --> 00:21:55,960
+alapbeállításra. Mind a három Jobnak,
+
+479
+00:21:53,600 --> 00:21:57,520
+majd alböknek is ez lesz. Ugye ez azt
+
+480
+00:21:55,960 --> 00:22:00,360
+jelenti, hogy a legrosszabb esetben, ha
+
+481
+00:21:57,520 --> 00:22:04,279
+pont pechünk van, akkor 45 percelt a
+
+482
+00:22:00,360 --> 00:22:05,840
+késeltetés a két adatbázis között. Igaz,
+
+483
+00:22:04,279 --> 00:22:08,559
+ha éppen úgy kapjuk el ezeket az
+
+484
+00:22:05,840 --> 00:22:10,440
+ütemezéseket,
+
+485
+00:22:08,559 --> 00:22:13,919
+így viszont maximum három percet, hogyha
+
+486
+00:22:10,440 --> 00:22:16,159
+ezeket mindig átjük egy percre.
+
+487
+00:22:13,919 --> 00:22:17,039
+Oké.
+
+488
+00:22:16,159 --> 00:22:21,360
+És
+
+489
+00:22:17,039 --> 00:22:21,360
+és akkor nézzük a harmadik fület.
+
+490
+00:22:21,559 --> 00:22:26,760
+Ez pedig a harmadik job, tehát a a
+
+491
+00:22:24,640 --> 00:22:28,880
+restore job
+
+492
+00:22:26,760 --> 00:22:32,559
+nakak a beállításai.
+
+493
+00:22:28,880 --> 00:22:35,559
+Itt azt látszuk ki, hogy legyen standby
+
+494
+00:22:32,559 --> 00:22:35,559
+módban,
+
+495
+00:22:35,960 --> 00:22:42,080
+ami azt jelenti, ez egy olyan állapot,
+
+496
+00:22:38,880 --> 00:22:44,000
+hogy csak olvasható.
+
+497
+00:22:42,080 --> 00:22:46,480
+Ez azért lényeges, hogy mé ez egy ez egy
+
+498
+00:22:44,000 --> 00:22:48,080
+ez egy másolat, hogyha itt megengednénk
+
+499
+00:22:46,480 --> 00:22:50,600
+azt, hogy az irat olvastat és bárki
+
+500
+00:22:48,080 --> 00:22:52,480
+hozzáfér, akkor hát ugye előforgatna az,
+
+501
+00:22:50,600 --> 00:22:55,440
+hogy bár ugye nem ez a tervezett
+
+502
+00:22:52,480 --> 00:22:57,039
+funkcionalitás, de valaki hozzáférne és
+
+503
+00:22:55,440 --> 00:22:59,640
+módosítani a tartalmat, na onnantól
+
+504
+00:22:57,039 --> 00:23:01,840
+kezdve bukna az egész kis vagy az egész
+
+505
+00:22:59,640 --> 00:23:05,480
+vállalkozásunk,
+
+506
+00:23:01,840 --> 00:23:07,159
+mert a a két adatbázis több nem volna
+
+507
+00:23:05,480 --> 00:23:09,760
+identikus, tehát nem volna ugyanaz a két
+
+508
+00:23:07,159 --> 00:23:12,919
+adatbázis, és hát nem volna használható
+
+509
+00:23:09,760 --> 00:23:16,400
+ilyen ilyen ilyen bekapnak.
+
+510
+00:23:12,919 --> 00:23:18,880
+Jó, tehát itt ez ez a ez a standby a
+
+511
+00:23:16,400 --> 00:23:19,600
+helyes beállítás.
+
+512
+00:23:18,880 --> 00:23:21,840
+És
+
+513
+00:23:19,600 --> 00:23:24,320
+vannak itt ilyen látják még tud küldeni
+
+514
+00:23:21,840 --> 00:23:27,960
+riasztásokat is, hogy mik a riasztások
+
+515
+00:23:24,320 --> 00:23:30,000
+arról szintén a a korszer adatbázisok
+
+516
+00:23:27,960 --> 00:23:31,000
+jegyzetben, akit érdekel, az az nézzen
+
+517
+00:23:30,000 --> 00:23:33,400
+után hogyan lehet egy riasztást
+
+518
+00:23:31,000 --> 00:23:35,400
+konfigurálni. Ezt is meg lehetne itt itt
+
+519
+00:23:33,400 --> 00:23:37,919
+itt itt csinálni. De most maradjunk csak
+
+520
+00:23:35,400 --> 00:23:41,880
+a logshippingnél és ennek is állítsuk át
+
+521
+00:23:37,919 --> 00:23:45,559
+az időzítését. Ö egy percre ennek a
+
+522
+00:23:41,880 --> 00:23:48,240
+ennek a jobnak. Jó,
+
+523
+00:23:45,559 --> 00:23:51,799
+és hát tulajdonképpen kész is van. Be is
+
+524
+00:23:48,240 --> 00:23:51,799
+állítottuk a dolgokat.
+
+525
+00:23:53,799 --> 00:23:58,919
+Minden készen van. Lehetne erről
+
+526
+00:23:55,679 --> 00:24:02,520
+csinálni egy scriptet egyébként, akkor
+
+527
+00:23:58,919 --> 00:24:04,480
+látnánk azt, hogy hogy na majd lehet,
+
+528
+00:24:02,520 --> 00:24:07,240
+hogy meg is nézzük, hogy ez hogyan vagy
+
+529
+00:24:04,480 --> 00:24:10,200
+a háttérben. És az okéra rábökök, akkor
+
+530
+00:24:07,240 --> 00:24:13,120
+látható, hogy hogy elkezdődnek ezek a
+
+531
+00:24:10,200 --> 00:24:16,120
+ezek a tranzakciók. Megtörtént az első
+
+532
+00:24:13,120 --> 00:24:16,120
+backup.
+
+533
+00:24:17,200 --> 00:24:22,840
+És
+
+534
+00:24:20,120 --> 00:24:25,440
+ha ezt bércsukjuk, akkor látnunk kell a
+
+535
+00:24:22,840 --> 00:24:27,799
+jobokat is.
+
+536
+00:24:25,440 --> 00:24:31,960
+Először is létrejött, látják ez a ez a
+
+537
+00:24:27,799 --> 00:24:34,520
+standby állapotú Vap nevű adatbázis.
+
+538
+00:24:31,960 --> 00:24:37,279
+Illetve az SQL Server agentnél
+
+539
+00:24:34,520 --> 00:24:39,159
+megfrissítjük a jobokat.
+
+540
+00:24:37,279 --> 00:24:44,840
+Akkor itt látnunk kell, hogy hogy
+
+541
+00:24:39,159 --> 00:24:44,840
+létrejött három új job. Látják, ez a
+
+542
+00:24:45,080 --> 00:24:50,840
+ásek kezdők, úgy mintogy logshipping.
+
+543
+00:24:48,360 --> 00:24:53,039
+Ez a backup, ez a copy, ez meg a
+
+544
+00:24:50,840 --> 00:24:55,600
+restore. És még csinált egy alert jobot
+
+545
+00:24:53,039 --> 00:24:57,320
+is, mert az volt a default beállítás,
+
+546
+00:24:55,600 --> 00:24:59,039
+hogy ha nem tudom mennyi ideig nem
+
+547
+00:24:57,320 --> 00:25:02,080
+sikerül megcsinálni a dolgokat, akkor
+
+548
+00:24:59,039 --> 00:25:04,039
+akkor legyen egy
+
+549
+00:25:02,080 --> 00:25:05,679
+egy riasztás.
+
+550
+00:25:04,039 --> 00:25:07,480
+Na most, hogyha belenézünk ebbe az
+
+551
+00:25:05,679 --> 00:25:09,279
+adatbázisba,
+
+552
+00:25:07,480 --> 00:25:12,520
+akkor
+
+553
+00:25:09,279 --> 00:25:15,279
+akkor azt látjuk, hogy
+
+554
+00:25:12,520 --> 00:25:17,320
+hogy ott van a teljes northw adatbázis,
+
+555
+00:25:15,279 --> 00:25:19,440
+ami ugye várható volt, tehát miért
+
+556
+00:25:17,320 --> 00:25:23,039
+backup és restore történt, ez ez
+
+557
+00:25:19,440 --> 00:25:23,039
+éppenséggel logikus.
+
+558
+00:25:24,120 --> 00:25:31,960
+És nézzük meg azt viszont, hogy hogy
+
+559
+00:25:26,960 --> 00:25:34,080
+hogy mi van most a mappáinkban, amiket
+
+560
+00:25:31,960 --> 00:25:36,640
+ahonnan vagy ahová és ahonnan másoljuk
+
+561
+00:25:34,080 --> 00:25:40,240
+az adatokat, amiket ott létrehoztunk és
+
+562
+00:25:36,640 --> 00:25:43,000
+megosztottunk. Tehát elvileg azt várjuk,
+
+563
+00:25:40,240 --> 00:25:45,399
+hogy
+
+564
+00:25:43,000 --> 00:25:49,360
+hopp, nézzük csak, ez éppen a logs
+
+565
+00:25:45,399 --> 00:25:49,360
+mappánk, a ship logs.
+
+566
+00:25:49,559 --> 00:25:57,399
+Egy percenként, tehát 28, 29, 30 valóban
+
+567
+00:25:53,440 --> 00:26:01,000
+egy percenként jönnek ide ezek a ez ezek
+
+568
+00:25:57,399 --> 00:26:04,080
+ezek ezek a TRN kiterjesztések, ezek a
+
+569
+00:26:01,000 --> 00:26:07,200
+tranzakciós lognak a bekapjai. De ha
+
+570
+00:26:04,080 --> 00:26:11,000
+most visszajövünk a Ja, igen. Szóval ez
+
+571
+00:26:07,200 --> 00:26:14,080
+ez itt a a tranzakciós log backupnak a
+
+572
+00:26:11,000 --> 00:26:18,000
+mappája. Ide készülnek mindig percenként
+
+573
+00:26:14,080 --> 00:26:20,480
+a az az új mentések. Aztán innen a copy
+
+574
+00:26:18,000 --> 00:26:23,200
+job másolja át a destination mappába.
+
+575
+00:26:20,480 --> 00:26:24,720
+Eddig egyet másolt át, ugye? Mégpedig
+
+576
+00:26:23,200 --> 00:26:26,960
+azért, mer hogy ez is csak percenként
+
+577
+00:26:24,720 --> 00:26:29,440
+fut le. És aztán majd ebből a
+
+578
+00:26:26,960 --> 00:26:33,159
+destination mappából fogja a harmadik
+
+579
+00:26:29,440 --> 00:26:35,360
+drop, a helyreállító vinni lefutatni
+
+580
+00:26:33,159 --> 00:26:38,360
+a a
+
+581
+00:26:35,360 --> 00:26:38,360
+meleg
+
+582
+00:26:39,480 --> 00:26:46,200
+másolaton a tranzakciókat.
+
+583
+00:26:43,799 --> 00:26:48,960
+Szóval próbáljuk akkor most ki, hogy
+
+584
+00:26:46,200 --> 00:26:51,159
+tényleg ez működik-e.
+
+585
+00:26:48,960 --> 00:26:55,159
+A teszt adatbázis, bocsánat, a
+
+586
+00:26:51,159 --> 00:26:55,159
+Nintendbázisal rácsatlakozunk.
+
+587
+00:26:55,799 --> 00:27:02,520
+Jó, tehát egy egy új query ablakot fogok
+
+588
+00:27:00,440 --> 00:27:04,919
+nyitni ide,
+
+589
+00:27:02,520 --> 00:27:11,600
+és valami módosítások, aztán megnézzük,
+
+590
+00:27:04,919 --> 00:27:11,600
+ez tényleg átkerül-e a WM backupba. Jó.
+
+591
+00:27:25,039 --> 00:27:30,880
+Igen,
+
+592
+00:27:26,640 --> 00:27:30,880
+az vegyünk ki egy
+
+593
+00:27:30,960 --> 00:27:34,679
+mondjuk 10 248.
+
+594
+00:27:41,799 --> 00:27:48,720
+És itt mondjuk itt itt fogjuk átállítani
+
+595
+00:27:44,120 --> 00:27:48,720
+majd az employ idt valami másra.
+
+596
+00:27:56,720 --> 00:28:00,200
+Menjünk háromra.
+
+597
+00:28:08,039 --> 00:28:14,480
+Hogyha esetleg nem tudják követni, akkor
+
+598
+00:28:09,960 --> 00:28:14,480
+kérem, hogy szóljanak. Jó,
+
+599
+00:28:17,799 --> 00:28:21,200
+tehát ez lesz a ez lesz a módus, és ez
+
+600
+00:28:19,640 --> 00:28:24,600
+ez egy egy olyan tranzakció, aminek be
+
+601
+00:28:21,200 --> 00:28:26,279
+kell kerülni a tranzakciós logba.
+
+602
+00:28:24,600 --> 00:28:28,200
+Ja, bocsánat, még amit elfelejtettem
+
+603
+00:28:26,279 --> 00:28:30,399
+mondani,
+
+604
+00:28:28,200 --> 00:28:33,880
+hogy ez az egész mechanizmus, amit most
+
+605
+00:28:30,399 --> 00:28:39,200
+mutat mutatok, ez akkor fog működni,
+
+606
+00:28:33,880 --> 00:28:41,200
+hogyha a forrásadatbázisnak a a recovery
+
+607
+00:28:39,200 --> 00:28:43,360
+modellje az full, nem pedig simple.
+
+608
+00:28:41,200 --> 00:28:48,840
+Tehát ezt ugye itt itt lehet megnézni,
+
+609
+00:28:43,360 --> 00:28:50,600
+hogy properties és options.
+
+610
+00:28:48,840 --> 00:28:52,799
+Ez a requiry model, ez full kell, hogy
+
+611
+00:28:50,600 --> 00:28:55,279
+legyen. Ha valaki még emlékszik rá, hogy
+
+612
+00:28:52,799 --> 00:28:56,440
+ez mit jelent, vagy ha nem emlékszik, na
+
+613
+00:28:55,279 --> 00:28:58,480
+ha valaki nem emlékszik, annak a
+
+614
+00:28:56,440 --> 00:29:01,559
+kedvéért elmondom,
+
+615
+00:28:58,480 --> 00:29:03,799
+hogy ez azt jelenti,
+
+616
+00:29:01,559 --> 00:29:06,679
+hogy ilyenkor
+
+617
+00:29:03,799 --> 00:29:09,279
+a lognak az úgynevezett inaktív részeit
+
+618
+00:29:06,679 --> 00:29:11,919
+azt nem dobjuk el
+
+619
+00:29:09,279 --> 00:29:14,360
+a checkpointok esetén.
+
+620
+00:29:11,919 --> 00:29:17,360
+Ö a lognak az inaktív része az, hogy a
+
+621
+00:29:14,360 --> 00:29:19,720
+már komitált lefutott tranzakciókat
+
+622
+00:29:17,360 --> 00:29:21,000
+tartalmazza.
+
+623
+00:29:19,720 --> 00:29:23,200
+És
+
+624
+00:29:21,000 --> 00:29:25,559
+ugye a simple módban ezeket eldobjuk,
+
+625
+00:29:23,200 --> 00:29:26,960
+hogy a log ne növekedjen óriásira, mert
+
+626
+00:29:25,559 --> 00:29:29,320
+hogy a log az nagyobb lehet, mint az
+
+627
+00:29:26,960 --> 00:29:31,200
+adatbázis simán, hogyha ilyen full
+
+628
+00:29:29,320 --> 00:29:34,039
+üzemmódban vagyunk. Viszont ha ezeket
+
+629
+00:29:31,200 --> 00:29:36,760
+eldobjuk, akkor nem lehet újra
+
+630
+00:29:34,039 --> 00:29:38,919
+lefuttatni a tranzakciókat. Tehát a roll
+
+631
+00:29:36,760 --> 00:29:40,559
+forward az nem fog működni. És most
+
+632
+00:29:38,919 --> 00:29:43,240
+nekünk pont erre a roll forwardról van
+
+633
+00:29:40,559 --> 00:29:45,360
+szükségünk, hiszen a másik adatbázisban
+
+634
+00:29:43,240 --> 00:29:49,000
+ugye ezt le akarjuk újra futtatni. Most
+
+635
+00:29:45,360 --> 00:29:52,440
+hogyha úgy van beállítva a a transaction
+
+636
+00:29:49,000 --> 00:29:55,320
+log backup jobnak az ütemezése,
+
+637
+00:29:52,440 --> 00:29:56,919
+hogy hogy két futása között történik egy
+
+638
+00:29:55,320 --> 00:29:59,880
+checkpoint,
+
+639
+00:29:56,919 --> 00:30:01,840
+ugye, és szimpl módban az adatbázis,
+
+640
+00:29:59,880 --> 00:30:03,840
+akkor elvesztjük azokat a tranzakciókat,
+
+641
+00:30:01,840 --> 00:30:06,720
+azok onnan onnan ki lesznek törölve.
+
+642
+00:30:03,840 --> 00:30:09,679
+Úgyhogy ezért ezt a full
+
+643
+00:30:06,720 --> 00:30:12,320
+recovery módot kell használni. Na de
+
+644
+00:30:09,679 --> 00:30:14,360
+akkor akkor most
+
+645
+00:30:12,320 --> 00:30:19,320
+futtassuk le ezt az updateet, és aztán
+
+646
+00:30:14,360 --> 00:30:19,320
+átmegyünk a másik adatbázisba.
+
+647
+00:30:19,559 --> 00:30:24,760
+Nem is kell másik adlakot keresnünk,
+
+648
+00:30:21,200 --> 00:30:29,240
+hiszen ide be tudom írni azt, hogy use
+
+649
+00:30:24,760 --> 00:30:29,240
+nv warm backup.
+
+650
+00:30:30,440 --> 00:30:34,120
+rá tudok csatlakozni és le is tudok
+
+651
+00:30:32,279 --> 00:30:37,279
+kérdezni róla dolgokat, csak módosítani,
+
+652
+00:30:34,120 --> 00:30:40,399
+hogy nem lehet, de a select az fog
+
+653
+00:30:37,279 --> 00:30:43,559
+működni, tehát most, hogy érthető legyen
+
+654
+00:30:40,399 --> 00:30:45,760
+átmásom ide, és akkor most mintha itt
+
+655
+00:30:43,559 --> 00:30:47,720
+lennék ezzel az adatbálison,
+
+656
+00:30:45,760 --> 00:30:49,679
+itt futtatom le. Látható, hogy négy az
+
+657
+00:30:47,720 --> 00:30:52,679
+értéke, ugye? Tehát ez ez még nem jött
+
+658
+00:30:49,679 --> 00:30:55,320
+ide meg. Maximálisan nem jött meg, mer
+
+659
+00:30:52,679 --> 00:30:57,679
+még mindig négy. Ugye elvileg három
+
+660
+00:30:55,320 --> 00:31:00,399
+percen belül meg kell neki jönnie. Addig
+
+661
+00:30:57,679 --> 00:31:03,480
+nézzük meg, hogy mi van a a jobjainkkal.
+
+662
+00:31:00,399 --> 00:31:07,120
+Úgyis várakoznunk kell.
+
+663
+00:31:03,480 --> 00:31:07,120
+Tehát nézzük meg
+
+664
+00:31:07,279 --> 00:31:12,679
+például, hogy ez a ez a ez a restore
+
+665
+00:31:09,919 --> 00:31:16,240
+job, ez ez hogyan fut egyáltalán mit
+
+666
+00:31:12,679 --> 00:31:16,240
+csinál ez a job.
+
+667
+00:31:17,240 --> 00:31:22,600
+Itt látható, hogy hogy egy lépése van
+
+668
+00:31:20,679 --> 00:31:27,880
+neki,
+
+669
+00:31:22,600 --> 00:31:31,559
+és ez az egy lépés, ez egy
+
+670
+00:31:27,880 --> 00:31:33,960
+operating system commandets.
+
+671
+00:31:31,559 --> 00:31:36,320
+És itt itt itt látható, hogy hogy mi fog
+
+672
+00:31:33,960 --> 00:31:38,240
+mi fog lefutni. Ez egy ilyen kis
+
+673
+00:31:36,320 --> 00:31:41,240
+parancssoros
+
+674
+00:31:38,240 --> 00:31:41,240
+program.
+
+675
+00:31:45,120 --> 00:31:51,080
+És azt is meg lehet nézni,
+
+676
+00:31:48,639 --> 00:31:52,440
+hogy Eddig mikor futott le. Itt látható,
+
+677
+00:31:51,080 --> 00:31:55,399
+hogy mivel beállítottuk a perces
+
+678
+00:31:52,440 --> 00:31:58,080
+ütemezést, ezért innentől kezdve nem is
+
+679
+00:31:55,399 --> 00:32:00,480
+tudom, sokszor lefutott, hát szépen
+
+680
+00:31:58,080 --> 00:32:03,519
+szépen fut, ahogy kell. Ugyanit meg
+
+681
+00:32:00,480 --> 00:32:08,279
+lehet nézni azt, hogy a a backup jobunk
+
+682
+00:32:03,519 --> 00:32:11,080
+is fut-e szépen. Az is fut.
+
+683
+00:32:08,279 --> 00:32:15,760
+Aztán, hogy a copy jobunk, hogy fut.
+
+684
+00:32:11,080 --> 00:32:15,760
+Tehát ezek úgy folyamatosan működnek.
+
+685
+00:32:16,039 --> 00:32:19,799
+Jó. És hogyha most visszatérünk ide,
+
+686
+00:32:18,279 --> 00:32:23,919
+akkor
+
+687
+00:32:19,799 --> 00:32:25,840
+akkor megnézhetjük, hogy
+
+688
+00:32:23,919 --> 00:32:30,080
+hogy mi történt. Még mindig nem jött át
+
+689
+00:32:25,840 --> 00:32:30,080
+ez a ez a ez a három
+
+690
+00:32:32,279 --> 00:32:35,840
+forrás adatbázisban.
+
+691
+00:32:38,559 --> 00:32:42,559
+Ott három, úgyhogy még egy kicsit
+
+692
+00:32:40,360 --> 00:32:44,960
+várnunk kell,
+
+693
+00:32:42,559 --> 00:32:47,679
+hogy ide is átjöjjön. Jó, most most itt
+
+694
+00:32:44,960 --> 00:32:50,840
+vagyunk.
+
+695
+00:32:47,679 --> 00:32:53,960
+Na, és pont azt, amíg váltottam, azatt
+
+696
+00:32:50,840 --> 00:32:55,960
+sikerült neki lefutnia. Tehát most már
+
+697
+00:32:53,960 --> 00:32:57,639
+itt most már itt vagyunk ebben a WBA
+
+698
+00:32:55,960 --> 00:32:59,559
+padatbázisban,
+
+699
+00:32:57,639 --> 00:33:02,120
+és látod, hogy átjött az érték, tehát
+
+700
+00:32:59,559 --> 00:33:04,120
+valahol működik ez a dolog.
+
+701
+00:33:02,120 --> 00:33:06,000
+Jó, most akkor tegyük fel, hogy hogy
+
+702
+00:33:04,120 --> 00:33:09,000
+megtörtént a katasztrófa a Northund
+
+703
+00:33:06,000 --> 00:33:09,000
+adottbázissal
+
+704
+00:33:09,159 --> 00:33:12,159
+és
+
+705
+00:33:14,639 --> 00:33:19,720
+helyre kell állítanunk ezt a V bekapott.
+
+706
+00:33:17,240 --> 00:33:21,440
+Tehát, hogy akkor akkor mi a teendő,
+
+707
+00:33:19,720 --> 00:33:24,360
+hogy hogy mit lehet mit mit lehet
+
+708
+00:33:21,440 --> 00:33:26,480
+csinálni?
+
+709
+00:33:24,360 --> 00:33:31,159
+Hát az első feladat az az, hogy gyorsan
+
+710
+00:33:26,480 --> 00:33:31,159
+el kell állítani a log shippinget.
+
+711
+00:33:31,639 --> 00:33:36,559
+Ugye most már, hogy hogy nincs honnan
+
+712
+00:33:33,559 --> 00:33:40,639
+másolni, ez ez ne menjen. Úgy állítjuk
+
+713
+00:33:36,559 --> 00:33:43,600
+le a logshippinget, hogy itt a forrás
+
+714
+00:33:40,639 --> 00:33:48,559
+adott bázisnál
+
+715
+00:33:43,600 --> 00:33:48,559
+tnál kiválasztjuk azt, hogy
+
+716
+00:33:52,720 --> 00:34:00,679
+hogy disable, tehát hogy hogy igazából
+
+717
+00:33:56,799 --> 00:34:04,360
+ez ez a művelet ez ez le fogja állítani
+
+718
+00:34:00,679 --> 00:34:04,360
+mind a három jobot.
+
+719
+00:34:05,000 --> 00:34:10,119
+Hogyha most megnézzük a a jobjainknak a
+
+720
+00:34:07,360 --> 00:34:12,720
+frissített listáját, akkor látható, hogy
+
+721
+00:34:10,119 --> 00:34:16,159
+hogy eltűntek. Csak csak ez az egy alert
+
+722
+00:34:12,720 --> 00:34:16,159
+maradt meg belőle.
+
+723
+00:34:16,240 --> 00:34:19,679
+Tehát most már nem történik másolás, de
+
+724
+00:34:18,440 --> 00:34:21,679
+ez az adat ez még mindig nem
+
+725
+00:34:19,679 --> 00:34:26,960
+hozzáférhető, ugye? Tehát itt az a gond,
+
+726
+00:34:21,679 --> 00:34:26,960
+hogy hogy ennek
+
+727
+00:34:27,119 --> 00:34:32,200
+ennek az adatbázisnak
+
+728
+00:34:29,599 --> 00:34:34,919
+valahogy működőképesnek kéne lennie,
+
+729
+00:34:32,200 --> 00:34:37,359
+különben
+
+730
+00:34:34,919 --> 00:34:39,879
+nem tudnak hozzác csatlakozni a az üzti
+
+731
+00:34:37,359 --> 00:34:42,280
+klienseink. Ennek igazából két része
+
+732
+00:34:39,879 --> 00:34:44,720
+van. Az egyik az az, hogy ahhoz, hogy ki
+
+733
+00:34:42,280 --> 00:34:47,040
+tudjuk venni ebből az állapotból, ahhoz
+
+734
+00:34:44,720 --> 00:34:48,679
+először egy felhasználósság kell
+
+735
+00:34:47,040 --> 00:34:52,000
+tennünk,
+
+736
+00:34:48,679 --> 00:34:52,000
+aztán utána
+
+737
+00:34:52,440 --> 00:34:56,919
+tudjuk beállítani azt, hogy hogy online
+
+738
+00:34:55,000 --> 00:34:58,720
+legyen, ne pedig standby. Most ezt az
+
+739
+00:34:56,919 --> 00:35:01,280
+egyhez felhasználóssá tét, ezt
+
+740
+00:34:58,720 --> 00:35:04,400
+kétfélképpen is meg lehet csinálni. Az
+
+741
+00:35:01,280 --> 00:35:09,599
+egyik az az, hogy
+
+742
+00:35:04,400 --> 00:35:09,599
+itt a a az adab tulajdonságainál
+
+743
+00:35:11,359 --> 00:35:18,640
+a az opcióknál van egy ilyen lehetőség,
+
+744
+00:35:14,839 --> 00:35:20,440
+hogy látják, hogy multiuser,
+
+745
+00:35:18,640 --> 00:35:22,359
+vagy pedig single user. Ez most
+
+746
+00:35:20,440 --> 00:35:25,680
+multiuserre van állítva, viszont read
+
+747
+00:35:22,359 --> 00:35:28,040
+only. Látják? Read only the multiuser.
+
+748
+00:35:25,680 --> 00:35:30,240
+Egy nekünk az kell,
+
+749
+00:35:28,040 --> 00:35:32,720
+hogy ez most legyen egy felhasznál most.
+
+750
+00:35:30,240 --> 00:35:34,920
+Itt ki kell az single user. Ugyanerre
+
+751
+00:35:32,720 --> 00:35:36,960
+van egy
+
+752
+00:35:34,920 --> 00:35:40,320
+egy alter database utasítás, és úgy is
+
+753
+00:35:36,960 --> 00:35:40,320
+meg lehet csinálni.
+
+754
+00:35:44,440 --> 00:35:47,720
+Most ez ugye ledobta magáról a
+
+755
+00:35:46,200 --> 00:35:52,520
+kapcsolatokat,
+
+756
+00:35:47,720 --> 00:35:52,520
+és most és most single user. És
+
+757
+00:35:52,960 --> 00:35:57,640
+most ide visszajövünk a master
+
+758
+00:35:54,640 --> 00:35:57,640
+adatbázisra,
+
+759
+00:36:01,200 --> 00:36:06,119
+akkor master adatbázison ki tudunk adni
+
+760
+00:36:03,160 --> 00:36:08,640
+egy olyan utasítást,
+
+761
+00:36:06,119 --> 00:36:08,640
+amelyik
+
+762
+00:36:11,520 --> 00:36:19,880
+kiveszi ebből a standby állapotból.
+
+763
+00:36:15,400 --> 00:36:23,240
+az a neve, hogy NV
+
+764
+00:36:19,880 --> 00:36:23,240
+warn backup.
+
+765
+00:36:30,200 --> 00:36:33,480
+Ved recovery.
+
+766
+00:36:39,119 --> 00:36:43,920
+És hogyha most megfrissítjük az
+
+767
+00:36:41,040 --> 00:36:45,520
+adabunknak a listáit, az adabisaink
+
+768
+00:36:43,920 --> 00:36:48,480
+listáját,
+
+769
+00:36:45,520 --> 00:36:50,200
+akkor azt látjuk, hogy hogy most még
+
+770
+00:36:48,480 --> 00:36:52,480
+mindig single user, de már nem volbe
+
+771
+00:36:50,200 --> 00:36:58,280
+backup. Látják? És most tudjuk
+
+772
+00:36:52,480 --> 00:36:58,280
+visszaállítani a multiuserbe, és akkor
+
+773
+00:36:58,319 --> 00:37:03,880
+lesz igazából elérhető
+
+774
+00:37:00,760 --> 00:37:06,359
+a kedves felhasználók számára.
+
+775
+00:37:03,880 --> 00:37:08,839
+De ez, amit most itt csinálok, azért az
+
+776
+00:37:06,359 --> 00:37:12,440
+látható, hogy
+
+777
+00:37:08,839 --> 00:37:12,440
+az igaz, hogy
+
+778
+00:37:12,599 --> 00:37:17,920
+kicsit olyan körülményesnek tűnik, de
+
+779
+00:37:15,480 --> 00:37:19,800
+mégis csak megvolt az egész egy-két perc
+
+780
+00:37:17,920 --> 00:37:24,400
+alatt, ugye? Tehát ez, amit mondtam,
+
+781
+00:37:19,800 --> 00:37:28,440
+hogy hogy nem forró, de azért eléggé
+
+782
+00:37:24,400 --> 00:37:28,440
+eléggé meleg ez a ez a bekap.
+

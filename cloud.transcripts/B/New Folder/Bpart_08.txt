@@ -1,0 +1,288 @@
+ kell
+feldolgoznunk. Tehát ez már a
+feldolgozás módján is egy változást vagy
+változtatást igényel.
+És hát itt nyilván megjelenik az IO
+kommunikációs idő problémája,
+hogyha egy rendszerbe be kell vinni
+nagyon nagy mennyiségadatot megnan
+kihozni, akkor az nagyon könnyen
+domináls, dominálni fogja a végrehare
+időt. Tehát nem is biztos, hogy a
+feldolgozási idő az kritikus, hanem a
+adatmozgatásnak az ideje.
+Amit szeretnék itt megemlíteni, hogy van
+egy ilyen, mondjuk egy ilyen definíciós
+modell, ez a 3D modell, ami már egy
+kicsit pontosabb megfogalmazása a big
+data
+jelenségnek. Tehát azt mondjuk, hogy
+hogy valami akkor számít ilyen big data
+kategóriájú adatnak, hogyha ez a 3D
+betűs szó érvényesse.
+Tehát egy sokkal nagyobb mennyiségű adat
+van, mint amit korábban normálendszerrel
+fel lehetett dolgozni. Ez az adat
+változik is gyorsan, tehát nem statikus
+adatról van szó, hanem általában változó
+adatról, illetve nem egyféle adatról van
+szó, hanem ez egy nagyon ilyen divers
+adat
+típusokat, adott struktúrákat használó
+halmaz. Tehát ha ez a három igaz, akkor
+azt mondjuk, hogy ez egy digitaal
+valami, és hát itt mindenféle bajokkal
+nehézségekkel meg kell küzdenünk.
+Jó, tehát ez a a háttér, és ami most
+minket érdekelni fog, ez a harmadik pont
+ebben az életciklusban, amikor
+feldolgozzuk és analizáljuk, vagy
+elemezzük ezeket az adatokat. Most attól
+függően, hogy milyen adatforrásból
+dolgozunk, ez kétféle lehet. Vagy ez az
+úgynevezett BCH feldolgozási mód, amit
+használunk, vagy pedig a valós idejű
+stream feldolgozás.
+Ugye a badch az annyit jelent, hogy még
+a régi main frame időkből át kifejezés,
+hogy van egy bemenő fájlunk, betöltjük a
+memóriába, feldolgozzuk az adatot és
+fájba kiírjuk az eredményt. Nyilván ez
+az egy fá az lehet több is, de az a
+lényeg, hogy fájból jön az adat és fájba
+megy. Elindítjuk és fut.
+A stream alapú az nem ilyen. Ott
+folyamatosan jön az adat és folyamatosan
+dolgozzuk fel és folyamatosan gyártjuk a
+kimenetet. Tehát ez olyan, mint egy
+ilyen pipeline,
+vagy
+ugye mostanában sokat beszélnek a
+barátság kőolajvezetékről. Amíg
+működött, az pont így működött, hogy
+jött az egyik végén az olaj, a másik
+oldalán meg kvázi jött ki a benzin meg
+egyebek feldolgozás után.
+Jó. Na most ennek az a jelentősége, hogy
+hogy nem lehet megvárni, amíg az összes
+adat megérkezik, mert nincs vége az
+adatnál, tehát folyamatosan jön, ezért
+ilyen kisebb szakaszokban,
+szegmensekben kell a feldolgozást
+végezni. Most amiről beszélni fogunk
+először, az a becsalakú feldolgozás, és
+erre találták ki ezt a bizonyos Maprice
+jellegű
+feldolgozási modellt,
+ami egy nagyon egyszerű program.
+architektúra.
+De
+hogy ennek az egésznek mi az értelme, az
+az, hogy ez több gépen fut egyszerre.
+Tehát ez egy ez egy párhuzamos vagy
+elosztott rendszer, klaszter
+architektúrán futó szoftver, és a több
+gépes végrehajtásnak köszönhetően
+gyorsabban föl lehet az adatokat
+dolgozni, mindenképpen,
+illetve sokkal nagyobb méretű adatokat
+tudunk feldolgozni. Most ennek az első
+futára volt ez az úgynevezett Hadub
+rendszer,
+tehát ez maga a klaster környezet,
+amin futtathatunk ilyen reduce
+szoftvert, és ennek a második generációs
+változata pedig a Spark
+szoftverkörnyezet, amiről lehet, hogy
+hallottatok már párom, vagy esetleg
+használják is. A kettő alapvetően kábé
+ugyanazt csinálja. A spark az gyorsabb
+hatékonyságú, am picit más elven
+működik. A közös mindegyikben az, hogy
+téges méretű,
+nem változó, tehát statikus adatmazókat
+feltételez, amik tárolva vannak a
+rendszerben,
+és a program az összes
+rekordot, az összes adatelemet el tudja
+érni a feldolgozás során.
+A stream processing rész az itt van a
+diákon. Azt most átugranám, majd erre
+visszatérünk később, amikor már a
+batcsel végeztünk. Csak összehasonlítás
+miatt van itt. Ez most nem annyira kell
+nekünk, hanem a metus részhez szeretnék
+előrelépni,
+ami itt van.
+Amit szintén a Google talált ki
+egyébként, ez 2004-ben
+jelent meg, mint
+nem is tudom, ajánlás vagy az első
+változata ennek a feldolgozási módnak.
+Ez ez a cikk megvan nekem, úgyhogy fel
+fogom tölteni nektek az oldalra. Érdemes
+elolvasni, hogy 20 évvel ezelőtt mit
+gondoltak erről és
+mit találtak ki illetve ezt hogyan
+hogyan mutatták be.
+Jó a röviden annyi, hogy amit mondtam,
+klaszter Jávában implementált
+keretrendszer és adott párhuzamos
+végrehajtást
+nyújt nekünk. És akkor ennek egy picit a
+belsejébe belenéznénk.
+És azt fogom megmutatni a végén, hogy ez
+a Google felfben hol található meg. Ezt
+szerintem ma ezzel be fogjuk fejezni.
+Viszont fel fogok majd rakni nektek
+megint csak ilyen gyakorlatszerű
+linkeket,
+hogy hogy tudjátok kipróbálni ennek a
+Metus-os környezetnek a működését. Jó,
+mert arra most nem lesz idő, hogy itt
+ezt lefuttassuk. annál a dolog egy
+kicsit bonyolultabb. Itt van egy
+felsorás arról, hogy milyen alkalmazási
+területei vannak. Hát kvázi mindenhol
+lehet használni. Én amit kiemelnék most
+a az egyik az a log elemzés.
+Tehát ha van köztetek olyan, aki olyan
+helyen dolgozik, ahol akár
+infrastruktúrából vagy bármilyen más
+formából jönnek logok folyamatosan,
+és ezeket elemezni kell, az el tudni,
+hogy ezért valami segítséget jelent. Aki
+nem dolgozott még ilyen logokkal, utána
+számolhat, hogy milyen adatmennyiséget
+generál. mondjuk egy számítógép 24 óra
+alatt, hogyha másodpercenként lementünk
+egy 100 karakter, és hogyha sok gép van,
+az nagyon-nagyon sok adat lesz. És ha
+itt valamit akarunk találni, akár egy
+ilyen
+nemikus logjegyzést
+letörési kísérlet miatt, de hát ez az
+egyik, hogy meghibásodása utaló
+nyomokat, akkor hát az elég gyorsnak
+kell lennünk. Jó, a másik
+az nyilván az adatelemzés,
+képi tanulás satöbbi, illetve van nagyon
+sok tudományos alkalmazás, ahol szintén
+nagy adatségekkel kell dolgozni. Ott is
+ez
+előnyösen alkalmazható.
+És akkor erre szerettem volna eljutni,
+hogy még erről egy kicsit tudjunk
+beszélni. Tehát itt látszik a
+klaszternek a a felépítése.
+Tehát
+nagyon egyszerűen tekintve egy klasszter
+nem más, mint több gépnek a az
+együttese.
+Felhőben ez ugye több virtuális gépet
+jelent, de attól, hogy több gépünk van,
+az nem jelent az, hogy ezek együtt
+tudnak működni.
+Ráadásul esetleg hatékonyan és jól
+együtt tudnának működni.
+Tehát itt egy speciális klaszterről van
+szó, ami jelen esetben egy ilyen hadup
+jellegű klaszter.
+És
+megint csak visszautalva a tudományos
+számításokra, ahol ugye párhuzamos
+programokat futtatunk, ott
+az az elképzelés, hogy telepítünk
+programokat a kluster nodódokra,
+és mindegyiknek kiküldjük azt az adatot,
+amivel neki dolgozni kell.
+De ahogy mondtam, ezeknél az
+alkalmazásoknál általában a számlítás
+az, ami időigényes, nem pedig az adat
+kezelés.
+Nem túl nagy az adat, viszont nagyon sok
+műveletet kell rajta végrehajtani. Tehát
+az, hogy küldünk valami adatot egy
+gépre, az nem különösebben nagy idő,
+viszont a számítás az az hosszú lehet.
+Most adatfeldolgozásnál pont fordítva
+van, hogy lehet, hogy nagyon kis elleni
+műveleteket kell végezni az adaton,
+viszont ebből nagyon sok van. Tehát az
+adatnak a mozgatása
+és ugye itt klasszterről van szó, tehát
+hálózati összeköttetések vannak. Tehát
+az adatmozgatás az viszont nagyon
+időigényes lehet. Ezért érdekes a HADUB,
+mert ők megfordították ezt a korabeli
+feldolgozási elvet, és nem a adatot
+küldik az előreett programhoz,
+hanem az adatot osztják szét előre a
+klaszterben,
+és utána minden program az adott nódon
+található adaton fog dolgozni, pont
+azért, hogy ne kelljen az adatot
+mozgatni körbe-körbe.
+És azért egyszerű a programozási modell,
+hogy a kódot ne kelljen küldözgetni
+sehova, hanem minden gép ugyanazt fogja
+végrehajtani a helyben található
+adatokon. Jó? És akkor ennek a működését
+látjuk itt. Tehát itt van egy két
+kliens, akik a klustert szeretnék
+használni,
+és ennek a klusternek a vezértését egy
+ilyen menedzser végzi. És annak a
+legfontosabb része az a resource
+manager, ami figyeli azt, hogy melyik
+node milyen állapotban van. Minden gépen
+helyben van egy node menedzser, akik a
+helyi feladat végrehajtásért felelnek.
+És látjuk azt, hogy
+vannak ilyen konténerek, meg látunk egy
+olyat, hogy app MSTR. Ez az application
+master. Tehát ez lesz az, aki bezényli.
+az egész programnak a futtatását.
+És itt látjuk azt, hogy vannak
+konténerek, amik ezzel a mesterrel
+beszélgetnek.
+Tehát ez csak annyit jelent, hogy a a
+mester irányítja a többi programrésznek
+a végref hajtását. Jó. És akkor ez az
+egyik mester, az az egyik klienshez
+tartozik, a másik clienshez meg a másik.
+Jó. És közben vannak mindenféle egyéb
+nyilak, hogy erőforrásinformációk
+meg státusz ö megy ide-oda, meg a kérés
+ugye az az adat
+feldolgozásnak az elindítását jelenti.
+És persze ennek mindenek hibatűrőnek is
+kell lenni. Tehát ezek a konténerek meg
+a mester azért van, hogyha véletlenül
+valamelyik nód leállna, akkor a mester
+erről tudomást szerezzen, és akkor
+kiosztja ugyanazt a feladatot valaki
+másnak. Most nyilván, hogy tudja
+kiosztani ezt másnak, hogyha az a nód
+lefagyott? Hát úgy, hogy ez alatt egy
+olyan fárendszer van, ami hibatűrő.
+Itt van egy ilyen, hogy HDF-S, ez a high
+performance.
+distributed file system, aminek az a
+lényege, hogy az adat az
+minden note számára elérhető, de hogyha
+kell, akkor replikálva is van, tehát
+hiba esetén nem esik kiadat a
+rendszerből, hanem egy másik módát tudja
+venni annak a helyét.
+Jó, és akkor itt különböző elemeket
+látunk, tehát a fárendszer mellett van
+még ez a klaster koordinátor satöbbi.
+Ezek mind az alsó szintű működésért
+felelnek. És ami majd minket érdekelni
+fog, ez a legmagasabb része ennek a az
+egész
+konfigurációnak vagy architektúrának. Ez
+a M produce végrehajtó
+engine vagy futtató környezet. Jó, és
+akkor ezzel fogjuk itt la

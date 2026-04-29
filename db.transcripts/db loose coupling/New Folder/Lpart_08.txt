@@ -1,0 +1,112 @@
+�gan, az a hibaüzenet került
+ide.
+amit egyébként a rendszer generált.
+Tehát
+innentől kezdve ez egyszerűen az SP,
+tehát ez az error messagebből van
+kivíve, amit a rendszer adott, hogy hogy
+ez egy checkpon szerintem ütközött. És
+azt, hogy even processing f, azt már mi
+írtuk vissza,
+mivel a a státusza ennek a az eseménynek
+nem
+ez a rezultátja ugye az az ennek
+köszönhetően
+ugye itt ezt a rizált alapot egyre
+állította be ez a tároljást.
+Következésképpen ha most megnézzük a az
+order táblát, akkor azt fogjuk látni,
+hogy ennek itt sajnos egy a státusza,
+tehát ennek sikertelen volt a
+feldolgozása. Hát készen van az
+információs rendszerünk, mondhatjuk ezt
+a dolgot.
+Alkalmasínt most megint állítsunk vissza
+mindent,
+tehát legyenek új eseményeink.
+És most nézzük meg, hogy mi történik,
+hogyha ezt nem kézzel akarjuk ugye ezt a
+tárolytást mindig futtatgatni,
+hanem automatizálni akarjuk. Tehát
+utolsó lépésünk az, hogy hogy készítünk
+egy jobot. Hogy kell egy jobot csinálni?
+Hát ez úgy néz ki, hogy a
+a jobokat egy olyan külön szolgáltatást
+futtatja, amit úgy hívnak itt, hogy SQS
+server agent.
+Ez hasonlít a Chrome Demonhoz, például
+Unix rendszereken,
+de hát itt itt tulajdonképpen nagyon
+szorosan össze van integrálódva az
+adobás kezelő rendszerrel. Hogy ez éppen
+fut-e, azt célszerű megnézni.
+Es server agent. Ugye a primerak nem
+fut. Látható, hogy piros. Tehát most így
+nem fogunk jobbot csinálni. Indítsuk el.
+Jó, most már fut.
+És hogyha fut, ugye mi most a primaryre
+vagyunk bejelentkezve, itt látható egy
+kis zöld háromszög lett belőle,
+akkor mi mindent lehet vele csinálni, is
+lehet satöbbi, satöbbi. Most egy jobot
+fogunk csinálni. Nézzük meg, hogy most
+milyen milyen jobok vannak.
+Hát ezek a dolgok
+a master data services miatt vannak
+benne, de mi most egy kézzel fogunk
+létrehozni egy jobot. Azt v neki, hogy
+new job. Adunk neki egy nevet, és ez
+lesz a Northwind
+Order
+Process.
+És ahhoz, hogy ebből legyen egy tényleg
+egy job, ahhoz legalább egy lépésre
+kell, hogy legyen. Most egy új lépést
+hozunk létre.
+New step. Kell neki nevet adni.
+Akkor
+process log. Ez lesz a neve. A típusa
+egy TSQL lesz.
+És az fontos, hogy melyik adatbázison
+fusson. Hát ez a Natbálison fog futni.
+Jó.
+És
+és a commandot be kell adnunk. Hát a
+command az ugyanaz lesz, mint ami ami
+ami itt volt.
+Tehát
+ez nincs paraméterünk, hiszen ezt ez
+tudja, hogy melyik táblába kell
+megnézni. Tudja, hogy melyik a loktábla.
+Ezt ide bemásolom.
+Mindösszes csak ennyi. En ennyit ennyit
+csinálunk.
+Jó.
+Van már egy lépésünk, most pedig kell
+adni neki egy időzítést. Hát ugye
+normális esetben az időzítés az úgy
+nézne ki, hogy
+hogy mondjuk éjszakánként fusson le
+éjjel 2-kor, de mi ezt nem tudnánk
+tesztelni. Tehát most azt fogjuk
+beállítani, hogy ez most folyamatosan
+mostantól kezdve egy percenként fusson
+le egyszer ez a drop. Hát ezt most
+persze valóságban ilyet nem csináljuk.
+Ezt csak tesztelési céljából.
+Egy perc ez lesz a neve.
+csináljuk tehát, hogy minden nap
+és
+és minden egyes percben ezt szépen be
+lehet itt állítani. Na azért nem
+másodpercben.
+Fusson le. Aztán majd majd ezt tesztelés
+végén kikapcsoljuk és kész. Ha azt
+mondom, hogy oké, innentől kezdve
+létrejön a job és már aktív is. Ez azt
+jelenti, hogy egy perc múlva le fog
+futni.
+Úgy nézegessük ezt az order block
+táblát.
+Ugye most még nulla a státusza. Az azt
+jelenti
