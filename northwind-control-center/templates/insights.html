@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block title %}Insights – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-cpu"></i> Insights &amp; ML</h4>
+
+<!-- Tab navigation -->
+<ul class="nav nav-tabs mb-3" id="insightsTabs">
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'predict' %}active{% endif %}"
+       href="{{ url_for('insights', tab='predict') }}">
+      <i class="bi bi-graph-up-arrow"></i> Order Value Prediction
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'risk' %}active{% endif %}"
+       href="{{ url_for('inventory_risk') }}">
+      <i class="bi bi-exclamation-diamond"></i> Inventory Risk
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'anomalies' %}active{% endif %}"
+       href="{{ url_for('anomalies') }}">
+      <i class="bi bi-bug"></i> Anomaly Detection
+    </a>
+  </li>
+</ul>
+
+
+{# ── Tab 1: Order Value Prediction ───────────────────────────────────── #}
+{% if active_tab == 'predict' %}
+
+{% if not sklearn_available %}
+<div class="alert alert-warning">
+  <strong>scikit-learn not found.</strong>
+  Install it: <code>pip install scikit-learn numpy</code>
+</div>
+{% else %}
+
+<div class="row g-3">
+
+  <!-- Model status card -->
+  <div class="col-12 col-xl-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-gear"></i> Model Status</div>
+      <div class="card-body">
+        {% if status.trained %}
+          <p class="mb-1"><span class="badge bg-success">Trained</span></p>
+          <dl class="row mb-0 small">
+            <dt class="col-6">Trained at</dt>
+            <dd class="col-6">{{ status.trained_at }}</dd>
+            <dt class="col-6">Samples</dt>
+            <dd class="col-6">{{ status.n_samples }}</dd>
+            <dt class="col-6">R² (test set)</dt>
+            <dd class="col-6">{{ status.r2 }}</dd>
+          </dl>
+          {% if status.feature_importances %}
+          <hr class="my-2">
+          <p class="small text-muted mb-1">Feature importances</p>
+          {% for feat, imp in status.feature_importances.items() %}
+          <div class="d-flex justify-content-between small mb-1">
+            <span>{{ feat }}</span>
+            <span>{{ (imp * 100) | round(1) }}%</span>
+          </div>
+          <div class="progress mb-1" style="height:6px">
+            <div class="progress-bar bg-primary" style="width:{{ (imp * 100) | round }}%"></div>
+          </div>
+          {% endfor %}
+          {% endif %}
+        {% else %}
+          <p><span class="badge bg-secondary">Not trained</span></p>
+          <p class="small text-muted">Train the model before making predictions.</p>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('train_model') }}" class="mt-3">
+          <button type="submit" class="btn btn-sm btn-outline-primary w-100"
+                  onclick="this.textContent='Training…';this.disabled=true;this.form.submit()">
+            <i class="bi bi-play-circle"></i>
+            {% if status.trained %}Retrain{% else %}Train Model{% endif %}
+          </button>
+        </form>
+        <p class="small text-muted mt-2 mb-0">
+          Algorithm: Gradient Boosting Regressor<br>
+          Features: category, country, price, discount, year<br>
+          Target: order item value
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prediction form -->
+  <div class="col-12 col-xl-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-sliders"></i> Predict Order Item Value</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('predict_value') }}">
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label small">Category</label>
+              <select name="category" class="form-select form-select-sm">
+                {% for cat in options.categories %}
+                <option value="{{ cat }}"
+                  {% if last_form and last_form.category == cat %}selected{% endif %}>
+                  {{ cat }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small">Customer Country</label>
+              <select name="country" class="form-select form-select-sm">
+                {% for c in options.countries %}
+                <option value="{{ c }}"
+                  {% if last_form and last_form.country == c %}selected{% endif %}>
+                  {{ c }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small">Unit Price (€)</label>
+              <input type="number" name="unit_price" class="form-control form-control-sm"
+                     step="0.01" min="0" value="{{ last_form.unit_price if last_form else 20 }}">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small">Discount (0 – 0.25)</label>
+              <input type="number" name="discount" class="form-control form-control-sm"
+                     step="0.05" min="0" max="0.25" value="{{ last_form.discount if last_form else 0 }}">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small">Year</label>
+              <select name="year" class="form-select form-select-sm">
+                {% for yr in options.years %}
+                <option value="{{ yr }}"
+                  {% if last_form and last_form.year == yr %}selected{% endif %}>
+                  {{ yr }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary btn-sm"
+                      {% if not status.trained %}disabled{% endif %}>
+                <i class="bi bi-calculator"></i> Predict
+              </button>
+              {% if not status.trained %}
+              <small class="text-muted ms-2">Train the model first.</small>
+              {% endif %}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Prediction result -->
+    {% if pred_error %}
+    <div class="alert alert-danger mt-3">{{ pred_error }}</div>
+    {% endif %}
+
+    {% if prediction %}
+    <div class="card mt-3 border-{{ prediction.class_color }}">
+      <div class="card-body text-center py-4">
+        <div class="mb-2 text-muted small">Predicted Order Item Value</div>
+        <div style="font-size:2.5rem;font-weight:700" class="text-{{ prediction.class_color }}">
+          €{{ '{:,.2f}'.format(prediction.predicted_value) }}
+        </div>
+        <div class="mt-2">
+          <span class="badge bg-{{ prediction.class_color }} fs-6 px-3">
+            Class {{ prediction.value_class }} — {{ prediction.class_label }}
+          </span>
+        </div>
+        <div class="mt-3 small text-muted">
+          Thresholds: L &lt; €{{ prediction.thresholds.p33 }} &nbsp;|&nbsp;
+          M €{{ prediction.thresholds.p33 }}–€{{ prediction.thresholds.p67 }} &nbsp;|&nbsp;
+          H &gt; €{{ prediction.thresholds.p67 }}
+        </div>
+        {% if prediction.country_warning %}
+        <div class="alert alert-warning small mt-2 mb-0 py-1">
+          Country not seen during training — a fallback was used.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endif %}{# sklearn #}
+
+
+{# ── Tab 2: Inventory Risk ────────────────────────────────────────────── #}
+{% elif active_tab == 'risk' %}
+
+{% if risk_error %}
+<div class="alert alert-danger">{{ risk_error }}</div>
+{% else %}
+
+<!-- Summary badges -->
+{% if risk_summary %}
+<div class="d-flex gap-3 mb-3 flex-wrap">
+  <div class="card stat-card px-4 py-2">
+    <div class="stat-number text-danger">{{ risk_summary.get('High', 0) }}</div>
+    <div class="stat-label">High Risk</div>
+  </div>
+  <div class="card stat-card px-4 py-2">
+    <div class="stat-number text-warning">{{ risk_summary.get('Medium', 0) }}</div>
+    <div class="stat-label">Medium Risk</div>
+  </div>
+  <div class="card stat-card px-4 py-2">
+    <div class="stat-number text-success">{{ risk_summary.get('Low', 0) }}</div>
+    <div class="stat-label">Low Risk</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between">
+    <span><i class="bi bi-exclamation-diamond"></i> Inventory Risk Scores</span>
+    <small class="text-muted">
+      Scoring: 60% stock deficit + 40% recent sales velocity
+    </small>
+  </div>
+  <div class="card-body p-0" style="overflow-x:auto">
+    {% if risk_items %}
+    <table class="table table-sm table-hover mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>Product</th><th>Category</th>
+          <th>Stock</th><th>Reorder</th><th>On Order</th>
+          <th>Sales 30d</th><th>Sales 90d</th>
+          <th>Risk Score</th><th>Level</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in risk_items %}
+        <tr>
+          <td>{{ item.product_name }}</td>
+          <td>{{ item.category }}</td>
+          <td {% if item.stock <= item.reorder_level %}class="text-danger fw-bold"{% endif %}>
+            {{ item.stock }}
+          </td>
+          <td>{{ item.reorder_level }}</td>
+          <td>{{ item.on_order }}</td>
+          <td>{{ item.sales_30d }}</td>
+          <td>{{ item.sales_90d }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1" style="height:8px;min-width:60px">
+                <div class="progress-bar bg-{{ item.risk_color }}"
+                     style="width:{{ item.score_pct }}%"></div>
+              </div>
+              <span class="small">{{ item.risk_score }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge bg-{{ item.risk_color }}">{{ item.risk_label }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted p-3 mb-0">No active products found.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="mt-2 text-muted small">
+  <strong>Risk formula:</strong>
+  score = 0.6 × max(0, (reorder_level − stock) / reorder_level) + 0.4 × min(sales_30d / (stock + on_order), 1)
+  &nbsp;|&nbsp; High ≥ 0.55 &nbsp;|&nbsp; Medium ≥ 0.25
+</div>
+{% endif %}
+
+
+{# ── Tab 3: Anomaly Detection ─────────────────────────────────────────── #}
+{% elif active_tab == 'anomalies' %}
+
+{% if anom_error %}
+<div class="alert alert-danger">{{ anom_error }}</div>
+{% else %}
+
+<!-- Summary badges -->
+{% if anom_summary %}
+<div class="d-flex gap-3 mb-3 flex-wrap">
+  <div class="card stat-card px-4 py-2">
+    <div class="stat-number text-danger">{{ anom_summary.get('high', 0) }}</div>
+    <div class="stat-label">High Severity</div>
+  </div>
+  <div class="card stat-card px-4 py-2">
+    <div class="stat-number text-warning">{{ anom_summary.get('medium', 0) }}</div>
+    <div class="stat-label">Medium Severity</div>
+  </div>
+  <div class="card stat-card px-4 py-2">
+    <div class="stat-number text-info">{{ anom_summary.get('low', 0) }}</div>
+    <div class="stat-label">Low Severity</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between">
+    <span><i class="bi bi-bug"></i> Flagged Order Items</span>
+    <small class="text-muted">
+      Rules: item value &gt; p95 &nbsp;|&nbsp; discount &gt; mean+2σ &nbsp;|&nbsp; freight &gt; p95
+    </small>
+  </div>
+  <div class="card-body p-0" style="overflow-x:auto">
+    {% if anomalies %}
+    <table class="table table-sm table-hover mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>Severity</th><th>Order</th><th>Date</th>
+          <th>Product</th><th>Country</th>
+          <th>Price</th><th>Qty</th><th>Discount</th>
+          <th>Item Value</th><th>Freight</th><th>Reasons</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in anomalies %}
+        <tr>
+          <td><span class="badge bg-{{ a.severity_color }}">{{ a.severity }}</span></td>
+          <td>{{ a.order_id }}</td>
+          <td>{{ a.order_date }}</td>
+          <td>{{ a.product }}</td>
+          <td>{{ a.country }}</td>
+          <td>€{{ '{:,.2f}'.format(a.unit_price) }}</td>
+          <td>{{ a.quantity }}</td>
+          <td>{{ a.discount_pct }}%</td>
+          <td><strong>€{{ '{:,.2f}'.format(a.item_value) }}</strong></td>
+          <td>€{{ '{:,.2f}'.format(a.freight) }}</td>
+          <td class="small text-muted">{{ a.reasons | join('; ') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted p-3 mb-0">No anomalies detected.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% endif %}{# active_tab #}
+{% endblock %}

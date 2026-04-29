@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Operations – Northwind CC{% endblock %}
+
+{% macro result_table(cols, rows, err, empty_msg) %}
+  {% if err %}
+    <div class="alert alert-warning py-2 small">{{ err }}</div>
+  {% elif rows %}
+    <div style="overflow-x:auto">
+      <table class="table table-sm table-hover table-bordered mb-0">
+        <thead class="table-dark">
+          <tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>{% for cell in row %}<td title="{{ cell }}">{{ cell }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted mb-0 small">{{ empty_msg }}</p>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-speedometer2"></i> Operations Dashboard</h4>
+
+<div class="row g-3">
+
+  <!-- DB file sizes -->
+  <div class="col-12 col-xl-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-hdd"></i> Database Files</div>
+      <div class="card-body p-0">
+        {{ result_table(db[0], db[1], db[2], 'No file data.') }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Row counts -->
+  <div class="col-12 col-xl-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-table"></i> Table Row Counts</div>
+      <div class="card-body p-0">
+        {{ result_table(row_counts[0], row_counts[1], row_counts[2], 'No tables found.') }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Low stock -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-exclamation-triangle text-warning"></i> Low Stock Products</div>
+      <div class="card-body p-0">
+        {{ result_table(low_stock[0], low_stock[1], low_stock[2], 'All products are well-stocked.') }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent backups -->
+  <div class="col-12 col-xl-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-archive"></i> Recent Backups</div>
+      <div class="card-body p-0">
+        {{ result_table(backups[0], backups[1], backups[2], 'No backup history found in msdb.') }}
+      </div>
+    </div>
+  </div>
+
+  <!-- SQL Agent jobs -->
+  <div class="col-12 col-xl-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history"></i> SQL Agent Job History</div>
+      <div class="card-body p-0">
+        {{ result_table(jobs[0], jobs[1], jobs[2], 'No job history found in msdb.') }}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

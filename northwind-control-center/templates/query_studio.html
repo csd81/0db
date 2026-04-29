@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Query Studio – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-terminal"></i> Query Studio</h4>
+
+<div class="card mb-3">
+  <div class="card-header">SQL Editor</div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('run_query') }}" id="queryForm">
+
+      <!-- Saved query picker -->
+      {% if saved_queries %}
+      <div class="mb-3">
+        <label class="form-label small text-muted">Load saved query</label>
+        <div class="input-group">
+          <select class="form-select form-select-sm" id="savedPicker">
+            <option value="">— choose a template —</option>
+            {% for q in saved_queries %}
+            <option value="{{ q.query_id }}"
+                    data-text="{{ q.query_text | e }}"
+                    data-readonly="{{ '1' if q.is_readonly else '0' }}">
+              [{{ q.category }}] {{ q.query_name }}
+            </option>
+            {% endfor %}
+          </select>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="loadBtn">Load</button>
+        </div>
+        <input type="hidden" name="saved_query_id" id="savedQueryId">
+      </div>
+      {% endif %}
+
+      <!-- SQL textarea -->
+      <div class="mb-3">
+        <textarea name="sql_text" id="sql-editor" class="form-control"
+                  rows="8" placeholder="SELECT TOP 20 * FROM Orders ORDER BY OrderDate DESC">{{ sql_text or '' }}</textarea>
+      </div>
+
+      <!-- Options row -->
+      <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
+        <div>
+          <label class="form-label small text-muted mb-0">Isolation level</label>
+          <select name="isolation" class="form-select form-select-sm" style="width:auto">
+            {% for lvl in ['READ COMMITTED', 'READ UNCOMMITTED', 'REPEATABLE READ', 'SERIALIZABLE', 'SNAPSHOT'] %}
+            <option value="{{ lvl }}" {% if isolation == lvl %}selected{% endif %}>{{ lvl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-check mt-3">
+          <input class="form-check-input" type="checkbox" name="readonly" value="1" id="readonlyCheck"
+                 {% if readonly != False %}checked{% endif %}>
+          <label class="form-check-label small" for="readonlyCheck">Read-only mode</label>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-play-fill"></i> Run
+        </button>
+        <button type="submit" name="export" value="1" class="btn btn-outline-secondary btn-sm"
+                {% if not columns %}disabled{% endif %}>
+          <i class="bi bi-download"></i> Export CSV
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-sm" id="clearBtn">
+          <i class="bi bi-x"></i> Clear
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Error -->
+{% if error %}
+<div class="alert alert-danger">
+  <i class="bi bi-exclamation-triangle"></i> {{ error }}
+</div>
+{% endif %}
+
+<!-- Results -->
+{% if columns is not none and not error %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Results</span>
+    <small class="text-muted">
+      {{ rows | length }} row(s) &nbsp;|&nbsp; {{ elapsed_ms }} ms
+    </small>
+  </div>
+  <div class="card-body p-0" style="overflow-x:auto">
+    {% if rows %}
+    <table class="table table-sm table-hover table-bordered mb-0">
+      <thead class="table-dark">
+        <tr>{% for col in columns %}<th>{{ col }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>{% for cell in row %}<td title="{{ cell }}">{{ cell }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted p-3 mb-0">Query returned no rows.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/query_studio.js') }}"></script>
+{% endblock %}

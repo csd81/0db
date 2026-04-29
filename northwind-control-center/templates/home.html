@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Home – Northwind CC{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <h4 class="mb-0 me-3"><i class="bi bi-house"></i> Dashboard</h4>
+  {% if connected %}
+    <span class="badge bg-success"><i class="bi bi-circle-fill"></i> Connected</span>
+  {% else %}
+    <span class="badge bg-danger"><i class="bi bi-circle-fill"></i> Disconnected</span>
+  {% endif %}
+</div>
+
+{% if not connected %}
+<div class="alert alert-danger">
+  <strong>Cannot connect to SQL Server:</strong> {{ conn_error }}
+  <hr class="my-2">
+  Check your <code>.env</code> file and verify SQL_SERVER, SQL_USERNAME, SQL_PASSWORD.
+</div>
+{% else %}
+
+<!-- Summary cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      <div class="stat-number text-primary">{{ summary.today_orders }}</div>
+      <div class="stat-label">Orders Today</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      <div class="stat-number text-warning">{{ summary.low_stock_count }}</div>
+      <div class="stat-label">Low Stock Products</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      {% if summary.events_available %}
+        <div class="stat-number text-info">{{ summary.pending_events }}</div>
+      {% else %}
+        <div class="stat-number text-secondary">—</div>
+      {% endif %}
+      <div class="stat-label">Pending Events</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card">
+      {% if summary.events_available %}
+        <div class="stat-number {% if summary.failed_events > 0 %}text-danger{% else %}text-success{% endif %}">
+          {{ summary.failed_events }}
+        </div>
+      {% else %}
+        <div class="stat-number text-secondary">—</div>
+      {% endif %}
+      <div class="stat-label">Failed Events</div>
+    </div>
+  </div>
+</div>
+
+{% if not summary.events_available %}
+<div class="alert alert-warning alert-sm py-2">
+  <i class="bi bi-exclamation-triangle"></i>
+  Event log table not found — run <code>sql/04_loose_coupling.sql</code> to enable the Events module.
+</div>
+{% endif %}
+
+<!-- Quick links -->
+<div class="row g-3">
+  <div class="col-12"><h5 class="text-muted">Modules</h5></div>
+  {% for title, icon, ep, desc in [
+      ('Query Studio', 'bi-terminal', 'query_studio', 'Run SQL queries and explore saved templates'),
+      ('Operations', 'bi-speedometer2', 'operations', 'Database file sizes, backups, jobs, row counts'),
+      ('Events', 'bi-arrow-repeat', 'events', 'Loose coupling monitor: trigger → log → job workflow'),
+      ('Analytics', 'bi-bar-chart', 'analytics_page', 'Revenue, categories, geography, top products'),
+      ('Graph Explorer', 'bi-diagram-3', 'graph_explorer', 'SQL Server graph tables and MATCH queries'),
+      ('Insights / ML', 'bi-cpu', 'insights', 'Order value prediction, inventory risk, anomaly detection'),
+  ] %}
+  <div class="col-sm-6 col-lg-4">
+    <a href="{{ url_for(ep) }}" class="text-decoration-none">
+      <div class="card h-100 p-3">
+        <div class="d-flex align-items-center mb-1">
+          <i class="bi {{ icon }} fs-4 me-2 text-primary"></i>
+          <strong>{{ title }}</strong>
+        </div>
+        <small class="text-muted">{{ desc }}</small>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+{% endif %}
+{% endblock %}

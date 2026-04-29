@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Graph Explorer – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-diagram-3"></i> Graph Explorer</h4>
+
+<div class="card mb-3">
+  <div class="card-header">Select Graph Query</div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('run_graph') }}">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-8">
+          <select name="query_key" class="form-select" id="queryPicker">
+            <option value="">— choose a query —</option>
+            {% for q in queries %}
+            <option value="{{ q.key }}"
+                    {% if selected and selected.key == q.key %}selected{% endif %}>
+              {{ q.label }}
+              {% if q.requires_graph_tables %}⚠{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-text" id="queryDesc"></div>
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-play-fill"></i> Run Query
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if selected %}
+<p class="text-muted small"><strong>{{ selected.label }}</strong> — {{ selected.description }}
+{% if selected.requires_graph_tables %}
+  <span class="badge bg-warning text-dark ms-1">Requires graph tables</span>
+{% endif %}
+</p>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> {{ error }}</div>
+{% endif %}
+
+{% if columns is not none and not error %}
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between">
+    <span>Results</span>
+    <small class="text-muted">{{ rows | length }} row(s)</small>
+  </div>
+  <div class="card-body p-0" style="overflow-x:auto">
+    {% if rows %}
+    <table class="table table-sm table-hover table-bordered mb-0">
+      <thead class="table-dark">
+        <tr>{% for c in columns %}<th>{{ c }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted p-3 mb-0">No rows returned.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if selected and selected.key == 'employee_hierarchy' %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Network View</span>
+    <button class="btn btn-sm btn-outline-secondary" id="loadCyBtn">Load Visualization</button>
+  </div>
+  <div class="card-body p-2">
+    <div id="cy"></div>
+    <p class="text-muted small text-center mt-2">Click "Load Visualization" to render the graph.</p>
+  </div>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const queryDescs = {{ descs | tojson }};
+  const selectedKey = {{ (selected.key if selected else '') | tojson }};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.29.2/dist/cytoscape.min.js"></script>
+<script src="{{ url_for('static', filename='js/graph.js') }}"></script>
+{% endblock %}

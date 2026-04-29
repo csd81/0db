@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Analytics – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-bar-chart"></i> Analytics Dashboard</h4>
+
+<div class="row g-4">
+
+  <!-- Revenue by month -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">Revenue by Month</div>
+      <div class="card-body"><div class="chart-container"><canvas id="chartMonth"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Sales by category + Ship status -->
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-header">Revenue by Category</div>
+      <div class="card-body"><div class="chart-container"><canvas id="chartCategory"></canvas></div></div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">Shipment Status</div>
+      <div class="card-body"><div class="chart-container"><canvas id="chartShip"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Top products -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">Top 10 Products by Revenue</div>
+      <div class="card-body"><div class="chart-container"><canvas id="chartProducts"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Orders by country -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">Orders by Country</div>
+      <div class="card-body"><div class="chart-container" style="height:400px"><canvas id="chartCountry"></canvas></div></div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}
