@@ -82,6 +82,17 @@ def get_adapter_connection(conn_id: int):
     return conn
 
 
+def _fix_str(v):
+    """ODBC Driver 18 on Linux returns NVARCHAR as UTF-8 decoded as Latin-1.
+    Re-encode to Latin-1 bytes then decode as UTF-8 to recover correct string."""
+    if not isinstance(v, str):
+        return v
+    try:
+        return v.encode('latin-1').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return v
+
+
 def adapter_select(conn_id: int, sql: str, params=None) -> tuple[list, list]:
     """Execute a SELECT and return (column_names, rows_as_lists)."""
     conn = get_adapter_connection(conn_id)
@@ -97,6 +108,9 @@ def adapter_select(conn_id: int, sql: str, params=None) -> tuple[list, list]:
         cur = conn.execute(sql, params or [])
         columns = [d[0] for d in cur.description] if cur.description else []
         rows = [list(r) for r in cur.fetchall()]
+
+    if db_type == 'sqlserver':
+        rows = [[_fix_str(cell) for cell in row] for row in rows]
 
     return columns, rows
 

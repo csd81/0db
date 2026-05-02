@@ -2,6 +2,17 @@ import pyodbc
 from flask import current_app, g
 
 
+def _fix_str(v):
+    """ODBC Driver 18 on Linux returns NVARCHAR as UTF-8 bytes decoded as Latin-1.
+    Re-encoding to Latin-1 then decoding as UTF-8 recovers the correct string."""
+    if not isinstance(v, str):
+        return v
+    try:
+        return v.encode('latin-1').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return v
+
+
 def _conn_str():
     c = current_app.config
     return (
@@ -34,7 +45,7 @@ def run_select(sql, params=None):
     if cursor.description is None:
         return [], []
     columns = [col[0] for col in cursor.description]
-    rows = [list(row) for row in cursor.fetchall()]
+    rows = [[_fix_str(cell) for cell in row] for row in cursor.fetchall()]
     return columns, rows
 
 
