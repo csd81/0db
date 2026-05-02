@@ -52,6 +52,7 @@ from blueprints.elasticsearch_bp import elasticsearch_bp
 from blueprints.cqrs_bp import cqrs_bp
 from blueprints.pgvector_bp import pgvector_bp
 from blueprints.demos_bp import demos_bp
+from blueprints.services_bp import services_bp
 
 app.register_blueprint(auth)
 app.register_blueprint(connections)
@@ -69,6 +70,7 @@ app.register_blueprint(elasticsearch_bp)
 app.register_blueprint(cqrs_bp)
 app.register_blueprint(pgvector_bp)
 app.register_blueprint(demos_bp)
+app.register_blueprint(services_bp)
 
 # ── Context processor: make current_user available in all templates ────────────
 from auth import get_current_user
