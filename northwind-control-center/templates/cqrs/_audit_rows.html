@@ -1,0 +1,48 @@
+{% if audit %}
+<table class="table table-sm mb-0">
+  <thead class="table-dark sticky-top">
+    <tr>
+      <th style="width:80px">Time</th>
+      <th style="width:90px">Routed to</th>
+      <th>SQL snippet</th>
+      <th style="width:110px">Result</th>
+      <th style="width:70px">Elapsed</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in audit %}
+    <tr class="small {% if e.error %}table-danger{% elif e.routed_to == 'replica' %}table-info{% else %}table-warning{% endif %}">
+      <td class="text-muted">{{ e.timestamp }}</td>
+      <td>
+        {% if e.routed_to == 'replica' %}
+        <span class="badge bg-info text-dark">Replica</span>
+        {% else %}
+        <span class="badge bg-warning text-dark">Primary</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if e.error %}
+        <i class="bi bi-exclamation-triangle text-danger" title="{{ e.error }}"></i>
+        {% endif %}
+        <code class="small">{{ e.sql_snippet }}</code>
+      </td>
+      <td>
+        {% if e.rows_returned is not none %}
+          {{ e.rows_returned }} rows
+        {% elif e.rowcount is not none %}
+          {{ e.rowcount }} affected
+        {% else %}
+          —
+        {% endif %}
+      </td>
+      <td>{{ e.elapsed_ms }} ms</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="text-muted text-center py-3 mb-0 small">
+  <i class="bi bi-journal-x"></i> No routing decisions recorded yet.
+  Execute a query above to see entries here.
+</p>
+{% endif %}

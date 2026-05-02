@@ -27,6 +27,8 @@ def index():
         selected=None, stats=None,
         columns=None, rows=None, find_error=None, filter_str='{}',
         agg_queries=ms.agg_queries(), agg_result=None,
+        preset_validators=ms.get_preset_validators(),
+        validator_json=None, validate_result=None,
     )
 
 
@@ -44,6 +46,8 @@ def view_collection(conn_id, collection):
         selected=collection, stats=stats,
         columns=columns, rows=rows, find_error=find_error, filter_str=filter_str,
         agg_queries=ms.agg_queries(), agg_result=None,
+        preset_validators=ms.get_preset_validators(),
+        validator_json=None, validate_result=None,
     )
 
 
@@ -101,4 +105,54 @@ def aggregate(conn_id):
         selected=None, stats=None,
         columns=None, rows=None, find_error=None, filter_str='{}',
         agg_queries=ms.agg_queries(), agg_result=agg_result,
+        preset_validators=ms.get_preset_validators(),
+        validator_json=None, validate_result=None,
+    )
+
+
+@mongo_bp.route('/<int:conn_id>/apply-validator/<collection>', methods=['POST'])
+@admin_required
+def apply_validator(conn_id, collection):
+    validator_key = request.form.get('validator_key', '')
+    err = ms.apply_validator(conn_id, collection, validator_key)
+    if err:
+        flash(f'Validator apply failed: {err}', 'danger')
+    else:
+        flash(f'Validator applied to "{collection}" (level: moderate, action: warn).', 'success')
+    return redirect(url_for('mongo_bp.view_collection', conn_id=conn_id, collection=collection))
+
+
+@mongo_bp.route('/<int:conn_id>/validator/<collection>')
+@login_required
+def view_validator(conn_id, collection):
+    validator, err = ms.get_current_validator(conn_id, collection)
+    collections, col_err = ms.list_collections(conn_id)
+    import json
+    return render_template('mongo/index.html',
+        conns=_conns(), conn_id=conn_id, all_conns=_all_conns(),
+        collections=collections, col_err=col_err,
+        selected=collection, stats=ms.get_collection_stats(conn_id, collection),
+        columns=None, rows=None, find_error=None, filter_str='{}',
+        agg_queries=ms.agg_queries(), agg_result=None,
+        validator_json=json.dumps(validator, indent=2) if validator else None,
+        preset_validators=ms.get_preset_validators(),
+        validate_result=None,
+    )
+
+
+@mongo_bp.route('/<int:conn_id>/validate-doc/<collection>', methods=['POST'])
+@login_required
+def validate_doc(conn_id, collection):
+    doc_str = request.form.get('document', '{}')
+    is_valid, issues, err = ms.validate_document_against_schema(conn_id, collection, doc_str)
+    collections, col_err = ms.list_collections(conn_id)
+    return render_template('mongo/index.html',
+        conns=_conns(), conn_id=conn_id, all_conns=_all_conns(),
+        collections=collections, col_err=col_err,
+        selected=collection, stats=ms.get_collection_stats(conn_id, collection),
+        columns=None, rows=None, find_error=None, filter_str='{}',
+        agg_queries=ms.agg_queries(), agg_result=None,
+        validator_json=None,
+        preset_validators=ms.get_preset_validators(),
+        validate_result={'is_valid': is_valid, 'issues': issues, 'error': err, 'doc': doc_str},
     )

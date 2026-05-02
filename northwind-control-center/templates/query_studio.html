@@ -48,6 +48,11 @@
             rqlite (Raft): {{ c.name }}
           </option>
           {% endfor %}
+          {% for c in es_conns %}
+          <option value="elasticsearch:{{ c.id }}" {% if engine == 'elasticsearch:'~c.id %}selected{% endif %}>
+            Elasticsearch: {{ c.name }}
+          </option>
+          {% endfor %}
         </select>
       </div>
       {% else %}
@@ -132,7 +137,8 @@ function updateIsolationVisibility() {
   const sel = document.getElementById('engineSelect');
   const row = document.getElementById('isolationRow');
   if (!sel || !row) return;
-  row.style.display = (sel.value.startsWith('rqlite:')) ? 'none' : '';
+  const noIso = sel.value.startsWith('rqlite:') || sel.value.startsWith('elasticsearch:');
+  row.style.display = noIso ? 'none' : '';
 }
 updateIsolationVisibility();
 </script>

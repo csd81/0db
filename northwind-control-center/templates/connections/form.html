@@ -248,6 +248,35 @@
         </div>
       </div>
 
+      <!-- Elasticsearch fields -->
+      {% set es = conn.conn_params if conn and conn.db_type == 'elasticsearch' else {} %}
+      <div id="elasticsearchFields" style="display:none">
+        <div class="mb-2">
+          <label class="form-label small">URL</label>
+          <input type="text" name="es_url" class="form-control"
+                 value="{{ es.get('url', 'https://localhost:9200') }}"
+                 placeholder="https://localhost:9200">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Username</label>
+            <input type="text" name="es_username" class="form-control"
+                   value="{{ es.get('username', 'elastic') }}" placeholder="elastic">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Password</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="{% if conn %}(unchanged if blank){% else %}password{% endif %}">
+          </div>
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="es_verify_certs" value="1" id="esVerify"
+                 {% if es.get('verify_certs','0') == '1' %}checked{% endif %}>
+          <label class="form-check-label small" for="esVerify">Verify TLS certificate</label>
+          <div class="form-text">Uncheck for local self-signed certificates (ES 8 default).</div>
+        </div>
+      </div>
+
       <!-- rqlite fields -->
       {% set rql = conn.conn_params if conn and conn.db_type == 'rqlite' else {} %}
       <div id="rqliteFields" style="display:none">
@@ -314,6 +343,7 @@ function toggleFields() {
   document.getElementById('mongodbFields').style.display = t === 'mongodb' ? '' : 'none';
   document.getElementById('cassandraFields').style.display = t === 'cassandra' ? '' : 'none';
   document.getElementById('rqliteFields').style.display = t === 'rqlite' ? '' : 'none';
+  document.getElementById('elasticsearchFields').style.display = t === 'elasticsearch' ? '' : 'none';
 }
 toggleFields();
 

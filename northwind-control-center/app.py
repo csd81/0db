@@ -16,6 +16,7 @@ import services.analytics_service as analytics
 import services.graph_service as gs
 import services.ml_service as ml
 import services.rqlite_service as rqlite_svc
+import services.elasticsearch_service as es_svc
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -47,6 +48,9 @@ from blueprints.redis_bp import redis_bp
 from blueprints.mongo_bp import mongo_bp
 from blueprints.cassandra_bp import cassandra_bp
 from blueprints.rqlite_bp import rqlite_bp
+from blueprints.elasticsearch_bp import elasticsearch_bp
+from blueprints.cqrs_bp import cqrs_bp
+from blueprints.pgvector_bp import pgvector_bp
 
 app.register_blueprint(auth)
 app.register_blueprint(connections)
@@ -60,6 +64,9 @@ app.register_blueprint(redis_bp)
 app.register_blueprint(mongo_bp)
 app.register_blueprint(cassandra_bp)
 app.register_blueprint(rqlite_bp)
+app.register_blueprint(elasticsearch_bp)
+app.register_blueprint(cqrs_bp)
+app.register_blueprint(pgvector_bp)
 
 # ── Context processor: make current_user available in all templates ────────────
 from auth import get_current_user
@@ -89,6 +96,9 @@ def home():
 def _rqlite_conns():
     return [c for c in meta_db.list_connections() if c['db_type'] == 'rqlite']
 
+def _es_conns():
+    return [c for c in meta_db.list_connections() if c['db_type'] == 'elasticsearch']
+
 
 @app.route('/query')
 def query_studio():
@@ -96,7 +106,8 @@ def query_studio():
     return render_template('query_studio.html', saved_queries=saved,
                            sql_text='', columns=None, rows=None,
                            elapsed_ms=None, error=None,
-                           rqlite_conns=_rqlite_conns(), engine='')
+                           rqlite_conns=_rqlite_conns(),
+                           es_conns=_es_conns(), engine='')
 
 
 @app.route('/query/run', methods=['POST'])
@@ -117,6 +128,9 @@ def run_query():
     if engine.startswith('rqlite:'):
         rqlite_conn_id = int(engine.split(':', 1)[1])
         columns, rows, elapsed_ms, error = rqlite_svc.run_query(rqlite_conn_id, sql_text)
+    elif engine.startswith('elasticsearch:'):
+        es_conn_id = int(engine.split(':', 1)[1])
+        columns, rows, elapsed_ms, error = es_svc.run_query(es_conn_id, sql_text)
     else:
         columns, rows, elapsed_ms, error = qs.run_user_query(sql_text, isolation, readonly)
 
@@ -139,6 +153,7 @@ def run_query():
         isolation=isolation,
         readonly=readonly,
         rqlite_conns=_rqlite_conns(),
+        es_conns=_es_conns(),
         engine=engine,
     )
 

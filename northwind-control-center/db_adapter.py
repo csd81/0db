@@ -215,6 +215,15 @@ def adapter_test(conn_id: int) -> tuple[bool, str | None]:
             import requests as _req
             r = _req.get(params.get('url', 'http://127.0.0.1:4001') + '/status', timeout=5)
             r.raise_for_status()
+        elif db_type == 'elasticsearch':
+            from elasticsearch import Elasticsearch
+            _ec = Elasticsearch(
+                params.get('url', 'https://localhost:9200'),
+                basic_auth=(params.get('username', 'elastic'), password),
+                verify_certs=False, ssl_show_warn=False,
+                request_timeout=5,
+            )
+            _ec.info()
         else:
             return False, f"Unsupported db_type: {db_type!r}"
 

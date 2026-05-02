@@ -247,3 +247,106 @@ def run_aggregation(conn_id: int, query_key: str) -> tuple[list, list, str | Non
         return cols, rows, None
     except Exception as e:
         return [], [], str(e)
+
+
+# ── JSON Schema Validation ────────────────────────────────────────────────────
+
+_NORTHWIND_VALIDATORS = {
+    'products': {
+        '$jsonSchema': {
+            'bsonType': 'object',
+            'required': ['product_id', 'product_name', 'unit_price'],
+            'properties': {
+                'product_id':    {'bsonType': 'int',    'description': 'must be integer'},
+                'product_name':  {'bsonType': 'string', 'description': 'must be string'},
+                'unit_price':    {'bsonType': 'double', 'description': 'must be number > 0', 'minimum': 0},
+                'units_in_stock':{'bsonType': 'int'},
+                'discontinued':  {'bsonType': 'bool'},
+            }
+        }
+    },
+    'orders': {
+        '$jsonSchema': {
+            'bsonType': 'object',
+            'required': ['customer_id', 'order_date'],
+            'properties': {
+                'customer_id': {'bsonType': 'string'},
+                'order_date':  {'bsonType': 'string'},
+                'total':       {'bsonType': 'double', 'minimum': 0},
+                'items':       {'bsonType': 'array'},
+            }
+        }
+    },
+}
+
+def get_preset_validators() -> list[dict]:
+    return [
+        {'key': 'products', 'collection': 'products', 'description': 'Northwind Products validator'},
+        {'key': 'orders',   'collection': 'orders',   'description': 'Northwind Orders validator'},
+    ]
+
+def apply_validator(conn_id: int, collection: str, validator_key: str) -> str | None:
+    try:
+        db = get_db(conn_id)
+        validator = _NORTHWIND_VALIDATORS.get(validator_key)
+        if not validator:
+            return f'Unknown validator key: {validator_key}'
+        db.command('collMod', collection,
+                   validator=validator,
+                   validationLevel='moderate',
+                   validationAction='warn')
+        return None
+    except Exception as e:
+        return str(e)
+
+def get_current_validator(conn_id: int, collection: str) -> tuple[dict, str | None]:
+    try:
+        db = get_db(conn_id)
+        result = db.command('listCollections', filter={'name': collection})
+        cols = list(result.get('cursor', {}).get('firstBatch', []))
+        if cols:
+            validator = cols[0].get('options', {}).get('validator', {})
+            return validator, None
+        return {}, None
+    except Exception as e:
+        return {}, str(e)
+
+def validate_document_against_schema(conn_id: int, collection: str, doc_str: str) -> tuple[bool, list, str | None]:
+    import json
+    try:
+        doc = json.loads(doc_str)
+    except json.JSONDecodeError as e:
+        return False, [], f'Invalid JSON: {e}'
+    try:
+        validator, err = get_current_validator(conn_id, collection)
+        if err:
+            return False, [], err
+        if not validator:
+            return True, [], None  # no validator = anything is valid
+        schema = validator.get('$jsonSchema', {})
+        issues = []
+        required = schema.get('required', [])
+        for field in required:
+            if field not in doc:
+                issues.append(f'Missing required field: {field}')
+        props = schema.get('properties', {})
+        for field, rules in props.items():
+            if field in doc:
+                val = doc[field]
+                btype = rules.get('bsonType')
+                if btype == 'string' and not isinstance(val, str):
+                    issues.append(f'{field}: expected string, got {type(val).__name__}')
+                elif btype == 'int' and not isinstance(val, int):
+                    issues.append(f'{field}: expected int, got {type(val).__name__}')
+                elif btype == 'double' and not isinstance(val, (int, float)):
+                    issues.append(f'{field}: expected number, got {type(val).__name__}')
+                elif btype == 'bool' and not isinstance(val, bool):
+                    issues.append(f'{field}: expected bool, got {type(val).__name__}')
+                elif btype == 'array' and not isinstance(val, list):
+                    issues.append(f'{field}: expected array, got {type(val).__name__}')
+                minimum = rules.get('minimum')
+                if minimum is not None and isinstance(val, (int, float)) and val < minimum:
+                    issues.append(f'{field}: value {val} is below minimum {minimum}')
+        return (len(issues) == 0), issues, None
+    except Exception as e:
+        return False, [], str(e)

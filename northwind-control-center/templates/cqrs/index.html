@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}CQRS Demo – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-1"><i class="bi bi-arrows-collapse-vertical"></i> CQRS — Command Query Responsibility Segregation</h4>
+<p class="text-muted small mb-3">
+  Commands (writes) are routed to the <strong>Primary</strong> node; Queries (reads) go to the <strong>Replica</strong>.
+  The router inspects the first SQL keyword to decide automatically.
+</p>
+
+{# ── Architecture diagram ─────────────────────────────────────────────────── #}
+<div class="card mb-3 border-secondary">
+  <div class="card-header text-secondary small"><i class="bi bi-diagram-2"></i> Architecture</div>
+  <div class="card-body p-0">
+    <pre class="mb-0 p-3 small" style="line-height:1.55; color: var(--bs-body-color); background: transparent;">
+                 Client Request
+                       │
+                       ▼
+               ┌───────────────┐
+               │  CQRS Router  │ ◄── classify SQL keyword
+               │  (this page)  │     INSERT/UPDATE/DELETE → command
+               └───────┬───────┘     SELECT/…            → query
+                       │
+           ┌───────────┴───────────┐
+           │                       │
+     COMMAND path             QUERY path
+    (write model)            (read model)
+           │                       │
+           ▼                       ▼
+    ┌─────────────┐        ┌─────────────────┐
+    │   Primary   │        │     Replica     │
+    │  (writes)   │        │    (reads)      │
+    │ INSERT      │        │ SELECT …        │
+    │ UPDATE      │        │ aggregations    │
+    │ DELETE      │        │ reports         │
+    └─────────────┘        └─────────────────┘</pre>
+  </div>
+</div>
+
+{# ── Connection pair selector + SQL editor ────────────────────────────────── #}
+<div class="row g-3">
+
+  <div class="col-xl-4 col-lg-5">
+
+    {# Connection picker card #}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-plug"></i> Connection Pair</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-success">
+            <i class="bi bi-hdd-fill"></i> Primary (writes — commands)
+          </label>
+          <select id="primarySelect" name="primary_conn_id" class="form-select form-select-sm">
+            <option value="0">— choose primary —</option>
+            {% for c in connections %}
+            <option value="{{ c.id }}"
+              {% if c.id == primary_conn_id %}selected{% endif %}>
+              {{ c.name }} <span class="text-muted">({{ c.db_type }})</span>
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">INSERT / UPDATE / DELETE go here.</div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small fw-semibold text-info">
+            <i class="bi bi-hdd"></i> Replica (reads — queries)
+          </label>
+          <select id="replicaSelect" name="replica_conn_id" class="form-select form-select-sm">
+            <option value="0">— choose replica —</option>
+            {% for c in connections %}
+            <option value="{{ c.id }}"
+              {% if c.id == replica_conn_id %}selected{% endif %}>
+              {{ c.name }} <span class="text-muted">({{ c.db_type }})</span>
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">SELECT statements go here.</div>
+        </div>
+        {% if connections|length == 0 %}
+        <div class="alert alert-warning small py-1 mb-0">
+          <i class="bi bi-exclamation-triangle"></i>
+          No connections registered. <a href="{{ url_for('connections.list_connections') }}">Add one first.</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Demo queries card #}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-lightning-charge"></i> Quick Demo Queries</div>
+      <div class="card-body p-2">
+        <p class="small text-muted mb-2">
+          Click a preset to fill the SQL editor. The router will classify it automatically.
+        </p>
+        {% for d in demos %}
+        <button type="button"
+                class="btn btn-sm w-100 mb-1 text-start
+                       {% if 'SELECT' in d.sql[:10].upper() %}btn-outline-info{% else %}btn-outline-warning{% endif %}"
+                onclick="fillDemo({{ d.sql | tojson }})">
+          <i class="bi bi-{% if 'SELECT' in d.sql[:10].upper() %}search{% else %}pencil{% endif %}"></i>
+          {{ d.label }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Audit control card #}
+    <div class="card">
+      <div class="card-header"><i class="bi bi-journal-text"></i> Audit Log Controls</div>
+      <div class="card-body p-2 d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary flex-grow-1"
+                onclick="refreshAudit()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+        <form method="post" action="{{ url_for('cqrs.clear_audit') }}" class="flex-grow-1">
+          <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+            <i class="bi bi-trash"></i> Clear Log
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>{# /col-xl-4 #}
+
+  <div class="col-xl-8 col-lg-7">
+
+    {# SQL editor + execute form #}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-terminal"></i> SQL Editor</div>
+      <div class="card-body">
+        <form id="cqrsForm" method="post" action="{{ url_for('cqrs.execute') }}">
+          <input type="hidden" name="primary_conn_id" id="fPrimary" value="{{ primary_conn_id }}">
+          <input type="hidden" name="replica_conn_id" id="fReplica" value="{{ replica_conn_id }}">
+
+          <textarea id="sqlEditor" name="sql" class="form-control font-monospace mb-2"
+                    rows="7" placeholder="Type SQL here… SELECT routes to Replica, INSERT/UPDATE/DELETE to Primary."
+                    style="resize: vertical;">{{ sql }}</textarea>
+
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-play-fill"></i> Execute &amp; Route
+            </button>
+            <small class="text-muted">
+              Routing is decided by the <strong>first keyword</strong> of the SQL statement.
+            </small>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {# Result panel #}
+    {% if result %}
+    <div class="card mb-3">
+
+      {# Routing decision banner #}
+      {% if result.routed_to == 'replica' %}
+      <div class="card-header bg-info bg-opacity-25 border-info">
+        <i class="bi bi-search"></i>
+        <strong class="text-info">Routed to REPLICA</strong> — read query
+        <span class="badge bg-info text-dark ms-2">{{ result.conn_type }}</span>
+        <span class="badge bg-secondary ms-1">{{ result.elapsed_ms }} ms</span>
+      </div>
+      {% else %}
+      <div class="card-header bg-warning bg-opacity-25 border-warning">
+        <i class="bi bi-pencil-fill"></i>
+        <strong class="text-warning">Routed to PRIMARY</strong> — write command
+        <span class="badge bg-warning text-dark ms-2">{{ result.conn_type }}</span>
+        <span class="badge bg-secondary ms-1">{{ result.elapsed_ms }} ms</span>
+      </div>
+      {% endif %}
+
+      <div class="card-body">
+
+        {# Error #}
+        {% if result.error %}
+        <div class="alert alert-danger mb-0">
+          <i class="bi bi-x-circle"></i> <strong>Error:</strong> {{ result.error }}
+        </div>
+
+        {# Query result table #}
+        {% elif result.routed_to == 'replica' %}
+        {% if result.columns %}
+        <div class="mb-2 small text-muted">
+          <i class="bi bi-table"></i> {{ result.rows | length }} row(s) returned
+        </div>
+        <div style="overflow-x:auto; max-height: 400px; overflow-y:auto;">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-dark sticky-top">
+              <tr>
+                {% for col in result.columns %}
+                <th>{{ col }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in result.rows %}
+              <tr>
+                {% for cell in row %}
+                <td>{{ cell if cell is not none else '' }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Query returned no columns.</p>
+        {% endif %}
+
+        {# Command result #}
+        {% else %}
+        <div class="alert alert-success mb-0">
+          <i class="bi bi-check-circle-fill"></i>
+          Command executed on Primary.
+          <strong>{{ result.rowcount }}</strong> row(s) affected.
+        </div>
+        {% endif %}
+
+      </div>{# /card-body #}
+    </div>{# /result card #}
+    {% endif %}{# result #}
+
+    {# Audit log panel #}
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-journal-text"></i> Routing Audit Log <small class="text-muted">(last 20)</small></span>
+        <button class="btn btn-sm btn-outline-secondary" onclick="refreshAudit()">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+      <div id="auditTable" style="max-height:320px; overflow-y:auto;">
+        {% include 'cqrs/_audit_rows.html' %}
+      </div>
+    </div>
+
+  </div>{# /col-xl-8 #}
+</div>{# /row #}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Keep hidden inputs in sync with dropdowns */
+document.getElementById('primarySelect').addEventListener('change', function () {
+  document.getElementById('fPrimary').value = this.value;
+});
+document.getElementById('replicaSelect').addEventListener('change', function () {
+  document.getElementById('fReplica').value = this.value;
+});
+
+/* Fill the SQL editor with a preset SQL string */
+function fillDemo(sql) {
+  document.getElementById('sqlEditor').value = sql;
+  document.getElementById('sqlEditor').focus();
+}
+
+/* Live-refresh audit log panel via JSON endpoint */
+function refreshAudit() {
+  fetch('{{ url_for("cqrs.audit_json") }}')
+    .then(r => r.json())
+    .then(data => {
+      const tbody = document.querySelector('#auditTable table tbody');
+      if (!tbody) {
+        // No table yet — reload the whole audit div via a lightweight fetch
+        location.reload();
+        return;
+      }
+      // Clear and repopulate rows
+      tbody.innerHTML = '';
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center py-2">No entries yet.</td></tr>';
+        return;
+      }
+      data.forEach(function (e) {
+        const rowClass = e.error ? 'table-danger' :
+                         (e.routed_to === 'replica' ? 'table-info table-active' : 'table-warning');
+        const badge = e.routed_to === 'replica'
+          ? '<span class="badge bg-info text-dark">Replica</span>'
+          : '<span class="badge bg-warning text-dark">Primary</span>';
+        const rows_cell = e.rows_returned !== null
+          ? e.rows_returned + ' rows'
+          : (e.rowcount !== null ? e.rowcount + ' affected' : '—');
+        const err = e.error ? '<i class="bi bi-exclamation-triangle text-danger" title="' + e.error.replace(/"/g, '\'') + '"></i> ' : '';
+        tbody.innerHTML +=
+          '<tr class="' + rowClass + ' small">' +
+          '<td class="text-muted">' + e.timestamp + '</td>' +
+          '<td>' + badge + '</td>' +
+          '<td><code class="small">' + err + e.sql_snippet + '</code></td>' +
+          '<td>' + rows_cell + '</td>' +
+          '<td>' + e.elapsed_ms + ' ms</td>' +
+          '</tr>';
+      });
+    })
+    .catch(function (err) { console.warn('Audit refresh failed:', err); });
+}
+</script>
+{% endblock %}

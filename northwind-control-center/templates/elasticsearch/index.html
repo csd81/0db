@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Elasticsearch Explorer – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-search"></i> Elasticsearch Explorer</h4>
+
+{% if not conns %}
+<div class="alert alert-info">
+  No Elasticsearch connections registered.
+  <a href="{{ url_for('connections.new_connection') }}" class="alert-link">Add one</a>
+  — type <code>elasticsearch</code>, URL <code>https://localhost:9200</code>, username <code>elastic</code>.
+</div>
+{% else %}
+
+<!-- Connection selector -->
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-auto">
+    <select name="conn_id" class="form-select form-select-sm" onchange="this.form.submit()">
+      <option value="">— select connection —</option>
+      {% for c in conns %}
+      <option value="{{ c.id }}" {% if c.id == conn_id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+{% if conn_id %}
+<div class="row g-3">
+
+  <!-- ── Left panel: index list + import ─────────────────────────────── -->
+  <div class="col-12 col-lg-3">
+
+    <!-- Index list -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-collection"></i> Indices
+      </div>
+      <div class="list-group list-group-flush" style="max-height:320px;overflow-y:auto">
+        {% if idx_err %}
+        <div class="list-group-item text-danger small">{{ idx_err }}</div>
+        {% elif indices %}
+          {% for idx in indices %}
+          <a href="{{ url_for('elasticsearch_bp.view_index', conn_id=conn_id, index_name=idx.name) }}"
+             class="list-group-item list-group-item-action py-1 px-2 small d-flex justify-content-between align-items-center
+                    {% if selected_index == idx.name %}active{% endif %}">
+            <span><i class="bi bi-layers me-1"></i>{{ idx.name }}</span>
+            <span class="badge bg-secondary">{{ idx.docs_count }} docs</span>
+          </a>
+          {% endfor %}
+        {% else %}
+        <div class="list-group-item text-muted small">No indices yet. Import Northwind to start.</div>
+        {% endif %}
+      </div>
+
+      {% if selected_index %}
+      <div class="card-footer py-2">
+        <form method="post"
+              action="{{ url_for('elasticsearch_bp.delete_index', conn_id=conn_id, index_name=selected_index) }}"
+              onsubmit="return confirm('Delete index {{ selected_index }}? This cannot be undone.')">
+          <button class="btn btn-sm btn-outline-danger w-100">
+            <i class="bi bi-trash"></i> Delete {{ selected_index }}
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Import Northwind -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-box-arrow-in-down"></i> Import Northwind
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('elasticsearch_bp.import_northwind', conn_id=conn_id) }}">
+          <label class="form-label small">Source SQL connection</label>
+          <select name="source_conn_id" class="form-select form-select-sm mb-2">
+            <option value="">— select —</option>
+            {% for c in sql_conns %}
+            <option value="{{ c.id }}">{{ c.name }} ({{ c.db_type }})</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-sm btn-success w-100">
+            <i class="bi bi-play-fill"></i> Import
+          </button>
+        </form>
+        <div class="form-text mt-1">
+          Indexes <code>northwind_products</code> and <code>northwind_categories</code>.
+        </div>
+      </div>
+    </div>
+
+    <!-- Aggregation panel -->
+    <div class="card">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-bar-chart"></i> Aggregations
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('elasticsearch_bp.aggregate', conn_id=conn_id) }}">
+          <select name="agg_key" class="form-select form-select-sm mb-2">
+            {% for demo in agg_demos %}
+            <option value="{{ demo.key }}" {% if demo.key == agg_key %}selected{% endif %}>
+              {{ demo.label }}
+            </option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-sm btn-outline-info w-100">
+            <i class="bi bi-play-fill"></i> Run Aggregation
+          </button>
+        </form>
+      </div>
+
+      {% if agg_key %}
+      <div class="card-footer p-2">
+        {% if agg_error %}
+        <div class="alert alert-danger py-1 small mb-0">{{ agg_error }}</div>
+        {% elif agg_columns %}
+        <div style="overflow-x:auto;max-height:250px">
+          <table class="table table-sm table-hover table-bordered mb-0">
+            <thead class="table-dark">
+              <tr>{% for c in agg_columns %}<th class="small">{{ c }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+              {% for row in agg_rows %}
+              <tr>{% for cell in row %}<td class="small">{{ cell }}</td>{% endfor %}</tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">No results.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ── Right panel: index info + search ─────────────────────────────── -->
+  <div class="col-12 col-lg-9">
+
+    {% if selected_index %}
+
+    <!-- Index info: field badges + doc count -->
+    {% if index_info %}
+    <div class="d-flex gap-2 mb-2 flex-wrap align-items-center">
+      <span class="badge bg-primary">
+        <i class="bi bi-file-earmark-text"></i> {{ index_info.doc_count }} documents
+      </span>
+      {% for f in index_info.fields %}
+      <span class="badge bg-secondary">{{ f }}</span>
+      {% endfor %}
+      {% if index_info.error %}
+      <span class="badge bg-danger">{{ index_info.error }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Quick-search buttons -->
+    <div class="mb-2 d-flex flex-wrap gap-1">
+      {% for q in builtin_queries %}
+      <form method="post" action="{{ url_for('elasticsearch_bp.search', conn_id=conn_id) }}" class="d-inline">
+        <input type="hidden" name="index_name" value="{{ selected_index }}">
+        <input type="hidden" name="search_query" value="{{ q.query_text }}">
+        <input type="hidden" name="fuzziness" value="AUTO">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+          {{ q.label }}
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+
+    <!-- Search form -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-search"></i> Full-text search — <code>{{ selected_index }}</code>
+      </div>
+      <div class="card-body pb-2">
+        <form method="post" action="{{ url_for('elasticsearch_bp.search', conn_id=conn_id) }}"
+              class="row g-2 align-items-end mb-2">
+          <input type="hidden" name="index_name" value="{{ selected_index }}">
+          <div class="col">
+            <input type="text" name="search_query" value="{{ search_query }}"
+                   class="form-control form-control-sm"
+                   placeholder="e.g. chai, beverages, anise…">
+          </div>
+          <div class="col-auto">
+            <select name="fuzziness" class="form-select form-select-sm">
+              <option value="AUTO"  {% if fuzziness == 'AUTO'  %}selected{% endif %}>Fuzziness: AUTO</option>
+              <option value="0"     {% if fuzziness == '0'     %}selected{% endif %}>Exact (0)</option>
+              <option value="1"     {% if fuzziness == '1'     %}selected{% endif %}>Fuzzy 1</option>
+              <option value="2"     {% if fuzziness == '2'     %}selected{% endif %}>Fuzzy 2</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-sm btn-primary">
+              <i class="bi bi-search"></i> Search
+            </button>
+          </div>
+        </form>
+
+        {% if search_error %}
+        <div class="alert alert-danger py-1 small">{{ search_error }}</div>
+        {% elif columns %}
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-info text-dark">
+            {{ total_hits }} total hits
+          </span>
+          {% if total_hits > rows|length %}
+          <span class="text-muted small">showing first {{ rows|length }}</span>
+          {% endif %}
+        </div>
+        <div style="overflow-x:auto;max-height:400px">
+          <table class="table table-sm table-hover table-bordered mb-0">
+            <thead class="table-dark">
+              <tr>{% for c in columns %}<th class="small">{{ c }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                {% for cell in row %}
+                <td class="small text-truncate" style="max-width:200px" title="{{ cell }}">{{ cell }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% elif search_query %}
+        <p class="text-muted small mb-0">No results for <strong>{{ search_query }}</strong>.</p>
+        {% else %}
+        <p class="text-muted small mb-0">Enter a query above to search this index.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% else %}
+    <!-- No index selected -->
+    <div class="alert alert-secondary">
+      <i class="bi bi-arrow-left"></i>
+      Select an index from the left panel to browse, search, or delete it.
+    </div>
+    {% endif %}
+
+  </div><!-- /right panel -->
+</div><!-- /row -->
+{% endif %}<!-- /conn_id -->
+{% endif %}<!-- /conns -->
+{% endblock %}
