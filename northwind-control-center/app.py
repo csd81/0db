@@ -1,12 +1,16 @@
 import io
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    flash, jsonify, make_response, session,
+    flash, jsonify, make_response, session, Response, stream_with_context,
 )
+from apscheduler.schedulers.background import BackgroundScheduler
 from config import Config
 from db import close_connection, test_connection
+from db_adapter import close_adapter_connections
+import meta_db
 import services.query_service as qs
 import services.ops_service as ops
+import services.backup_service as bk
 import services.events_service as es
 import services.analytics_service as analytics
 import services.graph_service as gs
@@ -15,6 +19,49 @@ import services.ml_service as ml
 app = Flask(__name__)
 app.config.from_object(Config)
 app.teardown_appcontext(close_connection)
+app.teardown_appcontext(close_adapter_connections)
+
+# ── Meta-DB & Scheduler ───────────────────────────────────────────────────────
+with app.app_context():
+    meta_db.init_meta_db(app)
+
+scheduler = BackgroundScheduler(daemon=True)
+
+from services.replication_service import register_all_jobs
+with app.app_context():
+    register_all_jobs(scheduler, app)
+
+scheduler.start()
+
+# ── Blueprints ─────────────────────────────────────────────────────────────────
+from blueprints.auth_bp import auth
+from blueprints.connections_bp import connections
+from blueprints.replication_bp import replication
+from blueprints.consensus_bp import consensus
+from blueprints.dqs_bp import dqs_bp
+from blueprints.column_store_bp import column_store
+from blueprints.exports_bp import exports
+
+app.register_blueprint(auth)
+app.register_blueprint(connections)
+app.register_blueprint(replication)
+app.register_blueprint(consensus)
+app.register_blueprint(dqs_bp)
+app.register_blueprint(column_store)
+app.register_blueprint(exports)
+
+# ── Context processor: make current_user available in all templates ────────────
+from auth import get_current_user
+
+@app.context_processor
+def inject_user():
+    from flask import session as _session
+    return {
+        'current_user':    get_current_user(),
+        'config':          app.config,
+        'active_db_type':  _session.get('active_db_type', 'sqlserver'),
+        'active_conn_name': _session.get('active_conn_name', 'Default SQL Server'),
+    }
 
 
 # ── Home ──────────────────────────────────────────────────────────────────────
@@ -90,6 +137,8 @@ def operations():
         row_counts=(rc_cols, rc_rows, rc_err),
         low_stock=(ls_cols, ls_rows, ls_err),
     )
+
+
 
 
 # ── Events (Loose Coupling Monitor) ───────────────────────────────────────────

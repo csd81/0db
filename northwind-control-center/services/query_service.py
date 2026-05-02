@@ -2,7 +2,9 @@ import re
 import time
 import io
 import csv
+from flask import session
 from db import run_select, run_command
+import db_adapter
 
 BLOCKED = re.compile(
     r'\b(DROP\s+TABLE|DROP\s+DATABASE|TRUNCATE|ALTER\s+LOGIN|SHUTDOWN|XP_CMDSHELL)\b',
@@ -18,20 +20,22 @@ ISOLATION_LEVELS = {
 }
 
 
+def _active_conn():
+    return session.get('active_conn_id'), session.get('active_db_type', 'sqlserver')
+
+
 def list_saved_queries():
+    _, db_type = _active_conn()
+    if db_type != 'sqlserver':
+        return []
     try:
         _, rows = run_select(
             "SELECT query_id, query_name, category, is_readonly, query_text "
             "FROM dbo.saved_queries ORDER BY category, query_name"
         )
         return [
-            {
-                'query_id': r[0],
-                'query_name': r[1],
-                'category': r[2],
-                'is_readonly': r[3],
-                'query_text': r[4],
-            }
+            {'query_id': r[0], 'query_name': r[1], 'category': r[2],
+             'is_readonly': r[3], 'query_text': r[4]}
             for r in rows
         ]
     except Exception:
@@ -39,6 +43,9 @@ def list_saved_queries():
 
 
 def get_saved_query(query_id):
+    _, db_type = _active_conn()
+    if db_type != 'sqlserver':
+        return None, True
     try:
         _, rows = run_select(
             "SELECT query_text, is_readonly FROM dbo.saved_queries WHERE query_id = ?",
@@ -64,12 +71,15 @@ def run_user_query(sql_text, isolation_level='READ COMMITTED', readonly=True):
         if first_word not in ('SELECT', 'WITH', 'EXEC'):
             return None, None, 0, 'Read-only mode: only SELECT / WITH / EXEC statements are allowed.'
 
-    iso_stmt = ISOLATION_LEVELS.get(isolation_level, ISOLATION_LEVELS['READ COMMITTED'])
-    full_sql = iso_stmt + '\n' + sql
+    conn_id, db_type = _active_conn()
 
     start = time.perf_counter()
     try:
-        columns, rows = run_select(full_sql)
+        if conn_id:
+            columns, rows = db_adapter.adapter_select(conn_id, sql)
+        else:
+            iso_stmt = ISOLATION_LEVELS.get(isolation_level, ISOLATION_LEVELS['READ COMMITTED'])
+            columns, rows = run_select(iso_stmt + '\n' + sql)
         elapsed_ms = int((time.perf_counter() - start) * 1000)
         return columns, rows, elapsed_ms, None
     except Exception as e:

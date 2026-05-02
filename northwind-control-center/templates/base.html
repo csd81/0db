@@ -28,6 +28,7 @@
           <a class="nav-link {% if request.endpoint in ('query_studio','run_query') %}active{% endif %}"
              href="{{ url_for('query_studio') }}"><i class="bi bi-terminal"></i> Query Studio</a>
         </li>
+        {% if active_db_type == 'sqlserver' %}
         <li class="nav-item">
           <a class="nav-link {% if request.endpoint == 'operations' %}active{% endif %}"
              href="{{ url_for('operations') }}"><i class="bi bi-speedometer2"></i> Operations</a>
@@ -48,6 +49,67 @@
           <a class="nav-link {% if request.endpoint in ('insights','train_model','predict_value','inventory_risk','anomalies') %}active{% endif %}"
              href="{{ url_for('insights') }}"><i class="bi bi-cpu"></i> Insights</a>
         </li>
+        {% endif %}
+        <li class="nav-item">
+          <a class="nav-link {% if request.blueprint == 'exports' %}active{% endif %}"
+             href="{{ url_for('exports.index') }}"><i class="bi bi-box-arrow-up"></i> Exports</a>
+        </li>
+        <!-- Control Plane modules -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle {% if request.blueprint in ('connections','replication','consensus','dqs','column_store') %}active{% endif %}"
+             href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-server"></i> Control Plane
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('connections.list_connections') }}">
+              <i class="bi bi-plug"></i> Connections</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('replication.status') }}">
+              <i class="bi bi-arrow-repeat"></i> Replication</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('consensus.index') }}">
+              <i class="bi bi-cpu-fill"></i> PoW Consensus</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('dqs.index') }}">
+              <i class="bi bi-shield-check"></i> DQS</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('column_store.index') }}">
+              <i class="bi bi-lightning-charge"></i> Column Store</a></li>
+            {% if current_user and current_user.role == 'admin' %}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('auth.users') }}">
+              <i class="bi bi-people"></i> Users</a></li>
+            {% endif %}
+          </ul>
+        </li>
+      </ul>
+      <!-- Auth + active connection display -->
+      <ul class="navbar-nav ms-2">
+        {% if current_user %}
+        <li class="nav-item me-2 d-flex align-items-center">
+          {% set _type_colors = {'sqlserver':'primary','sqlite':'secondary','postgresql':'info','mysql':'warning'} %}
+          <span class="badge bg-{{ _type_colors.get(active_db_type, 'secondary') }}">
+            <i class="bi bi-database"></i> {{ active_conn_name }}
+          </span>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+            <span class="badge ms-1 bg-{% if current_user.role == 'admin' %}danger{% else %}secondary{% endif %} small">
+              {{ current_user.role }}
+            </span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ url_for('auth.switch_connection') }}">
+              <i class="bi bi-arrow-left-right"></i> Switch Connection</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+              <i class="bi bi-box-arrow-right"></i> Logout</a></li>
+          </ul>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.login') }}">
+            <i class="bi bi-box-arrow-in-right"></i> Login
+          </a>
+        </li>
+        {% endif %}
       </ul>
     </div>
   </div>

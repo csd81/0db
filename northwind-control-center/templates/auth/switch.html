@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Switch Connection – Northwind CC{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-sm-10 col-md-5 col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-arrow-left-right"></i> Switch Database Connection</div>
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label small">Connect to</label>
+            <select name="active_conn_id" class="form-select">
+              {% for c in connections %}
+              <option value="{{ c.id }}">
+                {{ c.name }}
+                {% if c.db_type == 'sqlserver' %}[SQL Server]
+                {% elif c.db_type == 'sqlite' %}[SQLite]
+                {% elif c.db_type == 'postgresql' %}[PostgreSQL]
+                {% elif c.db_type == 'mysql' %}[MySQL]
+                {% else %}[{{ c.db_type }}]{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-arrow-left-right"></i> Switch
+            </button>
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

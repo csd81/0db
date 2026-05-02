@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}PoW Consensus – Northwind CC{% endblock %}
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-cpu"></i> Proof-of-Work Consensus Simulator</h4>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">Start Mining Round</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('consensus.start') }}" id="mineForm">
+          <div class="mb-2">
+            <label class="form-label small">Payload (JSON — the contested data)</label>
+            <textarea name="payload" class="form-control form-control-sm" rows="4"
+                      placeholder='{"table":"products","record_id":5,"data":{"price":99.99}}'
+            >{{ state.payload | tojson if state.payload else '' }}</textarea>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small">Difficulty (leading zeros)</label>
+              <input type="number" name="difficulty" class="form-control form-control-sm"
+                     min="1" max="6" value="{{ state.difficulty or 4 }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Nodes</label>
+              <input type="number" name="n_nodes" class="form-control form-control-sm"
+                     min="2" max="5" value="3">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100"
+                  {% if state.active %}disabled{% endif %}>
+            <i class="bi bi-play-fill"></i> {% if state.active %}Mining…{% else %}Start{% endif %}
+          </button>
+        </form>
+        {% if not state.active and state.winner %}
+        <form method="post" action="{{ url_for('consensus.reset') }}" class="mt-2">
+          <button class="btn btn-outline-secondary w-100 btn-sm">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          </button>
+        </form>
+        {% endif %}
+        <div class="mt-3 small text-muted">
+          Difficulty {{ state.difficulty }}: SHA-256 hash must start with
+          <code>{{ '0' * (state.difficulty or 4) }}</code><br>
+          Expected ~{{ (16 ** (state.difficulty or 4)) | int }} hashes to win.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div id="nodesContainer" class="row g-3">
+      {% for node_id, node in state.nodes.items() %}
+      <div class="col">
+        <div class="card h-100 border-{% if node.winner %}success{% elif node.status == 'lost' %}secondary{% else %}primary{% endif %}"
+             id="node-{{ node_id }}">
+          <div class="card-header small fw-bold d-flex justify-content-between">
+            <span>Node {{ node_id }}</span>
+            <span class="badge bg-{% if node.winner %}success{% elif node.status == 'lost' %}secondary{% elif node.status == 'mining' %}primary{% else %}secondary{% endif %}">
+              {{ node.status }}
+            </span>
+          </div>
+          <div class="card-body text-center py-3">
+            <div class="stat-number text-primary" id="nonce-{{ node_id }}">{{ node.nonce }}</div>
+            <div class="small text-muted mb-1">nonces tried</div>
+            <code class="small" id="hash-{{ node_id }}">{{ node.hash }}</code>
+            <div class="small text-muted mt-2">{{ node.elapsed_ms }}ms</div>
+            {% if node.winner %}
+            <div class="mt-2">
+              <span class="badge bg-success fs-6"><i class="bi bi-trophy-fill"></i> WINNER</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="col-12">
+        <div class="alert alert-info mb-0">Start a mining round to see nodes compete.</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if state.winner %}
+    <div class="alert alert-success mt-3">
+      <i class="bi bi-trophy-fill"></i>
+      <strong>Node {{ state.winner }} won</strong> — finished at {{ state.finished_at }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const active = {{ state.active | tojson }};
+if (active) {
+  const interval = setInterval(() => {
+    fetch("{{ url_for('consensus.state') }}")
+      .then(r => r.json())
+      .then(s => {
+        for (const [nid, node] of Object.entries(s.nodes)) {
+          const el = document.getElementById(`nonce-${nid}`);
+          const hel = document.getElementById(`hash-${nid}`);
+          if (el) el.textContent = node.nonce.toLocaleString();
+          if (hel) hel.textContent = node.hash;
+        }
+        if (!s.active) {
+          clearInterval(interval);
+          location.reload();
+        }
+      });
+  }, 400);
+}
+</script>
+{% endblock %}

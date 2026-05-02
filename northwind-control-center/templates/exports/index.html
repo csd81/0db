@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Exports & Backups – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-box-arrow-up"></i> Exports &amp; Backups</h4>
+
+{% if db_type != 'sqlserver' %}
+<div class="alert alert-warning">
+  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+  <strong>Limited export options.</strong>
+  You are connected to a <strong>{{ db_type }}</strong> database.
+  SQL Server-specific exports (MySQL dump, PostgreSQL dump, native .bak backup) are only available when connected to SQL Server.
+</div>
+{% endif %}
+
+<div class="row g-3">
+
+{% if db_type == 'sqlserver' %}
+  <!-- Native .bak -->
+  <div class="col-12">
+    <div class="card border-success">
+      <div class="card-header text-success"><i class="bi bi-database-down"></i> Native SQL Server Backup (.bak) — Lossless</div>
+      <div class="card-body">
+        <p class="small mb-2">
+          Runs <code>BACKUP DATABASE ... TO DISK</code> on the SQL Server VM, then streams
+          the <code>.bak</code> directly to your browser over WinRM in 256 KB chunks.
+          Complete, restorable SQL Server backup — no type information lost.
+        </p>
+        <p class="small text-muted mb-3">
+          VM: <code>{{ config.WINRM_HOST }}</code> &nbsp;·&nbsp;
+          Path: <code>{{ config.WINRM_BAK_PATH }}</code>
+        </p>
+        <form method="post" action="{{ url_for('exports.backup_native') }}">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-download"></i> Backup &amp; Download .bak
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MySQL -->
+  <div class="col-12 col-xl-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-filetype-sql"></i> Export → MySQL (.sql)</div>
+      <div class="card-body">
+        <div class="alert alert-warning py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i><strong>Lossy.</strong>
+          <ul class="mb-0 mt-1">
+            <li><code>datetime2(7)</code> → <code>DATETIME(6)</code>: sub-microsecond precision lost</li>
+            <li><code>datetimeoffset</code> → <code>VARCHAR(34)</code>: timezone offset lost</li>
+            <li><code>uniqueidentifier</code> → <code>CHAR(36)</code>: no UUID enforcement</li>
+            <li>T-SQL procedures/triggers/functions: not exported</li>
+          </ul>
+          NULL preserved. PKs, FKs, simple defaults included.
+        </div>
+        <form method="post" action="{{ url_for('exports.export_mysql') }}">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-download"></i> Download northwind_mysql.sql
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- PostgreSQL -->
+  <div class="col-12 col-xl-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-filetype-sql"></i> Export → PostgreSQL (.sql)</div>
+      <div class="card-body">
+        <div class="alert alert-warning py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i><strong>Lossy (best cross-DB approximation).</strong>
+          <ul class="mb-0 mt-1">
+            <li><code>datetime2(7)</code> → <code>TIMESTAMP(6)</code>: last sub-microsecond digit lost</li>
+            <li><code>datetimeoffset</code> → <code>TIMESTAMPTZ</code>: normalised to UTC, offset lost</li>
+            <li><code>hierarchyid</code> / <code>sql_variant</code> → <code>TEXT</code></li>
+            <li>T-SQL procedures/triggers/functions: not exported</li>
+          </ul>
+          NULL preserved. PKs, FKs, identity columns, sequence resets included.
+        </div>
+        <form method="post" action="{{ url_for('exports.export_postgres') }}">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-download"></i> Download northwind_postgres.sql
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+  <!-- CSV + JSON sidecar (any db type) -->
+  <div class="col-12 col-xl-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-filetype-csv"></i> Export → CSV + Schema ZIP</div>
+      <div class="card-body">
+        <div class="alert alert-warning py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i><strong>Lossy.</strong>
+          Each table: <code>TableName.csv</code> + <code>TableName.schema.json</code> sidecar.
+          <ul class="mb-0 mt-1">
+            <li><code>NULL</code> exported as empty string — indistinguishable from empty value</li>
+            <li>Binary columns stringified as Python <code>bytes</code> repr</li>
+          </ul>
+          Schema JSON records original types, PKs, FKs, constraints for re-import.
+        </div>
+        <form method="post" action="{{ url_for('exports.export_csv') }}">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-download"></i> Download ZIP
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+{% if db_type == 'sqlserver' %}
+  <!-- SQLite -->
+  <div class="col-12 col-xl-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-box-arrow-down"></i> Export → SQLite</div>
+      <div class="card-body">
+        <div class="alert alert-warning py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i><strong>Lossy.</strong>
+          All values stored as <code>TEXT</code> regardless of original type.
+          <ul class="mb-0 mt-1">
+            <li>Numeric precision, datetime resolution, type semantics all lost</li>
+            <li>Constraints, indexes, foreign keys, computed columns dropped</li>
+          </ul>
+          Use for read/query purposes only.
+        </div>
+        <form method="post" action="{{ url_for('exports.export_sqlite') }}">
+          <div class="row g-2 align-items-end mb-2">
+            <div class="col-12 col-md-5">
+              <label class="form-label small">Target path</label>
+              <input type="text" name="target_path" id="exportPath" class="form-control font-monospace"
+                     placeholder="/home/csd81/Desktop/northwind_export.db"
+                     oninput="document.getElementById('exportConn').value=''">
+            </div>
+            <div class="col-auto text-muted small pt-3">— or —</div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small">Registered SQLite connection</label>
+              <select name="conn_id" id="exportConn" class="form-select"
+                      onchange="if(this.value) document.getElementById('exportPath').value=''">
+                <option value="">— select —</option>
+                {% for c in sqlite_connections %}
+                <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-download"></i> Export
+              </button>
+            </div>
+          </div>
+        </form>
+        {% if export_result %}
+          {% if export_result.error %}
+          <div class="alert alert-danger mt-2 py-2 small">Export failed: {{ export_result.error }}</div>
+          {% else %}
+          <div class="alert alert-success mt-2 py-2 small">
+            Exported {{ export_result.tables|length }} table(s) to <code>{{ export_result.path }}</code>:
+            {{ export_result.tables|join(', ') }}
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+</div>
+{% endblock %}

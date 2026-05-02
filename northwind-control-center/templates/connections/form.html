@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}{% if conn %}Edit{% else %}New{% endif %} Connection – Northwind CC{% endblock %}
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-plug"></i> {% if conn %}Edit{% else %}New{% endif %} Connection</h4>
+
+<div class="card" style="max-width:600px">
+  <div class="card-body">
+    <form method="post">
+      <div class="mb-3">
+        <label class="form-label small">Name</label>
+        <input type="text" name="name" class="form-control" required
+               value="{{ conn.name if conn else '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label small">Database Type</label>
+        <select name="db_type" class="form-select" id="dbTypeSelect" onchange="toggleFields()">
+          {% for t in db_types %}
+          <option value="{{ t }}" {% if conn and conn.db_type == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- SQLite fields -->
+      <div id="sqliteFields">
+        <div class="mb-3">
+          <label class="form-label small">SQLite File Path</label>
+          <input type="text" name="sqlite_path" id="sqlitePath" class="form-control"
+                 placeholder="/home/csd81/Desktop/mydb.db"
+                 value="{{ conn.conn_params.database if conn and conn.db_type == 'sqlite' else '' }}">
+          <div class="form-text">
+            Absolute path. The file and any missing directories will be created automatically.
+          </div>
+        </div>
+      </div>
+
+      <!-- SQL Server fields -->
+      {% set p = conn.conn_params if conn and conn.db_type == 'sqlserver' else {} %}
+      <div id="sqlserverFields" style="display:none">
+        <div class="row g-2 mb-2">
+          <div class="col-8">
+            <label class="form-label small">Server <span class="text-muted">(IP,port)</span></label>
+            <input type="text" name="ss_server" class="form-control"
+                   value="{{ p.get('server', defaults.server) }}"
+                   placeholder="34.118.34.126,1433">
+          </div>
+          <div class="col-4">
+            <label class="form-label small">Database</label>
+            <input type="text" name="ss_database" class="form-control"
+                   value="{{ p.get('database', defaults.database) }}">
+          </div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Username</label>
+            <input type="text" name="ss_username" class="form-control"
+                   value="{{ p.get('username', defaults.username) }}">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Password</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="{% if conn %}(unchanged if blank){% else %}password{% endif %}">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">ODBC Driver</label>
+          <input type="text" name="ss_driver" class="form-control"
+                 value="{{ p.get('driver', defaults.driver) }}">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Encrypt</label>
+            <select name="ss_encrypt" class="form-select form-select-sm">
+              {% set enc = p.get('encrypt', defaults.encrypt) %}
+              <option value="yes" {% if enc == 'yes' %}selected{% endif %}>yes</option>
+              <option value="no"  {% if enc == 'no'  %}selected{% endif %}>no</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Trust Server Cert</label>
+            <select name="ss_trust_cert" class="form-select form-select-sm">
+              {% set tc = p.get('trust_server_cert', defaults.trust_server_cert) %}
+              <option value="yes" {% if tc == 'yes' %}selected{% endif %}>yes</option>
+              <option value="no"  {% if tc == 'no'  %}selected{% endif %}>no</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- MySQL fields -->
+      {% set my = conn.conn_params if conn and conn.db_type == 'mysql' else {} %}
+      <div id="mysqlFields" style="display:none">
+        <div class="row g-2 mb-2">
+          <div class="col-8">
+            <label class="form-label small">Host</label>
+            <input type="text" name="my_host" class="form-control"
+                   value="{{ my.get('host', 'localhost') }}"
+                   placeholder="localhost">
+          </div>
+          <div class="col-4">
+            <label class="form-label small">Port</label>
+            <input type="number" name="my_port" class="form-control"
+                   value="{{ my.get('port', '3306') }}"
+                   placeholder="3306">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Database</label>
+          <input type="text" name="my_database" class="form-control"
+                 value="{{ my.get('database', '') }}"
+                 placeholder="northwind">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Username</label>
+            <input type="text" name="my_username" class="form-control"
+                   value="{{ my.get('username', 'root') }}"
+                   placeholder="root">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Password</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="{% if conn %}(unchanged if blank){% else %}password{% endif %}">
+          </div>
+        </div>
+      </div>
+
+      <!-- PostgreSQL fields -->
+      {% set pg = conn.conn_params if conn and conn.db_type == 'postgresql' else {} %}
+      <div id="postgresqlFields" style="display:none">
+        <div class="row g-2 mb-2">
+          <div class="col-8">
+            <label class="form-label small">Host</label>
+            <input type="text" name="pg_host" class="form-control"
+                   value="{{ pg.get('host', 'localhost') }}"
+                   placeholder="localhost">
+          </div>
+          <div class="col-4">
+            <label class="form-label small">Port</label>
+            <input type="number" name="pg_port" class="form-control"
+                   value="{{ pg.get('port', '5432') }}"
+                   placeholder="5432">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Database</label>
+          <input type="text" name="pg_database" class="form-control"
+                 value="{{ pg.get('database', 'postgres') }}"
+                 placeholder="postgres">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Username</label>
+            <input type="text" name="pg_username" class="form-control"
+                   value="{{ pg.get('username', 'postgres') }}"
+                   placeholder="postgres">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Password</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="{% if conn %}(unchanged if blank){% else %}password{% endif %}">
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg"></i> {% if conn %}Save Changes{% else %}Add Connection{% endif %}
+        </button>
+        <a href="{{ url_for('connections.list_connections') }}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleFields() {
+  const t = document.getElementById('dbTypeSelect').value;
+  document.getElementById('sqliteFields').style.display = t === 'sqlite' ? '' : 'none';
+  document.getElementById('sqlserverFields').style.display = t === 'sqlserver' ? '' : 'none';
+  document.getElementById('postgresqlFields').style.display = t === 'postgresql' ? '' : 'none';
+  document.getElementById('mysqlFields').style.display = t === 'mysql' ? '' : 'none';
+}
+toggleFields();
+
+document.getElementById('sqlitePath').addEventListener('keydown', function(e) {
+  if (e.key === 'Tab' && !this.value && this.placeholder) {
+    e.preventDefault();
+    this.value = this.placeholder;
+  }
+});
+</script>
+{% endblock %}

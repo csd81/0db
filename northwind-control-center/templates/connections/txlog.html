@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Transaction Log – {{ conn.name }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3 gap-2">
+  <h4 class="mb-0"><i class="bi bi-journal-text"></i> Transaction Log — {{ conn.name }}</h4>
+  <a href="{{ url_for('connections.browse', conn_id=conn.id) }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Browser
+  </a>
+</div>
+
+{% if log %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between">
+    <span>Last {{ log|length }} entries</span>
+    <small class="text-muted">Newest first</small>
+  </div>
+  <div class="card-body p-0" style="overflow-x:auto">
+    <table class="table table-sm table-hover mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th><th>Table</th><th>Op</th><th>Record</th>
+          <th>OldData</th><th>NewData</th><th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in log %}
+        <tr>
+          <td>{{ entry.LogID }}</td>
+          <td>{{ entry.TableName }}</td>
+          <td>
+            <span class="badge bg-{% if entry.Operation == 'INSERT' %}success{% elif entry.Operation == 'UPDATE' %}warning text-dark{% else %}danger{% endif %}">
+              {{ entry.Operation }}
+            </span>
+          </td>
+          <td>{{ entry.RecordID }}</td>
+          <td><code class="small">{{ (entry.OldData or '')[:80] }}</code></td>
+          <td><code class="small">{{ (entry.NewData or '')[:80] }}</code></td>
+          <td class="text-muted small">{{ entry.Timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No transactions recorded yet. Use the table browser to insert, update, or delete rows.</div>
+{% endif %}
+{% endblock %}

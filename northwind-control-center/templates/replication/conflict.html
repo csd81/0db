@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Conflicts – Northwind CC{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3 gap-2">
+  <h4 class="mb-0"><i class="bi bi-exclamation-diamond"></i> Merge Conflict Resolution</h4>
+  <a href="{{ url_for('replication.status') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-sm-6">
+        <label class="form-label small">Table to compare</label>
+        <input type="text" name="table" class="form-control form-control-sm"
+               value="{{ table }}" placeholder="e.g. products">
+      </div>
+      <div class="col-sm-2">
+        <button type="submit" class="btn btn-sm btn-primary w-100">Detect Conflicts</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if conflicts %}
+{% for conflict in conflicts %}
+<div class="card mb-3 border-warning">
+  <div class="card-header bg-warning text-dark">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    Conflict — Table: <strong>{{ conflict.table }}</strong> | Record ID: <strong>{{ conflict.record_id }}</strong>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      {% for nc in conflict.node_conflicts %}
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-header small">Node {{ nc.node_id }} — {{ nc.timestamp }}</div>
+          <div class="card-body">
+            <pre class="small mb-2">{{ nc.new_data | tojson(indent=2) }}</pre>
+            {% if current_user and current_user.role == 'admin' %}
+            <form method="post" action="{{ url_for('replication.resolve', job_id=job.id) }}">
+              <input type="hidden" name="table" value="{{ conflict.table }}">
+              <input type="hidden" name="pk_val" value="{{ conflict.record_id }}">
+              <input type="hidden" name="pk_col" value="rowid">
+              <input type="hidden" name="winner_conn_id" value="{{ nc.node_id }}">
+              <input type="hidden" name="winning_data" value="{{ nc.new_data | tojson }}">
+              <button type="submit" class="btn btn-sm btn-success w-100">
+                <i class="bi bi-check-lg"></i> Use This Version
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% elif table %}
+<div class="alert alert-success"><i class="bi bi-check-circle"></i> No conflicts detected for table "{{ table }}".</div>
+{% endif %}
+{% endblock %}

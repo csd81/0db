@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Replication – Northwind CC{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <h4 class="mb-0 me-3"><i class="bi bi-arrow-repeat"></i> Replication Jobs</h4>
+</div>
+
+{% for job in jobs %}
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><strong>{{ job.name }}</strong>
+      <span class="badge ms-2 bg-{% if job.status == 'running' %}success{% elif job.status == 'error' %}danger{% else %}secondary{% endif %}">
+        {{ job.status }}
+      </span>
+    </span>
+    <div class="d-flex gap-2">
+      {% if current_user and current_user.role == 'admin' %}
+      {% if job.status != 'running' %}
+      <form method="post" action="{{ url_for('replication.start_job', job_id=job.id) }}">
+        <button class="btn btn-sm btn-success"><i class="bi bi-play-fill"></i> Start</button>
+      </form>
+      {% else %}
+      <form method="post" action="{{ url_for('replication.stop_job', job_id=job.id) }}">
+        <button class="btn btn-sm btn-warning text-dark"><i class="bi bi-stop-fill"></i> Stop</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{{ url_for('replication.trigger_job', job_id=job.id) }}">
+        <button class="btn btn-sm btn-outline-primary"><i class="bi bi-lightning-fill"></i> Run Now</button>
+      </form>
+      <a href="{{ url_for('replication.conflicts', job_id=job.id) }}" class="btn btn-sm btn-outline-warning">
+        <i class="bi bi-exclamation-diamond"></i> Conflicts
+      </a>
+      <form method="post" action="{{ url_for('replication.delete_job', job_id=job.id) }}"
+            onsubmit="return confirm('Delete job?')">
+        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-sm-3">
+        <div class="small text-muted">Master</div>
+        <strong>{{ job.master_name }}</strong>
+        <div class="small text-muted">Log entries: {{ job.master_log_count }}</div>
+      </div>
+      <div class="col-sm-3">
+        <div class="small text-muted">Slave</div>
+        <strong>{{ job.slave_name }}</strong>
+        <div class="small text-muted">Log entries: {{ job.slave_log_count }}</div>
+      </div>
+      <div class="col-sm-2">
+        <div class="small text-muted">Interval</div>
+        {{ job.interval_secs }}s
+      </div>
+      <div class="col-sm-2">
+        <div class="small text-muted">Pending</div>
+        <span class="{% if job.pending_entries > 0 %}text-warning{% else %}text-success{% endif %}">
+          {{ job.pending_entries }}
+        </span>
+      </div>
+      <div class="col-sm-2">
+        <div class="small text-muted">Last Run</div>
+        {{ job.last_run or '—' }}
+      </div>
+    </div>
+    {% if job.last_error %}
+    <div class="alert alert-danger small mt-2 mb-0 py-1">{{ job.last_error }}</div>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No replication jobs configured yet.</div>
+{% endfor %}
+
+{% if current_user and current_user.role == 'admin' %}
+<div class="card mt-3">
+  <div class="card-header"><i class="bi bi-plus-lg"></i> New Log Shipping Job</div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('replication.new_job') }}">
+      <div class="row g-3">
+        <div class="col-sm-3">
+          <label class="form-label small">Job Name</label>
+          <input type="text" name="name" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label small">Master (SQLite)</label>
+          <select name="master_conn_id" class="form-select form-select-sm">
+            {% for c in connections %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label small">Slave (SQLite)</label>
+          <select name="slave_conn_id" class="form-select form-select-sm">
+            {% for c in connections %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-2">
+          <label class="form-label small">Interval (s)</label>
+          <input type="number" name="interval_secs" class="form-control form-control-sm" value="30" min="5">
+        </div>
+        <div class="col-sm-1 d-flex align-items-end">
+          <button type="submit" class="btn btn-sm btn-primary w-100">Add</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
