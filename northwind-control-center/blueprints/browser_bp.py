@@ -90,17 +90,12 @@ def run_sql():
     if not sql:
         return jsonify({'error': 'No SQL provided.'}), 400
     t0 = _time.perf_counter()
-    try:
-        columns, rows = db.run_select(sql)
-        elapsed_ms = round((_time.perf_counter() - t0) * 1000, 1)
-        return jsonify({
-            'columns': columns,
-            'rows': _safe_rows(rows),
-            'row_count': len(rows),
-            'elapsed_ms': elapsed_ms,
-            'error': None,
-        })
-    except Exception as e:
-        elapsed_ms = round((_time.perf_counter() - t0) * 1000, 1)
-        return jsonify({'error': str(e), 'elapsed_ms': elapsed_ms,
-                        'columns': [], 'rows': [], 'row_count': 0})
+    columns, rows, rowcount, error = db.run_any(sql)
+    elapsed_ms = round((_time.perf_counter() - t0) * 1000, 1)
+    return jsonify({
+        'columns': columns,
+        'rows': _safe_rows(rows),
+        'row_count': rowcount,
+        'elapsed_ms': elapsed_ms,
+        'error': error,
+    })

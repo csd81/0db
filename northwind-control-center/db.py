@@ -49,6 +49,31 @@ def run_select(sql, params=None):
     return columns, rows
 
 
+def run_any(sql, params=None):
+    """Execute any SQL statement.
+    Returns (columns, rows, rowcount, error).
+    SELECT → rows populated; DML/DDL → committed, rowcount set, rows=[].
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, params or [])
+        if cursor.description:
+            columns = [col[0] for col in cursor.description]
+            rows = [[_fix_str(cell) for cell in row] for row in cursor.fetchall()]
+            return columns, rows, len(rows), None
+        else:
+            rowcount = cursor.rowcount if cursor.rowcount is not None else 0
+            conn.commit()
+            return [], [], rowcount, None
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return [], [], 0, str(e)
+
+
 def run_command(sql, params=None):
     conn = get_connection()
     cursor = conn.cursor()
