@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Trigger Chain Demo{% endblock %}
+
+{% block content %}
+<style>
+.lightning { font-size: 3rem; transition: color 0.2s, text-shadow 0.2s; }
+.lightning.flash { color: #ffc107; text-shadow: 0 0 20px #ffc107; }
+</style>
+
+<div class="d-flex align-items-center mb-4">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold">⚙️ Trigger Chain Demo</h2>
+</div>
+
+<div class="row g-4">
+
+  <!-- Left: Orders -->
+  <div class="col-md-6">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Connection</label>
+      <select class="form-select" id="conn-select">
+        {% for c in sqlite_conns %}
+        <option value="{{ c.id }}">{{ c.name }}</option>
+        {% else %}
+        <option value="" disabled>No SQLite connections</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Insert Order</div>
+      <div class="card-body">
+        <div class="row g-2">
+          <div class="col-7">
+            <input type="text" class="form-control" id="product-input"
+                   placeholder="Product name" value="Widget">
+          </div>
+          <div class="col-3">
+            <input type="number" class="form-control" id="qty-input"
+                   placeholder="Qty" value="1" min="1">
+          </div>
+          <div class="col-2">
+            <button class="btn btn-warning w-100" id="insert-btn">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h6 class="fw-semibold">Orders Table</h6>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered table-hover">
+        <thead><tr><th>ID</th><th>Product</th><th>Qty</th><th>Timestamp</th></tr></thead>
+        <tbody id="orders-tbody">
+          <tr><td colspan="4" class="text-muted text-center">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right: Audit Log -->
+  <div class="col-md-6">
+    <div class="text-center mb-3">
+      <span class="lightning" id="lightning-icon">⚡</span>
+      <div class="small text-muted mt-1">Python trigger fires on INSERT</div>
+    </div>
+
+    <h6 class="fw-semibold">Audit Log</h6>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered table-hover">
+        <thead><tr><th>ID</th><th>Action</th><th>Table</th><th>Row Data</th><th>Timestamp</th></tr></thead>
+        <tbody id="audit-tbody">
+          <tr><td colspan="5" class="text-muted text-center">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/trigger_chain.js') }}"></script>
+{% endblock %}

@@ -198,3 +198,67 @@ def run_cached_query(redis_conn_id: int, query_key: str, ttl: int = 60) -> dict:
         'ttl': ttl,
         'cache_key': cache_key,
     }
+
+
+# ── Query Benchmark ───────────────────────────────────────────────────────────
+
+import hashlib as _hashlib
+
+
+def benchmark_query(sql_conn_id: int, redis_conn_id: int, sql: str,
+                    cache_ttl: int = 60) -> dict:
+    """
+    Execute sql against the SQL connection and measure elapsed time.
+    Check Redis for a cached result (key = benchmark:<sha256[:16]>).
+    First run stores result in Redis; subsequent runs measure cache read latency.
+    Returns dict: sql_elapsed_ms, redis_elapsed_ms, cache_hit, columns, rows, error.
+    """
+    result = {
+        'sql_elapsed_ms': None,
+        'redis_elapsed_ms': None,
+        'cache_hit': False,
+        'columns': [],
+        'rows': [],
+        'error': None,
+    }
+    cache_key = 'benchmark:' + _hashlib.sha256(sql.encode()).hexdigest()[:16]
+    try:
+        t0 = time.perf_counter()
+        cols, rows = db_adapter.adapter_select(sql_conn_id, sql)
+        result['sql_elapsed_ms'] = round((time.perf_counter() - t0) * 1000, 2)
+        result['columns'] = cols
+        result['rows'] = rows[:200]
+    except Exception as e:
+        result['error'] = f'SQL error: {e}'
+        return result
+
+    try:
+        client = db_adapter.get_redis_client(redis_conn_id)
+        cached = client.get(cache_key)
+        if cached:
+            t0 = time.perf_counter()
+            cached_data = json.loads(cached)
+            result['redis_elapsed_ms'] = round((time.perf_counter() - t0) * 1000, 2)
+            result['cache_hit'] = True
+            result['columns'] = cached_data['columns']
+            result['rows'] = cached_data['rows']
+        else:
+            client.setex(cache_key, cache_ttl,
+                         json.dumps({'columns': cols, 'rows': rows[:200]}))
+            t0 = time.perf_counter()
+            client.get(cache_key)
+            result['redis_elapsed_ms'] = round((time.perf_counter() - t0) * 1000, 2)
+    except Exception as e:
+        result['error'] = (result.get('error') or '') + f' | Redis error: {e}'
+
+    return result
+
+
+def clear_benchmark_cache(redis_conn_id: int) -> int:
+    """Delete all benchmark:* keys. Returns count deleted."""
+    try:
+        client = db_adapter.get_redis_client(redis_conn_id)
+        keys = client.keys('benchmark:*')
+        return client.delete(*keys) if keys else 0
+    except Exception:
+        return 0

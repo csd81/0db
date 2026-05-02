@@ -210,6 +210,45 @@
         </div>
       </div>
 
+      <!-- MariaDB fields (same driver as MySQL / pymysql) -->
+      {% set mdb = conn.conn_params if conn and conn.db_type == 'mariadb' else {} %}
+      <div id="mariadbFields" style="display:none">
+        <div class="row g-2 mb-2">
+          <div class="col-8">
+            <label class="form-label small">Host</label>
+            <input type="text" name="my_host" class="form-control"
+                   value="{{ mdb.get('host', 'localhost') }}"
+                   placeholder="localhost">
+          </div>
+          <div class="col-4">
+            <label class="form-label small">Port</label>
+            <input type="number" name="my_port" class="form-control"
+                   value="{{ mdb.get('port', '3306') }}"
+                   placeholder="3306">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Database</label>
+          <input type="text" name="my_database" class="form-control"
+                 value="{{ mdb.get('database', '') }}"
+                 placeholder="northwind">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Username</label>
+            <input type="text" name="my_username" class="form-control"
+                   value="{{ mdb.get('username', 'root') }}"
+                   placeholder="root">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Password</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="{% if conn %}(unchanged if blank){% else %}password{% endif %}">
+          </div>
+        </div>
+        <div class="form-text mb-2">MariaDB uses the same pymysql driver as MySQL. Default port: 3306.</div>
+      </div>
+
       <!-- PostgreSQL fields -->
       {% set pg = conn.conn_params if conn and conn.db_type == 'postgresql' else {} %}
       <div id="postgresqlFields" style="display:none">
@@ -338,6 +377,7 @@ function toggleFields() {
   document.getElementById('sqlserverFields').style.display = t === 'sqlserver' ? '' : 'none';
   document.getElementById('postgresqlFields').style.display = t === 'postgresql' ? '' : 'none';
   document.getElementById('mysqlFields').style.display = t === 'mysql' ? '' : 'none';
+  document.getElementById('mariadbFields').style.display = t === 'mariadb' ? '' : 'none';
   document.getElementById('neo4jFields').style.display = t === 'neo4j' ? '' : 'none';
   document.getElementById('redisFields').style.display = t === 'redis' ? '' : 'none';
   document.getElementById('mongodbFields').style.display = t === 'mongodb' ? '' : 'none';

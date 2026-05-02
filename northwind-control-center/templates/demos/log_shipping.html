@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Log Shipping Demo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold">📦 Log Shipping Demo</h2>
+</div>
+
+<!-- Connection Selectors + Status -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Master Connection</label>
+        <select class="form-select" id="master-select">
+          {% for c in sqlite_conns %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+          {% else %}
+          <option value="" disabled>No SQLite connections</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Replica Connection</label>
+        <select class="form-select" id="replica-select">
+          {% for c in sqlite_conns %}
+          <option value="{{ c.id }}" {% if loop.index == 2 %}selected{% endif %}>{{ c.name }}</option>
+          {% else %}
+          <option value="" disabled>No SQLite connections</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex gap-2 flex-wrap">
+          <span class="badge bg-secondary" id="badge-master">Master: — entries</span>
+          <span class="badge bg-info" id="badge-replica">Replica: — entries</span>
+          <span class="badge bg-warning text-dark" id="badge-pending">Pending: —</span>
+          <span class="badge bg-success d-none" id="badge-sync">In Sync ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stepper -->
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Replication Pipeline</div>
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+
+      <div class="text-center step-item" id="step-1" style="opacity:0.3; transition:opacity 0.4s;">
+        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-1"
+             style="width:40px;height:40px;font-weight:bold;">1</div>
+        <div class="small">New transaction<br>on master</div>
+      </div>
+      <div class="text-muted fs-5">→</div>
+
+      <div class="text-center step-item" id="step-2" style="opacity:0.3; transition:opacity 0.4s;">
+        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-1"
+             style="width:40px;height:40px;font-weight:bold;">2</div>
+        <div class="small">Written to<br>transaction log</div>
+      </div>
+      <div class="text-muted fs-5">→</div>
+
+      <div class="text-center step-item" id="step-3" style="opacity:0.3; transition:opacity 0.4s;">
+        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-1"
+             style="width:40px;height:40px;font-weight:bold;">3</div>
+        <div class="small">Log copied<br>to replica</div>
+      </div>
+      <div class="text-muted fs-5">→</div>
+
+      <div class="text-center step-item" id="step-4" style="opacity:0.3; transition:opacity 0.4s;">
+        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-1"
+             style="width:40px;height:40px;font-weight:bold;">4</div>
+        <div class="small">Log replayed<br>on replica</div>
+      </div>
+      <div class="text-muted fs-5">→</div>
+
+      <div class="text-center step-item" id="step-5" style="opacity:0.3; transition:opacity 0.4s;">
+        <div class="rounded-circle bg-success d-flex align-items-center justify-content-center mx-auto mb-1"
+             style="width:40px;height:40px;font-weight:bold;">5</div>
+        <div class="small">In sync ✓</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="d-flex gap-3 flex-wrap">
+  <button class="btn btn-primary" id="run-step-btn">
+    <i class="bi bi-fast-forward-fill me-1"></i> Run Step
+  </button>
+  <button class="btn btn-outline-secondary" id="insert-master-btn">
+    <i class="bi bi-plus-circle me-1"></i> Insert on Master
+  </button>
+</div>
+
+<div id="step-result" class="mt-3 text-muted small"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/log_shipping.js') }}"></script>
+{% endblock %}

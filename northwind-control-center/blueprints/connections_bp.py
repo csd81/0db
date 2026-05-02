@@ -9,7 +9,7 @@ from services import transaction_service as ts
 
 connections = Blueprint('connections', __name__, url_prefix='/connections')
 
-_DB_TYPES = ['sqlite', 'sqlserver', 'postgresql', 'mysql', 'neo4j', 'redis', 'mongodb', 'cassandra', 'rqlite', 'elasticsearch']
+_DB_TYPES = ['sqlite', 'sqlserver', 'postgresql', 'mysql', 'mariadb', 'neo4j', 'redis', 'mongodb', 'cassandra', 'rqlite', 'elasticsearch']
 
 
 @connections.route('/')
@@ -182,6 +182,44 @@ def txlog(conn_id):
     return render_template('connections/txlog.html', conn=rec, log=log)
 
 
+# ── Sample database loaders ───────────────────────────────────────────────────
+
+@connections.route('/<int:conn_id>/load-sample/chinook', methods=['POST'])
+@admin_required
+def load_sample_chinook(conn_id):
+    from services.sample_db_service import load_chinook
+    err = load_chinook(conn_id)
+    if err:
+        flash(f'Chinook load failed: {err}', 'danger')
+    else:
+        flash('Chinook sample database loaded successfully.', 'success')
+    return redirect(url_for('connections.browse', conn_id=conn_id))
+
+
+@connections.route('/<int:conn_id>/load-sample/dvdrental', methods=['POST'])
+@admin_required
+def load_sample_dvdrental(conn_id):
+    from services.sample_db_service import load_dvdrental
+    err = load_dvdrental(conn_id)
+    if err:
+        flash(f'dvdrental load failed: {err}', 'danger')
+    else:
+        flash('dvdrental sample database loaded successfully.', 'success')
+    return redirect(url_for('connections.list_connections'))
+
+
+@connections.route('/<int:conn_id>/load-sample/world', methods=['POST'])
+@admin_required
+def load_sample_world(conn_id):
+    from services.sample_db_service import load_world_db
+    err = load_world_db(conn_id)
+    if err:
+        flash(f'World DB load failed: {err}', 'danger')
+    else:
+        flash('World sample database loaded successfully.', 'success')
+    return redirect(url_for('connections.list_connections'))
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _list_tables(conn: sqlite3.Connection) -> list[str]:
@@ -223,6 +261,13 @@ def _params_from_form(db_type: str, form) -> dict:
             'username': form.get('pg_username', 'postgres').strip(),
         }
     elif db_type == 'mysql':
+        return {
+            'host': form.get('my_host', 'localhost').strip(),
+            'port': form.get('my_port', '3306').strip(),
+            'database': form.get('my_database', '').strip(),
+            'username': form.get('my_username', 'root').strip(),
+        }
+    elif db_type == 'mariadb':
         return {
             'host': form.get('my_host', 'localhost').strip(),
             'port': form.get('my_port', '3306').strip(),

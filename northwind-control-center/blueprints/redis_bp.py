@@ -106,3 +106,44 @@ def cache_demo(conn_id):
         selected_key=None, value=None, value_type=None, value_err=None,
         demo_queries=rs.demo_queries(), cache_result=cache_result,
     )
+
+
+# ── Benchmark ─────────────────────────────────────────────────────────────────
+
+@redis_bp.route('/<int:conn_id>/benchmark')
+@login_required
+def benchmark(conn_id):
+    rec = meta_db.get_connection_by_id(conn_id)
+    if not rec:
+        flash('Connection not found.', 'danger')
+        return redirect(url_for('redis_bp.index'))
+    all_conns = [c for c in meta_db.list_connections()
+                 if c['db_type'] not in ('redis', 'rqlite', 'elasticsearch')]
+    return render_template('redis/benchmark.html', conn=rec,
+                           all_conns=all_conns,
+                           result=None, sql_text='', sql_conn_id=None)
+
+
+@redis_bp.route('/<int:conn_id>/benchmark/run', methods=['POST'])
+@login_required
+def benchmark_run(conn_id):
+    sql_conn_id = request.form.get('sql_conn_id', type=int)
+    sql = request.form.get('sql', '').strip()
+    cache_ttl = request.form.get('cache_ttl', 60, type=int)
+    rec = meta_db.get_connection_by_id(conn_id)
+    all_conns = [c for c in meta_db.list_connections()
+                 if c['db_type'] not in ('redis', 'rqlite', 'elasticsearch')]
+    result = None
+    if sql and sql_conn_id:
+        result = rs.benchmark_query(sql_conn_id, conn_id, sql, cache_ttl)
+    return render_template('redis/benchmark.html', conn=rec,
+                           all_conns=all_conns,
+                           result=result, sql_text=sql, sql_conn_id=sql_conn_id)
+
+
+@redis_bp.route('/<int:conn_id>/benchmark/clear', methods=['POST'])
+@login_required
+def benchmark_clear(conn_id):
+    n = rs.clear_benchmark_cache(conn_id)
+    flash(f'Cleared {n} cached benchmark key(s).', 'success')
+    return redirect(url_for('redis_bp.benchmark', conn_id=conn_id))

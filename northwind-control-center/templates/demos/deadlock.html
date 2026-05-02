@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Deadlock Detection Demo{% endblock %}
+
+{% block content %}
+<style>
+.tx-node { width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; border:3px solid #6c757d; transition: all 0.5s; }
+.tx-node.waiting { border-color: #ffc107; animation: pulse 0.8s infinite alternate; }
+.tx-node.victim { border-color: #dc3545; background-color: #2d0b0b; }
+.tx-node.committed { border-color: #198754; background-color: #0b2d1a; }
+@keyframes pulse { from { box-shadow: 0 0 5px #ffc107; } to { box-shadow: 0 0 20px #ffc107; } }
+.arrow-label { font-size: 0.72rem; color: #adb5bd; }
+</style>
+
+<div class="d-flex align-items-center mb-4">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold">🔒 Deadlock Detection Demo</h2>
+</div>
+
+<!-- Connection Selector -->
+<div class="mb-4">
+  {% if pg_conns %}
+  <div class="d-flex align-items-center gap-3">
+    <label class="form-label mb-0 fw-semibold">PostgreSQL Connection:</label>
+    <select class="form-select w-auto" id="pg-conn-select">
+      {% for c in pg_conns %}
+      <option value="{{ c.id }}">{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% else %}
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    Add a PostgreSQL connection first to run this demo.
+  </div>
+  {% endif %}
+</div>
+
+<!-- Visual: Two Transaction Nodes -->
+<div class="d-flex justify-content-center align-items-center gap-5 my-4" style="min-height:160px;">
+  <div class="text-center">
+    <div class="tx-node mx-auto mb-2" id="tx-a-node">Tx A</div>
+    <div class="small text-muted">Thread A</div>
+  </div>
+
+  <div class="text-center">
+    <div class="arrow-label mb-1">—— waiting for ——&gt;</div>
+    <div class="arrow-label">&lt;—— waiting for ——</div>
+  </div>
+
+  <div class="text-center">
+    <div class="tx-node mx-auto mb-2" id="tx-b-node">Tx B</div>
+    <div class="small text-muted">Thread B</div>
+  </div>
+</div>
+
+<div class="d-flex justify-content-center mb-4">
+  <button class="btn btn-danger px-4" id="run-deadlock-btn" {% if not pg_conns %}disabled{% endif %}>
+    <i class="bi bi-play-fill me-1"></i> Run Demo
+  </button>
+</div>
+
+<!-- Result Card -->
+<div id="deadlock-result" class="card d-none mx-auto" style="max-width:600px;">
+  <div class="card-header fw-semibold">Result</div>
+  <div class="card-body">
+    <div id="deadlock-result-body" class="small font-monospace"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/deadlock.js') }}"></script>
+{% endblock %}

@@ -65,7 +65,7 @@ def get_adapter_connection(conn_id: int):
             password=password,
         )
         conn.autocommit = True
-    elif db_type == 'mysql':
+    elif db_type in ('mysql', 'mariadb'):
         conn = pymysql.connect(
             host=params.get('host', 'localhost'),
             port=int(params.get('port', 3306)),
@@ -88,7 +88,7 @@ def adapter_select(conn_id: int, sql: str, params=None) -> tuple[list, list]:
     rec = meta_db.get_connection_by_id(conn_id)
     db_type = rec['db_type']
 
-    if db_type == 'mysql':
+    if db_type in ('mysql', 'mariadb'):
         cur = conn.cursor()
         cur.execute(sql, params or [])
         columns = [d[0] for d in cur.description] if cur.description else []
@@ -107,7 +107,7 @@ def adapter_execute(conn_id: int, sql: str, params=None) -> int:
     rec = meta_db.get_connection_by_id(conn_id)
     db_type = rec['db_type']
 
-    if db_type == 'mysql':
+    if db_type in ('mysql', 'mariadb'):
         cur = conn.cursor()
         cur.execute(sql, params or [])
         return cur.rowcount
@@ -158,7 +158,7 @@ def adapter_test(conn_id: int) -> tuple[bool, str | None]:
             )
             c.cursor().execute("SELECT 1")
             c.close()
-        elif db_type == 'mysql':
+        elif db_type in ('mysql', 'mariadb'):
             c = pymysql.connect(
                 host=params.get('host', 'localhost'),
                 port=int(params.get('port', 3306)),

@@ -52,6 +52,28 @@
                   class="d-inline" onsubmit="return confirm('Delete connection {{ c.name }}?')">
               <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
             </form>
+            {% if c.db_type == 'sqlite' %}
+            <form method="post" action="{{ url_for('connections.load_sample_chinook', conn_id=c.id) }}" class="d-inline"
+                  onsubmit="return confirm('Load Chinook sample data into {{ c.name }}? This may take a moment.')">
+              <button type="submit" class="btn btn-sm btn-outline-info" title="Load Chinook sample DB">
+                <i class="bi bi-box-arrow-in-down"></i> Chinook
+              </button>
+            </form>
+            {% elif c.db_type == 'postgresql' %}
+            <form method="post" action="{{ url_for('connections.load_sample_dvdrental', conn_id=c.id) }}" class="d-inline"
+                  onsubmit="return confirm('Load dvdrental sample data into {{ c.name }}?')">
+              <button type="submit" class="btn btn-sm btn-outline-info" title="Load dvdrental sample DB">
+                <i class="bi bi-box-arrow-in-down"></i> dvdrental
+              </button>
+            </form>
+            {% elif c.db_type in ('mysql', 'mariadb') %}
+            <form method="post" action="{{ url_for('connections.load_sample_world', conn_id=c.id) }}" class="d-inline"
+                  onsubmit="return confirm('Load World sample data into {{ c.name }}?')">
+              <button type="submit" class="btn btn-sm btn-outline-info" title="Load World sample DB">
+                <i class="bi bi-box-arrow-in-down"></i> World DB
+              </button>
+            </form>
+            {% endif %}
             {% endif %}
           </td>
         </tr>
