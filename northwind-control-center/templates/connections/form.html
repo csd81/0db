@@ -86,6 +86,92 @@
         </div>
       </div>
 
+      <!-- MongoDB fields -->
+      {% set mg = conn.conn_params if conn and conn.db_type == 'mongodb' else {} %}
+      <div id="mongodbFields" style="display:none">
+        <div class="row g-2 mb-2">
+          <div class="col-7">
+            <label class="form-label small">Host</label>
+            <input type="text" name="mg_host" class="form-control"
+                   value="{{ mg.get('host', 'localhost') }}" placeholder="localhost">
+          </div>
+          <div class="col-5">
+            <label class="form-label small">Port</label>
+            <input type="number" name="mg_port" class="form-control"
+                   value="{{ mg.get('port', '27017') }}" placeholder="27017">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Database</label>
+          <input type="text" name="mg_database" class="form-control"
+                 value="{{ mg.get('database', 'northwind') }}" placeholder="northwind">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Username <span class="text-muted">(optional)</span></label>
+            <input type="text" name="mg_username" class="form-control"
+                   value="{{ mg.get('username', '') }}" placeholder="(leave blank if none)">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Password <span class="text-muted">(optional)</span></label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="{% if conn %}(unchanged if blank){% else %}optional{% endif %}">
+          </div>
+        </div>
+      </div>
+
+      <!-- Redis fields -->
+      {% set red = conn.conn_params if conn and conn.db_type == 'redis' else {} %}
+      <div id="redisFields" style="display:none">
+        <div class="row g-2 mb-2">
+          <div class="col-7">
+            <label class="form-label small">Host</label>
+            <input type="text" name="redis_host" class="form-control"
+                   value="{{ red.get('host', 'localhost') }}" placeholder="localhost">
+          </div>
+          <div class="col-3">
+            <label class="form-label small">Port</label>
+            <input type="number" name="redis_port" class="form-control"
+                   value="{{ red.get('port', '6379') }}" placeholder="6379">
+          </div>
+          <div class="col-2">
+            <label class="form-label small">DB#</label>
+            <input type="number" name="redis_db" class="form-control"
+                   value="{{ red.get('db', '0') }}" placeholder="0" min="0" max="15">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Password <span class="text-muted">(leave blank if none)</span></label>
+          <input type="password" name="password" class="form-control"
+                 placeholder="{% if conn %}(unchanged if blank){% else %}optional{% endif %}">
+        </div>
+      </div>
+
+      <!-- Neo4j fields -->
+      {% set neo = conn.conn_params if conn and conn.db_type == 'neo4j' else {} %}
+      <div id="neo4jFields" style="display:none">
+        <div class="mb-2">
+          <label class="form-label small">Bolt URI</label>
+          <input type="text" name="neo4j_uri" class="form-control"
+                 value="{{ neo.get('uri', 'bolt://localhost:7687') }}"
+                 placeholder="bolt://localhost:7687">
+          <div class="form-text">Use <code>bolt://</code> for local, <code>neo4j+s://</code> for AuraDB.</div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Username</label>
+            <input type="text" name="neo4j_username" class="form-control"
+                   value="{{ neo.get('username', 'neo4j') }}"
+                   placeholder="neo4j">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Password</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="{% if conn %}(unchanged if blank){% else %}password{% endif %}">
+          </div>
+        </div>
+      </div>
+
       <!-- MySQL fields -->
       {% set my = conn.conn_params if conn and conn.db_type == 'mysql' else {} %}
       <div id="mysqlFields" style="display:none">
@@ -162,6 +248,36 @@
         </div>
       </div>
 
+      <!-- Cassandra fields -->
+      {% set cass = conn.conn_params if conn and conn.db_type == 'cassandra' else {} %}
+      <div id="cassandraFields" style="display:none">
+        <div class="row g-2 mb-2">
+          <div class="col-8">
+            <label class="form-label small">Host</label>
+            <input type="text" name="cass_host" class="form-control"
+                   value="{{ cass.get('host', 'localhost') }}" placeholder="localhost">
+          </div>
+          <div class="col-4">
+            <label class="form-label small">Port</label>
+            <input type="number" name="cass_port" class="form-control"
+                   value="{{ cass.get('port', '9042') }}" placeholder="9042">
+          </div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Username <span class="text-muted">(optional)</span></label>
+            <input type="text" name="cass_username" class="form-control"
+                   value="{{ cass.get('username', '') }}" placeholder="(leave blank if none)">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Password <span class="text-muted">(optional)</span></label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="{% if conn %}(unchanged if blank){% else %}optional{% endif %}">
+          </div>
+        </div>
+        <div class="form-text mb-2">Default CQL port is 9042. No auth needed for local dev Cassandra.</div>
+      </div>
+
       <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary">
           <i class="bi bi-check-lg"></i> {% if conn %}Save Changes{% else %}Add Connection{% endif %}
@@ -181,6 +297,10 @@ function toggleFields() {
   document.getElementById('sqlserverFields').style.display = t === 'sqlserver' ? '' : 'none';
   document.getElementById('postgresqlFields').style.display = t === 'postgresql' ? '' : 'none';
   document.getElementById('mysqlFields').style.display = t === 'mysql' ? '' : 'none';
+  document.getElementById('neo4jFields').style.display = t === 'neo4j' ? '' : 'none';
+  document.getElementById('redisFields').style.display = t === 'redis' ? '' : 'none';
+  document.getElementById('mongodbFields').style.display = t === 'mongodb' ? '' : 'none';
+  document.getElementById('cassandraFields').style.display = t === 'cassandra' ? '' : 'none';
 }
 toggleFields();
 

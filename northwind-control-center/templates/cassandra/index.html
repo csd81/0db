@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Cassandra Explorer – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-hdd-stack"></i> Cassandra Explorer</h4>
+
+{% if not conns %}
+<div class="alert alert-info">
+  No Cassandra connections registered.
+  <a href="{{ url_for('connections.new_connection') }}" class="alert-link">Add one</a>
+  — type <code>cassandra</code>, host <code>localhost</code>, port <code>9042</code>.
+</div>
+{% else %}
+
+<!-- Connection selector -->
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-auto">
+    <select name="conn_id" class="form-select form-select-sm" onchange="this.form.submit()">
+      {% for c in conns %}
+      <option value="{{ c.id }}" {% if c.id == conn_id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% if selected_ks %}
+  <input type="hidden" name="keyspace" value="{{ selected_ks }}">
+  {% endif %}
+</form>
+
+{% if conn_id %}
+<div class="row g-3">
+
+  <!-- Left: keyspace / table tree + import -->
+  <div class="col-12 col-lg-3">
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-folder2"></i> Keyspaces</div>
+      <div class="list-group list-group-flush" style="max-height:200px;overflow-y:auto">
+        {% if ks_err %}
+        <div class="list-group-item text-danger small">{{ ks_err }}</div>
+        {% elif keyspaces %}
+          {% for ks in keyspaces %}
+          <a href="{{ url_for('cassandra_bp.index', conn_id=conn_id, keyspace=ks) }}"
+             class="list-group-item list-group-item-action py-1 px-2 small {% if selected_ks == ks %}active{% endif %}">
+            <i class="bi bi-folder me-1"></i>{{ ks }}
+          </a>
+          {% endfor %}
+        {% else %}
+        <div class="list-group-item text-muted small">No user keyspaces yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if selected_ks %}
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-table"></i> Tables — <code>{{ selected_ks }}</code></div>
+      <div class="list-group list-group-flush" style="max-height:250px;overflow-y:auto">
+        {% if tbl_err %}
+        <div class="list-group-item text-danger small">{{ tbl_err }}</div>
+        {% elif tables %}
+          {% for tbl in tables %}
+          <a href="{{ url_for('cassandra_bp.index', conn_id=conn_id, keyspace=selected_ks, table=tbl) }}"
+             class="list-group-item list-group-item-action py-1 px-2 small {% if selected_table == tbl %}active{% endif %}">
+            <i class="bi bi-table me-1"></i>{{ tbl }}
+          </a>
+          {% endfor %}
+        {% else %}
+        <div class="list-group-item text-muted small">No tables yet.</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Northwind import -->
+    <div class="card">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-box-arrow-in-down"></i> Import Northwind</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('cassandra_bp.import_northwind', conn_id=conn_id) }}">
+          <label class="form-label small">Source SQL connection</label>
+          <select name="source_conn_id" class="form-select form-select-sm mb-2">
+            {% for c in all_conns if c.db_type in ('sqlserver','postgresql','mysql','sqlite') %}
+            <option value="{{ c.id }}">{{ c.name }} ({{ c.db_type }})</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-sm btn-success w-100">
+            <i class="bi bi-play-fill"></i> Import
+          </button>
+        </form>
+        <div class="form-text mt-1">Creates the <code>northwind</code> keyspace with 7 query-driven tables.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: table schema + CQL runner -->
+  <div class="col-12 col-lg-9">
+
+    {% if table_info %}
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-info-circle"></i> Schema — <code>{{ selected_ks }}.{{ selected_table }}</code>
+      </div>
+      {% if table_info.error %}
+      <div class="card-body"><div class="alert alert-danger py-1 small mb-0">{{ table_info.error }}</div></div>
+      {% else %}
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-dark">
+            <tr><th class="small">Column</th><th class="small">Type</th><th class="small">Kind</th></tr>
+          </thead>
+          <tbody>
+            {% for col in table_info.columns %}
+            <tr>
+              <td class="small font-monospace">{{ col.name }}</td>
+              <td class="small">{{ col.type }}</td>
+              <td class="small">
+                {% if col.kind == 'partition_key' %}
+                <span class="badge bg-primary">partition key</span>
+                {% elif col.kind == 'clustering' %}
+                <span class="badge bg-info text-dark">clustering</span>
+                {% else %}
+                <span class="badge bg-secondary">regular</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Built-in queries -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-bookmarks"></i> Built-in CQL Queries</div>
+      <div class="card-body pb-2">
+        <div class="row g-2">
+          {% for q in builtin_queries %}
+          <div class="col-12 col-md-6">
+            <form method="post" action="{{ url_for('cassandra_bp.run_cql', conn_id=conn_id) }}">
+              <input type="hidden" name="builtin_key" value="{{ q.key }}">
+              <input type="hidden" name="keyspace" value="northwind">
+              <button class="btn btn-sm btn-outline-secondary w-100 text-start">
+                <i class="bi bi-play-fill text-success me-1"></i>{{ q.label }}
+              </button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom CQL runner -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-terminal"></i> CQL Console</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('cassandra_bp.run_cql', conn_id=conn_id) }}">
+          {% if selected_ks %}
+          <input type="hidden" name="keyspace" value="{{ selected_ks }}">
+          {% endif %}
+          <textarea name="cql_text" class="form-control font-monospace mb-2" rows="4"
+                    placeholder="SELECT * FROM northwind.products LIMIT 10;">{{ cql_text }}</textarea>
+          <button class="btn btn-sm btn-primary"><i class="bi bi-play-fill"></i> Execute CQL</button>
+        </form>
+      </div>
+    </div>
+
+    {% if cql_result %}
+    <div class="card">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-table"></i> Result</div>
+      <div class="card-body pb-2">
+        {% if cql_result.error %}
+        <div class="alert alert-danger py-1 small mb-0">{{ cql_result.error }}</div>
+        {% elif cql_result.columns %}
+        <div style="overflow-x:auto;max-height:400px">
+          <table class="table table-sm table-hover table-bordered mb-0">
+            <thead class="table-dark">
+              <tr>{% for c in cql_result.columns %}<th class="small">{{ c }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+              {% for row in cql_result.rows %}
+              <tr>{% for cell in row %}<td class="small text-truncate" style="max-width:220px" title="{{ cell }}">{{ cell }}</td>{% endfor %}</tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="text-muted small mt-1">{{ cql_result.rows|length }} row(s)</div>
+        {% else %}
+        <p class="text-muted small mb-0">Statement executed — no rows returned.</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

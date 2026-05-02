@@ -1,0 +1,630 @@
+No, szóval a relációs adatbázis
+technológia folyamatosan kapja a
+kihívásokat
+más technológiák irányából. És az egyik
+ilyen kihívás az a úgynevezett hálózatos
+vagy gráfadatbázis modell. Azt tudni
+kell, hogy az informatikában tényleg
+időről időre feltalálják ugyanazt másik
+néven. Ez már pár évtized után nagyon
+ismétlődő jelenség. És hát ebben az
+esetben is ez így történt. Tehát jó
+régen, még mielőtt a reakciós modell
+egyed uralkodó lett volna,
+létezett egy hálózatos adatbázis
+struktúra.
+Aminek pont az volt a lényege, hogy hogy
+igazából egy gráf szerkezetet
+igyekeztünk egy az egyben visszaadni.
+Most, hogyha meggondoljuk, hogy egy
+igazából egy reációs adális szerkezet és
+egy gráf, ugye,
+ahol a úgy a a modellezés során
+meghatározzuk, hogy mik az entitások és
+az entitásoknak az attribútuma a mezők
+és az entitások közötti kapcsolatokat,
+tehát a gráfoknak az éleit azt külső
+kulcskényszerekkel valósítjuk meg.
+Akkor, hogyha egy sok kapcsolatról van
+szó, akkor nincs is ez nincs is ezzel
+semmi probléma. Egy külső kulcsra meg
+eztanim, de hogyha sok-sok kapcsolatról
+van szó, akkor már a relációs módonek
+szüksége van egy kapcsolótáblára.
+Tehát effektív egy új táblába kerül az
+az él, ami ezt a két csomópontot
+összeköti.
+Na most a
+am a amit most fogok mutatni az az SQL
+szerveres az SK szerver reációs
+adabásának a kiegészítése
+a a gráf és és éltáblákkal
+ami tulajdonképpen viszonylag kevés
+kiegészítéssel lehetővé teszi a
+a gráf adatszerkezetben való gondolkodás
+és bizonyos típusú feladatokra ra,
+tehát például kapcsolati hálók
+ábrázolására, de különösen az ezeken
+való navigálásra hatékonyabb és jobb
+lehet, mint a tradicionális
+reációs modellnek a használata. Tehát
+annyi annyi a
+az újítás, hogy amikor egy táblát
+deklar deklarálunk, most mindjárt írtok
+egy képernyő megosztást, és akkor lehet
+látni.
+Tehát itt a a megosztáson lehet azt
+látni, hogy amikor egy táblát
+létrehozunk a create table parancsra,
+akkor annak lehet egy olyan kiegészítése
+igen, hogy ez node, tehát hogy ez egy ez
+egy csomó pont táb lesz, illetve lehetne
+egy olyan kiegészítése is, hogy edge. Ez
+edge.
+És úgy működik a a dolog, hogy a
+csomópont táblákat, tehát note típusú
+táblákat edge típusú táblák
+összeköthetik.
+az, hogy mi hogyan, mit hogy köt össze,
+azt tulajdonképpen mi döntjük el.
+Most amit ami amit most tudok mutatni,
+az SQL szerver 2017-es megvalósítás.
+A ennél van fejlettebb is. Az esk
+szerver 2019-es. Sajnos azt az azt most
+ezen a szerveren nem tudom demonstrálni.
+Az egy kicsit fejedtebb olyan
+szempontból, hogy
+már meg lehet azt is szűkíteni, hogy
+melyik él, milyen csomóponthoz
+csatlakoztat. Hát mi ezt most nem fogjuk
+megszűk vagy nem tudjuk megszűkíteni, de
+azért attól függetlenül, ha okosan
+használjuk a táblákat, akkor akkor
+nyilván logikailag a megfelel tudjuk
+őket kötni. Tehát például ugye ez egy
+egyszerű kis demo, amit a Microsofttól
+kölcsönöztem.
+Egy néhány táblából áll. Van a a
+jegyzetben egy
+egy
+kép a simáról. Mindjárt megpróbálom azt
+ide bevarázsolni.
+Itt van a sája ennek a ennek a kis
+adatbázisnak.
+Tehát látod, hogy van benne három
+csomópont. Vannak személyek,
+városok és éttermek, és az élek pedig a
+kapcsolatokat
+demonstrálják közöttük. Például egy egy
+személynek lehet saját magával, hát
+bocsánat, egy személy típusnak
+lehet kapcsolata saját magával. Az egyik
+ember, tehát lehet barátja, egy másik
+emberhez a friend kapcsolat, akkor a a
+személyek azok laknak bizonyos
+városokban
+és ugyanakkor ö szeretnek is bizonyos
+városokat. Itt már azt is lehet látni,
+hogy egy kapcsolatnak, tehát egy egy
+élnek, egy edgenek annak lehet
+attribútuma. Itt ilyen esetben ez a ez a
+review, hogy mennyire szereti. Egyben
+egyébként Isten igazából semmi újdonság
+nincsen, hiszen amikor mi a reakciós
+modellben összekötünk két táblát
+és ez egy kapcsolótáblát használunk,
+mert ez sok-sok kapcsolatról van szó.
+Mi? Hát például itt ugye ez a
+ez a ez a person meg a city között ez a
+lives kapcsolat, ez egy sok-sok
+kapcsolatnak tűnik, hiszen egy személy
+az több várost is szerethet és egy
+várost is több személy szerethet. Tehát
+ez egy kapcsolt táv valósulhat meg
+reakciós modellben, valósulna meg
+reakciós modellben. Szóval ilyen esetben
+természetesen annak a rekordnak, ami egy
+bizonyos szemét, egy bizonyos város
+összeket, lehetnek egyéb mezői is. Ezek
+a kapcsolatnak az attribútumai. Na most
+ezek azt mondjuk, hogy itt ebben az
+esetben az élnek az attribút lesznek és
+hasonlóképpen itt van van egy nagy egy
+attribútum ez a ez a review. Tehát
+összesen ez a három note van, és van egy
+1 2 3 4 5 él, tehát nyolc táblá tudjuk
+ezt a ezt a kis modellt megvalósítani.
+Amikor létrehozzuk a a táblákat, akkor
+akkor csak a minket érintő vagy érdeklő
+attribútunkat tesszük bele. Tehát van
+egy ID meg egy meg egy meg egy meg egy
+név, ugye? Tehát semmi különös.
+És
+és ugye itt látható, hogy amikor az
+éleket létrehozzuk, annak csak egy nevet
+adunk, illetve akkor, hogyha hogyha van
+neki ö
+saját attribútom is itt ugye a a sok-sok
+kapcsolat esetén, hogy a Likesnál volt
+egy ilyen, akkor oda betesszük egy
+mezőnek a a ratinget. Most valójában az
+történik, hogy amikor ilyen táblákat
+létrehozunk, tehát edge, illetve node
+típusú táblákat, akkor minden esetben
+létrejön egy rejtett azonosító is, egy
+egy olyan az egy olyan azonosító, amit
+mi le is kérhetünk egyébként, és a
+rendszer generálja. És ez azonosító ez
+valójában egy egy Jason dokumentum.
+Hát például itt most nézzük meg. Ugye
+van öt emberünk, van három éttermünk
+és van három városunk. Jó.
+És ha most beszúrok egy táblába egy egy
+élet, tehát most összekötök
+konkrétan az egyes
+szemét kötöm össze az egyes étteremmel
+és ezt be fogom szúrni a likes táblába,
+mégpedig olyan módon, hogy az egyes
+személy kilencesre értékelte ezt a
+bizonyos éttermet. Akkor itt azt lehet
+látni, hogy amikor amikor az értékeket
+beeszem a a L táblába,
+akkor itt van egy lekérdezés, ami
+tulajdonképpen
+ezt a rejtett mezőt hozza el, ezt a
+dollár node idét, amit a rendszer
+generált nekünk. És hát most nézzük meg,
+hogy mi ez a Ja, itt már itt ide ki is
+listáztam. Mi ez a ez a ez a node idé?
+Ez ez tát kapcsol zárójelek között
+látható. Ez tulajdonképpen egy Jason,
+aminek
+van egy típus attribútuma, akkor ez a
+sémazsas és a tábla, ez együtt a táblát
+azonosítja az adabison belül.
+És és azon kívül van neki egy ideje. Hát
+ugye hanyadik él, mondjuk úgy. Tehát
+ezért nem kellett itt nekünk, amikor az
+éleket létrehoztuk,
+itt ugye nem nem kellett azonosított
+megadnunk egyáltalán. Tulajdonképpen
+ebből a szempontból itt sem kellett
+volna, amikor a CT-t létreztuk meg a
+resztot, nem kellett volna idét
+használnunk. De hát ugye már, hogy
+megszokásból használunk egyét.
+Szóval, szóval így tudunk éleket
+beszurkálni a a ez az éltá, vagyis a
+igen, az az edges táblába, az edge
+táblába ugye itt a itt a likes táblába
+most sok mindent besz, illetve a
+lestában most ilyen esetben csak olyanok
+szúrunk be, hogy a hogy a személyek és a
+és a és és az éttermek közötti
+lájkolások vannak. Ugye most lehetne
+például ebben a táblában olyan is, ami a
+személyek és a városok közötti
+lájkolások. Az is az is lehetne itt,
+de olyan olyan olyan példánk most
+nincsen. Ugye ez még az a változata
+ennek az egész gráfadatbázisos dolognak,
+amikor nem tudjuk leszűkíteni azt, hogy
+ez a L tábla ez konkrétan ezek az élek,
+ezek milyen táblákat, milyen nódokat
+köthessenek össze.
+Jó. És és itt azt is lehet látni, hogy
+hogy egy élnek
+mi az mi az azonosítója? Ez azd hogy néz
+ki? Hát így néz ki. Tehát ha most
+megnézzük, hogy mi van ebbe a likes
+táblába,
+akkor itt látható egy ilyen GD, ugye itt
+is a típusra egy ér, akkor ez a séma
+adatbázis az az mondja meg, hogy melyik
+tábláról van szó. Ez ugye a LX tábla.
+És és ez a bizonyos ID az, ami ezt az
+élet itt azonosítja. Látod, hogy négy
+négy él van benne, mind a égnek más az
+idéje. Tehát ezt a rendszer generálja.
+Talán azért csinálták ezt így, hogy a a
+programozónak
+ne kelljen ezzel foglalkoznia,
+tehát
+úgy úgy úgy lehessen igazából szerintem
+minél inkább azt akarták, hogy
+hasonlítson egy ilyen dokumentumtárra.
+No, tehát ilyen módon föl tudunk építeni
+gráfot. Ez a lényeg.
+Itt most még teszünk bele olyasmikat is,
+hogy
+a
+hogy hogy ki hol lakik. Ugye ez a ez a
+bizonyos lives in, ez is egy ez is egy
+él. Ez a városok és az emberek közötti
+él. az egyes
+emberünk az egyes városban, a kettes a
+kettesben. Úgy szeretném azt
+megjegyezni, ugye, hogy itt itt nincs
+olyan
+megkötés, hogy egy olyan, aki csak egy
+városban élhet ezek szerint, ugye? Tehát
+ezek az élek, ezek ezek minden esetben a
+sok-sok kapcsolatokat támogatják úgy
+defaultba. Az, hogy mi itt most nem
+szúrunk be egy embert két különböző
+városhoz is, az az a mi dolgunk, de be
+lehetne szúrni elvileg.
+Jó, itt most itt most mindig itt
+hozzáendünk valahova. Látható, hogy a a
+hármas városban ketten is laknak hármas
+meg a négyes is ott lakik. Az egyesben
+is ketten laknak.
+És akkor még van egy olyan, hogy melyik
+város hol van. Az egyes egyes kedes
+hármas hármas hármasban van. Már nincsen
+nagyon nagy különlegesség. Hát most
+végeztünk egy feltöltéssel, és mi van
+akkor, hogyha szeretnénk lekérdezni? Bár
+igazából itt jön az egésznek a lényege,
+tehát hogy ezt az egészet azért
+csinálták, hogy az emberi gondolkodáshoz
+közelálló módon
+lehessen ezen a gráfon mozogni. Tehát az
+egyik csomópontba, egy élen keresztül
+lehessen jutni egy másik csomópontba.
+Látható az, hogy a a programozó
+szakmában az SQL-nek az ismerete az az
+általában eléggé gyatra, és ezért a
+különböző
+adatbázis gyártók azok mindenféle módon
+igyekeznek a
+az SQR-ket úgy kiegészíteni, hogy hogy
+közel legyen egy magas szintű
+programozás a nyelvhez. Na, itt is
+valami hasonló
+történt. Itt, bocsánat, itt még van az,
+hogy ki kinek a barátja, abból is van
+egy példa.
+És akkor nézzük meg ezt a ezt a ezt a
+lelkedésű példát. Tehát itt történik ez
+bizonyos kiegészítése az SQL nyelvnek.
+Ugye ez a ez a nyilacskázás, ez ez
+nagyon ismerős mindenféle magas szintű
+programozási nyelvből. És ez a minusz
+után a zárójelben az él neve és a másik
+nód. Hát ez ez úgy grafikusan tényleg
+már a az óvodásoknak is érthető módon
+mutatja meg azt, hogy miről van szó.
+Tehát elindulunk egy csomópontból,
+utána van egy nyl, ugye innentől idáig
+van egy nyíl, és a nyílra rá van írva a
+gömbő zárójelek között az, hogy milyen
+élen keresztül jutunk el valahova. A
+P1-ből, a friend of élen keresztől P2-be
+jutunk el.
+Itt felsorolom a azokat a táblákat,
+amelyeket egyáltalán használni akarok.
+Ugye most itt ezt három akarom
+használni.
+Mi a ez a personl a personba megy ez az
+él, ezért ugye ezt két könzű aliasszal
+is felveszem. És akkor a a meccs kulcszó
+után gömbőz darek között van egy
+úgynevezett gráfkeresési minta. Tehát ez
+egy ilyen pattern, egy ilyen minta, ami
+eléggé intuitív, igyekszik lenni. Tehát
+most a minta az az, hogy azokat
+keressük, ö azokat a ugye itt a P2-ből
+vesszük majd ki a name mezőt. Szóval
+azokat a person recordokat, amelyek egy
+ilyen nyílnak a végén vannak, tehát akik
+valakinek a barátai, ugye bárkinek a
+barátai, csak még itt van egy plusz most
+már hagyományos SQL-esvel feltétel, hogy
+a P1 name John, tehát a John-nak az
+összes barátját szeretnénk látni. Ez
+gyakorlatilag azt mutatja,
+az a Mary meg a meg a July, mert ugye a
+a John az
+ki is volt? Pillanat,
+egyes volt a John. Úgyhogy
+aztongja, hogy a
+a az egyesnek a barátja a kettes és az
+ötös, ugye? Tehát a Mary meg a meg a
+Julie, a kettes a Mary, ötös meg a
+Julie. Jó, nézzük egy kicsit
+bonyolultabb mintázatot.
+Hát bocsánat, ez még nem bonyolultabb,
+sőt ez még egyszerűbb is. Milyen
+éttermeket szeret Ját? Itt ugye a person
+likes és it nincs szükségünk ugyan a
+tábára kétszer, hiszen a person
+csomópontból jutunk el. Kicsit
+visszahozom ezt. Person csomópontból
+jutunk a restaurant csomópontba a likes
+élen keresztül.
+Jó.
+Na, egy kicsit bonyolottabb az, hogy
+milyen éttermeket szeretnek a John-nak a
+barátai.
+Hát, hogy először is meg kell tudnunk,
+hogy kik a Johnak a barátai, és akkor
+onnan megyünk tovább ezen az élen, ezen
+a Likes élen az éttermekbe. Tehát ugye
+kezdődik azzal, ami ami eddig volt. Ugye
+ezt már láttuk az előbb. Ez a personal a
+P1, P2 volt. Personal friend of P2.
+Tehát ezek a Johnak a barátai akkor,
+hogyha personal némas John, ugye? De
+most megy tovább. Tehát itt ugye egy
+csomópontból a másik csomópont
+eljutottunk, és aztán megint indul egy
+nyír. Csak erre a L van ráírva.
+Tehát, hogy azokat kapjuk vissza, azokat
+a mind azokat a csomópontokat, amelyek
+úgy állnak elő, hogy ezekből a person 2
+rekordokból követjük ezeket a likes
+éleket a restaurant táblában.
+És
+hát tulajdonképpen minden ilyen minden
+ilyen meccsnek az eredménye az egy az
+egy algráf. Most ilyen esetben
+az ételmeknek a nevei lesznek.
+Ez az egyes és a kettes. Lehet szépen
+ellenőrizgetni egyébként, ugye, hogyha
+hogyha megnézzük a az adatkészletünket,
+hogy tényleg az. Hát tervileg annak kell
+lennie.
+Na most van egy kicsit érdekesebb dolog,
+hogy kik azok, akik kezdenek legalább
+egy olyan éttermet, ami ugyanabban a
+városban van, mint amiben ők laknak. Itt
+az arra példa, hogy hogy ezeket a a
+mintákat, ezeket a gráfkeresési mintákat
+lehet kombinálni logikai operátorokkal.
+Tehát most
+és operátorral kombináljuk őket, mert
+ugye ugyanabban a városban keresünk.
+Tehát van egyszer egy olyan halmaz,
+ami azt tartalmazza, hogy azokat a azt
+az algfot, hogy úgy mondjam, azok az
+emberek vannak
+akik egy bizonyos város, bármelyik
+városban lévő éttermet kedvelnek. És
+akkor ezt kombináljuk azzal, tehát hogy
+ezt a k ezt éeljük azzal, hogy ugyanazok
+a rekordok azok lakjanak, tehát a
+lezzing kapcsolatban is legyenek
+ugyanazzal a várossal.
+Nyilván úgy van megcsinálva ez a kis
+demó, hogy ez ne legyen egy üres halmaz.
+És látható, hogy egészen egészen sok
+vannak egyébként ugye hát nyilván
+logikus is, hogy mindenki abba a városba
+szeret ebédelni, ahol lakik. Na most ez
+már egy kicsit bonyolultabb ez a ez a ez
+az utolsó példa,
+hogy
+hogy ugye itt volt az, hogy kik azok,
+akik ugyanabban a városban szeretnek rá
+értelmet laknak. És akkor most még úgy
+komun tovább, hogy kik azok, akiknek van
+legalább egy olyan barátjuk, aki
+ugyanabb a városban lakó éttermet
+kérdel, mint amiben lakik. Ez már ugye
+eléggé bonyolult, ugye nak hangzik úgy
+elsőre azért tehát ki ezt a gráfos
+dolgot, hogy ezt így kvázi olvassa ott
+volna egyik feltétel
+ugye, tehát hogy a P1 legyen barátja a
+P2-nek és akkor a P2
+kedveljen egy éttermet valamelyik
+városban. És akkor P2 lakn abba a
+városba. Hát szépen meg lehetett ezt
+fogalmazni, ugye? És nekünk a P1 kell,
+tehát a ez ez az eredeti, akinek van
+legalább egy barátja.
+És akkor látjuk, hogy hogy igazából a az
+ötből négy ilyen, akinek van valami van
+valamilyen barátja. Na most
+tulajdonképpen a
+ez tehát a a gráfon való keresésminták
+segítségével, ilyen gráfminták
+segítségével, de vannak még egyéb
+szolgáltatások is, amiket például az SQS
+szerver gráfos kiegészítése
+támogat,
+amik ennek ennél több értelme van
+szerintem, mert azért majd látni fogjuk
+mindjárt csak úgy viccből elkészítettem
+ugyanezt reakciós modellben is. Szóval
+látni fogjuk, hogy hogy ettől még nem
+kellett volna ezt egy új technológiának
+hívni, de például, hogyha itt meg
+akarnánk találni egy gráfon belül a
+legrövidebb utat, na az már nem volan
+egyszerű egy SQL elkérdezésre, ugye?
+Tehát ez már bizony
+egy nagyon hasznos függvény lehet egy
+ilyen esetben, mondjuk egy ismeretségi
+hálóban, ugye
+mekkora az ismertségi háló átmérője,
+ugye? Tehát tehát mi az a
+leghosszabb
+ösvény, ami összeköt két tetszögesen
+kiválasztott embert? Hát ugye ezt bizony
+ebbe kicsit beleizzadnánk, mire ezt mire
+ezt leprogramoznánk egy SKL-vel. Szóval
+csak az a baj, hogy ezt most nem tudom
+demonstrálni, mert az a a az a 17-es
+megossításban még nincsen benne. De aki
+gondolja meg majd lehet, hogy idés
+megpróbálom feltani 2019-es szervert,
+akkor később esetleg ezt ezt ezt ezt ki
+lehet próbálni. Na de hogy értsük, hogy
+mit csinálunk, akkor nézzük meg, hogy
+hogy nézne ki. Ugyanez a problémakör,
+tehát ez
+a gráftechnológia nélkül. Hát ugye mit
+mondanánk? Az, hogy egy város vagy egy
+étterem csak egy városban van. Tehát ez
+egy egy sok kapcsolat, amit meg tudunk
+oldani itt a restoran egy külső
+kulccsal.
+Egy ember csak egy városban lakik, tehát
+ezt a ezt a liv ezt meg tudjuk oldani
+egy külső kulccsal person táblában. A
+likes az egy sok-sok kapcsolat.
+Meg ez a ez a friends is egy is egy
+sok-sok kapcsolat. Hát ezekhez
+kapcsolótábára lesz szükségünk. És akkor
+akkor nézzük meg, hogy hogy néz ez ki.
+Most ilyen R betűvel jelöltem azt, hogy
+hogy
+ez most ez most a reációs megvalósítás
+és
+és ezzel az öt táblával tulajdonképpen
+meg tudjuk oldani a dolgokat. Hát
+az a különbséggel, hogy itt viszont mi
+már megmondjuk azt, hogy hogy ez a likes
+ez konkrétan a az embernek a
+a tehát a personnek az étterem irányába
+való szeretetét jelenti, és nem a
+personnek a city irányába való
+szeretetét. Ugye az eddigi példánkban is
+ez a likes tábla. Egy pillanat, mindjárt
+följebb megyek.
+Ez a Lives Zin, a Likes, ez mindig ember
+és étterem között volt, ugye? Hát
+elvileg ugye a sémánk szerint lehetne
+olyan is, hogy hogy person és City
+között, de olyanra itt nem volt példa,
+és ezért ebben a reakciós modellben
+sincsen példa,
+hanem mindössze ezzel az öt táblával
+megoldjuk a dolgot. Tehát itt látható
+van három
+hát entitásáblánk,
+tehát az emberek, városok, éttermek,
+amelyekben már meg is oldottunk
+két egy sok kapcsolatot, ugye azt, hogy
+hogy ki hol lakik, meg hogy az étterem
+hol van. És van két kapcsolótáblánk a
+sok-sok kapcsolatok modellezésére, és
+ott is expit megmondjuk, hogy ez mire
+vonatkozik. Ugye erre vannak ezek a
+references constraintek.
+Ugye abban az esetben, hogyha ennek a
+mezőnek ugyanaz a neve, mint a a person
+táblában hivatkozott mező
+neve, akkor akkor nem kell
+kiírnunk a mezőnevét. És tulajdonképpen
+kész. Itt látható, hogy a kapcsolót
+táblákban
+több mezős kulcsokat használunk.
+Természetesen
+ez azt jelenti, hogy egyből aki csak
+egyszer lájkolhat egy éttermet
+és csak egyszer lett barátja valakinek.
+Beírjuk ugyanazokat az értékeket, mint
+az előbb.
+Hát mit mondjak? Kicsit tömrebb az SQL
+kód. Nagyon úgy tűnik. És akkor nézzük
+meg ugyanazt a legkérdezést, hogy Kik
+John-nak a barátai. Egy össze kell
+fűznünk a táblákat. Ugye sok-sok
+kapcsolat, mivel neveket szeretnénk,
+ezért szükségünk van a P1 táblára is,
+meg a P2 tábára is. Bocsánat, a person
+tábára kétszer van szükségünk, ugyanúgy,
+mint az előbb. P1, P2 néven.
+Tehát amit a nyilacskákkal értünk el itt
+ezeknél a lekérdezéseknél
+itt volt John barátai.
+Azt most joinnal érjük el. Inner
+joinnal.
+Itt hát tényleg egy kicsit többet
+kellett írni esetleg.
+viszont ugyanez van a az ételmeknél
+satöbbi satöbbi. De hogyha megnézzük,
+hogy hogy például amikor már sok
+csomópont megyünk keresztül,
+na itt van például, hogy hogy akinek van
+legalább egy olyan barátja, aki ugyan
+szereti egy vagy kezd egy olyan
+értelmet, ami ugyanárosban, ahol ő
+lakik, hát akkor ugye már eléggé sok
+join van. 1 2
+3 n join ugye hiszen végig kell mennünk
+ezen a ugye azért a az azért öt tábán
+mert az egyik az kétszer szerepel
+viszont azért eléggé követhető szerintem
+a ez a logika iss
+az egyik join az egyik lökhöly feltételt
+azt itt a verdenen valósítjuk meg de
+nyugodtan betehettük volna ezt mondjuk
+valamelyik join feltétel részébe is ez
+már itt tényleg rajtunk múlik.
+Úgyhogy
+hát, hogy hogy kinek melyik tetszik
+jobban,
+valószínűleg attól függ, hogy ki mit
+szokott meg. Mindenesetre nem valós nem
+valósították volna meg ezeket a
+gráf adatbázis kiegészítéseket akkor,
+hogyha nem lenne rá igény. Az egészen
+biztos. Most egy SQS szerveres
+adatbázisban abban csak egy gráf lehet.
+Ez azt jelenti, hogy lehet akár gráftbla
+meg meg
+meg meg tábla, de az logikailag
+egyetlen adatbázist alkot, vagy egy
+egyetlen gráfot alkot.
+Jó.
+Akkor szerintem a
+gráf adatbázisok ennyi elég volt. És és
+van is itt egy kis önálló feladat, amit
+Ja, bocsánat, ha már itt vagyunk, akkor
+akkor akkor megmutatnám
+a azt a sémát, amit amit most
+felépítettünk reációsan. Tehát végül is
+mi ezt a sémát építettük fel.
+Tehát, hogy itt volt ez a person tábla,
+saját magával volt egy sok-sok
+kapcsolata,
+és aztán itt volt, ez volt még egy még
+egy sok-sok kapcsolat.
+Ez ez lett a az évekből. És hát ugye
+nyilván azt lehet tudni, hogy a hogy a
+háttérben
+a a gráfos táblákat is ugye reakciós
+modell szerint valósítja meg az SQL
+szerver. Na mindegy. Szóval van egy
+olyan önálló feladat itt, hogyha ha
+jegyzetbe valaki belenéz. Hogy most
+prójuk megcsinálni.
+Van egy sok-sok kapcsolata a Northind
+adatbázisban is. A rendelési tehát a a
+termékek és a rendelések kapcsolata,
+hiszen minden rendelési tétel az egy
+kapcsolatot valósít meg egy rendelés és
+egy termék között. Próbáljuk megcsinálni
+ezt a három táblát ilyen ilyen gráfos
+adatbázis formájában.
+És
+és próbáljuk meg
+ezt a gráfos adatbázist
+feltölteni
+a meglévő három távolla alapján, és
+akkor rögtön érezni fogjuk a kettő
+közötti különbséget.
+Meg egyébként azt is meg kell próbálni,
+hogy egy olyan megkérdezés, amit
+szoktunk itt írni például, hogy
+melyik
+terméknek, vagy bocsánat, melyik
+rendelésnek mennyi volt az összértéke
+meg ilyesmiket, hogy ez hogy nézne ki
+ilyen gráfos táblák használatával.
+Jó, tehát ennyit akartam mondani a a
+gráfos adatbázisokról.

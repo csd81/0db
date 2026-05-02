@@ -9,7 +9,7 @@ from services import transaction_service as ts
 
 connections = Blueprint('connections', __name__, url_prefix='/connections')
 
-_DB_TYPES = ['sqlite', 'sqlserver', 'postgresql', 'mysql']
+_DB_TYPES = ['sqlite', 'sqlserver', 'postgresql', 'mysql', 'neo4j', 'redis', 'mongodb', 'cassandra']
 
 
 @connections.route('/')
@@ -228,5 +228,29 @@ def _params_from_form(db_type: str, form) -> dict:
             'port': form.get('my_port', '3306').strip(),
             'database': form.get('my_database', '').strip(),
             'username': form.get('my_username', 'root').strip(),
+        }
+    elif db_type == 'neo4j':
+        return {
+            'uri': form.get('neo4j_uri', 'bolt://localhost:7687').strip(),
+            'username': form.get('neo4j_username', 'neo4j').strip(),
+        }
+    elif db_type == 'redis':
+        return {
+            'host': form.get('redis_host', 'localhost').strip(),
+            'port': form.get('redis_port', '6379').strip(),
+            'db':   form.get('redis_db', '0').strip(),
+        }
+    elif db_type == 'mongodb':
+        return {
+            'host':     form.get('mg_host', 'localhost').strip(),
+            'port':     form.get('mg_port', '27017').strip(),
+            'database': form.get('mg_database', 'northwind').strip(),
+            'username': form.get('mg_username', '').strip(),
+        }
+    elif db_type == 'cassandra':
+        return {
+            'host':     form.get('cass_host', 'localhost').strip(),
+            'port':     form.get('cass_port', '9042').strip(),
+            'username': form.get('cass_username', '').strip(),
         }
     return {}

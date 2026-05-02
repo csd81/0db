@@ -1,0 +1,264 @@
+Gemini
+Adatminőség és SQL Server DQS
+Conversation with Gemini
+Az adatminőség kérdése elsősorban olyan környezetben válik kritikussá, ahol nagy mennyiségű adattal dolgoznak, az adatok több forrásból származnak, és számos üzleti folyamat támaszkodik rájuk. A nem megfelelő adatminőség közvetlen hatással van a szolgáltatás színvonalára és az ügyfélkiszolgálás hatékonyságára.  
++1
+
+Az adatminőség dimenziói
+Az adatminőséget jellemzően kemény (mérhető) és lágy (véleményalapú) dimenziókra osztják. A szakirodalom három fő kemény dimenziót különít el:  
+
+
+Teljesség (Completeness): Azt mutatja meg, hogy minden szükséges adat rendelkezésre áll-e, vagy vannak-e hiányzó (null) értékek, amelyek akadályozzák a működést (például egy hiányzó szállítási cím).  
++1
+
+
+Pontosság (Accuracy): Ez határozza meg, hogy az adat mennyire részletes és mennyire felel meg a valóságnak (például a rögzített cím valóban az ügyfél lakhelye-e).  
+
+
+Konzisztencia (Consistency): Azt vizsgálja, hogy az információs rendszer egészét tekintve vannak-e az üzleti logikát sértő ellentmondások.  
+
+Adatminőség vs. Adatbázis-tervezés
+Fontos különbséget tenni a technikai adatintegritás és a tágabb értelemben vett adatminőség között:
+
+Az adatminőség nem merül ki a hivatkozási integritásban vagy a harmadik normál formában (3NF).  
+
+Bár a kényszerfeltételek (például külső kulcsok) védik az adatok használhatóságát és csökkentik a redundanciát, ezek önmagukban nem garantálják a minőséget.  
++1
+
+A magas minőségű adatoknak meg kell felelniük a belső logikai szabályoknak és rejtett funkcionális függéseknek is (például biológiai képtelenségek kiszűrése).  
+
+Microsoft SQL Server Data Quality Services (DQS)
+Az adatok tisztítására specializált technológiákat alkalmaznak, ilyen például a Microsoft SQL Server Data Quality Services (DQS) megoldása.  
+
+A DQS adatbázis-struktúrája
+A telepítés után három fő adatbázis jön létre a rendszerben:  
+
+DQS_MAIN: A központi vezérlő adatbázis.
+
+
+DQS_PROJECTS: A projektek fájljait és adatait tartalmazza.  
+
+
+DQS_STAGING_DATA: Ideiglenes tárolóhely, ahová a tisztítandó adatokat töltik fel, és ahol a folyamat végén a tisztított eredmények is tárolhatók.  
+
+Gyakorlati alkalmazás
+A DQS használata során gyakran az adattárház (DW) tábláira (például DimGeography) épülő nézeteket (view-kat) használnak a tisztítási folyamat demonstrálására és végrehajtására. Ez lehetővé teszi több tábla adatainak összehangolását és az olyan hibák kiszűrését, mint a néveltérések miatti többszörös bejegyzések vagy az elavult címek.  
++4
+
+A Microsoft SQL Server Data Quality Services (DQS) működése a tudásbázisokra (Knowledge Base) és az azokhoz rendelt doménekre épül. Ezek segítségével az adatok nem csupán technikai, hanem üzleti logika mentén is validálhatók és tisztíthatók.
+
+A DQS adatbázis-struktúrája
+A DQS három fő adatbázist használ a folyamatok menedzselésére és a logika tárolására:
+
+Adatbázis	Feladat
+DQS_MAIN	
+Itt találhatók azok a tárolt eljárások, amelyek a tisztítási logikát valósítják meg. 
+
+DQS_PROJECTS	
+A konkrét adattisztítási projektek adminisztrációját és az ezekhez kapcsolódó táblákat tartalmazza. 
+
+DQS_STAGING_DATA	
+Ideiglenes tárolóhely a tisztítandó és a már tisztított adatok számára. 
+
+Tudásbázisok és Domének
+Az adattisztítás alapja egy referencia adatkészlet, a Knowledge Base. Ez tartalmazza azokat a szabályokat, amelyek alapján eldönthető, mi számít helyes adatnak.  
+
+
+Domén: Egy-egy konkrét mezőre (pl. városnév, személynév) vonatkozó helyes értékek halmaza.  
+
+
+Tartalma: Magában foglal egy listát a helyes értékekről, egy szinonima szótárat az elgépelések javításához, valamint érvénytelennek minősített értékeket.  
+
+
+Szabályok: A doménen belül létrehozhatók logikai kifejezések is (pl. az életkor nem lehet negatív).  
+
+
+Rugalmasság: Ellentétben az adatbázisok merev check constraint-jeivel, a DQS szabályai nem gördítik vissza a tranzakciót; helyette lehetővé teszik a hibás adatok interaktív kezelését vagy automatikus javítását.  
+
+Az adattisztítás (Cleansing) folyamata
+A tisztítás során a rendszer összeveti a bemeneti adatokat a tudásbázissal. A hasonlóság mértékét nem egyszerű betűszámlálással, hanem komplex adatmennyiségi algoritmusokkal mérik, amelyek az emberi elgépeléseket modellezik.  
+
+Hasonlósági küszöbértékek:
+
+Automatikus javítás: Ha egy elgépelt érték nagyon hasonlít egy helyesre (magas küszöbérték), a rendszer magától kijavítja.  
+
+
+Javaslat: Közepes hasonlóság esetén a rendszer csak javaslatot tesz, amit a felhasználónak interaktívan kell jóváhagynia.  
+
+
+Új érték: Alacsony hasonlóság esetén (pl. 0,7 alatt) a rendszer nem tudja beazonosítani az adatot, így azt új vagy ismeretlen értékként kezeli.  
+
+"A humán intelligenciát nem lehet ebből igazán kizárni." – Ez különösen igaz az olyan esetekre, mint a különleges karakterek (pl. ü vs. u) vagy a névváltozatok kezelése, ahol a technológia javaslatokat tesz, de a végső döntés gyakran az emberé.  
++2
+
+Szeretne mélyebben belemenni abba, hogyan épül fel egy konkrét tisztítási szabály vagy domén-logika a DQS kliensben?
+
+A Microsoft SQL Server Data Quality Services (DQS) két fő eszközt kínál az adathalmazok karbantartására: a tisztítást (cleansing) és az adat-matching folyamatát. Míg a tisztítás egy külső referencia (tudásbázis) alapján javítja az egyes mezők értékeit, a matching a belső duplikátumok kiszűrésére szolgál azáltal, hogy gyanúsan hasonló rekordokat keres az állományban.  
++1
+
+A tudásbázis és a domének felépítése
+A DQS alapja a Knowledge Base (tudásbázis), amely tartalmazza az összes olyan szabályt és referenciaértéket, amelyhez az adatokat mérjük.  
++1
+
+
+Tudásbázisok típusai: A rendszerhez jár egy gyári minta (DQS DATA), de minden cégnek saját, specifikus tudásbázisokat kell építenie, vagy külső adatokat (pl. irányítószám-jegyzékeket) kell beimportálnia.  
++1
+
+
+Domének és értékek: Egy tudásbázis több doménre oszlik (pl. ország, családnév). Ezeken belül találhatók a:  
+
+
+Leading Values (Vezető értékek): A domén helyesnek ítélt alapértékei, amelyekhez a szinonimák tartoznak.  
+
+
+Szinonimák: Olyan hibás vagy eltérő formátumú értékek, amelyeket a rendszer automatikusan a vezető értékre javít.  
+
+
+Szabályok (Rules): Meghatározhatók olyan feltételek is, amelyek érvénytelennek minősítenek bizonyos bejegyzéseket, vagy szövegrészeket cserélnek le (pl. "Kft." feloldása).  
+
+A tisztítási munkafolyamat: Interaktív döntéshozatal
+A gyakorlatban a tisztítás nem teljesen automatizált; a rendszer a hasonlósági algoritmusok alapján javaslatokat tesz, de a végső döntés a felhasználóé.  
++2
+
+Hasonlósági szintek és eredmények:
+A példaprojektben (ahol a LastName mezőt vetették össze az US Last Name doménnel) a következő eredmények születtek:  
++1
+
+
+Automatikus javítás (Auto-correction): Ha a hasonlóság nagyon magas (pl. >80% vagy 87%), a rendszer magától elvégzi a cserét.  
++1
+
+
+Javaslat (Suggestion): Ha a hasonlóság eléri a 0,7-es (70%) szintet, a rendszer gyanút fog, és felkínálja a javítást a felhasználónak.  
++1
+
+
+Új érték: Ha a hasonlóság túl alacsony, a rendszer ismeretlenként kezeli az adatot.  
+
+Felhasználói feladatok:
+A folyamat végén egy interaktív felületen minden egyes javaslatnál dönteni kell:  
+
+
+Approve (Elfogadás): A javasolt javítás végrehajtódik, a rekord átkerül a "Corrected" (javított) státuszba.  
++2
+
+
+Reject (Elutasítás): Ha a név valójában helyes (pl. egy ritka vezetéknév), a felhasználó elutasíthatja a javítást, megtartva az eredeti értéket.  
++1
+
+Ez a hibrid megközelítés biztosítja, hogy a technológia gyorsasága és a humán intelligencia pontossága egyszerre érvényesüljön az adatminőség javítása során.  
++1
+
+Szeretné tudni, hogyan lehet ezeket a javított adatokat véglegesen visszaírni az eredeti adatbázisba vagy exportálni egy új táblába?
+
+A Microsoft SQL Server Data Quality Services (DQS) használata során az adatok tisztítása nem egy gépies folyamat, hanem egy interaktív együttműködés a rendszer és a felhasználó között. Miután a szoftver elvégezte a kezdeti elemzést, a végső döntést – hogy mi számít hibának és mi új, érvényes adatnak – az emberi intelligencia hozza meg.  
++1
+
+Interaktív tisztítás és döntéshozatal
+A tisztítási fázis végén a DQS különböző kategóriákba sorolja az eredményeket, ahol a felhasználónak ellenőriznie kell a javaslatokat:
+
+
+New (Új): Itt találhatók azok az értékek, amelyek nem szerepeltek a tudásbázisban, és semmire sem hasonlítottak. Ezeket a felhasználó jóváhagyhatja új, érvényes értékként, így bekerülnek a doménbe.  
++1
+
+
+Suggested (Javasolt): A rendszer bizonytalan, de tippet ad a javításra; a felhasználó itt az "Approve" (elfogadás) vagy "Reject" (elutasítás) gombokkal dönthet.  
+
+
+Corrected (Javított): Az automatikusan vagy manuálisan elfogadott javítások listája. Ha egy javaslatot elutasítunk, az kikerül a listából, de nem módosul a forrásérték.  
++1
+
+Az eredmények exportálása és feldolgozása
+A tisztítás után a rendszer egy előnézetet (preview) ad, amely tartalmazza az eredeti mezőket (pl. LastName_Source) és a tisztított változatokat (LastName_Output) is.  
++1
+
+
+Exportálás: A tisztított adatok általában a DQS_STAGING_DATA adatbázisba kerülnek kimentésre egy új táblába.  
++1
+
+
+Az OLTP védelme: Fontos szabály, hogy a DQS soha nem nyúl közvetlenül az eredeti éles (OLTP) adatbázishoz.  
+
+
+Visszaírás: Az eredménytábla feldolgozásához egy külön logikát, például egy tárolt eljárást kell írni, amely a státuszmezők (pl. "Correct", "Corrected") alapján frissíti a forrásrendszert.  
+
+Saját tudásbázis építése (Knowledge Discovery)
+Gyakran előfordul, hogy nincs kész tudásbázisunk (például egy speciális ügyféllistához), ilyenkor sajátot kell létrehoznunk a meglévő adatainkból.  
++1
+
+
+Forrás kijelölése: Kiválasztunk egy meglévő táblát vagy nézetet (pl. new_customer), amely az alapot adja.  
++1
+
+
+Domének létrehozása: Létrehozzuk a szükséges kategóriákat (pl. Cities, LastNames), és hozzákötjük őket a tábla megfelelő mezőihez.  
+
+
+Felfedezés: A rendszer végigfut a rekordokon, és kigyűjti az egyedi értékeket.  
+
+Manuális finomhangolás: A felfedezett értékeket kézzel is szerkeszthetjük. Például beállíthatjuk, hogy a hibás "Mulheim" értéket a rendszer mindig javítsa a helyes, ü-betűs "Mülheim" változatra.  
++1
+
+Speciális domének és szabályok
+Nem minden adatot lehet fix listákkal ellenőrizni. Vegyük például a születési dátumokat (birthday):
+
+Mivel bárki bármikor születhet, itt nem használunk fix értéklistát.  
+
+Ehelyett Domain Rules (doménszabályokat) hozunk létre, amelyek logikai feltételek alapján jelzik, ha egy adat gyanús vagy érvénytelen.  
++1
+
+Szeretné látni, hogyan építhető fel egy ilyen dátum-ellenőrző szabály (például a jövőbeli születési dátumok kiszűrésére) a DQS felületén?
+
+A Microsoft SQL Server Data Quality Services (DQS) használata során a tisztítási folyamat egyik legrugalmasabb eszköze a doménszabályok (Domain Rules) alkalmazása, amely lehetővé teszi az adatok logikai ellenőrzését olyan esetekben is, amikor nem áll rendelkezésre fix referencia-lista.  
++1
+
+Logikai szabályok és érvénytelen adatok
+A doménszabályok segítségével olyan feltételeket szabhatunk meg, amelyeknél a rendszer automatikusan jelzi, ha egy adat gyanús vagy valószínűtlen.  
+
+
+Példa – "100 évnél idősebb": A születési dátumok ellenőrzésére létrehozható egy szabály (pl. "more than 100"), amely kiszűri a túl régi dátumokat (például az 1920 előtti születési éveket).  
++1
+
+
+Szabálysértés hatása: Ha egy rekord nem felel meg a szabálynak, a rendszer érvénytelennek (Invalid) minősíti. Ilyenkor a felhasználó dönthet arról, hogy javítja-e az értéket, vagy elveti a rekordot.  
++2
+
+A tudásbázis alapú tisztítás eredményei
+Amikor egy egyedileg felépített tudásbázist futtatunk le (például a new_customer adathalmazon), a DQS precízen kategorizálja a hibákat:
+
+
+Városnevek javítása: Ha beállítunk egy szabályt, amely a hibás "Mulheim" (H-betű nélkül írt) változatot a helyes "Mülheim" alakra cseréli, a rendszer akár több száz rekordot is képes egyszerre javítani.  
++3
+
+
+Statisztikai összefoglaló: A folyamat végén pontos képet kapunk arról, hány rekord volt érvénytelen a szabályok miatt, és hány esetben történt automatikus vagy javasolt javítás.  
++1
+
+Az adattisztítás filozófiája és szükségessége
+Az adatok tisztítása nem csupán technikai feladat, hanem egy folyamatos karbantartási igény.  
++1
+
+
+Emberi vs. Gépi forrás: A gépi rendszerekből (pl. mérőműszerek) érkező adatok általában pontosak és zajmentesek. Ezzel szemben az emberi bevitel (pl. űrlapok kitöltése) folyamatosan kétértelműséget, hiányzó értékeket és pontatlanságot visz a rendszerbe.  
++1
+
+
+Adatromlás: Az adatbázis olyan, mint egy ruha: minél tovább használják, annál "szemetesebb" és elhasználtabb lesz. Ha nem tisztítjuk rendszeresen, az végül veszélyezteti a szolgáltatás színvonalát.  
++1
+
+
+Humán intelligencia: Bár a DQS segít a kategorizálásban és az automatizálásban, a folyamat végén a humán döntéshozatal nem iktatható ki teljesen. Egy rosszul végrehajtott automatikus javítás ugyanis nagyobb kárt okozhat, mintha nem csinálnánk semmit.  
++2
+
+
+Profi tipp: Bár a felügyelet emberi, maga a besorolási folyamat (tisztítási job-ok) automatizálható és időzíthető, így a nagy adatbázisok elemzése nem igényel folyamatos kézi beavatkozást.  
++1
+
+Érdekli esetleg, hogyan lehet ezeket a DQS folyamatokat egy automatizált SSIS (SQL Server Integration Services) csomagba integrálni a rendszeres tisztítás érdekében?
+
+
+
+
+
+Gemini is AI and can make mistakes, including about people. Your privacy & GeminiOpens in a new window
+

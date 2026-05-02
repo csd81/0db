@@ -1,0 +1,782 @@
+Tehát a logshipping az ugye szó szerint
+azt jelenti,
+hogy a lognak, itt a tranzakciós logra
+kell gondolni, a lognak a továbbítása,
+az a log elküldése szó szerint ezt ezt
+jelenti.
+És a az öföt mechanizmus az úgy működik,
+hogy ugye minden
+relációs OLTP adatbázisnak van egy
+tranzakciós logja.
+ek köré épül tajdonképpen az egész
+adatbázis.
+Ez teszi lehetővé az például, hogy egy
+tranzakciót visszaessen görgetni, vagy
+éppenségel újra lehessen futtatni.
+Ez a roll back, roll forward.
+Most beszél.
+Igen,
+mintogyha valaki mondott volna valamit.
+Nem jó, rendben van.
+Szóval van ez a ez a tranzakciós log, és
+az az alapvető gondolat, hogy az nagyon
+jót tenne a mi rendszerünk
+tehát a mi szolgáltatásunk
+megbízhatóságának,
+hogyha az adatbázis szerver kiesése
+esetén minimális idővel vissza tudnánk
+állítani a szolgáltatást. Hát például
+ugye
+Neptun rendszer mögött van egy Oracle
+adatbázis.
+Oracle adatbázsnak valami problémája
+van.
+Mondjuk például az oraköz szerver valami
+miatt leáll,
+akkor aztán leáll a Neptun is. Ugye most
+ez egy egy nagyobb cégnél borzasztóan
+nagy problémákat okozhat. Például a luft
+hanzának volt, vagy nem is bocsánat, a
+British Elvznek volt még egy olyan
+másfél éve, vagy mikor egy ilyen két
+napos leállása,
+és akkor én nem tudom hány ezer ember
+alud különféle raptereken, mert a
+gépeket nem tudták elindítani. Szóval ez
+távolról sem tréfa dolog.
+Nyilván itt a
+ennek a ezt egy disaster recoverynek
+hívják ezt a dolgot, tehát a a
+katasztrófából való
+felépülésnek, vagy a katasztrófa
+elhárításnak.
+Szóval ennek különböző szintjei vannak.
+Valamit már mi is most meg tudunk
+csinálni. Ezt mer ezt meg tudjuk
+csinálni, ugye, hogy fogunk egy
+adatbázist
+és
+mondjuk itt a Nort adatben, és csak azt
+mondjuk, hogy
+backup, ugye, tehát aki egyébként
+esetleg
+érdeklődik az adatbis adminisztráció
+iránt és nem hallgatta a korszer
+adatbázisok kurzust,
+az
+itt a a tárgynak a múlt idő alapján
+talál,
+megtalálja ezt a jegyzetet, és ennek
+utána nézhet, hogy ez hogy ezek hogyan
+mennek. Szóval csinálunk egy egy
+bekapolt egy mentést az adatbázisról
+időnként, ugye mondjuk naponta, és
+hogyha katasztrófa van, mondjuk a
+szerver leáll, meghibásodik, satöbbi,
+belecsap a villám,
+akkor ezt a bekapót, ami ugye nyilván
+nem azon a szerveren volt tárolva
+okosan, hanem másról, ezt elővesszük,
+előkapunk egy másik szervert, ezt a
+bekapott helyreállítjuk azon a
+szerveren, hogy ez a restore művelet
+helyreállítás
+és utána átítjuk a forgalmat arra a
+szerverre. Ugye persze az nyilván az
+adatbázisunk egy kicsit régebbi lesz,
+meg lesznek problémák, meg az egész
+művelet, hát ez ugye ez ez egy eléggé
+manuális művelet, amit most elmondtam.
+Tehát ez ez mondjuk egy-két órát biztos
+eltart, mire ez úgy tényleg meg megint
+működik a szolgál a szolgáltatás.
+És nyilván az ide az volna, hogyha ez ez
+minél kisebb kiesést okozna egy ilyen
+egy ilyen katasztrófa.
+Az ideális eset az lenne, hogyha
+egyáltalán nem lehetne észrevenni azt,
+hogy hogy kiesett egy szerver. Tehát ez
+ez az ideális, hogy gyakorlatilag
+legfeljebb annyit, hogy hogy egy picit
+mondjuk épp akkor, amikor ez a kiesés
+történik, valamelyik tranzakció tovább
+fut, vagy valami ilyesmi, de igazából
+semmi. Tehát ez a idees eset és a a
+attól függően, hogy mennyire el vagyunk
+táves esettől, mondjuk azt, hogy hogy
+hot vagy pedig warm, tehát hogy forró
+vagy meleg vagy langyos
+backapjaink vannak, vagy vagy fallback
+szervereknek hísiák ezeket. Tehát azok a
+szerverek vagy az a azok a megoldások,
+amikre hiba esetén
+vissza lehet vagy át lehet lépni.
+Tehát az, amit most fogok mutatni, az
+egy ilyen warm bekap, tehát nem egy hot.
+A warm az azt jelenti, hogy azért
+igényel még kézi munkát, de nagyon
+keveset. Tehát
+tényleg ö látni lehet majd, hogy hát
+egy-két perc alatt meg lehet csinálni a
+az a a adott esetben az átállást. És
+tulajdonképpen a kieső forgal ami
+elveszik,
+az is majd látni fogjuk, hogy igazából
+szabályozható, hogy mennyi legyen, hogy
+mondjuk azt mondjuk, hogy öt perc
+forgalmunk elveszthet például, vagy egy
+perc forgalmunk, vagy egy óra, mindegy.
+Ezt ez lényeg az, hogy ez a ez a mi
+kezünkben van.
+Ugyanúgy, ahogy ahogy a amikor kézzel
+csináltuk a bekapot, akkor is azt
+mondtuk, hogy naponta csinálunk északkal
+egy bekapot. Akkor ezzel azt mondtuk,
+hogy na hát hogyha mondjuk reggel 8-tól
+délután 5-ig van üzleti idő, akkor a a
+legrosszabb esetben, tehát hogy egy ha
+mondjuk
+épp úgy megy, úgy száll az adatunk, hogy
+még a backup előtt, akkor egy napja
+forgalot veszthetünk el. Ugye ebben ez
+volt benne.
+Itt is itt itt itt is azt mondhatjuk,
+hogy mi az illető jobok ütemezésé azt
+állítjuk be, hogy hogy mennyi az az
+elvesz az elveszeszíthető
+forgalom.
+Szóval akkor a mecchanizmus úgy úgy úgy
+konkrétan úgy néz ki, hogy van egy
+transzakciós logunk. Ugye azt itt
+egyébként meg is lehet nézni
+egy adatbázis kapcsán. Ez a ez a
+bizonyos tranzakciós log itt a fil-nál
+itt látható, hogy hogy ez hogy ez egy
+külön erre a célra készített fálban van.
+Itt van a neve, ez az LDF.
+És
+először is csinálunk a a úgy
+inicializáljuk a a logshippinget, hogy
+csinálunk egy másodot az adatbázisról
+a másik szerveren nyilván.
+És utána
+van egy olyan folyamat, egy egy olyan
+job, amelyik folyamatosan nézi a
+forrásadatbázisnak, mondjuk itt a
+Northwinnek a tranzakciós logját,
+és amikor abban csinálunk valamit, akkor
+minden tranzakciót onnan szépen fog és
+kimásol valahova,
+és
+aztán van egy másik job, ami ezeket a
+kimásolt tranzakciókat futtat. Ja, le
+folyamatosan bizonyos késeltetéssel a
+célatbázison.
+Még van egy harmadik job is egyébként,
+ami a kettőt összeköti, egy másoló job,
+mégpedig azért, mert hát ugye tipikusan
+ak értelme ennek az egésznek, hogyha ez
+fizikailag egy másik szerver, ugye,
+tehát úgy értem a a az a az, amelyik a
+céladatbázist futtatja, tehát egy másik
+szervergép, nem csak egy másik adatbáz
+szerver példa, egy másik szervergép, és
+az egyik szerverről át kell vinni a
+tranzakciós log backupokat egy másik
+szerver gépre, vagy ugye egy vállalati
+hálózati tárhelyre, tehát egy ilyen
+storage-ra, a most a mi szempontunkból,
+mindegy. Tehát igazából van még olyan
+két jobot összekötő harmadik job, ami
+egy ami ugye egy copy, tehát egy ilyen
+másoló job.
+És akkor, hogyha a mi szerveünket
+kilövik,
+akkor egész egyszerűen átrántjuk, ugye
+éré tesszük a másik adatbázist, ami
+úgynevezett ilyen warm standby
+állapotban van, tehát csak olvasható
+állapotban van az a szerver,
+am a a az a az az adatbázis, azt akkor
+élessé tesszük és áthetjük el a
+forgalmat. Most még egy dolgot szeretnék
+mondani, mielőtt ezt megmutatom, az
+pedig az, hogy itt ugye van egyfajta
+késeltetés
+az éles adatbázis, tehát most a Northw
+Doll TP adatbázis és a a másik adatbázis
+között, amit secondarynak is szoktak
+hívni,
+tehát amelyik a amelyik a warm standby
+adatbázis,
+tehát a a
+meleg tartalék, mondjuk úgy.
+És ez időnként jó is lehet. Tehát akkor
+például, hogyha
+valaki
+egy komoly hibát
+komoly adatvesztést okozó hibát követel
+az éles OLTP szerveren, mondjuk Isten
+tudja miért, akár támadásból, akár
+véletlenül szoftveriba, satöbbi,
+satöbbi, valaki kitör az ügyféltörzset
+és kész. Na most ugye akkor ne hát akkor
+leáll a szolgáltatás. Na most
+viszont mivel van mondjuk tegyük fel 10
+perc késleltetés
+az OLTP adatbázisunk és a secondary,
+tehát a meleg tartalék között. Ezért ha
+ezt 10 percennél rövidebb idő alatt
+észrevesszük ezt a hibát, akkor gyorsan
+leállítjuk a logshippinget, és hogyha
+akkor átítjuk a forgalmat a a meleg
+tartalékra, akkor semmi baj nem történt,
+mert ott még az a bizonyos törlés
+tranzakció az nem futott le. Érthető?
+Tehát ebből a ebből a késteltetésből
+erényt is lehet kovácsolni.
+És ugye az a az, ami a forró bekap
+lenne,
+olyan olyan olyan technológiát most itt
+én nem tudok mutatni, mert ahhoz az
+igényelne, az ahhoz arra volna szükség,
+hogy fizikailag több szervergépet
+használjunk, és abból lehetne
+egy ilyen
+klustert
+készíteni.
+De hát ezt itt ugye demonstrálni nem
+tudom, ezért ennek ennek csak a
+lehetőségét mondom, hogy hogy lehet
+ilyet is csinálni Windows szerverekkel.
+Meg persze ugyanezt, amit most
+elmondtam, ezt megcsinálja bármelyik
+másik adis technológia is. Csak azt kell
+még ezekről tudni, hogy ezek már
+általában elég sokba kerülnek. Tehát
+ezek a dolgok, amiket már tényleg
+fizetni kell. Poszgasznél is, Oracle is,
+mindenhol.
+Úgyhogy meg meg ugye ezek a load
+balancing megoldások, hogy a egy ilyen
+egy ilyen egy ilyen klusterben a terhés
+növekedésé átadják a
+terhelést egyik szer a másiknak. És ugye
+itt jön majd be a felhő
+szolgáltatásoknak a nagy előnye, hogy
+egy felhőben mindezekkel nem nekünk kell
+foglalkozni, csak fizetni kell. Azt
+viszont az viszont kell.
+No, tehát akkor akkor nézzük meg a
+a logshippinget,
+és tegyük fel azt első lépésben, hogy a
+hogy a North Indatbázist
+szeretnénk
+hát másolni, vagy
+ennek szeretnénk az adatbiztonságát
+növelni egy ilyen szerveg kiesés
+esetére. Hát az első lépés az az kell,
+hogy legyen, hogy megcsináljuk azt a
+táróhelyet, ahova majd a tranzakciós
+logok kerülnek.
+És
+hát akkor most megcsinálom ezt én én
+újra. Jó, mert itt itt egy korábbi talán
+a az önök virtuális gépén is megvan, de
+tegyük föl, hogy nincsen.
+Úgyhogy úgyhogy csináljuk meg újra. A
+lényeg az, hogy hogy most amit
+demonstrálni fogok, ugye csak egy egy
+fizikai szerverünk van. Ez ez a
+virtuális gép.
+És és ezért aztán azt fogjuk csinálni,
+hogy itt a szerveren belül alakítunk ki
+egy olyan mappát, amit majd megosztottá
+teszünk.
+És a a jobok ezen keresztül fognak
+adatot cserélni.
+Jó, tehát egy olyan mappa lesz, aminek
+most legyen az a neve, hogy hogy ship
+vagy locksi ship, vagy valami hasonló.
+És ezen belül is két alappa lesz,
+mert ugye van egy olyan copy drop, ami
+az egyik helyről, a másikra másról, mint
+említettem. Most ezt így fogjuk
+szimulálni, hogy egyik szerverről a
+másikra átisszük, hogy itt egyik
+mappából a másikba fogja ápásolni a
+dolgokat.
+Úgyhogy
+az, ahova a a logok gyűlnek, annak
+legyen az a neve, hogy logs.
+És az, ahova ahova majd másolunk át,
+annak például legyen az a neve, hogy
+des, hogy destination.
+Jó, tehát a
+a
+log reader jobunk az ide fog másolni.
+És ez még nem, ez még nem elég, mert ezt
+az egész logshippinget, ezt hasonlképpen
+a replikációhoz ilyen parancssoros exe
+utilityk vezénylik le itt a Microsoft QS
+szerver esetén, amiknek hozzá kell tudni
+férni az adatbázishoz is, meg ezekhez a
+mappákhoz is. Na most az nem jó, hogyha
+a
+ugye itt ezeket a jobokat az SQL Sver
+agent irányítja, az nem jó, hogyha az
+SQL Sver agentnek a kontextusában futnak
+ezek a jobok. Itt pedig azért, mert az
+SQL Sver agentnek semmiféle joga nincsen
+ahhoz például, hogy ezt a temp mappát
+olvassa vagy írja. Ugye hát ennek ennek
+ennek van oka. Ö az adablis szerver
+szolgáltatásnak sincsen joga ahhoz, hogy
+a saját mappáján kívül bármelyiket
+olvassa, vagy írja a gépen. Ez ezek
+direkt vannak így beállítva. És ez a ez
+a helyes gyakorlat. Tehát ez azért van
+ez a ez a gyakorlati,
+mert
+mi tulajdonképpen védjük a szervert
+ezzel, hogyha esetleg egy támadó az SQL
+szervert fölött
+hát az hozzáfér és szerez, akkor attól
+még az a az egész szervergéphez nem fog
+hozzáférés szerezni. Na most viszont
+emiatt ugye ez egy biztonsági előírás,
+hogy úgy mondjam.
+Emiatt viszont itt nekünk most erre
+gondolnunk kell, hogy ezek a ezek a
+mappák majd ennek a az Eskver Agent
+kontextusában futó utilitynek iratoksató
+legyenek. Szóval osszuk őket meg. Jó.
+A propertiesnél
+válasszuk ki azt, hogy
+sharing.
+És hát itt itt felkínál egy egy ösvényt,
+hogy legyen ez a neve. Legyen ez a neve.
+Akkor azt mondjuk, hogy hogy shell.
+És itt most meg kell adnunk, hogy kikkel
+akarjuk megosztani. Ha azt adom meg,
+hogy
+hogy everyone,
+akkor az azt jelenti, hogy mindenkivel.
+Tehát most ez a ez a legegyszerűbb.
+Bárki tudja írni, olvasni ezt a ezt a
+mappát.
+Jó.
+Itt látható, hogy
+megkaptunk egy ilyen egy ilyen
+megosztást. Tehát ez azt jelenti, hogy
+ha valaki úgy távolról a ehhez a szerz
+hozzá akar csatlakozni a file sharingen
+keresztül, akkor ilyen néven fogja
+elérni. Az elején van a két per után a
+szerver neve, utána pedig a megosztásnak
+a neve.
+Esetleg ezt ezt érdemes kimásolni egy
+szövegfába. Ja, én már ki is másoltam,
+csak ugye az az érdekes, hogy ezek itt
+ezek itt backslashek.
+Hát attól függő, hogy milyen rendszerben
+vagyunk, de itt a Windowson ez
+backslash, tehát ez ez a ez a
+megosztásnak a neve. Jó.
+És akkor csináljuk meg ezt a a logsnál
+is.
+Tehát megint beírom azt, hogy everyone
+és read az lényeges, mert hiszen ugye
+ide új fálokat is bele fogunk rakni, és
+ennek úgy a neve csak az a vége, hogy
+hogy logs.
+Jó, meg van osztva. Nagyon jó.
+Na most akkor elkezdhetjük a
+logshippinget konfigurálni.
+Itt a jobb oldali, bocsánat, az
+adatbázis fölött egy jobb oldali gombbal
+van egy ilyen, hogy hogy ship
+transaction logs.
+Ezt kell kiválasztani.
+Ő lesz a primary.
+Az első jobnak az ütemezését adhatjuk
+itt meg. Tehát amelyik a transaction
+logot fogja
+menteni.
+Itt kell megadnunk azt, hogy hova
+mentse. És pedig a a
+a megosztásnak a nevét. Tehát ez a
+ez a logs végül lesz.
+Ez lesz a log backup jobnak a célja, de
+meg kell adnunk azt is, hogy ez most
+konkrétan milyen könyvtár.
+Az pedig,
+hogyha itt itt itt itt vagyok,
+belemegyek ebbe, akkor innen szépen ki
+tudom másolni.
+Jó,
+és itt itt kell megadnom azt ennek a
+backup jobbnak minden az ütemezése. Most
+tényleg a demók kedvér állítjuk állítsuk
+be azt, hogy ez egy perces legyen.
+Tehát, hogy egy percenként fog
+folyamatosan futni. Hát ez egy ilyen
+eléggé eléggé meleg backup lesz akkor
+ugye vagy kapcsolat.
+És kész. Ennyi. Elkezdődik a backup, és
+ez menni fog
+egy percenként folyamatosan.
+Akkor nézzük a következőt, hogy hogy
+mire, hogy mi lesz a célja a
+logshippingnek.
+Ide egy szervert kell először megadnunk,
+és
+most itt ugyanez lesz a cél szerverünk
+is. Tehát ugyanezzel a szerveren belől
+egy másik adatbázisról fogjuk küldeni az
+adatokat.
+Most ha ide beírunk egy másik adás az
+étre fog jönni magától. Tehát northw
+shap lesz most akkor vagy warm vagy warm
+backup.
+Ez lesz a neve. És ak itt elég sok
+mindent be kell majd most állítanunk. Az
+egyik az az, hogy
+hogy
+inicializáljuk-e ezt a logshippinget.
+Azt mondja, hogy igen.
+Tehát ez azt jelenti, hogy hogy
+készítsünk egy
+egy egy full bekapót, mert még nem
+létezik ez az adabbázis, ugye? Tehát ez
+az első lépés. először létrekhozni, és
+utána lehet majd a már létező adatbon
+futtatni mindig a megfelelő
+tranzakciókat.
+A másik az az lenne, hogy
+már létezik az adatbázis. Na, akkor
+menjünk egyel tovább. Ez a copy files.
+Itt ugye ez a ez a ez a más jobnak a
+beállítása.
+Itt ide kell megadnom azt, hogy hova
+másoljál. Tehát akkor itt most
+ezt a
+foldert kell megadnom.
+Destination folder,
+ami a deskt.
+Oké. Itt mondja is, hogy hogy read and
+write permission van fix, tehát olvas
+olvasás írási hozzáféréshez.
+Itt mondja, hogy milyen jobot fog
+létrehozni. Ez lesz a jobnak a neve.
+egyébként át lehetne írni. És hogyan
+legyen ez ütve? Hát ők itt ugye 15
+percet javasolják, az már eléggé meleg,
+de mi most ezt átállítjuk egy percre.
+Ugye
+itt látják, hogy mindenütt 15 perc az
+alapbeállításra. Mind a három Jobnak,
+majd alböknek is ez lesz. Ugye ez azt
+jelenti, hogy a legrosszabb esetben, ha
+pont pechünk van, akkor 45 percelt a
+késeltetés a két adatbázis között. Igaz,
+ha éppen úgy kapjuk el ezeket az
+ütemezéseket,
+így viszont maximum három percet, hogyha
+ezeket mindig átjük egy percre.
+Oké.
+És
+és akkor nézzük a harmadik fület.
+Ez pedig a harmadik job, tehát a a
+restore job
+nakak a beállításai.
+Itt azt látszuk ki, hogy legyen standby
+módban,
+ami azt jelenti, ez egy olyan állapot,
+hogy csak olvasható.
+Ez azért lényeges, hogy mé ez egy ez egy
+ez egy másolat, hogyha itt megengednénk
+azt, hogy az irat olvastat és bárki
+hozzáfér, akkor hát ugye előforgatna az,
+hogy bár ugye nem ez a tervezett
+funkcionalitás, de valaki hozzáférne és
+módosítani a tartalmat, na onnantól
+kezdve bukna az egész kis vagy az egész
+vállalkozásunk,
+mert a a két adatbázis több nem volna
+identikus, tehát nem volna ugyanaz a két
+adatbázis, és hát nem volna használható
+ilyen ilyen ilyen bekapnak.
+Jó, tehát itt ez ez a ez a standby a
+helyes beállítás.
+És
+vannak itt ilyen látják még tud küldeni
+riasztásokat is, hogy mik a riasztások
+arról szintén a a korszer adatbázisok
+jegyzetben, akit érdekel, az az nézzen
+után hogyan lehet egy riasztást
+konfigurálni. Ezt is meg lehetne itt itt
+itt itt csinálni. De most maradjunk csak
+a logshippingnél és ennek is állítsuk át
+az időzítését. Ö egy percre ennek a
+ennek a jobnak. Jó,
+és hát tulajdonképpen kész is van. Be is
+állítottuk a dolgokat.
+Minden készen van. Lehetne erről
+csinálni egy scriptet egyébként, akkor
+látnánk azt, hogy hogy na majd lehet,
+hogy meg is nézzük, hogy ez hogyan vagy
+a háttérben. És az okéra rábökök, akkor
+látható, hogy hogy elkezdődnek ezek a
+ezek a tranzakciók. Megtörtént az első
+backup.
+És
+ha ezt bércsukjuk, akkor látnunk kell a
+jobokat is.
+Először is létrejött, látják ez a ez a
+standby állapotú Vap nevű adatbázis.
+Illetve az SQL Server agentnél
+megfrissítjük a jobokat.
+Akkor itt látnunk kell, hogy hogy
+létrejött három új job. Látják, ez a
+ásek kezdők, úgy mintogy logshipping.
+Ez a backup, ez a copy, ez meg a
+restore. És még csinált egy alert jobot
+is, mert az volt a default beállítás,
+hogy ha nem tudom mennyi ideig nem
+sikerül megcsinálni a dolgokat, akkor
+akkor legyen egy
+egy riasztás.
+Na most, hogyha belenézünk ebbe az
+adatbázisba,
+akkor
+akkor azt látjuk, hogy
+hogy ott van a teljes northw adatbázis,
+ami ugye várható volt, tehát miért
+backup és restore történt, ez ez
+éppenséggel logikus.
+És nézzük meg azt viszont, hogy hogy
+hogy mi van most a mappáinkban, amiket
+ahonnan vagy ahová és ahonnan másoljuk
+az adatokat, amiket ott létrehoztunk és
+megosztottunk. Tehát elvileg azt várjuk,
+hogy
+hopp, nézzük csak, ez éppen a logs
+mappánk, a ship logs.
+Egy percenként, tehát 28, 29, 30 valóban
+egy percenként jönnek ide ezek a ez ezek
+ezek ezek a TRN kiterjesztések, ezek a
+tranzakciós lognak a bekapjai. De ha
+most visszajövünk a Ja, igen. Szóval ez
+ez itt a a tranzakciós log backupnak a
+mappája. Ide készülnek mindig percenként
+a az az új mentések. Aztán innen a copy
+job másolja át a destination mappába.
+Eddig egyet másolt át, ugye? Mégpedig
+azért, mer hogy ez is csak percenként
+fut le. És aztán majd ebből a
+destination mappából fogja a harmadik
+drop, a helyreállító vinni lefutatni
+a a
+meleg
+másolaton a tranzakciókat.
+Szóval próbáljuk akkor most ki, hogy
+tényleg ez működik-e.
+A teszt adatbázis, bocsánat, a
+Nintendbázisal rácsatlakozunk.
+Jó, tehát egy egy új query ablakot fogok
+nyitni ide,
+és valami módosítások, aztán megnézzük,
+ez tényleg átkerül-e a WM backupba. Jó.
+Igen,
+az vegyünk ki egy
+mondjuk 10 248.
+És itt mondjuk itt itt fogjuk átállítani
+majd az employ idt valami másra.
+Menjünk háromra.
+Hogyha esetleg nem tudják követni, akkor
+kérem, hogy szóljanak. Jó,
+tehát ez lesz a ez lesz a módus, és ez
+ez egy egy olyan tranzakció, aminek be
+kell kerülni a tranzakciós logba.
+Ja, bocsánat, még amit elfelejtettem
+mondani,
+hogy ez az egész mechanizmus, amit most
+mutat mutatok, ez akkor fog működni,
+hogyha a forrásadatbázisnak a a recovery
+modellje az full, nem pedig simple.
+Tehát ezt ugye itt itt lehet megnézni,
+hogy properties és options.
+Ez a requiry model, ez full kell, hogy
+legyen. Ha valaki még emlékszik rá, hogy
+ez mit jelent, vagy ha nem emlékszik, na
+ha valaki nem emlékszik, annak a
+kedvéért elmondom,
+hogy ez azt jelenti,
+hogy ilyenkor
+a lognak az úgynevezett inaktív részeit
+azt nem dobjuk el
+a checkpointok esetén.
+Ö a lognak az inaktív része az, hogy a
+már komitált lefutott tranzakciókat
+tartalmazza.
+És
+ugye a simple módban ezeket eldobjuk,
+hogy a log ne növekedjen óriásira, mert
+hogy a log az nagyobb lehet, mint az
+adatbázis simán, hogyha ilyen full
+üzemmódban vagyunk. Viszont ha ezeket
+eldobjuk, akkor nem lehet újra
+lefuttatni a tranzakciókat. Tehát a roll
+forward az nem fog működni. És most
+nekünk pont erre a roll forwardról van
+szükségünk, hiszen a másik adatbázisban
+ugye ezt le akarjuk újra futtatni. Most
+hogyha úgy van beállítva a a transaction
+log backup jobnak az ütemezése,
+hogy hogy két futása között történik egy
+checkpoint,
+ugye, és szimpl módban az adatbázis,
+akkor elvesztjük azokat a tranzakciókat,
+azok onnan onnan ki lesznek törölve.
+Úgyhogy ezért ezt a full
+recovery módot kell használni. Na de
+akkor akkor most
+futtassuk le ezt az updateet, és aztán
+átmegyünk a másik adatbázisba.
+Nem is kell másik adlakot keresnünk,
+hiszen ide be tudom írni azt, hogy use
+nv warm backup.
+rá tudok csatlakozni és le is tudok
+kérdezni róla dolgokat, csak módosítani,
+hogy nem lehet, de a select az fog
+működni, tehát most, hogy érthető legyen
+átmásom ide, és akkor most mintha itt
+lennék ezzel az adatbálison,
+itt futtatom le. Látható, hogy négy az
+értéke, ugye? Tehát ez ez még nem jött
+ide meg. Maximálisan nem jött meg, mer
+még mindig négy. Ugye elvileg három
+percen belül meg kell neki jönnie. Addig
+nézzük meg, hogy mi van a a jobjainkkal.
+Úgyis várakoznunk kell.
+Tehát nézzük meg
+például, hogy ez a ez a ez a restore
+job, ez ez hogyan fut egyáltalán mit
+csinál ez a job.
+Itt látható, hogy hogy egy lépése van
+neki,
+és ez az egy lépés, ez egy
+operating system commandets.
+És itt itt itt látható, hogy hogy mi fog
+mi fog lefutni. Ez egy ilyen kis
+parancssoros
+program.
+És azt is meg lehet nézni,
+hogy Eddig mikor futott le. Itt látható,
+hogy mivel beállítottuk a perces
+ütemezést, ezért innentől kezdve nem is
+tudom, sokszor lefutott, hát szépen
+szépen fut, ahogy kell. Ugyanit meg
+lehet nézni azt, hogy a a backup jobunk
+is fut-e szépen. Az is fut.
+Aztán, hogy a copy jobunk, hogy fut.
+Tehát ezek úgy folyamatosan működnek.
+Jó. És hogyha most visszatérünk ide,
+akkor
+akkor megnézhetjük, hogy
+hogy mi történt. Még mindig nem jött át
+ez a ez a ez a három
+forrás adatbázisban.
+Ott három, úgyhogy még egy kicsit
+várnunk kell,
+hogy ide is átjöjjön. Jó, most most itt
+vagyunk.
+Na, és pont azt, amíg váltottam, azatt
+sikerült neki lefutnia. Tehát most már
+itt most már itt vagyunk ebben a WBA
+padatbázisban,
+és látod, hogy átjött az érték, tehát
+valahol működik ez a dolog.
+Jó, most akkor tegyük fel, hogy hogy
+megtörtént a katasztrófa a Northund
+adottbázissal
+és
+helyre kell állítanunk ezt a V bekapott.
+Tehát, hogy akkor akkor mi a teendő,
+hogy hogy mit lehet mit mit lehet
+csinálni?
+Hát az első feladat az az, hogy gyorsan
+el kell állítani a log shippinget.
+Ugye most már, hogy hogy nincs honnan
+másolni, ez ez ne menjen. Úgy állítjuk
+le a logshippinget, hogy itt a forrás
+adott bázisnál
+tnál kiválasztjuk azt, hogy
+hogy disable, tehát hogy hogy igazából
+ez ez a művelet ez ez le fogja állítani
+mind a három jobot.
+Hogyha most megnézzük a a jobjainknak a
+frissített listáját, akkor látható, hogy
+hogy eltűntek. Csak csak ez az egy alert
+maradt meg belőle.
+Tehát most már nem történik másolás, de
+ez az adat ez még mindig nem
+hozzáférhető, ugye? Tehát itt az a gond,
+hogy hogy ennek
+ennek az adatbázisnak
+valahogy működőképesnek kéne lennie,
+különben
+nem tudnak hozzác csatlakozni a az üzti
+klienseink. Ennek igazából két része
+van. Az egyik az az, hogy ahhoz, hogy ki
+tudjuk venni ebből az állapotból, ahhoz
+először egy felhasználósság kell
+tennünk,
+aztán utána
+tudjuk beállítani azt, hogy hogy online
+legyen, ne pedig standby. Most ezt az
+egyhez felhasználóssá tét, ezt
+kétfélképpen is meg lehet csinálni. Az
+egyik az az, hogy
+itt a a az adab tulajdonságainál
+a az opcióknál van egy ilyen lehetőség,
+hogy látják, hogy multiuser,
+vagy pedig single user. Ez most
+multiuserre van állítva, viszont read
+only. Látják? Read only the multiuser.
+Egy nekünk az kell,
+hogy ez most legyen egy felhasznál most.
+Itt ki kell az single user. Ugyanerre
+van egy
+egy alter database utasítás, és úgy is
+meg lehet csinálni.
+Most ez ugye ledobta magáról a
+kapcsolatokat,
+és most és most single user. És
+most ide visszajövünk a master
+adatbázisra,
+akkor master adatbázison ki tudunk adni
+egy olyan utasítást,
+amelyik
+kiveszi ebből a standby állapotból.
+az a neve, hogy NV
+warn backup.
+Ved recovery.
+És hogyha most megfrissítjük az
+adabunknak a listáit, az adabisaink
+listáját,
+akkor azt látjuk, hogy hogy most még
+mindig single user, de már nem volbe
+backup. Látják? És most tudjuk
+visszaállítani a multiuserbe, és akkor
+lesz igazából elérhető
+a kedves felhasználók számára.
+De ez, amit most itt csinálok, azért az
+látható, hogy
+az igaz, hogy
+kicsit olyan körülményesnek tűnik, de
+mégis csak megvolt az egész egy-két perc
+alatt, ugye? Tehát ez, amit mondtam,
+hogy hogy nem forró, de azért eléggé
+eléggé meleg ez a ez a bekap.

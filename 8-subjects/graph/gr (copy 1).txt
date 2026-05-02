@@ -1,0 +1,191 @@
+Gemini
+Relációs és Gráfadatbázisok SQL Serverben
+Conversation with Gemini
+összefoglalás
+
+Íme a megadott szöveg összefoglalása a relációs és gráfadatbázisok kapcsolatáról, illetve az SQL Server megvalósításáról:
+
+A relációs és gráfadatbázisok különbségei
+
+A relációs adatbázis technológiát folyamatosan kihívások érik más technológiák, például a hálózatos vagy gráfadatbázis modellek irányából.  
+
+A hálózatos adatbázis struktúra már jóval azelőtt létezett, hogy a relációs modell egyeduralkodóvá vált volna, így ez is egy példája annak, hogy az informatikában időről időre újra feltalálnak korábbi koncepciókat.  
+
+A gráfmodell célja, hogy egy az egyben visszaadjon egy gráfszerkezetet.  
+
+A relációs modell a gráfok éleit (a több-a-többhöz kapcsolatokat) külső kulcsokkal és úgynevezett kapcsolótáblákkal valósítja meg, tehát az összekötő él tulajdonképpen egy új táblába kerül.  
++1
+
+Gráfadatbázisok az SQL Serverben
+
+Az SQL Server relációs adatbázisa kiegészíthető csomópont- és éltáblákkal, ami a kapcsolati hálók ábrázolásában és az azokon való navigálásban sokkal hatékonyabb lehet a hagyományos relációs modellnél.  
+
+A táblák létrehozásakor deklarálható, hogy az adott tábla csomópont (node) vagy él (edge) típusú legyen. A csomópont típusú táblákat az él típusú táblák kötik össze.  
++2
+
+A bemutatott SQL Server 2017-es megoldással ellentétben a fejlettebb SQL Server 2019-ben már szigorúan le lehet szűkíteni, hogy egy adott él mely csomópontokat kötheti össze.  
++1
+
+A Microsoft demóadatbázis felépítése
+
+Egy egyszerű példában a csomópontokat a személyek, városok és éttermek jelentik, a köztük lévő kapcsolatokat pedig az élek demonstrálják.  
++1
+
+Egy személynek lehet kapcsolata egy másik személlyel (barátság), de az élek azt is jelölhetik, hogy a személy melyik városban lakik, vagy melyiket szereti.  
+
+Az éleknek (kapcsolatoknak) saját attribútumuk is lehet, például értékelhetik, hogy mennyire szeretnek egy adott várost.  
+
+Ez a logikai felépítés igazából nem jelent óriási újdonságot ahhoz a relációs megközelítéshez képest, amikor egy több-a-többhöz kapcsolatot (például egy személy és a városok kapcsolatát) egy kapcsolótáblával valósítanak meg.  
+
+összefoglalás
+
+Íme a megadott szöveg alapján az SQL Server gráfadatbázis-kiegészítésének további működéséről és a gráfok felépítéséről szóló összefoglaló:
+
+Táblák és attribútumok a gráfmodellben
+
+A bemutatott példamodell összesen három csomópontból és öt élből áll, amelyeket nyolc tábla segítségével lehet megvalósítani.  
+
+A csomóponttáblák létrehozásakor kizárólag a releváns attribútumokat (például azonosító és név) kell rögzíteni.  
+
+Az éltábláknak, amelyek a csomópontokat kötik össze, szintén lehetnek saját attribútumai.  
+
+Egy több-a-többhöz típusú "kedvelés" (Likes) kapcsolat esetén például ilyen attribútum lehet egy értékelés (rating vagy review) mező.  
++1
+
+Rendszer által generált rejtett azonosítók
+
+Amikor csomópont (node) vagy él (edge) típusú táblákat hozunk létre, a rendszer minden esetben automatikusan generál egy rejtett azonosítót (például $node_id), amelyet utólag le is lehet kérdezni.  
++1
+
+Ez a rejtett azonosító tulajdonképpen egy JSON dokumentum formátumát veszi fel.  
++1
+
+A JSON dokumentum magában foglal egy típus attribútumot, a sémát és a táblát azonosító adatokat, valamint egy egyedi ID-t is.  
++1
+
+Ezen automatikus generálás miatt a fejlesztőknek elméletileg nem is kellene manuálisan azonosítókat megadniuk a csomópontok vagy élek létrehozásakor, bár megszokásból ezt gyakran mégis megteszik.  
+
+Ezt az automatizmust valószínűleg azért vezették be, hogy megkönnyítsék a programozók dolgát, és a rendszer használata egy dokumentumtár logikájához hasonlítson.  
+
+A gráfadatbázis rugalmassága és az élek kezelése
+
+A táblák segítségével könnyedén építhetünk gráfokat, például összeköthetünk egy személyt egy étteremmel a "likes" táblán keresztül, rögzítve az adott személy kilences értékelését.  
++1
+
+Az adatbázis ezen változatában nincs szigorú megkötés arra vonatkozóan, hogy egy adott éltábla (mint a "likes") konkrétan milyen típusú csomópontokat köthet össze.  
+
+Ennek az engedékenységnek köszönhetően a "likes" tábla akár személyek és városok közötti kedveléseket is rögzíthetne, még akkor is, ha az aktuális demóban csak személyek és éttermek közötti kapcsolatok szerepelnek benne.  
+
+A gráfot további kapcsolatokkal (élekkel) is bővíthetjük, például a "lives in" éltáblával, amely rögzíti, hogy az emberek mely városokban laknak.  
+
+A modell nem korlátozza a kapcsolatok számát, így nincs olyan megkötés, amely tiltaná, hogy egy személy több városban is éljen.  
+
+összefoglalás
+
+Íme a megadott szövegek alapján az SQL Server gráfadatbázis-lekérdezéseinek és a kapcsolatok kezelésének összefoglalója:
+
+A kapcsolatok (élek) sajátosságai és az adatok feltöltése
+
+A gráfmodell élei alapértelmezésben a több-a-többhöz (many-to-many) kapcsolatokat támogatják. Ennek megfelelően nincs logikai akadálya annak, hogy például többen is lakjanak ugyanabban a városban, vagy elviekben egy emberhez több várost is hozzárendeljünk lakhelyként (hacsak mi magunk nem korlátozzuk ezt).
+
+Az adatbázis feltöltése után a technológia igazi lényege és előnye a lekérdezések során mutatkozik meg.
+
+Intuitív gráflekérdezések és az SQL kiegészítése
+
+A gráfos kiegészítés fő célja, hogy a csomópontok közötti navigálás az emberi gondolkodáshoz közel álló, természetes és egyszerű módon történjen.
+
+Mivel az SQL nyelv nem feltétlenül a legalkalmasabb bonyolult hálózatok bejárására, az adatbázis-gyártók egy vizuális, magas szintű programozási nyelvekre emlékeztető "nyilazós" szintaxissal egészítették ki a nyelvet.
+
+A MATCH záradék és a mintázatillesztés
+
+A lekérdezések alapja a MATCH kulcsszó, amely után egy vizuális gráfkeresési mintát (pattern) adhatunk meg.
+
+A szintaxis rendkívül szemléletes: egy csomópontból indulva egy nyíl mutat a másik csomópontba, a nyíl közepén pedig zárójelek között szerepel az összekötő él neve (pl. Csómópont1 -(Él)-> Csomópont2).
+
+Ez a megoldás még az összetett SQL WHERE feltételekkel (pl. "keresd Johnt") is kombinálható.
+
+Lekérdezési példák a gráfban
+
+Egyszerű kapcsolatok bejárása: Könnyedén lekérdezhető például az, hogy kik John barátai (indulás a 'Person' csomópontból a 'Friend of' élen át egy másik 'Person' csomópontba), vagy hogy John milyen éttermeket kedvel (a 'Likes' élen keresztül az éttermekig).
+
+Láncolt, összetett lekérdezések: A mintázatok egymás után fűzhetők. Így egyetlen, logikusan felépített lekérdezéssel megválaszolhatók olyan komplex kérdések is, mint például: "Milyen éttermeket szeretnek John barátai?". Ilyenkor a lekérdezés John csomópontjától a barátság élen át eljut a barátokig, majd onnan a kedvelés élen át a végpontot jelentő éttermekig. A keresés eredménye lényegében egy algráf lesz.
+
+összefoglalás
+
+Íme a legutóbb megadott szövegek összefoglalása a komplex gráflekérdezésekről és a hagyományos relációs modellel való összehasonlításról:
+
+Összetett gráflekérdezések és logikai operátorok
+
+A gráfkeresési mintákat (pattern) logikai operátorokkal, például az ÉS (AND) operátorral is lehet kombinálni.
+
+Ezzel a módszerrel egészen összetett kérdések is viszonylag könnyen és olvashatóan megfogalmazhatók. Lekérdezhető például, hogy:
+
+Kik azok az emberek, akik legalább egy olyan éttermet kedvelnek, ami abban a városban van, ahol ők maguk is laknak.
+
+Még tovább bonyolítva: Kik azok az emberek, akiknek van legalább egy olyan barátjuk, aki a saját lakóhelyén lévő éttermet kedveli.
+
+A technológia igazi előnye, hogy a gráfos szintaxis segítségével az ilyen – hagyományos SQL-ben bonyolult – feltételrendszerek szinte folyószövegként, természetes logikával olvashatók össze.
+
+Fejlett gráfos funkciók (pl. legrövidebb út keresése)
+
+Bár a fenti lekérdezéseket hagyományos SQL-lel is meg lehetne oldani, a gráf kiegészítés olyan speciális beépített funkciókat is kínál, amelyeknek ott már sokkal több értelme van.
+
+Ilyen például a legrövidebb út (shortest path) megkeresése a gráfon belül (pl. egy ismeretségi hálózatban mi a legrövidebb útvonal két tetszőleges ember között). Ezt egy sima SQL lekérdezéssel rendkívül nehéz lenne leprogramozni. (Megjegyzés: ez a funkció az SQL Server 2019-es verziójától érhető el).
+
+A hagyományos relációs modell alternatívája
+
+Ugyanezt a hálózatot tisztán relációs adatbázisként is fel lehet építeni gráftechnológia nélkül, mindössze 5 tábla felhasználásával.
+
+Ebben az esetben az egy-a-többhöz (1:N) kapcsolatokat – például, hogy egy étterem egy adott városban van, vagy egy ember egy adott városban lakik – egyszerű külső kulcsokkal (foreign key) lehet megoldani a megfelelő táblákban.
+
+A több-a-többhöz (N:M) kapcsolatokhoz – mint a "kedvelés" (likes) vagy a "barátság" (friends) – kapcsolótáblákra van szükség.
+
+A relációs megközelítés nagy különbsége, hogy sokkal kötöttebb: itt dedikáltan meg kell határozni, hogy a "kedvelés" kapcsolótábla szigorúan csak a személyek és az éttermek közötti összeköttetést jelenti (szemben a gráfmodell rugalmas élével, ami más csomópontokat is összeköthetne).
+
+összefoglalás
+
+Íme a megadott szövegek alapján az SQL Server gráfadatbázisainak és a tisztán relációs modellnek az összehasonlító összefoglalója:
+
+A relációs modell felépítése
+A bemutatott gráfos problémát egy tisztán relációs modellel is meg lehet oldani, mindössze öt tábla felhasználásával.  
+
+A modell három entitástáblából (emberek, városok, éttermek) áll, ahol az egy-a-többhöz kapcsolatokat (például, hogy ki hol lakik, vagy hol van az étterem) egyszerű külső kulcsokkal kezelik.  
+
+A több-a-többhöz kapcsolatok (barátság, kedvelés) leképezésére két külön kapcsolótáblát használnak, ahol explicit módon megadják a hivatkozási kényszereket (references constraint).  
+
+Ezekben a kapcsolótáblákban többmezős kulcsokat alkalmaznak. Ez a gyakorlatban azt jelenti, hogy egy személy csak egyszer lájkolhat egy adott éttermet, és csak egyszer lehet valakinek a barátja.  
++1
+
+Az adatok feltöltéséhez használt SQL kód a relációs modell esetében egy kicsit tömörebbnek tűnik.  
+
+Lekérdezések: JOIN műveletek a gráfos nyilak helyett
+A relációs megközelítésben a gráfos lekérdezéseknél használt intuitív "nyilacskákat" INNER JOIN műveletek helyettesítik.  
+
+Ha például "John barátait" szeretnénk lekérdezni, akkor a person táblát saját magával kell összefűzni, így a táblára kétszer is szükség van a lekérdezésben.  
+
+A komplexebb lekérdezések (például: kinek van olyan barátja, aki ugyanabban a városban szeret egy éttermet, ahol ő lakik) már rengeteg, egymásba fűzött JOIN műveletet igényelnek. Egy ilyen esetben akár öt táblán is végig kell menni.  
++1
+
+Bár a sok JOIN miatt a kód bonyolultabbnak tűnhet, a logika továbbra is jól követhető marad. A lekérdezési feltételeket a WHERE záradékban, vagy akár magukban a JOIN feltételekben is meg lehet valósítani.  
++1
+
+SQL Server technológiai háttér és konklúzió
+A két technológia közötti választás nagyrészt attól függ, hogy a fejlesztő melyik logikát szokta meg, de a gráfos kiegészítésekre egyértelműen van valós igény az adatbázis-kezelésben.  
+
+Fontos korlátozás, hogy egy SQL Server adatbázison belül logikailag csak egyetlen gráf alkotható meg.  
+
+Érdekesség, hogy a motor a háttérben a gráfos táblákat is a hagyományos relációs modell szerint valósítja meg.  
+
+Gyakorlati feladat a megértéshez
+A technológiák megértését egy gyakorlati feladat is segíti a népszerű Northwind adatbázis felhasználásával.  
+
+A feladat lényege, hogy a termékek, a rendelések, és az azokat összekötő rendelési tételek (mint kapcsolatok) hármasát át kell alakítani gráfos adatbázis formátumra.  
+
+A táblák feltöltése, majd az olyan hagyományos lekérdezések megírása gráfos környezetben, mint például egy adott rendelés összértékének kiszámítása, rávilágít a két adatbázis-modell közötti gyakorlati különbségekre.  
+
+
+
+
+
+Gemini is AI and can make mistakes, including about people. Your privacy & GeminiOpens in a new window
+

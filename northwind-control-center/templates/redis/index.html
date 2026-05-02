@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Redis Explorer – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-lightning-fill text-warning"></i> Redis Explorer</h4>
+
+{% if not conns %}
+<div class="alert alert-info">
+  No Redis connections registered.
+  <a href="{{ url_for('connections.new_connection') }}" class="alert-link">Add one</a>
+  — type <code>redis</code>, host <code>localhost</code>, port <code>6379</code>.
+</div>
+{% else %}
+
+<!-- Connection selector -->
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-auto">
+    <select name="conn_id" class="form-select form-select-sm" onchange="this.form.submit()">
+      {% for c in conns %}
+      <option value="{{ c.id }}" {% if c.id == conn_id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+{% if conn_id %}
+
+<!-- Server info -->
+{% if info_err %}
+<div class="alert alert-warning py-2 small">{{ info_err }}</div>
+{% elif info %}
+<div class="row g-2 mb-3">
+  {% for label, val in [
+      ('Version', info.version),
+      ('Uptime', (info.uptime_sec // 3600)|string + 'h'),
+      ('Memory', info.used_memory),
+      ('Clients', info.connected_clients),
+      ('Commands', info.total_commands),
+  ] %}
+  <div class="col-auto">
+    <div class="card text-center px-3 py-2">
+      <div class="small text-muted">{{ label }}</div>
+      <div class="fw-bold">{{ val }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="row g-3">
+
+  <!-- Left: key browser -->
+  <div class="col-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-header py-2 d-flex justify-content-between align-items-center">
+        <span class="small fw-semibold"><i class="bi bi-list-ul"></i> Keys</span>
+        <form method="get" class="d-flex gap-1">
+          <input type="hidden" name="conn_id" value="{{ conn_id }}">
+          <input type="text" name="pattern" value="{{ pattern }}"
+                 class="form-control form-control-sm" style="width:100px" placeholder="*">
+          <button class="btn btn-sm btn-outline-secondary">Filter</button>
+        </form>
+      </div>
+      <div class="list-group list-group-flush" style="max-height:400px;overflow-y:auto">
+        {% if keys_err %}
+        <div class="list-group-item text-danger small">{{ keys_err }}</div>
+        {% elif keys %}
+          {% for k in keys %}
+          <a href="{{ url_for('redis_bp.get_key', conn_id=conn_id, key=k.key, pattern=pattern) }}"
+             class="list-group-item list-group-item-action py-1 px-2 {% if selected_key == k.key %}active{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="font-monospace small text-truncate" style="max-width:160px">{{ k.key }}</span>
+              <span class="ms-1">
+                <span class="badge bg-secondary" style="font-size:.65rem">{{ k.type }}</span>
+                {% if k.ttl > 0 %}<span class="badge bg-warning text-dark" style="font-size:.65rem">{{ k.ttl }}s</span>{% endif %}
+              </span>
+            </div>
+          </a>
+          {% endfor %}
+        {% else %}
+        <div class="list-group-item text-muted small">No keys found.</div>
+        {% endif %}
+      </div>
+      <div class="card-footer py-2 d-flex gap-2">
+        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#flushModal">
+          <i class="bi bi-trash"></i> Flush DB
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: value viewer + SET form + cache demo -->
+  <div class="col-12 col-lg-8">
+
+    <!-- Value viewer -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-eye"></i> Key Value</div>
+      <div class="card-body">
+        {% if value_err %}
+        <div class="alert alert-danger py-1 small">{{ value_err }}</div>
+        {% elif selected_key %}
+        <div class="mb-2">
+          <span class="font-monospace fw-bold">{{ selected_key }}</span>
+          <span class="badge bg-secondary ms-2">{{ value_type }}</span>
+        </div>
+        <pre class="bg-dark text-light p-2 rounded small" style="max-height:200px;overflow:auto">{{ value }}</pre>
+        <form method="post" action="{{ url_for('redis_bp.delete_key', conn_id=conn_id) }}" class="mt-2">
+          <input type="hidden" name="key" value="{{ selected_key }}">
+          <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete key</button>
+        </form>
+        {% else %}
+        <p class="text-muted small mb-0">Select a key from the list.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- SET form -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-pencil"></i> Set Key</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('redis_bp.set_key', conn_id=conn_id) }}">
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <input type="text" name="key" class="form-control form-control-sm"
+                     placeholder="key" value="{{ selected_key or '' }}">
+            </div>
+            <div class="col-3">
+              <input type="number" name="ttl" class="form-control form-control-sm"
+                     placeholder="TTL (sec, 0=none)" min="0">
+            </div>
+            <div class="col-3">
+              <button class="btn btn-sm btn-primary w-100"><i class="bi bi-check-lg"></i> SET</button>
+            </div>
+          </div>
+          <textarea name="value" class="form-control font-monospace" rows="2"
+                    placeholder="value"></textarea>
+        </form>
+      </div>
+    </div>
+
+    <!-- Query cache demo -->
+    <div class="card">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-speedometer2"></i> Query Cache Demo
+        <span class="text-muted fw-normal ms-1">— cache SQL Server results in Redis</span>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('redis_bp.cache_demo', conn_id=conn_id) }}" class="row g-2 mb-3">
+          <div class="col-5">
+            <select name="query_key" class="form-select form-select-sm">
+              {% for q in demo_queries %}
+              <option value="{{ q.key }}">{{ q.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-3">
+            <input type="number" name="ttl" value="60" min="1" class="form-control form-control-sm"
+                   placeholder="TTL sec">
+          </div>
+          <div class="col-4">
+            <button class="btn btn-sm btn-success w-100"><i class="bi bi-play-fill"></i> Run / Cache</button>
+          </div>
+        </form>
+
+        {% if cache_result %}
+          {% if cache_result.error %}
+          <div class="alert alert-danger py-2 small">{{ cache_result.error }}</div>
+          {% else %}
+          <div class="alert py-2 small {% if cache_result.hit %}alert-success{% else %}alert-warning{% endif %}">
+            <strong>{{ '✓ Cache HIT' if cache_result.hit else '✗ Cache MISS' }}</strong>
+            — {{ cache_result.label }}<br>
+            {% if cache_result.hit %}
+            Redis: <strong>{{ cache_result.elapsed_redis_ms }} ms</strong>
+            &nbsp;|&nbsp; TTL remaining: {{ cache_result.ttl }}s
+            {% else %}
+            SQL Server: <strong>{{ cache_result.elapsed_sql_ms }} ms</strong>
+            → cached with TTL {{ cache_result.ttl }}s
+            &nbsp;(key: <code>{{ cache_result.cache_key }}</code>)
+            {% endif %}
+          </div>
+          {% if cache_result.columns %}
+          <div style="overflow-x:auto;max-height:200px">
+            <table class="table table-sm table-hover table-bordered mb-0">
+              <thead class="table-dark">
+                <tr>{% for c in cache_result.columns %}<th>{{ c }}</th>{% endfor %}</tr>
+              </thead>
+              <tbody>
+                {% for row in cache_result.rows[:20] %}
+                <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Flush confirmation modal -->
+<div class="modal fade" id="flushModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2"><h6 class="modal-title">Flush database?</h6></div>
+      <div class="modal-body small">This deletes ALL keys in db {{ conn_id }}. Cannot be undone.</div>
+      <div class="modal-footer py-2">
+        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form method="post" action="{{ url_for('redis_bp.flush', conn_id=conn_id) }}">
+          <button class="btn btn-sm btn-danger">Flush</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %} {# conn_id #}
+{% endif %} {# conns #}
+{% endblock %}

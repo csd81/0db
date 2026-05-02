@@ -41,6 +41,10 @@ from blueprints.consensus_bp import consensus
 from blueprints.dqs_bp import dqs_bp
 from blueprints.column_store_bp import column_store
 from blueprints.exports_bp import exports
+from blueprints.neo4j_bp import neo4j_bp
+from blueprints.redis_bp import redis_bp
+from blueprints.mongo_bp import mongo_bp
+from blueprints.cassandra_bp import cassandra_bp
 
 app.register_blueprint(auth)
 app.register_blueprint(connections)
@@ -49,6 +53,10 @@ app.register_blueprint(consensus)
 app.register_blueprint(dqs_bp)
 app.register_blueprint(column_store)
 app.register_blueprint(exports)
+app.register_blueprint(neo4j_bp)
+app.register_blueprint(redis_bp)
+app.register_blueprint(mongo_bp)
+app.register_blueprint(cassandra_bp)
 
 # ── Context processor: make current_user available in all templates ────────────
 from auth import get_current_user

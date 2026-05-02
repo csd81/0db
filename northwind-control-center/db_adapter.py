@@ -13,6 +13,11 @@ import psycopg2.extras
 import pymysql
 import pymysql.cursors
 import pyodbc
+import redis as _redis
+from neo4j import GraphDatabase
+from pymongo import MongoClient
+from cassandra.cluster import Cluster
+from cassandra.auth import PlainTextAuthProvider
 from flask import g
 
 import meta_db
@@ -164,6 +169,48 @@ def adapter_test(conn_id: int) -> tuple[bool, str | None]:
             )
             c.cursor().execute("SELECT 1")
             c.close()
+        elif db_type == 'mongodb':
+            _u = params.get('username', '') or None
+            _p = password or None
+            _c = MongoClient(
+                host=params.get('host', 'localhost'),
+                port=int(params.get('port', 27017)),
+                username=_u, password=_p,
+                serverSelectionTimeoutMS=5000,
+            )
+            _c.admin.command('ping')
+            _c.close()
+        elif db_type == 'redis':
+            c = _redis.Redis(
+                host=params.get('host', 'localhost'),
+                port=int(params.get('port', 6379)),
+                db=int(params.get('db', 0)),
+                password=password or None,
+                socket_timeout=5,
+                decode_responses=True,
+            )
+            c.ping()
+        elif db_type == 'neo4j':
+            d = GraphDatabase.driver(
+                params.get('uri', 'bolt://localhost:7687'),
+                auth=(params.get('username', 'neo4j'), password),
+                connection_timeout=5,
+            )
+            d.verify_connectivity()
+            d.close()
+        elif db_type == 'cassandra':
+            _ap = None
+            if params.get('username'):
+                _ap = PlainTextAuthProvider(params['username'], password or '')
+            _cl = Cluster(
+                contact_points=[params.get('host', 'localhost')],
+                port=int(params.get('port', 9042)),
+                auth_provider=_ap,
+                connect_timeout=10,
+            )
+            _s = _cl.connect()
+            _s.execute("SELECT release_version FROM system.local")
+            _cl.shutdown()
         else:
             return False, f"Unsupported db_type: {db_type!r}"
 
@@ -172,13 +219,120 @@ def adapter_test(conn_id: int) -> tuple[bool, str | None]:
         return False, str(e)
 
 
+def get_mongo_client(conn_id: int):
+    """Return a cached MongoClient for this request."""
+    cache_key = f'_mongo_{conn_id}'
+    client = g.get(cache_key)
+    if client is not None:
+        return client
+
+    rec = meta_db.get_connection_by_id(conn_id)
+    if rec is None:
+        raise ValueError(f"Connection id={conn_id} not found in meta.db")
+    params = rec['conn_params']
+    password = rec.get('password', '') or None
+    username = params.get('username', '') or None
+
+    host = params.get('host', 'localhost')
+    port = int(params.get('port', 27017))
+
+    if username and password:
+        client = MongoClient(host=host, port=port, username=username, password=password,
+                             serverSelectionTimeoutMS=5000)
+    else:
+        client = MongoClient(host=host, port=port, serverSelectionTimeoutMS=5000)
+
+    setattr(g, cache_key, client)
+    return client
+
+
+def get_redis_client(conn_id: int):
+    """Return a cached Redis client for this request."""
+    cache_key = f'_redis_{conn_id}'
+    client = g.get(cache_key)
+    if client is not None:
+        return client
+
+    rec = meta_db.get_connection_by_id(conn_id)
+    if rec is None:
+        raise ValueError(f"Connection id={conn_id} not found in meta.db")
+    params = rec['conn_params']
+    password = rec.get('password', '') or None
+
+    client = _redis.Redis(
+        host=params.get('host', 'localhost'),
+        port=int(params.get('port', 6379)),
+        db=int(params.get('db', 0)),
+        password=password,
+        decode_responses=True,
+    )
+    setattr(g, cache_key, client)
+    return client
+
+
+def get_neo4j_driver(conn_id: int):
+    """Return a cached Neo4j driver for this request."""
+    cache_key = f'_neo4j_{conn_id}'
+    driver = g.get(cache_key)
+    if driver is not None:
+        return driver
+
+    rec = meta_db.get_connection_by_id(conn_id)
+    if rec is None:
+        raise ValueError(f"Connection id={conn_id} not found in meta.db")
+    params = rec['conn_params']
+    password = rec.get('password', '')
+
+    driver = GraphDatabase.driver(
+        params.get('uri', 'bolt://localhost:7687'),
+        auth=(params.get('username', 'neo4j'), password),
+    )
+    setattr(g, cache_key, driver)
+    return driver
+
+
+def get_cassandra_session(conn_id: int):
+    """Return a cached Cassandra session for this request."""
+    cache_key = f'_cassandra_{conn_id}'
+    sess = g.get(cache_key)
+    if sess is not None:
+        return sess
+
+    rec = meta_db.get_connection_by_id(conn_id)
+    if rec is None:
+        raise ValueError(f"Connection id={conn_id} not found in meta.db")
+    params = rec['conn_params']
+    password = rec.get('password', '') or ''
+    username = params.get('username', '') or ''
+
+    auth = PlainTextAuthProvider(username, password) if username else None
+    cluster = Cluster(
+        contact_points=[params.get('host', 'localhost')],
+        port=int(params.get('port', 9042)),
+        auth_provider=auth,
+        connect_timeout=10,
+    )
+    session = cluster.connect()
+    # Store cluster on g so teardown can shut it down
+    setattr(g, f'_cassandra_cluster_{conn_id}', cluster)
+    setattr(g, cache_key, session)
+    return session
+
+
 def close_adapter_connections(e=None) -> None:
     """Teardown hook: close all adapter connections opened during this request."""
     for key in list(vars(g)):
-        if key.startswith('_adapter_'):
-            conn = getattr(g, key, None)
-            if conn:
+        if any(key.startswith(p) for p in ('_adapter_', '_neo4j_', '_redis_', '_mongo_')):
+            obj = getattr(g, key, None)
+            if obj:
                 try:
-                    conn.close()
+                    obj.close()
+                except Exception:
+                    pass
+        elif key.startswith('_cassandra_cluster_'):
+            cluster = getattr(g, key, None)
+            if cluster:
+                try:
+                    cluster.shutdown()
                 except Exception:
                     pass

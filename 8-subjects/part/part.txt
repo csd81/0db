@@ -1,0 +1,764 @@
+No, tehát a mostani alkalommal
+a
+relációs adatbárisoknak a
+particionálásával, illetve egy ezzel
+ehhez az egy kapcsolódó téma az
+oszloptár indexelésről lesz szó, ugye
+ezek tehát olyan technológiák,
+amelyekkel különös adatokban
+találkozunk, ahol nagy méretű
+tehát sok
+mezős és nagyon sok rekordot tartalmazó
+tá táblák vannak itt. A sok rekord az
+azt jelenti, hogy mondjuk több mint
+néhány millió, tehát egy-két 10-es
+rekorménység az az nem számít soknak.
+Ez az a terület egyébként, ahol a
+reakciós technológiát bizonyos esetekben
+kihívja
+a a NO SQL technológia. Tehát ahol a
+például a dokumentumtárakban
+kevesebb strukturális információ van,
+meg ugye hát nyilván a ö a
+különböző hivatkozási, integritási,
+egyéb ö szabályok mellőzésével.
+viszont nagyon nagy mennyiségű
+rekordot szeretnénk vagy dokumentumot
+szeretnék tárolni. Most azt a módszert
+mutatom, ami a hát mondhatni, hogy
+tradicionális
+OLT vagy OLTP vagy nem OLTP adattárház
+adatbázisoknak a
+a sajátossága.
+Ez ez már azok, ez ez egy olyan
+feature, vagy egy olyan szolgáltatás,
+ami már általában fizetős mindenhol és
+általában elég sokba is kerül.
+Tipikusan arról van szó, hogy amíg a a
+az adatbázis kicsi, amíg a az elvárt
+lekérdezési teljesítmény kicsi, addig
+nincs ilyenekre szükség. Aztán ugye ez
+növekedik, akkor egyre inkább előtébre
+kerülnek ezek a dolgok. Itt igazából az
+alapgondolat az az a particionálisnál, a
+particionálásnál,
+hogy a a nagyméretű táblát
+nem egyszerre próbáljuk kezelni, hanem
+partíciókra bontjuk fel. Igyekszünk
+minél több párhuzamosságot belevinni a
+tábla feldolgozásába is. Ha valahogy
+szét tudjuk bontani kisebb, hát ugye egy
+táblaz végül is egy rekord halmaz,
+szóval kisebb halmazokra akkor ezekkel
+halmazokkal külön-külön tudunk bánni.
+Ugye ez egy
+sok processzoros és
+és több párhuzamos adattárót tartalmazó
+rendszerben.
+Jó, ez végülis skálázhatóvá teszi a
+megoldásunkat.
+Itt tehát két fajta párhuzamosság van,
+azt azért látni kell. Az egyik tehát a a
+legkérdezésnek a végrehajtása, hogy az
+több szálon futhat. A a másik pedig az
+adatok elővételete tárolása, hogy több
+fizikai adattáró lehet, amelyek
+egymással pár azonosan működnek.
+Most nyilván, hogyha
+ha nekem egy egy hatalmas táblában
+meg kell keresnem mondjuk egy maximum
+értékét egy mezőnek, az az egész táblára
+szükség van, ugye? Tehát ez ez világos,
+de ugye ebben az esetben is megkeresetem
+párhuzamosan a mondjuk tegyük, hogy négy
+részre van bontva a négy allrésznek a
+maximált, és azoknak vehetem aztán még a
+maximát. Szóval nagyon sok műveletet
+lehet okosan, párhuzamosan végrehajtani.
+A particionálásnak
+azt nevezik, amikor valamilyen adott
+szabály vagy függvény szerint minden a
+táblába irányított rekordot egy ilyen
+particionok nevezett alhalmazba sorolunk
+be.
+Ez a ez a par ez a particionál függvény,
+ez lehet tulajdonképpen bármi.
+A lényeg az, hogy kihessen értékelni a
+rekordra.
+Természetesen
+a leggyakoribb megoldás az üzleti
+logikából fakadóan
+vagy térbeli vagy időbeli felbontást
+jelent. Tehát például mondhatom azt,
+hogyha van egy egy hívás adatbázis,
+mondjuk a mobiltelefon szolgáltatónál,
+akkor országonként van egy partíkm,
+például Magyarországól, kezdeményezett
+hívások, aztán a Szlovákiából satöbbi,
+satöbbi, illetve azt is lehet mondani,
+hogy időbeli particionálást használok,
+az is nagyon gyakori. Tehát például én
+én úgy tudom, hogy a a NEAK
+adattárházában,
+tehát a TB adat adat adat adatbázisban,
+ott például egy olyan arak adatbázis
+van, ahol időbeli particionást
+használnak. Tehát évente
+vannak
+szétbontva tulajdonképpen a a jelentett
+esetek, és mindegyik év egy külön
+partíciót jelent.
+Hát, hogyha ez így van megvalósítva,
+akkor ennek bizony előnyei vannak.
+Gondolját csak meg például, hogy ha
+általában időszerint keresnek egy
+időszerint particionált táblában, akkor
+ugye egy ilyen lekkérdezésnél
+elegendő azt az egy partíciót egyáltalán
+elérni, amelyikről szó van.
+És hát ez azt jelenti, hogy a hogy a
+feladat mérete le fog csökkenni.
+Arról nem is beszélve, hogyha hogyha
+tényleg párhuzamosan
+sikerül megoldani a tárolást, tehát nem
+arról van szó, hogy hogy
+ugyanazon a fizikai adattárolón vannak a
+a partíciók, hanem több több adattároló,
+akkor gyakorlatilag minden műveltő
+valamilyen szinten páronosítható. Bár
+azt megjegyzem, hogy hogy ez kétségkívül
+nem egy egyszerű feladat. Én én
+konkrétan azt hallottam az oraknek az
+egyik ilyen vezető fejlesztőjétől, hogy
+hogy a a create index utasítás ugye hát
+az egy az egy az egy nagyon gyakran
+használt utasítás, amikor idétozunk egy
+indexet egy táblához, hogy ezen a ennek
+a megosításán
+egy mind harver táralás, mind pedig
+énés végületes szempontjából párhuzamos
+környezetben egy ilyen zsenikből álló
+csapat másfél évig dolgozott. Tehát
+azért ez ez tényleg nem egy egyszerű
+dolog, hogy ez hogy ez hogyan működik
+hatékonyan jól. És ezek az emberek
+írják és olvassák
+a
+különféle tudán folyóatokba a
+legkomolyabb cikkeket. Szóval ez egy ez
+egy kutatási terület, amivel az
+informatika összes
+elérhető eszközét felhasználják. Most
+amit én szeretnék megmutatni,
+az egy az a Microsoft SQL szervernek a a
+particionálása.
+múlt lapra tettem fel ezzel kapcsolatban
+egy kis kiegészítő jegyzetet, meg egy
+kis scriptet is, amit most itt meg is
+osztok. Egyébként
+igazából nem egy bonyolult dologról van
+itt szó.
+Arról van szó, hogy van egy particánsi
+függvényünk, amit már említettem,
+ami minden rekordra kiértékelhető.
+És ezenkívül van még egy particionsi
+séma is, ugye a a partíció az egy
+logikai fogalom, hogy most mit tudom én,
+például a a valamelyik év vagy
+valamelyik régió mondjuk
+de utána jön az, hogy ezt a partíciót én
+egy
+fizikai alattáróhoz rendelem hozzá.
+A az SQL szerveren ezeket file
+csoportoknak hívják, file groupnak.
+Mi eddig mindig csak a primary file
+groupot használtuk, ami legalább egy
+file group mindenképpen van, de lehet
+további file groupat is létrehozni.
+És és akkor ezeket most mutatom is, hogy
+ezt például hogyan nézné itt ki.
+Akkor ezeket a fá csoportokat
+aztán már rakhatom különböző helyekre.
+Látható, hogy ez a ez a primary ez ez
+mindenképpen van.
+És ugye egy fálcsoporton belül aztán
+aztán lehetnek különböző fáljaim. ö
+minimum ö egy ló és egy adatfál
+mindenképpen van egy adatbázishoz, de
+hát ugye nyugodtan mondhatom azt, hogy
+egy nagy táblával, amit szeretnék
+gyorsítani, azt ugye egy külön
+táblába teszem és
+egy egy bocsánat, egy egy külön fájba
+teszem és
+és igazából, hogy hogyha ez particíálva
+van, akkor minden partícióját tudom
+külön fájokba tenni, ami különböző fáj
+grupokon vannak. Tehát ilyen módon lehet
+megvalósítani azt a bizonyos
+ö tárolási szintű párhuzamosságot.
+Hát ez az, amit most itt lehet is látni.
+Tegyük fel, hogy van egy adattázunk.
+Egyébként van is ez, ami a DW van, ugye
+a virtuális gépen is szerepel.
+Ebben van egy egy ténytábla. Most ugye
+hát
+ez egy ilyen persze demó, tehát néhány
+ezer rekord van csak benne, de de tegyük
+fel, hogy mondjuk itt mondjuk 100 millió
+rekord van. Tehát ez egy olyan tábla,
+amit szeretnénk particionálni
+és aztán párhuzamosan elérni.
+Ö mi mivel idő szerint keresünk benne?
+Logikusan, hiszen itt eladásokról van
+szó.
+Ezért megnézzük azt, hogy mi az
+időtartomány itt.
+Tehát van
+öt évünk 10-től 14-ig
+vannak az az eladásti tranzakciók.
+És nekünk először mi bármit csinálnánk,
+definiálnunk kell a particionási
+függvényt és a és a sémát. Itt látható
+az az eskola utasítás.
+Most itt ugye azt lehet látni, hogy
+van egy van neki egy neve ennek a ennek
+a partenső függvénynek,
+és van neki egy egy visszatési
+adattípusa, tehát amit majd itt vissza
+fog adni.
+Mi ezt a négy
+értéket definiáljuk, hogy 10 11 13 azért
+csak ilyen tájnényt értéket használunk.
+hogy nem az egész évet tároljuk el, csak
+az utolsó két számjegyét, tehát 2010,
+2011 121, mert ugye ez a time int ez
+tulajdonképpen csak egy bytot foglal el,
+és ezt ezt végülis minden rekorddal
+kapcsolatban nyilván kell tartanunk. Még
+annyit mondanék, hogy ez a left, ez itt
+azt jelenti, hogy balról
+lesz tagja a rekord ezeknek a
+partícióknak.
+Tehát
+a 2010-es év az a
+2010-zel egyenlő, vagy annál kisebb
+értékeket tartalmazza. Vagy ez a 2011-es
+partíció az akkor ezek szerint a 2000
+14. január 1jétől december 31-ig
+terjedéket tartalmazza és így tovább.
+És akkor a másik, amit létre kell
+hoznunk, az pedig a particionális séma.
+ami azt mondja meg, hogy melyik
+partíciót melyik fágrouphoz rendeljük
+hozzá. Hát itt ugye mivel ebbe az adatba
+is csak egy fouunk van, ugye lehetne
+több is, csak igazából nem tudnánk
+demonstrálni a azt a bizonyos
+gyorsulást, mert mert harv szinten nem
+fog nem ne nem tudnánk párhuzalmasságot
+bebiztosítani vagy biztosítani. Szóval
+itt ezért mi azt mondjuk, hogy
+mindegyiket, tehát all to primary
+mindegyiket a primaryre tesszük rá. De
+egyébként mondom, itt lehetne különböző
+fácsoportokhoz ho szó hozzáani a
+partíciókat.
+Na most
+a következő lépés az az, hogy ezt a ezt
+a fact internet sales táblát szeretnénk
+ugye particionálni, aminek van egy
+bizonyos szerkezete. Ezt meg is lehet
+nézni. Egyébként az igazság, hogy hogy
+sokkal több mezője van neki. Itt
+látszik.
+látható. Tehát azért itt jó sok mező
+van. Most mi nem mindegyiket akarjuk itt
+tárolni. A legfontosabbakat a sales
+amount ezeket választottuk ki, illetve
+ezek tulajdonképpen
+külső kulcsok, amik egy adattáházásban a
+dimenzió táblákra mutatnak, de most a az
+egyszerűsítés kedvéért ezeket egyszerűen
+átvesszük majd a fent affective intens
+táblára, és nem kötjük dimenzió
+táblákhoz.
+Szóval ennek volt egy olyan kulcsa ennek
+a táblának,
+úgy eredetileg két mezős kulcsa volt, az
+a sales order number, sales order line
+number. Most ehelyett
+mi mi csinálunk egy olyan kulcsot, ami
+két mezőből áll.
+Az egyik ez az internet sal ke, ami egy
+identitate típusú mező. A másik pedig az
+a mező, amelyik a partíció azonosítót
+tartalmazza. Tehát ez ugye ez azért tin,
+mert ez lesz majd a 10 11 12 vagy 13 ez
+a ez ez a mező. És akkor a a partíón
+belül fog tulajdonképpen futni ez a ez
+az identity futósorszám. Jó, akkor
+ezeket közben futassuk is le. Tehát én
+megcsinálom ezt a particionáló
+függvényt,
+meg ezt a sémát. Egyébként ezeket itt
+itt lehet a storagenél lehet látni,
+milyen objektumokat hoztunk létre. Hát
+itt
+jelennek ezek meg,
+amiket most most létrehoztunk. És akkor
+ezek után létrehozhatjuk a az internet
+sales táblát.
+És itt van a végén ugye látják azt, hogy
+nem az van a vége, hogy on primary.
+Eddig mindig az volt a vége, hogy on
+primary, igaz, amikor egy táblát
+létrehoztunk, vagy semmi, ugye, ami
+ugyanaz, hanem az van, hogy on után
+szerepel ez a particionális séma, ami
+megmondja, hogy melyik rekord melyik
+fouba
+kerüljön bele. És ugye ennek egy
+paramétere az, hogy mi a particionálsi
+kulcs, amit pedig ebbe a mezőbe
+helyezünk el, ugye? Tehát az, hogy a
+12-es, az akkor majd
+ide megy vagy odamegy. Jó, ezt is, ezt
+is létrehozzuk.
+Na most ez az utasítás, ez
+tulajdonképpen akár el is hagyható
+lenne, mert az egész táblát majd
+oszloptár indexzel fogjuk indexelni, de
+azért nem árt, ha itt van, hogy halljunk
+erről is.
+Van egy olyan
+módszer,
+amit hát kifejezetten nagy táblák esetén
+használnak. Ö a
+az adabblokkotok a tömörítése.
+Ugye ha az adblokkok kisebbek, akkor
+több adabblok befér egyszer a memóriába.
+Nyilván ugye ez egy kétű fegyver, hiszen
+azt akkor ki kell csomagolni, hogyha
+művetet akarunk rajta végezni, illetve
+hogyha esetleg módosítjuk, akkor
+akkor meg utána a azt még át kell nyomni
+a tömörítésen is.
+adattárházakban Isten igazából inkább
+csak olvassunk, tehát sokkal kevesebbet
+módosítunk
+és ez a ez a ez az utasítás ez egy lapú
+kompressziót vagy tömörítést hajt végre,
+ami azt jelenti, hogy hogy blokkonként
+vég végzünk egy tömörítést.
+Na és akkor itt van az a az az utasítás,
+amelyik azt mutatja, az az a az az
+inzert, amelyik azt mutatja meg, hogy
+hogyan tudunk egy egy particionált
+táblába adatokat betölteni.
+Meg kell határoznunk
+a particionálási kulcsolt, ezt a
+particionási függvényértéket. Itt
+látható ez a ez a szép hosszú kifejezés.
+Ez ennek az értéke lesz majd 10, 11, 12
+vagy 13. Egy kicsit zavaros ez a dolog
+egyébként, hogy ez hogy is van. Ög ez a
+ez az fes tábla, ez a fact internet
+sales tábla, és ennek van egy egy order
+date key nevű
+mezője. De hogyha ezt megnézzük, ezt az
+order date keyt, akkor
+akkor azt látjuk,
+hogy bármilyen furcsa, de ennek az
+adattípusa int látható. Nem is az a
+fenét. Itt itt van. Szóval int az
+adattípusa. Pedig ez egy dátum. Hogyha
+belenézünk ebbe a táblába, akkor akkor
+azt fogjuk látni, hogy hogy ez egy ez
+igazából egy dátum kéne, hogy legyen.
+Nem, mert time time stamp nem.
+Mi ez itt?
+Nem,
+nem az nem.
+Na, ez itt amire most utalok, az az
+order date key. Ez látják ez a mező.
+Oké, tehát ennek int az adattípusa. Na
+de nézzünk bele a táblába, és akkor
+látjuk, hogy ez tényleg egy intértétték,
+mert ez itt például azt mondja, hogy ez
+Igaz, ez egy intérték.
+Igen, ez egy intérték. Viszont lehet
+dátumnak is olvasni 2010 12-ő 29. Igaz?
+Tehát ez egy trükk. Ezt a trükköt azért
+csinálták ebbe az adatbázisba, mert
+hogyha itt van három ilyen mező is,
+hogyha ezek
+date time vagy akár csak date típusú
+értékek lettek volna, akkor sokkal több
+itot foglalnak el, mint egy int. Ennyi
+az egész. Az már a mi dolgunk, hogy ezt
+hogyan hogyan értelmezzük, hogyan
+dolgozzuk fel. Hát így értelmezzük, ami
+ami itt látható,
+hogy először is átalakítjuk
+őket, átkosztoljuk karakterré, aztán
+sengingel kivesszük belőlük az első két,
+vagy bocsánat a a harmadik, negyedik
+karaktert, ugye hát világos és akkor
+megvan a a az év 10-11 vagy 12 vagy 13.
+Oké? Tehát ilyen módon tudjuk
+előállítani a particionásnak a kulcsát.
+Ezt itt bele is írtam egy kommentbe.
+Most egyelőre csak 2013-ig töltjük föl,
+tehát ez azt jelent 13-as már nem lesz
+benne. Itt van egy ilyen szűrőfeltétel,
+látható. Ez azt jelenti, hogy mit
+töltünk föl 2010-et, a 11-et meg a 12-t.
+És több dolgunk nincs is. Tehát itt ebbe
+az üzlet utasításba nekünk nem kell
+foglalkoznunk most már azzal, hogy mi
+ennek a táblának a particensási sémája
+meg a függvénye, mert azt már a táblánál
+rögzítettük. Nekünk itt csak ezt a mezőt
+kell helyesen beállítanunk, ezt a ezt a
+PC-t. Ez a partitioning column az a PC
+annak a ülítése. Csak ezt a mezőt kell
+jól beállítanunk. És akkor az a
+megfelelő rekordok automatikusan
+megfelelő particba fognak belekerülni.
+Na akkor nézzük meg.
+Hát persze ugye ez igényel bizonyos
+logikát,
+hiszen ezt mindig ki kell értékelni ezt
+a függvényt. Itt világos,
+de ha egyszer benne van, akkor ugye
+szétszágtuk a problémát. Most akkor jel
+jelen jelek szerint hány problémára? Itt
+ezzel a
+megkérdezéssel meg tudom nézni, hogy
+melyik partícióban hány rekord van. Ugye
+itt látható kettesbe például 2216.
+Ez egy ez egy ez ez egy rendszertáblából
+veszi ki a rekordszámokat, de nagyon
+hasznos az, hogy van egy ilyen Dollar
+Partition nevű függvény,
+ami minden egyes rekordnál lekérdezhető.
+Tehát
+ha egy particionált táblába
+ezt a függvényt én meghívom, akkor
+megmondja, hogy az a bizonyos rekord az
+melyik be a partícióban van benne.
+Hát látható, hogy ugye ez a három
+partícióban van egyáltalán rekord, ugye
+a a negyedikben még még még nincsen
+semmi. Oké.
+No most próbáljuk ki azt, ami a másul,
+amit szeretnék mutatni. Tehát ez mind a
+két technológia, amit most mutatok, az
+hát az ilyen ilyen nagyobb teljesítményű
+adattárház technológia, és kettő úgy
+általában együtt van alkalmazva.
+A másik az az oszloptárindex.
+Az oszloptárindex az egy hát
+tulajdonképpen az nem index, hanem az
+egy speciális adattárolási módszer. csak
+így hívják, hogy calm store index.
+Ott igazából arról van szó, hogy hogy
+ugye mindig a reációs adatbázisokban
+ugye úgy tanultuk azt, hogy a rekordok
+szépen le vannak pakolva egymás után a
+háttértáron. És akkor ott ha keressek
+valatok, akkor kell olvasni egyik
+rekordot a másik után és aztán csináltok
+velük valamit. Ugye egy adabblokban a
+rekordok úgy jönnek egymás után.
+Ez a ez a fajta hagyományos megközítés,
+ez nagyon rossz hatékonyságú akkor,
+hogyha az egyes rekordok eléggé nagy
+méretűek,
+tehát sok mezőből állnak.
+Lehet akár mondjuk tipikusan megint csak
+egy adattá az alkalmazásban akár 1000
+mezője is lehet mondjuk egy
+ténytáblának.
+És nekem a lekkérdezésemben nem kell az
+összes mező, hanem csak mondjuk egy
+kettő az 1000-ből. Hát akkor annak a
+rekordnak adatmennyiségek én beolvasok,
+csak egy nagyon kis részét használom
+egyáltalán bármire. Érthető a probléma?
+Márpedig azt tudni kell, hogy a a a az
+adat feldolgozásnak a szűk
+keresztmedzete az mindig a az adatoknak
+az elérése és és bemozgatása például a
+memóriával. Tehát ez a ez amit
+szeretnénk minimalizálni. Kitalálták
+tehát
+a az oszloptárindexet.
+Az az elgondásnak az alapja,
+hogy nem rekordonként tároljuk a nagy
+táblát, hanem mezőnként. Tehát kvázi úgy
+néz ki, mintogyha minden mező mondjuk
+tegyük föl egy egy külön állomány lenne.
+És
+és egyébként a rekordok sorrendjében a
+mezőértékek vannak benne felsorolva.
+Most gondoljuk meg, hogyha ez egy olyan
+mező, aminek
+nem túlságosan nagy az értékészlete.
+Mondjuk például hát vannak szélsőos
+esetek, mondjuk az, hogy valaki férfi
+vagy nő, ugye, vagy mondjuk van három
+értéke egy mezőnek, hát akkor hogy fog
+kinézni egy ilyen egy ilyen és van
+mondjuk 100 millió rekordom. Ö ez egy
+ilyen ö-két
+értékből álló, nagyon hosszú vektor
+lesz, igaz? Tehát minden minden mezőből
+lesz egy vektor, és különösen azokból a
+a mezőkből amelyek kevés értéket
+tartalmaznak, ugye kevés különböző
+értéket tartalmaznak, azokból rendkívül
+jól tömöríthető vektorok lesznek. Hát el
+tudják azt képzelni, hogy hogy milyen
+elképesztő tömörítési hatékonyságot
+lehet elérni ilyen esetekben, ugye?
+Tehát ezzel a fajta adattárulással
+sok egyetünk egy csapásra. Először is az
+egyik az az, hogy
+amikor egy lekkérdezést végrehajtunk, és
+nincsen szükségünk minden mezőre, csak
+néhány a sok közül, akkor meg se
+mozdítjuk azokat a mezőket, amelyekre
+nincsen szükségünk, amelyekre nem
+szűrünk, vagy az értékükkel nem
+csinálunk semmit. Hát ez egy óriási
+hozadék lehet.
+Persze természetesen van ennek ára.
+Tudnunk kell azt, hogy most ha például
+ugye egy egy rekordmező összetartoznak
+most is, tehát nem mindegy, hogy a hogy
+a a
+valakinek a nevéhez akkor milyen nem
+tartozik. Hát azt nyilván kell
+tartanunk, hogy hanyadik értéknél
+vagyunk például egy ilyen egy egy ilyen
+vektorban.
+Tehát bizonyos adminisztációt ez jelent.
+Viszont még egyszer mondom, a mezőknek
+egy jelentős részét nem kell
+megmozdítanunk. A másik pedig az, és hát
+ugye itt el lehet képzelni, hogy komoly
+kutatások vannak emögött, tehát ez és és
+nem is nem is tegnap találták ki, hanem
+már sokkal korábban,
+hogy az össze, tehát a a ezeket a
+vektorokat tömörítjük,
+és a műveleteknek a jelentős részét
+tömörített ápodban is el lehet végezni.
+Ez nagyon lényeges. Tudnilik
+az egy nagyon nagy ö ö
+hát
+ár, hogy ki kell tömörítenem egy ilyen
+egy ilyen nagy rektort, egy egy ilyen
+nagy vektort, hogy tudjak vele végezni
+valamit, valami például egy keresést el
+tudjam benne végezni, vagy mondjuk meg
+tudjam számolni, hogy hogy hány férfi
+van, meg hány nő, meg ilyesmi,
+és aztán meg vissza kell esetleg
+csomagolnom. Arról is beszélve, hogyha
+hogyha ki kell csomagolnom, akkor ugye
+nagyon nagy helyet fog elfoglalni
+kapásból. Szóval arra ment ki a kutatás,
+hogy hogy olyan tömörítő algoritmusokat
+kellett kitalálni,
+amelyeken a nekünk szükséges műveleteket
+legalábbis tömét tápadó is el lehet
+végezni, és ezt megoldották. Ezért aztán
+ezek a kaltore indexek, ezek valami
+kegyetlenül
+gyorsak a hagyományos indexekhez képest.
+Természetesen olyan esetekben, amikor
+ezt érdemes használni a mi esetünkben.
+Tehát amikor sok rekord van,
+so mező van és a
+lekkérdezés szerkezete olyan, hogy hogy
+nincs minden mezőre szükségünk.
+Na most ezt a colum store-t, ezt a
+az SQL szerver támogatja. Így kell
+csinálni.
+Ez a Calumstore index. Ide beírjuk csak
+ennyit, hogy kalst és akkor az lesz
+belőle. És innentől kezdve megváltozik a
+tábla tároásának a szerkezete.
+Most ugye itt van a végén megint ez a on
+rész.
+Tehát itt itt minden partícióhoz külön
+fognak elkészülni ezek ezek a cumstore
+indexek,
+vagy hát oszloptárak pontosabban szólva.
+Tehát mind a négy partícióhoz lesz egy
+oszloptár a a customer DV keyek, a
+produkt keynek meg az ord mindegyiknek.
+Jó,
+hát ez így szépen működik és be is
+tudjuk szurkálni az adatokat.
+De most nézzük azt, ami szintén ehhez az
+esettommányhoz hozzátartozik,
+hogy hogy szeretnénk új értékeket
+betölteni.
+Például szeretnénk hozzátölteni a
+2013-as évet, hiszen ugye az eddig még
+nem volt benne.
+Most, hogyha ezt
+ezt ilyen indutasítások sorozatával
+tesszük meg, tulajdonképpen mindegy az,
+hogy egyetlen inzert utasítással szúrunk
+be sok rekordot, vagy pedig sok inzert
+utasítással.
+A lényeg az, hogy hogy
+a az inzet utasításnak
+ugye van az a hátránya, hogy minden
+rekordó el kell döntenünk, hogy melyik
+partícióba kerül.
+És van egy van egy egyszerű vagy egy
+elegánsabb megoldás,
+amit itt most tulajdonképpen ezt
+szeretném demonstrálni, ami kifejezetten
+ezzel a particionálisi technikával
+működik jól együtt. Igazából arról van
+szó, hogy ha én tudom, hogy a hogy a
+rekordjaim egy bizonyos partícióba
+fognak kerülni, akkor
+egy partíált, tehát egy partíciónak a
+hovatartozását, azt egyetlen utasítással
+át lehet állítani,
+és és nincsen szükség arra, hogy hogy
+abba a táblába egyenként beszurkáljuk a
+rekordokat. Hát itt látható, hogy most
+mi csinálunk egy olyan árnyéktáblát,
+aminek tök ugyanolyan szerkezete, mint a
+a rendes táblánknak ennek az internet
+salesnek,
+csak abban különbözik, hogy van benne
+egy olyan check constint it, hogy ez a
+13-as évre fog csak működni.
+Hát persze nem kellene bele, de hogy
+biztos biztos ne keveredjenek össze a
+rekordjaink. Jó,
+és
+ezt most létrehozzuk.
+És
+és akkor most van egy egy nagyon hasonló
+utasítás, nagyon hasonló insert
+utasítás, mint ami a fenti, csak azzal a
+különbséggel, hogy hogy itt a 13-as évet
+fogjuk csak betölteni, és ezt ebből az
+új táblába.
+Most itt még van egy olyan olyan trükk
+is, amit úgy ide is írtam, hogy abban az
+esetben, hogy a tábla tök üres volt,
+tehát nem volt még benne semmi,
+akkor ezt az inzet utasítást nem fogják
+logolni, és ezért aztán sokkal gyorsabb
+lesz. Tehát ez kicsit olyan ugye a
+logolás az azt jelenti, hogy hogy
+különben egy reakciós adatbázisban
+egy esk utasítás egy ez egy implicit
+tranzakció, tehát visszagörgetőnek kell
+lennie és például ez az inzet esertén
+azt jelenti,
+visszagetőnek és újra játszhatónak kell
+lennie, hogyha én beszúrok 1 millió
+rekordot például egy üzlet utasítással,
+akkor a transzakciós lobban le kell
+tárnom azt az 1 millió rekordot
+hogy újra játszható legyen a tranzakció,
+ugye? Tehát most ebben az esbő viszont
+nem történik meg ez a logolás, mert ez
+egy üres tábla volt.
+És ugye ebben az évben már van 52000
+tranzakciónk, tehát ez lényegesen top.
+És megcsináljuk ehhez is a calm store
+indexet.
+És akkor ez a igazából erre ment ki ez a
+ez az egész erre a switch utasításra.
+Tehát van a az SQL szerverenek egy
+támogatása,
+hogy hogy tulajdonképpen azt a
+tartalmat, ami most az Internet Sales
+New táblában van, azt ezzel az elegáns
+kis kapcsolóval átdobjuk az internet
+sales táblának a negyedik partíciójába.
+Tehát mostantól kezdve
+az oda fog tartozni,
+és ezzel egyidejűleg
+ez az internet sales new tábla kiürül.
+Hogyha most lekérdezzük a partíciókat,
+akkor akkor látni fogjuk, hogy megjelent
+ez az 52000 rekord. Itt látják, itt van
+a a negyedik partíciójában ennek a
+táblának.
+Hát ez tulajdonképpen
+azt mutatja, hogy nagy táblákkal kicsit
+másképpen kell bánni, mint mint a kis
+táblákkal, azért, hogy ne kelljen
+mondjuk egy-egy ilyen utasításra másfél
+órát válni. Pár persze most itt nekünk
+nyilván ilyen kis táblákon ezt a
+különbséget most nem tudtam volna
+demonstrálni.
+Jó. És hát ami amit mondtam, hogy hogy
+most pedig ez a tábla ezért ezért
+kiürült, tehát ami ebben volt, az az oda
+került át.
+Anyival
+még adós vagyok itt a itt a végén ennek
+a kis demónak,
+hogy
+ugye itt azért eléggé
+hát mit mondjak? úgy, úgy úgy bele
+kellett mennünk a a részletekbe ahhoz,
+hogy hogy meg tudjunk csinálni egy
+többi-kevésbé skálázható megoldást.
+Tehát például nekünk meg kell tervezni a
+particionási függvényt meg ilyesmi,
+ugye? Tehát ezt nekünk kézzel meg kell
+adni.
+Ez ugye sokkal ö barátságosabb volna,
+hogyha automatikusan menne ez a dolog.
+Tehát hogyha nekem ezzel nem kellene
+foglalkoznom, hogy hogy ahogy a
+táblamérete nő egyszer csak az már több
+darabban legyen. Hát ezek azok a
+tulajdonságok, vagy ezek azok a
+szolgáltatások, ahol
+a például a a felhő adatbázis
+technológiák azok azok nagyon
+kompetitívek.
+Tehát
+egyrészt a fel, másrészt pedig a nok
+adális technikák is. Tehát például a a
+mongo dbben
+ez a ez a particionálás ez ez teljesen
+automatikusan meg van oldva. Nekem
+igazából nem kell vele csinálnom semmit.
+Az is igaz persze, hogy ugye a Mongol
+DB-ben
+mi dokumentumokkal dolgozunk, amiknek
+olyan nagyon nem szükséges foglalkozunk
+egyértelmű a belső struktúrájuk. Ehhez
+képest itt itt bizony a a
+struktúr és a nyugatkozások nagyon
+fontosak, tehát ezért is lehet azt ott
+olyan szépen megcsinálni automatikusan.
+Jó, hát akkor ennyi volt itt a a demo.
+Van a a jegyzet végén, akit ez akinek ez
+tetszett, nézze meg. Van a jegyzet végén
+egy ilyen
+önálló feladat, hogy egy hasonlóenses
+sémást csináljunk meg egy másik
+ténytáblán ebben az adattárásban.
+Jó, és én igazából ennyit szerettem
+volna most mutatni.
