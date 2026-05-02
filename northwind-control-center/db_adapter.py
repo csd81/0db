@@ -211,6 +211,10 @@ def adapter_test(conn_id: int) -> tuple[bool, str | None]:
             _s = _cl.connect()
             _s.execute("SELECT release_version FROM system.local")
             _cl.shutdown()
+        elif db_type == 'rqlite':
+            import requests as _req
+            r = _req.get(params.get('url', 'http://127.0.0.1:4001') + '/status', timeout=5)
+            r.raise_for_status()
         else:
             return False, f"Unsupported db_type: {db_type!r}"
 

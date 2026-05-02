@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}rqlite Raft Explorer – Northwind CC{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-diagram-2-fill"></i> rqlite — Raft Consensus Cluster</h4>
+
+{% if not conns %}
+<div class="alert alert-info">
+  No rqlite connections registered.
+  <a href="{{ url_for('connections.new_connection') }}" class="alert-link">Add one</a>
+  — type <code>rqlite</code>, URL <code>http://127.0.0.1:4001</code>.
+  Then run <code>bash start_rqlite_cluster.sh</code> to start the local 3-node cluster.
+</div>
+{% else %}
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-auto">
+    <select name="conn_id" class="form-select form-select-sm" onchange="this.form.submit()">
+      {% for c in conns %}
+      <option value="{{ c.id }}" {% if c.id == conn_id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% if conn_id %}
+  <div class="col-auto">
+    <button type="button" class="btn btn-sm btn-outline-secondary"
+            onclick="pollStatus()" id="refreshBtn">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+  {% endif %}
+</form>
+
+{% if conn_id %}
+<div class="row g-3">
+
+  <!-- Left: cluster status + node list -->
+  <div class="col-12 col-lg-4">
+
+    {% if info %}
+    <!-- Raft status card -->
+    <div class="card mb-3" id="statusCard">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-activity"></i> Raft State
+      </div>
+      <div class="card-body py-2" id="statusBody">
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="badge bg-success fs-6" id="stateLabel">{{ info.state }}</span>
+          <span class="badge bg-secondary">commit {{ info.commit_index }}</span>
+          <span class="badge bg-secondary">applied {{ info.applied_index }}</span>
+        </div>
+        <table class="table table-sm mb-0 small">
+          <tr><td class="text-muted">This node</td><td class="fw-semibold">{{ info.node_id }}</td></tr>
+          <tr><td class="text-muted">Leader</td>
+              <td>
+                <span class="text-success fw-semibold" id="leaderId">{{ info.leader_id }}</span>
+                <small class="text-muted ms-1" id="leaderAddr">{{ info.leader_addr }}</small>
+              </td>
+          </tr>
+        </table>
+        {% if info.status_error %}<div class="alert alert-danger py-1 small mt-2 mb-0">{{ info.status_error }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Node list -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-hdd-network"></i> Cluster Nodes
+      </div>
+      <div class="list-group list-group-flush" id="nodeList">
+        {% if info.nodes_error %}
+        <div class="list-group-item text-danger small">{{ info.nodes_error }}</div>
+        {% else %}
+          {% for node in info.nodes %}
+          <div class="list-group-item py-2 px-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="small fw-semibold">{{ node.id }}</span>
+              {% if node.id == info.leader_id %}
+              <span class="badge bg-success">leader</span>
+              {% elif node.get('reachable', True) %}
+              <span class="badge bg-secondary">follower</span>
+              {% else %}
+              <span class="badge bg-danger">unreachable</span>
+              {% endif %}
+            </div>
+            <div class="text-muted" style="font-size:0.75rem">{{ node.get('addr', '') }}</div>
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Table list -->
+    {% if info.tables %}
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-table"></i> Tables</div>
+      <div class="list-group list-group-flush">
+        {% for tbl in info.tables %}
+        <div class="list-group-item py-1 px-3 small">
+          <i class="bi bi-table me-1 text-muted"></i>{{ tbl }}
+          <button class="btn btn-link btn-sm p-0 ms-2 text-primary"
+                  onclick="setQuery('SELECT * FROM {{ tbl }} LIMIT 20')">
+            <i class="bi bi-play-fill"></i>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% elif info is none and conn_id %}
+    <div class="alert alert-warning small">Could not reach cluster node.</div>
+    {% endif %}
+
+    <!-- Chaos Monkey panel -->
+    <div class="card border-danger">
+      <div class="card-header py-2 small fw-semibold text-danger">
+        <i class="bi bi-bug"></i> Chaos Monkey Lab
+      </div>
+      <div class="card-body small">
+        <p class="mb-2">Kill the leader to trigger Raft election:</p>
+        <pre class="bg-dark text-light p-2 rounded" style="font-size:0.72rem">pkill -f "node-id node1"</pre>
+        <p class="mb-1">Then query Node 2 immediately:</p>
+        <pre class="bg-dark text-light p-2 rounded" style="font-size:0.72rem">curl "http://127.0.0.1:4003/db/query?q=SELECT+*+FROM+orders"</pre>
+        <p class="text-muted mb-0">A new leader is elected in ~1 s. Register Node 2 as a separate connection to see it in this UI.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: SQL console + results -->
+  <div class="col-12 col-lg-8">
+
+    <!-- Quick query buttons -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-bookmarks"></i> Quick Queries</div>
+      <div class="card-body pb-2">
+        <div class="d-flex flex-wrap gap-2">
+          {% for label, sql in [
+            ('All orders',        'SELECT * FROM orders'),
+            ('All products',      'SELECT * FROM products'),
+            ('Orders by country', "SELECT ship_country, COUNT(*) AS cnt, SUM(total) AS revenue FROM orders GROUP BY ship_country ORDER BY revenue DESC"),
+            ('Raft log index',    'PRAGMA wal_checkpoint'),
+            ('DB file size',      'PRAGMA page_count'),
+          ] %}
+          <button class="btn btn-sm btn-outline-secondary"
+                  onclick="setQuery({{ sql | tojson }})">
+            {{ label }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- SQL editor -->
+    <div class="card mb-3">
+      <div class="card-header py-2 small fw-semibold"><i class="bi bi-terminal"></i> SQL Console</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('rqlite_bp.run', conn_id=conn_id) }}" id="sqlForm">
+          <textarea name="sql_text" id="sqlEditor" class="form-control font-monospace mb-2" rows="4"
+                    placeholder="SELECT * FROM orders LIMIT 10">{{ sql_text }}</textarea>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-primary"><i class="bi bi-play-fill"></i> Execute</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    onclick="document.getElementById('sqlEditor').value=''">Clear</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Results -->
+    {% if cql_result %}
+    <div class="card">
+      <div class="card-header py-2 small fw-semibold d-flex justify-content-between">
+        <span><i class="bi bi-table"></i> Result</span>
+        {% if not cql_result.error %}
+        <small class="text-muted">{{ cql_result.rows | length }} row(s) &nbsp;|&nbsp; {{ cql_result.elapsed_ms }} ms (Raft)</small>
+        {% endif %}
+      </div>
+      <div class="card-body pb-2">
+        {% if cql_result.error %}
+        <div class="alert alert-danger py-1 small mb-0">{{ cql_result.error }}</div>
+        {% elif cql_result.columns %}
+        <div style="overflow-x:auto;max-height:400px">
+          <table class="table table-sm table-hover table-bordered mb-0">
+            <thead class="table-dark">
+              <tr>{% for c in cql_result.columns %}<th class="small">{{ c }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+              {% for row in cql_result.rows %}
+              <tr>{% for cell in row %}<td class="small">{{ cell }}</td>{% endfor %}</tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">Statement executed — no rows returned.</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setQuery(sql) {
+  document.getElementById('sqlEditor').value = sql;
+  document.getElementById('sqlEditor').focus();
+}
+
+function pollStatus() {
+  {% if conn_id %}
+  fetch('{{ url_for("rqlite_bp.status_json", conn_id=conn_id) }}')
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) return;
+      document.getElementById('stateLabel').textContent  = d.state;
+      document.getElementById('leaderId').textContent    = d.leader_id;
+      document.getElementById('leaderAddr').textContent  = d.leader_addr;
+    })
+    .catch(() => {});
+  {% endif %}
+}
+
+// Auto-poll every 3 s while the page is open (shows Raft election in real-time)
+setInterval(pollStatus, 3000);
+</script>
+{% endblock %}

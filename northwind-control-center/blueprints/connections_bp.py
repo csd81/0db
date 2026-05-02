@@ -9,7 +9,7 @@ from services import transaction_service as ts
 
 connections = Blueprint('connections', __name__, url_prefix='/connections')
 
-_DB_TYPES = ['sqlite', 'sqlserver', 'postgresql', 'mysql', 'neo4j', 'redis', 'mongodb', 'cassandra']
+_DB_TYPES = ['sqlite', 'sqlserver', 'postgresql', 'mysql', 'neo4j', 'redis', 'mongodb', 'cassandra', 'rqlite']
 
 
 @connections.route('/')
@@ -252,5 +252,9 @@ def _params_from_form(db_type: str, form) -> dict:
             'host':     form.get('cass_host', 'localhost').strip(),
             'port':     form.get('cass_port', '9042').strip(),
             'username': form.get('cass_username', '').strip(),
+        }
+    elif db_type == 'rqlite':
+        return {
+            'url': form.get('rqlite_url', 'http://127.0.0.1:4001').strip(),
         }
     return {}

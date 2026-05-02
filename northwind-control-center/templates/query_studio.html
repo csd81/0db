@@ -36,8 +36,26 @@
                   rows="8" placeholder="SELECT TOP 20 * FROM Orders ORDER BY OrderDate DESC">{{ sql_text or '' }}</textarea>
       </div>
 
+      <!-- Engine selector -->
+      {% if rqlite_conns %}
+      <div class="mb-3">
+        <label class="form-label small text-muted mb-0">Target Engine</label>
+        <select name="engine" class="form-select form-select-sm" style="width:auto" id="engineSelect"
+                onchange="updateIsolationVisibility()">
+          <option value="" {% if not engine %}selected{% endif %}>— Active SQL connection —</option>
+          {% for c in rqlite_conns %}
+          <option value="rqlite:{{ c.id }}" {% if engine == 'rqlite:'~c.id %}selected{% endif %}>
+            rqlite (Raft): {{ c.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% else %}
+      <input type="hidden" name="engine" value="">
+      {% endif %}
+
       <!-- Options row -->
-      <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
+      <div class="d-flex flex-wrap gap-3 align-items-center mb-3" id="isolationRow">
         <div>
           <label class="form-label small text-muted mb-0">Isolation level</label>
           <select name="isolation" class="form-select form-select-sm" style="width:auto">
@@ -109,4 +127,13 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/query_studio.js') }}"></script>
+<script>
+function updateIsolationVisibility() {
+  const sel = document.getElementById('engineSelect');
+  const row = document.getElementById('isolationRow');
+  if (!sel || !row) return;
+  row.style.display = (sel.value.startsWith('rqlite:')) ? 'none' : '';
+}
+updateIsolationVisibility();
+</script>
 {% endblock %}

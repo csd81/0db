@@ -15,6 +15,7 @@ import services.events_service as es
 import services.analytics_service as analytics
 import services.graph_service as gs
 import services.ml_service as ml
+import services.rqlite_service as rqlite_svc
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -45,6 +46,7 @@ from blueprints.neo4j_bp import neo4j_bp
 from blueprints.redis_bp import redis_bp
 from blueprints.mongo_bp import mongo_bp
 from blueprints.cassandra_bp import cassandra_bp
+from blueprints.rqlite_bp import rqlite_bp
 
 app.register_blueprint(auth)
 app.register_blueprint(connections)
@@ -57,6 +59,7 @@ app.register_blueprint(neo4j_bp)
 app.register_blueprint(redis_bp)
 app.register_blueprint(mongo_bp)
 app.register_blueprint(cassandra_bp)
+app.register_blueprint(rqlite_bp)
 
 # ── Context processor: make current_user available in all templates ────────────
 from auth import get_current_user
@@ -83,12 +86,17 @@ def home():
 
 # ── Query Studio ──────────────────────────────────────────────────────────────
 
+def _rqlite_conns():
+    return [c for c in meta_db.list_connections() if c['db_type'] == 'rqlite']
+
+
 @app.route('/query')
 def query_studio():
     saved = qs.list_saved_queries()
     return render_template('query_studio.html', saved_queries=saved,
                            sql_text='', columns=None, rows=None,
-                           elapsed_ms=None, error=None)
+                           elapsed_ms=None, error=None,
+                           rqlite_conns=_rqlite_conns(), engine='')
 
 
 @app.route('/query/run', methods=['POST'])
@@ -97,6 +105,7 @@ def run_query():
     isolation = request.form.get('isolation', 'READ COMMITTED')
     readonly = request.form.get('readonly', '1') == '1'
     export = request.form.get('export', '0') == '1'
+    engine = request.form.get('engine', '')
 
     saved_id = request.form.get('saved_query_id', '')
     if saved_id:
@@ -105,7 +114,11 @@ def run_query():
             sql_text = loaded_sql
             readonly = loaded_ro
 
-    columns, rows, elapsed_ms, error = qs.run_user_query(sql_text, isolation, readonly)
+    if engine.startswith('rqlite:'):
+        rqlite_conn_id = int(engine.split(':', 1)[1])
+        columns, rows, elapsed_ms, error = rqlite_svc.run_query(rqlite_conn_id, sql_text)
+    else:
+        columns, rows, elapsed_ms, error = qs.run_user_query(sql_text, isolation, readonly)
 
     if export and columns and rows and not error:
         csv_data = qs.rows_to_csv(columns, rows)
@@ -125,6 +138,8 @@ def run_query():
         error=error,
         isolation=isolation,
         readonly=readonly,
+        rqlite_conns=_rqlite_conns(),
+        engine=engine,
     )
 
 

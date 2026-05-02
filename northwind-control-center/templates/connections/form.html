@@ -248,6 +248,18 @@
         </div>
       </div>
 
+      <!-- rqlite fields -->
+      {% set rql = conn.conn_params if conn and conn.db_type == 'rqlite' else {} %}
+      <div id="rqliteFields" style="display:none">
+        <div class="mb-2">
+          <label class="form-label small">HTTP API URL</label>
+          <input type="text" name="rqlite_url" class="form-control"
+                 value="{{ rql.get('url', 'http://127.0.0.1:4001') }}"
+                 placeholder="http://127.0.0.1:4001">
+          <div class="form-text">Point to any node. Typically Node 1 (leader) on port 4001.</div>
+        </div>
+      </div>
+
       <!-- Cassandra fields -->
       {% set cass = conn.conn_params if conn and conn.db_type == 'cassandra' else {} %}
       <div id="cassandraFields" style="display:none">
@@ -301,6 +313,7 @@ function toggleFields() {
   document.getElementById('redisFields').style.display = t === 'redis' ? '' : 'none';
   document.getElementById('mongodbFields').style.display = t === 'mongodb' ? '' : 'none';
   document.getElementById('cassandraFields').style.display = t === 'cassandra' ? '' : 'none';
+  document.getElementById('rqliteFields').style.display = t === 'rqlite' ? '' : 'none';
 }
 toggleFields();
 
