@@ -1,9 +1,11 @@
 import decimal
 import datetime
+import time as _time
 
-from flask import Blueprint, render_template, jsonify, abort
+from flask import Blueprint, render_template, jsonify, abort, request
 from auth import login_required
 import services.browser_service as bsvc
+import db
 
 browser_bp = Blueprint('browser_bp', __name__, url_prefix='/browser')
 
@@ -79,3 +81,26 @@ def proc_detail(name):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     return jsonify({'name': name, 'definition': definition})
+
+
+@browser_bp.route('/run', methods=['POST'])
+@login_required
+def run_sql():
+    sql = (request.form.get('sql') or '').strip()
+    if not sql:
+        return jsonify({'error': 'No SQL provided.'}), 400
+    t0 = _time.perf_counter()
+    try:
+        columns, rows = db.run_select(sql)
+        elapsed_ms = round((_time.perf_counter() - t0) * 1000, 1)
+        return jsonify({
+            'columns': columns,
+            'rows': _safe_rows(rows),
+            'row_count': len(rows),
+            'elapsed_ms': elapsed_ms,
+            'error': None,
+        })
+    except Exception as e:
+        elapsed_ms = round((_time.perf_counter() - t0) * 1000, 1)
+        return jsonify({'error': str(e), 'elapsed_ms': elapsed_ms,
+                        'columns': [], 'rows': [], 'row_count': 0})
