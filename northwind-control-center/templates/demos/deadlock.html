@@ -3,12 +3,25 @@
 
 {% block content %}
 <style>
-.tx-node { width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; border:3px solid #6c757d; transition: all 0.5s; }
-.tx-node.waiting { border-color: #ffc107; animation: pulse 0.8s infinite alternate; }
-.tx-node.victim { border-color: #dc3545; background-color: #2d0b0b; }
-.tx-node.committed { border-color: #198754; background-color: #0b2d1a; }
-@keyframes pulse { from { box-shadow: 0 0 5px #ffc107; } to { box-shadow: 0 0 20px #ffc107; } }
-.arrow-label { font-size: 0.72rem; color: #adb5bd; }
+.tx-node {
+  width: 90px; height: 90px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-weight: bold; font-size: 1.1rem;
+  border: 3px solid #6c757d;
+  transition: all 0.5s;
+  position: relative;
+}
+.tx-node .node-label { font-size: 0.68rem; color: #aaa; margin-top: 2px; }
+.tx-node.waiting  { border-color: #ffc107; animation: pulse 0.8s infinite alternate; }
+.tx-node.victim   { border-color: #dc3545; background: #2d0b0b; }
+.tx-node.committed{ border-color: #198754; background: #0b2d1a; }
+@keyframes pulse { from { box-shadow: 0 0 5px #ffc107; } to { box-shadow: 0 0 22px #ffc107; } }
+
+#triangle-svg { overflow: visible; }
+#triangle-svg .wait-arrow { stroke: #6c757d; stroke-width: 2; fill: none; marker-end: url(#arrowhead); transition: stroke 0.5s; }
+#triangle-svg .wait-arrow.active { stroke: #ffc107; }
+#triangle-svg .wait-arrow.resolved { stroke: #198754; }
+#triangle-svg text { fill: #adb5bd; font-size: 11px; }
 </style>
 
 <div class="d-flex align-items-center mb-4">
@@ -37,23 +50,70 @@
   {% endif %}
 </div>
 
-<!-- Visual: Two Transaction Nodes -->
-<div class="d-flex justify-content-center align-items-center gap-5 my-4" style="min-height:160px;">
-  <div class="text-center">
-    <div class="tx-node mx-auto mb-2" id="tx-a-node">Tx A</div>
-    <div class="small text-muted">Thread A</div>
-  </div>
+<!-- Triangle of 3 transaction nodes -->
+<div class="d-flex justify-content-center my-4">
+  <div style="position:relative; width:360px; height:320px;">
 
-  <div class="text-center">
-    <div class="arrow-label mb-1">—— waiting for ——&gt;</div>
-    <div class="arrow-label">&lt;—— waiting for ——</div>
-  </div>
+    <!-- SVG arrows underneath -->
+    <svg id="triangle-svg" width="360" height="320" style="position:absolute;top:0;left:0;">
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#6c757d" id="arrow-fill"/>
+        </marker>
+      </defs>
+      <!-- A (top-centre=180,30) → B (bottom-right=310,250): A waits for B's row -->
+      <path id="arrow-ab" class="wait-arrow"
+            d="M 207,65 C 290,120 310,180 295,240"/>
+      <text x="278" y="148">waits for</text>
 
-  <div class="text-center">
-    <div class="tx-node mx-auto mb-2" id="tx-b-node">Tx B</div>
-    <div class="small text-muted">Thread B</div>
+      <!-- B (310,250) → C (bottom-left=50,250): B waits for C's row -->
+      <path id="arrow-bc" class="wait-arrow"
+            d="M 280,262 L 82,262"/>
+      <text x="148" y="280">waits for</text>
+
+      <!-- C (50,250) → A (180,30): C waits for A's row -->
+      <path id="arrow-ca" class="wait-arrow"
+            d="M 67,235 C 40,160 100,80 158,52"/>
+      <text x="42" y="150">waits for</text>
+    </svg>
+
+    <!-- Node A — top centre -->
+    <div style="position:absolute; left:135px; top:10px; text-align:center;">
+      <div class="tx-node mx-auto" id="tx-a-node">
+        Tx A
+        <span class="node-label">locks row 1</span>
+      </div>
+      <div class="small text-muted mt-1">Thread A</div>
+    </div>
+
+    <!-- Node B — bottom right -->
+    <div style="position:absolute; left:270px; top:215px; text-align:center;">
+      <div class="tx-node mx-auto" id="tx-b-node">
+        Tx B
+        <span class="node-label">locks row 2</span>
+      </div>
+      <div class="small text-muted mt-1">Thread B</div>
+    </div>
+
+    <!-- Node C — bottom left -->
+    <div style="position:absolute; left:0px; top:215px; text-align:center;">
+      <div class="tx-node mx-auto" id="tx-c-node">
+        Tx C
+        <span class="node-label">locks row 3</span>
+      </div>
+      <div class="small text-muted mt-1">Thread C</div>
+    </div>
+
   </div>
 </div>
+
+<!-- Explanation -->
+<p class="text-center text-muted small mb-4">
+  A locks row 1 → wants row 2 &nbsp;|&nbsp;
+  B locks row 2 → wants row 3 &nbsp;|&nbsp;
+  C locks row 3 → wants row 1 &nbsp;—&nbsp;
+  <strong>cyclic wait</strong>, PostgreSQL detects and rolls back one victim.
+</p>
 
 <div class="d-flex justify-content-center mb-4">
   <button class="btn btn-danger px-4" id="run-deadlock-btn" {% if not pg_conns %}disabled{% endif %}>
@@ -62,7 +122,7 @@
 </div>
 
 <!-- Result Card -->
-<div id="deadlock-result" class="card d-none mx-auto" style="max-width:600px;">
+<div id="deadlock-result" class="card d-none mx-auto" style="max-width:520px;">
   <div class="card-header fw-semibold">Result</div>
   <div class="card-body">
     <div id="deadlock-result-body" class="small font-monospace"></div>

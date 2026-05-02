@@ -152,6 +152,11 @@ def get_accounts(conn_id):
 # ── Deadlock Scenario ──────────────────────────────────────────────────────────
 
 def create_deadlock_scenario(pg_conn_id):
+    """
+    Three-way cyclic deadlock: A locks row 1 then wants row 2,
+    B locks row 2 then wants row 3, C locks row 3 then wants row 1.
+    PostgreSQL detects the cycle and chooses one victim to roll back.
+    """
     rec = meta_db.get_connection_by_id(pg_conn_id)
     if rec is None or rec["db_type"] != "postgresql":
         raise ValueError("Deadlock demo requires a PostgreSQL connection.")
@@ -170,7 +175,7 @@ def create_deadlock_scenario(pg_conn_id):
             password=password,
         )
 
-    # Setup: ensure table + seed rows using a dedicated connection
+    # Ensure table with 3 rows
     setup_conn = _make_pg_conn()
     setup_conn.autocommit = True
     cur = setup_conn.cursor()
@@ -178,82 +183,65 @@ def create_deadlock_scenario(pg_conn_id):
         CREATE TABLE IF NOT EXISTS deadlock_accounts
         (id INTEGER PRIMARY KEY, balance NUMERIC DEFAULT 1000)
     """)
-    cur.execute("INSERT INTO deadlock_accounts (id, balance) VALUES (1, 1000) ON CONFLICT DO NOTHING")
-    cur.execute("INSERT INTO deadlock_accounts (id, balance) VALUES (2, 1000) ON CONFLICT DO NOTHING")
+    for i in (1, 2, 3):
+        cur.execute(
+            "INSERT INTO deadlock_accounts (id, balance) VALUES (%s, 1000) ON CONFLICT DO NOTHING",
+            (i,)
+        )
     setup_conn.close()
 
-    results = [None, None]
+    results = [None, None, None]
 
-    def thread_a():
-        conn_a = _make_pg_conn()
-        conn_a.autocommit = False
+    def _thread(idx, lock_first, lock_second):
+        conn = _make_pg_conn()
+        conn.autocommit = False
         try:
-            cur_a = conn_a.cursor()
-            cur_a.execute("BEGIN")
-            cur_a.execute("UPDATE deadlock_accounts SET balance = balance - 100 WHERE id = 1")
-            time.sleep(0.15)
-            cur_a.execute("UPDATE deadlock_accounts SET balance = balance + 100 WHERE id = 2")
-            conn_a.commit()
-            results[0] = {"ok": True, "error": None}
+            c = conn.cursor()
+            c.execute("BEGIN")
+            c.execute("UPDATE deadlock_accounts SET balance = balance - 10 WHERE id = %s", (lock_first,))
+            time.sleep(0.15)  # give other threads time to acquire their first lock
+            c.execute("UPDATE deadlock_accounts SET balance = balance + 10 WHERE id = %s", (lock_second,))
+            conn.commit()
+            results[idx] = {"ok": True, "error": None}
         except Exception as e:
             try:
-                conn_a.rollback()
+                conn.rollback()
             except Exception:
                 pass
-            results[0] = {"ok": False, "error": str(e)}
+            results[idx] = {"ok": False, "error": str(e)}
         finally:
             try:
-                conn_a.close()
+                conn.close()
             except Exception:
                 pass
 
-    def thread_b():
-        conn_b = _make_pg_conn()
-        conn_b.autocommit = False
-        try:
-            cur_b = conn_b.cursor()
-            cur_b.execute("BEGIN")
-            cur_b.execute("UPDATE deadlock_accounts SET balance = balance - 100 WHERE id = 2")
-            time.sleep(0.15)
-            cur_b.execute("UPDATE deadlock_accounts SET balance = balance + 100 WHERE id = 1")
-            conn_b.commit()
-            results[1] = {"ok": True, "error": None}
-        except Exception as e:
-            try:
-                conn_b.rollback()
-            except Exception:
-                pass
-            results[1] = {"ok": False, "error": str(e)}
-        finally:
-            try:
-                conn_b.close()
-            except Exception:
-                pass
-
+    # Cyclic wait: A→1,2  B→2,3  C→3,1
     t_start = time.time()
-    ta = threading.Thread(target=thread_a)
-    tb = threading.Thread(target=thread_b)
-    ta.start()
-    tb.start()
-    ta.join(timeout=10)
-    tb.join(timeout=10)
+    threads = [
+        threading.Thread(target=_thread, args=(0, 1, 2)),
+        threading.Thread(target=_thread, args=(1, 2, 3)),
+        threading.Thread(target=_thread, args=(2, 3, 1)),
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=10)
     elapsed_ms = int((time.time() - t_start) * 1000)
 
-    r_a = results[0] or {"ok": False, "error": "Thread timed out"}
-    r_b = results[1] or {"ok": False, "error": "Thread timed out"}
+    r = [results[i] or {"ok": False, "error": "Thread timed out"} for i in range(3)]
+    labels = ["A", "B", "C"]
 
-    victim = None
-    if not r_a["ok"] and r_b["ok"]:
-        victim = "A"
-    elif r_a["ok"] and not r_b["ok"]:
-        victim = "B"
-    elif not r_a["ok"] and not r_b["ok"]:
-        victim = "A"  # fallback
+    victims = [labels[i] for i in range(3) if not r[i]["ok"]]
+    committed = [labels[i] for i in range(3) if r[i]["ok"]]
+    # PostgreSQL rolls back exactly one transaction in a deadlock
+    victim = victims[0] if victims else None
 
     return {
-        "thread_a": r_a,
-        "thread_b": r_b,
+        "thread_a": r[0],
+        "thread_b": r[1],
+        "thread_c": r[2],
         "victim": victim,
+        "committed": committed,
         "elapsed_ms": elapsed_ms,
     }
 
