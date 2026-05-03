@@ -246,9 +246,13 @@ function updateOrdersTable(s) {
   const bodyHash = s.orders.map(o => s.order_cols.map(c => o[c] ?? '').join('|')).join('\n');
   if (body.dataset.hash !== bodyHash) {
     body.dataset.hash = bodyHash;
+    const FK_FALLBACK = { Customer: 'CustomerID', Employee: 'EmployeeID', Shipper: 'ShipVia' };
     body.innerHTML = s.orders.map((o, ri) =>
       '<tr data-ri="' + ri + '">' +
-      s.order_cols.map(c => `<td>${fmt(o[c])}</td>`).join('') +
+      s.order_cols.map(c => {
+        const v = o[c] != null ? o[c] : (FK_FALLBACK[c] ? o[FK_FALLBACK[c]] : null);
+        return `<td>${fmt(v)}</td>`;
+      }).join('') +
       '</tr>'
     ).join('');
   }
