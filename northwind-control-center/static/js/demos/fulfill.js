@@ -2,11 +2,11 @@
 
 // ── Column lists (mirrors Python constants) ───────────────────────────────────
 const COL_MAP = {
-  customer_card:  ['CustomerID','CompanyName','ContactName','ContactTitle','Phone','Fax','City','Country'],
-  employee_card:  ['EmployeeID','FirstName','LastName','Title','TitleOfCourtesy','HomePhone','City','Country'],
-  shipper_card:   ['ShipperID','CompanyName','Phone'],
-  product_card:   ['ProductID','ProductName','QuantityPerUnit','UnitPrice','UnitsInStock','UnitsOnOrder','ReorderLevel','Discontinued','SupplierID'],
-  supplier_card:  ['SupplierID','CompanyName','ContactName','ContactTitle','Phone','Fax','HomePage','City','Country'],
+  customer_card:  ['CompanyName','ContactName','Phone'],
+  employee_card:  ['FirstName','LastName','Title'],
+  shipper_card:   ['CompanyName','Phone'],
+  product_card:   ['ProductName','UnitPrice','UnitsInStock','SupplierID'],
+  supplier_card:  ['CompanyName','ContactName','Phone'],
 };
 
 // ── Phase banner map ──────────────────────────────────────────────────────────
@@ -186,25 +186,24 @@ function updateRefillOrder(s) {
   // Build dl rows from all known fields in insertion order
   const REFILL_FIELD_ORDER = [
     'order_id', 'OrderNeed', 'RestockQty',
-    // Products fields
-    'ProductID', 'ProductName', 'QuantityPerUnit', 'UnitPrice',
-    'UnitsInStock', 'UnitsOnOrder', 'ReorderLevel', 'Discontinued', 'SupplierID',
-    // Supplier fields
-    'CompanyName', 'ContactName', 'ContactTitle', 'Phone', 'Fax', 'HomePage', 'City', 'Country',
+    'ProductName', 'UnitPrice', 'UnitsInStock', 'SupplierID',
+    'CompanyName', 'ContactName', 'Phone',
   ];
   const body = document.getElementById('refill-order-body');
 
   // Collect keys present in ro, preserving REFILL_FIELD_ORDER then any extras
   const ordered = REFILL_FIELD_ORDER.filter(k => k in ro && k !== 'status');
-  const extras  = Object.keys(ro).filter(k => !REFILL_FIELD_ORDER.includes(k) && k !== 'status');
+  const extras  = Object.keys(ro).filter(k => !REFILL_FIELD_ORDER.includes(k) && k !== 'status' && k !== 'ticks_remaining');
   const keys    = [...ordered, ...extras];
 
-  body.innerHTML = keys.map(k => {
-    const v = ro[k];
-    const label = k === 'order_id' ? 'Order ID' : k;
-    return `<dt class="col-5 text-truncate" title="${esc(label)}">${esc(label)}</dt>
-            <dd class="col-7 mb-0">${v != null ? esc(String(v)) : '<span class="text-muted">—</span>'}</dd>`;
-  }).join('');
+  body.innerHTML = keys
+    .filter(k => ro[k] != null && ro[k] !== '')
+    .map(k => {
+      const v = ro[k];
+      const label = k === 'order_id' ? 'Order ID' : k;
+      return `<dt class="col-5 text-truncate" title="${esc(label)}">${esc(label)}</dt>
+              <dd class="col-7 mb-0">${esc(String(v))}</dd>`;
+    }).join('');
 }
 
 // ── Banner ────────────────────────────────────────────────────────────────────
@@ -226,15 +225,7 @@ function updateProgress(s) {
     `Order ${s.orders_total ? s.order_idx + 1 : 0} / ${s.orders_total}`;
 }
 
-// Friendly display labels for joined column aliases
-const COL_LABEL = {
-  c_CompanyName: 'Customer', c_ContactName: 'CustContact', c_ContactTitle: 'CustTitle',
-  c_Phone: 'CustPhone', c_Fax: 'CustFax', c_City: 'CustCity', c_Country: 'CustCountry',
-  e_FirstName: 'EmpFirst', e_LastName: 'EmpLast', e_Title: 'EmpTitle',
-  e_TitleOfCourtesy: 'EmpTitle2', e_HomePhone: 'EmpPhone',
-  e_City: 'EmpCity', e_Country: 'EmpCountry',
-  s_CompanyName: 'Shipper', s_Phone: 'ShipperPhone',
-};
+// (No column label overrides needed — Orders columns use their native names)
 
 // ── Orders table ──────────────────────────────────────────────────────────────
 function updateOrdersTable(s) {
@@ -246,7 +237,7 @@ function updateOrdersTable(s) {
 
   if (head.querySelectorAll('th').length !== s.order_cols.length) {
     head.innerHTML = '<tr>' + s.order_cols.map(c =>
-      `<th title="${esc(c)}">${esc(COL_LABEL[c] || c)}</th>`
+      `<th title="${esc(c)}">${esc(c)}</th>`
     ).join('') + '</tr>';
   }
 
@@ -390,13 +381,13 @@ function updatePackage(s) {
   const metaKeys = Object.keys(meta);
   const shipComplete = 'ShipCountry' in meta;
 
-  if (metaKeys.length) {
+  const visibleMeta = Object.entries(meta).filter(([, v]) => v != null && v !== '');
+  if (visibleMeta.length) {
     metaDl.style.display = '';
-    metaDl.innerHTML = metaKeys.map(k => {
-      const v = meta[k];
-      return `<dt class="col-5 text-truncate" title="${esc(k)}">${esc(k)}</dt>
-              <dd class="col-7 mb-0">${v != null ? esc(String(v)) : '<span class="text-muted">—</span>'}</dd>`;
-    }).join('');
+    metaDl.innerHTML = visibleMeta.map(([k, v]) =>
+      `<dt class="col-5 text-truncate" title="${esc(k)}">${esc(k)}</dt>
+       <dd class="col-7 mb-0">${esc(String(v))}</dd>`
+    ).join('');
     empty.classList.add('d-none');
   } else {
     metaDl.style.display = 'none';
@@ -464,11 +455,11 @@ function esc(s) {
 }
 
 function buildDl(cols, row) {
-  return cols.map(c => {
-    const v = row[c];
-    return `<dt class="col-5 text-truncate" title="${esc(c)}">${esc(c)}</dt>
-            <dd class="col-7 mb-0">${v != null ? esc(String(v)) : '<span class="text-muted">—</span>'}</dd>`;
-  }).join('');
+  return cols
+    .filter(c => row[c] != null && row[c] !== '' && row[c] !== false)
+    .map(c => `<dt class="col-5 text-truncate" title="${esc(c)}">${esc(c)}</dt>
+               <dd class="col-7 mb-0">${esc(String(row[c]))}</dd>`)
+    .join('');
 }
 
 // ── Button handlers ───────────────────────────────────────────────────────────

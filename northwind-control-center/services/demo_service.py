@@ -3189,32 +3189,20 @@ _FULFILL_ABORTED    = False
 _FULFILL_LOG_CONN   = None   # persistent autocommit connection for SQL logging
 
 _FULFILL_ORDER_COLS = [
-    # Orders
     'OrderID', 'CustomerID', 'EmployeeID', 'OrderDate', 'RequiredDate',
     'ShipVia', 'Freight', 'ShipName', 'ShipAddress', 'ShipCity',
-    'ShipRegion', 'ShipPostalCode', 'ShipCountry',
-    # Customers (LEFT JOIN)
-    'c_CompanyName', 'c_ContactName', 'c_ContactTitle',
-    'c_Phone', 'c_Fax', 'c_City', 'c_Country',
-    # Employees (LEFT JOIN)
-    'e_FirstName', 'e_LastName', 'e_Title',
-    'e_TitleOfCourtesy', 'e_HomePhone', 'e_City', 'e_Country',
-    # Shippers (LEFT JOIN)
-    's_CompanyName', 's_Phone',
-]
-_FULFILL_PRODUCT_COLS  = [
-    'ProductID', 'ProductName', 'QuantityPerUnit', 'UnitPrice',
-    'UnitsInStock', 'UnitsOnOrder', 'ReorderLevel', 'Discontinued', 'SupplierID',
-]
-_FULFILL_SUPPLIER_COLS = [
-    'SupplierID', 'CompanyName', 'ContactName', 'ContactTitle',
-    'Phone', 'Fax', 'HomePage', 'City', 'Country',
-]
-# Orders columns that feed directly into package metadata
-_FULFILL_META_FIELDS = {
-    'OrderID', 'OrderDate', 'RequiredDate', 'Freight',
-    'ShipName', 'ShipAddress', 'ShipCity', 'ShipRegion',
     'ShipPostalCode', 'ShipCountry',
+]
+# Lean FK-table column sets — only what's needed to fill context cards
+_FULFILL_CUSTOMER_COLS = ['CompanyName', 'ContactName', 'Phone']
+_FULFILL_EMPLOYEE_COLS = ['FirstName', 'LastName', 'Title']
+_FULFILL_SHIPPER_COLS  = ['CompanyName', 'Phone']
+_FULFILL_PRODUCT_COLS  = ['ProductID', 'ProductName', 'UnitPrice', 'UnitsInStock', 'SupplierID']
+_FULFILL_SUPPLIER_COLS = ['SupplierID', 'CompanyName', 'ContactName', 'Phone']
+# Orders fields that flow onto the shipping label (package meta)
+_FULFILL_META_FIELDS = {
+    'OrderID', 'OrderDate', 'Freight',
+    'ShipName', 'ShipAddress', 'ShipCity', 'ShipPostalCode', 'ShipCountry',
 }
 
 _FULFILL_STATE_DEFAULTS: dict = {
@@ -3717,27 +3705,13 @@ def fulfill_start(conn_str: str):
         cur = setup.cursor()
         cur.execute("""
             SELECT TOP 5
-                o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate, o.RequiredDate,
-                o.ShipVia, o.Freight, o.ShipName, o.ShipAddress, o.ShipCity,
-                o.ShipRegion, o.ShipPostalCode, o.ShipCountry,
-                c.CompanyName   AS c_CompanyName,  c.ContactName  AS c_ContactName,
-                c.ContactTitle  AS c_ContactTitle, c.Phone        AS c_Phone,
-                c.Fax           AS c_Fax,          c.City         AS c_City,
-                c.Country       AS c_Country,
-                e.FirstName     AS e_FirstName,    e.LastName     AS e_LastName,
-                e.Title         AS e_Title,        e.TitleOfCourtesy AS e_TitleOfCourtesy,
-                e.HomePhone     AS e_HomePhone,    e.City         AS e_City,
-                e.Country       AS e_Country,
-                s.CompanyName   AS s_CompanyName,  s.Phone        AS s_Phone
-            FROM Orders o
-            LEFT JOIN Customers c ON c.CustomerID = o.CustomerID
-            LEFT JOIN Employees e ON e.EmployeeID = o.EmployeeID
-            LEFT JOIN Shippers  s ON s.ShipperID  = o.ShipVia
-            WHERE o.ShippedDate IS NULL
-              AND NOT EXISTS (
-                  SELECT 1 FROM Packages WHERE OrderID = o.OrderID
-              )
-            ORDER BY o.OrderID
+                OrderID, CustomerID, EmployeeID, OrderDate, RequiredDate,
+                ShipVia, Freight, ShipName, ShipAddress, ShipCity,
+                ShipPostalCode, ShipCountry
+            FROM Orders
+            WHERE ShippedDate IS NULL
+              AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID)
+            ORDER BY OrderID
         """)
         orders = [
             {col: _fulfill_fix_val(r[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)}
@@ -4196,26 +4170,14 @@ def _load_next_order(conn_str: str):
         cur  = conn.cursor()
         cur.execute(f"""
             SELECT TOP 1
-                o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate, o.RequiredDate,
-                o.ShipVia, o.Freight, o.ShipName, o.ShipAddress, o.ShipCity,
-                o.ShipRegion, o.ShipPostalCode, o.ShipCountry,
-                c.CompanyName   AS c_CompanyName,  c.ContactName  AS c_ContactName,
-                c.ContactTitle  AS c_ContactTitle, c.Phone        AS c_Phone,
-                c.Fax           AS c_Fax,          c.City         AS c_City,
-                c.Country       AS c_Country,
-                e.FirstName     AS e_FirstName,    e.LastName     AS e_LastName,
-                e.Title         AS e_Title,        e.TitleOfCourtesy AS e_TitleOfCourtesy,
-                e.HomePhone     AS e_HomePhone,    e.City         AS e_City,
-                e.Country       AS e_Country,
-                s.CompanyName   AS s_CompanyName,  s.Phone        AS s_Phone
-            FROM Orders o
-            LEFT JOIN Customers c ON c.CustomerID = o.CustomerID
-            LEFT JOIN Employees e ON e.EmployeeID = o.EmployeeID
-            LEFT JOIN Shippers  s ON s.ShipperID  = o.ShipVia
-            WHERE o.ShippedDate IS NULL
-              AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = o.OrderID)
-              AND o.OrderID NOT IN ({placeholders})
-            ORDER BY o.OrderID
+                OrderID, CustomerID, EmployeeID, OrderDate, RequiredDate,
+                ShipVia, Freight, ShipName, ShipAddress, ShipCity,
+                ShipPostalCode, ShipCountry
+            FROM Orders
+            WHERE ShippedDate IS NULL
+              AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID)
+              AND OrderID NOT IN ({placeholders})
+            ORDER BY OrderID
         """, loaded_ids)
         row = cur.fetchone()
         conn.close()
@@ -4296,64 +4258,21 @@ def _fulfill_worker():
                  phase_label=f'Order {order_id} — click Next to begin reading'):
             return
 
-        # ── Log the actual JOIN SELECT used to fetch this order ──
+        # ── Log the Orders SELECT used to fetch this row ──
         _fulfill_sql_log(
-            f"SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.OrderDate,o.RequiredDate,\n"
-            f"  o.ShipVia,o.Freight,o.ShipName,o.ShipAddress,o.ShipCity,\n"
-            f"  o.ShipRegion,o.ShipPostalCode,o.ShipCountry,\n"
-            f"  c.CompanyName,c.ContactName,c.ContactTitle,c.Phone,c.Fax,c.City,c.Country,\n"
-            f"  e.FirstName,e.LastName,e.Title,e.TitleOfCourtesy,e.HomePhone,e.City,e.Country,\n"
-            f"  s.CompanyName,s.Phone\n"
-            f"FROM [Orders] o\n"
-            f"  LEFT JOIN [Customers] c ON c.CustomerID = o.CustomerID\n"
-            f"  LEFT JOIN [Employees] e ON e.EmployeeID = o.EmployeeID\n"
-            f"  LEFT JOIN [Shippers]  s ON s.ShipperID  = o.ShipVia\n"
-            f"WHERE o.OrderID = {order_id}"
+            f"SELECT OrderID,CustomerID,EmployeeID,OrderDate,RequiredDate,\n"
+            f"  ShipVia,Freight,ShipName,ShipAddress,ShipCity,ShipPostalCode,ShipCountry\n"
+            f"FROM [Orders]\n"
+            f"WHERE OrderID = {order_id}"
         )
 
-        # Populate Customer / Employee / Shipper cards immediately from the joined row
-        with _FULFILL_LOCK:
-            _FULFILL_STATE['customer_card'] = {
-                'CustomerID':   order['CustomerID'],
-                'CompanyName':  order.get('c_CompanyName'),
-                'ContactName':  order.get('c_ContactName'),
-                'ContactTitle': order.get('c_ContactTitle'),
-                'Phone':        order.get('c_Phone'),
-                'Fax':          order.get('c_Fax'),
-                'City':         order.get('c_City'),
-                'Country':      order.get('c_Country'),
-            }
-            _FULFILL_STATE['employee_card'] = {
-                'EmployeeID':      order['EmployeeID'],
-                'FirstName':       order.get('e_FirstName'),
-                'LastName':        order.get('e_LastName'),
-                'Title':           order.get('e_Title'),
-                'TitleOfCourtesy': order.get('e_TitleOfCourtesy'),
-                'HomePhone':       order.get('e_HomePhone'),
-                'City':            order.get('e_City'),
-                'Country':         order.get('e_Country'),
-            }
-            _FULFILL_STATE['shipper_card'] = {
-                'ShipperID':   order['ShipVia'],
-                'CompanyName': order.get('s_CompanyName'),
-                'Phone':       order.get('s_Phone'),
-            }
-            _FULFILL_STATE['package_meta']['Customer'] = order.get('c_CompanyName')
-            _FULFILL_STATE['package_meta']['Employee'] = (
-                f"{order.get('e_FirstName', '') or ''} "
-                f"{order.get('e_LastName', '') or ''}".strip()
-            )
-            _FULFILL_STATE['package_meta']['Shipper'] = order.get('s_CompanyName')
-            for q in _FULFILL_STATE['order_queue']:
-                if q['order_id'] == order_id:
-                    q['customer'] = order.get('c_CompanyName', '')
-                    break
-
-        # ── Animate reading each column (no SQL log per cell — data already fetched) ──
+        # ── Animate reading each Orders column; copy shipping-label fields to package meta ──
         for col_idx, col in enumerate(_FULFILL_ORDER_COLS):
             with _FULFILL_LOCK:
                 if col in _FULFILL_META_FIELDS:
-                    _FULFILL_STATE['package_meta'][col] = order.get(col)
+                    val = order.get(col)
+                    if val is not None and val != '':
+                        _FULFILL_STATE['package_meta'][col] = val
                 new_meta = dict(_FULFILL_STATE['package_meta'])
 
             if _step(phase='reading_field',
@@ -4362,6 +4281,24 @@ def _fulfill_worker():
                      sub_table=None,
                      package_meta=new_meta):
                 return
+
+        # ── Resolve FK IDs: scan Customers → Employee → Shipper tables ──
+        if not _scan_subtable(conn_str, 'Customers', 'CustomerID',
+                              order['CustomerID'], _FULFILL_CUSTOMER_COLS, 'customer_card'):
+            return
+        with _FULFILL_LOCK:
+            cust_name = _FULFILL_STATE.get('customer_card', {}).get('CompanyName', '')
+            for q in _FULFILL_STATE['order_queue']:
+                if q['order_id'] == order_id and q.get('type') != 'refill':
+                    q['customer'] = cust_name
+                    break
+
+        if not _scan_subtable(conn_str, 'Employees', 'EmployeeID',
+                              order['EmployeeID'], _FULFILL_EMPLOYEE_COLS, 'employee_card'):
+            return
+        if not _scan_subtable(conn_str, 'Shippers', 'ShipperID',
+                              order['ShipVia'], _FULFILL_SHIPPER_COLS, 'shipper_card'):
+            return
 
         # ── Load Order Details rows ──
         _fulfill_sql_log(
