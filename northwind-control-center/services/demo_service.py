@@ -3725,11 +3725,13 @@ def fulfill_start(conn_str: str):
               AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID)
             ORDER BY OrderID
         """)
-        orders = [
-            {**{col: _fulfill_fix_val(r[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)},
-             'Customer': None, 'Employee': None, 'Shipper': None}
-            for r in cur.fetchall()
-        ]
+        orders = []
+        for _r in cur.fetchall():
+            _od = {col: _fulfill_fix_val(_r[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)}
+            _od['Customer'] = _od.get('CustomerID')
+            _od['Employee'] = _od.get('EmployeeID')
+            _od['Shipper']  = _od.get('ShipVia')
+            orders.append(_od)
         setup.close()
 
         # Open a dedicated autocommit connection for SQL logging
@@ -4195,8 +4197,10 @@ def _load_next_order(conn_str: str):
         row = cur.fetchone()
         conn.close()
         if row:
-            order = {**{col: _fulfill_fix_val(row[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)},
-                     'Customer': None, 'Employee': None, 'Shipper': None}
+            order = {col: _fulfill_fix_val(row[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)}
+            order['Customer'] = order.get('CustomerID')
+            order['Employee'] = order.get('EmployeeID')
+            order['Shipper']  = order.get('ShipVia')
             with _FULFILL_LOCK:
                 _FULFILL_STATE['orders'].append(order)
                 _FULFILL_STATE['orders_total'] = len(_FULFILL_STATE['orders'])
