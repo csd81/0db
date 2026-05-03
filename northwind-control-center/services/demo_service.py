@@ -3189,10 +3189,12 @@ _FULFILL_ABORTED    = False
 _FULFILL_LOG_CONN   = None   # persistent autocommit connection for SQL logging
 
 _FULFILL_ORDER_COLS = [
-    'OrderID', 'CustomerID', 'EmployeeID', 'OrderDate', 'RequiredDate',
+    'OrderID', 'CustomerID', 'EmployeeID', 'OrderDate',
     'ShipVia', 'Freight', 'ShipName', 'ShipAddress', 'ShipCity',
     'ShipPostalCode', 'ShipCountry',
 ]
+# Columns shown in the Orders table and animated — hides OrderDate (kept for internal month tracking)
+_FULFILL_ORDER_DISPLAY_COLS = [c for c in _FULFILL_ORDER_COLS if c not in ('OrderDate',)]
 # Lean FK-table column sets — only what's needed to fill context cards
 _FULFILL_CUSTOMER_COLS = ['CompanyName', 'ContactName', 'Phone']
 _FULFILL_EMPLOYEE_COLS = ['FirstName', 'LastName', 'Title']
@@ -3705,7 +3707,7 @@ def fulfill_start(conn_str: str):
         cur = setup.cursor()
         cur.execute("""
             SELECT TOP 5
-                OrderID, CustomerID, EmployeeID, OrderDate, RequiredDate,
+                OrderID, CustomerID, EmployeeID, OrderDate,
                 ShipVia, Freight, ShipName, ShipAddress, ShipCity,
                 ShipPostalCode, ShipCountry
             FROM Orders
@@ -3749,7 +3751,7 @@ def fulfill_start(conn_str: str):
     with _FULFILL_LOCK:
         _FULFILL_STATE['orders']                 = orders
         _FULFILL_STATE['orders_total']           = len(orders)
-        _FULFILL_STATE['order_cols']             = _FULFILL_ORDER_COLS
+        _FULFILL_STATE['order_cols']             = _FULFILL_ORDER_DISPLAY_COLS
         _FULFILL_STATE['pnl']['initial_capital'] = _ic
 
     threading.Thread(target=_fulfill_worker, daemon=True).start()
@@ -4170,7 +4172,7 @@ def _load_next_order(conn_str: str):
         cur  = conn.cursor()
         cur.execute(f"""
             SELECT TOP 1
-                OrderID, CustomerID, EmployeeID, OrderDate, RequiredDate,
+                OrderID, CustomerID, EmployeeID, OrderDate,
                 ShipVia, Freight, ShipName, ShipAddress, ShipCity,
                 ShipPostalCode, ShipCountry
             FROM Orders
@@ -4260,14 +4262,20 @@ def _fulfill_worker():
 
         # ── Log the Orders SELECT used to fetch this row ──
         _fulfill_sql_log(
-            f"SELECT OrderID,CustomerID,EmployeeID,OrderDate,RequiredDate,\n"
+            f"SELECT OrderID,CustomerID,EmployeeID,OrderDate,\n"
             f"  ShipVia,Freight,ShipName,ShipAddress,ShipCity,ShipPostalCode,ShipCountry\n"
             f"FROM [Orders]\n"
             f"WHERE OrderID = {order_id}"
         )
 
-        # ── Animate reading each Orders column; copy shipping-label fields to package meta ──
-        for col_idx, col in enumerate(_FULFILL_ORDER_COLS):
+        # OrderDate: copy to package meta silently (not animated — internal tracking only)
+        with _FULFILL_LOCK:
+            od = order.get('OrderDate')
+            if od is not None and od != '':
+                _FULFILL_STATE['package_meta']['OrderDate'] = od
+
+        # ── Animate reading each displayed Orders column ──
+        for col_idx, col in enumerate(_FULFILL_ORDER_DISPLAY_COLS):
             with _FULFILL_LOCK:
                 if col in _FULFILL_META_FIELDS:
                     val = order.get(col)
