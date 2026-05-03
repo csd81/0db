@@ -90,9 +90,20 @@ function render(s) {
 }
 
 // ── Order queue ───────────────────────────────────────────────────────────────
+const MAX_QUEUE = 10;
+
 function updateOrderQueue(s) {
   const el = document.getElementById('order-queue');
-  const queue = (s.order_queue || []).filter(q => q.status !== 'active');
+  let queue = (s.order_queue || []).filter(q => q.status !== 'active');
+
+  // Cap at MAX_QUEUE: keep all partials + refills; drop oldest shipped entries
+  if (queue.length > MAX_QUEUE) {
+    const keep    = queue.filter(q => q.status !== 'shipped' || q.type === 'refill');
+    const shipped = queue.filter(q => q.status === 'shipped' && q.type !== 'refill');
+    const slots   = Math.max(0, MAX_QUEUE - keep.length);
+    queue = [...keep, ...shipped.slice(-slots)];
+  }
+
   if (!queue.length) { el.innerHTML = ''; return; }
 
   el.innerHTML = queue.map(q => {
@@ -287,8 +298,17 @@ function updateSubTable(s) {
     return `<tr class="${rowCls}">${cells}</tr>`;
   }).join('');
 
+  // Scroll active row into view within the sub-table container only — never the page
+  const tblWrap = document.querySelector('#sub-table-card .tbl-wrap');
   const activeRow = tbody.querySelector('tr.table-warning');
-  if (activeRow) activeRow.scrollIntoView({ block: 'nearest' });
+  if (tblWrap && activeRow) {
+    const rowTop = activeRow.offsetTop;
+    const rowBot = rowTop + activeRow.offsetHeight;
+    if (rowTop < tblWrap.scrollTop)
+      tblWrap.scrollTop = rowTop;
+    else if (rowBot > tblWrap.scrollTop + tblWrap.clientHeight)
+      tblWrap.scrollTop = rowBot - tblWrap.clientHeight;
+  }
 }
 
 // ── Items table ───────────────────────────────────────────────────────────────

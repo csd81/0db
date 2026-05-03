@@ -161,9 +161,17 @@
   var nav   = document.getElementById('navbarMain');
   if (!brand || !nav) return;
   if (localStorage.getItem('nwcc_nav_collapsed') === '1') nav.classList.add('nav-collapsed');
-  brand.addEventListener('click', function() {
+  brand.addEventListener('click', function(e) {
+    e.stopPropagation();
     var hidden = nav.classList.toggle('nav-collapsed');
     localStorage.setItem('nwcc_nav_collapsed', hidden ? '1' : '0');
+    if (!hidden) {
+      // Clear any inline display:none Bootstrap may have set, then force flex
+      nav.style.removeProperty('display');
+      nav.style.display = 'flex';
+      // Let Bootstrap clean up after itself on next frame
+      requestAnimationFrame(function() { nav.style.removeProperty('display'); });
+    }
   });
 })();
 </script>
