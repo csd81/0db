@@ -1,6 +1,10 @@
 """
 demo_service.py — Backend logic for Visual Demo Lab.
 """
+import copy
+import re
+import decimal
+import datetime
 import hashlib
 import json
 import os
@@ -9,6 +13,7 @@ import random
 import time
 import threading
 import sqlite3
+import pyodbc
 import requests as _requests
 import db_adapter
 import meta_db
@@ -3173,3 +3178,1568 @@ def hft_reset():
         _HFT_STATE['last_hft_latency_ms'] = None
         _HFT_STATE['last_ret_latency_ms'] = None
         _HFT_STATE['last_race_result']    = None
+
+
+
+# ── Order Fulfillment Demo ─────────────────────────────────────────────────────
+
+_FULFILL_LOCK       = threading.Lock()
+_FULFILL_STEP_EVENT = threading.Event()
+_FULFILL_ABORTED    = False
+_FULFILL_LOG_CONN   = None   # persistent autocommit connection for SQL logging
+
+_FULFILL_ORDER_COLS = [
+    'OrderID', 'CustomerID', 'EmployeeID', 'OrderDate', 'RequiredDate',
+    'ShipVia', 'Freight', 'ShipName', 'ShipAddress', 'ShipCity',
+    'ShipRegion', 'ShipPostalCode', 'ShipCountry',
+]
+_FULFILL_CUSTOMER_COLS = [
+    'CustomerID', 'CompanyName', 'ContactName', 'ContactTitle',
+    'Phone', 'Fax', 'City', 'Country',
+]
+_FULFILL_EMPLOYEE_COLS = [
+    'EmployeeID', 'FirstName', 'LastName', 'Title',
+    'TitleOfCourtesy', 'HomePhone', 'City', 'Country',
+]
+_FULFILL_SHIPPER_COLS  = ['ShipperID', 'CompanyName', 'Phone']
+_FULFILL_PRODUCT_COLS  = [
+    'ProductID', 'ProductName', 'QuantityPerUnit', 'UnitPrice',
+    'UnitsInStock', 'UnitsOnOrder', 'ReorderLevel', 'Discontinued', 'SupplierID',
+]
+_FULFILL_SUPPLIER_COLS = [
+    'SupplierID', 'CompanyName', 'ContactName', 'ContactTitle',
+    'Phone', 'Fax', 'HomePage', 'City', 'Country',
+]
+_FULFILL_FK_MAP = {
+    'CustomerID': ('Customers', 'CustomerID', _FULFILL_CUSTOMER_COLS, 'customer_card'),
+    'EmployeeID': ('Employees', 'EmployeeID', _FULFILL_EMPLOYEE_COLS, 'employee_card'),
+    'ShipVia':    ('Shippers',  'ShipperID',  _FULFILL_SHIPPER_COLS,  'shipper_card'),
+}
+# Orders columns that feed directly into package metadata
+_FULFILL_META_FIELDS = {
+    'OrderID', 'OrderDate', 'RequiredDate', 'Freight',
+    'ShipName', 'ShipAddress', 'ShipCity', 'ShipRegion',
+    'ShipPostalCode', 'ShipCountry',
+}
+
+_FULFILL_STATE_DEFAULTS: dict = {
+    'phase': 'idle',
+    'phase_label': '',
+    'waiting_for_step': False,
+    # Orders table
+    'orders': [],
+    'order_idx': 0,
+    'orders_total': 0,
+    'order_cols': [],
+    'order_col_idx': -1,
+    # Universal sub-table viewer
+    'sub_table': None,
+    # Order Details
+    'items': [],
+    'item_idx': -1,
+    # Context cards (fill incrementally, cell by cell)
+    'customer_card': {},
+    'employee_card': {},
+    'shipper_card': {},
+    'supplier_card': {},
+    'product_card': {},
+    # Order queue (visual stack of in-flight orders)
+    'order_queue': [],    # [{order_id, status: active|partial|shipped, customer}]
+    # Refill order card (open while scanning Products/Suppliers for restock)
+    'refill_order': None,  # None | {status:'open'|'sent', fields...}
+    # Package
+    'package_id': None,
+    'package_items': [],
+    'package_meta': {},   # accumulates order metadata field by field as it is read
+    # SQL log
+    'sql_log': [],
+    'current_sql': '',
+    # P&L running totals (updated in-memory as events fire)
+    'pnl': {
+        'initial_capital': 500000.0,
+        'revenue':         0.0,
+        'cogs':            0.0,
+        'freight':         0.0,
+        'restock':         0.0,
+        'salaries':        0.0,
+        'overhead':        0.0,
+    },
+    # DB changes (for reset)
+    'changes': {
+        'package_ids': [],
+        'shipped_order_ids': [],
+        'deleted_details': [],
+        'stock_decremented': [],
+        'stock_incremented': [],
+    },
+    'error': None,
+    'conn_str': '',
+}
+_FULFILL_STATE: dict = copy.deepcopy(_FULFILL_STATE_DEFAULTS)
+
+
+# ── Low-level helpers ─────────────────────────────────────────────────────────
+
+def _fulfill_fix_val(v):
+    if v is None:
+        return None
+    if isinstance(v, (datetime.datetime, datetime.date, datetime.time)):
+        return v.isoformat()
+    if isinstance(v, decimal.Decimal):
+        return float(v)
+    if isinstance(v, str):
+        try:
+            return v.encode('latin-1').decode('utf-8')
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return v
+    return v
+
+
+def _queue_set(order_id, status, customer=''):
+    with _FULFILL_LOCK:
+        for q in _FULFILL_STATE['order_queue']:
+            if q['order_id'] == order_id and q.get('type') != 'refill':
+                q['status'] = status
+                return
+        _FULFILL_STATE['order_queue'].append(
+            {'order_id': order_id, 'status': status, 'customer': customer}
+        )
+
+
+def _fulfill_sql_log(line):
+    with _FULFILL_LOCK:
+        _FULFILL_STATE['sql_log'].append(line)
+        _FULFILL_STATE['current_sql'] = line
+        conn_str = _FULFILL_STATE.get('conn_str', '')
+    global _FULFILL_LOG_CONN
+    if not conn_str:
+        return
+    # Try existing connection; reconnect once on failure
+    for attempt in range(2):
+        if _FULFILL_LOG_CONN is None:
+            try:
+                _FULFILL_LOG_CONN = pyodbc.connect(conn_str, autocommit=True, timeout=5)
+            except Exception:
+                return
+        try:
+            _FULFILL_LOG_CONN.execute("INSERT INTO log_(sql_text) VALUES (?)", [line])
+            return
+        except Exception:
+            try: _FULFILL_LOG_CONN.close()
+            except Exception: pass
+            _FULFILL_LOG_CONN = None
+
+
+def _ledger_insert(conn_str: str, event_type: str, amount: float,
+                   description: str, order_id=None, product_id=None, employee_id=None):
+    """Insert one row into CompanyLedger and update the in-memory pnl dict."""
+    pnl_key = {
+        'revenue': 'revenue', 'cogs': 'cogs', 'freight': 'freight',
+        'restock': 'restock', 'salary': 'salaries', 'overhead': 'overhead',
+    }.get(event_type)
+    if pnl_key:
+        with _FULFILL_LOCK:
+            if event_type == 'revenue':
+                _FULFILL_STATE['pnl'][pnl_key] += amount
+            else:
+                _FULFILL_STATE['pnl'][pnl_key] += abs(amount)
+
+    _fulfill_sql_log(
+        f"INSERT CompanyLedger({event_type}): {description}  [{amount:+.2f}]"
+    )
+    try:
+        conn = pyodbc.connect(conn_str, autocommit=True, timeout=5)
+        conn.execute(
+            "INSERT INTO CompanyLedger(EventType,OrderID,ProductID,EmployeeID,Amount,Description)"
+            " VALUES (?,?,?,?,?,?)",
+            [event_type, order_id, product_id, employee_id, amount, description],
+        )
+        conn.close()
+    except Exception:
+        pass
+
+
+def _step(**updates) -> bool:
+    """Atomically update state fields and pause until Next Step is clicked.
+    Returns True if the demo was aborted (reset)."""
+    with _FULFILL_LOCK:
+        _FULFILL_STATE.update(updates)
+        _FULFILL_STATE['waiting_for_step'] = True
+    _FULFILL_STEP_EVENT.wait()
+    _FULFILL_STEP_EVENT.clear()
+    with _FULFILL_LOCK:
+        _FULFILL_STATE['waiting_for_step'] = False
+    return _FULFILL_ABORTED
+
+
+def _scan_subtable(conn_str: str, table_name: str, id_col: str, id_val,
+                   scan_cols: list, card_key: str, refill_key: str = None) -> bool:
+    """Physically 'open' table in the sub-table viewer, highlight the target row,
+    then scan each column cell-by-cell, filling state[card_key] incrementally.
+    Returns True if completed normally, False if aborted."""
+
+    # Log the SELECT being executed
+    col_list = ', '.join(scan_cols)
+    _fulfill_sql_log(
+        f"SELECT {col_list}\n"
+        f"FROM [{table_name}]\n"
+        f"WHERE [{id_col}] = '{id_val}'"
+    )
+
+    # Fetch full table ordered by PK
+    try:
+        conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+        try:
+            cur = conn.cursor()
+            col_list_sq = ', '.join(f'[{c}]' for c in scan_cols)
+            cur.execute(f'SELECT {col_list_sq} FROM [{table_name}] ORDER BY [{id_col}]')
+            all_rows = [
+                {scan_cols[j]: _fulfill_fix_val(v) for j, v in enumerate(r)}
+                for r in cur.fetchall()
+            ]
+        finally:
+            conn.close()
+    except Exception:
+        all_rows = []
+
+    # Locate target row
+    str_val       = str(id_val)
+    target_global = next(
+        (i for i, r in enumerate(all_rows) if str(r.get(id_col, '')) == str_val),
+        None,
+    )
+    if target_global is None:
+        if _step(phase='sub_table_open',
+                 phase_label=f'{table_name}: {id_col}={id_val} not found',
+                 sub_table=None, **{card_key: {}}):
+            return False
+        return True
+
+    # 5-row context window centred on target
+    win_start  = max(0, target_global - 2)
+    win_end    = min(len(all_rows), target_global + 3)
+    ctx_rows   = all_rows[win_start:win_end]
+    target_win = target_global - win_start
+
+    # Step 1 — open table, highlight row (no column selected yet)
+    if _step(
+        phase='sub_table_open',
+        phase_label=f'Opening {table_name} → searching {id_col} = {id_val}',
+        sub_table={
+            'table_name':     table_name,
+            'columns':        scan_cols,
+            'rows':           ctx_rows,
+            'active_row_idx': target_win,
+            'active_col_idx': -1,
+        },
+        **{card_key: {}},
+    ): return False
+
+    # Step 2 — scan each column, fill card (and optionally refill_order) incrementally
+    card = {}
+    for col_idx, col in enumerate(scan_cols):
+        card[col] = all_rows[target_global][col]
+        _fulfill_sql_log(f"  ↳ [{col}] = {repr(card[col])}")
+
+        extra = {}
+        if refill_key:
+            with _FULFILL_LOCK:
+                current_refill = dict(_FULFILL_STATE.get(refill_key, {}) or {})
+            current_refill[col] = card[col]
+            extra[refill_key] = current_refill
+
+        if _step(
+            phase='sub_table_scan',
+            phase_label=f'{table_name}.{col} = {card[col]}',
+            sub_table={
+                'table_name':     table_name,
+                'columns':        scan_cols,
+                'rows':           ctx_rows,
+                'active_row_idx': target_win,
+                'active_col_idx': col_idx,
+            },
+            **{card_key: dict(card)},
+            **extra,
+        ): return False
+
+    # Step 3 — close sub-table
+    if _step(
+        phase='sub_table_done',
+        phase_label=f'{table_name} scan complete',
+        sub_table=None,
+    ): return False
+
+    return True
+
+
+def _fulfill_reset_state():
+    with _FULFILL_LOCK:
+        cs = _FULFILL_STATE.get('conn_str', '')
+        _FULFILL_STATE.clear()
+        _FULFILL_STATE.update(copy.deepcopy(_FULFILL_STATE_DEFAULTS))
+        _FULFILL_STATE['conn_str'] = cs
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+def fulfill_get_state() -> dict:
+    with _FULFILL_LOCK:
+        return copy.deepcopy(_FULFILL_STATE)
+
+
+def fulfill_step():
+    """Advance the worker by one step (called from the Next Step button)."""
+    _FULFILL_STEP_EVENT.set()
+
+
+def _fulfill_ensure_tables(conn_str: str):
+    """Create Packages / PackageItems if missing, run one-time 1996 init and wrap-around.
+    Idempotent — safe to call on every Start and Reset."""
+    _db_m    = re.search(r'DATABASE=([^;]+)', conn_str, re.I)
+    _db_name = _db_m.group(1).strip() if _db_m else 'Northwind'
+    conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+    conn.execute(f'USE [{_db_name}]')
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='Packages')
+            CREATE TABLE Packages (
+                PackageID INT IDENTITY(1,1) PRIMARY KEY,
+                OrderID   INT NOT NULL,
+                CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+                Status    NVARCHAR(20) NOT NULL DEFAULT 'packing'
+            )
+    """)
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='PackageItems')
+            CREATE TABLE PackageItems (
+                ItemID      INT IDENTITY(1,1) PRIMARY KEY,
+                PackageID   INT NOT NULL REFERENCES Packages(PackageID),
+                ProductID   INT NOT NULL,
+                ProductName NVARCHAR(100),
+                Quantity    INT NOT NULL,
+                Status      NVARCHAR(20) NOT NULL DEFAULT 'packed'
+            )
+    """)
+    conn.execute("""
+        IF NOT EXISTS (
+            SELECT 1 FROM sys.columns
+            WHERE object_id = OBJECT_ID('PackageItems') AND name = 'Status'
+        )
+            ALTER TABLE PackageItems ADD Status NVARCHAR(20) NOT NULL DEFAULT 'packed'
+    """)
+    # CREATE TRIGGER must be the first statement in its batch — check separately.
+    _cur = conn.cursor()
+    _cur.execute("SELECT COUNT(*) FROM sys.triggers WHERE name='trg_PackageItems_DecrStock'")
+    if _cur.fetchone()[0] == 0:
+        conn.execute("""
+            CREATE TRIGGER trg_PackageItems_DecrStock
+            ON PackageItems AFTER INSERT AS
+            BEGIN
+                SET NOCOUNT ON;
+                UPDATE p
+                SET    p.UnitsInStock = p.UnitsInStock - i.Quantity
+                FROM   Products p
+                JOIN   inserted i ON i.ProductID = p.ProductID
+                WHERE  i.Status = 'packed'
+            END
+        """)
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='log_')
+            CREATE TABLE log_ (
+                id       INT IDENTITY(1,1) PRIMARY KEY,
+                ts       DATETIME      NOT NULL DEFAULT GETDATE(),
+                sql_text NVARCHAR(MAX) NOT NULL
+            )
+    """)
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='RefillOrders')
+            CREATE TABLE RefillOrders (
+                RefillID    INT IDENTITY(1,1) PRIMARY KEY,
+                OrderID     INT NOT NULL,
+                ProductID   INT NOT NULL,
+                ProductName NVARCHAR(100),
+                NeededQty   INT NOT NULL,
+                RestockQty  INT NOT NULL DEFAULT 100,
+                SupplierID  INT,
+                Supplier    NVARCHAR(100),
+                SentAt              DATETIME NOT NULL DEFAULT GETDATE(),
+                Status              NVARCHAR(20) NOT NULL DEFAULT 'sent',
+                TicksUntilDelivery  INT NOT NULL DEFAULT 3
+            )
+    """)
+    # Migration: add TicksUntilDelivery to existing RefillOrders table
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.columns
+                       WHERE object_id=OBJECT_ID('RefillOrders') AND name='TicksUntilDelivery')
+            ALTER TABLE RefillOrders ADD TicksUntilDelivery INT NOT NULL DEFAULT 3
+    """)
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='CompanySettings')
+        BEGIN
+            CREATE TABLE CompanySettings (
+                SettingKey   NVARCHAR(50)  NOT NULL PRIMARY KEY,
+                SettingValue NVARCHAR(200) NOT NULL
+            )
+            INSERT INTO CompanySettings VALUES ('InitialCapital','500000')
+            INSERT INTO CompanySettings VALUES ('SimulationYear','1996')
+            INSERT INTO CompanySettings VALUES ('MonthlyOverhead','5000')
+        END
+    """)
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='CompanyLedger')
+            CREATE TABLE CompanyLedger (
+                LedgerID    INT IDENTITY(1,1) PRIMARY KEY,
+                EventType   NVARCHAR(30)  NOT NULL,
+                OrderID     INT           NULL,
+                ProductID   INT           NULL,
+                EmployeeID  INT           NULL,
+                Amount      MONEY         NOT NULL,
+                Description NVARCHAR(200) NULL,
+                EventDate   DATETIME      NOT NULL DEFAULT GETDATE()
+            )
+    """)
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.columns
+                       WHERE object_id=OBJECT_ID('Products') AND name='UnitCost')
+        BEGIN
+            ALTER TABLE Products ADD UnitCost MONEY NULL
+            UPDATE Products SET UnitCost = ROUND(UnitPrice * 0.60, 2)
+        END
+    """)
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.columns
+                       WHERE object_id=OBJECT_ID('Employees') AND name='MonthlySalary')
+        BEGIN
+            ALTER TABLE Employees ADD MonthlySalary MONEY NULL
+            UPDATE Employees SET MonthlySalary =
+                CASE EmployeeID
+                    WHEN 1 THEN 2800 WHEN 2 THEN 5500 WHEN 3 THEN 2600
+                    WHEN 4 THEN 2700 WHEN 5 THEN 4200 WHEN 6 THEN 2500
+                    WHEN 7 THEN 2500 WHEN 8 THEN 3100 WHEN 9 THEN 2400
+                    ELSE 2500
+                END
+        END
+    """)
+    conn.execute("""
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'FulfillDemoInit')
+        BEGIN
+            CREATE TABLE FulfillDemoInit (InitAt DATETIME NOT NULL DEFAULT GETDATE())
+            INSERT INTO FulfillDemoInit DEFAULT VALUES
+            DELETE FROM PackageItems
+            DELETE FROM Packages
+            UPDATE Orders SET ShippedDate = NULL
+        END
+    """)
+    conn.execute("""
+        IF NOT EXISTS (
+            SELECT 1 FROM Orders
+            WHERE ShippedDate IS NULL
+              AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID)
+        )
+        BEGIN
+            DELETE FROM PackageItems
+            DELETE FROM Packages
+            UPDATE Orders SET ShippedDate = NULL
+        END
+    """)
+    conn.close()
+
+
+def fulfill_start(conn_str: str):
+    global _FULFILL_ABORTED
+    with _FULFILL_LOCK:
+        if _FULFILL_STATE['phase'] != 'idle':
+            return
+        _FULFILL_STATE.update(copy.deepcopy(_FULFILL_STATE_DEFAULTS))
+        _FULFILL_STATE['phase']       = 'loading'
+        _FULFILL_STATE['phase_label'] = 'Loading orders…'
+        _FULFILL_STATE['conn_str']    = conn_str
+
+    _FULFILL_ABORTED = False
+    _FULFILL_STEP_EVENT.clear()
+
+    _db_m    = re.search(r'DATABASE=([^;]+)', conn_str, re.I)
+    _db_name = _db_m.group(1).strip() if _db_m else 'Northwind'
+
+    try:
+        setup = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+        setup.execute(f'USE [{_db_name}]')
+        setup.execute("""
+            IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='Packages')
+                CREATE TABLE Packages (
+                    PackageID INT IDENTITY(1,1) PRIMARY KEY,
+                    OrderID   INT NOT NULL,
+                    CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+                    Status    NVARCHAR(20) NOT NULL DEFAULT 'packing'
+                )
+        """)
+        setup.execute("""
+            IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='PackageItems')
+                CREATE TABLE PackageItems (
+                    ItemID      INT IDENTITY(1,1) PRIMARY KEY,
+                    PackageID   INT NOT NULL REFERENCES Packages(PackageID),
+                    ProductID   INT NOT NULL,
+                    ProductName NVARCHAR(100),
+                    Quantity    INT NOT NULL
+                )
+        """)
+        # One-time 1996 init: null every ShippedDate so the full catalogue is available.
+        # Guarded by a sentinel table so it only fires on the very first Start ever.
+        setup.execute("""
+            IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'FulfillDemoInit')
+            BEGIN
+                CREATE TABLE FulfillDemoInit (InitAt DATETIME NOT NULL DEFAULT GETDATE())
+                INSERT INTO FulfillDemoInit DEFAULT VALUES
+                DELETE FROM PackageItems
+                DELETE FROM Packages
+                UPDATE Orders SET ShippedDate = NULL
+            END
+        """)
+        # Wrap-around: if no unstarted orders remain, reset for the next cycle.
+        setup.execute("""
+            IF NOT EXISTS (
+                SELECT 1 FROM Orders
+                WHERE ShippedDate IS NULL
+                  AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID)
+            )
+            BEGIN
+                DELETE FROM PackageItems
+                DELETE FROM Packages
+                UPDATE Orders SET ShippedDate = NULL
+            END
+        """)
+        cur = setup.cursor()
+        cur.execute("""
+            SELECT TOP 5 OrderID, CustomerID, EmployeeID, OrderDate, RequiredDate,
+                         ShipVia, Freight, ShipName, ShipAddress, ShipCity,
+                         ShipRegion, ShipPostalCode, ShipCountry
+            FROM Orders
+            WHERE ShippedDate IS NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID
+              )
+            ORDER BY OrderID
+        """)
+        orders = [
+            {col: _fulfill_fix_val(r[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)}
+            for r in cur.fetchall()
+        ]
+        setup.close()
+
+        # Open a dedicated autocommit connection for SQL logging
+        global _FULFILL_LOG_CONN
+        try:
+            if _FULFILL_LOG_CONN:
+                try: _FULFILL_LOG_CONN.close()
+                except Exception: pass
+            _FULFILL_LOG_CONN = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+        except Exception:
+            _FULFILL_LOG_CONN = None
+
+    except Exception as e:
+        with _FULFILL_LOCK:
+            _FULFILL_STATE['phase'] = 'error'
+            _FULFILL_STATE['error'] = str(e)
+        return
+
+    # Seed P&L initial capital from CompanySettings
+    try:
+        _ic_conn = pyodbc.connect(conn_str, autocommit=True, timeout=5)
+        _ic_cur  = _ic_conn.cursor()
+        _ic_cur.execute("SELECT SettingValue FROM CompanySettings WHERE SettingKey='InitialCapital'")
+        _ic_row = _ic_cur.fetchone()
+        _ic = float(_ic_row[0]) if _ic_row else 500000.0
+
+        # Seed salary ledger rows for this run
+        _ic_cur.execute("SELECT EmployeeID, FirstName, LastName, MonthlySalary FROM Employees WHERE MonthlySalary IS NOT NULL")
+        _sal_rows = _ic_cur.fetchall()
+
+        # Seed overhead
+        _ic_cur.execute("SELECT SettingValue FROM CompanySettings WHERE SettingKey='MonthlyOverhead'")
+        _oh_row = _ic_cur.fetchone()
+        _oh = float(_oh_row[0]) if _oh_row else 5000.0
+        _ic_conn.close()
+    except Exception:
+        _ic = 500000.0; _sal_rows = []; _oh = 5000.0
+
+    with _FULFILL_LOCK:
+        _FULFILL_STATE['orders']           = orders
+        _FULFILL_STATE['orders_total']     = len(orders)
+        _FULFILL_STATE['order_cols']       = _FULFILL_ORDER_COLS
+        _FULFILL_STATE['pnl']['initial_capital'] = _ic
+
+    # Insert salary + overhead ledger rows (fire-and-forget, non-blocking)
+    def _seed_ledger():
+        for eid, fname, lname, sal in _sal_rows:
+            _ledger_insert(conn_str, 'salary', -float(sal),
+                           f'Monthly salary: {fname} {lname}', employee_id=eid)
+        _ledger_insert(conn_str, 'overhead', -_oh, 'Monthly overhead (rent/utilities)')
+
+    threading.Thread(target=_seed_ledger, daemon=True).start()
+    threading.Thread(target=_fulfill_worker, daemon=True).start()
+
+
+def fulfill_reset():
+    global _FULFILL_ABORTED, _FULFILL_LOG_CONN
+    _FULFILL_ABORTED = True
+    _FULFILL_STEP_EVENT.set()   # unblock any waiting step
+
+    if _FULFILL_LOG_CONN:
+        try: _FULFILL_LOG_CONN.close()
+        except Exception: pass
+        _FULFILL_LOG_CONN = None
+
+    with _FULFILL_LOCK:
+        ch       = copy.deepcopy(_FULFILL_STATE['changes'])
+        conn_str = _FULFILL_STATE['conn_str']
+
+    # Always ensure schema exists — recovers from manual DROP TABLE
+    if conn_str:
+        try:
+            _fulfill_ensure_tables(conn_str)
+        except Exception:
+            pass
+
+    if conn_str:
+        try:
+            conn = pyodbc.connect(conn_str, autocommit=False, timeout=15)
+            cur  = conn.cursor()
+            try:
+                if ch['shipped_order_ids']:
+                    ph = ','.join('?' * len(ch['shipped_order_ids']))
+                    cur.execute(
+                        f"UPDATE Orders SET ShippedDate=NULL WHERE OrderID IN ({ph})",
+                        ch['shipped_order_ids'],
+                    )
+                for d in ch['deleted_details']:
+                    cur.execute(
+                        "INSERT INTO [Order Details]"
+                        "(OrderID,ProductID,UnitPrice,Quantity,Discount)"
+                        " VALUES (?,?,?,?,?)",
+                        [d['OrderID'], d['ProductID'], d['UnitPrice'],
+                         d['Quantity'], d['Discount']],
+                    )
+                for pid, delta in ch['stock_decremented']:
+                    cur.execute(
+                        "UPDATE Products SET UnitsInStock=UnitsInStock+? WHERE ProductID=?",
+                        [delta, pid],
+                    )
+                for pid, delta in ch['stock_incremented']:
+                    cur.execute(
+                        "UPDATE Products SET UnitsInStock=UnitsInStock-? WHERE ProductID=?",
+                        [delta, pid],
+                    )
+                if ch['package_ids']:
+                    ph = ','.join('?' * len(ch['package_ids']))
+                    cur.execute(f"DELETE FROM PackageItems WHERE PackageID IN ({ph})",
+                                ch['package_ids'])
+                    cur.execute(f"DELETE FROM Packages WHERE PackageID IN ({ph})",
+                                ch['package_ids'])
+                # Clear refill orders and ledger from this run
+                if ch.get('shipped_order_ids') or ch.get('deleted_details'):
+                    cur.execute("DELETE FROM RefillOrders WHERE Status IN ('sent','arrived')")
+                cur.execute("DELETE FROM CompanyLedger")
+                conn.commit()
+            except Exception:
+                conn.rollback()
+            finally:
+                conn.close()
+        except Exception:
+            pass
+
+    _fulfill_reset_state()
+
+
+# ── Partial-order completion helper ──────────────────────────────────────────
+
+def _check_deliveries(conn_str: str) -> bool:
+    """Decrement delivery ticks; arrive orders whose tick reaches 0; restock Products.
+    Returns True if aborted."""
+    with _FULFILL_LOCK:
+        # Decrement ticks for all in-transit refills
+        for q in _FULFILL_STATE['order_queue']:
+            if q.get('type') == 'refill' and q.get('status') == 'refill':
+                q['ticks_remaining'] = max(0, q.get('ticks_remaining', 3) - 1)
+        # Decrement in DB too (best-effort, fire-and-forget)
+        _conn_str_snap = _FULFILL_STATE.get('conn_str', conn_str)
+
+    try:
+        _tc = pyodbc.connect(_conn_str_snap, autocommit=True, timeout=5)
+        _tc.execute(
+            "UPDATE RefillOrders SET TicksUntilDelivery = CASE WHEN TicksUntilDelivery > 0"
+            " THEN TicksUntilDelivery - 1 ELSE 0 END WHERE Status='sent'"
+        )
+        _tc.close()
+    except Exception:
+        pass
+
+    with _FULFILL_LOCK:
+        pending = [q for q in _FULFILL_STATE['order_queue']
+                   if q.get('type') == 'refill' and q.get('status') == 'refill'
+                   and q.get('ticks_remaining', 3) <= 0]
+
+    if not pending:
+        return False
+
+    if _step(phase='delivery_check',
+             phase_label='Checking for incoming deliveries…'):
+        return True
+
+    for entry in pending:
+        if _FULFILL_ABORTED:
+            return True
+
+        pid         = entry.get('product_id')
+        restock_qty = entry.get('restock_qty', 100)
+        product     = entry.get('product', f'Product #{pid}')
+
+        # Mark arrived in queue
+        with _FULFILL_LOCK:
+            for q in _FULFILL_STATE['order_queue']:
+                if (q.get('type') == 'refill' and q.get('product_id') == pid
+                        and q.get('status') == 'refill'):
+                    q['status'] = 'arrived'
+                    break
+
+        # Restock in DB + mark RefillOrders row as arrived
+        try:
+            conn_rs = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+            conn_rs.execute(
+                'UPDATE Products SET UnitsInStock=UnitsInStock+? WHERE ProductID=?',
+                [restock_qty, pid],
+            )
+            try:
+                conn_rs.execute(
+                    "UPDATE RefillOrders SET Status='arrived' WHERE ProductID=? AND Status='sent'",
+                    [pid],
+                )
+            except Exception:
+                pass
+            conn_rs.close()
+            _fulfill_sql_log(
+                f'UPDATE Products +{restock_qty}'
+                f' WHERE ProductID={pid}  ← delivery arrived ✓'
+            )
+            _fulfill_sql_log(
+                f"UPDATE RefillOrders SET Status='arrived' WHERE ProductID={pid}"
+            )
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['changes']['stock_incremented'].append((pid, restock_qty))
+
+            # P&L: restock cost = RestockQty × UnitCost
+            try:
+                conn_uc = pyodbc.connect(conn_str, autocommit=True, timeout=5)
+                cur_uc  = conn_uc.cursor()
+                cur_uc.execute('SELECT UnitCost, ProductName FROM Products WHERE ProductID=?', [pid])
+                uc_row = cur_uc.fetchone()
+                conn_uc.close()
+                unit_cost    = float(uc_row[0]) if uc_row and uc_row[0] else 0.0
+                product_name = uc_row[1] if uc_row else product
+            except Exception:
+                unit_cost = 0.0; product_name = product
+            restock_cost = round(unit_cost * restock_qty, 2)
+            if restock_cost:
+                _ledger_insert(conn_str, 'restock', -restock_cost,
+                               f'Restock: {product_name} ×{restock_qty} from supplier',
+                               product_id=pid)
+        except Exception as e:
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['phase'] = 'error'
+                _FULFILL_STATE['error'] = str(e)
+            return True
+
+        if _step(phase='delivery_arrived',
+                 phase_label=f'✓ Delivery arrived: {product} ×{restock_qty}'):
+            return True
+
+    return False
+
+
+def _can_fulfill_partial(pp: dict, conn_str: str) -> bool:
+    """Return True if all short items in pp have sufficient stock now."""
+    try:
+        conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+        cur  = conn.cursor()
+        for item in pp['short_items']:
+            cur.execute(
+                'SELECT UnitsInStock FROM Products WHERE ProductID=?',
+                [item['ProductID']],
+            )
+            row = cur.fetchone()
+            if not row or row[0] < item['Quantity']:
+                conn.close()
+                return False
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
+    """Pack already-restocked items and ship the partial order.
+    Delivery restock is assumed done by _check_deliveries.
+    Returns True if aborted."""
+    order_id = p['order_id']
+    pkg_id   = p['pkg_id']
+
+    _queue_set(order_id, 'active')
+
+    if _step(phase='returning_to_partial',
+             phase_label=f'Returning to partial order {order_id}…'):
+        return True
+
+    # Restore the partial order's display state
+    with _FULFILL_LOCK:
+        _FULFILL_STATE['order_idx']     = p['order_idx']
+        _FULFILL_STATE['items']         = [dict(it) for it in p['raw_items']]
+        _FULFILL_STATE['package_id']    = pkg_id
+        _FULFILL_STATE['package_items'] = [dict(pi) for pi in p['pkg_items_snapshot']]
+        _FULFILL_STATE['package_meta']  = dict(p['package_meta'])
+
+    # Pack each restocked short item
+    for short_item in p['short_items']:
+        if _FULFILL_ABORTED:
+            return True
+
+        with _FULFILL_LOCK:
+            for pkg in _FULFILL_STATE['package_items']:
+                if pkg['ProductID'] == short_item['ProductID']:
+                    pkg['status'] = 'completing'
+                    break
+
+        _fulfill_sql_log(
+            f'BEGIN TRAN  -- completing partial: {short_item["ProductName"]}'
+        )
+        try:
+            conn_c = pyodbc.connect(conn_str, autocommit=False, timeout=15)
+            conn_c.execute(
+                'UPDATE Products SET UnitsInStock=UnitsInStock-? WHERE ProductID=?',
+                [short_item['Quantity'], short_item['ProductID']],
+            )
+            _fulfill_sql_log(
+                f'UPDATE Products -{short_item["Quantity"]}'
+                f' WHERE ProductID={short_item["ProductID"]} ✓'
+            )
+            conn_c.execute(
+                "UPDATE PackageItems SET Status='packed'"
+                " WHERE PackageID=? AND ProductID=? AND Status='awaiting_restock'",
+                [p['pkg_id'], short_item['ProductID']],
+            )
+            _fulfill_sql_log(
+                f"UPDATE PackageItems SET Status='packed'"
+                f" WHERE PackageID={p['pkg_id']} AND ProductID={short_item['ProductID']}"
+            )
+            conn_c.commit()
+            conn_c.close()
+        except Exception as e:
+            try: conn_c.rollback(); conn_c.close()
+            except Exception: pass
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['phase'] = 'error'
+                _FULFILL_STATE['error'] = str(e)
+            return True
+
+        with _FULFILL_LOCK:
+            for pkg in _FULFILL_STATE['package_items']:
+                if pkg['ProductID'] == short_item['ProductID']:
+                    pkg['status'] = 'packed'
+                    break
+            _FULFILL_STATE['changes']['stock_decremented'].append(
+                (short_item['ProductID'], short_item['Quantity'])
+            )
+
+        if _step(phase='completing_partial',
+                 phase_label=f'✓ Packed: {short_item["ProductName"]} ×{short_item["Quantity"]}'):
+            return True
+
+    # Ship
+    _fulfill_sql_log(f'BEGIN TRAN  -- shipping partial order {order_id}')
+    try:
+        conn_s = pyodbc.connect(conn_str, autocommit=False, timeout=15)
+        cur_s  = conn_s.cursor()
+    except Exception as e:
+        with _FULFILL_LOCK:
+            _FULFILL_STATE['phase'] = 'error'
+            _FULFILL_STATE['error'] = str(e)
+        return True
+
+    if _step(phase='removing_details',
+             phase_label=f'Removing Order Details for order {order_id}…'):
+        conn_s.rollback(); conn_s.close(); return True
+
+    for item in p['raw_items']:
+        if _FULFILL_ABORTED:
+            conn_s.rollback(); conn_s.close(); return True
+        try:
+            cur_s.execute(
+                'DELETE FROM [Order Details] WHERE OrderID=? AND ProductID=?',
+                [order_id, item['ProductID']],
+            )
+        except Exception as e:
+            conn_s.rollback(); conn_s.close()
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['phase'] = 'error'
+                _FULFILL_STATE['error'] = str(e)
+            return True
+        _fulfill_sql_log(
+            f"DELETE [Order Details] OrderID={order_id} ProductID={item['ProductID']}"
+        )
+        with _FULFILL_LOCK:
+            _FULFILL_STATE['changes']['deleted_details'].append({
+                'OrderID':   order_id,
+                'ProductID': item['ProductID'],
+                'UnitPrice': item['UnitPrice'],
+                'Quantity':  item['Quantity'],
+                'Discount':  item['Discount'],
+            })
+        if _step(phase='removing_details',
+                 phase_label=f'Deleted {item["ProductName"]} from Order Details'):
+            conn_s.rollback(); conn_s.close(); return True
+
+    try:
+        cur_s.execute(
+            'UPDATE Orders SET ShippedDate=GETDATE() WHERE OrderID=?', [order_id]
+        )
+        cur_s.execute(
+            "UPDATE Packages SET Status='shipped' WHERE PackageID=?", [pkg_id]
+        )
+        _fulfill_sql_log(
+            f'UPDATE Orders ShippedDate=GETDATE() WHERE OrderID={order_id}'
+        )
+        _fulfill_sql_log('COMMIT')
+        conn_s.commit()
+    except Exception as e:
+        conn_s.rollback(); conn_s.close()
+        with _FULFILL_LOCK:
+            _FULFILL_STATE['phase'] = 'error'
+            _FULFILL_STATE['error'] = str(e)
+        return True
+    conn_s.close()
+
+    with _FULFILL_LOCK:
+        _FULFILL_STATE['changes']['shipped_order_ids'].append(order_id)
+
+    # P&L: revenue + COGS per line item, freight per order
+    for item in p['raw_items']:
+        rev = round(item['UnitPrice'] * item['Quantity'] * (1 - item['Discount']), 2)
+        try:
+            _cc = pyodbc.connect(conn_str, autocommit=True, timeout=5)
+            _cr = _cc.cursor()
+            _cr.execute('SELECT UnitCost FROM Products WHERE ProductID=?', [item['ProductID']])
+            _uc_row = _cr.fetchone()
+            _cc.close()
+            unit_cost = float(_uc_row[0]) if _uc_row and _uc_row[0] else item['UnitPrice'] * 0.6
+        except Exception:
+            unit_cost = item['UnitPrice'] * 0.6
+        cogs = round(unit_cost * item['Quantity'], 2)
+        _ledger_insert(conn_str, 'revenue', rev,
+                       f"Revenue: {item['ProductName']} ×{item['Quantity']}",
+                       order_id=order_id, product_id=item['ProductID'])
+        _ledger_insert(conn_str, 'cogs', -cogs,
+                       f"COGS: {item['ProductName']} ×{item['Quantity']}",
+                       order_id=order_id, product_id=item['ProductID'])
+    freight = float(p['package_meta'].get('Freight') or 0)
+    if freight:
+        ship_to = ', '.join(filter(None, [
+            p['package_meta'].get('ShipName'), p['package_meta'].get('ShipCity'),
+        ]))
+        _ledger_insert(conn_str, 'freight', -freight,
+                       f'Freight: {ship_to}', order_id=order_id)
+
+    _queue_set(order_id, 'shipped')
+    with _FULFILL_LOCK:
+        # Attach final details to the queue entry
+        pkg_items_now = list(_FULFILL_STATE['package_items'])
+        meta_now      = dict(_FULFILL_STATE['package_meta'])
+        for q in _FULFILL_STATE['order_queue']:
+            if q['order_id'] == order_id and q.get('type') != 'refill':
+                q['details'] = {
+                    'ship_to': ', '.join(filter(None, [
+                        meta_now.get('ShipName'), meta_now.get('ShipCity'),
+                        meta_now.get('ShipCountry'),
+                    ])),
+                    'items': [{'name': pi['ProductName'], 'qty': pi['Quantity'],
+                               'status': pi['status']} for pi in pkg_items_now],
+                }
+                break
+        # Remove refill delivery entries for this order — delivery is consumed
+        _FULFILL_STATE['order_queue'] = [
+            q for q in _FULFILL_STATE['order_queue']
+            if not (q.get('type') == 'refill' and q.get('order_id') == order_id)
+        ]
+    return _step(phase='shipped',
+                 phase_label=f'✓ Partial order {order_id} fully shipped!')
+
+
+# ── Dynamic order loader ──────────────────────────────────────────────────────
+
+def _load_next_order(conn_str: str):
+    """Fetch the next unprocessed order and append it to the live orders list."""
+    with _FULFILL_LOCK:
+        loaded_ids = [o['OrderID'] for o in _FULFILL_STATE['orders']]
+
+    if not loaded_ids:
+        return
+
+    placeholders = ','.join('?' * len(loaded_ids))
+    try:
+        conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+        cur  = conn.cursor()
+        cur.execute(f"""
+            SELECT TOP 1 OrderID, CustomerID, EmployeeID, OrderDate, RequiredDate,
+                         ShipVia, Freight, ShipName, ShipAddress, ShipCity,
+                         ShipRegion, ShipPostalCode, ShipCountry
+            FROM Orders
+            WHERE ShippedDate IS NULL
+              AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID)
+              AND OrderID NOT IN ({placeholders})
+            ORDER BY OrderID
+        """, loaded_ids)
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            order = {col: _fulfill_fix_val(row[i])
+                     for i, col in enumerate(_FULFILL_ORDER_COLS)}
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['orders'].append(order)
+                _FULFILL_STATE['orders_total'] = len(_FULFILL_STATE['orders'])
+    except Exception:
+        pass
+
+
+# ── Worker ────────────────────────────────────────────────────────────────────
+
+def _fulfill_worker():
+    with _FULFILL_LOCK:
+        conn_str = _FULFILL_STATE['conn_str']
+
+    pending_partials = []   # partial orders waiting for delivery
+    idx = 0
+
+    while True:
+        if _FULFILL_ABORTED:
+            return
+        with _FULFILL_LOCK:
+            if idx >= len(_FULFILL_STATE['orders']):
+                break
+            order = dict(_FULFILL_STATE['orders'][idx])
+
+        order_id = order['OrderID']
+
+        # Reset all per-order display state
+        _queue_set(order_id, 'active')
+        with _FULFILL_LOCK:
+            _FULFILL_STATE.update({
+                'order_idx':     idx,
+                'phase':         'reading_order',
+                'phase_label':   f'Order {order_id}',
+                'order_col_idx': -1,
+                'sub_table':     None,
+                'items':         [],
+                'item_idx':      -1,
+                'package_id':    None,
+                'package_items': [],
+                'package_meta':  {},
+                'customer_card': {},
+                'employee_card': {},
+                'shipper_card':  {},
+                'supplier_card': {},
+                'product_card':  {},
+                'refill_order':  None,
+            })
+
+        if _step(phase='reading_order',
+                 phase_label=f'Order {order_id} — click Next to begin reading'):
+            return
+
+        # ── Read each column of the Orders row, follow FK columns ──
+        _fulfill_sql_log(
+            f"SELECT OrderID,CustomerID,EmployeeID,OrderDate,\n"
+            f"  RequiredDate,ShipVia,Freight,ShipName,...\n"
+            f"FROM Orders WHERE OrderID={order_id}"
+        )
+        for col_idx, col in enumerate(_FULFILL_ORDER_COLS):
+            _fulfill_sql_log(f"  ↳ [{col}] = {repr(order.get(col, ''))}")
+
+            # Accumulate package metadata from Orders fields as they are read
+            with _FULFILL_LOCK:
+                if col in _FULFILL_META_FIELDS:
+                    _FULFILL_STATE['package_meta'][col] = order.get(col)
+                new_meta = dict(_FULFILL_STATE['package_meta'])
+
+            if _step(phase='reading_field',
+                     phase_label=f'Orders.{col} = {order.get(col, "")}',
+                     order_col_idx=col_idx,
+                     sub_table=None,
+                     package_meta=new_meta):
+                return
+
+            if col in _FULFILL_FK_MAP:
+                tbl, id_col, scan_cols, card_key = _FULFILL_FK_MAP[col]
+                if not _scan_subtable(conn_str, tbl, id_col, order[col],
+                                      scan_cols, card_key):
+                    return
+                # After FK scan: pull the "name" field into package metadata
+                with _FULFILL_LOCK:
+                    card_data = _FULFILL_STATE.get(card_key, {})
+                    if card_key == 'customer_card':
+                        _FULFILL_STATE['package_meta']['Customer'] = card_data.get('CompanyName')
+                        # Also update queue entry so collapsed header can show customer name
+                        cname = card_data.get('CompanyName', '')
+                        for q in _FULFILL_STATE['order_queue']:
+                            if q['order_id'] == order_id:
+                                q['customer'] = cname
+                                break
+                    elif card_key == 'employee_card':
+                        fname = card_data.get('FirstName', '') or ''
+                        lname = card_data.get('LastName', '') or ''
+                        _FULFILL_STATE['package_meta']['Employee'] = f'{fname} {lname}'.strip()
+                    elif card_key == 'shipper_card':
+                        _FULFILL_STATE['package_meta']['Shipper'] = card_data.get('CompanyName')
+                    # Snapshot updated meta so the package card rerenders on next poll
+                    _FULFILL_STATE['package_meta'] = dict(_FULFILL_STATE['package_meta'])
+
+        # ── Load Order Details rows ──
+        _fulfill_sql_log(
+            f"SELECT od.ProductID, p.ProductName, od.Quantity,\n"
+            f"  od.UnitPrice, od.Discount, p.UnitsInStock\n"
+            f"FROM [Order Details] od\n"
+            f"  JOIN Products p ON p.ProductID = od.ProductID\n"
+            f"WHERE od.OrderID = {order_id}"
+        )
+        try:
+            conn_items = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+            cur_items  = conn_items.cursor()
+            cur_items.execute("""
+                SELECT od.ProductID, p.ProductName, od.Quantity, od.UnitPrice,
+                       od.Discount, p.UnitsInStock
+                FROM [Order Details] od
+                JOIN Products p ON p.ProductID = od.ProductID
+                WHERE od.OrderID = ?
+            """, [order_id])
+            raw_items = [
+                {
+                    'ProductID':    r[0],
+                    'ProductName':  _fulfill_fix_val(r[1]),
+                    'Quantity':     r[2],
+                    'UnitPrice':    float(r[3]) if r[3] is not None else 0.0,
+                    'Discount':     float(r[4]) if r[4] is not None else 0.0,
+                    'UnitsInStock': r[5],
+                    'status':       'pending',
+                }
+                for r in cur_items.fetchall()
+            ]
+            conn_items.close()
+        except Exception as e:
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['phase'] = 'error'
+                _FULFILL_STATE['error'] = str(e)
+            return
+
+        with _FULFILL_LOCK:
+            _FULFILL_STATE['items'] = raw_items
+
+        # ── Scan each item row, follow ProductID → Products sub-table ──
+        for i, item in enumerate(raw_items):
+            if _step(phase='reading_items',
+                     phase_label=f'Item {i + 1}/{len(raw_items)}: {item["ProductName"]}',
+                     item_idx=i,
+                     sub_table=None,
+                     product_card={}):
+                return
+
+            if not _scan_subtable(conn_str, 'Products', 'ProductID',
+                                  item['ProductID'], _FULFILL_PRODUCT_COLS,
+                                  'product_card'):
+                return
+
+            ok = item['UnitsInStock'] >= item['Quantity']
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['items'][i]['status'] = 'ok' if ok else 'short'
+                if ok:
+                    # Immediately reflect the reservation: decrement displayed stock
+                    # and queue item in the package card
+                    _FULFILL_STATE['items'][i]['UnitsInStock'] -= item['Quantity']
+                    _FULFILL_STATE['package_items'].append({
+                        'ProductID':   item['ProductID'],
+                        'ProductName': item['ProductName'],
+                        'Quantity':    item['Quantity'],
+                        'status':      'queued',
+                    })
+
+            if _step(
+                phase='stock_checked',
+                phase_label=(
+                    f'{"✓ OK" if ok else "✗ SHORT"}: {item["ProductName"]} — '
+                    f'{item["UnitsInStock"]} in stock, need {item["Quantity"]}'
+                ),
+            ): return
+
+        # ── Pack & Ship ───────────────────────────────────────────
+        if _step(phase='checking_stock',
+                 phase_label='Stock check complete — ready to begin transaction?'):
+            return
+
+        _fulfill_sql_log('BEGIN TRAN')
+        try:
+            conn_tx = pyodbc.connect(conn_str, autocommit=False, timeout=15)
+        except Exception as e:
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['phase'] = 'error'
+                _FULFILL_STATE['error'] = str(e)
+            return
+        cur_tx = conn_tx.cursor()
+
+        if _step(phase='begin_tran', phase_label='BEGIN TRANSACTION'):
+            conn_tx.rollback(); conn_tx.close(); return
+
+        # INSERT Packages
+        try:
+            cur_tx.execute(
+                "INSERT INTO Packages(OrderID, Status)"
+                " OUTPUT INSERTED.PackageID VALUES (?, 'packing')",
+                [order_id],
+            )
+            row_pkg = cur_tx.fetchone()
+            pkg_id  = int(row_pkg[0]) if row_pkg and row_pkg[0] is not None else None
+        except Exception as e:
+            conn_tx.rollback(); conn_tx.close()
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['phase'] = 'error'
+                _FULFILL_STATE['error'] = str(e)
+            return
+
+        _fulfill_sql_log(f'INSERT INTO Packages(OrderID={order_id}) → PackageID={pkg_id}')
+        with _FULFILL_LOCK:
+            _FULFILL_STATE['package_id'] = pkg_id
+            # package_items already populated with 'queued' entries from stock-check — keep them
+
+        if _step(phase='creating_package', phase_label=f'Package #{pkg_id} created'):
+            conn_tx.rollback(); conn_tx.close(); return
+        if _step(phase='packing', phase_label='Packing items…'):
+            conn_tx.rollback(); conn_tx.close(); return
+
+        # Pack each item: OK → deduct stock now; SHORT → mark awaiting_restock, defer
+        short_items   = []
+        short_pid_set = set()
+        for i, item in enumerate(raw_items):
+            if _FULFILL_ABORTED:
+                conn_tx.rollback(); conn_tx.close(); return
+
+            item_ok = (_FULFILL_STATE['items'][i].get('status') == 'ok')
+            item_status = 'packed' if item_ok else 'awaiting_restock'
+
+            try:
+                cur_tx.execute(
+                    'INSERT INTO PackageItems(PackageID,ProductID,ProductName,Quantity,Status)'
+                    ' VALUES (?,?,?,?,?)',
+                    [pkg_id, item['ProductID'], item['ProductName'],
+                     item['Quantity'], item_status],
+                )
+            except Exception as e:
+                conn_tx.rollback(); conn_tx.close()
+                with _FULFILL_LOCK:
+                    _FULFILL_STATE['phase'] = 'error'
+                    _FULFILL_STATE['error'] = str(e)
+                return
+
+            _fulfill_sql_log(
+                f"INSERT PackageItems: {item['ProductName']} ×{item['Quantity']}"
+                f" [Status={item_status}]"
+            )
+
+            if item_ok:
+                # Trigger trg_PackageItems_DecrStock fires automatically on INSERT
+                # and decrements Products.UnitsInStock. CK_UnitsInStock enforces >= 0.
+                _fulfill_sql_log(
+                    f"  → TRIGGER trg_PackageItems_DecrStock: "
+                    f"UnitsInStock -= {item['Quantity']} (ProductID={item['ProductID']})"
+                )
+                with _FULFILL_LOCK:
+                    for pkg in _FULFILL_STATE['package_items']:
+                        if pkg['ProductID'] == item['ProductID'] and pkg['status'] == 'queued':
+                            pkg['status'] = 'packed'
+                            break
+                    _FULFILL_STATE['changes']['stock_decremented'].append(
+                        (item['ProductID'], item['Quantity'])
+                    )
+                if _step(phase='packing',
+                         phase_label=f'✓ Packed: {item["ProductName"]} ×{item["Quantity"]}'):
+                    conn_tx.rollback(); conn_tx.close(); return
+            else:
+                short_items.append(item)
+                short_pid_set.add(item['ProductID'])
+                with _FULFILL_LOCK:
+                    for pkg in _FULFILL_STATE['package_items']:
+                        if pkg['ProductID'] == item['ProductID'] and pkg['status'] == 'queued':
+                            pkg['status'] = 'awaiting_restock'
+                            break
+                _fulfill_sql_log(
+                    f"  ↳ SHORT: {item['ProductName']} — Status=awaiting_restock, trigger skipped"
+                )
+                if _step(phase='packing',
+                         phase_label=f'⚠ {item["ProductName"]}: short stock — deferred'):
+                    conn_tx.rollback(); conn_tx.close(); return
+
+        # Commit partial or full pack
+        is_partial = len(short_items) > 0
+        try:
+            cur_tx.execute(
+                "UPDATE Packages SET Status=? WHERE PackageID=?",
+                ['partial' if is_partial else 'packing', pkg_id],
+            )
+            _fulfill_sql_log(
+                f"COMMIT  -- Package #{pkg_id} "
+                f"[{'partial' if is_partial else 'full'}]"
+            )
+            conn_tx.commit()
+        except Exception as e:
+            conn_tx.rollback(); conn_tx.close()
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['phase'] = 'error'
+                _FULFILL_STATE['error'] = str(e)
+            return
+        conn_tx.close()
+
+        with _FULFILL_LOCK:
+            _FULFILL_STATE['changes']['package_ids'].append(pkg_id)
+            # stock_decremented already populated per-item in the packing loop above
+
+        if is_partial:
+            # Contact supplier(s) for each short item — no delivery yet
+            for short_item in short_items:
+                if _FULFILL_ABORTED: return
+
+                # Open a fresh refill_order card for this short item
+                with _FULFILL_LOCK:
+                    _FULFILL_STATE['refill_order'] = {
+                        'status':    'open',
+                        'order_id':  order_id,
+                        'OrderNeed': short_item['Quantity'],
+                        'RestockQty': 100,
+                    }
+
+                if not _scan_subtable(conn_str, 'Products', 'ProductID',
+                                      short_item['ProductID'], _FULFILL_PRODUCT_COLS,
+                                      'product_card', refill_key='refill_order'):
+                    return
+                with _FULFILL_LOCK:
+                    raw_sup = _FULFILL_STATE.get('product_card', {}).get('SupplierID')
+                sup_id = int(raw_sup) if raw_sup is not None else None
+                if sup_id is not None:
+                    if not _scan_subtable(conn_str, 'Suppliers', 'SupplierID',
+                                          sup_id, _FULFILL_SUPPLIER_COLS, 'supplier_card',
+                                          refill_key='refill_order'):
+                        return
+                if _step(phase='contacting_supplier',
+                         phase_label=f'Supplier contacted for "{short_item["ProductName"]}" — delivery pending'):
+                    return
+
+                # Collapse refill card into the order queue
+                with _FULFILL_LOCK:
+                    ro = _FULFILL_STATE.get('refill_order') or {}
+                    ro['status'] = 'sent'
+                    _FULFILL_STATE['refill_order'] = None
+                    _FULFILL_STATE['order_queue'].append({
+                        'order_id':       order_id,
+                        'status':         'refill',
+                        'type':           'refill',
+                        'product_id':     short_item['ProductID'],
+                        'product':        short_item['ProductName'],
+                        'qty':            short_item['Quantity'],
+                        'restock_qty':    ro.get('RestockQty', 100),
+                        'supplier':       ro.get('CompanyName', ''),
+                        'ticks_remaining': 3,
+                    })
+
+                # Persist refill order to DB
+                _restock_qty = ro.get('RestockQty', 100)
+                _supplier_id = sup_id
+                _supplier    = ro.get('CompanyName', '')
+                _fulfill_sql_log(
+                    f"INSERT INTO RefillOrders(OrderID,ProductID,ProductName,"
+                    f"NeededQty,RestockQty,SupplierID,Supplier) VALUES "
+                    f"({order_id},{short_item['ProductID']},'{short_item['ProductName']}',"
+                    f"{short_item['Quantity']},{_restock_qty},{_supplier_id},'{_supplier}')"
+                )
+                try:
+                    conn_rf = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+                    conn_rf.execute(
+                        "INSERT INTO RefillOrders"
+                        "(OrderID,ProductID,ProductName,NeededQty,RestockQty,SupplierID,Supplier)"
+                        " VALUES (?,?,?,?,?,?,?)",
+                        [order_id, short_item['ProductID'], short_item['ProductName'],
+                         short_item['Quantity'], _restock_qty, _supplier_id, _supplier],
+                    )
+                    conn_rf.close()
+                except Exception:
+                    pass
+
+            # Snapshot package state and move on to next order
+            with _FULFILL_LOCK:
+                pkg_snap  = [dict(pi) for pi in _FULFILL_STATE['package_items']]
+                meta_snap = dict(_FULFILL_STATE['package_meta'])
+
+            pending_partials.append({
+                'order_id':           order_id,
+                'order_idx':          idx,
+                'pkg_id':             pkg_id,
+                'raw_items':          raw_items,
+                'short_items':        short_items,
+                'pkg_items_snapshot': pkg_snap,
+                'package_meta':       meta_snap,
+            })
+
+            _queue_set(order_id, 'partial')
+            with _FULFILL_LOCK:
+                for q in _FULFILL_STATE['order_queue']:
+                    if q['order_id'] == order_id and q.get('type') != 'refill':
+                        q['details'] = {
+                            'ship_to': ', '.join(filter(None, [
+                                meta_snap.get('ShipName'), meta_snap.get('ShipCity'),
+                                meta_snap.get('ShipCountry'),
+                            ])),
+                            'items': [{'name': pi['ProductName'], 'qty': pi['Quantity'],
+                                       'status': pi['status']} for pi in pkg_snap],
+                        }
+                        break
+            if _step(phase='partial_order',
+                     phase_label=f'Partial order {order_id} saved — processing next order…'):
+                return
+
+        else:
+            # Full pack — ship immediately
+            _fulfill_sql_log(f'BEGIN TRAN  -- shipping order {order_id}')
+            try:
+                conn_s = pyodbc.connect(conn_str, autocommit=False, timeout=15)
+                cur_s  = conn_s.cursor()
+            except Exception as e:
+                with _FULFILL_LOCK:
+                    _FULFILL_STATE['phase'] = 'error'
+                    _FULFILL_STATE['error'] = str(e)
+                return
+
+            if _step(phase='removing_details', phase_label='Removing from Order Details…'):
+                conn_s.rollback(); conn_s.close(); return
+
+            for item in raw_items:
+                if _FULFILL_ABORTED:
+                    conn_s.rollback(); conn_s.close(); return
+                try:
+                    cur_s.execute(
+                        'DELETE FROM [Order Details] WHERE OrderID=? AND ProductID=?',
+                        [order_id, item['ProductID']],
+                    )
+                except Exception as e:
+                    conn_s.rollback(); conn_s.close()
+                    with _FULFILL_LOCK:
+                        _FULFILL_STATE['phase'] = 'error'
+                        _FULFILL_STATE['error'] = str(e)
+                    return
+                _fulfill_sql_log(
+                    f"DELETE [Order Details] OrderID={order_id} ProductID={item['ProductID']}"
+                )
+                with _FULFILL_LOCK:
+                    _FULFILL_STATE['changes']['deleted_details'].append({
+                        'OrderID': order_id, 'ProductID': item['ProductID'],
+                        'UnitPrice': item['UnitPrice'], 'Quantity': item['Quantity'],
+                        'Discount': item['Discount'],
+                    })
+                if _step(phase='removing_details',
+                         phase_label=f'Deleted {item["ProductName"]} from Order Details'):
+                    conn_s.rollback(); conn_s.close(); return
+
+            try:
+                cur_s.execute(
+                    'UPDATE Orders SET ShippedDate=GETDATE() WHERE OrderID=?', [order_id]
+                )
+                cur_s.execute(
+                    "UPDATE Packages SET Status='shipped' WHERE PackageID=?", [pkg_id]
+                )
+                _fulfill_sql_log(
+                    f'UPDATE Orders ShippedDate=GETDATE() WHERE OrderID={order_id}'
+                )
+                _fulfill_sql_log('COMMIT')
+                conn_s.commit()
+            except Exception as e:
+                conn_s.rollback(); conn_s.close()
+                with _FULFILL_LOCK:
+                    _FULFILL_STATE['phase'] = 'error'
+                    _FULFILL_STATE['error'] = str(e)
+                return
+            conn_s.close()
+
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['changes']['shipped_order_ids'].append(order_id)
+
+            # P&L: revenue + COGS per line item, freight per order
+            for item in raw_items:
+                rev = round(item['UnitPrice'] * item['Quantity'] * (1 - item['Discount']), 2)
+                # Fetch UnitCost from Products (may be None for legacy rows)
+                try:
+                    _cc = pyodbc.connect(conn_str, autocommit=True, timeout=5)
+                    _cr = _cc.cursor()
+                    _cr.execute('SELECT UnitCost FROM Products WHERE ProductID=?', [item['ProductID']])
+                    _uc_row = _cr.fetchone()
+                    _cc.close()
+                    unit_cost = float(_uc_row[0]) if _uc_row and _uc_row[0] else item['UnitPrice'] * 0.6
+                except Exception:
+                    unit_cost = item['UnitPrice'] * 0.6
+                cogs = round(unit_cost * item['Quantity'], 2)
+                _ledger_insert(conn_str, 'revenue', rev,
+                               f"Revenue: {item['ProductName']} ×{item['Quantity']}",
+                               order_id=order_id, product_id=item['ProductID'])
+                _ledger_insert(conn_str, 'cogs', -cogs,
+                               f"COGS: {item['ProductName']} ×{item['Quantity']}",
+                               order_id=order_id, product_id=item['ProductID'])
+            freight = float(order.get('Freight') or 0)
+            if freight:
+                ship_to = ', '.join(filter(None, [order.get('ShipName'), order.get('ShipCity')]))
+                _ledger_insert(conn_str, 'freight', -freight,
+                               f'Freight: {ship_to}', order_id=order_id)
+
+            _queue_set(order_id, 'shipped')
+            with _FULFILL_LOCK:
+                pkg_items_now = list(_FULFILL_STATE['package_items'])
+                meta_now      = dict(_FULFILL_STATE['package_meta'])
+                for q in _FULFILL_STATE['order_queue']:
+                    if q['order_id'] == order_id and q.get('type') != 'refill':
+                        q['details'] = {
+                            'ship_to': ', '.join(filter(None, [
+                                meta_now.get('ShipName'), meta_now.get('ShipCity'),
+                                meta_now.get('ShipCountry'),
+                            ])),
+                            'items': [{'name': pi['ProductName'], 'qty': pi['Quantity'],
+                                       'status': pi['status']} for pi in pkg_items_now],
+                        }
+                        break
+            if _step(phase='shipped', phase_label=f'✓ Order {order_id} shipped!'):
+                return
+
+        # After every order: load the next one into the queue
+        _load_next_order(conn_str)
+        idx += 1
+
+        # Delivery check runs after every order (tick-based: each order = 1 tick).
+        # Refills queued this iteration start at ticks_remaining=3, so they won't
+        # arrive until 3 orders later — the transit delay is enforced by the counter.
+        if _check_deliveries(conn_str):
+            return
+        still_pending = []
+        for pp in pending_partials:
+            if _can_fulfill_partial(pp, conn_str):
+                if _complete_and_ship_partial(pp, conn_str):
+                    return
+            else:
+                still_pending.append(pp)
+        pending_partials = still_pending
+
+    # End of orders loop: one final delivery check + complete any remaining partials
+    if _check_deliveries(conn_str):
+        return
+    for pp in pending_partials:
+        if _complete_and_ship_partial(pp, conn_str):
+            return
+
+    with _FULFILL_LOCK:
+        _FULFILL_STATE['phase']       = 'done'
+        _FULFILL_STATE['phase_label'] = 'All orders processed'

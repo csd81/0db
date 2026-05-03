@@ -1,7 +1,9 @@
 """
 demos_bp.py — Visual Demo Lab blueprint.
 """
-from flask import Blueprint, render_template, request, jsonify
+import json
+import os
+from flask import Blueprint, render_template, request, jsonify, current_app, Response
 from auth import login_required
 import meta_db
 from services import demo_service
@@ -348,4 +350,60 @@ def hft_trigger():
 @login_required
 def hft_reset():
     demo_service.hft_reset()
+    return jsonify({'ok': True})
+
+
+# ── Order Fulfillment ──────────────────────────────────────────────────────────
+
+def _build_conn_str(c):
+    # SA credentials and target database come from os.environ (.env) as the
+    # authoritative source — the Settings UI / startup fallback can overwrite
+    # app.config (and meta_db) with 'master', but the .env always has Northwind.
+    user = (c.get('SQL_SA_USERNAME')
+            or os.environ.get('SQL_SA_USERNAME')
+            or c.get('SQL_USERNAME', ''))
+    pw   = (c.get('SQL_SA_PASSWORD')
+            or os.environ.get('SQL_SA_PASSWORD')
+            or c.get('SQL_PASSWORD', ''))
+    db   = os.environ.get('SQL_DATABASE') or c.get('SQL_DATABASE', 'Northwind')
+    return (
+        f"DRIVER={{{c['SQL_DRIVER']}}};SERVER={c['SQL_SERVER']};"
+        f"DATABASE={db};UID={user};PWD={pw};"
+        f"Encrypt={c['SQL_ENCRYPT']};TrustServerCertificate={c['SQL_TRUST_SERVER_CERT']};"
+    )
+
+
+@demos_bp.route('/fulfill')
+@login_required
+def fulfill():
+    return render_template('demos/fulfill.html')
+
+
+@demos_bp.route('/fulfill/state')
+@login_required
+def fulfill_state():
+    return Response(
+        json.dumps(demo_service.fulfill_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/fulfill/start', methods=['POST'])
+@login_required
+def fulfill_start():
+    demo_service.fulfill_start(_build_conn_str(current_app.config))
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/fulfill/reset', methods=['POST'])
+@login_required
+def fulfill_reset():
+    demo_service.fulfill_reset()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/fulfill/step', methods=['POST'])
+@login_required
+def fulfill_step():
+    demo_service.fulfill_step()
     return jsonify({'ok': True})

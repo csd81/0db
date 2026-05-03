@@ -12,11 +12,20 @@
     overflow: hidden;
   }
   #object-explorer {
-    width: 260px; min-width: 160px; max-width: 440px;
+    width: 260px; min-width: 140px;
     display: flex; flex-direction: column;
-    border-right: 1px solid #2d2d2d;
-    overflow: hidden; resize: horizontal; flex-shrink: 0;
+    overflow: hidden; flex-shrink: 0;
   }
+  .splitter-col {
+    width: 5px; cursor: col-resize; flex-shrink: 0;
+    background: #2d2d2d; transition: background 0.15s; z-index: 10;
+  }
+  .splitter-row {
+    height: 5px; cursor: row-resize; flex-shrink: 0;
+    background: #2d2d2d; transition: background 0.15s; z-index: 10;
+  }
+  .splitter-col:hover, .splitter-col.dragging { background: #4a9eff; }
+  .splitter-row:hover, .splitter-row.dragging { background: #4a9eff; }
   #oe-header {
     padding: 6px 10px; font-size: 0.72rem; font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.07em; color: #888;
@@ -120,7 +129,7 @@
 
   /* Editor */
   #editor-wrapper {
-    resize: vertical; overflow: hidden;
+    overflow: hidden;
     min-height: 60px; max-height: 80vh; height: 60vh;
     width: 100%; box-sizing: border-box;
   }
@@ -139,7 +148,7 @@
   .CodeMirror-linenumber { color: #4a4a4a; padding: 0 8px; }
 
   /* Results */
-  #results-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  #results-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 32px; }
   #results-tabs-bar {
     display: flex; align-items: center;
     border-bottom: 1px solid #2d2d2d; background: rgba(255,255,255,0.02);
@@ -152,15 +161,21 @@
   #results-content { flex: 1; overflow: auto; }
 
   .res-grid { font-size: 0.78rem; }
+  .col-resizer {
+    position: absolute; right: 0; top: 0; width: 5px; height: 100%;
+    cursor: col-resize; z-index: 2;
+    border-right: 2px solid transparent; transition: border-color 0.1s;
+  }
+  .col-resizer:hover, .col-resizer.dragging { border-right-color: #4a9eff; }
   .res-grid th {
     position: sticky; top: 0; background: #1a1a2e; z-index: 1;
-    white-space: nowrap; padding: 5px 10px; font-weight: 500;
+    white-space: nowrap; padding: 5px 10px 5px 8px; font-weight: 500;
     border-bottom: 1px solid #333; cursor: pointer;
   }
   .res-grid th:hover { background: #222244; }
   .res-grid td {
     padding: 3px 10px; white-space: nowrap;
-    max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+    overflow: hidden; text-overflow: ellipsis;
     border-bottom: 1px solid #1e1e1e;
   }
   .res-grid td.null-cell { color: #555; font-style: italic; }
@@ -206,6 +221,8 @@
       </div>
     </div>
   </div>
+
+  <div id="oe-splitter" class="splitter-col"></div>
 
   <!-- ── Right pane ───────────────────────────────────────────── -->
   <div id="right-pane">
@@ -258,6 +275,8 @@
           placeholder="-- Type SQL and press F5&#10;SELECT TOP 100 * FROM Orders ORDER BY OrderDate DESC"></textarea>
       </div>
     </div>
+
+    <div id="editor-splitter" class="splitter-row"></div>
 
     <div id="results-pane">
       <div id="results-tabs-bar">
@@ -817,15 +836,20 @@
 
   function handleResult(d, sql) {
     setRunning(false);
+    // Server PRINT / informational messages (always shown in Messages tab)
+    var srvMsgs = (d.server_msgs || []).map(function(m) { return {cls:'msg-info', text: m}; });
+
     if (d.error) {
-      setMessages([{cls:'msg-error', text: d.error}]);
+      setMessages([{cls:'msg-error', text: d.error}].concat(srvMsgs));
       statusEl.textContent = 'Error · ' + d.elapsed_ms + ' ms';
       showPanel('tab-messages');
     } else {
       renderResults(d);
       statusEl.textContent = d.row_count + ' row' + (d.row_count !== 1 ? 's' : '') + ' · ' + d.elapsed_ms + ' ms';
-      showPanel('tab-results');
-      setMessages([{cls:'msg-ok', text: '(' + d.row_count + ' row(s) affected) · ' + d.elapsed_ms + ' ms'}]);
+      var baseMsgs = [{cls:'msg-ok', text: '(' + d.row_count + ' row(s) affected) · ' + d.elapsed_ms + ' ms'}];
+      setMessages(baseMsgs.concat(srvMsgs));
+      if (srvMsgs.length && !d.columns.length) showPanel('tab-messages');
+      else showPanel('tab-results');
       // DML post-processing
       if (_dmlCtx) {
         var ctx = _dmlCtx; _dmlCtx = null;
@@ -906,6 +930,48 @@
     });
     html += '</tbody></table>';
     document.getElementById('tab-results').innerHTML = html;
+    addColResizers(document.querySelector('#tab-results table'));
+  }
+
+  function addColResizers(table) {
+    if (!table) return;
+    table.querySelectorAll('thead th').forEach(function(th) {
+      var handle = document.createElement('div');
+      handle.className = 'col-resizer';
+      th.appendChild(handle);
+      handle.addEventListener('mousedown', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        // Freeze to fixed layout on first drag so td content can be clipped
+        var tbl = th.closest('table');
+        if (tbl && tbl.style.tableLayout !== 'fixed') {
+          tbl.querySelectorAll('thead th').forEach(function(t) { t.style.width = t.offsetWidth + 'px'; });
+          tbl.style.width = tbl.offsetWidth + 'px';
+          tbl.style.tableLayout = 'fixed';
+        }
+        var startX  = e.clientX;
+        var startW  = th.offsetWidth;
+        handle.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        function onMove(e) {
+          var w = Math.max(20, startW + e.clientX - startX);
+          var delta = w - startW;
+          th.style.width = w + 'px';
+          var tbl = th.closest('table');
+          if (tbl) tbl.style.width = (parseInt(tbl.style.width) || tbl.offsetWidth) + delta + 'px';
+          startW = w; startX = e.clientX;
+        }
+        function onUp() {
+          handle.classList.remove('dragging');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
   }
 
   function renderSchema(d) {
@@ -924,6 +990,7 @@
     });
     html += '</tbody></table>';
     document.getElementById('tab-schema').innerHTML = html;
+    addColResizers(document.querySelector('#tab-schema table'));
   }
 
   /* ── Tabs ── */
@@ -985,12 +1052,65 @@
       this.title = 'Restore editor';
     } else {
       editorWrapper.style.height    = '60vh';
-      editorWrapper.style.maxHeight = '80vh';
+      editorWrapper.style.maxHeight = '';
       icon.className = 'bi bi-arrows-fullscreen';
       this.title = 'Maximize editor';
     }
     if (cm) cm.setSize(editorWrapper.clientWidth, editorWrapper.clientHeight);
   });
+
+  /* ── Splitter drag ── */
+  function makeSplitter(splitterId, axis, getSize, setSize, minSize, maxSize) {
+    var splitter = document.getElementById(splitterId);
+    splitter.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      var startPos  = axis === 'x' ? e.clientX : e.clientY;
+      var startSize = getSize();
+      splitter.classList.add('dragging');
+      document.body.style.cursor = axis === 'x' ? 'col-resize' : 'row-resize';
+      document.body.style.userSelect = 'none';
+      function onMove(e) {
+        var delta   = (axis === 'x' ? e.clientX : e.clientY) - startPos;
+        var limit   = typeof maxSize === 'function' ? maxSize() : maxSize;
+      var newSize = Math.max(minSize, Math.min(startSize + delta, limit));
+        setSize(newSize);
+      }
+      function onUp() {
+        splitter.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+
+  var oePanel = document.getElementById('object-explorer');
+  makeSplitter('oe-splitter', 'x',
+    function() { return oePanel.offsetWidth; },
+    function(w) { oePanel.style.width = w + 'px'; if (cm) cm.refresh(); },
+    140, 600
+  );
+
+  makeSplitter('editor-splitter', 'y',
+    function() { return editorWrapper.offsetHeight; },
+    function(h) {
+      editorWrapper.style.height = h + 'px';
+      editorWrapper.style.maxHeight = 'none';
+      if (cm) cm.setSize(editorWrapper.clientWidth, h);
+    },
+    60,
+    function() {
+      var rightPane  = document.getElementById('right-pane');
+      var queryPane  = document.getElementById('query-pane');
+      var edSplitter = document.getElementById('editor-splitter');
+      var tabsBar    = document.getElementById('results-tabs-bar');
+      var toolbarsH  = queryPane.offsetHeight - editorWrapper.offsetHeight;
+      return rightPane.clientHeight - toolbarsH - edSplitter.offsetHeight - tabsBar.offsetHeight - 4;
+    }
+  );
 
   /* ── Open SQL file into editor ── */
   var sqlFileInput = document.getElementById('sql-file-input');
@@ -1056,6 +1176,11 @@
           rows.push(cells.join('\t'));
         });
         text = rows.join('\n');
+      } else {
+        // No table — copy status text + results panel text (e.g. "Query executed. No rows returned.")
+        var statusText = (document.getElementById('results-status') || {}).innerText || '';
+        var panelText  = (document.getElementById('tab-results') || {}).innerText || '';
+        text = [statusText, panelText].filter(Boolean).join('\n').trim();
       }
     }
     if (!text) return;
@@ -1069,7 +1194,8 @@
   });
 
   /* ── Boot ── */
-  initTree();
+  refreshTree();  // always fetch fresh schema on page load
+  setInterval(refreshTree, 30000);  // re-sync every 30 s to pick up tables created by demos
 })();
 </script>
 {% endblock %}

@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Order Fulfillment Simulator{% endblock %}
+
+{% block content %}
+<style>
+.cell-active { background:#fff3cd !important; font-weight:bold; outline:2px solid #ffc107; }
+.pkg-removing { opacity:.25; text-decoration:line-through; transition:opacity .3s; }
+#sql-ticker { background:#1e1e1e; color:#d4d4d4; font-size:.78rem; height:160px;
+              overflow-y:auto; padding:.5rem; white-space:pre-wrap; word-break:break-all; border-radius:0 0 .375rem .375rem; }
+.tbl-wrap { overflow-x:auto; }
+.tbl-wrap table td, .tbl-wrap table th { white-space:nowrap; font-size:.78rem; padding:.2rem .35rem; }
+dl.card-dl dt { font-size:.72rem; color:#adb5bd; margin-bottom:0; }
+dl.card-dl dd { font-size:.8rem; word-break:break-all; margin-bottom:.15rem; color:#f8f9fa; }
+.queue-card { border-radius:.375rem; border:1px solid; font-size:.78rem; overflow:hidden; }
+.queue-card-partial { border-color:#ffc107; background:#fff3cd; color:#664d03; }
+.queue-card-partial:hover { background:#ffe69c; }
+.queue-card-shipped { border-color:#198754; background:#d1e7dd; color:#0a3622; }
+.queue-card-shipped:hover { background:#a3cfbb; }
+.queue-card-refill  { border-color:#0dcaf0; background:#cff4fc; color:#055160; }
+.pkg-stamp {
+  display:inline-block; border:3px solid; border-radius:4px;
+  font-weight:900; font-size:.75rem; letter-spacing:.04em;
+  padding:.25rem .6rem; margin-top:.6rem; transform:rotate(-2deg);
+  text-transform:uppercase; text-align:center; width:100%;
+}
+.pkg-stamp-ok   { border-color:#198754; color:#198754; }
+.pkg-stamp-warn { border-color:#dc3545; color:#dc3545; }
+</style>
+
+<!-- Controls -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap" data-bs-theme="light">
+  <i class="bi bi-box-seam me-1 text-success fs-5"></i>
+  <strong>Order Fulfillment</strong>
+  <button id="start-btn"    class="btn btn-success btn-sm ms-2"><i class="bi bi-play-circle me-1"></i>Start</button>
+  <button id="step-btn"     class="btn btn-primary btn-sm" disabled><i class="bi bi-skip-forward me-1"></i>Next Step</button>
+  <button id="autoplay-btn" class="btn btn-outline-primary btn-sm"><i class="bi bi-fast-forward me-1"></i>Auto</button>
+  <div class="btn-group btn-group-sm" role="group" aria-label="Speed">
+    <button id="speed-0x" class="btn btn-outline-secondary">½×</button>
+    <button id="speed-1x" class="btn btn-outline-secondary active">1×</button>
+    <button id="speed-2x" class="btn btn-outline-secondary">2×</button>
+    <button id="speed-4x" class="btn btn-outline-secondary">4×</button>
+    <button id="speed-8x" class="btn btn-outline-secondary">8×</button>
+    <button id="speed-16x" class="btn btn-outline-secondary">16×</button>
+    <button id="speed-32x" class="btn btn-outline-secondary">32×</button>
+  </div>
+  <button id="reset-btn"    class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</button>
+  <span id="order-badge" class="badge bg-secondary ms-1">Order 0 / 0</span>
+  <div class="flex-grow-1" style="min-width:80px;">
+    <div class="progress" style="height:7px;">
+      <div id="progress-bar" class="progress-bar bg-success" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SQL log + P&L side by side -->
+<div class="row g-2 mb-2" data-bs-theme="light">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header py-1 fw-semibold small" style="background:#2d2d2d;color:#ccc;border-radius:.375rem .375rem 0 0;">
+        <i class="bi bi-terminal me-1"></i>SQL Log
+      </div>
+      <pre id="sql-ticker"></pre>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div id="pnl-card" class="card h-100" data-bs-theme="light">
+      <div class="card-header py-1 fw-semibold small d-flex justify-content-between align-items-center" style="background:#1a2332;color:#adb5bd;">
+        <span><i class="bi bi-bar-chart-line me-1"></i>P&amp;L — Net Capital</span>
+        <span id="pnl-net-badge" class="badge bg-secondary">—</span>
+      </div>
+      <div class="card-body p-2" style="background:#212529;color:#f8f9fa;font-size:.75rem;">
+        <table class="table table-sm table-borderless mb-0" style="color:inherit;font-size:.75rem;">
+          <tbody id="pnl-body">
+            <tr><td colspan="2" class="text-muted text-center">Not started</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Phase banner -->
+<div id="phase-banner" class="alert alert-secondary py-1 px-3 mb-2" role="alert" data-bs-theme="light">
+  <span id="phase-text">Waiting…</span>
+</div>
+
+<!-- Main body: 3 columns -->
+<div class="row g-2 mb-2" data-bs-theme="light">
+
+  <!-- ── LEFT: all tables ───────────────────────────────────── -->
+  <div class="col-md-5 d-flex flex-column gap-2">
+
+    <!-- Orders table -->
+    <div class="card">
+      <div class="card-header py-1 fw-semibold small" style="background:#f8f9fa;color:#212529;">
+        <i class="bi bi-table me-1"></i>Orders
+      </div>
+      <div class="card-body p-1 tbl-wrap">
+        <table id="orders-table" class="table table-bordered table-sm mb-0">
+          <thead><tr><th colspan="13" class="text-center text-muted" style="color:#6c757d!important;">— not started —</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Order Details table -->
+    <div class="card">
+      <div class="card-header py-1 fw-semibold small" style="background:#f8f9fa;color:#212529;">
+        <i class="bi bi-list-ul me-1"></i>Order Details
+      </div>
+      <div class="card-body p-1 tbl-wrap">
+        <table id="items-table" class="table table-bordered table-sm mb-0">
+          <thead>
+            <tr>
+              <th>ProdID</th><th>Product Name</th><th>Qty</th>
+              <th>Price</th><th>Disc%</th><th>Stock</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-table (FK lookup) -->
+    <div class="card border-warning d-none" id="sub-table-card">
+      <div class="card-header py-1 bg-warning bg-opacity-25 d-flex align-items-center small" style="color:#212529;">
+        <i class="bi bi-arrow-right-circle me-1 text-warning"></i>
+        <span id="sub-table-title" class="fw-semibold"></span>
+      </div>
+      <div class="card-body p-1 tbl-wrap" style="max-height:220px;overflow-y:auto;">
+        <table id="sub-table" class="table table-bordered table-sm mb-0">
+          <thead id="sub-table-head"></thead>
+          <tbody id="sub-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── MIDDLE: context cards ──────────────────────────────── -->
+  <div class="col-md-4 d-flex flex-column gap-2">
+
+    <div id="customer-card" class="card border-primary d-none">
+      <div class="card-header py-1 fw-semibold small" style="background:#0d6efd;color:#fff;"><i class="bi bi-building me-1"></i>Customer</div>
+      <div class="card-body p-2" style="background:#212529;color:#f8f9fa;"><dl id="customer-body" class="row mb-0 card-dl"></dl></div>
+    </div>
+    <div id="employee-card" class="card border-secondary d-none">
+      <div class="card-header py-1 fw-semibold small" style="background:#495057;color:#fff;"><i class="bi bi-person me-1"></i>Employee</div>
+      <div class="card-body p-2" style="background:#212529;color:#f8f9fa;"><dl id="employee-body" class="row mb-0 card-dl"></dl></div>
+    </div>
+    <div id="shipper-card" class="card border-info d-none">
+      <div class="card-header py-1 fw-semibold small" style="background:#087990;color:#fff;"><i class="bi bi-truck me-1"></i>Shipper</div>
+      <div class="card-body p-2" style="background:#212529;color:#f8f9fa;"><dl id="shipper-body" class="row mb-0 card-dl"></dl></div>
+    </div>
+    <div id="product-card" class="card border-success d-none">
+      <div class="card-header py-1 fw-semibold small" style="background:#146c43;color:#fff;"><i class="bi bi-box me-1"></i>Product</div>
+      <div class="card-body p-2" style="background:#212529;color:#f8f9fa;"><dl id="product-body" class="row mb-0 card-dl"></dl></div>
+    </div>
+    <div id="supplier-card" class="card border-warning d-none">
+      <div class="card-header py-1 fw-semibold small" style="background:#997404;color:#fff;"><i class="bi bi-building-up me-1"></i>Supplier</div>
+      <div class="card-body p-2" style="background:#212529;color:#f8f9fa;"><dl id="supplier-body" class="row mb-0 card-dl"></dl></div>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT: Package (full column) ──────────────────────── -->
+  <div class="col-md-3 d-flex flex-column gap-2">
+
+    <!-- Order queue (collapsed partial/shipped headers) -->
+    <div id="order-queue" class="d-flex flex-column gap-1"></div>
+
+    <!-- Refill order card (open while contacting supplier) -->
+    <div id="refill-order-card" class="card border-warning d-none">
+      <div class="card-header py-1 fw-semibold small d-flex align-items-center" style="background:#997404;color:#fff;">
+        <i class="bi bi-arrow-repeat me-1"></i>
+        <span id="refill-order-title">Refill Order</span>
+      </div>
+      <div class="card-body p-2" style="background:#212529;color:#f8f9fa;">
+        <dl id="refill-order-body" class="row mb-0 card-dl"></dl>
+      </div>
+    </div>
+
+    <div class="card h-100" style="color:#212529;">
+      <div class="card-header py-1 fw-semibold small" style="background:#f8f9fa;color:#212529;">
+        <i class="bi bi-archive me-1"></i><span id="pkg-title">Package</span>
+      </div>
+      <div class="card-body p-2">
+        <dl id="pkg-meta" class="row mb-2 card-dl" style="display:none;"></dl>
+        <hr id="pkg-meta-divider" class="my-1" style="display:none;">
+        <div id="pkg-contents-header" class="fw-semibold small text-uppercase text-muted mb-1" style="display:none;letter-spacing:.06em;">Contents</div>
+        <ul id="pkg-list" class="list-group list-group-flush mb-0"></ul>
+        <div id="pkg-stamp" style="display:none;"></div>
+        <div id="pkg-empty" class="text-muted text-center small py-2">No package yet</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/fulfill.js') }}"></script>
+{% endblock %}

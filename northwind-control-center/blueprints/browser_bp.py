@@ -282,15 +282,16 @@ def run_sql():
 
     t0 = _time.perf_counter()
     conn = None
+    server_msgs = []
     try:
         if admin:
             conn = _admin_conn(target_db or 'master', autocommit=True)
-            columns, rows, rowcount, error = db.run_any_on_conn(conn, sql)
+            columns, rows, rowcount, error, server_msgs = db.run_any_on_conn(conn, sql)
         elif target_db:
             conn = _user_conn(target_db)
-            columns, rows, rowcount, error = db.run_any_on_conn(conn, sql)
+            columns, rows, rowcount, error, server_msgs = db.run_any_on_conn(conn, sql)
         else:
-            columns, rows, rowcount, error = db.run_any(sql)
+            columns, rows, rowcount, error, server_msgs = db.run_any(sql)
     except Exception as e:
         columns, rows, rowcount, error = [], [], 0, str(e)
     finally:
@@ -307,6 +308,7 @@ def run_sql():
         'row_count': rowcount,
         'elapsed_ms': elapsed_ms,
         'error': error,
+        'server_msgs': server_msgs,
     })
 
 

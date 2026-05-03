@@ -2,6 +2,21 @@ import re
 import pyodbc
 from flask import current_app, g
 
+# Strip "[Microsoft][ODBC Driver 18 for SQL Server][SQL Server]" prefix from messages
+_MSG_PREFIX = re.compile(r'^\[.*?\]\[.*?\]\[.*?\]')
+
+
+def _collect_messages(cursor):
+    """Return list of clean server message strings from cursor.messages."""
+    out = []
+    for entry in (getattr(cursor, 'messages', None) or []):
+        # entry is (state, message) or just a string depending on driver version
+        msg = entry[1] if isinstance(entry, (tuple, list)) else str(entry)
+        msg = _MSG_PREFIX.sub('', msg).strip()
+        if msg:
+            out.append(msg)
+    return out
+
 
 def _fix_str(v):
     """ODBC Driver 18 on Linux returns NVARCHAR as UTF-8 bytes decoded as Latin-1.
@@ -65,13 +80,14 @@ _NEEDS_AUTOCOMMIT = re.compile(
 
 def run_any(sql, params=None):
     """Execute any SQL statement (supports multi-batch GO scripts).
-    Returns (columns, rows, rowcount, error).
+    Returns (columns, rows, rowcount, error, server_msgs).
     SELECT → rows populated; DML/DDL → committed, rowcount set, rows=[].
     For multi-batch scripts the last SELECT result is returned.
+    server_msgs contains PRINT / informational messages from all batches.
     """
     batches = _split_go_batches(sql)
     if not batches:
-        return [], [], 0, None
+        return [], [], 0, None, []
 
     conn = get_connection()
     needs_ac = any(_NEEDS_AUTOCOMMIT.search(b) for b in batches)
@@ -79,11 +95,11 @@ def run_any(sql, params=None):
         conn.autocommit = True
     cursor = conn.cursor()
     try:
-        columns, rows, total_rowcount = [], [], 0
+        columns, rows, total_rowcount, all_msgs = [], [], 0, []
         for batch in batches:
-            # params only meaningful for single-batch parameterized queries
             batch_params = (params or []) if len(batches) == 1 else []
             cursor.execute(batch, batch_params)
+            all_msgs.extend(_collect_messages(cursor))
             if cursor.description:
                 columns = [col[0] for col in cursor.description]
                 rows = [[_fix_str(cell) for cell in row] for row in cursor.fetchall()]
@@ -94,15 +110,15 @@ def run_any(sql, params=None):
         if not needs_ac:
             conn.commit()
         if columns:
-            return columns, rows, len(rows), None
-        return [], [], total_rowcount, None
+            return columns, rows, len(rows), None, all_msgs
+        return [], [], total_rowcount, None, all_msgs
     except Exception as e:
         if not needs_ac:
             try:
                 conn.rollback()
             except Exception:
                 pass
-        return [], [], 0, str(e)
+        return [], [], 0, str(e), []
     finally:
         if needs_ac:
             conn.autocommit = False
@@ -110,18 +126,19 @@ def run_any(sql, params=None):
 
 def run_any_on_conn(conn, sql):
     """Like run_any but on a caller-provided connection (e.g. admin/SA connection).
-    Uses autocommit if the connection has it set; otherwise commits/rolls back.
+    Returns (columns, rows, rowcount, error, server_msgs).
     Continues on error per batch, collecting the first error message."""
     batches = _split_go_batches(sql)
     if not batches:
-        return [], [], 0, None
+        return [], [], 0, None, []
     is_autocommit = getattr(conn, 'autocommit', False)
     try:
-        columns, rows, total_rowcount, first_error = [], [], 0, None
+        columns, rows, total_rowcount, first_error, all_msgs = [], [], 0, None, []
         for batch in batches:
             try:
                 cursor = conn.cursor()
                 cursor.execute(batch)
+                all_msgs.extend(_collect_messages(cursor))
                 if cursor.description:
                     columns = [col[0] for col in cursor.description]
                     rows = [[_fix_str(cell) for cell in row] for row in cursor.fetchall()]
@@ -135,15 +152,15 @@ def run_any_on_conn(conn, sql):
         if not is_autocommit:
             conn.commit()
         if columns:
-            return columns, rows, len(rows), first_error
-        return [], [], total_rowcount, first_error
+            return columns, rows, len(rows), first_error, all_msgs
+        return [], [], total_rowcount, first_error, all_msgs
     except Exception as e:
         if not is_autocommit:
             try:
                 conn.rollback()
             except Exception:
                 pass
-        return [], [], 0, str(e)
+        return [], [], 0, str(e), []
 
 
 def run_command(sql, params=None):
