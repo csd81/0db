@@ -3352,11 +3352,11 @@ def _ledger_insert(conn_str: str, event_type: str, amount: float,
         conn.execute(
             "INSERT INTO CompanyLedger(EventType,OrderID,ProductID,EmployeeID,Amount,Description)"
             " VALUES (?,?,?,?,?,?)",
-            [event_type, order_id, product_id, employee_id, amount, description],
+            [event_type, order_id, product_id, employee_id, float(amount), description],
         )
         conn.close()
-    except Exception:
-        pass
+    except Exception as _e:
+        _fulfill_sql_log(f"  [LEDGER ERR] {event_type}: {_e}")
 
 
 def _step(**updates) -> bool:
@@ -4119,24 +4119,25 @@ def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
         _FULFILL_STATE['changes']['shipped_order_ids'].append(order_id)
 
     # P&L: revenue + COGS per line item, freight per order
+    _pnl_conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+    _pnl_cur  = _pnl_conn.cursor()
     for item in p['raw_items']:
-        rev = round(item['UnitPrice'] * item['Quantity'] * (1 - item['Discount']), 2)
-        try:
-            _cc = pyodbc.connect(conn_str, autocommit=True, timeout=5)
-            _cr = _cc.cursor()
-            _cr.execute('SELECT UnitCost FROM Products WHERE ProductID=?', [item['ProductID']])
-            _uc_row = _cr.fetchone()
-            _cc.close()
-            unit_cost = float(_uc_row[0]) if _uc_row and _uc_row[0] else item['UnitPrice'] * 0.6
-        except Exception:
-            unit_cost = item['UnitPrice'] * 0.6
-        cogs = round(unit_cost * item['Quantity'], 2)
+        price = float(item['UnitPrice']  or 0)
+        qty   = int(item['Quantity']     or 0)
+        disc  = float(item['Discount']   or 0)
+        rev   = round(price * qty * (1.0 - disc), 2)
+        _pnl_cur.execute('SELECT UnitCost FROM Products WHERE ProductID=?',
+                         [item['ProductID']])
+        _uc = _pnl_cur.fetchone()
+        unit_cost = float(_uc[0]) if _uc and _uc[0] else price * 0.6
+        cogs = round(unit_cost * qty, 2)
         _ledger_insert(conn_str, 'revenue', rev,
-                       f"Revenue: {item['ProductName']} ×{item['Quantity']}",
+                       f"Revenue: {item['ProductName']} ×{qty}",
                        order_id=order_id, product_id=item['ProductID'])
         _ledger_insert(conn_str, 'cogs', -cogs,
-                       f"COGS: {item['ProductName']} ×{item['Quantity']}",
+                       f"COGS: {item['ProductName']} ×{qty}",
                        order_id=order_id, product_id=item['ProductID'])
+    _pnl_conn.close()
     freight = float(p['package_meta'].get('Freight') or 0)
     if freight:
         ship_to = ', '.join(filter(None, [
@@ -4509,13 +4510,23 @@ def _fulfill_worker():
             for short_item in short_items:
                 if _FULFILL_ABORTED: return
 
+                # Calculate restock qty: cap at 2× needed; for expensive items, order only needed
+                _need       = int(short_item['Quantity'])
+                _unit_price = float(short_item.get('UnitPrice') or 0)
+                if _unit_price >= 50:
+                    _restock = _need                      # high-value: no excess stock
+                elif _unit_price >= 20:
+                    _restock = round(_need * 1.5)         # mid-range: modest buffer
+                else:
+                    _restock = _need * 2                  # cheap: double up to avoid re-orders
+
                 # Open a fresh refill_order card for this short item
                 with _FULFILL_LOCK:
                     _FULFILL_STATE['refill_order'] = {
                         'status':    'open',
                         'order_id':  order_id,
-                        'OrderNeed': short_item['Quantity'],
-                        'RestockQty': 100,
+                        'OrderNeed': _need,
+                        'RestockQty': _restock,
                     }
 
                 if not _scan_subtable(conn_str, 'Products', 'ProductID',
@@ -4672,25 +4683,25 @@ def _fulfill_worker():
                 _FULFILL_STATE['changes']['shipped_order_ids'].append(order_id)
 
             # P&L: revenue + COGS per line item, freight per order
+            _pnl_conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+            _pnl_cur  = _pnl_conn.cursor()
             for item in raw_items:
-                rev = round(item['UnitPrice'] * item['Quantity'] * (1 - item['Discount']), 2)
-                # Fetch UnitCost from Products (may be None for legacy rows)
-                try:
-                    _cc = pyodbc.connect(conn_str, autocommit=True, timeout=5)
-                    _cr = _cc.cursor()
-                    _cr.execute('SELECT UnitCost FROM Products WHERE ProductID=?', [item['ProductID']])
-                    _uc_row = _cr.fetchone()
-                    _cc.close()
-                    unit_cost = float(_uc_row[0]) if _uc_row and _uc_row[0] else item['UnitPrice'] * 0.6
-                except Exception:
-                    unit_cost = item['UnitPrice'] * 0.6
-                cogs = round(unit_cost * item['Quantity'], 2)
+                price    = float(item['UnitPrice']  or 0)
+                qty      = int(item['Quantity']     or 0)
+                disc     = float(item['Discount']   or 0)
+                rev      = round(price * qty * (1.0 - disc), 2)
+                _pnl_cur.execute('SELECT UnitCost FROM Products WHERE ProductID=?',
+                                 [item['ProductID']])
+                _uc = _pnl_cur.fetchone()
+                unit_cost = float(_uc[0]) if _uc and _uc[0] else price * 0.6
+                cogs = round(unit_cost * qty, 2)
                 _ledger_insert(conn_str, 'revenue', rev,
-                               f"Revenue: {item['ProductName']} ×{item['Quantity']}",
+                               f"Revenue: {item['ProductName']} ×{qty}",
                                order_id=order_id, product_id=item['ProductID'])
                 _ledger_insert(conn_str, 'cogs', -cogs,
-                               f"COGS: {item['ProductName']} ×{item['Quantity']}",
+                               f"COGS: {item['ProductName']} ×{qty}",
                                order_id=order_id, product_id=item['ProductID'])
+            _pnl_conn.close()
             freight = float(order.get('Freight') or 0)
             if freight:
                 ship_to = ', '.join(filter(None, [order.get('ShipName'), order.get('ShipCity')]))
