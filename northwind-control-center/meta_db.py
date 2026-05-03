@@ -25,6 +25,16 @@ _conn: sqlite3.Connection | None = None
 _write_lock = threading.Lock()
 _fernet: Fernet | None = None
 
+# Keys persisted to app_config; excludes bootstrapping keys (FERNET_KEY, SECRET_KEY, META_DB_PATH)
+_STORABLE_KEYS = {
+    'SQL_SERVER', 'SQL_DATABASE', 'SQL_USERNAME', 'SQL_PASSWORD',
+    'SQL_SA_USERNAME', 'SQL_SA_PASSWORD', 'SQL_DRIVER', 'SQL_ENCRYPT', 'SQL_TRUST_SERVER_CERT',
+    'WINRM_HOST', 'WINRM_USERNAME', 'WINRM_PASSWORD', 'WINRM_BAK_PATH',
+    'SSH_HOST', 'SSH_PORT', 'SSH_USERNAME', 'SSH_KEY_PATH', 'BACKUP_REMOTE_PATH',
+    'GCS_BUCKET', 'GCS_HMAC_ACCESS_ID', 'GCS_HMAC_SECRET',
+}
+_PASSWORD_KEYS = {'SQL_PASSWORD', 'SQL_SA_PASSWORD', 'WINRM_PASSWORD', 'GCS_HMAC_SECRET'}
+
 
 # ── Startup ────────────────────────────────────────────────────────────────────
 
@@ -71,6 +81,12 @@ def _create_schema() -> None:
                 conn_params        TEXT NOT NULL,
                 encrypted_password TEXT,
                 created_at         DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS app_config (
+                key       TEXT PRIMARY KEY,
+                value     TEXT,
+                encrypted INTEGER DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS replication_jobs (
@@ -281,3 +297,50 @@ def delete_replication_job(job_id: int) -> None:
     with _write_lock:
         _conn.execute("DELETE FROM replication_jobs WHERE id = ?", (job_id,))
         _conn.commit()
+
+
+# ── App Config (persistent key/value, survives restarts) ──────────────────────
+
+def set_app_config(key: str, value: str) -> None:
+    encrypted = key in _PASSWORD_KEYS
+    stored = _encrypt(str(value)) if encrypted else str(value)
+    with _write_lock:
+        _conn.execute(
+            "INSERT OR REPLACE INTO app_config (key, value, encrypted) VALUES (?, ?, ?)",
+            (key, stored, int(encrypted)),
+        )
+        _conn.commit()
+
+
+def get_app_config(key: str, default=None):
+    row = _conn.execute(
+        "SELECT value, encrypted FROM app_config WHERE key = ?", (key,)
+    ).fetchone()
+    if row is None:
+        return default
+    value, encrypted = row
+    return _decrypt(value) if encrypted and value else value
+
+
+def get_all_app_config() -> dict:
+    rows = _conn.execute("SELECT key, value, encrypted FROM app_config").fetchall()
+    result = {}
+    for key, value, encrypted in rows:
+        result[key] = _decrypt(value) if encrypted and value else value
+    return result
+
+
+def load_config_into_app(app) -> None:
+    """Load persisted config into app.config.
+    First run (empty table): seeds from current app.config (.env values).
+    Subsequent runs: overrides app.config with stored values."""
+    stored = get_all_app_config()
+    if not stored:
+        for key in _STORABLE_KEYS:
+            value = app.config.get(key)
+            if value is not None:
+                set_app_config(key, str(value))
+    else:
+        for key, value in stored.items():
+            if key in _STORABLE_KEYS:
+                app.config[key] = value

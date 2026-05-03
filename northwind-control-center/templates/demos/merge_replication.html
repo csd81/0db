@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Merge Replication — Last-Mile Delivery{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold me-auto">Merge Replication — Last-Mile Delivery</h2>
+  <span class="badge bg-secondary fs-6" id="phase-badge">Idle</span>
+  <span class="badge bg-dark fs-6" id="sync-badge">0 syncs</span>
+  <span class="badge bg-danger fs-6" id="conflict-badge">0 conflicts</span>
+  <button class="btn btn-success" id="start-btn">
+    <i class="bi bi-play-fill me-1"></i> Start
+  </button>
+  <button class="btn btn-danger" id="stop-btn" disabled>
+    <i class="bi bi-stop-fill me-1"></i> Stop
+  </button>
+</div>
+
+<!-- Explanation -->
+<div class="alert alert-secondary py-2 mb-3 small">
+  <strong>How it works:</strong>
+  The <strong>Central Office</strong> (left) cancels orders and updates addresses in real time.
+  Meanwhile the <strong>Driver</strong> (right) marks packages delivered or failed — but is <em>offline</em>, so the two databases diverge.
+  When signal returns, the <strong>Merge Agent</strong> (middle) syncs bidirectionally: driver confirmations are pushed up ↑, dispatcher changes are pulled down ↓.
+  If <em>both sides changed the same package</em>, that is a conflict (⚡) — resolved automatically by the <strong>Central Office wins</strong> rule.
+  This is <strong>eventual consistency</strong>: no node is blocked while offline, but all nodes converge to the same state after sync.
+</div>
+
+<!-- SQL Ticker -->
+<pre id="sql-ticker"
+     class="mb-3 rounded p-3"
+     style="background:#1e1e1e;color:#9cdcfe;min-height:54px;max-height:100px;overflow-y:auto;font-size:.82rem;white-space:pre-wrap;">-- Merge Replication ready. Press Start to begin simulation.</pre>
+
+<!-- 3-panel layout -->
+<div class="row g-3">
+
+  <!-- Central Office -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-building text-primary me-1"></i>
+          Central Office
+          <small class="text-muted fw-normal">/ deliveries</small>
+        </span>
+        <span class="badge bg-primary rounded-pill" id="badge-central">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>Pkg</th><th>Customer</th><th>Status</th><th>Notes</th></tr>
+          </thead>
+          <tbody id="tbl-central">
+            <tr><td colspan="4" class="text-muted text-center py-3">Starting…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merge Agent -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-arrow-left-right text-warning me-1"></i>
+          Merge Agent Log
+        </span>
+        <span class="badge bg-warning text-dark rounded-pill" id="badge-merge">0</span>
+      </div>
+      <!-- Offline banner -->
+      <div id="offline-banner" class="alert alert-warning m-2 py-1 mb-0 small d-none">
+        <i class="bi bi-wifi-off me-1"></i> Driver offline —
+        <strong id="countdown-val">0</strong>s until signal
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.76rem;">
+          <thead class="table-dark">
+            <tr><th>Event</th><th>Pkg</th><th>Description</th></tr>
+          </thead>
+          <tbody id="tbl-merge">
+            <tr><td colspan="3" class="text-muted text-center py-3">Log empty</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Driver Device -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-phone text-success me-1"></i>
+          Driver Device
+          <small class="text-muted fw-normal">/ deliveries</small>
+          <span id="offline-chip" class="badge bg-warning text-dark ms-1 d-none" style="font-size:.65rem;">
+            <i class="bi bi-wifi-off"></i> offline
+          </span>
+        </span>
+        <span class="badge bg-success rounded-pill" id="badge-driver">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>Pkg</th><th>Customer</th><th>Status</th><th>Notes</th></tr>
+          </thead>
+          <tbody id="tbl-driver">
+            <tr><td colspan="4" class="text-muted text-center py-3">Starting…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-3 mt-3 small text-muted flex-wrap">
+  <span><span class="badge bg-primary">↑ Push</span> driver → central</span>
+  <span><span class="badge bg-info text-dark">↓ Pull</span> central → driver</span>
+  <span><span class="badge bg-danger">⚡ Conflict</span> both sides changed</span>
+  <span><span class="badge bg-warning text-dark">✓ Resolved</span> Central Office wins</span>
+  <span><span class="badge bg-secondary">✔ Done</span> sync complete</span>
+  <span>⚡ in row = dirty (pending sync)</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/merge_replication.js') }}"></script>
+{% endblock %}

@@ -1,93 +1,251 @@
 {% extends "base.html" %}
-{% block title %}Home – Northwind CC{% endblock %}
+{% block title %}Overview – Northwind CC{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center mb-3">
-  <h4 class="mb-0 me-3"><i class="bi bi-house"></i> Dashboard</h4>
-  {% if connected %}
-    <span class="badge bg-success"><i class="bi bi-circle-fill"></i> Connected</span>
+<style>
+  .ov-card {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 18px 20px;
+    height: 100%;
+  }
+  .ov-card-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #555;
+    margin-bottom: 14px;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+  .status-dot.ok  { background: #2ecc71; box-shadow: 0 0 6px #2ecc71aa; }
+  .status-dot.err { background: #e74c3c; box-shadow: 0 0 6px #e74c3caa; }
+  .status-dot.unk { background: #888; }
+  .ov-value { font-size: 1rem; font-weight: 600; color: #e0e0e0; }
+  .ov-meta  { font-size: 0.78rem; color: #555; margin-top: 2px; font-family: monospace; }
+
+  .role-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+  }
+  .role-sysadmin   { background: rgba(231,76,60,0.2);  color: #e74c3c; border: 1px solid #e74c3c44; }
+  .role-db_owner   { background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid #ffc10744; }
+  .role-default    { background: rgba(100,180,255,0.1);color: #6ea8fe; border: 1px solid #6ea8fe44; }
+
+  .db-tile {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid #2a2a2a;
+    background: #161616;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: #bbb;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    text-decoration: none;
+  }
+  .db-tile:hover { border-color: #4a9eff; color: #fff; background: #1a2030; }
+  .db-tile.active-db {
+    border-color: #2ecc71;
+    color: #2ecc71;
+    background: rgba(46,204,113,0.07);
+  }
+  .db-tile .db-size { font-size: 0.68rem; color: #444; }
+  .db-tile.sys-db { opacity: 0.55; }
+
+  .sys-tag { font-size: 0.62rem; color: #555; text-transform: uppercase; letter-spacing:0.05em; }
+</style>
+
+<div class="d-flex align-items-center mb-4 gap-2">
+  <h5 class="mb-0 fw-semibold">Server Overview</h5>
+  <span class="badge {{ 'bg-success' if connected else 'bg-danger' }} ms-1" style="font-size:0.7rem;">
+    {{ 'Connected' if connected else 'Disconnected' }}
+  </span>
+</div>
+
+<!-- ── Row 1: Service · Connection · Session ── -->
+<div class="row g-3 mb-3">
+
+  <!-- SQL Server Service -->
+  <div class="col-12 col-md-4">
+    <div class="ov-card">
+      <div class="ov-card-title"><i class="bi bi-server me-1"></i>SQL Server Service</div>
+      <div class="d-flex align-items-center mb-2">
+        <span class="status-dot {{ 'ok' if service.running else 'err' }}"></span>
+        <span class="ov-value">{{ 'Running' if service.running else 'Stopped' }}</span>
+      </div>
+      <div class="ov-meta mb-1">
+        {% if service.type == 'docker' %}
+          <i class="bi bi-box me-1" style="color:#0db7ed;"></i>Docker · {{ service.name }}
+        {% elif service.type == 'systemd' %}
+          <i class="bi bi-gear me-1"></i>systemd · {{ service.name }}
+        {% else %}
+          <i class="bi bi-diagram-2 me-1"></i>{{ service.name }}
+        {% endif %}
+      </div>
+      <div class="ov-meta mb-3">{{ service.status }}</div>
+
+      {% if service.type in ('docker', 'systemd') %}
+        {% if service.running %}
+        <form method="POST" action="{{ url_for('stop_service') }}" class="d-inline"
+              onsubmit="return confirm('Stop SQL Server? The app will lose its connection.');">
+          <input type="hidden" name="type" value="{{ service.type }}">
+          <input type="hidden" name="name" value="{{ service.name }}">
+          <button class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-stop-circle me-1"></i>Stop
+          </button>
+        </form>
+        {% else %}
+        <form method="POST" action="{{ url_for('start_service') }}" class="d-inline">
+          <input type="hidden" name="type" value="{{ service.type }}">
+          <input type="hidden" name="name" value="{{ service.name }}">
+          <button class="btn btn-sm btn-outline-success">
+            <i class="bi bi-play-circle me-1"></i>Start
+          </button>
+        </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Connection -->
+  <div class="col-12 col-md-4">
+    <div class="ov-card">
+      <div class="ov-card-title"><i class="bi bi-plug me-1"></i>Connection</div>
+      <div class="d-flex align-items-center mb-2">
+        <span class="status-dot {{ 'ok' if connected else 'err' }}"></span>
+        <span class="ov-value">{{ 'Connected' if connected else 'Disconnected' }}</span>
+      </div>
+      {% if connected %}
+        <div class="ov-meta">
+          <span style="color:#555;">Server</span>&nbsp;&nbsp;
+          <span style="color:#ccc;">{{ config.SQL_SERVER }}</span>
+        </div>
+        <div class="ov-meta">
+          <span style="color:#555;">Database</span>&nbsp;
+          <span style="color:#ccc;">{{ config.SQL_DATABASE }}</span>
+        </div>
+        <div class="ov-meta">
+          <span style="color:#555;">Driver</span>&nbsp;&nbsp;
+          <span style="color:#ccc;">{{ config.SQL_DRIVER }}</span>
+        </div>
+      {% else %}
+        <div class="alert alert-danger py-2 px-3 mt-2 mb-0" style="font-size:0.78rem;">
+          {{ conn_error }}
+        </div>
+        <div class="ov-meta mt-2">
+          Check <code>SQL_SERVER</code>, <code>SQL_USERNAME</code>,
+          <code>SQL_PASSWORD</code> in <code>.env</code>.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Session / Permissions -->
+  <div class="col-12 col-md-4">
+    <div class="ov-card">
+      <div class="ov-card-title"><i class="bi bi-person-badge me-1"></i>Session &amp; Permissions</div>
+      {% if connected and user_info and not user_info.get('error') %}
+        <div class="ov-meta mb-1">
+          <span style="color:#555;">Login&nbsp;&nbsp;&nbsp;</span>
+          <span style="color:#ccc;">{{ user_info.login_name }}</span>
+        </div>
+        <div class="ov-meta mb-1">
+          <span style="color:#555;">DB User&nbsp;</span>
+          <span style="color:#ccc;">{{ user_info.db_user }}</span>
+        </div>
+        <div class="ov-meta mb-3">
+          <span style="color:#555;">Server&nbsp;&nbsp;</span>
+          <span style="color:#ccc;">{{ user_info.server_name }}</span>
+        </div>
+        <div>
+          {% for r in user_info.roles %}
+            <span class="role-badge {{ 'role-sysadmin' if 'sysadmin' in r else ('role-db_owner' if 'owner' in r else 'role-default') }}">
+              {{ r }}
+            </span>
+          {% else %}
+            <span class="ov-meta">No explicit roles found</span>
+          {% endfor %}
+        </div>
+        {% if user_info.get('error') %}
+          <div class="ov-meta text-danger mt-1">{{ user_info.error }}</div>
+        {% endif %}
+      {% elif not connected %}
+        <div class="ov-meta text-muted">Not connected — no session info available.</div>
+      {% else %}
+        <div class="ov-meta text-danger">{{ user_info.get('error', 'Could not retrieve session info.') }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div><!-- /row 1 -->
+
+<!-- ── Row 2: Available Databases ── -->
+<div class="ov-card">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="ov-card-title mb-0"><i class="bi bi-database me-1"></i>Available Databases</div>
+    {% if not config.SQL_SA_PASSWORD %}
+      <span class="ov-meta">
+        <i class="bi bi-info-circle me-1"></i>
+        Set <code>SQL_SA_PASSWORD</code> in <code>.env</code> for full list &amp; sizes
+      </span>
+    {% endif %}
+  </div>
+
+  {% if not connected %}
+    <div class="ov-meta text-muted">Connect to SQL Server to see available databases.</div>
+  {% elif db_err %}
+    <div class="ov-meta text-danger">{{ db_err }}</div>
+  {% elif not databases %}
+    <div class="ov-meta text-muted">No databases found.</div>
   {% else %}
-    <span class="badge bg-danger"><i class="bi bi-circle-fill"></i> Disconnected</span>
+    <div class="d-flex flex-wrap gap-2">
+      {% set sys_dbs = ['master', 'tempdb', 'model', 'msdb'] %}
+      {% for dbr in databases %}
+        <form method="POST" action="{{ url_for('select_database') }}" class="m-0 p-0">
+          <input type="hidden" name="db_name" value="{{ dbr.name }}">
+          <button type="submit"
+            class="db-tile {{ 'active-db' if dbr.name == active_db else '' }} {{ 'sys-db' if dbr.name in sys_dbs else '' }}"
+            title="Open {{ dbr.name }} in Browser">
+            {% if dbr.name in sys_dbs %}
+              <i class="bi bi-gear-fill" style="font-size:0.72rem;"></i>
+            {% else %}
+              <i class="bi bi-database-fill" style="color:#4a9eff;font-size:0.78rem;"></i>
+            {% endif %}
+            {{ dbr.name }}
+            {% if dbr.name == active_db %}
+              <i class="bi bi-check-circle-fill" style="font-size:0.7rem;color:#2ecc71;"></i>
+            {% endif %}
+            {% if dbr.size_mb is not none %}
+              <span class="db-size">{{ dbr.size_mb }} MB</span>
+            {% endif %}
+            {% if dbr.state != 'ONLINE' %}
+              <span class="sys-tag">{{ dbr.state }}</span>
+            {% endif %}
+          </button>
+        </form>
+      {% endfor %}
+    </div>
+    <div class="ov-meta mt-3">
+      <i class="bi bi-arrow-right-circle me-1"></i>
+      Click a database to open it in the Browser.
+      Currently active: <strong style="color:#2ecc71;">{{ active_db }}</strong>
+    </div>
   {% endif %}
 </div>
 
-{% if not connected %}
-<div class="alert alert-danger">
-  <strong>Cannot connect to SQL Server:</strong> {{ conn_error }}
-  <hr class="my-2">
-  Check your <code>.env</code> file and verify SQL_SERVER, SQL_USERNAME, SQL_PASSWORD.
-</div>
-{% else %}
-
-<!-- Summary cards -->
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
-    <div class="card stat-card">
-      <div class="stat-number text-primary">{{ summary.today_orders }}</div>
-      <div class="stat-label">Orders Today</div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card stat-card">
-      <div class="stat-number text-warning">{{ summary.low_stock_count }}</div>
-      <div class="stat-label">Low Stock Products</div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card stat-card">
-      {% if summary.events_available %}
-        <div class="stat-number text-info">{{ summary.pending_events }}</div>
-      {% else %}
-        <div class="stat-number text-secondary">—</div>
-      {% endif %}
-      <div class="stat-label">Pending Events</div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card stat-card">
-      {% if summary.events_available %}
-        <div class="stat-number {% if summary.failed_events > 0 %}text-danger{% else %}text-success{% endif %}">
-          {{ summary.failed_events }}
-        </div>
-      {% else %}
-        <div class="stat-number text-secondary">—</div>
-      {% endif %}
-      <div class="stat-label">Failed Events</div>
-    </div>
-  </div>
-</div>
-
-{% if not summary.events_available %}
-<div class="alert alert-warning alert-sm py-2">
-  <i class="bi bi-exclamation-triangle"></i>
-  Event log table not found — run <code>sql/04_loose_coupling.sql</code> to enable the Events module.
-</div>
-{% endif %}
-
-<!-- Quick links -->
-<div class="row g-3">
-  <div class="col-12"><h5 class="text-muted">Modules</h5></div>
-  {% for title, icon, ep, desc in [
-      ('Query Studio', 'bi-terminal', 'query_studio', 'Run SQL queries and explore saved templates'),
-      ('Operations', 'bi-speedometer2', 'operations', 'Database file sizes, backups, jobs, row counts'),
-      ('Events', 'bi-arrow-repeat', 'events', 'Loose coupling monitor: trigger → log → job workflow'),
-      ('Analytics', 'bi-bar-chart', 'analytics_page', 'Revenue, categories, geography, top products'),
-      ('Graph Explorer', 'bi-diagram-3', 'graph_explorer', 'SQL Server graph tables and MATCH queries'),
-      ('Insights / ML', 'bi-cpu', 'insights', 'Order value prediction, inventory risk, anomaly detection'),
-  ] %}
-  <div class="col-sm-6 col-lg-4">
-    <a href="{{ url_for(ep) }}" class="text-decoration-none">
-      <div class="card h-100 p-3">
-        <div class="d-flex align-items-center mb-1">
-          <i class="bi {{ icon }} fs-4 me-2 text-primary"></i>
-          <strong>{{ title }}</strong>
-        </div>
-        <small class="text-muted">{{ desc }}</small>
-      </div>
-    </a>
-  </div>
-  {% endfor %}
-</div>
-
-{% endif %}
 {% endblock %}

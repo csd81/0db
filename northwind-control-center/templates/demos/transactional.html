@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Transactional Replication Demo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold me-auto">Transactional Replication Demo</h2>
+  <span class="badge bg-secondary fs-6" id="status-badge">Stopped</span>
+  <span class="badge bg-dark fs-6" id="tx-badge">0 tx</span>
+  <span class="badge bg-success fs-6" id="ok-badge">0 OK</span>
+  <span class="badge bg-danger fs-6" id="fail-badge">0 fail</span>
+  <button class="btn btn-success" id="start-btn">
+    <i class="bi bi-play-fill me-1"></i> Start
+  </button>
+  <button class="btn btn-danger" id="stop-btn" disabled>
+    <i class="bi bi-stop-fill me-1"></i> Stop
+  </button>
+</div>
+
+<!-- SQL Ticker -->
+<pre id="sql-ticker"
+     class="mb-3 rounded p-3"
+     style="background:#1e1e1e;color:#9cdcfe;min-height:60px;max-height:110px;overflow-y:auto;font-size:.82rem;white-space:pre-wrap;">-- Transactional Replication ready. Press Start to begin streaming.</pre>
+
+<!-- 3-column layout -->
+<div class="row g-3">
+
+  <!-- Publisher -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold text-center mb-2">
+      <i class="bi bi-database-fill text-primary me-1"></i>Publisher
+    </h6>
+
+    <!-- pub orders -->
+    <div class="card mb-2">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>orders</span>
+        <span class="badge bg-primary rounded-pill" id="badge-pub-orders">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>#</th><th>customer</th><th>item</th><th>qty</th><th>amount</th><th>status</th></tr>
+          </thead>
+          <tbody id="tbl-pub-orders">
+            <tr><td colspan="6" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- pub balances -->
+    <div class="card mb-2">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>balances</span>
+        <span class="badge bg-primary rounded-pill" id="badge-pub-balances">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>customer</th><th>balance</th></tr>
+          </thead>
+          <tbody id="tbl-pub-balances">
+            <tr><td colspan="2" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- pub inventory -->
+    <div class="card mb-2">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>inventory</span>
+        <span class="badge bg-primary rounded-pill" id="badge-pub-inventory">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>item</th><th>stock</th><th>price</th></tr>
+          </thead>
+          <tbody id="tbl-pub-inventory">
+            <tr><td colspan="3" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- pub company account -->
+    <div class="card border-success">
+      <div class="card-header py-1 small fw-semibold text-success">
+        <i class="bi bi-bank me-1"></i>company account (HQ)
+      </div>
+      <div class="card-body py-2 text-center">
+        <span class="fs-4 fw-bold text-success" id="pub-company-bal">$0.00</span>
+        <div class="text-muted" style="font-size:.72rem;">revenue from fulfilled orders</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distributor -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold text-center mb-2">
+      <i class="bi bi-arrow-left-right text-warning me-1"></i>Distributor
+      <small class="text-muted fw-normal">/ change log</small>
+    </h6>
+    <div class="card">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>dist_log</span>
+        <span class="badge bg-warning text-dark rounded-pill" id="badge-dist">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>#</th><th>SQL</th><th>status</th></tr>
+          </thead>
+          <tbody id="tbl-dist">
+            <tr><td colspan="3" class="text-muted text-center py-2">Queue empty</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscriber -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold text-center mb-2">
+      <i class="bi bi-database-fill text-success me-1"></i>Subscriber
+    </h6>
+
+    <!-- sub orders -->
+    <div class="card mb-2">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>orders</span>
+        <span class="badge bg-success rounded-pill" id="badge-sub-orders">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>#</th><th>customer</th><th>item</th><th>qty</th><th>amount</th><th>status</th></tr>
+          </thead>
+          <tbody id="tbl-sub-orders">
+            <tr><td colspan="6" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- sub balances -->
+    <div class="card mb-2">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>balances</span>
+        <span class="badge bg-success rounded-pill" id="badge-sub-balances">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>customer</th><th>balance</th></tr>
+          </thead>
+          <tbody id="tbl-sub-balances">
+            <tr><td colspan="2" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- sub inventory -->
+    <div class="card mb-2">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>inventory</span>
+        <span class="badge bg-success rounded-pill" id="badge-sub-inventory">0</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
+          <thead class="table-dark">
+            <tr><th>item</th><th>stock</th><th>price</th></tr>
+          </thead>
+          <tbody id="tbl-sub-inventory">
+            <tr><td colspan="3" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- sub company account -->
+    <div class="card border-success">
+      <div class="card-header py-1 small fw-semibold text-success">
+        <i class="bi bi-bank me-1"></i>company account (HQ)
+      </div>
+      <div class="card-body py-2 text-center">
+        <span class="fs-4 fw-bold text-success" id="sub-company-bal">$0.00</span>
+        <div class="text-muted" style="font-size:.72rem;">replicated from publisher</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-4 mt-3 small text-muted flex-wrap">
+  <span><span class="badge bg-info">Log Reader Agent</span> tails publisher transaction log → writes to distributor</span>
+  <span><span class="badge bg-success">Distribution Agent</span> drains distributor queue → applies to subscriber</span>
+  <span><span class="badge bg-success">table-success</span> fulfilled order &nbsp;
+        <span class="badge bg-danger">table-danger</span> failed/rolled back</span>
+  <span><span class="badge bg-warning text-dark">[TRIGGER]</span> AFTER UPDATE trigger auto-restocks on stock-out rollback</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/transactional.js') }}"></script>
+{% endblock %}

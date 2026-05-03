@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}NASDAQ Simulation{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold me-auto">NASDAQ — NCC Stock Simulation</h2>
+  <span class="badge bg-secondary fs-6" id="market-badge">Idle</span>
+  <span class="badge bg-warning text-dark fs-6" id="price-badge">$—</span>
+  <span class="badge bg-dark fs-6" id="trade-badge">0 trades</span>
+  <span class="badge bg-danger fs-6" id="settle-badge">0 pending</span>
+  <button class="btn btn-success" id="start-btn">
+    <i class="bi bi-play-fill me-1"></i> Start
+  </button>
+  <button class="btn btn-danger" id="stop-btn" disabled>
+    <i class="bi bi-stop-fill me-1"></i> Stop
+  </button>
+</div>
+
+<!-- Explanation -->
+<div class="alert alert-secondary py-2 mb-3 small">
+  <strong>NASDAQ is only a matching engine — it holds nothing.</strong>
+  A <strong>Broker</strong> (Schwab, Robinhood) routes your order in via the internet.
+  The engine matches it instantly, but legal ownership only transfers after
+  <strong>T+1 settlement</strong> — the DTCC runs a batch process the next business day
+  and the <strong>DTC Custodian</strong> updates the book-entry ledger.
+  HFT firms pay millions for <strong>colocation</strong> (sub-millisecond latency) vs retail's ~50ms cloud path.
+  Contrast the right panel: custodian holdings do <em>not</em> change until settlement fires.
+</div>
+
+<!-- SQL Ticker -->
+<pre id="sql-ticker"
+     class="mb-3 rounded p-3"
+     style="background:#1e1e1e;color:#9cdcfe;min-height:54px;max-height:100px;overflow-y:auto;font-size:.82rem;white-space:pre-wrap;">-- NASDAQ demo ready. Press Start.</pre>
+
+<div class="row g-3">
+
+  <!-- Left: Broker Layer -->
+  <div class="col-md-3">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-building text-secondary me-1"></i>Broker Layer
+      <small class="text-muted fw-normal">Order Routing</small>
+    </h6>
+
+    <!-- Retail -->
+    <div class="card mb-2 border-secondary">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>Retail Brokers</span>
+        <span class="badge bg-secondary">~50ms</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.72rem;">
+          <thead class="table-light">
+            <tr><th>Broker</th><th>Side</th><th>Qty</th><th>Price</th></tr>
+          </thead>
+          <tbody id="tbl-retail">
+            <tr><td colspan="4" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- HFT -->
+    <div class="card border-warning">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>⚡ HFT Colocation</span>
+        <span class="badge bg-warning text-dark">~0.2ms</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.72rem;">
+          <thead class="table-light">
+            <tr><th>Firm</th><th>Side</th><th>Qty</th><th>Price</th></tr>
+          </thead>
+          <tbody id="tbl-hft">
+            <tr><td colspan="4" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mt-2 text-center small text-muted">
+      Cycle: <strong id="cycle-badge">0</strong>
+    </div>
+  </div>
+
+  <!-- Middle: Matching Engine + DTCC -->
+  <div class="col-md-5">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-lightning-charge text-primary me-1"></i>NASDAQ Matching Engine
+      <small class="text-muted fw-normal">(NCC / USD)</small>
+    </h6>
+
+    <!-- Order Book -->
+    <div class="row g-1 mb-2">
+      <div class="col-6">
+        <div class="card">
+          <div class="card-header py-1 small fw-semibold d-flex justify-content-between">
+            <span class="text-danger">Asks</span>
+            <span class="text-muted" style="font-size:.68rem;">price ↑</span>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm table-borderless mb-0" style="font-size:.72rem;">
+              <thead class="table-light">
+                <tr><th>Price</th><th>Qty</th></tr>
+              </thead>
+              <tbody id="tbl-asks">
+                <tr><td colspan="2" class="text-muted text-center">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="card">
+          <div class="card-header py-1 small fw-semibold d-flex justify-content-between">
+            <span class="text-success">Bids</span>
+            <span class="text-muted" style="font-size:.68rem;">price ↓</span>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm table-borderless mb-0" style="font-size:.72rem;">
+              <thead class="table-light">
+                <tr><th>Price</th><th>Qty</th></tr>
+              </thead>
+              <tbody id="tbl-bids">
+                <tr><td colspan="2" class="text-muted text-center">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center small text-muted mb-2">
+      spread: <strong id="spread-val">—</strong> USD
+    </div>
+
+    <!-- DTCC Settlement Queue -->
+    <h6 class="fw-semibold mb-1 text-center">
+      <i class="bi bi-bank text-warning me-1"></i>DTCC Settlement Queue
+      <small class="text-muted fw-normal">T+1 Pending</small>
+    </h6>
+    <div class="card">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.70rem;">
+          <thead class="table-dark">
+            <tr><th>#</th><th>Buyer → Seller</th><th>Qty</th><th>Price</th><th>Status</th></tr>
+          </thead>
+          <tbody id="tbl-settlement">
+            <tr><td colspan="5" class="text-muted text-center py-2">No settlements yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: DTC Custodian -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-shield-lock text-success me-1"></i>DTC Custodian
+      <small class="text-muted fw-normal">SIPC Protected</small>
+    </h6>
+    <div class="alert alert-info py-2 mb-2 small">
+      Assets held by <strong>DTC</strong> (DTCC subsidiary). SIPC insures accounts up to
+      <strong>$500,000</strong>. Holdings only update <em>after</em> DTCC settlement fires —
+      not at match time.
+    </div>
+    <div class="card">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.75rem;">
+          <thead class="table-dark">
+            <tr><th>Broker</th><th>NCC Shares</th><th>Cash (USD)</th></tr>
+          </thead>
+          <tbody id="tbl-custodian">
+            <tr><td colspan="3" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-3 mt-3 small text-muted flex-wrap">
+  <span><span class="badge bg-danger">CLOSED</span> pre-market queuing</span>
+  <span><span class="badge bg-warning text-dark">OPENING/CLOSING AUCTION</span> single clearing price</span>
+  <span><span class="badge bg-success">OPEN</span> continuous matching</span>
+  <span><span class="badge bg-info text-dark">AFTER-HOURS · SETTLEMENT</span> DTCC T+1 batch</span>
+  <span><span class="badge bg-warning text-dark">⏳ pending</span> matched but not settled</span>
+  <span><span class="badge bg-success">✓ settled</span> legal ownership transferred</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/nasdaq.js') }}"></script>
+{% endblock %}

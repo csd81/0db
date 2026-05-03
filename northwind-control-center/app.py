@@ -23,9 +23,76 @@ app.config.from_object(Config)
 app.teardown_appcontext(close_connection)
 app.teardown_appcontext(close_adapter_connections)
 
+# ── Smart startup ────────────────────────────────────────────────────────────
+
+def _save_working_config(app):
+    """Persist current app.config SQL/infra keys to meta_db."""
+    for key in meta_db._STORABLE_KEYS:
+        value = app.config.get(key)
+        if value is not None:
+            meta_db.set_app_config(key, str(value))
+
+
+def _smart_startup(app):
+    """
+    1. Load persisted config from meta_db (overrides .env).
+    2. Start SQL Server if not running.
+    3. Try connection; fall back to master, then SA credentials.
+    4. Persist working config.
+    """
+    import time
+    import services.server_service as svc
+
+    meta_db.load_config_into_app(app)
+
+    # Start SQL Server if needed
+    status = svc.get_sql_service_status()
+    if not status['running'] and status['type'] in ('docker', 'systemd'):
+        print(f"[startup] SQL Server not running — starting {status['name']}...")
+        err = svc.start_sql_server(status['type'], status['name'])
+        if err:
+            print(f"[startup] Could not start: {err}")
+        else:
+            for _ in range(10):
+                time.sleep(3)
+                ok, _ = test_connection()
+                if ok:
+                    break
+
+    ok, err = test_connection()
+    if ok:
+        _save_working_config(app)
+        return
+
+    # Database unreachable (wrong db name or no access) → try master
+    if err and ('4060' in err or '916' in err):
+        print(f"[startup] '{app.config['SQL_DATABASE']}' unavailable — falling back to master")
+        app.config['SQL_DATABASE'] = 'master'
+        ok, err = test_connection()
+        if ok:
+            _save_working_config(app)
+            return
+
+    # Auth / permission failure → try SA credentials
+    sa_user = app.config.get('SQL_SA_USERNAME', '')
+    sa_pass = app.config.get('SQL_SA_PASSWORD', '')
+    if sa_user and sa_pass:
+        print(f"[startup] Trying SA credentials...")
+        app.config['SQL_USERNAME'] = sa_user
+        app.config['SQL_PASSWORD'] = sa_pass
+        app.config['SQL_DATABASE'] = 'master'
+        ok, err = test_connection()
+        if ok:
+            _save_working_config(app)
+            return
+
+    print(f"[startup] No working connection found: {err}")
+
+
 # ── Meta-DB & Scheduler ───────────────────────────────────────────────────────
 with app.app_context():
     meta_db.init_meta_db(app)
+    _smart_startup(app)
 
 scheduler = BackgroundScheduler(daemon=True)
 
@@ -75,7 +142,7 @@ app.register_blueprint(services_bp)
 app.register_blueprint(browser_bp)
 
 # ── Context processor: make current_user available in all templates ────────────
-from auth import get_current_user
+from auth import get_current_user, login_required
 
 @app.context_processor
 def inject_user():
@@ -90,11 +157,59 @@ def inject_user():
 
 # ── Home ──────────────────────────────────────────────────────────────────────
 
+import services.server_service as svc
+
 @app.route('/')
 def home():
-    ok, err = test_connection()
-    summary = ops.get_home_summary() if ok else {}
-    return render_template('home.html', connected=ok, conn_error=err, summary=summary)
+    from flask import session as _sess
+    service   = svc.get_sql_service_status()
+    ok, err   = test_connection()
+    user_info = svc.get_user_info()  if ok else {}
+    databases, db_err = svc.get_databases() if ok else ([], None)
+    active_db = _sess.get('active_db', app.config['SQL_DATABASE'])
+    return render_template('home.html',
+        service=service,
+        connected=ok,
+        conn_error=err,
+        user_info=user_info,
+        databases=databases,
+        db_err=db_err,
+        active_db=active_db,
+    )
+
+
+@app.route('/service/start', methods=['POST'])
+@login_required
+def start_service():
+    err = svc.start_sql_server(
+        request.form.get('type', ''),
+        request.form.get('name', ''),
+    )
+    flash('SQL Server starting…' if not err else f'Start failed: {err}',
+          'success' if not err else 'danger')
+    return redirect(url_for('home'))
+
+
+@app.route('/service/stop', methods=['POST'])
+@login_required
+def stop_service():
+    err = svc.stop_sql_server(
+        request.form.get('type', ''),
+        request.form.get('name', ''),
+    )
+    flash('SQL Server stopped.' if not err else f'Stop failed: {err}',
+          'warning' if not err else 'danger')
+    return redirect(url_for('home'))
+
+
+@app.route('/select-database', methods=['POST'])
+@login_required
+def select_database():
+    from flask import session as _sess
+    db_name = request.form.get('db_name', '').strip()
+    if db_name:
+        _sess['active_db'] = db_name
+    return redirect(url_for('browser_bp.index'))
 
 
 # ── Query Studio ──────────────────────────────────────────────────────────────

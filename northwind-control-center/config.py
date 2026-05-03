@@ -10,6 +10,8 @@ class Config:
     SQL_DATABASE = os.environ.get('SQL_DATABASE', 'Northwind')
     SQL_USERNAME = os.environ.get('SQL_USERNAME', '')
     SQL_PASSWORD = os.environ.get('SQL_PASSWORD', '')
+    SQL_SA_USERNAME = os.environ.get('SQL_SA_USERNAME', 'sa')
+    SQL_SA_PASSWORD = os.environ.get('SQL_SA_PASSWORD', '')
     SQL_DRIVER = os.environ.get('SQL_DRIVER', 'ODBC Driver 18 for SQL Server')
     SQL_ENCRYPT = os.environ.get('SQL_ENCRYPT', 'yes')
     SQL_TRUST_SERVER_CERT = os.environ.get('SQL_TRUST_SERVER_CERT', 'yes')
@@ -32,6 +34,10 @@ class Config:
     GCS_BUCKET          = os.environ.get('GCS_BUCKET', '')
     GCS_HMAC_ACCESS_ID  = os.environ.get('GCS_HMAC_ACCESS_ID', '')
     GCS_HMAC_SECRET     = os.environ.get('GCS_HMAC_SECRET', '')
+
+    # Request size limits (Werkzeug defaults to 500 KB for form fields — too small for SQL scripts)
+    MAX_CONTENT_LENGTH  = 50 * 1024 * 1024   # 50 MB total request body
+    MAX_FORM_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB for non-file form fields
 
     # Fernet key for encrypting stored database passwords.
     # WARNING: losing or rotating this key makes all stored passwords unrecoverable.

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Crypto Exchange Demo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold me-auto">Crypto Exchange — BTC/USDT</h2>
+  <span class="badge bg-warning text-dark fs-6" id="price-badge">$ —</span>
+  <span class="badge bg-dark fs-6" id="trade-badge">0 trades</span>
+  <span class="badge bg-secondary fs-6" id="spread-badge">spread —</span>
+  <button class="btn btn-success" id="start-btn">
+    <i class="bi bi-play-fill me-1"></i> Start
+  </button>
+  <button class="btn btn-danger" id="stop-btn" disabled>
+    <i class="bi bi-stop-fill me-1"></i> Stop
+  </button>
+</div>
+
+<!-- Explanation -->
+<div class="alert alert-secondary py-2 mb-3 small">
+  <strong>A CEX is NOT a blockchain.</strong> It is a microservices architecture:
+  an in-memory <strong>Order Book</strong> (Redis) matches buy/sell orders via price-time priority,
+  each trade event is published to <strong>Kafka</strong> for downstream consumers,
+  and final balances are settled atomically in a <strong>PostgreSQL ACID ledger</strong>.
+  Three FinTech rules apply: <em>partial fills</em> (orders stay open until fully consumed),
+  <em>locked-fund validation</em> (available = ledger − open orders), and
+  <em>maker price</em> (the older order sets the trade price).
+</div>
+
+<!-- SQL Ticker -->
+<pre id="sql-ticker"
+     class="mb-3 rounded p-3"
+     style="background:#1e1e1e;color:#9cdcfe;min-height:54px;max-height:100px;overflow-y:auto;font-size:.82rem;white-space:pre-wrap;">-- CEX demo ready. Press Start.</pre>
+
+<div class="row g-3">
+
+  <!-- Left: Order Book -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-lightning-charge text-danger me-1"></i>Order Book
+      <small class="text-muted fw-normal">Redis / In-Memory</small>
+    </h6>
+
+    <!-- Asks (sell orders) -->
+    <div class="card mb-1">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>Asks <span class="badge bg-danger ms-1">sell</span></span>
+        <span class="text-muted" style="font-size:.72rem;">price ↑</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.75rem;">
+          <thead class="table-light">
+            <tr><th>Price (USDT)</th><th>Qty (BTC)</th><th>Trader</th></tr>
+          </thead>
+          <tbody id="tbl-asks">
+            <tr><td colspan="3" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Spread -->
+    <div class="text-center py-1 small text-muted">
+      ── spread: <strong id="spread-val">—</strong> USDT ──
+    </div>
+
+    <!-- Bids (buy orders) -->
+    <div class="card">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>Bids <span class="badge bg-success ms-1">buy</span></span>
+        <span class="text-muted" style="font-size:.72rem;">price ↓</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.75rem;">
+          <thead class="table-light">
+            <tr><th>Price (USDT)</th><th>Qty (BTC)</th><th>Trader</th></tr>
+          </thead>
+          <tbody id="tbl-bids">
+            <tr><td colspan="3" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Middle: Kafka Event Stream + Recent Trades -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-envelope-fill text-warning me-1"></i>Kafka Event Stream
+    </h6>
+    <div class="card mb-3">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.72rem;">
+          <thead class="table-dark">
+            <tr><th>Topic</th><th>Detail</th><th style="white-space:nowrap">Time</th></tr>
+          </thead>
+          <tbody id="tbl-events">
+            <tr><td colspan="3" class="text-muted text-center py-2">No events</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-arrow-left-right text-success me-1"></i>Recent Trades
+    </h6>
+    <div class="card">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.72rem;">
+          <thead class="table-dark">
+            <tr><th>Price</th><th>Qty</th><th>Buyer → Seller</th></tr>
+          </thead>
+          <tbody id="tbl-trades">
+            <tr><td colspan="3" class="text-muted text-center py-2">No trades yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: ACID Ledger -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-bank text-primary me-1"></i>Ledger
+      <small class="text-muted fw-normal">PostgreSQL / ACID</small>
+    </h6>
+    <div class="card">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.75rem;">
+          <thead class="table-dark">
+            <tr><th>Trader</th><th>BTC</th><th>USDT</th></tr>
+          </thead>
+          <tbody id="tbl-ledger">
+            <tr><td colspan="3" class="text-muted text-center py-2">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-3 mt-3 small text-muted flex-wrap">
+  <span><span class="badge bg-secondary">📋 ORDER_PLACED</span> new order in book</span>
+  <span><span class="badge bg-success">✓ TRADE_EXECUTED</span> match committed to ledger</span>
+  <span><span class="badge bg-primary">💳 BALANCE_UPDATED</span> ledger settlement</span>
+  <span><span class="badge bg-warning text-dark">✗ ORDER_CANCELLED</span> expired (20 s timeout)</span>
+  <span class="ms-auto">Maker price · Partial fills · Locked-fund validation</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/crypto_exchange.js') }}"></script>
+{% endblock %}

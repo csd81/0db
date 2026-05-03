@@ -107,37 +107,245 @@ def trigger_chain_data():
 @demos_bp.route("/log-shipping")
 @login_required
 def log_shipping():
-    sqlite_conns = _conns_by_type("sqlite")
-    return render_template("demos/log_shipping.html", sqlite_conns=sqlite_conns)
+    return render_template("demos/log_shipping.html")
 
 
 @demos_bp.route("/log-shipping/state")
 @login_required
 def log_shipping_state():
-    master_conn_id = request.args.get("master_conn_id", 0)
-    replica_conn_id = request.args.get("replica_conn_id", 0)
-    try:
-        state = demo_service.get_log_shipping_state(master_conn_id, replica_conn_id)
-        return jsonify(state)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify(demo_service.ls_get_state())
 
 
-@demos_bp.route("/log-shipping/run", methods=["POST"])
+@demos_bp.route("/log-shipping/start", methods=["POST"])
 @login_required
-def log_shipping_run():
-    master_conn_id = request.form.get("master_conn_id", 0)
-    replica_conn_id = request.form.get("replica_conn_id", 0)
-    try:
-        result = demo_service.run_log_shipping_step(master_conn_id, replica_conn_id)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def log_shipping_start():
+    demo_service.ls_start()
+    return jsonify({'ok': True})
 
 
-# ── Snapshot ───────────────────────────────────────────────────────────────────
+# ── Snapshot Replication ───────────────────────────────────────────────────────
 
 @demos_bp.route("/snapshot")
 @login_required
 def snapshot():
     return render_template("demos/snapshot.html")
+
+
+@demos_bp.route("/snapshot/state")
+@login_required
+def snapshot_state():
+    return jsonify(demo_service.ss_get_state())
+
+
+@demos_bp.route("/snapshot/start", methods=["POST"])
+@login_required
+def snapshot_start():
+    demo_service.ss_start()
+    return jsonify({'ok': True})
+
+
+# ── Transactional Replication ──────────────────────────────────────────────────
+
+@demos_bp.route("/transactional")
+@login_required
+def transactional():
+    return render_template("demos/transactional.html")
+
+
+@demos_bp.route("/transactional/state")
+@login_required
+def transactional_state():
+    return jsonify(demo_service.tr_get_state())
+
+
+@demos_bp.route("/transactional/start", methods=["POST"])
+@login_required
+def transactional_start():
+    demo_service.tr_start()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route("/transactional/stop", methods=["POST"])
+@login_required
+def transactional_stop():
+    demo_service.tr_stop()
+    return jsonify({'ok': True})
+
+
+# ── Merge Replication ──────────────────────────────────────────────────────────
+
+@demos_bp.route("/merge-replication")
+@login_required
+def merge_replication():
+    return render_template("demos/merge_replication.html")
+
+
+@demos_bp.route("/merge-replication/state")
+@login_required
+def merge_replication_state():
+    return jsonify(demo_service.mr_get_state())
+
+
+@demos_bp.route("/merge-replication/start", methods=["POST"])
+@login_required
+def merge_replication_start():
+    demo_service.mr_start()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route("/merge-replication/stop", methods=["POST"])
+@login_required
+def merge_replication_stop():
+    demo_service.mr_stop()
+    return jsonify({'ok': True})
+
+
+# ── Blockchain Demo ────────────────────────────────────────────────────────────
+
+@demos_bp.route("/blockchain")
+@login_required
+def blockchain():
+    return render_template("demos/blockchain.html")
+
+
+@demos_bp.route("/blockchain/state")
+@login_required
+def blockchain_state():
+    return jsonify(demo_service.bc_get_state())
+
+
+@demos_bp.route("/blockchain/start", methods=["POST"])
+@login_required
+def blockchain_start():
+    demo_service.bc_start()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route("/blockchain/stop", methods=["POST"])
+@login_required
+def blockchain_stop():
+    demo_service.bc_stop()
+    return jsonify({'ok': True})
+
+
+# ── Crypto Exchange ────────────────────────────────────────────────────────────
+
+@demos_bp.route("/crypto-exchange")
+@login_required
+def crypto_exchange():
+    return render_template("demos/crypto_exchange.html")
+
+
+@demos_bp.route("/crypto-exchange/state")
+@login_required
+def crypto_exchange_state():
+    return jsonify(demo_service.ce_get_state())
+
+
+@demos_bp.route("/crypto-exchange/start", methods=["POST"])
+@login_required
+def crypto_exchange_start():
+    demo_service.ce_start()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route("/crypto-exchange/stop", methods=["POST"])
+@login_required
+def crypto_exchange_stop():
+    demo_service.ce_stop()
+    return jsonify({'ok': True})
+
+
+# ── NASDAQ ─────────────────────────────────────────────────────────────────────
+
+@demos_bp.route("/nasdaq")
+@login_required
+def nasdaq():
+    return render_template("demos/nasdaq.html")
+
+
+@demos_bp.route("/nasdaq/state")
+@login_required
+def nasdaq_state():
+    return jsonify(demo_service.nq_get_state())
+
+
+@demos_bp.route("/nasdaq/start", methods=["POST"])
+@login_required
+def nasdaq_start():
+    demo_service.nq_start()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route("/nasdaq/stop", methods=["POST"])
+@login_required
+def nasdaq_stop():
+    demo_service.nq_stop()
+    return jsonify({'ok': True})
+
+
+# ── NYSE ───────────────────────────────────────────────────────────────────────
+
+@demos_bp.route("/nyse")
+@login_required
+def nyse():
+    return render_template("demos/nyse.html")
+
+
+@demos_bp.route("/nyse/state")
+@login_required
+def nyse_state():
+    return jsonify(demo_service.ny_get_state())
+
+
+@demos_bp.route("/nyse/start", methods=["POST"])
+@login_required
+def nyse_start():
+    demo_service.ny_start()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route("/nyse/stop", methods=["POST"])
+@login_required
+def nyse_stop():
+    demo_service.ny_stop()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route("/nyse/flash-crash", methods=["POST"])
+@login_required
+def nyse_flash_crash():
+    demo_service.ny_flash_crash()
+    return jsonify({'ok': True})
+
+
+# ── HFT ────────────────────────────────────────────────────────────────────────
+
+@demos_bp.route("/hft")
+@login_required
+def hft():
+    return render_template("demos/hft.html")
+
+
+@demos_bp.route("/hft/state")
+@login_required
+def hft_state():
+    return jsonify(demo_service.hft_get_state())
+
+
+@demos_bp.route("/hft/trigger", methods=["POST"])
+@login_required
+def hft_trigger():
+    network = request.form.get("network", "microwave")
+    setup   = request.form.get("setup",   "cloud")
+    result  = demo_service.hft_trigger(network, setup)
+    if 'error' in result:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+@demos_bp.route("/hft/reset", methods=["POST"])
+@login_required
+def hft_reset():
+    demo_service.hft_reset()
+    return jsonify({'ok': True})

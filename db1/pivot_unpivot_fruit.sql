@@ -162,6 +162,10 @@ unpivot (
 order by csapat_nev, gyumolcs_nev;
 go
 
+if object_id('tempdb..#temp') is not null
+    drop table #temp;
+go
+
 select csapat_nev, nap_nev, pt.alma, pt.szilva
 into #temp
 from dbo.eredm_pivot

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Blockchain Demo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold me-auto">Blockchain — Proof of Work Demo</h2>
+  <span class="badge bg-secondary fs-6" id="phase-badge">Idle</span>
+  <span class="badge bg-dark fs-6" id="block-badge">0 blocks</span>
+  <span class="badge bg-danger fs-6" id="fork-badge">0 forks</span>
+  <button class="btn btn-success" id="start-btn">
+    <i class="bi bi-play-fill me-1"></i> Start
+  </button>
+  <button class="btn btn-danger" id="stop-btn" disabled>
+    <i class="bi bi-stop-fill me-1"></i> Stop
+  </button>
+</div>
+
+<!-- Explanation -->
+<div class="alert alert-secondary py-2 mb-3 small">
+  <strong>How it works:</strong>
+  Three peers race to mine each block by finding a nonce where
+  <code>SHA-256(prev_hash | txs | peer | nonce)</code> starts with <code>00</code>.
+  The winner broadcasts to the <strong>rqlite</strong> network ledger.
+  If two peers finish during the propagation window → <strong>fork</strong> — the
+  first-seen block wins, the other is <strong>orphaned</strong>.
+  Unlike traditional DB replication, no central authority decides the winner —
+  cryptographic proof does.
+</div>
+
+<!-- SQL Ticker -->
+<pre id="sql-ticker"
+     class="mb-3 rounded p-3"
+     style="background:#1e1e1e;color:#9cdcfe;min-height:54px;max-height:100px;overflow-y:auto;font-size:.82rem;white-space:pre-wrap;">-- Blockchain demo ready. Press Start.</pre>
+
+<div class="row g-3">
+
+  <!-- Left: Miners -->
+  <div class="col-md-3">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-cpu text-warning me-1"></i>Miners
+    </h6>
+
+    {% for peer, color in [('Peer A','warning'), ('Peer B','info'), ('Peer C','success')] %}
+    <div class="card mb-2 border-{{ color }}">
+      <div class="card-header py-1 d-flex justify-content-between small fw-semibold">
+        <span>⛏ {{ peer }}</span>
+        <span class="badge bg-secondary" id="badge-{{ peer.lower().replace(' ','-') }}">idle</span>
+      </div>
+      <div class="card-body py-2" style="font-size:.78rem;">
+        <div>nonce: <strong id="nonce-{{ peer.lower().replace(' ','-') }}">—</strong></div>
+        <div class="text-muted" id="hash-{{ peer.lower().replace(' ','-') }}">—</div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- rqlite node status -->
+    <div class="card border-primary mt-3">
+      <div class="card-header py-1 small fw-semibold text-primary">
+        <i class="bi bi-diagram-3 me-1"></i>rqlite Network
+      </div>
+      <div class="card-body py-2" id="node-status" style="font-size:.75rem;">
+        <span class="text-muted">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Middle: Blockchain -->
+  <div class="col-md-5">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-link-45deg text-primary me-1"></i>Blockchain
+      <small class="text-muted fw-normal">(stored in rqlite)</small>
+    </h6>
+    <div id="chain-container" style="overflow-x:auto;">
+      <div id="chain-blocks" class="d-flex flex-row-reverse gap-2 pb-2" style="min-width:max-content;">
+        <span class="text-muted small align-self-center">Waiting…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Events -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-broadcast text-danger me-1"></i>Network Events
+    </h6>
+    <div class="card">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.76rem;">
+          <thead class="table-dark">
+            <tr><th>Event</th><th>Detail</th></tr>
+          </thead>
+          <tbody id="tbl-events">
+            <tr><td colspan="2" class="text-muted text-center py-3">No events</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-3 mt-3 small text-muted flex-wrap">
+  <span><span class="badge bg-success">BLOCK</span> block accepted into chain</span>
+  <span><span class="badge bg-danger">FORK</span> two peers mined same height simultaneously</span>
+  <span><span class="badge bg-secondary text-decoration-line-through">orphaned</span> discarded block (first-seen rule)</span>
+  <span>DB: <strong>rqlite</strong> v8 — Raft consensus, single-node</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/blockchain.js') }}"></script>
+{% endblock %}

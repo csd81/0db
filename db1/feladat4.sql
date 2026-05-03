@@ -1,21 +1,17 @@
 -- ÖNÁLLÓ FELADAT #4: az 1000-nél kisebb Fibonacci-számok kiíratása
-declare @a int = 1,
-        @b int = 1,
-        @c int
+SET NOCOUNT ON;                                                 
+declare @a int = 1, @b int = 1, @c int;
+declare @t table (n int, fib int);
 
-print @a
-print @b
+insert @t values (1, @a), (2, @b);
+declare @i int = 3;                                                                                                         
 
-while 1 = 1
+while 1 = 1                                                                                                                 
 begin
-    set @c = @a + @b
+    set @c = @a + @b;                                                                                                       
+    if @c >= 1000 break;                                        
+    insert @t values (@i, @c);                                                                                              
+    set @a = @b; set @b = @c; set @i += 1;
+end                                                                                                                         
 
-    if @c >= 1000
-        break
-
-    print @c
-
-    set @a = @b
-    set @b = @c
-end
-go
+select n, fib from @t order by n;  		

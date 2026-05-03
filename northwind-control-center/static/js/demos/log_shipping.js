@@ -1,119 +1,170 @@
-/* log_shipping.js — Log Shipping Demo */
+/* log_shipping.js — 3-Panel Log Shipping Demo */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const masterSelect = document.getElementById('master-select');
-  const replicaSelect = document.getElementById('replica-select');
-  const runStepBtn = document.getElementById('run-step-btn');
-  const insertMasterBtn = document.getElementById('insert-master-btn');
-  const stepResult = document.getElementById('step-result');
+  const startBtn   = document.getElementById('start-btn');
+  const phaseBadge = document.getElementById('phase-badge');
+  const ticker     = document.getElementById('sql-ticker');
 
-  const badgeMaster = document.getElementById('badge-master');
-  const badgeReplica = document.getElementById('badge-replica');
-  const badgePending = document.getElementById('badge-pending');
-  const badgeSync = document.getElementById('badge-sync');
+  let lastSql = '';
+  let lastReplicaIds = new Set();
+  let pollTimer = null;
 
-  function getMasterConnId() { return masterSelect ? masterSelect.value : ''; }
-  function getReplicaConnId() { return replicaSelect ? replicaSelect.value : ''; }
+  const phaseMap = {
+    idle:   ['bg-secondary', 'Idle'],
+    done:   ['bg-primary', 'Done ✓'],
+    error:  ['bg-danger', 'Error'],
+  };
 
-  function setStepOpacity(stepNum, opacity) {
-    const el = document.getElementById('step-' + stepNum);
-    if (el) el.style.opacity = opacity;
+  function updatePhase(state) {
+    let cls, label;
+    if (state.phase === 'active') {
+      cls = 'bg-success';
+      label = `Active — cycle ${state.cycle}/${state.total_cycles}`;
+    } else if (state.phase === 'gap') {
+      cls = 'bg-warning text-dark';
+      label = `Gap — ${state.countdown}s`;
+    } else if (state.phase === 'replay') {
+      cls = 'bg-info';
+      label = `Replaying — ${state.replayed}/${state.log_count}`;
+    } else {
+      const entry = phaseMap[state.phase] || ['bg-secondary', state.phase];
+      [cls, label] = entry;
+    }
+    phaseBadge.className = 'badge fs-6 ' + cls;
+    phaseBadge.textContent = label;
   }
 
-  function refreshState() {
-    const m = getMasterConnId();
-    const r = getReplicaConnId();
-    if (!m || !r) return;
-    fetch('/demos/log-shipping/state?master_conn_id=' + m + '&replica_conn_id=' + r)
-      .then(resp => resp.json())
+  function updateTicker(sql) {
+    if (!sql || sql === lastSql) return;
+    lastSql = sql;
+    ticker.textContent += '\n> ' + sql;
+    ticker.scrollTop = ticker.scrollHeight;
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function statusBadge(status) {
+    const map = {
+      pending:    'bg-secondary',
+      processing: 'bg-primary',
+      shipped:    'bg-success',
+      cancelled:  'bg-danger',
+    };
+    return map[status] || 'bg-secondary';
+  }
+
+  function renderMaster(rows) {
+    const tbody = document.getElementById('tbl-master-body');
+    const badge = document.getElementById('badge-master-count');
+    badge.textContent = rows.length + ' rows';
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center py-3">Empty</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r =>
+      `<tr>` +
+      `<td>${esc(r.id)}</td>` +
+      `<td>${esc(r.customer)}</td>` +
+      `<td>${esc(r.product)}</td>` +
+      `<td>${esc(r.qty)}</td>` +
+      `<td>${esc(r.price)}</td>` +
+      `<td><span class="badge ${statusBadge(r.status)}">${esc(r.status)}</span></td>` +
+      `</tr>`
+    ).join('');
+  }
+
+  function renderLog(entries) {
+    const tbody = document.getElementById('tbl-log-body');
+    const badge = document.getElementById('badge-log-count');
+    const scrollDiv = document.getElementById('log-scroll');
+    badge.textContent = entries.length + ' entries';
+    if (!entries.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center py-3">Empty</td></tr>';
+      return;
+    }
+    const atBottom = scrollDiv
+      ? (scrollDiv.scrollHeight - scrollDiv.scrollTop - scrollDiv.clientHeight) < 40
+      : true;
+    tbody.innerHTML = entries.map(e => {
+      const rowCls = e.operation === 'INSERT' ? 'table-success'
+                   : e.operation === 'UPDATE' ? 'table-warning'
+                   : 'table-danger';
+      const ts = (e.ts || '').split(' ')[1] || (e.ts || '');
+      const sqlShort = (e.sql_text || '').length > 42
+        ? esc(e.sql_text.substring(0, 42)) + '…'
+        : esc(e.sql_text || '');
+      return `<tr class="${rowCls}">` +
+        `<td>${esc(e.seq)}</td>` +
+        `<td><strong>${esc(e.operation)}</strong></td>` +
+        `<td>${esc(e.row_id)}</td>` +
+        `<td class="font-monospace" style="font-size:.78rem;" title="${esc(e.sql_text)}">${sqlShort}</td>` +
+        `<td class="small">${esc(ts)}</td>` +
+        `</tr>`;
+    }).join('');
+    if (atBottom && scrollDiv) scrollDiv.scrollTop = scrollDiv.scrollHeight;
+  }
+
+  function renderReplica(rows) {
+    const tbody = document.getElementById('tbl-replica-body');
+    const badge = document.getElementById('badge-replica-count');
+    badge.textContent = rows.length + ' rows';
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center py-3">Waiting for replay…</td></tr>';
+      lastReplicaIds = new Set();
+      return;
+    }
+    const currentIds = new Set(rows.map(r => r.id));
+    tbody.innerHTML = rows.map(r => {
+      const isNew = !lastReplicaIds.has(r.id);
+      const rowCls = isNew ? 'table-success' : '';
+      return `<tr class="${rowCls}">` +
+        `<td>${esc(r.id)}</td>` +
+        `<td>${esc(r.customer)}</td>` +
+        `<td>${esc(r.product)}</td>` +
+        `<td>${esc(r.qty)}</td>` +
+        `<td>${esc(r.price)}</td>` +
+        `<td><span class="badge ${statusBadge(r.status)}">${esc(r.status)}</span></td>` +
+        `</tr>`;
+    }).join('');
+    lastReplicaIds = currentIds;
+  }
+
+  function poll() {
+    fetch('/demos/log-shipping/state')
+      .then(r => r.json())
       .then(state => {
-        if (badgeMaster) badgeMaster.textContent = 'Master: ' + state.master_log_count + ' entries';
-        if (badgeReplica) badgeReplica.textContent = 'Replica: ' + state.replica_log_count + ' entries';
-        if (badgePending) badgePending.textContent = 'Pending: ' + state.pending_count;
-        if (badgeSync) {
-          if (state.in_sync) {
-            badgeSync.classList.remove('d-none');
-            // activate all steps
-            [1, 2, 3, 4, 5].forEach(i => setStepOpacity(i, '1'));
-          } else {
-            badgeSync.classList.add('d-none');
-          }
-        }
+        updatePhase(state);
+        updateTicker(state.current_sql);
+        renderMaster(state.master_rows || []);
+        renderLog(state.log_entries || []);
+        renderReplica(state.replica_rows || []);
       })
       .catch(() => {});
   }
 
-  function animateStepSequence(onDone) {
-    [1, 2, 3, 4, 5].forEach(i => setStepOpacity(i, '0.3'));
-    let i = 1;
-    function next() {
-      if (i > 5) { if (onDone) onDone(); return; }
-      setStepOpacity(i, '1');
-      i++;
-      setTimeout(next, 300);
-    }
-    setTimeout(next, 100);
-  }
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      startBtn.disabled = true;
+      ticker.textContent = '-- Starting…';
+      lastSql = '';
+      lastReplicaIds = new Set();
 
-  if (runStepBtn) {
-    runStepBtn.addEventListener('click', async () => {
-      const m = getMasterConnId();
-      const r = getReplicaConnId();
-      if (!m || !r) return;
-
-      runStepBtn.disabled = true;
-      if (stepResult) stepResult.textContent = 'Running...';
-
-      const fd = new FormData();
-      fd.append('master_conn_id', m);
-      fd.append('replica_conn_id', r);
-
-      try {
-        const resp = await fetch('/demos/log-shipping/run', { method: 'POST', body: fd });
-        const result = await resp.json();
-
-        animateStepSequence(() => {
-          refreshState();
-          if (stepResult) {
-            stepResult.textContent = result.error
-              ? 'Error: ' + result.error
-              : 'Replicated ' + result.replicated_count + ' entries.';
-          }
-        });
-      } catch (err) {
-        if (stepResult) stepResult.textContent = 'Request failed: ' + err.message;
-      } finally {
-        runStepBtn.disabled = false;
-      }
+      fetch('/demos/log-shipping/start', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => {
+          poll();
+          startBtn.disabled = false;
+        })
+        .catch(() => { startBtn.disabled = false; });
     });
   }
 
-  if (insertMasterBtn) {
-    insertMasterBtn.addEventListener('click', async () => {
-      const m = getMasterConnId();
-      if (!m) return;
-      insertMasterBtn.disabled = true;
+  poll();
+  pollTimer = setInterval(poll, 800);
 
-      const fd = new FormData();
-      fd.append('conn_id', m);
-      fd.append('product', 'TestItem');
-      fd.append('qty', '1');
-
-      try {
-        await fetch('/demos/trigger-chain/insert', { method: 'POST', body: fd });
-        setTimeout(refreshState, 400);
-      } catch (err) {
-        // silent
-      } finally {
-        insertMasterBtn.disabled = false;
-      }
-    });
-  }
-
-  if (masterSelect) masterSelect.addEventListener('change', refreshState);
-  if (replicaSelect) replicaSelect.addEventListener('change', refreshState);
-
-  refreshState();
-  // Auto-refresh every 5 seconds
-  setInterval(refreshState, 5000);
+  window.addEventListener('beforeunload', () => {
+    if (pollTimer) clearInterval(pollTimer);
+  });
 });

@@ -2,30 +2,158 @@
 {% block title %}Snapshot Replication Demo{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center mb-4">
-  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary me-3">
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
     <i class="bi bi-arrow-left"></i>
   </a>
-  <h2 class="mb-0 fw-bold">🔄 Snapshot Replication Demo</h2>
-</div>
-
-<p class="text-muted mb-3">
-  Click <strong>Push Snapshot</strong> to watch the snapshot propagate from the central HQ hub to all branch nodes.
-</p>
-
-<div class="mb-3 d-flex gap-2">
-  <button class="btn btn-success" id="push-btn">
-    <i class="bi bi-broadcast me-1"></i> Push Snapshot
-  </button>
-  <button class="btn btn-outline-secondary" id="reset-btn">
-    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+  <h2 class="mb-0 fw-bold me-auto">Snapshot Replication Demo</h2>
+  <span class="badge bg-secondary fs-6" id="phase-badge">Idle</span>
+  <button class="btn btn-success" id="start-btn">
+    <i class="bi bi-play-fill me-1"></i> Start
   </button>
 </div>
 
-<div id="cy" class="border rounded bg-dark" style="width:100%; height:600px;"></div>
+<!-- SQL Ticker -->
+<pre id="sql-ticker"
+     class="mb-3 rounded p-3"
+     style="background:#1e1e1e;color:#9cdcfe;min-height:70px;max-height:120px;overflow-y:auto;font-size:.85rem;white-space:pre-wrap;">-- Snapshot Replication Demo ready. Click Start to begin.</pre>
+
+<!-- 3-panel tables -->
+<div class="row g-3 mb-3">
+
+  <!-- Publisher -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-database-fill text-primary me-1"></i> Publisher</span>
+        <span class="badge bg-primary rounded-pill" id="badge-pub-count">0 rows</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered table-hover mb-0">
+          <thead class="table-dark">
+            <tr><th>id</th><th>from</th><th>to</th><th>rate</th></tr>
+          </thead>
+          <tbody id="tbl-pub-body">
+            <tr><td colspan="4" class="text-muted text-center py-3">Empty</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distributor -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-hdd-stack-fill text-warning me-1"></i> Distributor</span>
+        <span class="badge bg-warning text-dark rounded-pill" id="badge-dist-count">0 rows</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered table-hover mb-0">
+          <thead class="table-dark">
+            <tr><th>id</th><th>from</th><th>to</th><th>rate</th></tr>
+          </thead>
+          <tbody id="tbl-dist-body">
+            <tr><td colspan="4" class="text-muted text-center py-3">Empty — waiting for BCP snapshot</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscribers -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-diagram-3-fill text-success me-1"></i> Subscribers</span>
+        <span class="badge bg-success rounded-pill" id="badge-sub-count">0 / 3 synced</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered table-hover mb-0">
+          <thead class="table-dark">
+            <tr><th>id</th><th>from</th><th>to</th><th>rate</th></tr>
+          </thead>
+          <tbody id="tbl-sub-body">
+            <tr><td colspan="4" class="text-muted text-center py-3">Waiting for push…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Topology graph -->
+<div class="card">
+  <div class="card-header fw-semibold">
+    <i class="bi bi-broadcast me-1 text-info"></i> Replication Topology
+  </div>
+  <div class="card-body py-3" style="background:#141428;">
+    <svg id="topo-svg" viewBox="0 0 860 200" style="width:100%;height:auto;display:block;">
+      <defs>
+        <!-- Three arrowhead variants: idle / active / done -->
+        <marker id="arr-idle" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#6c757d"/>
+        </marker>
+        <marker id="arr-act" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#ffc107"/>
+        </marker>
+        <marker id="arr-done" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#198754"/>
+        </marker>
+        <style>
+          @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+          .edge-active { animation: dash-flow 0.5s linear infinite; }
+        </style>
+      </defs>
+
+      <!-- Edges (drawn before nodes so nodes sit on top) -->
+      <line id="edge-pd"
+            x1="163" y1="100" x2="347" y2="100"
+            stroke="#6c757d" stroke-width="3" stroke-dasharray="10,5"
+            marker-end="url(#arr-idle)"/>
+      <line id="edge-da"
+            x1="513" y1="82"  x2="702" y2="42"
+            stroke="#6c757d" stroke-width="3" stroke-dasharray="10,5"
+            marker-end="url(#arr-idle)"/>
+      <line id="edge-db"
+            x1="513" y1="100" x2="702" y2="100"
+            stroke="#6c757d" stroke-width="3" stroke-dasharray="10,5"
+            marker-end="url(#arr-idle)"/>
+      <line id="edge-dc"
+            x1="513" y1="118" x2="702" y2="158"
+            stroke="#6c757d" stroke-width="3" stroke-dasharray="10,5"
+            marker-end="url(#arr-idle)"/>
+
+      <!-- Publisher node -->
+      <circle id="node-pub" cx="100" cy="100" r="60" fill="#1a1a1a" stroke="#6c757d" stroke-width="2"/>
+      <text x="100" y="93" text-anchor="middle" fill="#adb5bd" font-size="13" font-weight="bold" font-family="sans-serif">Publisher</text>
+      <text x="100" y="113" text-anchor="middle" fill="#6c757d" font-size="11" font-family="sans-serif" id="label-pub">empty</text>
+
+      <!-- Distributor node -->
+      <circle id="node-dist" cx="430" cy="100" r="60" fill="#1a1a1a" stroke="#6c757d" stroke-width="2"/>
+      <text x="430" y="93" text-anchor="middle" fill="#adb5bd" font-size="13" font-weight="bold" font-family="sans-serif">Distributor</text>
+      <text x="430" y="113" text-anchor="middle" fill="#6c757d" font-size="11" font-family="sans-serif" id="label-dist">empty</text>
+
+      <!-- Subscriber A -->
+      <circle id="node-suba" cx="760" cy="40"  r="38" fill="#1a1a1a" stroke="#6c757d" stroke-width="2"/>
+      <text x="760" y="36"  text-anchor="middle" fill="#adb5bd" font-size="11" font-weight="bold" font-family="sans-serif">Sub A</text>
+      <text x="760" y="51"  text-anchor="middle" fill="#6c757d" font-size="10" font-family="sans-serif" id="label-suba">—</text>
+
+      <!-- Subscriber B -->
+      <circle id="node-subb" cx="760" cy="100" r="38" fill="#1a1a1a" stroke="#6c757d" stroke-width="2"/>
+      <text x="760" y="96"  text-anchor="middle" fill="#adb5bd" font-size="11" font-weight="bold" font-family="sans-serif">Sub B</text>
+      <text x="760" y="111" text-anchor="middle" fill="#6c757d" font-size="10" font-family="sans-serif" id="label-subb">—</text>
+
+      <!-- Subscriber C -->
+      <circle id="node-subc" cx="760" cy="160" r="38" fill="#1a1a1a" stroke="#6c757d" stroke-width="2"/>
+      <text x="760" y="156" text-anchor="middle" fill="#adb5bd" font-size="11" font-weight="bold" font-family="sans-serif">Sub C</text>
+      <text x="760" y="171" text-anchor="middle" fill="#6c757d" font-size="10" font-family="sans-serif" id="label-subc">—</text>
+    </svg>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 <script src="{{ url_for('static', filename='js/demos/snapshot.js') }}"></script>
 {% endblock %}

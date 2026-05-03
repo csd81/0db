@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}HFT Latency Arbitrage Race{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold me-auto">HFT Latency Arbitrage Race</h2>
+  <span class="badge bg-dark fs-6" id="race-count-badge">Race #0</span>
+  <button class="btn btn-warning" id="trigger-btn">
+    <i class="bi bi-lightning-charge-fill me-1"></i> Trigger Arbitrage Event
+  </button>
+  <button class="btn btn-outline-secondary" id="reset-btn">
+    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+  </button>
+</div>
+
+<!-- Explanation -->
+<div class="alert alert-secondary py-2 mb-3 small">
+  <strong>Latency arbitrage:</strong> when NYSE WMT drops $0.05, there is a
+  <em>propagation window</em> before Chicago CBOT updates its price. The first
+  SELL order to reach Chicago captures the $0.05 spread (×100 shares = <strong>$5.00</strong>).
+  HFT firms pay millions to colocate servers inches from the exchange and build
+  <strong>microwave tower</strong> networks (straight-line, faster than fiber which bends around terrain).
+  Configure below and watch who wins.
+</div>
+
+<!-- Config -->
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-auto">
+        <label class="form-label small fw-semibold mb-1">HFT Network</label>
+        <div class="btn-group" role="group" aria-label="HFT Network">
+          <input type="radio" class="btn-check" name="hft-network" id="opt-microwave" value="microwave" checked>
+          <label class="btn btn-outline-warning btn-sm" for="opt-microwave">
+            <i class="bi bi-broadcast me-1"></i>Microwave ~4 ms
+          </label>
+          <input type="radio" class="btn-check" name="hft-network" id="opt-fiber" value="fiber">
+          <label class="btn btn-outline-secondary btn-sm" for="opt-fiber">
+            <i class="bi bi-ethernet me-1"></i>Fiber ~6 ms
+          </label>
+        </div>
+      </div>
+      <div class="col-auto">
+        <label class="form-label small fw-semibold mb-1">Retail Setup</label>
+        <div class="btn-group" role="group" aria-label="Retail Setup">
+          <input type="radio" class="btn-check" name="retail-setup" id="opt-cloud" value="cloud" checked>
+          <label class="btn btn-outline-info btn-sm" for="opt-cloud">
+            <i class="bi bi-cloud me-1"></i>Cloud Ohio ~67 ms
+          </label>
+          <input type="radio" class="btn-check" name="retail-setup" id="opt-colocated" value="colocated">
+          <label class="btn btn-outline-info btn-sm" for="opt-colocated">
+            <i class="bi bi-building me-1"></i>Co-located NY ~8.5 ms
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SQL Ticker -->
+<pre id="sql-ticker"
+     class="mb-3 rounded p-3"
+     style="background:#0d1117;color:#79c0ff;min-height:54px;max-height:120px;overflow-y:auto;font-size:.80rem;white-space:pre-wrap;">-- HFT demo ready. Configure and press Trigger.</pre>
+
+<!-- Race Track -->
+<div class="card mb-3" style="background:#0d1117;color:#e6edf3;border-color:#30363d;">
+  <div class="card-body">
+
+    <!-- Exchange price display -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="text-center" style="min-width:150px;">
+        <div class="badge bg-info text-dark fs-6 mb-1">NYSE (New York)</div>
+        <div class="fs-2 fw-bold font-monospace" id="ny-price">$100.00</div>
+        <div class="small" style="color:#8b949e;">WMT</div>
+      </div>
+      <div class="text-center flex-grow-1 px-2" style="color:#6e7681;">
+        <div class="small">&larr;&mdash;&mdash;&mdash; 1,200 km &mdash;&mdash;&mdash;&rarr;</div>
+        <div style="font-size:.65rem;">Fiber: ~6ms &nbsp;|&nbsp; Microwave: ~4ms &nbsp;|&nbsp; Cloud Ohio: ~67ms</div>
+      </div>
+      <div class="text-center" style="min-width:150px;">
+        <div class="badge bg-info text-dark fs-6 mb-1">CBOT (Chicago)</div>
+        <div class="fs-2 fw-bold font-monospace" id="chi-price">$100.00</div>
+        <div class="small" style="color:#8b949e;">WMT</div>
+      </div>
+    </div>
+
+    <!-- HFT Lane -->
+    <div class="mb-4">
+      <div class="d-flex justify-content-between align-items-center small mb-1">
+        <span>
+          ⚡ HFT Bot
+          <span class="badge bg-warning text-dark ms-1" id="hft-config-badge">Co-located · Microwave</span>
+        </span>
+        <span id="hft-status" class="fw-bold" style="color:#e3b341;">Waiting…</span>
+      </div>
+      <div class="progress" style="height:26px;background:#21262d;border-radius:4px;">
+        <div id="hft-bar"
+             class="progress-bar bg-warning"
+             role="progressbar"
+             style="width:0%;transition:none;font-size:.75rem;font-weight:bold;color:#000;"></div>
+      </div>
+      <div class="small mt-1" style="color:#8b949e;" id="hft-latency-label">Latency: 4.1 ms</div>
+    </div>
+
+    <!-- Retail Lane -->
+    <div>
+      <div class="d-flex justify-content-between align-items-center small mb-1">
+        <span>
+          💻 Retail Bot
+          <span class="badge bg-info text-dark ms-1" id="retail-config-badge">Cloud Ohio</span>
+        </span>
+        <span id="retail-status" class="fw-bold" style="color:#58a6ff;">Waiting…</span>
+      </div>
+      <div class="progress" style="height:26px;background:#21262d;border-radius:4px;">
+        <div id="retail-bar"
+             class="progress-bar bg-info"
+             role="progressbar"
+             style="width:0%;transition:none;font-size:.75rem;font-weight:bold;color:#000;"></div>
+      </div>
+      <div class="small mt-1" style="color:#8b949e;" id="retail-latency-label">Latency: 67.0 ms</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- P&L Scoreboard -->
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="card border-warning h-100">
+      <div class="card-body text-center py-3">
+        <h6 class="text-warning fw-semibold">⚡ HFT Bot</h6>
+        <div class="fs-2 fw-bold text-warning" id="hft-pnl">$0.00</div>
+        <div class="text-muted small"><span id="hft-wins">0</span> wins</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-info h-100">
+      <div class="card-body text-center py-3">
+        <h6 class="text-info fw-semibold">💻 Retail Bot</h6>
+        <div class="fs-2 fw-bold text-info" id="retail-pnl">$0.00</div>
+        <div class="text-muted small"><span id="retail-wins">0</span> wins</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Race History -->
+<div class="card">
+  <div class="card-header small fw-semibold">Race History</div>
+  <div class="card-body p-0">
+    <table class="table table-sm table-bordered mb-0" style="font-size:.72rem;">
+      <thead class="table-dark">
+        <tr>
+          <th>#</th><th>HFT Net</th><th>Retail</th>
+          <th>HFT ms</th><th>Retail ms</th><th>Margin</th><th>Winner</th><th>Profit</th>
+        </tr>
+      </thead>
+      <tbody id="tbl-races">
+        <tr><td colspan="8" class="text-muted text-center py-3">No races yet. Press Trigger.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-3 mt-3 small text-muted flex-wrap">
+  <span><span class="badge bg-warning text-dark">⚡ HFT</span> co-located, sub-ms detection</span>
+  <span><span class="badge bg-info text-dark">💻 Retail</span> cloud server, ~45ms detection</span>
+  <span>Microwave: straight-line through air (faster) | Fiber: bends around terrain (slower)</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/hft.js') }}"></script>
+{% endblock %}

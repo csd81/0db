@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}NYSE — Auction Market + DMM{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold me-auto">NYSE — WMT Auction Market</h2>
+  <span class="badge bg-success fs-6" id="market-badge">Idle</span>
+  <span class="badge bg-warning text-dark fs-6" id="price-badge">$—</span>
+  <span class="badge bg-dark fs-6" id="trade-badge">0 trades</span>
+  <span class="badge bg-warning text-dark fs-6" id="dmm-badge">0 interventions</span>
+  <button class="btn btn-success" id="start-btn">
+    <i class="bi bi-play-fill me-1"></i> Start
+  </button>
+  <button class="btn btn-secondary" id="stop-btn" disabled>
+    <i class="bi bi-stop-fill me-1"></i> Stop
+  </button>
+  <button class="btn btn-danger" id="flash-crash-btn" disabled>
+    <i class="bi bi-lightning-charge-fill me-1"></i> Flash Crash
+  </button>
+</div>
+
+<!-- Explanation -->
+<div class="alert alert-secondary py-2 mb-3 small">
+  <strong>NYSE is an Auction Market.</strong> Buyers and sellers bid directly against each other —
+  no dealer intermediary. One <strong>Designated Market Maker (DMM)</strong> is assigned per stock
+  and is <em>legally obligated</em> to provide liquidity with their own capital when the spread
+  widens dangerously or the bid side empties. This costs the DMM real money.
+  Press <strong>Flash Crash</strong> to trigger a liquidity crisis and watch the DMM step in.
+  Contrast NASDAQ: multiple competing dealers, no legal obligation.
+</div>
+
+<!-- SQL Ticker -->
+<pre id="sql-ticker"
+     class="mb-3 rounded p-3"
+     style="background:#1e1e1e;color:#9cdcfe;min-height:54px;max-height:100px;overflow-y:auto;font-size:.82rem;white-space:pre-wrap;">-- NYSE demo ready. Press Start.</pre>
+
+<div class="row g-3">
+
+  <!-- Left: Order Book -->
+  <div class="col-md-5">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-list-ul text-primary me-1"></i>Order Book — WMT
+      <small class="text-muted fw-normal">Auction Market</small>
+    </h6>
+
+    <div class="row g-1">
+      <!-- Bids -->
+      <div class="col-6">
+        <div class="card">
+          <div class="card-header py-1 small fw-semibold d-flex justify-content-between">
+            <span class="text-success">Bids (BUY)</span>
+            <span class="text-muted" style="font-size:.68rem;">price ↓</span>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm table-borderless mb-0" style="font-size:.72rem;">
+              <thead class="table-light">
+                <tr><th>Price</th><th>Qty</th><th>Trader</th></tr>
+              </thead>
+              <tbody id="tbl-bids">
+                <tr><td colspan="3" class="text-muted text-center py-2">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- Asks -->
+      <div class="col-6">
+        <div class="card">
+          <div class="card-header py-1 small fw-semibold d-flex justify-content-between">
+            <span class="text-danger">Asks (SELL)</span>
+            <span class="text-muted" style="font-size:.68rem;">price ↑</span>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm table-borderless mb-0" style="font-size:.72rem;">
+              <thead class="table-light">
+                <tr><th>Price</th><th>Qty</th><th>Trader</th></tr>
+              </thead>
+              <tbody id="tbl-asks">
+                <tr><td colspan="3" class="text-muted text-center py-2">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center py-1 small">
+      spread: <strong id="spread-val">—</strong> USD
+      <span id="spread-warning" class="badge bg-danger ms-2 d-none">WIDE — DMM may intervene</span>
+    </div>
+  </div>
+
+  <!-- Middle: Tape + Event Log -->
+  <div class="col-md-4">
+    <h6 class="fw-semibold mb-1 text-center">
+      <i class="bi bi-receipt text-success me-1"></i>The Tape
+      <small class="text-muted fw-normal">Recent Executions</small>
+    </h6>
+    <div class="card mb-3">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.70rem;">
+          <thead class="table-dark">
+            <tr><th>Price</th><th>Qty</th><th>Buyer#</th><th>Seller#</th><th></th></tr>
+          </thead>
+          <tbody id="tbl-tape">
+            <tr><td colspan="5" class="text-muted text-center py-2">No trades yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h6 class="fw-semibold mb-1 text-center">
+      <i class="bi bi-journal-text text-secondary me-1"></i>Event Log
+    </h6>
+    <div class="card">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.70rem;">
+          <thead class="table-dark">
+            <tr><th>Type</th><th>Detail</th></tr>
+          </thead>
+          <tbody id="tbl-events">
+            <tr><td colspan="2" class="text-muted text-center py-2">No events</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: DMM Inventory -->
+  <div class="col-md-3">
+    <h6 class="fw-semibold mb-2 text-center">
+      <i class="bi bi-bank text-warning me-1"></i>DMM Inventory
+      <small class="text-muted fw-normal">Capital at Risk</small>
+    </h6>
+
+    <div class="alert alert-warning py-2 mb-2 small">
+      The DMM is <strong>legally obligated</strong> to buy WMT when no human will.
+      This costs real capital. If the DMM runs out of cash or shares,
+      it cannot intervene — the market crashes.
+    </div>
+
+    <div class="card mb-2">
+      <div class="card-body text-center py-3">
+        <div class="text-muted small mb-1">Cash Balance</div>
+        <div class="fs-4 fw-bold" id="dmm-cash">$500,000.00</div>
+        <div class="text-muted small mt-2 mb-1">WMT Shares</div>
+        <div class="fs-4 fw-bold" id="dmm-shares">5,000</div>
+        <div class="mt-3">
+          <span class="badge bg-warning text-dark fs-6" id="dmm-interventions">0 interventions</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-danger w-100 mb-2" id="flash-crash-btn2" disabled>
+      <i class="bi bi-lightning-charge-fill me-1"></i> Trigger Flash Crash
+    </button>
+    <div class="small text-muted text-center">
+      Cancels top bids + injects 6,000 panic sell orders at $85/$80/$75
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-3 mt-3 small text-muted flex-wrap">
+  <span><span class="badge bg-success">✓ TRADE</span> matched on auction floor</span>
+  <span><span class="badge bg-warning text-dark">🛡 DMM_INTERVENE</span> DMM stepped in with own capital</span>
+  <span><span class="badge bg-danger">💥 FLASH_CRASH</span> liquidity crisis triggered</span>
+  <span><span class="badge bg-warning text-dark">★ DMM</span> order from Designated Market Maker</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demos/nyse.js') }}"></script>
+{% endblock %}
