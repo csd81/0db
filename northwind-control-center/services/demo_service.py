@@ -3189,19 +3189,19 @@ _FULFILL_ABORTED    = False
 _FULFILL_LOG_CONN   = None   # persistent autocommit connection for SQL logging
 
 _FULFILL_ORDER_COLS = [
+    # Orders
     'OrderID', 'CustomerID', 'EmployeeID', 'OrderDate', 'RequiredDate',
     'ShipVia', 'Freight', 'ShipName', 'ShipAddress', 'ShipCity',
     'ShipRegion', 'ShipPostalCode', 'ShipCountry',
+    # Customers (LEFT JOIN)
+    'c_CompanyName', 'c_ContactName', 'c_ContactTitle',
+    'c_Phone', 'c_Fax', 'c_City', 'c_Country',
+    # Employees (LEFT JOIN)
+    'e_FirstName', 'e_LastName', 'e_Title',
+    'e_TitleOfCourtesy', 'e_HomePhone', 'e_City', 'e_Country',
+    # Shippers (LEFT JOIN)
+    's_CompanyName', 's_Phone',
 ]
-_FULFILL_CUSTOMER_COLS = [
-    'CustomerID', 'CompanyName', 'ContactName', 'ContactTitle',
-    'Phone', 'Fax', 'City', 'Country',
-]
-_FULFILL_EMPLOYEE_COLS = [
-    'EmployeeID', 'FirstName', 'LastName', 'Title',
-    'TitleOfCourtesy', 'HomePhone', 'City', 'Country',
-]
-_FULFILL_SHIPPER_COLS  = ['ShipperID', 'CompanyName', 'Phone']
 _FULFILL_PRODUCT_COLS  = [
     'ProductID', 'ProductName', 'QuantityPerUnit', 'UnitPrice',
     'UnitsInStock', 'UnitsOnOrder', 'ReorderLevel', 'Discontinued', 'SupplierID',
@@ -3210,11 +3210,6 @@ _FULFILL_SUPPLIER_COLS = [
     'SupplierID', 'CompanyName', 'ContactName', 'ContactTitle',
     'Phone', 'Fax', 'HomePage', 'City', 'Country',
 ]
-_FULFILL_FK_MAP = {
-    'CustomerID': ('Customers', 'CustomerID', _FULFILL_CUSTOMER_COLS, 'customer_card'),
-    'EmployeeID': ('Employees', 'EmployeeID', _FULFILL_EMPLOYEE_COLS, 'employee_card'),
-    'ShipVia':    ('Shippers',  'ShipperID',  _FULFILL_SHIPPER_COLS,  'shipper_card'),
-}
 # Orders columns that feed directly into package metadata
 _FULFILL_META_FIELDS = {
     'OrderID', 'OrderDate', 'RequiredDate', 'Freight',
@@ -3344,8 +3339,13 @@ def _ledger_insert(conn_str: str, event_type: str, amount: float,
             else:
                 _FULFILL_STATE['pnl'][pnl_key] += abs(amount)
 
+    _oid  = order_id    if order_id    is not None else 'NULL'
+    _pid  = product_id  if product_id  is not None else 'NULL'
+    _eid  = employee_id if employee_id is not None else 'NULL'
+    _desc = str(description).replace("'", "''")
     _fulfill_sql_log(
-        f"INSERT CompanyLedger({event_type}): {description}  [{amount:+.2f}]"
+        f"INSERT INTO [CompanyLedger](EventType,OrderID,ProductID,EmployeeID,Amount,Description)"
+        f" VALUES ('{event_type}',{_oid},{_pid},{_eid},{amount:.2f},N'{_desc}')"
     )
     try:
         conn = pyodbc.connect(conn_str, autocommit=True, timeout=5)
@@ -3378,20 +3378,25 @@ def _scan_subtable(conn_str: str, table_name: str, id_col: str, id_val,
     then scan each column cell-by-cell, filling state[card_key] incrementally.
     Returns True if completed normally, False if aborted."""
 
-    # Log the SELECT being executed
-    col_list = ', '.join(scan_cols)
+    # Log and execute the real targeted SELECT
+    col_list_sq = ', '.join(f'[{c}]' for c in scan_cols)
     _fulfill_sql_log(
-        f"SELECT {col_list}\n"
+        f"SELECT {col_list_sq}\n"
         f"FROM [{table_name}]\n"
-        f"WHERE [{id_col}] = '{id_val}'"
+        f"WHERE [{id_col}] = {repr(id_val)}"
     )
 
-    # Fetch full table ordered by PK
+    # Fetch target row + context window for the viewer
     try:
         conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
         try:
             cur = conn.cursor()
-            col_list_sq = ', '.join(f'[{c}]' for c in scan_cols)
+            cur.execute(
+                f'SELECT {col_list_sq} FROM [{table_name}] WHERE [{id_col}] = ?',
+                [id_val],
+            )
+            target_row_raw = cur.fetchone()
+            # Context window (unlogged — used only for the visual sub-table viewer)
             cur.execute(f'SELECT {col_list_sq} FROM [{table_name}] ORDER BY [{id_col}]')
             all_rows = [
                 {scan_cols[j]: _fulfill_fix_val(v) for j, v in enumerate(r)}
@@ -3400,6 +3405,7 @@ def _scan_subtable(conn_str: str, table_name: str, id_col: str, id_val,
         finally:
             conn.close()
     except Exception:
+        target_row_raw = None
         all_rows = []
 
     # Locate target row
@@ -3439,7 +3445,6 @@ def _scan_subtable(conn_str: str, table_name: str, id_col: str, id_val,
     card = {}
     for col_idx, col in enumerate(scan_cols):
         card[col] = all_rows[target_global][col]
-        _fulfill_sql_log(f"  ↳ [{col}] = {repr(card[col])}")
 
         extra = {}
         if refill_key:
@@ -3709,15 +3714,28 @@ def fulfill_start(conn_str: str):
         """)
         cur = setup.cursor()
         cur.execute("""
-            SELECT TOP 5 OrderID, CustomerID, EmployeeID, OrderDate, RequiredDate,
-                         ShipVia, Freight, ShipName, ShipAddress, ShipCity,
-                         ShipRegion, ShipPostalCode, ShipCountry
-            FROM Orders
-            WHERE ShippedDate IS NULL
+            SELECT TOP 5
+                o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate, o.RequiredDate,
+                o.ShipVia, o.Freight, o.ShipName, o.ShipAddress, o.ShipCity,
+                o.ShipRegion, o.ShipPostalCode, o.ShipCountry,
+                c.CompanyName   AS c_CompanyName,  c.ContactName  AS c_ContactName,
+                c.ContactTitle  AS c_ContactTitle, c.Phone        AS c_Phone,
+                c.Fax           AS c_Fax,          c.City         AS c_City,
+                c.Country       AS c_Country,
+                e.FirstName     AS e_FirstName,    e.LastName     AS e_LastName,
+                e.Title         AS e_Title,        e.TitleOfCourtesy AS e_TitleOfCourtesy,
+                e.HomePhone     AS e_HomePhone,    e.City         AS e_City,
+                e.Country       AS e_Country,
+                s.CompanyName   AS s_CompanyName,  s.Phone        AS s_Phone
+            FROM Orders o
+            LEFT JOIN Customers c ON c.CustomerID = o.CustomerID
+            LEFT JOIN Employees e ON e.EmployeeID = o.EmployeeID
+            LEFT JOIN Shippers  s ON s.ShipperID  = o.ShipVia
+            WHERE o.ShippedDate IS NULL
               AND NOT EXISTS (
-                  SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID
+                  SELECT 1 FROM Packages WHERE OrderID = o.OrderID
               )
-            ORDER BY OrderID
+            ORDER BY o.OrderID
         """)
         orders = [
             {col: _fulfill_fix_val(r[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)}
@@ -3916,11 +3934,12 @@ def _check_deliveries(conn_str: str) -> bool:
                 pass
             conn_rs.close()
             _fulfill_sql_log(
-                f'UPDATE Products +{restock_qty}'
-                f' WHERE ProductID={pid}  ← delivery arrived ✓'
+                f'UPDATE [Products] SET UnitsInStock = UnitsInStock + {restock_qty}'
+                f' WHERE ProductID = {pid}  -- delivery arrived'
             )
             _fulfill_sql_log(
-                f"UPDATE RefillOrders SET Status='arrived' WHERE ProductID={pid}"
+                f"UPDATE [RefillOrders] SET Status = 'arrived'"
+                f" WHERE ProductID = {pid} AND Status = 'sent'"
             )
             with _FULFILL_LOCK:
                 _FULFILL_STATE['changes']['stock_incremented'].append((pid, restock_qty))
@@ -4007,7 +4026,7 @@ def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
                     break
 
         _fulfill_sql_log(
-            f'BEGIN TRAN  -- completing partial: {short_item["ProductName"]}'
+            f'BEGIN TRANSACTION  -- completing partial order {order_id}'
         )
         try:
             conn_c = pyodbc.connect(conn_str, autocommit=False, timeout=15)
@@ -4016,8 +4035,8 @@ def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
                 [short_item['Quantity'], short_item['ProductID']],
             )
             _fulfill_sql_log(
-                f'UPDATE Products -{short_item["Quantity"]}'
-                f' WHERE ProductID={short_item["ProductID"]} ✓'
+                f'UPDATE [Products] SET UnitsInStock = UnitsInStock - {short_item["Quantity"]}'
+                f' WHERE ProductID = {short_item["ProductID"]}'
             )
             conn_c.execute(
                 "UPDATE PackageItems SET Status='packed'"
@@ -4025,8 +4044,9 @@ def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
                 [p['pkg_id'], short_item['ProductID']],
             )
             _fulfill_sql_log(
-                f"UPDATE PackageItems SET Status='packed'"
-                f" WHERE PackageID={p['pkg_id']} AND ProductID={short_item['ProductID']}"
+                f"UPDATE [PackageItems] SET Status = 'packed'"
+                f" WHERE PackageID = {p['pkg_id']} AND ProductID = {short_item['ProductID']}"
+                f" AND Status = 'awaiting_restock'"
             )
             conn_c.commit()
             conn_c.close()
@@ -4052,7 +4072,7 @@ def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
             return True
 
     # Ship
-    _fulfill_sql_log(f'BEGIN TRAN  -- shipping partial order {order_id}')
+    _fulfill_sql_log(f'BEGIN TRANSACTION  -- completing partial order {order_id}')
     try:
         conn_s = pyodbc.connect(conn_str, autocommit=False, timeout=15)
         cur_s  = conn_s.cursor()
@@ -4081,7 +4101,8 @@ def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
                 _FULFILL_STATE['error'] = str(e)
             return True
         _fulfill_sql_log(
-            f"DELETE [Order Details] OrderID={order_id} ProductID={item['ProductID']}"
+            f"DELETE FROM [Order Details]"
+            f" WHERE OrderID = {order_id} AND ProductID = {item['ProductID']}"
         )
         with _FULFILL_LOCK:
             _FULFILL_STATE['changes']['deleted_details'].append({
@@ -4103,7 +4124,10 @@ def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
             "UPDATE Packages SET Status='shipped' WHERE PackageID=?", [pkg_id]
         )
         _fulfill_sql_log(
-            f'UPDATE Orders ShippedDate=GETDATE() WHERE OrderID={order_id}'
+            f'UPDATE [Orders] SET ShippedDate = GETDATE() WHERE OrderID = {order_id}'
+        )
+        _fulfill_sql_log(
+            f"UPDATE [Packages] SET Status = 'shipped' WHERE PackageID = {pkg_id}"
         )
         _fulfill_sql_log('COMMIT')
         conn_s.commit()
@@ -4186,14 +4210,27 @@ def _load_next_order(conn_str: str):
         conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
         cur  = conn.cursor()
         cur.execute(f"""
-            SELECT TOP 1 OrderID, CustomerID, EmployeeID, OrderDate, RequiredDate,
-                         ShipVia, Freight, ShipName, ShipAddress, ShipCity,
-                         ShipRegion, ShipPostalCode, ShipCountry
-            FROM Orders
-            WHERE ShippedDate IS NULL
-              AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = Orders.OrderID)
-              AND OrderID NOT IN ({placeholders})
-            ORDER BY OrderID
+            SELECT TOP 1
+                o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate, o.RequiredDate,
+                o.ShipVia, o.Freight, o.ShipName, o.ShipAddress, o.ShipCity,
+                o.ShipRegion, o.ShipPostalCode, o.ShipCountry,
+                c.CompanyName   AS c_CompanyName,  c.ContactName  AS c_ContactName,
+                c.ContactTitle  AS c_ContactTitle, c.Phone        AS c_Phone,
+                c.Fax           AS c_Fax,          c.City         AS c_City,
+                c.Country       AS c_Country,
+                e.FirstName     AS e_FirstName,    e.LastName     AS e_LastName,
+                e.Title         AS e_Title,        e.TitleOfCourtesy AS e_TitleOfCourtesy,
+                e.HomePhone     AS e_HomePhone,    e.City         AS e_City,
+                e.Country       AS e_Country,
+                s.CompanyName   AS s_CompanyName,  s.Phone        AS s_Phone
+            FROM Orders o
+            LEFT JOIN Customers c ON c.CustomerID = o.CustomerID
+            LEFT JOIN Employees e ON e.EmployeeID = o.EmployeeID
+            LEFT JOIN Shippers  s ON s.ShipperID  = o.ShipVia
+            WHERE o.ShippedDate IS NULL
+              AND NOT EXISTS (SELECT 1 FROM Packages WHERE OrderID = o.OrderID)
+              AND o.OrderID NOT IN ({placeholders})
+            ORDER BY o.OrderID
         """, loaded_ids)
         row = cur.fetchone()
         conn.close()
@@ -4252,16 +4289,61 @@ def _fulfill_worker():
                  phase_label=f'Order {order_id} — click Next to begin reading'):
             return
 
-        # ── Read each column of the Orders row, follow FK columns ──
+        # ── Log the actual JOIN SELECT used to fetch this order ──
         _fulfill_sql_log(
-            f"SELECT OrderID,CustomerID,EmployeeID,OrderDate,\n"
-            f"  RequiredDate,ShipVia,Freight,ShipName,...\n"
-            f"FROM Orders WHERE OrderID={order_id}"
+            f"SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.OrderDate,o.RequiredDate,\n"
+            f"  o.ShipVia,o.Freight,o.ShipName,o.ShipAddress,o.ShipCity,\n"
+            f"  o.ShipRegion,o.ShipPostalCode,o.ShipCountry,\n"
+            f"  c.CompanyName,c.ContactName,c.ContactTitle,c.Phone,c.Fax,c.City,c.Country,\n"
+            f"  e.FirstName,e.LastName,e.Title,e.TitleOfCourtesy,e.HomePhone,e.City,e.Country,\n"
+            f"  s.CompanyName,s.Phone\n"
+            f"FROM [Orders] o\n"
+            f"  LEFT JOIN [Customers] c ON c.CustomerID = o.CustomerID\n"
+            f"  LEFT JOIN [Employees] e ON e.EmployeeID = o.EmployeeID\n"
+            f"  LEFT JOIN [Shippers]  s ON s.ShipperID  = o.ShipVia\n"
+            f"WHERE o.OrderID = {order_id}"
         )
-        for col_idx, col in enumerate(_FULFILL_ORDER_COLS):
-            _fulfill_sql_log(f"  ↳ [{col}] = {repr(order.get(col, ''))}")
 
-            # Accumulate package metadata from Orders fields as they are read
+        # Populate Customer / Employee / Shipper cards immediately from the joined row
+        with _FULFILL_LOCK:
+            _FULFILL_STATE['customer_card'] = {
+                'CustomerID':   order['CustomerID'],
+                'CompanyName':  order.get('c_CompanyName'),
+                'ContactName':  order.get('c_ContactName'),
+                'ContactTitle': order.get('c_ContactTitle'),
+                'Phone':        order.get('c_Phone'),
+                'Fax':          order.get('c_Fax'),
+                'City':         order.get('c_City'),
+                'Country':      order.get('c_Country'),
+            }
+            _FULFILL_STATE['employee_card'] = {
+                'EmployeeID':      order['EmployeeID'],
+                'FirstName':       order.get('e_FirstName'),
+                'LastName':        order.get('e_LastName'),
+                'Title':           order.get('e_Title'),
+                'TitleOfCourtesy': order.get('e_TitleOfCourtesy'),
+                'HomePhone':       order.get('e_HomePhone'),
+                'City':            order.get('e_City'),
+                'Country':         order.get('e_Country'),
+            }
+            _FULFILL_STATE['shipper_card'] = {
+                'ShipperID':   order['ShipVia'],
+                'CompanyName': order.get('s_CompanyName'),
+                'Phone':       order.get('s_Phone'),
+            }
+            _FULFILL_STATE['package_meta']['Customer'] = order.get('c_CompanyName')
+            _FULFILL_STATE['package_meta']['Employee'] = (
+                f"{order.get('e_FirstName', '') or ''} "
+                f"{order.get('e_LastName', '') or ''}".strip()
+            )
+            _FULFILL_STATE['package_meta']['Shipper'] = order.get('s_CompanyName')
+            for q in _FULFILL_STATE['order_queue']:
+                if q['order_id'] == order_id:
+                    q['customer'] = order.get('c_CompanyName', '')
+                    break
+
+        # ── Animate reading each column (no SQL log per cell — data already fetched) ──
+        for col_idx, col in enumerate(_FULFILL_ORDER_COLS):
             with _FULFILL_LOCK:
                 if col in _FULFILL_META_FIELDS:
                     _FULFILL_STATE['package_meta'][col] = order.get(col)
@@ -4273,31 +4355,6 @@ def _fulfill_worker():
                      sub_table=None,
                      package_meta=new_meta):
                 return
-
-            if col in _FULFILL_FK_MAP:
-                tbl, id_col, scan_cols, card_key = _FULFILL_FK_MAP[col]
-                if not _scan_subtable(conn_str, tbl, id_col, order[col],
-                                      scan_cols, card_key):
-                    return
-                # After FK scan: pull the "name" field into package metadata
-                with _FULFILL_LOCK:
-                    card_data = _FULFILL_STATE.get(card_key, {})
-                    if card_key == 'customer_card':
-                        _FULFILL_STATE['package_meta']['Customer'] = card_data.get('CompanyName')
-                        # Also update queue entry so collapsed header can show customer name
-                        cname = card_data.get('CompanyName', '')
-                        for q in _FULFILL_STATE['order_queue']:
-                            if q['order_id'] == order_id:
-                                q['customer'] = cname
-                                break
-                    elif card_key == 'employee_card':
-                        fname = card_data.get('FirstName', '') or ''
-                        lname = card_data.get('LastName', '') or ''
-                        _FULFILL_STATE['package_meta']['Employee'] = f'{fname} {lname}'.strip()
-                    elif card_key == 'shipper_card':
-                        _FULFILL_STATE['package_meta']['Shipper'] = card_data.get('CompanyName')
-                    # Snapshot updated meta so the package card rerenders on next poll
-                    _FULFILL_STATE['package_meta'] = dict(_FULFILL_STATE['package_meta'])
 
         # ── Load Order Details rows ──
         _fulfill_sql_log(
@@ -4380,7 +4437,7 @@ def _fulfill_worker():
                  phase_label='Stock check complete — ready to begin transaction?'):
             return
 
-        _fulfill_sql_log('BEGIN TRAN')
+        _fulfill_sql_log('BEGIN TRANSACTION')
         try:
             conn_tx = pyodbc.connect(conn_str, autocommit=False, timeout=15)
         except Exception as e:
@@ -4409,7 +4466,10 @@ def _fulfill_worker():
                 _FULFILL_STATE['error'] = str(e)
             return
 
-        _fulfill_sql_log(f'INSERT INTO Packages(OrderID={order_id}) → PackageID={pkg_id}')
+        _fulfill_sql_log(
+            f"INSERT INTO [Packages](OrderID, Status) VALUES ({order_id}, 'packing')"
+            f"  -- OUTPUT PackageID = {pkg_id}"
+        )
         with _FULFILL_LOCK:
             _FULFILL_STATE['package_id'] = pkg_id
             # package_items already populated with 'queued' entries from stock-check — keep them
@@ -4444,16 +4504,18 @@ def _fulfill_worker():
                 return
 
             _fulfill_sql_log(
-                f"INSERT PackageItems: {item['ProductName']} ×{item['Quantity']}"
-                f" [Status={item_status}]"
+                f"INSERT INTO [PackageItems](PackageID,ProductID,ProductName,Quantity,Status)"
+                f" VALUES ({pkg_id},{item['ProductID']},"
+                f"N'{item['ProductName']}',{item['Quantity']},'{item_status}')"
             )
 
             if item_ok:
                 # Trigger trg_PackageItems_DecrStock fires automatically on INSERT
                 # and decrements Products.UnitsInStock. CK_UnitsInStock enforces >= 0.
                 _fulfill_sql_log(
-                    f"  → TRIGGER trg_PackageItems_DecrStock: "
-                    f"UnitsInStock -= {item['Quantity']} (ProductID={item['ProductID']})"
+                    f"-- TRIGGER trg_PackageItems_DecrStock:\n"
+                    f"UPDATE [Products] SET UnitsInStock = UnitsInStock - {item['Quantity']}"
+                    f" WHERE ProductID = {item['ProductID']}"
                 )
                 with _FULFILL_LOCK:
                     for pkg in _FULFILL_STATE['package_items']:
@@ -4474,9 +4536,6 @@ def _fulfill_worker():
                         if pkg['ProductID'] == item['ProductID'] and pkg['status'] == 'queued':
                             pkg['status'] = 'awaiting_restock'
                             break
-                _fulfill_sql_log(
-                    f"  ↳ SHORT: {item['ProductName']} — Status=awaiting_restock, trigger skipped"
-                )
                 if _step(phase='packing',
                          phase_label=f'⚠ {item["ProductName"]}: short stock — deferred'):
                     conn_tx.rollback(); conn_tx.close(); return
@@ -4619,7 +4678,7 @@ def _fulfill_worker():
 
         else:
             # Full pack — ship immediately
-            _fulfill_sql_log(f'BEGIN TRAN  -- shipping order {order_id}')
+            _fulfill_sql_log(f'BEGIN TRANSACTION  -- shipping order {order_id}')
             try:
                 conn_s = pyodbc.connect(conn_str, autocommit=False, timeout=15)
                 cur_s  = conn_s.cursor()
@@ -4647,7 +4706,8 @@ def _fulfill_worker():
                         _FULFILL_STATE['error'] = str(e)
                     return
                 _fulfill_sql_log(
-                    f"DELETE [Order Details] OrderID={order_id} ProductID={item['ProductID']}"
+                    f"DELETE FROM [Order Details]"
+                    f" WHERE OrderID = {order_id} AND ProductID = {item['ProductID']}"
                 )
                 with _FULFILL_LOCK:
                     _FULFILL_STATE['changes']['deleted_details'].append({
@@ -4667,7 +4727,10 @@ def _fulfill_worker():
                     "UPDATE Packages SET Status='shipped' WHERE PackageID=?", [pkg_id]
                 )
                 _fulfill_sql_log(
-                    f'UPDATE Orders ShippedDate=GETDATE() WHERE OrderID={order_id}'
+                    f'UPDATE [Orders] SET ShippedDate = GETDATE() WHERE OrderID = {order_id}'
+                )
+                _fulfill_sql_log(
+                    f"UPDATE [Packages] SET Status = 'shipped' WHERE PackageID = {pkg_id}"
                 )
                 _fulfill_sql_log('COMMIT')
                 conn_s.commit()

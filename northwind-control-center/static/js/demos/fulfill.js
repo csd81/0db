@@ -226,6 +226,16 @@ function updateProgress(s) {
     `Order ${s.orders_total ? s.order_idx + 1 : 0} / ${s.orders_total}`;
 }
 
+// Friendly display labels for joined column aliases
+const COL_LABEL = {
+  c_CompanyName: 'Customer', c_ContactName: 'CustContact', c_ContactTitle: 'CustTitle',
+  c_Phone: 'CustPhone', c_Fax: 'CustFax', c_City: 'CustCity', c_Country: 'CustCountry',
+  e_FirstName: 'EmpFirst', e_LastName: 'EmpLast', e_Title: 'EmpTitle',
+  e_TitleOfCourtesy: 'EmpTitle2', e_HomePhone: 'EmpPhone',
+  e_City: 'EmpCity', e_Country: 'EmpCountry',
+  s_CompanyName: 'Shipper', s_Phone: 'ShipperPhone',
+};
+
 // ── Orders table ──────────────────────────────────────────────────────────────
 function updateOrdersTable(s) {
   const tbl  = document.getElementById('orders-table');
@@ -235,7 +245,9 @@ function updateOrdersTable(s) {
   if (!s.order_cols || !s.order_cols.length) return;
 
   if (head.querySelectorAll('th').length !== s.order_cols.length) {
-    head.innerHTML = '<tr>' + s.order_cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+    head.innerHTML = '<tr>' + s.order_cols.map(c =>
+      `<th title="${esc(c)}">${esc(COL_LABEL[c] || c)}</th>`
+    ).join('') + '</tr>';
   }
 
   if (!s.orders || !s.orders.length) return;
