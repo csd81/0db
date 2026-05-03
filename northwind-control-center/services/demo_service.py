@@ -3255,10 +3255,11 @@ _FULFILL_STATE_DEFAULTS: dict = {
         'revenue':         0.0,
         'cogs':            0.0,
         'freight':         0.0,
-        'restock':         0.0,
         'salaries':        0.0,
         'overhead':        0.0,
+        'inventory':       0.0,   # restock cash spent (asset, not P&L expense)
     },
+    'current_month': None,   # 'YYYY-MM' of last order processed — triggers salary at month-end
     # DB changes (for reset)
     'changes': {
         'package_ids': [],
@@ -3330,7 +3331,8 @@ def _ledger_insert(conn_str: str, event_type: str, amount: float,
     """Insert one row into CompanyLedger and update the in-memory pnl dict."""
     pnl_key = {
         'revenue': 'revenue', 'cogs': 'cogs', 'freight': 'freight',
-        'restock': 'restock', 'salary': 'salaries', 'overhead': 'overhead',
+        'salary': 'salaries', 'overhead': 'overhead',
+        'restock': 'inventory',   # asset purchase — tracked separately, NOT deducted from net income
     }.get(event_type)
     if pnl_key:
         with _FULFILL_LOCK:
@@ -3607,8 +3609,8 @@ def _fulfill_ensure_tables(conn_str: str):
                        WHERE object_id=OBJECT_ID('Products') AND name='UnitCost')
         BEGIN
             ALTER TABLE Products ADD UnitCost MONEY NULL
-            UPDATE Products SET UnitCost = ROUND(UnitPrice * 0.60, 2)
         END
+        UPDATE Products SET UnitCost = ROUND(UnitPrice * 0.50, 2)
     """)
     conn.execute("""
         IF NOT EXISTS (SELECT 1 FROM sys.columns
@@ -3766,33 +3768,16 @@ def fulfill_start(conn_str: str):
         _ic_cur.execute("SELECT SettingValue FROM CompanySettings WHERE SettingKey='InitialCapital'")
         _ic_row = _ic_cur.fetchone()
         _ic = float(_ic_row[0]) if _ic_row else 500000.0
-
-        # Seed salary ledger rows for this run
-        _ic_cur.execute("SELECT EmployeeID, FirstName, LastName, MonthlySalary FROM Employees WHERE MonthlySalary IS NOT NULL")
-        _sal_rows = _ic_cur.fetchall()
-
-        # Seed overhead
-        _ic_cur.execute("SELECT SettingValue FROM CompanySettings WHERE SettingKey='MonthlyOverhead'")
-        _oh_row = _ic_cur.fetchone()
-        _oh = float(_oh_row[0]) if _oh_row else 5000.0
         _ic_conn.close()
     except Exception:
-        _ic = 500000.0; _sal_rows = []; _oh = 5000.0
+        _ic = 500000.0
 
     with _FULFILL_LOCK:
-        _FULFILL_STATE['orders']           = orders
-        _FULFILL_STATE['orders_total']     = len(orders)
-        _FULFILL_STATE['order_cols']       = _FULFILL_ORDER_COLS
+        _FULFILL_STATE['orders']                 = orders
+        _FULFILL_STATE['orders_total']           = len(orders)
+        _FULFILL_STATE['order_cols']             = _FULFILL_ORDER_COLS
         _FULFILL_STATE['pnl']['initial_capital'] = _ic
 
-    # Insert salary + overhead ledger rows (fire-and-forget, non-blocking)
-    def _seed_ledger():
-        for eid, fname, lname, sal in _sal_rows:
-            _ledger_insert(conn_str, 'salary', -float(sal),
-                           f'Monthly salary: {fname} {lname}', employee_id=eid)
-        _ledger_insert(conn_str, 'overhead', -_oh, 'Monthly overhead (rent/utilities)')
-
-    threading.Thread(target=_seed_ledger, daemon=True).start()
     threading.Thread(target=_fulfill_worker, daemon=True).start()
 
 
@@ -4153,7 +4138,7 @@ def _complete_and_ship_partial(p: dict, conn_str: str) -> bool:
         _pnl_cur.execute('SELECT UnitCost FROM Products WHERE ProductID=?',
                          [item['ProductID']])
         _uc = _pnl_cur.fetchone()
-        unit_cost = float(_uc[0]) if _uc and _uc[0] else price * 0.6
+        unit_cost = float(_uc[0]) if _uc and _uc[0] else price * 0.5
         cogs = round(unit_cost * qty, 2)
         _ledger_insert(conn_str, 'revenue', rev,
                        f"Revenue: {item['ProductName']} ×{qty}",
@@ -4245,6 +4230,28 @@ def _load_next_order(conn_str: str):
 
 
 # ── Worker ────────────────────────────────────────────────────────────────────
+
+def _pay_monthly_salaries(conn_str: str, month_label: str):
+    """Pay salaries + overhead for the given month label (e.g. '1996-07').
+    Inserts into CompanyLedger and updates the in-memory P&L."""
+    try:
+        conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
+        cur  = conn.cursor()
+        cur.execute("SELECT EmployeeID, FirstName, LastName, MonthlySalary FROM Employees"
+                    " WHERE MonthlySalary IS NOT NULL")
+        sal_rows = cur.fetchall()
+        cur.execute("SELECT SettingValue FROM CompanySettings WHERE SettingKey='MonthlyOverhead'")
+        oh_row = cur.fetchone()
+        oh = float(oh_row[0]) if oh_row else 5000.0
+        conn.close()
+    except Exception:
+        return
+    for eid, fname, lname, sal in sal_rows:
+        _ledger_insert(conn_str, 'salary', -float(sal),
+                       f'Monthly salary ({month_label}): {fname} {lname}', employee_id=eid)
+    _ledger_insert(conn_str, 'overhead', -oh,
+                   f'Monthly overhead ({month_label}): rent/utilities')
+
 
 def _fulfill_worker():
     with _FULFILL_LOCK:
@@ -4756,7 +4763,7 @@ def _fulfill_worker():
                 _pnl_cur.execute('SELECT UnitCost FROM Products WHERE ProductID=?',
                                  [item['ProductID']])
                 _uc = _pnl_cur.fetchone()
-                unit_cost = float(_uc[0]) if _uc and _uc[0] else price * 0.6
+                unit_cost = float(_uc[0]) if _uc and _uc[0] else price * 0.5
                 cogs = round(unit_cost * qty, 2)
                 _ledger_insert(conn_str, 'revenue', rev,
                                f"Revenue: {item['ProductName']} ×{qty}",
@@ -4793,6 +4800,23 @@ def _fulfill_worker():
         _load_next_order(conn_str)
         idx += 1
 
+        # Month-end salary: if the order's month changed, pay previous month's salaries
+        order_date = order.get('OrderDate') or ''
+        if isinstance(order_date, str):
+            order_month = order_date[:7]   # 'YYYY-MM'
+        else:
+            try:
+                order_month = order_date.strftime('%Y-%m')
+            except Exception:
+                order_month = ''
+        if order_month:
+            with _FULFILL_LOCK:
+                prev_month = _FULFILL_STATE.get('current_month')
+            if prev_month and prev_month != order_month:
+                _pay_monthly_salaries(conn_str, prev_month)
+            with _FULFILL_LOCK:
+                _FULFILL_STATE['current_month'] = order_month
+
         # Delivery check runs after every order (tick-based: each order = 1 tick).
         # Refills queued this iteration start at ticks_remaining=3, so they won't
         # arrive until 3 orders later — the transit delay is enforced by the counter.
@@ -4813,6 +4837,12 @@ def _fulfill_worker():
     for pp in pending_partials:
         if _complete_and_ship_partial(pp, conn_str):
             return
+
+    # Pay salaries for the final (partial) month
+    with _FULFILL_LOCK:
+        last_month = _FULFILL_STATE.get('current_month')
+    if last_month:
+        _pay_monthly_salaries(conn_str, last_month)
 
     with _FULFILL_LOCK:
         _FULFILL_STATE['phase']       = 'done'

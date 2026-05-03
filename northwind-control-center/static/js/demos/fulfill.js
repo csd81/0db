@@ -541,11 +541,11 @@ function updatePnl(s) {
   const revenue     = p.revenue    || 0;
   const cogs        = p.cogs       || 0;
   const freight     = p.freight    || 0;
-  const restock     = p.restock    || 0;
+  const inventory   = p.inventory  || 0;   // asset purchase — not deducted from net income
   const salaries    = p.salaries   || 0;
   const overhead    = p.overhead   || 0;
   const grossProfit = revenue - cogs;
-  const netIncome   = revenue - cogs - freight - restock - salaries - overhead;
+  const netIncome   = revenue - cogs - freight - salaries - overhead;
   const netCapital  = ic + netIncome;
 
   const fmt = v => '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -558,21 +558,23 @@ function updatePnl(s) {
     ['= Gross Profit', grossProfit, cls(grossProfit)],
     ['─────────────────────────', null, ''],
     ['− Freight',      -freight,    'text-danger'],
-    ['− Restock',      -restock,    'text-danger'],
-    ['− Salaries',     -salaries,   'text-danger'],
-    ['− Overhead',     -overhead,   'text-danger'],
+    ['− Salaries',     -salaries,   salaries > 0 ? 'text-danger' : 'text-muted'],
+    ['− Overhead',     -overhead,   overhead > 0 ? 'text-danger' : 'text-muted'],
     ['═ Net Income',   netIncome,   cls(netIncome)],
     ['─────────────────────────', null, ''],
-    ['Initial Capital', ic,         'text-muted'],
-    ['Net Capital',     netCapital, cls(netCapital)],
+    ['Initial Capital',    ic,        'text-muted'],
+    ['Net Capital',        netCapital, cls(netCapital)],
+    ['─────────────────────────', null, ''],
+    ['∗ Inventory Purchased', inventory, 'text-info'],
   ];
 
   document.getElementById('pnl-body').innerHTML = rows.map(([label, val, klass]) => {
     if (val === null) return `<tr><td colspan="2" class="text-muted py-0" style="font-size:.65rem;">${label}</td></tr>`;
     const bold = label.startsWith('═') || label === 'Net Capital' ? 'fw-bold' : '';
+    const noSign = label.startsWith('∗');
     return `<tr class="${bold}">
       <td class="py-0 text-muted">${label}</td>
-      <td class="py-0 text-end ${klass}">${sign(val)}${fmt(val)}</td>
+      <td class="py-0 text-end ${klass}">${noSign ? '' : sign(val)}${fmt(val)}</td>
     </tr>`;
   }).join('');
 
