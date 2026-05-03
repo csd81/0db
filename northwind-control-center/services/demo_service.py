@@ -3193,8 +3193,18 @@ _FULFILL_ORDER_COLS = [
     'ShipVia', 'Freight', 'ShipName', 'ShipAddress', 'ShipCity',
     'ShipPostalCode', 'ShipCountry',
 ]
-# Columns shown in the Orders table and animated — hides OrderDate (kept for internal month tracking)
-_FULFILL_ORDER_DISPLAY_COLS = [c for c in _FULFILL_ORDER_COLS if c not in ('OrderDate',)]
+# Display columns: FK IDs replaced with resolved-name placeholders
+_FULFILL_ORDER_DISPLAY_COLS = [
+    'OrderID', 'Customer', 'Employee', 'Shipper',
+    'Freight', 'ShipName', 'ShipAddress', 'ShipCity', 'ShipPostalCode', 'ShipCountry',
+]
+# Maps each display column to the actual Orders column animated during reading
+_FULFILL_ORDER_COL_MAP = {
+    'OrderID': 'OrderID', 'Customer': 'CustomerID', 'Employee': 'EmployeeID',
+    'Shipper': 'ShipVia', 'Freight': 'Freight', 'ShipName': 'ShipName',
+    'ShipAddress': 'ShipAddress', 'ShipCity': 'ShipCity',
+    'ShipPostalCode': 'ShipPostalCode', 'ShipCountry': 'ShipCountry',
+}
 # Lean FK-table column sets — only what's needed to fill context cards
 _FULFILL_CUSTOMER_COLS = ['CompanyName', 'ContactName', 'Phone']
 _FULFILL_EMPLOYEE_COLS = ['FirstName', 'LastName', 'Title']
@@ -3203,7 +3213,7 @@ _FULFILL_PRODUCT_COLS  = ['ProductID', 'ProductName', 'UnitPrice', 'UnitsInStock
 _FULFILL_SUPPLIER_COLS = ['SupplierID', 'CompanyName', 'ContactName', 'Phone']
 # Orders fields that flow onto the shipping label (package meta)
 _FULFILL_META_FIELDS = {
-    'OrderID', 'OrderDate', 'Freight',
+    'OrderID', 'Freight',
     'ShipName', 'ShipAddress', 'ShipCity', 'ShipPostalCode', 'ShipCountry',
 }
 
@@ -3716,7 +3726,8 @@ def fulfill_start(conn_str: str):
             ORDER BY OrderID
         """)
         orders = [
-            {col: _fulfill_fix_val(r[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)}
+            {**{col: _fulfill_fix_val(r[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)},
+             'Customer': None, 'Employee': None, 'Shipper': None}
             for r in cur.fetchall()
         ]
         setup.close()
@@ -4184,8 +4195,8 @@ def _load_next_order(conn_str: str):
         row = cur.fetchone()
         conn.close()
         if row:
-            order = {col: _fulfill_fix_val(row[i])
-                     for i, col in enumerate(_FULFILL_ORDER_COLS)}
+            order = {**{col: _fulfill_fix_val(row[i]) for i, col in enumerate(_FULFILL_ORDER_COLS)},
+                     'Customer': None, 'Employee': None, 'Shipper': None}
             with _FULFILL_LOCK:
                 _FULFILL_STATE['orders'].append(order)
                 _FULFILL_STATE['orders_total'] = len(_FULFILL_STATE['orders'])
@@ -4247,7 +4258,12 @@ def _fulfill_worker():
                 'item_idx':      -1,
                 'package_id':    None,
                 'package_items': [],
-                'package_meta':  {},
+                # Pre-initialize package_meta with insertion-ordered keys for the label
+                'package_meta':  {
+                    'OrderID': None, 'Customer': None, 'Employee': None, 'Shipper': None,
+                    'Freight': None, 'ShipName': None, 'ShipAddress': None,
+                    'ShipCity': None, 'ShipPostalCode': None, 'ShipCountry': None,
+                },
                 'customer_card': {},
                 'employee_card': {},
                 'shipper_card':  {},
@@ -4268,34 +4284,32 @@ def _fulfill_worker():
             f"WHERE OrderID = {order_id}"
         )
 
-        # OrderDate: copy to package meta silently (not animated — internal tracking only)
-        with _FULFILL_LOCK:
-            od = order.get('OrderDate')
-            if od is not None and od != '':
-                _FULFILL_STATE['package_meta']['OrderDate'] = od
-
-        # ── Animate reading each displayed Orders column ──
-        for col_idx, col in enumerate(_FULFILL_ORDER_DISPLAY_COLS):
+        # ── Animate reading each Orders column; use col map so FK IDs show in phase label ──
+        for col_idx, display_col in enumerate(_FULFILL_ORDER_DISPLAY_COLS):
+            actual_col = _FULFILL_ORDER_COL_MAP.get(display_col, display_col)
             with _FULFILL_LOCK:
-                if col in _FULFILL_META_FIELDS:
-                    val = order.get(col)
+                if actual_col in _FULFILL_META_FIELDS:
+                    val = order.get(actual_col)
                     if val is not None and val != '':
-                        _FULFILL_STATE['package_meta'][col] = val
+                        _FULFILL_STATE['package_meta'][actual_col] = val
                 new_meta = dict(_FULFILL_STATE['package_meta'])
 
             if _step(phase='reading_field',
-                     phase_label=f'Orders.{col} = {order.get(col, "")}',
+                     phase_label=f'Orders.{actual_col} = {order.get(actual_col, "")}',
                      order_col_idx=col_idx,
                      sub_table=None,
                      package_meta=new_meta):
                 return
 
-        # ── Resolve FK IDs: scan Customers → Employee → Shipper tables ──
+        # ── Resolve FK IDs: scan Customers → Employees → Shippers ──
         if not _scan_subtable(conn_str, 'Customers', 'CustomerID',
                               order['CustomerID'], _FULFILL_CUSTOMER_COLS, 'customer_card'):
             return
         with _FULFILL_LOCK:
             cust_name = _FULFILL_STATE.get('customer_card', {}).get('CompanyName', '')
+            _FULFILL_STATE['package_meta']['Customer'] = cust_name
+            if idx < len(_FULFILL_STATE['orders']):
+                _FULFILL_STATE['orders'][idx]['Customer'] = cust_name
             for q in _FULFILL_STATE['order_queue']:
                 if q['order_id'] == order_id and q.get('type') != 'refill':
                     q['customer'] = cust_name
@@ -4304,9 +4318,21 @@ def _fulfill_worker():
         if not _scan_subtable(conn_str, 'Employees', 'EmployeeID',
                               order['EmployeeID'], _FULFILL_EMPLOYEE_COLS, 'employee_card'):
             return
+        with _FULFILL_LOCK:
+            emp = _FULFILL_STATE.get('employee_card', {})
+            emp_name = f"{emp.get('FirstName', '') or ''} {emp.get('LastName', '') or ''}".strip()
+            _FULFILL_STATE['package_meta']['Employee'] = emp_name
+            if idx < len(_FULFILL_STATE['orders']):
+                _FULFILL_STATE['orders'][idx]['Employee'] = emp_name
+
         if not _scan_subtable(conn_str, 'Shippers', 'ShipperID',
                               order['ShipVia'], _FULFILL_SHIPPER_COLS, 'shipper_card'):
             return
+        with _FULFILL_LOCK:
+            ship_name = _FULFILL_STATE.get('shipper_card', {}).get('CompanyName', '')
+            _FULFILL_STATE['package_meta']['Shipper'] = ship_name
+            if idx < len(_FULFILL_STATE['orders']):
+                _FULFILL_STATE['orders'][idx]['Shipper'] = ship_name
 
         # ── Load Order Details rows ──
         _fulfill_sql_log(

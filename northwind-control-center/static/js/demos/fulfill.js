@@ -242,7 +242,10 @@ function updateOrdersTable(s) {
   }
 
   if (!s.orders || !s.orders.length) return;
-  if (body.querySelectorAll('tr').length !== s.orders.length) {
+  // Rebuild when content changes (resolved names fill in after FK scans)
+  const bodyHash = s.orders.map(o => s.order_cols.map(c => o[c] ?? '').join('|')).join('\n');
+  if (body.dataset.hash !== bodyHash) {
+    body.dataset.hash = bodyHash;
     body.innerHTML = s.orders.map((o, ri) =>
       '<tr data-ri="' + ri + '">' +
       s.order_cols.map(c => `<td>${fmt(o[c])}</td>`).join('') +
