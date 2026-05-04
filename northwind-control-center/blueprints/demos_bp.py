@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request, jsonify, current_app, Res
 from auth import login_required
 import meta_db
 from services import demo_service
+from services import graph_routing_service as grs
 
 demos_bp = Blueprint("demos", __name__, url_prefix="/demos")
 
@@ -406,4 +407,47 @@ def fulfill_reset():
 @login_required
 def fulfill_step():
     demo_service.fulfill_step()
+    return jsonify({'ok': True})
+
+
+# ── Graph Routing ──────────────────────────────────────────────────────────────
+
+@demos_bp.route('/graph_routing')
+@login_required
+def graph_routing_page():
+    return render_template('demos/graph_routing.html')
+
+
+@demos_bp.route('/graph_routing/state')
+@login_required
+def graph_routing_state():
+    return Response(
+        json.dumps(grs.graph_routing_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/graph_routing/start', methods=['POST'])
+@login_required
+def graph_routing_start():
+    data     = request.json or {}
+    start    = data.get('start', 'Paris')
+    end      = data.get('end', 'Berlin')
+    conn_str = _build_conn_str(current_app.config)
+    grs.graph_routing_start(conn_str, start, end)
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/graph_routing/step', methods=['POST'])
+@login_required
+def graph_routing_step():
+    grs.graph_routing_step()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/graph_routing/reset', methods=['POST'])
+@login_required
+def graph_routing_reset():
+    conn_str = _build_conn_str(current_app.config)
+    grs.graph_routing_reset(conn_str)
     return jsonify({'ok': True})
