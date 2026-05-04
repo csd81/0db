@@ -241,6 +241,11 @@ function applyStep(step, cityCoords) {
         const tc = cityCoords[step.target];
         if (tc) ensureMarker(step.target, tc, COLORS.frontier, 4);
     }
+    else if (step.type === 'check_node') {
+        // Euler check: odd-degree city — flash red
+        const c = cityCoords[step.node];
+        if (c) ensureMarker(step.node, c, '#ff2255', 6);
+    }
     else if (step.type === 'negative_relax') {
         const tc = cityCoords[step.target];
         if (tc) ensureMarker(step.target, tc, '#ff2255', 5);
@@ -253,8 +258,18 @@ function applyStep(step, cityCoords) {
     }
 }
 
+// ── Result panel (analysis algorithms) ───────────────────────────────────────
+function setResultPanel(text) {
+    const p = document.getElementById('result-panel');
+    if (!p) return;
+    p.textContent = text || '';
+    p.classList.toggle('d-none', !text);
+}
+
 // ── Completion renderer — branches on result_type ─────────────────────────────
 function _onComplete(data, cityCoords, solveMs) {
+    setBadge('done', 'success');
+
     if (data.result_type === 'tree') {
         renderTreeEdges(data.tree_edges || [], cityCoords);
         const edgeCount = (data.tree_edges || []).length;
@@ -262,14 +277,26 @@ function _onComplete(data, cityCoords, solveMs) {
         document.getElementById('m-dist').textContent    = (data.total_km ?? '—').toLocaleString();
         document.getElementById('m-hops').textContent    = edgeCount;
         document.getElementById('m-visited').textContent = data.n_visited ?? '—';
+        setResultPanel('');
+
+    } else if (data.result_type === 'analysis') {
+        const a = data.analysis || {};
+        setLabel(a.verdict || 'Analysis complete');
+        setResultPanel(a.detail || '');
+        document.getElementById('m-dist').textContent    = '—';
+        document.getElementById('m-hops').textContent    = a.n_odd != null ? `${a.n_odd} odd` : '—';
+        document.getElementById('m-visited').textContent = data.n_visited ?? '—';
+
     } else {
         renderFinalPath(data.path || [], cityCoords);
         const confStr = data.confidence != null
             ? ` · ${(data.confidence * 100).toFixed(1)}% reliable` : '';
-        setLabel(`${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km · ${solveMs} ms${confStr}`);
+        const isTsp = data.algorithm === 'tsp_approx';
+        const suffix = isTsp ? ' (≤2×OPT)' : confStr;
+        setLabel(`${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km · ${solveMs} ms${suffix}`);
         updateMetrics(data);
+        setResultPanel('');
     }
-    setBadge('done', 'success');
 }
 
 // ── Main run ──────────────────────────────────────────────────────────────────
@@ -356,6 +383,7 @@ function resetLab() {
         document.getElementById(id).textContent = '—');
     setBadge('idle', 'secondary');
     setLabel('—');
+    setResultPanel('');
 }
 
 // ── Button handlers ───────────────────────────────────────────────────────────

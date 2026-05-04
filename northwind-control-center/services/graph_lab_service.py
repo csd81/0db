@@ -23,6 +23,7 @@ from graph_algorithms import (
     bfs, dfs, dijkstra, astar,
     bellman_ford, reliability, floyd_warshall,
     kruskal, prim,
+    euler_check, tsp_approx,
 )
 
 _ASTAR_EPSILON = 1.1
@@ -43,6 +44,8 @@ _ALGO_RUNNERS: dict = {
     'floyd_warshall': floyd_warshall.run,
     'kruskal':        kruskal.run,
     'prim':           prim.run,
+    'euler_check':    euler_check.run,
+    'tsp_approx':     tsp_approx.run,
 }
 
 MAX_ANIM_STEPS = 300
@@ -161,6 +164,34 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         ),
         'phase': 5,
     },
+    'euler_check': {
+        'label':         'Euler Check',
+        'problem':       'connectivity',
+        'needs_reduced': True,
+        'needs_dst':     False,
+        'weight_attr':   None,
+        'description':   (
+            'Counts odd-degree cities. '
+            '0 odd → Euler Circuit (every road once, back to start). '
+            '2 odd → Euler Path (every road once, start ≠ end). '
+            'Otherwise: neither — the Königsberg bridge problem.'
+        ),
+        'phase': 6,
+    },
+    'tsp_approx': {
+        'label':         'TSP 2-Approx',
+        'problem':       'connectivity',
+        'needs_reduced': True,
+        'needs_dst':     False,
+        'weight_attr':   'weight',
+        'description':   (
+            'MST-based 2-approximation for the Traveling Salesman Problem (NP-complete). '
+            'Builds MST, traverses via DFS preorder — visits all cities once. '
+            f'Guaranteed ≤ 2× the optimal Hamilton cycle. '
+            f'Runs on the {REDUCED_N}-city graph.'
+        ),
+        'phase': 6,
+    },
 }
 
 PROBLEM_REGISTRY: dict[str, dict] = {
@@ -183,6 +214,10 @@ PROBLEM_REGISTRY: dict[str, dict] = {
     'mst': {
         'label':      'Spanning Tree Design',
         'algorithms': ['kruskal', 'prim'],
+    },
+    'connectivity': {
+        'label':      'Connectivity Analysis',
+        'algorithms': ['euler_check', 'tsp_approx'],
     },
 }
 
@@ -220,13 +255,20 @@ def _path_to_geo(G: nx.Graph, path: list[str], city_by_name: dict) -> list[dict]
     actual_km = 0.0
     for i, name in enumerate(path):
         ferry_hop = ocean_hop = False
-        if i > 0:
-            edge       = G[path[i - 1]][name]
-            actual_km += edge.get('dist_km', 0.0)
-            ferry_hop  = edge.get('ferry', False)
-            ocean_hop  = edge.get('ocean', False)
         nd   = G.nodes[name]
         meta = city_by_name.get(name, {})
+        if i > 0:
+            prev = path[i - 1]
+            if G.has_edge(prev, name):
+                edge       = G[prev][name]
+                actual_km += edge.get('dist_km', 0.0)
+                ferry_hop  = edge.get('ferry', False)
+                ocean_hop  = edge.get('ocean', False)
+            else:
+                # TSP shortcut: no direct road — use haversine as km estimate
+                pnd        = G.nodes[prev]
+                actual_km += haversine_km(pnd['lat'], pnd['lng'],
+                                          nd['lat'],  nd['lng'])
         result.append({
             'name':            name,
             'country':         meta.get('country', ''),
@@ -375,15 +417,40 @@ def solve(conn_str: str, problem: str, algorithm: str,
                 'city_coords': _city_coords_for_steps(G, throttled, all_cities, city_by_name),
             }
 
+        # ── Analysis result (Euler check, planarity, matrix, …) ──────
+        if terminal.type == 'found_analysis':
+            analysis   = terminal.flags
+            all_cities = [s.node for s in visit_steps if s.node]
+            return {
+                **base,
+                'result_type': 'analysis',
+                'path':        [],
+                'tree_edges':  [],
+                'total_km':    0,
+                'total_cost':  0,
+                'hop_count':   0,
+                'confidence':  None,
+                'analysis':    analysis,
+                'city_coords': _city_coords_for_steps(G, throttled, all_cities, city_by_name),
+            }
+
         # ── Path result (navigation / traversal algorithms) ───────────
         path_names = terminal.flags.get('path', [])
         if not path_names:
             return {'error': f'No route found: {src!r} → {dst!r}'}
 
+        def _edge_val(u: str, v: str, attr: str, fallback: float = 0.0) -> float:
+            if G.has_edge(u, v):
+                return G[u][v].get(attr, fallback)
+            if attr == 'dist_km':
+                nu, nv = G.nodes[u], G.nodes[v]
+                return haversine_km(nu['lat'], nu['lng'], nv['lat'], nv['lng'])
+            return fallback
+
         path_geo   = _path_to_geo(G, path_names, city_by_name)
-        total_km   = sum(G[path_names[i]][path_names[i + 1]].get('dist_km', 0.0)
+        total_km   = sum(_edge_val(path_names[i], path_names[i + 1], 'dist_km')
                          for i in range(len(path_names) - 1))
-        total_cost = sum(G[path_names[i]][path_names[i + 1]].get(weight_attr, 0.0)
+        total_cost = sum(_edge_val(path_names[i], path_names[i + 1], weight_attr)
                          for i in range(len(path_names) - 1))
         confidence = (round(math.exp(-total_cost), 4)
                       if algorithm == 'reliability' else None)
