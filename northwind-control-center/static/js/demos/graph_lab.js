@@ -253,7 +253,8 @@ async function runLab() {
         // Phase 0 fallback — no animation, just draw the path
         renderFinalPath(data.path, cityCoords);
         setBadge('done', 'success');
-        setLabel(data.warnings?.[0] || `${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km`);
+        const fb_conf = data.confidence != null ? ` · ${(data.confidence * 100).toFixed(1)}% reliable` : '';
+        setLabel(data.warnings?.[0] || `${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km${fb_conf}`);
         updateMetrics(data);
         return;
     }
@@ -266,7 +267,9 @@ async function runLab() {
             playTimer = null;
             renderFinalPath(data.path, cityCoords);
             setBadge('done', 'success');
-            setLabel(`${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km · ${solveMs} ms`);
+            const confStr = data.confidence != null
+                ? ` · ${(data.confidence * 100).toFixed(1)}% reliable` : '';
+            setLabel(`${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km · ${solveMs} ms${confStr}`);
             updateMetrics(data);
             return;
         }

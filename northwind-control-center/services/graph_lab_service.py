@@ -16,7 +16,7 @@ from graph_algorithms.common import (
     get_full_graph, get_reduced_graph,
     haversine_km, REDUCED_N,
 )
-from graph_algorithms import bfs, dfs, dijkstra, astar, bellman_ford
+from graph_algorithms import bfs, dfs, dijkstra, astar, bellman_ford, reliability
 
 _ASTAR_EPSILON = 1.1
 
@@ -30,6 +30,7 @@ _ALGO_RUNNERS: dict = {
     'dijkstra':     dijkstra.run,
     'astar':        astar.run,
     'bellman_ford': bellman_ford.run,
+    'reliability':  reliability.run,
 }
 
 # Maximum animation frames returned to the frontend.
@@ -270,12 +271,15 @@ def solve(conn_str: str, problem: str, algorithm: str,
         throttled = _throttle(visit_steps, MAX_ANIM_STEPS)
         throttled.append(terminal)
 
+        import math as _math
         path_geo   = _path_to_geo(G, path_names, city_by_name)
         total_km   = sum(G[path_names[i]][path_names[i + 1]].get('dist_km', 0.0)
                          for i in range(len(path_names) - 1))
         total_cost = sum(G[path_names[i]][path_names[i + 1]].get(weight_attr, 0.0)
                          for i in range(len(path_names) - 1))
         n_visited  = sum(1 for s in visit_steps if s.type == 'visit_node')
+        confidence = (round(_math.exp(-total_cost), 4)
+                      if algorithm == 'reliability' else None)
 
         return {
             'algorithm':    algorithm,
@@ -288,7 +292,7 @@ def solve(conn_str: str, problem: str, algorithm: str,
             'total_cost':   round(total_cost, 3),
             'hop_count':    len(path_names) - 1,
             'n_visited':    n_visited,
-            'confidence':   None,
+            'confidence':   confidence,
             'graph_mode':   'reduced' if meta['needs_reduced'] else 'full',
             'n_nodes':      G.number_of_nodes(),
             'n_edges':      G.number_of_edges(),
