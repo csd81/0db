@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}City Importance — PageRank on Afro-Eurasia Road Network{% endblock %}
+
+{% block content %}
+<style>
+#map-container { height: 560px; border-radius: .375rem; background: #1a1a2e; }
+#loading-overlay {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(0,0,0,.55); border-radius: .375rem;
+  z-index: 800; font-size: 1rem; color: #fff;
+}
+#rank-table { font-size: .78rem; }
+#rank-table td, #rank-table th { padding: .2rem .4rem; }
+.pr-bar {
+  display: inline-block; height: 6px; background: #ffd700;
+  border-radius: 3px; vertical-align: middle;
+}
+</style>
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <h5 class="mb-0">City Importance — PageRank</h5>
+  <span id="stats-badge" class="badge bg-secondary" style="font-size:.75rem">loading…</span>
+</div>
+<p class="text-muted small mb-3">
+  PageRank on the <strong>unweighted</strong> Afro-Eurasia road graph.
+  Cities that bridge continents or sit at geographic choke-points rank highest —
+  not necessarily the most populous cities, but the most <em>structurally central</em> ones.
+</p>
+
+<div class="row g-3">
+  <!-- Map -->
+  <div class="col-lg-8">
+    <div style="position:relative">
+      <div id="map-container"></div>
+      <div id="loading-overlay"><div class="spinner-border spinner-border-sm me-2"></div>Computing PageRank…</div>
+    </div>
+
+    <!-- Legend -->
+    <div class="card bg-dark text-light mt-2">
+      <div class="card-body p-2 small">
+        <div class="d-flex flex-wrap gap-3">
+          <span><span style="color:#ffd700;font-size:1.1rem">●</span> Top 1% — continental bridges</span>
+          <span><span style="color:#fd7e14;font-size:1rem">●</span> Top 5%</span>
+          <span><span style="color:#0dcaf0;font-size:.9rem">●</span> Top 20%</span>
+          <span><span style="color:#adb5bd;font-size:.8rem">●</span> Rest</span>
+          <span class="ms-auto text-muted">Circle size ∝ PageRank score</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar ranking -->
+  <div class="col-lg-4">
+    <div class="card bg-dark text-light h-100">
+      <div class="card-header py-1 px-2 small fw-semibold">
+        Top 25 Cities by PageRank
+      </div>
+      <div class="card-body p-0" style="overflow-y:auto;max-height:620px">
+        <table class="table table-dark table-sm mb-0" id="rank-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>City</th>
+              <th>CC</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="rank-body">
+            <tr><td colspan="4" class="text-muted text-center py-3">loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/demos/graph_pagerank.js') }}"></script>
+{% endblock %}

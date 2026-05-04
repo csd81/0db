@@ -8,6 +8,7 @@ from auth import login_required
 import meta_db
 from services import demo_service
 from services import graph_routing_service as grs
+from services import graph_pagerank_service as gprs
 
 demos_bp = Blueprint("demos", __name__, url_prefix="/demos")
 
@@ -451,3 +452,21 @@ def graph_routing_reset():
     conn_str = _build_conn_str(current_app.config)
     grs.graph_routing_reset(conn_str)
     return jsonify({'ok': True})
+
+
+# ── Graph PageRank ─────────────────────────────────────────────────────────────
+
+@demos_bp.route('/graph_pagerank')
+@login_required
+def graph_pagerank_page():
+    return render_template('demos/graph_pagerank.html')
+
+
+@demos_bp.route('/graph_pagerank/data')
+@login_required
+def graph_pagerank_data():
+    try:
+        conn_str = _build_conn_str(current_app.config)
+        return jsonify(gprs.get_pagerank_data(conn_str))
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500

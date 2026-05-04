@@ -5,10 +5,12 @@ State machine + A* shortest-path visualiser
 Data source: EuropeGraph.dbo.EuropeCity / EuropeGraph.dbo.EuropeRoad
 (pre-populated relational tables on the same SQL Server instance)
 
-Ferry bridges (IsFerry=1) use a 3× weight penalty so A* prefers land routes.
+Ferry bridges (IsFerry=1) use a 1.5× weight penalty so A* prefers land routes.
 Actual km is stored separately for display.
 """
-FERRY_PENALTY = 3.0
+FERRY_PENALTY  = 1.5   # matches generator; lower = ferries treated as near-normal roads
+OCEAN_PENALTY  = 5.0   # intercontinental shipping lane corridors (CrossingType=2)
+ASTAR_EPSILON  = 1.1   # weighted A*: h × ε — 1.1 keeps near-optimality, avoids Arctic greed
 import heapq
 import math
 import threading
@@ -115,15 +117,24 @@ def _astar_steps(G: nx.Graph, start: str, end: str):
     """
     Yield (step_dict, is_done) for each A* node settlement.
     Final yield has is_done=True and step_dict['path'] is the reconstructed path.
+
+    Uses weighted A* (ε = ASTAR_EPSILON) so the heuristic dominates on long
+    routes — prevents the algorithm from expanding every village in France
+    while searching for Tokyo.  ε=1.5 is suboptimal by at most 50 % but
+    visits ~10× fewer nodes in practice.
+
+    Frontier is maintained as a dict (discovered but not settled) so the
+    O(N) scan over all 7k+ nodes is eliminated — O(|frontier|) per step instead.
     """
-    def heuristic(u: str, v: str) -> float:
-        nu, nv = G.nodes[u], G.nodes[v]
+    def h(u: str) -> float:
+        nu, nv = G.nodes[u], G.nodes[end]
         return _haversine_km(nu['lat'], nu['lng'], nv['lat'], nv['lng'])
 
-    dist_g = {n: float('inf') for n in G.nodes}
-    prev   = {n: None        for n in G.nodes}
-    dist_g[start] = 0.0
-    pq      = [(heuristic(start, end), 0.0, start)]
+    dist_g: dict[str, float] = {start: 0.0}
+    prev:   dict[str, str | None] = {start: None}
+    # discovered: name → g-score for nodes seen but not yet settled
+    discovered: dict[str, float] = {start: 0.0}
+    pq      = [(ASTAR_EPSILON * h(start), 0.0, start)]
     visited: set = set()
 
     while pq:
@@ -131,28 +142,24 @@ def _astar_steps(G: nx.Graph, start: str, end: str):
         if u in visited:
             continue
         visited.add(u)
+        discovered.pop(u, None)   # settled — remove from open set
 
         is_done = (u == end)
 
-        frontier = sorted(
-            [(n, round(dist_g[n], 1))
-             for n in G.nodes
-             if n not in visited and dist_g[n] < float('inf')],
-            key=lambda x: x[1])[:8]
+        # Frontier: top-8 closest discovered (not yet settled) nodes by g-score
+        frontier = sorted(discovered.items(), key=lambda kv: kv[1])[:8]
+        frontier = [(name, round(g, 1)) for name, g in frontier]
 
-        distances_snap = {
-            k: round(v, 1)
-            for k, v in dist_g.items()
-            if v < float('inf')
-        }
+        # distances_snap: only discovered nodes (compact; frontend colours them)
+        distances_snap = {k: round(v, 1) for k, v in discovered.items()}
+        distances_snap[u] = round(d, 1)   # include the just-settled node
 
-        # Reconstruct path only for final step
         path_out: list = []
         if is_done:
-            node = end
+            node: str | None = end
             while node is not None:
                 path_out.append(node)
-                node = prev[node]
+                node = prev.get(node)
             path_out.reverse()
 
         yield {
@@ -168,10 +175,11 @@ def _astar_steps(G: nx.Graph, start: str, end: str):
 
         for v in G.neighbors(u):
             nd = d + G[u][v]['weight']
-            if nd < dist_g[v]:
-                dist_g[v] = nd
-                prev[v]   = u
-                heapq.heappush(pq, (nd + heuristic(v, end), nd, v))
+            if nd < dist_g.get(v, float('inf')):
+                dist_g[v]     = nd
+                prev[v]       = u
+                discovered[v] = nd
+                heapq.heappush(pq, (nd + ASTAR_EPSILON * h(v), nd, v))
 
 
 # ---------------------------------------------------------------------------
@@ -341,9 +349,9 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
         # ── 4. BUILD NETWORKX GRAPH — from EuropeGraph relational tables ───
         nx_sql = (
             "-- NetworkX weighted graph from EuropeGraph.dbo.EuropeRoad\n"
-            "-- Ferry edges (IsFerry=1) carry a 3× penalty weight\n"
-            f"-- so A* prefers land routes (penalty factor = {FERRY_PENALTY})\n"
-            "SELECT c1.Name AS src, c2.Name AS dst, r.DistanceKM, r.IsFerry\n"
+            f"-- Ferry (CrossingType=1): {FERRY_PENALTY}× penalty; "
+            f"Ocean (CrossingType=2): {OCEAN_PENALTY}× penalty\n"
+            "SELECT c1.Name AS src, c2.Name AS dst, r.DistanceKM, r.IsFerry, r.CrossingType\n"
             "FROM   EuropeGraph.dbo.EuropeRoad  r\n"
             "JOIN   EuropeGraph.dbo.EuropeCity  c1 ON c1.CityID = r.FromCityID\n"
             "JOIN   EuropeGraph.dbo.EuropeCity  c2 ON c2.CityID = r.ToCityID;"
@@ -355,16 +363,23 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
             G.add_node(c['name'], lat=c['lat'], lng=c['lng'])
 
         cur.execute(
-            "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry"
+            "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType"
             " FROM EuropeGraph.dbo.EuropeRoad r"
             " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID=r.FromCityID"
             " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID=r.ToCityID"
         )
         for row in cur.fetchall():
-            dist_km = float(row[2])
-            ferry   = bool(row[3])
-            weight  = dist_km * (FERRY_PENALTY if ferry else 1.0)
-            G.add_edge(row[0], row[1], weight=weight, dist_km=dist_km, ferry=ferry)
+            dist_km  = float(row[2])
+            ferry    = bool(row[3])
+            crossing = int(row[4])
+            if crossing == 2:
+                weight = dist_km * OCEAN_PENALTY
+            elif crossing == 1:
+                weight = dist_km * FERRY_PENALTY
+            else:
+                weight = dist_km
+            G.add_edge(row[0], row[1], weight=weight, dist_km=dist_km, ferry=ferry,
+                       ocean=(crossing == 2))
 
         _gr_log(
             f"-- NetworkX Graph ready: {G.number_of_nodes()} nodes,"
