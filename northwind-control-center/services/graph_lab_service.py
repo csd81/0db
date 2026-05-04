@@ -16,7 +16,7 @@ from graph_algorithms.common import (
     get_full_graph, get_reduced_graph,
     haversine_km, REDUCED_N,
 )
-from graph_algorithms import bfs, dfs, dijkstra, astar, bellman_ford, reliability
+from graph_algorithms import bfs, dfs, dijkstra, astar, bellman_ford, reliability, floyd_warshall
 
 _ASTAR_EPSILON = 1.1
 
@@ -25,12 +25,13 @@ _ASTAR_EPSILON = 1.1
 # objects; the final event is always 'found_path' or 'no_path'.
 
 _ALGO_RUNNERS: dict = {
-    'bfs':          bfs.run,
-    'dfs':          dfs.run,
-    'dijkstra':     dijkstra.run,
-    'astar':        astar.run,
-    'bellman_ford': bellman_ford.run,
-    'reliability':  reliability.run,
+    'bfs':           bfs.run,
+    'dfs':           dfs.run,
+    'dijkstra':      dijkstra.run,
+    'astar':         astar.run,
+    'bellman_ford':  bellman_ford.run,
+    'reliability':   reliability.run,
+    'floyd_warshall': floyd_warshall.run,
 }
 
 # Maximum animation frames returned to the frontend.
@@ -277,7 +278,8 @@ def solve(conn_str: str, problem: str, algorithm: str,
                          for i in range(len(path_names) - 1))
         total_cost = sum(G[path_names[i]][path_names[i + 1]].get(weight_attr, 0.0)
                          for i in range(len(path_names) - 1))
-        n_visited  = sum(1 for s in visit_steps if s.type == 'visit_node')
+        n_visited  = sum(1 for s in visit_steps
+                         if s.type in ('visit_node', 'pivot_node'))
         confidence = (round(_math.exp(-total_cost), 4)
                       if algorithm == 'reliability' else None)
 

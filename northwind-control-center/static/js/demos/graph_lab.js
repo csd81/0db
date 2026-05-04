@@ -185,6 +185,11 @@ function applyStep(step, cityCoords) {
             labMarkers[step.source].setStyle({color: COLORS.settled, fillColor: COLORS.settled});
         }
     }
+    else if (step.type === 'pivot_node') {
+        // Floyd-Warshall: highlight the current intermediate vertex k
+        const c = cityCoords[step.node];
+        if (c) ensureMarker(step.node, c, '#ffc107', 7);
+    }
     else if (step.type === 'relax_edge') {
         // Mark source as settled, target as frontier
         if (step.source && labMarkers[step.source]) {
