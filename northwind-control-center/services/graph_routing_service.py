@@ -1,20 +1,16 @@
 """
 SQL Server Graph DB demo — European City Routing
 State machine + A* shortest-path visualiser
+
+Data source: EuropeGraph.dbo.EuropeCity / EuropeGraph.dbo.EuropeRoad
+(pre-populated relational tables on the same SQL Server instance)
 """
 import heapq
 import math
-import os
 import threading
-import xml.etree.ElementTree as ET
 
 import networkx as nx
 import pyodbc
-
-# ---------------------------------------------------------------------------
-# XML path
-# ---------------------------------------------------------------------------
-_XML_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'europe_graph.xml')
 
 # ---------------------------------------------------------------------------
 # Shared state
@@ -90,28 +86,22 @@ def _gr_step(**updates) -> bool:
     return _GR_ABORTED
 
 
-def _load_xml():
-    """Return (cities_list, edges_list) from europe_graph.xml."""
-    tree = ET.parse(_XML_PATH)
-    root = tree.getroot()
-    cities = []
-    for c in root.find('Cities'):
-        cities.append({
-            'id':         int(c.attrib['id']),
-            'name':       c.attrib['name'],
-            'country':    c.attrib['country'],
-            'lat':        float(c.attrib['lat']),
-            'lng':        float(c.attrib['lng']),
-            'population': int(c.attrib['pop']),
-        })
-    edges = []
-    for r in root.find('Roads'):
-        edges.append({
-            'from_id':  int(r.attrib['from']),
-            'to_id':    int(r.attrib['to']),
-            'distance': float(r.attrib['distance']),
-        })
-    return cities, edges
+def _load_from_db(cur) -> tuple[list, dict]:
+    """
+    Pull cities and edge count from EuropeGraph.dbo.*.
+    Returns (cities_list, city_by_name_dict).
+    """
+    cur.execute(
+        "SELECT CityID, Name, Country, Lat, Lng, Population "
+        "FROM EuropeGraph.dbo.EuropeCity ORDER BY CityID"
+    )
+    cities = [
+        {'id': r[0], 'name': r[1], 'country': r[2],
+         'lat': float(r[3]), 'lng': float(r[4]), 'population': int(r[5])}
+        for r in cur.fetchall()
+    ]
+    city_by_name = {c['name']: c for c in cities}
+    return cities, city_by_name
 
 
 # ---------------------------------------------------------------------------
@@ -189,13 +179,19 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
         conn = pyodbc.connect(conn_str, autocommit=True, timeout=30)
         cur  = conn.cursor()
 
-        # ── 1. SEED NODES ────────────────────────────────────────────────
-        _gr_step(phase='seeding_nodes', phase_label='Parsing europe_graph.xml …')
+        # ── 1. SEED NODES — from EuropeGraph.dbo.EuropeCity ─────────────────
+        _gr_step(phase='seeding_nodes',
+                 phase_label='Reading EuropeGraph.dbo.EuropeCity …')
         if _GR_ABORTED:
             return
 
-        cities, edges = _load_xml()
-        city_by_id   = {c['id']: c for c in cities}
+        _gr_log(
+            "-- Source: pre-populated relational table (not XML)\n"
+            "SELECT CityID, Name, Country, Lat, Lng, Population\n"
+            "FROM   EuropeGraph.dbo.EuropeCity\n"
+            "ORDER  BY CityID;"
+        )
+        cities, city_by_name = _load_from_db(cur)
 
         ddl_node = (
             "IF OBJECT_ID('GraphRoad','U') IS NOT NULL DROP TABLE GraphRoad;\n"
@@ -219,100 +215,53 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
             "Lng FLOAT NOT NULL, Population INT NULL) AS NODE"
         )
 
-        city_rows = [
-            (c['id'], c['name'], c['country'], c['lat'], c['lng'], c['population'])
-            for c in cities
-        ]
         insert_cities_sql = (
-            f"-- Inserting {len(cities)} cities (executemany)\n"
-            f"INSERT INTO [GraphCity] (CityID, Name, Country, Lat, Lng, Population)\n"
-            f"VALUES (?, ?, ?, ?, ?, ?)"
+            f"-- Cross-database INSERT: {len(cities)} cities\n"
+            "INSERT INTO [GraphCity] (CityID, Name, Country, Lat, Lng, Population)\n"
+            "SELECT CityID, Name, Country, Lat, Lng, Population\n"
+            "FROM   EuropeGraph.dbo.EuropeCity;"
         )
         _gr_log(insert_cities_sql)
-        cur.executemany(
+        cur.execute(
             "INSERT INTO [GraphCity](CityID,Name,Country,Lat,Lng,Population)"
-            " VALUES(?,?,?,?,?,?)",
-            city_rows
+            " SELECT CityID,Name,Country,Lat,Lng,Population"
+            " FROM EuropeGraph.dbo.EuropeCity"
         )
 
-        cities_for_state = [
-            {'id': c['id'], 'name': c['name'], 'country': c['country'],
-             'lat': c['lat'], 'lng': c['lng'], 'population': c['population']}
-            for c in cities
-        ]
+        cities_for_state = cities  # already dicts with id/name/country/lat/lng/population
         if _gr_step(phase='seeding_nodes',
                     phase_label=f'GraphCity seeded — {len(cities)} cities',
                     cities=cities_for_state):
             return
 
-        # ── 2. SEED EDGES ────────────────────────────────────────────────
-        ddl_edge = (
-            "CREATE TABLE [GraphRoad] (DistanceKM FLOAT NOT NULL) AS EDGE;"
-        )
+        # ── 2. SEED EDGES — from EuropeGraph.dbo.EuropeRoad (bidirectional) ──
+        ddl_edge = "CREATE TABLE [GraphRoad] (DistanceKM FLOAT NOT NULL) AS EDGE;"
         _gr_log(ddl_edge)
-        cur.execute(
-            "CREATE TABLE [GraphRoad](DistanceKM FLOAT NOT NULL) AS EDGE"
-        )
+        cur.execute("CREATE TABLE [GraphRoad](DistanceKM FLOAT NOT NULL) AS EDGE")
 
-        # Staging table + INSERT-SELECT with JOIN for fast graph edge load
-        staging_sql = (
-            "-- Fast bulk-load via staging table\n"
-            "CREATE TABLE #EdgeStaging (FromID INT, ToID INT, Dist FLOAT);\n"
-            f"-- Inserting {len(edges)*2:,} directed edges via executemany …\n"
+        cur.execute("SELECT COUNT(*) FROM EuropeGraph.dbo.EuropeRoad")
+        edge_count = cur.fetchone()[0]
+
+        insert_edges_sql = (
+            f"-- {edge_count:,} bidirectional rows from EuropeGraph.dbo.EuropeRoad\n"
+            "-- $node_id resolved via JOIN on CityID (no Python loop needed)\n"
             "INSERT INTO [GraphRoad] ($from_id, $to_id, DistanceKM)\n"
-            "SELECT c1.$node_id, c2.$node_id, s.Dist\n"
-            "FROM   #EdgeStaging s\n"
-            "JOIN   [GraphCity] c1 ON c1.CityID = s.FromID\n"
-            "JOIN   [GraphCity] c2 ON c2.CityID = s.ToID;"
+            "SELECT c1.$node_id, c2.$node_id, r.DistanceKM\n"
+            "FROM   EuropeGraph.dbo.EuropeRoad r\n"
+            "JOIN   [GraphCity] c1 ON c1.CityID = r.FromCityID\n"
+            "JOIN   [GraphCity] c2 ON c2.CityID = r.ToCityID;"
         )
-        _gr_log(staging_sql)
-
-        cur.execute(
-            "CREATE TABLE #EdgeStaging (FromID INT NOT NULL, ToID INT NOT NULL, Dist FLOAT NOT NULL)"
-        )
-
-        # Build bidirectional rows
-        staging_rows: list = []
-        for e in edges:
-            fid, tid, d = e['from_id'], e['to_id'], e['distance']
-            staging_rows.append((fid, tid, d))
-            staging_rows.append((tid, fid, d))
-
-        total = len(staging_rows)
-        BATCH = 2000
-        for i in range(0, total, BATCH):
-            batch = staging_rows[i:i + BATCH]
-            cur.executemany(
-                "INSERT INTO #EdgeStaging(FromID,ToID,Dist) VALUES(?,?,?)",
-                batch
-            )
-            if _GR_ABORTED:
-                return
-            pct = min(i + BATCH, total)
-            with _GR_LOCK:
-                _GR_STATE['phase_label'] = (
-                    f'Staging edges: {pct:,} / {total:,} …'
-                )
-
-        _gr_log(
-            f"-- Staged {total:,} rows → running INSERT-SELECT …\n"
-            "INSERT INTO [GraphRoad] ($from_id, $to_id, DistanceKM)\n"
-            "SELECT c1.$node_id, c2.$node_id, s.Dist\n"
-            "FROM   #EdgeStaging s\n"
-            "JOIN   [GraphCity] c1 ON c1.CityID = s.FromID\n"
-            "JOIN   [GraphCity] c2 ON c2.CityID = s.ToID"
-        )
+        _gr_log(insert_edges_sql)
         cur.execute(
             "INSERT INTO [GraphRoad]($from_id,$to_id,DistanceKM)"
-            " SELECT c1.$node_id,c2.$node_id,s.Dist"
-            " FROM #EdgeStaging s"
-            " JOIN [GraphCity] c1 ON c1.CityID=s.FromID"
-            " JOIN [GraphCity] c2 ON c2.CityID=s.ToID"
+            " SELECT c1.$node_id,c2.$node_id,r.DistanceKM"
+            " FROM EuropeGraph.dbo.EuropeRoad r"
+            " JOIN [GraphCity] c1 ON c1.CityID=r.FromCityID"
+            " JOIN [GraphCity] c2 ON c2.CityID=r.ToCityID"
         )
-        cur.execute("DROP TABLE #EdgeStaging")
 
         if _gr_step(phase='seeding_edges',
-                    phase_label=f'GraphRoad seeded — {total:,} directed edges'):
+                    phase_label=f'GraphRoad seeded — {edge_count:,} directed edges'):
             return
 
         # ── 3. SQL SERVER SHORTEST_PATH (educational) ────────────────────
@@ -385,25 +334,26 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
                     sqlserver_hops=sp_hops):
             return
 
-        # ── 4. BUILD NETWORKX GRAPH ──────────────────────────────────────
-        match_sql = (
-            "-- Building NetworkX graph from SQL Server graph tables\n"
-            "SELECT Name, Lat, Lng FROM [GraphCity];\n"
-            "SELECT c1.Name AS src, c2.Name AS dst, e.DistanceKM\n"
-            "FROM   [GraphCity] c1, [GraphRoad] e, [GraphCity] c2\n"
-            "WHERE  MATCH(c1-(e)->c2);"
+        # ── 4. BUILD NETWORKX GRAPH — from EuropeGraph relational tables ───
+        nx_sql = (
+            "-- NetworkX weighted graph from EuropeGraph.dbo.EuropeRoad\n"
+            "-- (bidirectional rows — no MATCH/graph syntax needed)\n"
+            "SELECT c1.Name AS src, c2.Name AS dst, r.DistanceKM\n"
+            "FROM   EuropeGraph.dbo.EuropeRoad  r\n"
+            "JOIN   EuropeGraph.dbo.EuropeCity  c1 ON c1.CityID = r.FromCityID\n"
+            "JOIN   EuropeGraph.dbo.EuropeCity  c2 ON c2.CityID = r.ToCityID;"
         )
-        _gr_log(match_sql)
+        _gr_log(nx_sql)
 
-        cur.execute("SELECT Name, Lat, Lng FROM [GraphCity]")
         G = nx.Graph()
-        for row in cur.fetchall():
-            G.add_node(row[0], lat=float(row[1]), lng=float(row[2]))
+        for c in cities:
+            G.add_node(c['name'], lat=c['lat'], lng=c['lng'])
 
         cur.execute(
-            "SELECT c1.Name, c2.Name, e.DistanceKM"
-            " FROM [GraphCity] c1, [GraphRoad] e, [GraphCity] c2"
-            " WHERE MATCH(c1-(e)->c2)"
+            "SELECT c1.Name, c2.Name, r.DistanceKM"
+            " FROM EuropeGraph.dbo.EuropeRoad r"
+            " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID=r.FromCityID"
+            " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID=r.ToCityID"
         )
         for row in cur.fetchall():
             G.add_edge(row[0], row[1], weight=float(row[2]))
@@ -471,7 +421,7 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
             else:
                 d = 0.0
             nd = G.nodes[name]
-            city_meta = next((c for c in cities if c['name'] == name), {})
+            city_meta = city_by_name.get(name, {})
             path_with_geo.append({
                 'name':            name,
                 'country':         city_meta.get('country', ''),
