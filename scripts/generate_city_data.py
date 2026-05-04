@@ -2,6 +2,10 @@
 One-time script: GeoNames cities1000.txt → data/europe_graph.xml
 Run from the repo root: python scripts/generate_city_data.py
 
+Hyperparams tuned via Optuna (scripts/tune_graph_hyperparams.py):
+  pop_threshold = 80,000  (min city population)
+  max_dist_km   = 40      (max edge length; island-fix adds forced edges beyond this)
+
 GeoNames tab-separated columns (no header):
   0=geonameid  1=name  2=asciiname  3=alternatenames  4=lat  5=lng
   6=featureClass  7=featureCode  8=countryCode  ...  14=population
@@ -13,8 +17,8 @@ import os
 
 INPUT = '/tmp/cities1000.txt'
 OUTPUT = os.path.join(os.path.dirname(__file__), '..', 'northwind-control-center', 'data', 'europe_graph.xml')
-MIN_POP = 100_000
-MAX_KM  = 500
+MIN_POP = 80_000   # Optuna best_params['pop_threshold']
+MAX_KM  = 40       # Optuna best_params['max_dist_km']
 
 EUROPEAN_CC = {
     'AL','AT','BY','BE','BA','BG','HR','CZ','DK','EE','FI','FR','DE','GR',
@@ -50,7 +54,7 @@ with open(INPUT, encoding='utf-8') as f:
                 continue
         except ValueError:
             continue
-        name = parts[2] or parts[1]   # prefer ASCII name
+        name = parts[2] or parts[1]
         name = name.strip()
         if not name or name in seen_names:
             continue
@@ -71,22 +75,52 @@ with open(INPUT, encoding='utf-8') as f:
 
 print(f'   → {len(cities)} cities kept (pop ≥ {MIN_POP:,}, European CC)')
 
-print('2. Computing adjacency edges (≤ 500 km) …')
+print(f'2. Computing adjacency edges (≤ {MAX_KM} km, island-safe) …')
+# has_neighbor[i]: True if city i has ≥1 neighbor within MAX_KM
+has_neighbor = set()
+# nearest[i] = (dist_km, j) — closest city regardless of threshold
+nearest = {}
+
 edges = []
+
 for i, c1 in enumerate(cities):
+    la1, lo1 = float(c1['lat']), float(c1['lng'])
     for j, c2 in enumerate(cities):
         if i >= j:
             continue
-        d = haversine_km(float(c1['lat']), float(c1['lng']),
-                         float(c2['lat']), float(c2['lng']))
+        la2, lo2 = float(c2['lat']), float(c2['lng'])
+        d = haversine_km(la1, lo1, la2, lo2)
+        # Track nearest for island fix (both directions)
+        if d < nearest.get(i, (999,))[0]:
+            nearest[i] = (d, j)
+        if d < nearest.get(j, (999,))[0]:
+            nearest[j] = (d, i)
         if d <= MAX_KM:
             edges.append({
                 'from':     c1['id'],
                 'to':       c2['id'],
                 'distance': str(round(d, 1)),
             })
+            has_neighbor.add(i)
+            has_neighbor.add(j)
 
-print(f'   → {len(edges):,} undirected edges (each stored bidirectionally → {len(edges)*2:,} in GraphRoad)')
+# Island fix: isolated cities get one forced edge to their nearest neighbour
+island_fixes = 0
+for i, c in enumerate(cities):
+    if i not in has_neighbor and i in nearest:
+        d, j = nearest[i]
+        c_other = cities[j]
+        # Store with smaller numeric ID first (same convention as main loop)
+        if int(c['id']) < int(c_other['id']):
+            edges.append({'from': c['id'], 'to': c_other['id'], 'distance': str(round(d, 1))})
+        else:
+            edges.append({'from': c_other['id'], 'to': c['id'], 'distance': str(round(d, 1))})
+        island_fixes += 1
+        print(f'   ⚠ Island fix: {c["name"]} → {c_other["name"]} ({d:.1f} km)')
+
+print(f'   → {len(edges):,} undirected edges  ({len(edges)*2:,} directed in GraphRoad)')
+if island_fixes:
+    print(f'   → {island_fixes} island cities force-connected')
 
 print('3. Writing XML …')
 root      = ET.Element('GraphData')

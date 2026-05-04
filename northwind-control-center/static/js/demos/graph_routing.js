@@ -47,18 +47,10 @@ function initMarkers(cities) {
     }
     markersReady = true;
 
-    // Populate city dropdowns
+    // Populate searchable datalist (shared by both inputs)
     const allNames = cities.map(c => c.name).sort();
-    const startSel = document.getElementById('sel-start');
-    const endSel   = document.getElementById('sel-end');
-    const curStart = startSel.value;
-    const curEnd   = endSel.value;
-    startSel.innerHTML = allNames.map(n =>
-        `<option value="${esc(n)}"${n === curStart ? ' selected' : ''}>${esc(n)}</option>`
-    ).join('');
-    endSel.innerHTML = allNames.map(n =>
-        `<option value="${esc(n)}"${n === curEnd ? ' selected' : ''}>${esc(n)}</option>`
-    ).join('');
+    const dl = document.getElementById('cities-datalist');
+    dl.innerHTML = allNames.map(n => `<option value="${esc(n)}"></option>`).join('');
 }
 
 function updateMarkers(s) {
