@@ -1,7 +1,7 @@
 'use strict';
 
 // ── Leaflet map ──────────────────────────────────────────────────────────────
-const map = L.map('map-container', {zoomControl: true}).setView([51, 15], 4);
+const map = L.map('map-container', {zoomControl: true}).setView([45, 60], 3);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 18,
