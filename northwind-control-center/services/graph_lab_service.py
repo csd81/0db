@@ -5,9 +5,12 @@ Phase 0  — infrastructure skeleton (StepEvent, dual graph cache, /solve endpoi
 Phase 1  — BFS / DFS / Dijkstra / A* with step-by-step animation.
 Phase 2  — Bellman-Ford with negative-edge highlight (reduced graph).
 Phase 3  — Reliability routing: max-probability path via -log(p) weights.
-Phase 4  — Floyd-Warshall / flow algorithms on reduced graph.
+Phase 4  — Floyd-Warshall all-pairs shortest paths (reduced graph).
+Phase 5  — Minimum Spanning Tree: Kruskal + Prim (reduced graph).
 """
 from __future__ import annotations
+
+import math
 
 import networkx as nx
 
@@ -16,26 +19,32 @@ from graph_algorithms.common import (
     get_full_graph, get_reduced_graph,
     haversine_km, REDUCED_N,
 )
-from graph_algorithms import bfs, dfs, dijkstra, astar, bellman_ford, reliability, floyd_warshall
+from graph_algorithms import (
+    bfs, dfs, dijkstra, astar,
+    bellman_ford, reliability, floyd_warshall,
+    kruskal, prim,
+)
 
 _ASTAR_EPSILON = 1.1
 
-# ── Algorithm runners (Phase 1) ───────────────────────────────────────────────
-# Maps algorithm key → generator function.  Each generator yields StepEvent
-# objects; the final event is always 'found_path' or 'no_path'.
+# Terminal event types — split from traversal steps in solve().
+_TERMINAL = frozenset({
+    'found_path', 'no_path', 'found_tree', 'found_analysis',
+    'found_coloring', 'error',
+})
 
 _ALGO_RUNNERS: dict = {
-    'bfs':           bfs.run,
-    'dfs':           dfs.run,
-    'dijkstra':      dijkstra.run,
-    'astar':         astar.run,
-    'bellman_ford':  bellman_ford.run,
-    'reliability':   reliability.run,
+    'bfs':            bfs.run,
+    'dfs':            dfs.run,
+    'dijkstra':       dijkstra.run,
+    'astar':          astar.run,
+    'bellman_ford':   bellman_ford.run,
+    'reliability':    reliability.run,
     'floyd_warshall': floyd_warshall.run,
+    'kruskal':        kruskal.run,
+    'prim':           prim.run,
 }
 
-# Maximum animation frames returned to the frontend.
-# Steps are subsampled so the animation never takes more than ~30 s at 1×.
 MAX_ANIM_STEPS = 300
 
 
@@ -46,6 +55,7 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'label':         'A*',
         'problem':       'nav',
         'needs_reduced': False,
+        'needs_dst':     True,
         'weight_attr':   'weight',
         'description':   (
             'Uses Haversine distance to the goal as a heuristic to "aim" the search. '
@@ -57,6 +67,7 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'label':         'Dijkstra',
         'problem':       'nav',
         'needs_reduced': False,
+        'needs_dst':     True,
         'weight_attr':   'weight',
         'description':   (
             'Expands nodes in all directions by accumulated road cost. '
@@ -68,6 +79,7 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'label':         'BFS',
         'problem':       'nav',
         'needs_reduced': False,
+        'needs_dst':     True,
         'weight_attr':   None,
         'description':   (
             'Breadth-First Search ignores distance — finds the route with the fewest '
@@ -79,6 +91,7 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'label':         'DFS',
         'problem':       'reach',
         'needs_reduced': False,
+        'needs_dst':     True,
         'weight_attr':   None,
         'description':   (
             'Depth-First Search plunges down one branch before backtracking. '
@@ -90,6 +103,7 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'label':         'Bellman-Ford',
         'problem':       'nav',
         'needs_reduced': True,
+        'needs_dst':     True,
         'weight_attr':   'bellman_weight',
         'description':   (
             'Handles negative edge costs (wind assistance, subsidies). '
@@ -101,6 +115,7 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'label':         'Reliability Routing',
         'problem':       'stoch',
         'needs_reduced': False,
+        'needs_dst':     True,
         'weight_attr':   'log_weight',
         'description':   (
             'Finds the most probable route by minimising −log(ReliabilityScore). '
@@ -112,12 +127,39 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'label':         'Floyd-Warshall',
         'problem':       'global',
         'needs_reduced': True,
+        'needs_dst':     True,
         'weight_attr':   'weight',
         'description':   (
             'All-pairs shortest paths in one O(V³) pass. '
             f'Restricted to the top-{REDUCED_N} cities; pre-computes the full distance matrix.'
         ),
         'phase': 4,
+    },
+    'kruskal': {
+        'label':         'Kruskal (MST)',
+        'problem':       'mst',
+        'needs_reduced': True,
+        'needs_dst':     False,
+        'weight_attr':   'weight',
+        'description':   (
+            'Builds the cheapest spanning tree by greedily adding the lowest-weight edge '
+            'that does not create a cycle (Union-Find). '
+            f'Visual: edges pop in across the {REDUCED_N}-city map, cheapest first.'
+        ),
+        'phase': 5,
+    },
+    'prim': {
+        'label':         'Prim (MST)',
+        'problem':       'mst',
+        'needs_reduced': True,
+        'needs_dst':     False,
+        'weight_attr':   'weight',
+        'description':   (
+            'Grows the spanning tree node-by-node from the seed city using a priority queue. '
+            'Same MST result as Kruskal but expands as a geographic blob. '
+            f'Restricted to the top-{REDUCED_N} cities.'
+        ),
+        'phase': 5,
     },
 }
 
@@ -138,6 +180,10 @@ PROBLEM_REGISTRY: dict[str, dict] = {
         'label':      'Global Hub Analysis',
         'algorithms': ['floyd_warshall'],
     },
+    'mst': {
+        'label':      'Spanning Tree Design',
+        'algorithms': ['kruskal', 'prim'],
+    },
 }
 
 
@@ -157,8 +203,6 @@ def _throttle(steps: list[StepEvent], n: int) -> list[StepEvent]:
     """
     Subsample a step list to at most n frames.
     Always preserves the first 5 and last 5; samples the middle uniformly.
-    This retains the algorithm's search signature without grinding through
-    thousands of identical visit_node events.
     """
     if len(steps) <= n:
         return steps
@@ -169,7 +213,7 @@ def _throttle(steps: list[StepEvent], n: int) -> list[StepEvent]:
     return head + mid[::stride] + tail
 
 
-# ── Path helpers ──────────────────────────────────────────────────────────────
+# ── Geo helpers ───────────────────────────────────────────────────────────────
 
 def _path_to_geo(G: nx.Graph, path: list[str], city_by_name: dict) -> list[dict]:
     result    = []
@@ -195,15 +239,39 @@ def _path_to_geo(G: nx.Graph, path: list[str], city_by_name: dict) -> list[dict]
     return result
 
 
-def _city_coords_for_steps(G: nx.Graph, steps: list[StepEvent],
-                            path_names: list[str],
+def _tree_edges_to_geo(G: nx.Graph,
+                       tree_edges: list[tuple[str, str]],
+                       city_by_name: dict) -> list[dict]:
+    """Convert MST edge pairs to lat/lng dicts for the frontend renderer."""
+    result = []
+    for u, v in tree_edges:
+        nu   = G.nodes[u]
+        nv   = G.nodes[v]
+        edata = G[u][v]
+        result.append({
+            'u':       u,
+            'v':       v,
+            'lat1':    nu['lat'],
+            'lng1':    nu['lng'],
+            'lat2':    nv['lat'],
+            'lng2':    nv['lng'],
+            'dist_km': round(edata.get('dist_km', 0.0), 1),
+            'weight':  round(edata.get('weight', 0.0), 1),
+            'ferry':   edata.get('ferry', False),
+            'ocean':   edata.get('ocean', False),
+        })
+    return result
+
+
+def _city_coords_for_steps(G: nx.Graph,
+                            steps: list[StepEvent],
+                            mentioned_names: list[str],
                             city_by_name: dict) -> dict:
     """
-    Build a {name: {lat, lng, country}} lookup for every city referenced in
-    the step list + final path.  The frontend uses this to place markers
-    without needing the full 18k-city list.
+    Build {name: {lat, lng, country}} for every city referenced in steps
+    and the explicitly provided name list (path nodes or tree nodes).
     """
-    mentioned: set[str] = set(path_names)
+    mentioned: set[str] = set(mentioned_names)
     for s in steps:
         if s.node:   mentioned.add(s.node)
         if s.source: mentioned.add(s.source)
@@ -228,12 +296,9 @@ def solve(conn_str: str, problem: str, algorithm: str,
     """
     Route a solve request to the appropriate algorithm generator.
 
-    Phase 1 algorithms (bfs/dfs/dijkstra/astar) run their full generators,
-    throttle the step list to MAX_ANIM_STEPS, and return city_coords for the
-    frontend to place markers without fetching all 18k cities.
-
-    Unimplemented algorithms (phase > 1) fall back to the A* backbone and
-    return an empty steps list.
+    Algorithms with needs_dst=False (MST, global checks) skip the dst
+    validation and receive dst=None.  The response includes result_type
+    ('path' or 'tree') so the frontend can choose the correct renderer.
     """
     if algorithm not in ALGORITHM_REGISTRY:
         return {'error': f'Unknown algorithm: {algorithm!r}'}
@@ -245,63 +310,94 @@ def solve(conn_str: str, problem: str, algorithm: str,
     G            = cache['graph']
     city_by_name = cache['city_by_name']
 
+    needs_dst = meta.get('needs_dst', True)
+
     if src not in G.nodes:
         return {'error': f'City not found: {src!r}'}
-    if dst not in G.nodes:
+    if needs_dst and dst not in G.nodes:
         return {'error': f'City not found: {dst!r}'}
 
-    weight_attr = meta['weight_attr'] or 'weight'
-    runner      = _ALGO_RUNNERS.get(algorithm)
+    weight_attr  = meta['weight_attr'] or 'weight'
+    effective_dst = dst if needs_dst else None
+    runner        = _ALGO_RUNNERS.get(algorithm)
 
-    # ── Phase 1+ algorithms: real generators ─────────────────────────────
+    # ── Algorithms with real generators ──────────────────────────────────
     if runner:
-        raw = list(runner(G, src, dst, weight=weight_attr))
+        raw = list(runner(G, src, effective_dst, weight=weight_attr))
 
-        # Split terminal event from traversal steps
-        terminal     = next((s for s in reversed(raw)
-                             if s.type in ('found_path', 'no_path')), None)
-        visit_steps  = [s for s in raw if s.type not in ('found_path', 'no_path')]
+        terminal    = next((s for s in reversed(raw) if s.type in _TERMINAL), None)
+        visit_steps = [s for s in raw if s.type not in _TERMINAL]
 
-        if terminal is None or terminal.type == 'no_path':
-            return {'error': f'No route found: {src!r} → {dst!r}'}
-
-        path_names = terminal.flags.get('path', [])
-        if not path_names:
+        if terminal is None:
+            return {'error': 'Algorithm produced no terminal event'}
+        if terminal.type == 'error':
+            return {'error': terminal.flags.get('message', 'Algorithm error')}
+        if terminal.type == 'no_path':
             return {'error': f'No route found: {src!r} → {dst!r}'}
 
         throttled = _throttle(visit_steps, MAX_ANIM_STEPS)
         throttled.append(terminal)
 
-        import math as _math
-        path_geo   = _path_to_geo(G, path_names, city_by_name)
-        total_km   = sum(G[path_names[i]][path_names[i + 1]].get('dist_km', 0.0)
-                         for i in range(len(path_names) - 1))
-        total_cost = sum(G[path_names[i]][path_names[i + 1]].get(weight_attr, 0.0)
-                         for i in range(len(path_names) - 1))
-        n_visited  = sum(1 for s in visit_steps
-                         if s.type in ('visit_node', 'pivot_node'))
-        confidence = (round(_math.exp(-total_cost), 4)
-                      if algorithm == 'reliability' else None)
+        n_visited = sum(1 for s in visit_steps
+                        if s.type in ('visit_node', 'pivot_node'))
 
-        return {
+        base = {
             'algorithm':    algorithm,
             'algo_label':   meta['label'],
             'problem':      problem,
             'src':          src,
             'dst':          dst,
-            'path':         path_geo,
-            'total_km':     round(total_km, 1),
-            'total_cost':   round(total_cost, 3),
-            'hop_count':    len(path_names) - 1,
-            'n_visited':    n_visited,
-            'confidence':   confidence,
             'graph_mode':   'reduced' if meta['needs_reduced'] else 'full',
             'n_nodes':      G.number_of_nodes(),
             'n_edges':      G.number_of_edges(),
-            'city_coords':  _city_coords_for_steps(G, throttled, path_names, city_by_name),
+            'n_visited':    n_visited,
             'steps':        [s.to_dict() for s in throttled],
             'warnings':     [],
             'has_extended': cache.get('has_extended', False),
+        }
+
+        # ── Tree result (MST algorithms) ──────────────────────────────
+        if terminal.type == 'found_tree':
+            tree_edges_raw = terminal.flags.get('tree_edges', [])
+            tree_geo       = _tree_edges_to_geo(G, tree_edges_raw, city_by_name)
+            all_cities     = [c for e in tree_edges_raw for c in e]
+            total_km       = sum(G[u][v].get('dist_km', 0.0) for u, v in tree_edges_raw)
+            total_cost     = sum(G[u][v].get(weight_attr, 0.0) for u, v in tree_edges_raw)
+            return {
+                **base,
+                'result_type': 'tree',
+                'path':        [],
+                'tree_edges':  tree_geo,
+                'total_km':    round(total_km, 1),
+                'total_cost':  round(total_cost, 3),
+                'hop_count':   len(tree_edges_raw),
+                'confidence':  None,
+                'city_coords': _city_coords_for_steps(G, throttled, all_cities, city_by_name),
+            }
+
+        # ── Path result (navigation / traversal algorithms) ───────────
+        path_names = terminal.flags.get('path', [])
+        if not path_names:
+            return {'error': f'No route found: {src!r} → {dst!r}'}
+
+        path_geo   = _path_to_geo(G, path_names, city_by_name)
+        total_km   = sum(G[path_names[i]][path_names[i + 1]].get('dist_km', 0.0)
+                         for i in range(len(path_names) - 1))
+        total_cost = sum(G[path_names[i]][path_names[i + 1]].get(weight_attr, 0.0)
+                         for i in range(len(path_names) - 1))
+        confidence = (round(math.exp(-total_cost), 4)
+                      if algorithm == 'reliability' else None)
+
+        return {
+            **base,
+            'result_type': 'path',
+            'path':        path_geo,
+            'tree_edges':  [],
+            'total_km':    round(total_km, 1),
+            'total_cost':  round(total_cost, 3),
+            'hop_count':   len(path_names) - 1,
+            'confidence':  confidence,
+            'city_coords': _city_coords_for_steps(G, throttled, path_names, city_by_name),
         }
 
     # ── Phase 0 fallback: A* backbone, empty steps ───────────────────────
@@ -321,12 +417,14 @@ def solve(conn_str: str, problem: str, algorithm: str,
                      for i in range(len(path_names) - 1))
 
     return {
+        'result_type':  'path',
         'algorithm':    algorithm,
         'algo_label':   meta['label'],
         'problem':      problem,
         'src':          src,
         'dst':          dst,
         'path':         path_geo,
+        'tree_edges':   [],
         'total_km':     round(total_km, 1),
         'total_cost':   round(total_cost, 3),
         'hop_count':    len(path_names) - 1,

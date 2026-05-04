@@ -13,15 +13,19 @@ const landLine  = L.polyline([], {color: '#0d6efd', weight: 2.5, opacity: 0.85})
 const ferryLine = L.polyline([], {color: '#fd7e14', weight: 3,   opacity: 0.9,  dashArray: '9 6'}).addTo(map);
 const oceanLine = L.polyline([], {color: '#9c4dcc', weight: 3,   opacity: 0.9,  dashArray: '4 9'}).addTo(map);
 
+// MST edge layer — individual polylines accumulated during animation
+let mstPolylines = [];
+
 const COLORS = {
     frontier: '#0dcaf0',
     current:  '#ffc107',
     settled:  '#2a3040',
     path:     '#198754',
+    mst:      '#adb5bd',
 };
 
 // ── State ────────────────────────────────────────────────────────────────────
-let registry   = null;   // {problems, algorithms, reduced_n}
+let registry    = null;   // {problems, algorithms, reduced_n}
 let cityNameMap = {};     // "Name (CC)" → raw name
 let labMarkers  = {};     // name → L.circleMarker (created lazily during animation)
 let playTimer   = null;
@@ -54,14 +58,18 @@ function buildAlgoDropdown(problem) {
     sel.innerHTML = algos
         .map(a => `<option value="${esc(a)}">${esc(registry.algorithms[a]?.label || a)}</option>`)
         .join('');
-    sel.onchange = updateDescription;
-    updateDescription();
+    sel.onchange = updateAlgoUI;
+    updateAlgoUI();
 }
 
-function updateDescription() {
-    const algo = document.getElementById('sel-algo').value;
-    document.getElementById('algo-desc').textContent =
-        registry?.algorithms[algo]?.description || '—';
+function updateAlgoUI() {
+    const algo    = document.getElementById('sel-algo').value;
+    const algoMeta = registry?.algorithms[algo] || {};
+    // Show/hide the "To" row for algorithms that don't need a destination
+    const needsDst = algoMeta.needs_dst !== false;
+    document.getElementById('dst-row').style.display = needsDst ? '' : 'none';
+    // Update description
+    document.getElementById('algo-desc').textContent = algoMeta.description || '—';
 }
 
 // ── City datalist ─────────────────────────────────────────────────────────────
@@ -106,6 +114,36 @@ function clearMarkers() {
     labMarkers = {};
 }
 
+// ── MST edge rendering ────────────────────────────────────────────────────────
+function _addMstEdge(c1, c2, ferry, ocean) {
+    const color = ocean ? '#9c4dcc' : ferry ? '#fd7e14' : COLORS.mst;
+    const dash  = ocean ? '4 9' : ferry ? '9 6' : null;
+    const opts  = {color, weight: 1.5, opacity: 0.75};
+    if (dash) opts.dashArray = dash;
+    const pl = L.polyline([[c1.lat, c1.lng], [c2.lat, c2.lng]], opts).addTo(map);
+    mstPolylines.push(pl);
+}
+
+function renderTreeEdges(treeEdges, cityCoords) {
+    for (const e of treeEdges) {
+        const c1 = cityCoords[e.u] || {lat: e.lat1, lng: e.lng1};
+        const c2 = cityCoords[e.v] || {lat: e.lat2, lng: e.lng2};
+        _addMstEdge(c1, c2, e.ferry, e.ocean);
+        // Colour both endpoints as "path" green
+        if (cityCoords[e.u]) ensureMarker(e.u, cityCoords[e.u], COLORS.path, 4);
+        if (cityCoords[e.v]) ensureMarker(e.v, cityCoords[e.v], COLORS.path, 4);
+    }
+    if (treeEdges.length) {
+        const allPts = treeEdges.flatMap(e => [[e.lat1, e.lng1], [e.lat2, e.lng2]]);
+        map.fitBounds(L.latLngBounds(allPts), {padding: [32, 32]});
+    }
+}
+
+function clearMstEdges() {
+    for (const pl of mstPolylines) map.removeLayer(pl);
+    mstPolylines = [];
+}
+
 // ── Path line rendering — same _buildSegments logic as graph_routing.js ───────
 function _buildSegments(path) {
     const land = [], ferry = [], ocean = [];
@@ -137,17 +175,16 @@ function _buildSegments(path) {
 }
 
 function renderFinalPath(path, cityCoords) {
+    if (!path || !path.length) return;
     const {land, ferry, ocean} = _buildSegments(path);
     landLine.setLatLngs(land);
     ferryLine.setLatLngs(ferry);
     oceanLine.setLatLngs(ocean);
 
-    // Colour path markers green
     for (const hop of path) {
         ensureMarker(hop.name, {lat: hop.lat, lng: hop.lng, country: hop.country},
                      COLORS.path, 5);
     }
-
     if (path.length > 1) {
         map.fitBounds(L.latLngBounds(path.map(p => [p.lat, p.lng])), {padding: [32, 32]});
     }
@@ -157,6 +194,7 @@ function clearLines() {
     landLine.setLatLngs([]);
     ferryLine.setLatLngs([]);
     oceanLine.setLatLngs([]);
+    clearMstEdges();
 }
 
 // ── Banner helpers ────────────────────────────────────────────────────────────
@@ -180,25 +218,30 @@ function applyStep(step, cityCoords) {
     else if (step.type === 'enqueue' || step.type === 'push_stack') {
         const c = cityCoords[step.node];
         if (c) ensureMarker(step.node, c, COLORS.frontier, 4);
-        // Dim the source to settled
         if (step.source && labMarkers[step.source]) {
             labMarkers[step.source].setStyle({color: COLORS.settled, fillColor: COLORS.settled});
         }
     }
     else if (step.type === 'pivot_node') {
-        // Floyd-Warshall: highlight the current intermediate vertex k
         const c = cityCoords[step.node];
         if (c) ensureMarker(step.node, c, '#ffc107', 7);
     }
+    else if (step.type === 'mst_edge') {
+        // Draw the edge being admitted to the spanning tree
+        const c1 = cityCoords[step.source];
+        const c2 = cityCoords[step.target];
+        if (c1 && c2) _addMstEdge(c1, c2, false, false);
+        if (c1) ensureMarker(step.source, c1, COLORS.settled, 4);
+        if (c2) ensureMarker(step.target, c2, COLORS.frontier, 5);
+    }
     else if (step.type === 'relax_edge') {
-        // Mark source as settled, target as frontier
         if (step.source && labMarkers[step.source]) {
             labMarkers[step.source].setStyle({color: COLORS.settled, fillColor: COLORS.settled});
         }
         const tc = cityCoords[step.target];
         if (tc) ensureMarker(step.target, tc, COLORS.frontier, 4);
     }
-    else if (step.type === 'negative_relax') {  // Phase 2 Bellman-Ford
+    else if (step.type === 'negative_relax') {
         const tc = cityCoords[step.target];
         if (tc) ensureMarker(step.target, tc, '#ff2255', 5);
     }
@@ -210,6 +253,25 @@ function applyStep(step, cityCoords) {
     }
 }
 
+// ── Completion renderer — branches on result_type ─────────────────────────────
+function _onComplete(data, cityCoords, solveMs) {
+    if (data.result_type === 'tree') {
+        renderTreeEdges(data.tree_edges || [], cityCoords);
+        const edgeCount = (data.tree_edges || []).length;
+        setLabel(`${edgeCount} edges · ${(data.total_km ?? 0).toLocaleString()} km MST · ${solveMs} ms`);
+        document.getElementById('m-dist').textContent    = (data.total_km ?? '—').toLocaleString();
+        document.getElementById('m-hops').textContent    = edgeCount;
+        document.getElementById('m-visited').textContent = data.n_visited ?? '—';
+    } else {
+        renderFinalPath(data.path || [], cityCoords);
+        const confStr = data.confidence != null
+            ? ` · ${(data.confidence * 100).toFixed(1)}% reliable` : '';
+        setLabel(`${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km · ${solveMs} ms${confStr}`);
+        updateMetrics(data);
+    }
+    setBadge('done', 'success');
+}
+
 // ── Main run ──────────────────────────────────────────────────────────────────
 async function runLab() {
     clearInterval(playTimer);
@@ -219,13 +281,16 @@ async function runLab() {
     ['m-dist','m-hops','m-visited','m-time'].forEach(id =>
         document.getElementById(id).textContent = '—');
 
-    const src = resolveCity(document.getElementById('sel-src').value);
-    const dst = resolveCity(document.getElementById('sel-dst').value);
+    const src       = resolveCity(document.getElementById('sel-src').value);
+    const dst       = resolveCity(document.getElementById('sel-dst').value);
     const problem   = document.getElementById('sel-problem').value;
     const algorithm = document.getElementById('sel-algo').value;
+    const needsDst  = registry?.algorithms[algorithm]?.needs_dst !== false;
 
     setBadge('computing…', 'warning');
-    setLabel(`${registry?.algorithms[algorithm]?.label || algorithm}: ${src} → ${dst}`);
+    setLabel(needsDst
+        ? `${registry?.algorithms[algorithm]?.label || algorithm}: ${src} → ${dst}`
+        : `${registry?.algorithms[algorithm]?.label || algorithm}: from ${src}`);
 
     const t0 = performance.now();
     let data;
@@ -255,12 +320,10 @@ async function runLab() {
     const cityCoords = data.city_coords || {};
 
     if (!steps.length) {
-        // Phase 0 fallback — no animation, just draw the path
-        renderFinalPath(data.path, cityCoords);
         setBadge('done', 'success');
         const fb_conf = data.confidence != null ? ` · ${(data.confidence * 100).toFixed(1)}% reliable` : '';
         setLabel(data.warnings?.[0] || `${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km${fb_conf}`);
-        updateMetrics(data);
+        _onComplete(data, cityCoords, solveMs);
         return;
     }
 
@@ -270,12 +333,7 @@ async function runLab() {
         if (i >= steps.length) {
             clearInterval(playTimer);
             playTimer = null;
-            renderFinalPath(data.path, cityCoords);
-            setBadge('done', 'success');
-            const confStr = data.confidence != null
-                ? ` · ${(data.confidence * 100).toFixed(1)}% reliable` : '';
-            setLabel(`${data.hop_count} hops · ${(data.total_km ?? 0).toLocaleString()} km · ${solveMs} ms${confStr}`);
-            updateMetrics(data);
+            _onComplete(data, cityCoords, solveMs);
             return;
         }
         applyStep(steps[i++], cityCoords);
