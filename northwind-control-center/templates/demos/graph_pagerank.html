@@ -1,76 +1,115 @@
 {% extends "base.html" %}
-{% block title %}City Importance — PageRank on Afro-Eurasia Road Network{% endblock %}
+{% block title %}Global Logistics Hubs — PageRank{% endblock %}
 
 {% block content %}
 <style>
-#map-container { height: 560px; border-radius: .375rem; background: #1a1a2e; }
-#loading-overlay {
-  position: absolute; inset: 0; display: flex; align-items: center;
-  justify-content: center; background: rgba(0,0,0,.55); border-radius: .375rem;
-  z-index: 800; font-size: 1rem; color: #fff;
+/* Break out of container-fluid py-3 px-4 */
+#pg-shell {
+  margin: -1rem -1.5rem 0;
+  height: calc(100vh - 56px);
+  position: relative;
+  overflow: hidden;
 }
-#rank-table { font-size: .78rem; }
-#rank-table td, #rank-table th { padding: .2rem .4rem; }
+
+#pg-map { width: 100%; height: 100%; }
+
+/* Floating info panel */
+#pg-panel {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 290px;
+  z-index: 1000;
+  max-height: calc(100% - 2rem);
+  overflow-y: auto;
+  background: rgba(12, 14, 19, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid #1e2230;
+  border-radius: .4rem;
+}
+#pg-panel::-webkit-scrollbar { width: 3px; }
+#pg-panel::-webkit-scrollbar-thumb { background: #333; }
+
+#pg-panel .panel-head {
+  padding: .6rem .75rem .4rem;
+  border-bottom: 1px solid #1e2230;
+}
+#pg-panel .panel-body { padding: .5rem .75rem; }
+
+#rank-table { font-size: .73rem; }
+#rank-table td, #rank-table th { padding: .18rem .3rem; }
+
 .pr-bar {
-  display: inline-block; height: 6px; background: #ffd700;
-  border-radius: 3px; vertical-align: middle;
+  display: inline-block;
+  height: 5px;
+  background: linear-gradient(90deg, #ffd700, #fd7e14);
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+/* Floating legend */
+#pg-legend {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background: rgba(12, 14, 19, 0.88);
+  border: 1px solid #1e2230;
+  border-radius: .35rem;
+  padding: .5rem .75rem;
+  font-size: .68rem;
+  color: #adb5bd;
 }
 </style>
 
-<div class="d-flex align-items-center gap-2 mb-3">
-  <h5 class="mb-0">City Importance — PageRank</h5>
-  <span id="stats-badge" class="badge bg-secondary" style="font-size:.75rem">loading…</span>
-</div>
-<p class="text-muted small mb-3">
-  PageRank on the <strong>unweighted</strong> Afro-Eurasia road graph.
-  Cities that bridge continents or sit at geographic choke-points rank highest —
-  not necessarily the most populous cities, but the most <em>structurally central</em> ones.
-</p>
+<div id="pg-shell">
+  <div id="pg-map"></div>
 
-<div class="row g-3">
-  <!-- Map -->
-  <div class="col-lg-8">
-    <div style="position:relative">
-      <div id="map-container"></div>
-      <div id="loading-overlay"><div class="spinner-border spinner-border-sm me-2"></div>Computing PageRank…</div>
+  <!-- Floating side panel -->
+  <div id="pg-panel">
+    <div class="panel-head">
+      <div class="d-flex align-items-center gap-2">
+        <span class="fw-bold text-warning" style="font-size:.88rem">Logistics Hubs</span>
+        <span id="stats-badge" class="badge bg-secondary ms-auto" style="font-size:.65rem">loading…</span>
+      </div>
+      <div class="text-muted mt-1" style="font-size:.68rem">
+        Structural centrality via PageRank on the unweighted road graph.
+        Bridges between continents rank highest — not necessarily the most populous cities.
+      </div>
+      <div id="loading-row" class="d-flex align-items-center gap-2 mt-2" style="font-size:.75rem">
+        <div class="spinner-border spinner-border-sm text-info"></div>
+        <span class="text-muted">Computing PageRank on 14k cities…</span>
+      </div>
     </div>
 
-    <!-- Legend -->
-    <div class="card bg-dark text-light mt-2">
-      <div class="card-body p-2 small">
-        <div class="d-flex flex-wrap gap-3">
-          <span><span style="color:#ffd700;font-size:1.1rem">●</span> Top 1% — continental bridges</span>
-          <span><span style="color:#fd7e14;font-size:1rem">●</span> Top 5%</span>
-          <span><span style="color:#0dcaf0;font-size:.9rem">●</span> Top 20%</span>
-          <span><span style="color:#adb5bd;font-size:.8rem">●</span> Rest</span>
-          <span class="ms-auto text-muted">Circle size ∝ PageRank score</span>
-        </div>
+    <div class="panel-body">
+      <div style="font-size:.65rem;color:#5a6070;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem">
+        Top 25 by PageRank
       </div>
+      <table class="table table-dark table-sm mb-0" id="rank-table" style="background:transparent">
+        <thead>
+          <tr>
+            <th class="text-muted">#</th>
+            <th>City</th>
+            <th class="text-muted">CC</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="rank-body">
+          <tr><td colspan="4" class="text-muted text-center py-2">loading…</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Sidebar ranking -->
-  <div class="col-lg-4">
-    <div class="card bg-dark text-light h-100">
-      <div class="card-header py-1 px-2 small fw-semibold">
-        Top 25 Cities by PageRank
-      </div>
-      <div class="card-body p-0" style="overflow-y:auto;max-height:620px">
-        <table class="table table-dark table-sm mb-0" id="rank-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>City</th>
-              <th>CC</th>
-              <th>Score</th>
-            </tr>
-          </thead>
-          <tbody id="rank-body">
-            <tr><td colspan="4" class="text-muted text-center py-3">loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+  <!-- Floating legend -->
+  <div id="pg-legend">
+    <div class="mb-1 fw-semibold" style="color:#cdd">Circle size ∝ PageRank</div>
+    <div><span style="color:#ffd700;font-size:1.1rem">●</span> Top 1% — continental bridges</div>
+    <div><span style="color:#fd7e14;font-size:.95rem">●</span> Top 5%</div>
+    <div><span style="color:#0dcaf0;font-size:.85rem">●</span> Top 20%</div>
+    <div><span style="color:#444">●</span> Rest</div>
   </div>
 </div>
 {% endblock %}

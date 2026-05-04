@@ -438,16 +438,18 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
                      error=f'A* could not reach "{end}" from "{start}" — graph may be disconnected.')
             return
 
-        # Compute actual (unpenalized) km and flag ferry segments
+        # Compute actual (unpenalized) km and flag crossing type per hop
         path_with_geo = []
         actual_dist   = 0.0
         for i, name in enumerate(path_names):
             ferry_hop = False
+            ocean_hop = False
             if i > 0:
                 prev_name = path_names[i - 1]
                 edge      = G[prev_name][name]
                 actual_dist += edge['dist_km']
-                ferry_hop    = edge.get('ferry', False)
+                ferry_hop    = edge.get('ferry', False)   # CrossingType=1
+                ocean_hop    = edge.get('ocean', False)   # CrossingType=2
             nd        = G.nodes[name]
             city_meta = city_by_name.get(name, {})
             path_with_geo.append({
@@ -456,7 +458,8 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
                 'lat':             nd['lat'],
                 'lng':             nd['lng'],
                 'dist_from_start': round(actual_dist, 1),
-                'ferry':           ferry_hop,   # True if INCOMING edge is a ferry
+                'ferry':           ferry_hop,
+                'ocean':           ocean_hop,
             })
         total_dist = round(actual_dist, 1)
 
@@ -522,6 +525,23 @@ def graph_routing_get_state() -> dict:
 
 def graph_routing_step() -> None:
     _GR_STEP_EVENT.set()
+
+
+def graph_routing_cities(conn_str: str) -> list:
+    """Return all cities sorted by population desc, for datalist pre-population."""
+    conn = pyodbc.connect(conn_str, timeout=10)
+    cur  = conn.cursor()
+    cur.execute(
+        "SELECT CityID, Name, Country, Population "
+        "FROM EuropeGraph.dbo.EuropeCity "
+        "ORDER BY Population DESC"
+    )
+    result = [
+        {'id': int(r[0]), 'name': r[1], 'country': r[2], 'pop': int(r[3])}
+        for r in cur.fetchall()
+    ]
+    conn.close()
+    return result
 
 
 def graph_routing_reset(conn_str: str) -> None:

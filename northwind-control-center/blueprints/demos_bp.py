@@ -454,6 +454,13 @@ def graph_routing_reset():
     return jsonify({'ok': True})
 
 
+@demos_bp.route('/graph_routing/cities')
+@login_required
+def graph_routing_cities():
+    conn_str = _build_conn_str(current_app.config)
+    return jsonify(grs.graph_routing_cities(conn_str))
+
+
 # ── Graph PageRank ─────────────────────────────────────────────────────────────
 
 @demos_bp.route('/graph_pagerank')

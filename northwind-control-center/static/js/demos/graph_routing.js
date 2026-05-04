@@ -1,105 +1,161 @@
 'use strict';
 
 // ── Leaflet map ──────────────────────────────────────────────────────────────
-const map = L.map('map-container', {zoomControl: true}).setView([45, 60], 3);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 18,
+const map = L.map('gr-map', {zoomControl: true}).setView([35, 40], 3);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> &copy; <a href="https://carto.com">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
 }).addTo(map);
 
-const pathLine  = L.polyline([], {color: '#0d6efd', weight: 4, opacity: 0.9}).addTo(map);
-const ferryLine = L.polyline([], {color: '#fd7e14', weight: 3, opacity: 0.9,
-                                   dashArray: '8 6'}).addTo(map);
+// Three visual layers — land (solid cyan), ferry (orange dash), ocean (purple dot-dash)
+const landLine  = L.polyline([], {color: '#0d6efd', weight: 2.5, opacity: 0.85}).addTo(map);
+const ferryLine = L.polyline([], {color: '#fd7e14', weight: 3,   opacity: 0.9,  dashArray: '9 6'}).addTo(map);
+const oceanLine = L.polyline([], {color: '#9c4dcc', weight: 3,   opacity: 0.9,  dashArray: '4 9'}).addTo(map);
 
 const COLORS = {
-    unvisited: '#adb5bd',
+    unvisited: '#2a2d36',
     frontier:  '#0dcaf0',
     current:   '#ffc107',
-    settled:   '#6c757d',
+    settled:   '#394050',
     path:      '#198754',
 };
 
-const markers    = {};  // name → L.circleMarker
+const markers      = {};   // name → L.circleMarker
 let   markersReady = false;
 let   citiesLoaded = [];
+const cityNameMap  = {};   // "Name (CC)" → raw name  (for datalist resolution)
 
 function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-function fmt(v) { return v == null ? '—' : v; }
+
+// ── Datalist — loaded on init from /cities ───────────────────────────────────
+async function loadCitiesDatalist() {
+    try {
+        const r  = await fetch('/demos/graph_routing/cities');
+        const cs = await r.json();
+        const dl = document.getElementById('cities-dl');
+        const frags = [];
+        for (const c of cs) {
+            const label = `${c.name} (${c.country})`;
+            cityNameMap[label]  = c.name;
+            cityNameMap[c.name] = c.name;   // raw name also resolves
+            frags.push(`<option value="${esc(label)}">`);
+        }
+        dl.innerHTML = frags.join('');
+    } catch (_) { /* optional — raw names still work */ }
+}
+
+function resolveCity(inputVal) {
+    const v = inputVal.trim();
+    return cityNameMap[v] || v;
+}
 
 // ── Markers ──────────────────────────────────────────────────────────────────
 function initMarkers(cities) {
-    // Clear old markers
     for (const m of Object.values(markers)) map.removeLayer(m);
     Object.keys(markers).forEach(k => delete markers[k]);
-    citiesLoaded = cities;
-    markersReady = false;
+    citiesLoaded   = cities;
+    markersReady   = false;
 
     for (const c of cities) {
         const m = L.circleMarker([c.lat, c.lng], {
-            radius:      4,
+            radius:      3,
             color:       COLORS.unvisited,
             fillColor:   COLORS.unvisited,
-            fillOpacity: 0.9,
+            fillOpacity: 0.7,
             weight:      1,
         }).addTo(map);
-        m.bindTooltip(`<b>${esc(c.name)}</b><br>${esc(c.country)}<br>Pop: ${c.population.toLocaleString()}`, {sticky: true});
+        m.bindTooltip(
+            `<b>${esc(c.name)}</b> (${esc(c.country)})<br>Pop: ${c.population.toLocaleString()}`,
+            {sticky: true}
+        );
         markers[c.name] = m;
     }
     markersReady = true;
 
-    // Populate searchable datalist (shared by both inputs)
-    const allNames = cities.map(c => c.name).sort();
-    const dl = document.getElementById('cities-datalist');
-    dl.innerHTML = allNames.map(n => `<option value="${esc(n)}"></option>`).join('');
+    // Sync datalist — city records from state have lat/lng; upsert into cityNameMap
+    const dl = document.getElementById('cities-dl');
+    if (!dl.childElementCount) {
+        const frags = [];
+        const allNames = cities.map(c => c.name).sort();
+        for (const n of allNames) {
+            frags.push(`<option value="${esc(n)}">`);
+            cityNameMap[n] = n;
+        }
+        dl.innerHTML = frags.join('');
+    }
 }
 
 function updateMarkers(s) {
     if (!markersReady) return;
-    const pathSet    = new Set((s.path || []).map(p => p.name));
-    const visitedSet = new Set(s.visited || []);
-    const frontSet   = new Set((s.frontier || []).map(f => f[0]));
+    const pathSet  = new Set((s.path || []).map(p => p.name));
+    const visited  = new Set(s.visited || []);
+    const frontier = new Set((s.frontier || []).map(f => f[0]));
     for (const [name, m] of Object.entries(markers)) {
         let color = COLORS.unvisited;
-        if (pathSet.has(name))              color = COLORS.path;
-        else if (name === s.current_city)   color = COLORS.current;
-        else if (visitedSet.has(name))      color = COLORS.settled;
-        else if (frontSet.has(name))        color = COLORS.frontier;
-        m.setStyle({color, fillColor: color});
+        let r     = 3;
+        if (pathSet.has(name))            { color = COLORS.path;     r = 5; }
+        else if (name === s.current_city) { color = COLORS.current;  r = 6; }
+        else if (visited.has(name))       { color = COLORS.settled; }
+        else if (frontier.has(name))      { color = COLORS.frontier; r = 4; }
+        m.setStyle({color, fillColor: color, radius: r});
     }
 }
 
-function updatePathLine(s) {
+// ── Path line rendering ───────────────────────────────────────────────────────
+function _buildSegments(path) {
+    // Returns {land: [[latlng,...]], ferry: [[latlng,...]], ocean: [[latlng,...]]}
+    // Each inner array is a continuous segment of the same crossing type.
+    const land = [], ferry = [], ocean = [];
+    if (!path || path.length < 2) return {land, ferry, ocean};
+
+    let curType = 0;  // 0=land 1=ferry 2=ocean
+    let curPts  = [[path[0].lat, path[0].lng]];
+
+    const flush = (nextLL) => {
+        if (nextLL) curPts.push(nextLL);  // include transition point
+        if (curPts.length >= 2) {
+            if (curType === 2) ocean.push(curPts);
+            else if (curType === 1) ferry.push(curPts);
+            else land.push(curPts);
+        }
+    };
+
+    for (let i = 1; i < path.length; i++) {
+        const p    = path[i];
+        const type = p.ocean ? 2 : p.ferry ? 1 : 0;
+        const ll   = [p.lat, p.lng];
+
+        if (type === curType) {
+            curPts.push(ll);
+        } else {
+            flush(ll);          // include bridge point in the closing segment
+            curType = type;
+            curPts  = [curPts[curPts.length - 1], ll];  // new segment starts at bridge
+        }
+    }
+    flush(null);
+    return {land, ferry, ocean};
+}
+
+function updatePathLines(s) {
     if (!s.path || s.path.length < 2) {
-        pathLine.setLatLngs([]);
+        landLine.setLatLngs([]);
         ferryLine.setLatLngs([]);
+        oceanLine.setLatLngs([]);
         return;
     }
 
-    // Land segments as solid blue, ferry segments as dashed orange
-    const landSegs  = [];
-    const ferrySegs = [];
-    for (let i = 1; i < s.path.length; i++) {
-        const prev = s.path[i - 1], curr = s.path[i];
-        const seg  = [[prev.lat, prev.lng], [curr.lat, curr.lng]];
-        if (curr.ferry) ferrySegs.push(...seg);
-        else            landSegs.push(...seg);
-    }
+    const {land, ferry, ocean} = _buildSegments(s.path);
+    landLine.setLatLngs(land);
+    ferryLine.setLatLngs(ferry);
+    oceanLine.setLatLngs(ocean);
 
-    // Build continuous polyline for land (split on ferry gaps)
-    const landCoords = [];
-    for (let i = 0; i < s.path.length; i++) {
-        if (i > 0 && s.path[i].ferry) {
-            landCoords.push(null);   // gap marker — not supported natively; skip
-        }
-        landCoords.push([s.path[i].lat, s.path[i].lng]);
-    }
-    pathLine.setLatLngs(s.path.map(p => [p.lat, p.lng]));
-    ferryLine.setLatLngs(ferrySegs);
-
-    if (s.phase === 'found_path' || s.phase === 'done') {
-        map.fitBounds(pathLine.getBounds(), {padding: [30, 30]});
+    if (['found_path', 'done'].includes(s.phase) && s.path.length > 1) {
+        const allCoords = s.path.map(p => [p.lat, p.lng]);
+        map.fitBounds(L.latLngBounds(allCoords), {padding: [32, 32]});
     }
 }
 
@@ -111,92 +167,86 @@ function appendSql(s) {
     const log    = s.sql_log || [];
     if (log.length === lastSqlCount) return;
     for (let i = lastSqlCount; i < log.length; i++) {
-        const line = document.createElement('div');
-        line.className = 'mb-1';
-        line.textContent = log[i];
-        ticker.appendChild(line);
+        const div = document.createElement('div');
+        div.className   = 'mb-1';
+        div.textContent = log[i];
+        ticker.appendChild(div);
     }
     lastSqlCount = log.length;
     ticker.scrollTop = ticker.scrollHeight;
 }
 
-// ── Sidebar ──────────────────────────────────────────────────────────────────
+// ── Sidebar updates ───────────────────────────────────────────────────────────
 const PHASE_COLORS = {
-    idle:             'secondary',
-    seeding_nodes:    'info',
-    seeding_edges:    'info',
-    querying_graph:   'primary',
-    building_networkx:'primary',
-    running_astar:    'warning',
-    found_path:       'success',
-    done:             'success',
-    error:            'danger',
+    idle:              'secondary',
+    seeding_nodes:     'info',
+    seeding_edges:     'info',
+    querying_graph:    'primary',
+    building_networkx: 'primary',
+    running_astar:     'warning',
+    found_path:        'success',
+    done:              'success',
+    error:             'danger',
 };
 
 function updateBanner(s) {
     const badge = document.getElementById('phase-badge');
-    const color  = PHASE_COLORS[s.phase] || 'secondary';
-    badge.className = `badge bg-${color} phase-badge`;
+    const col   = PHASE_COLORS[s.phase] || 'secondary';
+    badge.className   = `badge bg-${col} phase-badge`;
     badge.textContent = s.phase.replace(/_/g, ' ');
     document.getElementById('phase-label').textContent = s.phase_label || '—';
 }
 
 function updateSidebar(s) {
+    // Expanding city
     document.getElementById('current-city').textContent =
-        s.current_city ? `${s.current_city}  (${(s.distances||{})[s.current_city] ?? '?'} km)` : '—';
+        s.current_city
+            ? `${s.current_city}  (${(s.distances || {})[s.current_city] ?? '?'} km)`
+            : '—';
 
-    const fl = document.getElementById('frontier-list');
+    // Frontier list
+    const fl    = document.getElementById('frontier-list');
     const front = s.frontier || [];
     fl.innerHTML = front.map(([name, d]) =>
-        `<li class="d-flex justify-content-between">
+        `<li class="frontier-li">
            <span>${esc(name)}</span>
-           <span class="text-muted ms-2">${d} km</span>
+           <span class="text-muted">${d} km</span>
          </li>`
-    ).join('') || '<li class="text-muted">—</li>';
+    ).join('') || '<li class="text-muted" style="font-size:.73rem">—</li>';
 
+    // Visited count
     const vc = document.getElementById('visited-count');
-    if (s.visited && s.visited.length > 0) {
-        const total = citiesLoaded.length || '?';
-        vc.textContent = `Visited: ${s.visited.length} / ${total} cities`;
-    } else {
-        vc.textContent = '';
-    }
-}
+    vc.textContent = (s.visited && s.visited.length)
+        ? `Visited: ${s.visited.length.toLocaleString()} / ${citiesLoaded.length.toLocaleString()} cities`
+        : '';
 
-function updateRouteBar(s) {
-    const bar = document.getElementById('route-bar');
-    if (!s.sqlserver_route?.length && !s.path?.length) {
-        bar.classList.add('d-none');
-        return;
-    }
-    bar.classList.remove('d-none');
-
-    const spEl = document.getElementById('sp-route');
-    if (s.sqlserver_route?.length) {
-        spEl.textContent = s.sqlserver_route.join(' → ')
-            + (s.sqlserver_hops ? ` [${s.sqlserver_hops} hops]` : '');
-    } else {
-        spEl.textContent = 'not available (SQL Server < 2019)';
+    // Metrics (only when path is available)
+    if (s.path && s.path.length > 1) {
+        const ferryHops = s.path.filter(p => p.ferry).length;
+        const oceanHops = s.path.filter(p => p.ocean).length;
+        document.getElementById('m-dist').textContent  = (s.total_distance ?? '—').toLocaleString();
+        document.getElementById('m-hops').textContent  = s.hop_count ?? '—';
+        document.getElementById('m-ferry').textContent = ferryHops;
+        document.getElementById('m-ocean').textContent = oceanHops;
     }
 
-    const aEl = document.getElementById('astar-route');
-    if (s.path?.length) {
-        aEl.textContent = s.path.map(p => p.name).join(' → ')
-            + (s.total_distance ? ` — ${s.total_distance} km` : '');
-    } else {
-        aEl.textContent = '…';
+    // SQL Server shortest-path result
+    const spWrap = document.getElementById('sp-wrap');
+    if (s.sqlserver_route && s.sqlserver_route.length) {
+        spWrap.classList.remove('d-none');
+        document.getElementById('sp-route').textContent =
+            s.sqlserver_route.join(' → ') + ` [${s.sqlserver_hops} hops]`;
     }
 }
 
 // ── Main render ──────────────────────────────────────────────────────────────
 function render(s) {
     updateBanner(s);
-    if (s.cities?.length && !markersReady) initMarkers(s.cities);
+    if (s.cities && s.cities.length && !markersReady) initMarkers(s.cities);
     updateMarkers(s);
-    updatePathLine(s);
+    updatePathLines(s);
     updateSidebar(s);
     appendSql(s);
-    updateRouteBar(s);
 
     document.getElementById('btn-step').disabled = !s.waiting_for_step;
 
@@ -211,11 +261,13 @@ function render(s) {
 }
 
 // ── Polling ──────────────────────────────────────────────────────────────────
-let pollTimer = null;
+let pollTimer  = null;
+const POLL_MS_ACTIVE = 150;   // during A*
+const POLL_MS_IDLE   = 600;
 
 function startPolling() {
     if (pollTimer) return;
-    pollTimer = setInterval(fetchState, 300);
+    pollTimer = setInterval(fetchState, POLL_MS_ACTIVE);
 }
 
 function stopPolling() {
@@ -226,51 +278,62 @@ function stopPolling() {
 async function fetchState() {
     try {
         const r = await fetch('/demos/graph_routing/state');
-        render(await r.json());
-    } catch (e) { /* network transient */ }
+        const s = await r.json();
+        render(s);
+        // Slow down poll once done
+        if (['done', 'error', 'idle'].includes(s.phase) && pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = setInterval(fetchState, POLL_MS_IDLE);
+        }
+    } catch (_) { /* transient */ }
 }
 
-// ── Auto-play ────────────────────────────────────────────────────────────────
-let autoTimer  = null;
-let autoMs     = 400;
+// ── Auto-play ─────────────────────────────────────────────────────────────────
+let autoTimer = null;
+let autoMs    = 400;
 
 function startAuto() {
     if (autoTimer) return;
     document.getElementById('btn-auto').classList.replace('btn-outline-info', 'btn-info');
     autoTimer = setInterval(async () => {
         try {
-            const r  = await fetch('/demos/graph_routing/state');
-            const s  = await r.json();
+            const r = await fetch('/demos/graph_routing/state');
+            const s = await r.json();
             render(s);
             if (s.waiting_for_step) {
                 await fetch('/demos/graph_routing/step', {method: 'POST'});
             }
-        } catch (e) { /* transient */ }
+        } catch (_) { /* transient */ }
     }, autoMs);
 }
 
 function stopAuto() {
     clearInterval(autoTimer);
     autoTimer = null;
-    document.getElementById('btn-auto').classList.replace('btn-info', 'btn-outline-info');
+    const btn = document.getElementById('btn-auto');
+    btn.classList.replace('btn-info', 'btn-outline-info');
 }
 
-// ── Button handlers ──────────────────────────────────────────────────────────
+// ── Button handlers ───────────────────────────────────────────────────────────
 document.getElementById('btn-start').addEventListener('click', async () => {
     stopPolling();
     stopAuto();
     lastSqlCount = 0;
     document.getElementById('sql-ticker').innerHTML = '';
-    pathLine.setLatLngs([]);
+    document.getElementById('sp-wrap').classList.add('d-none');
+    landLine.setLatLngs([]);
     ferryLine.setLatLngs([]);
-    document.getElementById('route-bar').classList.add('d-none');
+    oceanLine.setLatLngs([]);
+    ['m-dist','m-hops','m-ferry','m-ocean'].forEach(id =>
+        document.getElementById(id).textContent = '—'
+    );
 
-    const start = document.getElementById('sel-start').value;
-    const end   = document.getElementById('sel-end').value;
+    const start = resolveCity(document.getElementById('sel-start').value);
+    const end   = resolveCity(document.getElementById('sel-end').value);
     await fetch('/demos/graph_routing/start', {
-        method: 'POST',
+        method:  'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({start, end}),
+        body:    JSON.stringify({start, end}),
     });
     startPolling();
     startAuto();
@@ -289,13 +352,15 @@ document.getElementById('btn-reset').addEventListener('click', async () => {
     stopAuto();
     lastSqlCount = 0;
     document.getElementById('sql-ticker').innerHTML = '';
-    pathLine.setLatLngs([]);
+    document.getElementById('sp-wrap').classList.add('d-none');
+    landLine.setLatLngs([]);
     ferryLine.setLatLngs([]);
-    document.getElementById('route-bar').classList.add('d-none');
-    // Clear markers state (keep them visible but reset colors)
-    for (const m of Object.values(markers)) {
-        m.setStyle({color: COLORS.unvisited, fillColor: COLORS.unvisited});
-    }
+    oceanLine.setLatLngs([]);
+    ['m-dist','m-hops','m-ferry','m-ocean'].forEach(id =>
+        document.getElementById(id).textContent = '—'
+    );
+    for (const m of Object.values(markers))
+        m.setStyle({color: COLORS.unvisited, fillColor: COLORS.unvisited, radius: 3});
 
     await fetch('/demos/graph_routing/reset', {method: 'POST'});
     const r = await fetch('/demos/graph_routing/state');
@@ -312,4 +377,5 @@ document.querySelectorAll('.speed-btn').forEach(btn => {
 });
 
 // ── Init ─────────────────────────────────────────────────────────────────────
+loadCitiesDatalist();
 fetchState();
