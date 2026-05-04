@@ -7,7 +7,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
 }).addTo(map);
 
-const pathLine = L.polyline([], {color: '#0d6efd', weight: 4, opacity: 0.9}).addTo(map);
+const pathLine  = L.polyline([], {color: '#0d6efd', weight: 4, opacity: 0.9}).addTo(map);
+const ferryLine = L.polyline([], {color: '#fd7e14', weight: 3, opacity: 0.9,
+                                   dashArray: '8 6'}).addTo(map);
 
 const COLORS = {
     unvisited: '#adb5bd',
@@ -71,9 +73,31 @@ function updateMarkers(s) {
 function updatePathLine(s) {
     if (!s.path || s.path.length < 2) {
         pathLine.setLatLngs([]);
+        ferryLine.setLatLngs([]);
         return;
     }
+
+    // Land segments as solid blue, ferry segments as dashed orange
+    const landSegs  = [];
+    const ferrySegs = [];
+    for (let i = 1; i < s.path.length; i++) {
+        const prev = s.path[i - 1], curr = s.path[i];
+        const seg  = [[prev.lat, prev.lng], [curr.lat, curr.lng]];
+        if (curr.ferry) ferrySegs.push(...seg);
+        else            landSegs.push(...seg);
+    }
+
+    // Build continuous polyline for land (split on ferry gaps)
+    const landCoords = [];
+    for (let i = 0; i < s.path.length; i++) {
+        if (i > 0 && s.path[i].ferry) {
+            landCoords.push(null);   // gap marker — not supported natively; skip
+        }
+        landCoords.push([s.path[i].lat, s.path[i].lng]);
+    }
     pathLine.setLatLngs(s.path.map(p => [p.lat, p.lng]));
+    ferryLine.setLatLngs(ferrySegs);
+
     if (s.phase === 'found_path' || s.phase === 'done') {
         map.fitBounds(pathLine.getBounds(), {padding: [30, 30]});
     }
@@ -238,6 +262,7 @@ document.getElementById('btn-start').addEventListener('click', async () => {
     lastSqlCount = 0;
     document.getElementById('sql-ticker').innerHTML = '';
     pathLine.setLatLngs([]);
+    ferryLine.setLatLngs([]);
     document.getElementById('route-bar').classList.add('d-none');
 
     const start = document.getElementById('sel-start').value;
@@ -265,6 +290,7 @@ document.getElementById('btn-reset').addEventListener('click', async () => {
     lastSqlCount = 0;
     document.getElementById('sql-ticker').innerHTML = '';
     pathLine.setLatLngs([]);
+    ferryLine.setLatLngs([]);
     document.getElementById('route-bar').classList.add('d-none');
     // Clear markers state (keep them visible but reset colors)
     for (const m of Object.values(markers)) {

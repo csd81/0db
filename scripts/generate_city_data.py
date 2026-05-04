@@ -2,18 +2,20 @@
 One-time script: GeoNames cities1000.txt → data/europe_graph.xml
 Run from the repo root: python scripts/generate_city_data.py
 
-Coverage: Europe + Asia continental (no islands: GB, IE, IS, JP, ID, PH, LK, TW, CY, MT)
-Hyperparams tuned via Optuna (scripts/tune_graph_hyperparams.py):
-  pop_threshold = 80,000  (min city population)
-  max_dist_km   = 120     (max edge length for radius fill)
-  k_nearest     = 3       (mandatory KNN connections per city)
+Coverage: Afro-Eurasia "World Island" + major island nations
+  - Continental: Europe, Asia (no JP/TW/ID/PH/LK), Africa (no MG/CV/KM)
+  - Islands: GB, IE, IS, JP, ID, PH, LK, TW, CY, MT
+  - Island bridges use a 3× ferry-penalty weight so A* prefers land routes
 
-Edge strategy: KNN-3 mandatory + radius fill + Kruskal MST bridging
-→ guarantees full connectivity even across continental divides
+Edge strategy:
+  1. KNN-3 mandatory connections per city (guarantees local mesh)
+  2. Radius fill (≤ MAX_KM for radius edges)
+  3. Kruskal MST bridging (connects remaining components; tagged as ferry)
 
-GeoNames tab-separated columns (no header):
-  0=geonameid  1=name  2=asciiname  3=alternatenames  4=lat  5=lng
-  6=featureClass  7=featureCode  8=countryCode  ...  14=population
+Hyperparams from Optuna: pop_threshold=130,000  max_dist_km=180
+
+GeoNames columns (no header, tab-separated):
+  0=geonameid  1=name  2=asciiname  4=lat  5=lng  8=countryCode  14=population
 """
 import heapq
 import math
@@ -24,13 +26,13 @@ import os
 INPUT  = '/tmp/cities1000.txt'
 OUTPUT = os.path.join(os.path.dirname(__file__), '..', 'northwind-control-center', 'data', 'europe_graph.xml')
 
-MIN_POP   = 130_000  # Optuna best_params['pop_threshold']
-MAX_KM    = 180      # Optuna best_params['max_dist_km']
-K_NEAREST = 3        # mandatory KNN per city
+MIN_POP       = 130_000
+MAX_KM        = 180
+K_NEAREST     = 3
+FERRY_PENALTY = 3.0   # Kruskal bridge weight multiplier (proxy for ferry/tunnel)
 
-# Europe + Asia continental; islands excluded (GB, IE, IS, CY, MT, JP, TW, ID, PH, LK)
-EURASIA_CC = {
-    # Europe
+CONTINENTAL_CC = {
+    # Europe (no CY, MT — handled in ISLAND_CC)
     'AL','AT','BY','BE','BA','BG','HR','CZ','DK','EE','FI','FR','DE','GR',
     'HU','IT','LV','LT','LU','MD','NL','MK','NO','PL','PT','RO','RS',
     'SK','SI','ES','SE','CH','UA','ME','AD','LI','MC','SM','VA','XK',
@@ -38,13 +40,30 @@ EURASIA_CC = {
     'GE','AM','AZ','KZ','UZ','TM','TJ','KG',
     # Middle East
     'TR','IR','IQ','SY','JO','IL','LB','PS','SA','AE','KW','BH','QA','OM','YE',
-    # South Asia
+    # South Asia (continental)
     'IN','PK','AF','NP','BT','BD',
     # East / SE Asia (continental only)
     'CN','MN','KP','KR','MM','TH','VN','LA','KH','MY',
-    # Russia (spans both continents)
+    # Russia
     'RU',
+    # Africa — continental (no MG, CV, KM, SC, MU, RE, SH)
+    'DZ','EG','LY','MA','SD','TN',               # North Africa
+    'ET','ER','DJ','KE','TZ','UG','RW','BI','SO', # East Africa
+    'BJ','BF','CI','GH','GN','GM','GW','LR',      # West Africa
+    'ML','MR','NE','NG','SN','SL','TG',           # West Africa cont.
+    'CM','CF','TD','CG','CD','GQ','GA',           # Central Africa
+    'AO','BW','LS','MW','MZ','NA','ZA','ZM','ZW', # Southern Africa
+    'SS',                                          # South Sudan
 }
+
+ISLAND_CC = {
+    'GB','IE','IS',        # British Isles + Iceland
+    'JP','TW',             # East Asian islands
+    'ID','PH','LK',        # SE Asian / South Asian islands
+    'CY','MT',             # Mediterranean islands
+}
+
+ALL_CC = CONTINENTAL_CC | ISLAND_CC
 
 
 def haversine_km(lat1, lng1, lat2, lng2):
@@ -57,7 +76,8 @@ def haversine_km(lat1, lng1, lat2, lng2):
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-print('1. Parsing GeoNames cities1000.txt …')
+# ── 1. Parse cities ────────────────────────────────────────────────────────────
+print('1. Parsing GeoNames …')
 cities = []
 seen_names = set()
 with open(INPUT, encoding='utf-8') as f:
@@ -67,15 +87,14 @@ with open(INPUT, encoding='utf-8') as f:
             continue
         cc  = parts[8]
         pop = parts[14]
-        if cc not in EURASIA_CC:
+        if cc not in ALL_CC:
             continue
         try:
             if int(pop) < MIN_POP:
                 continue
         except ValueError:
             continue
-        name = parts[2] or parts[1]
-        name = name.strip()
+        name = (parts[2] or parts[1]).strip()
         if not name or name in seen_names:
             continue
         seen_names.add(name)
@@ -84,61 +103,66 @@ with open(INPUT, encoding='utf-8') as f:
             lng = float(parts[5])
         except ValueError:
             continue
+        is_island = cc in ISLAND_CC
         cities.append({
-            'id':      str(len(cities) + 1),
-            'name':    name,
-            'country': cc,
-            'lat':     str(round(lat, 6)),
-            'lng':     str(round(lng, 6)),
-            'pop':     pop,
+            'id':       str(len(cities) + 1),
+            'name':     name,
+            'country':  cc,
+            'lat':      str(round(lat, 6)),
+            'lng':      str(round(lng, 6)),
+            'pop':      pop,
+            'island':   is_island,   # internal flag, not written to XML
         })
 
 n = len(cities)
-print(f'   → {n} cities kept (pop ≥ {MIN_POP:,}, Eurasia CC)')
+island_count = sum(1 for c in cities if c['island'])
+print(f'   → {n} cities  ({n - island_count} continental + {island_count} island)')
 
-print(f'2. Computing distances and building KNN-{K_NEAREST} + radius (≤{MAX_KM} km) edges …')
-
-# Precompute full distance matrix
+# ── 2. Distance matrix ────────────────────────────────────────────────────────
+print(f'2. Building distance matrix ({n}×{n}) …')
 dm = [[0.0] * n for _ in range(n)]
 for i in range(n):
-    if i % 100 == 0:
-        print(f'   distance matrix: {i}/{n}…')
+    if i % 200 == 0:
+        print(f'   {i}/{n}…')
     la1, lo1 = float(cities[i]['lat']), float(cities[i]['lng'])
     for j in range(i + 1, n):
         d = haversine_km(la1, lo1, float(cities[j]['lat']), float(cities[j]['lng']))
         dm[i][j] = dm[j][i] = d
 
-added = set()   # (lo_id, hi_id) string pairs to deduplicate
-edges = []      # list of {'from','to','distance'}
+# ── 3. KNN-3 + radius edges ───────────────────────────────────────────────────
+print(f'3. KNN-{K_NEAREST} mandatory + radius fill (≤{MAX_KM} km) …')
+added = set()      # (lo_idx, hi_idx)
+edges = []         # {'from','to','distance','ferry'}
+
+def add_edge(i, j, dist, ferry=False):
+    key = (min(i, j), max(i, j))
+    if key in added:
+        return
+    added.add(key)
+    lo, hi = key
+    # Ferry weight: actual distance stored; weight used by A* = dist * FERRY_PENALTY (done in service)
+    edges.append({
+        'from':     cities[lo]['id'],
+        'to':       cities[hi]['id'],
+        'distance': str(round(dist, 1)),
+        'ferry':    '1' if ferry else '0',
+    })
 
 for i in range(n):
     order = sorted(range(n), key=lambda j, _i=i: dm[_i][j] if j != _i else 1e9)
     # Mandatory KNN-3
     for j in order[:K_NEAREST]:
-        key = (min(i, j), max(i, j))
-        if key not in added:
-            edges.append({
-                'from':     cities[key[0]]['id'],
-                'to':       cities[key[1]]['id'],
-                'distance': str(round(dm[key[0]][key[1]], 1)),
-            })
-            added.add(key)
+        add_edge(i, j, dm[i][j])
     # Radius fill
     for j in order[K_NEAREST:]:
         if dm[i][j] > MAX_KM:
             break
-        key = (min(i, j), max(i, j))
-        if key not in added:
-            edges.append({
-                'from':     cities[key[0]]['id'],
-                'to':       cities[key[1]]['id'],
-                'distance': str(round(dm[key[0]][key[1]], 1)),
-            })
-            added.add(key)
+        add_edge(i, j, dm[i][j])
 
 print(f'   → {len(edges):,} edges after KNN + radius')
 
-print('3. Kruskal bridging: connecting remaining components …')
+# ── 4. Kruskal bridge: connect remaining components ───────────────────────────
+print('4. Kruskal bridging …')
 parent = list(range(n))
 
 def find(x):
@@ -155,9 +179,7 @@ def union(x, y):
     return True
 
 for e in edges:
-    i = int(e['from']) - 1
-    j = int(e['to']) - 1
-    union(i, j)
+    union(int(e['from']) - 1, int(e['to']) - 1)
 
 n_comp = len(set(find(i) for i in range(n)))
 bridge_count = 0
@@ -173,26 +195,29 @@ if n_comp > 1:
     while heap and n_comp > 1:
         d, i, j = heapq.heappop(heap)
         if union(i, j):
-            key = (min(i, j), max(i, j))
-            edges.append({
-                'from':     cities[key[0]]['id'],
-                'to':       cities[key[1]]['id'],
-                'distance': str(round(d, 1)),
-            })
-            added.add(key)
+            add_edge(i, j, d, ferry=True)
             bridge_count += 1
             n_comp -= 1
-            ci_name = cities[i]['name']
-            cj_name = cities[j]['name']
-            print(f'   ⚠ Bridge: {ci_name} ↔ {cj_name} ({d:.1f} km)')
+            print(f'   ⚠ Ferry bridge: {cities[i]["name"]} ({cities[i]["country"]}) ↔ '
+                  f'{cities[j]["name"]} ({cities[j]["country"]})  {d:.1f} km')
 
-print(f'   → {len(edges):,} total edges  ({len(edges)*2:,} directed)  [{bridge_count} bridges added]')
+ferry_total = sum(1 for e in edges if e['ferry'] == '1')
+print(f'   → {len(edges):,} total edges  ({len(edges)*2:,} directed)  '
+      f'[{bridge_count} ferry bridges, {ferry_total} ferry edges total]')
 
-print('4. Writing XML …')
+# ── 5. Write XML ──────────────────────────────────────────────────────────────
+print('5. Writing XML …')
 root      = ET.Element('GraphData')
 cities_el = ET.SubElement(root, 'Cities')
 for c in cities:
-    ET.SubElement(cities_el, 'City', c)
+    ET.SubElement(cities_el, 'City', {
+        'id':      c['id'],
+        'name':    c['name'],
+        'country': c['country'],
+        'lat':     c['lat'],
+        'lng':     c['lng'],
+        'pop':     c['pop'],
+    })
 
 roads_el = ET.SubElement(root, 'Roads')
 for e in edges:

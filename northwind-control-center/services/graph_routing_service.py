@@ -1,10 +1,14 @@
 """
-SQL Server Graph DB demo — European City Routing
+SQL Server Graph DB demo — Afro-Eurasia + Islands City Routing
 State machine + A* shortest-path visualiser
 
 Data source: EuropeGraph.dbo.EuropeCity / EuropeGraph.dbo.EuropeRoad
 (pre-populated relational tables on the same SQL Server instance)
+
+Ferry bridges (IsFerry=1) use a 3× weight penalty so A* prefers land routes.
+Actual km is stored separately for display.
 """
+FERRY_PENALTY = 3.0
 import heapq
 import math
 import threading
@@ -337,8 +341,9 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
         # ── 4. BUILD NETWORKX GRAPH — from EuropeGraph relational tables ───
         nx_sql = (
             "-- NetworkX weighted graph from EuropeGraph.dbo.EuropeRoad\n"
-            "-- (bidirectional rows — no MATCH/graph syntax needed)\n"
-            "SELECT c1.Name AS src, c2.Name AS dst, r.DistanceKM\n"
+            "-- Ferry edges (IsFerry=1) carry a 3× penalty weight\n"
+            f"-- so A* prefers land routes (penalty factor = {FERRY_PENALTY})\n"
+            "SELECT c1.Name AS src, c2.Name AS dst, r.DistanceKM, r.IsFerry\n"
             "FROM   EuropeGraph.dbo.EuropeRoad  r\n"
             "JOIN   EuropeGraph.dbo.EuropeCity  c1 ON c1.CityID = r.FromCityID\n"
             "JOIN   EuropeGraph.dbo.EuropeCity  c2 ON c2.CityID = r.ToCityID;"
@@ -350,13 +355,16 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
             G.add_node(c['name'], lat=c['lat'], lng=c['lng'])
 
         cur.execute(
-            "SELECT c1.Name, c2.Name, r.DistanceKM"
+            "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry"
             " FROM EuropeGraph.dbo.EuropeRoad r"
             " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID=r.FromCityID"
             " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID=r.ToCityID"
         )
         for row in cur.fetchall():
-            G.add_edge(row[0], row[1], weight=float(row[2]))
+            dist_km = float(row[2])
+            ferry   = bool(row[3])
+            weight  = dist_km * (FERRY_PENALTY if ferry else 1.0)
+            G.add_edge(row[0], row[1], weight=weight, dist_km=dist_km, ferry=ferry)
 
         _gr_log(
             f"-- NetworkX Graph ready: {G.number_of_nodes()} nodes,"
@@ -415,29 +423,27 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
                      error=f'A* could not reach "{end}" from "{start}" — graph may be disconnected.')
             return
 
-        total_dist    = 0.0
+        # Compute actual (unpenalized) km and flag ferry segments
         path_with_geo = []
+        actual_dist   = 0.0
         for i, name in enumerate(path_names):
-            d = 0.0
+            ferry_hop = False
             if i > 0:
                 prev_name = path_names[i - 1]
-                d = G[prev_name][name]['weight']
-            if path_with_geo:
-                d = path_with_geo[-1]['dist_from_start'] + d
-            else:
-                d = 0.0
-            nd = G.nodes[name]
+                edge      = G[prev_name][name]
+                actual_dist += edge['dist_km']
+                ferry_hop    = edge.get('ferry', False)
+            nd        = G.nodes[name]
             city_meta = city_by_name.get(name, {})
             path_with_geo.append({
                 'name':            name,
                 'country':         city_meta.get('country', ''),
                 'lat':             nd['lat'],
                 'lng':             nd['lng'],
-                'dist_from_start': round(
-                    last_step['distances'].get(name, 0) if last_step else 0, 1
-                ),
+                'dist_from_start': round(actual_dist, 1),
+                'ferry':           ferry_hop,   # True if INCOMING edge is a ferry
             })
-        total_dist = last_step['distances'].get(end, 0.0) if last_step else 0.0
+        total_dist = round(actual_dist, 1)
 
         _gr_log(
             f"-- A* path found: {' → '.join(path_names)}\n"
