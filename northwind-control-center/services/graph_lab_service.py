@@ -16,7 +16,7 @@ from graph_algorithms.common import (
     get_full_graph, get_reduced_graph,
     haversine_km, REDUCED_N,
 )
-from graph_algorithms import bfs, dfs, dijkstra, astar
+from graph_algorithms import bfs, dfs, dijkstra, astar, bellman_ford
 
 _ASTAR_EPSILON = 1.1
 
@@ -25,10 +25,11 @@ _ASTAR_EPSILON = 1.1
 # objects; the final event is always 'found_path' or 'no_path'.
 
 _ALGO_RUNNERS: dict = {
-    'bfs':      bfs.run,
-    'dfs':      dfs.run,
-    'dijkstra': dijkstra.run,
-    'astar':    astar.run,
+    'bfs':          bfs.run,
+    'dfs':          dfs.run,
+    'dijkstra':     dijkstra.run,
+    'astar':        astar.run,
+    'bellman_ford': bellman_ford.run,
 }
 
 # Maximum animation frames returned to the frontend.
