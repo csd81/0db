@@ -45,9 +45,9 @@ async function load() {
             })
             .bindTooltip(
                 `<b>${esc(c.name)}</b> (${esc(c.country)})<br>` +
-                `Global rank: #${c.pr_rank.toLocaleString()} of ${data.n_cities.toLocaleString()}<br>` +
+                `Chokepoint rank: #${c.pr_rank.toLocaleString()} of ${data.n_cities.toLocaleString()}<br>` +
                 `Pop: ${c.population.toLocaleString()}<br>` +
-                `PR score: ${c.pr_norm.toFixed(4)}`,
+                `BC score: ${c.pr_norm.toFixed(4)}`,
                 {sticky: true}
             )
             .addTo(map);

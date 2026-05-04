@@ -376,6 +376,87 @@ document.querySelectorAll('.speed-btn').forEach(btn => {
     });
 });
 
+// ── Fast route — single A* call, no step-by-step state machine ───────────────
+async function fastRoute() {
+    stopPolling();
+    stopAuto();
+    lastSqlCount = 0;
+    document.getElementById('sql-ticker').innerHTML = '';
+    document.getElementById('sp-wrap').classList.add('d-none');
+    landLine.setLatLngs([]);
+    ferryLine.setLatLngs([]);
+    oceanLine.setLatLngs([]);
+    ['m-dist','m-hops','m-ferry','m-ocean'].forEach(id =>
+        document.getElementById(id).textContent = '—'
+    );
+
+    const start = resolveCity(document.getElementById('sel-start').value);
+    const end   = resolveCity(document.getElementById('sel-end').value);
+
+    const badge = document.getElementById('phase-badge');
+    badge.className   = 'badge bg-warning phase-badge';
+    badge.textContent = 'computing…';
+    document.getElementById('phase-label').textContent = `A* route: ${start} → ${end}`;
+
+    const t0 = performance.now();
+    try {
+        const r    = await fetch('/demos/graph_routing/fast', {
+            method:  'POST',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify({start, end}),
+        });
+        const data = await r.json();
+        const ms   = (performance.now() - t0).toFixed(0);
+
+        if (data.error) {
+            badge.className   = 'badge bg-danger phase-badge';
+            badge.textContent = 'error';
+            document.getElementById('phase-label').innerHTML =
+                `<span class="text-danger">${esc(data.error)}</span>`;
+            return;
+        }
+
+        const {land, ferry, ocean} = _buildSegments(data.path);
+        landLine.setLatLngs(land);
+        ferryLine.setLatLngs(ferry);
+        oceanLine.setLatLngs(ocean);
+
+        if (data.path.length > 1) {
+            map.fitBounds(L.latLngBounds(data.path.map(p => [p.lat, p.lng])), {padding: [32, 32]});
+        }
+
+        const ferryHops = data.path.filter(p => p.ferry).length;
+        const oceanHops = data.path.filter(p => p.ocean).length;
+        document.getElementById('m-dist').textContent  = (data.total_distance ?? '—').toLocaleString();
+        document.getElementById('m-hops').textContent  = data.hop_count ?? '—';
+        document.getElementById('m-ferry').textContent = ferryHops;
+        document.getElementById('m-ocean').textContent = oceanHops;
+
+        badge.className   = 'badge bg-success phase-badge';
+        badge.textContent = 'done';
+        document.getElementById('phase-label').textContent =
+            `⚡ ${data.hop_count} hops · ${(data.total_distance ?? 0).toLocaleString()} km · ${ms} ms`;
+
+        if (markersReady) {
+            const pathSet = new Set(data.path.map(p => p.name));
+            for (const [name, m] of Object.entries(markers)) {
+                if (pathSet.has(name)) {
+                    m.setStyle({color: COLORS.path, fillColor: COLORS.path, radius: 5});
+                } else {
+                    m.setStyle({color: COLORS.unvisited, fillColor: COLORS.unvisited, radius: 3});
+                }
+            }
+        }
+    } catch (e) {
+        badge.className   = 'badge bg-danger phase-badge';
+        badge.textContent = 'error';
+        document.getElementById('phase-label').innerHTML =
+            `<span class="text-danger">Network error: ${esc(e.message)}</span>`;
+    }
+}
+
+document.getElementById('btn-fast').addEventListener('click', fastRoute);
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 loadCitiesDatalist();
 fetchState();

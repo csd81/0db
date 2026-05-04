@@ -1,16 +1,14 @@
 """
-SQL Server Graph DB demo — Afro-Eurasia + Islands City Routing
-State machine + A* shortest-path visualiser
+SQL Server Graph DB demo — Global City Routing
+Two modes:
+  • Educational visualiser  — step-by-step A* with yield/poll loop
+  • Production fast route   — cached graph, single nx.astar_path call, ~150ms
 
 Data source: EuropeGraph.dbo.EuropeCity / EuropeGraph.dbo.EuropeRoad
-(pre-populated relational tables on the same SQL Server instance)
-
-Ferry bridges (IsFerry=1) use a 1.5× weight penalty so A* prefers land routes.
-Actual km is stored separately for display.
 """
-FERRY_PENALTY  = 1.5   # matches generator; lower = ferries treated as near-normal roads
-OCEAN_PENALTY  = 5.0   # intercontinental shipping lane corridors (CrossingType=2)
-ASTAR_EPSILON  = 1.1   # weighted A*: h × ε — 1.1 keeps near-optimality, avoids Arctic greed
+FERRY_PENALTY  = 1.5   # CrossingType=1: short strait / island bridge
+OCEAN_PENALTY  = 5.0   # CrossingType=2: intercontinental shipping lane
+ASTAR_EPSILON  = 1.1   # weighted A*: h × ε — keeps near-optimality, avoids Arctic greed
 import heapq
 import math
 import threading
@@ -19,11 +17,68 @@ import networkx as nx
 import pyodbc
 
 # ---------------------------------------------------------------------------
-# Shared state
+# Shared state — step-by-step educational visualiser
 # ---------------------------------------------------------------------------
 _GR_LOCK        = threading.Lock()
 _GR_STEP_EVENT  = threading.Event()
 _GR_ABORTED     = False
+
+# ---------------------------------------------------------------------------
+# Graph cache — production fast route
+# Populated on first get_instant_route() call (or by the worker thread).
+# ---------------------------------------------------------------------------
+_CACHE_LOCK  = threading.Lock()
+_GRAPH_CACHE: dict | None = None   # {graph, cities, city_by_name}
+
+
+def _load_graph(conn_str: str) -> dict:
+    """Load EuropeGraph into NetworkX and return a cache dict."""
+    conn = pyodbc.connect(conn_str, timeout=30)
+    cur  = conn.cursor()
+
+    cur.execute(
+        "SELECT CityID, Name, Country, Lat, Lng, Population "
+        "FROM EuropeGraph.dbo.EuropeCity ORDER BY CityID"
+    )
+    cities = [
+        {'id': r[0], 'name': r[1], 'country': r[2],
+         'lat': float(r[3]), 'lng': float(r[4]), 'population': int(r[5])}
+        for r in cur.fetchall()
+    ]
+    city_by_name = {c['name']: c for c in cities}
+
+    G = nx.Graph()
+    for c in cities:
+        G.add_node(c['name'], lat=c['lat'], lng=c['lng'])
+
+    cur.execute(
+        "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType"
+        " FROM EuropeGraph.dbo.EuropeRoad r"
+        " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID=r.FromCityID"
+        " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID=r.ToCityID"
+    )
+    for row in cur.fetchall():
+        dist_km  = float(row[2])
+        crossing = int(row[4])
+        if crossing == 2:   weight = dist_km * OCEAN_PENALTY
+        elif crossing == 1: weight = dist_km * FERRY_PENALTY
+        else:               weight = dist_km
+        G.add_edge(row[0], row[1], weight=weight, dist_km=dist_km,
+                   ferry=bool(row[3]), ocean=(crossing == 2))
+
+    conn.close()
+    return {'graph': G, 'cities': cities, 'city_by_name': city_by_name}
+
+
+def _ensure_graph(conn_str: str) -> dict:
+    """Return graph cache, loading from SQL on first call (double-checked lock)."""
+    global _GRAPH_CACHE
+    if _GRAPH_CACHE is not None:
+        return _GRAPH_CACHE
+    with _CACHE_LOCK:
+        if _GRAPH_CACHE is None:
+            _GRAPH_CACHE = _load_graph(conn_str)
+    return _GRAPH_CACHE
 
 _STATE_DEFAULTS: dict = {
     'phase':            'idle',
@@ -495,7 +550,62 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Public API
+# Public API — production fast route
+# ---------------------------------------------------------------------------
+def get_instant_route(conn_str: str, start: str, end: str) -> dict:
+    """
+    Return the A* route in a single call (~150ms on 18k nodes).
+    Bypasses the step-by-step state machine entirely.
+    Graph is loaded once and kept in _GRAPH_CACHE for the server lifetime.
+    """
+    cache        = _ensure_graph(conn_str)
+    G            = cache['graph']
+    city_by_name = cache['city_by_name']
+
+    if start not in G.nodes:
+        return {'error': f'City not found in graph: {start}'}
+    if end not in G.nodes:
+        return {'error': f'City not found in graph: {end}'}
+
+    def h(u: str, v: str) -> float:
+        nu, nv = G.nodes[u], G.nodes[v]
+        return _haversine_km(nu['lat'], nu['lng'], nv['lat'], nv['lng']) * ASTAR_EPSILON
+
+    try:
+        path_names = nx.astar_path(G, start, end, heuristic=h, weight='weight')
+    except nx.NetworkXNoPath:
+        return {'error': f'No route found between {start!r} and {end!r}'}
+
+    path_geo    = []
+    actual_dist = 0.0
+    for i, name in enumerate(path_names):
+        ferry_hop = ocean_hop = False
+        if i > 0:
+            edge         = G[path_names[i - 1]][name]
+            actual_dist += edge['dist_km']
+            ferry_hop    = edge.get('ferry', False)
+            ocean_hop    = edge.get('ocean', False)
+        nd        = G.nodes[name]
+        city_meta = city_by_name.get(name, {})
+        path_geo.append({
+            'name':            name,
+            'country':         city_meta.get('country', ''),
+            'lat':             nd['lat'],
+            'lng':             nd['lng'],
+            'dist_from_start': round(actual_dist, 1),
+            'ferry':           ferry_hop,
+            'ocean':           ocean_hop,
+        })
+
+    return {
+        'path':           path_geo,
+        'total_distance': round(actual_dist, 1),
+        'hop_count':      len(path_names) - 1,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Public API — educational step-by-step visualiser
 # ---------------------------------------------------------------------------
 def graph_routing_start(conn_str: str, start: str, end: str) -> None:
     global _GR_ABORTED, _GR_STATE

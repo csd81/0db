@@ -1,15 +1,21 @@
 """
-PageRank city importance — Afro-Eurasia + Islands road network.
+Betweenness Centrality — global city importance via road network chokepoints.
 
-Loads cities and roads from EuropeGraph.dbo.*, builds an unweighted
-undirected NetworkX graph, and runs nx.pagerank().  Unweighted PR
-measures pure structural centrality: cities that bridge continents
-(Istanbul, Cairo, Moscow) outrank dense-but-local clusters.
+Loads cities and penalty-weighted roads from EuropeGraph.dbo.*, builds a
+NetworkX graph, and runs nx.betweenness_centrality(k=250, weight='weight').
+
+Betweenness counts how many weighted shortest paths pass through each node.
+Cities that sit on unavoidable corridors (Panama City, Istanbul, Cairo) rank
+highest — not just dense local hubs. Ferry/ocean penalties push routes onto
+real geographic chokepoints rather than open-water shortcuts.
 
 Result is cached in-process; restart Flask to refresh after a re-import.
 """
 import networkx as nx
 import pyodbc
+
+_FERRY_PENALTY = 1.5
+_OCEAN_PENALTY = 5.0
 
 _CACHE: dict | None = None
 
@@ -33,26 +39,31 @@ def _compute(conn_str: str) -> dict:
         G.add_node(c['name'])
 
     cur.execute(
-        "SELECT c1.Name, c2.Name "
+        "SELECT c1.Name, c2.Name, r.DistanceKM, r.CrossingType "
         "FROM EuropeGraph.dbo.EuropeRoad r "
         "JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID = r.FromCityID "
         "JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID = r.ToCityID"
     )
     for row in cur.fetchall():
-        G.add_edge(row[0], row[1])
+        dist_km  = float(row[2])
+        crossing = int(row[3])
+        if crossing == 2:   weight = dist_km * _OCEAN_PENALTY
+        elif crossing == 1: weight = dist_km * _FERRY_PENALTY
+        else:               weight = dist_km
+        G.add_edge(row[0], row[1], weight=weight)
 
     cur.close()
     conn.close()
 
-    pr       = nx.pagerank(G, max_iter=300)
-    max_score = max(pr.values()) if pr else 1.0
-    ranked   = sorted(pr.items(), key=lambda kv: kv[1], reverse=True)
-    rank_map = {name: i + 1 for i, (name, _) in enumerate(ranked)}
-    n        = len(cities)
+    bc        = nx.betweenness_centrality(G, k=250, weight='weight')
+    max_score = max(bc.values()) if bc else 1.0
+    ranked    = sorted(bc.items(), key=lambda kv: kv[1], reverse=True)
+    rank_map  = {name: i + 1 for i, (name, _) in enumerate(ranked)}
+    n         = len(cities)
 
     result_cities = []
     for c in cities:
-        score = pr.get(c['name'], 0.0)
+        score = bc.get(c['name'], 0.0)
         rank  = rank_map.get(c['name'], n)
         result_cities.append({
             **c,

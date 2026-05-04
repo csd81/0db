@@ -9,6 +9,7 @@ import meta_db
 from services import demo_service
 from services import graph_routing_service as grs
 from services import graph_pagerank_service as gprs
+from services import graph_lab_service as gl
 
 demos_bp = Blueprint("demos", __name__, url_prefix="/demos")
 
@@ -459,6 +460,43 @@ def graph_routing_reset():
 def graph_routing_cities():
     conn_str = _build_conn_str(current_app.config)
     return jsonify(grs.graph_routing_cities(conn_str))
+
+
+@demos_bp.route('/graph_routing/fast', methods=['POST'])
+@login_required
+def graph_routing_fast():
+    data     = request.json or {}
+    start    = data.get('start', '')
+    end      = data.get('end', '')
+    conn_str = _build_conn_str(current_app.config)
+    result   = grs.get_instant_route(conn_str, start, end)
+    if 'error' in result:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+# ── Graph Algorithm Laboratory ────────────────────────────────────────────────
+
+@demos_bp.route('/graph_lab/algorithms')
+@login_required
+def graph_lab_algorithms():
+    """Return problem → algorithm registry for the frontend dual-dropdown."""
+    return jsonify(gl.get_registry())
+
+
+@demos_bp.route('/graph_lab/solve', methods=['POST'])
+@login_required
+def graph_lab_solve():
+    data      = request.json or {}
+    problem   = data.get('problem', 'nav')
+    algorithm = data.get('algorithm', 'astar')
+    src       = data.get('src', '')
+    dst       = data.get('dst', '')
+    conn_str  = _build_conn_str(current_app.config)
+    result    = gl.solve(conn_str, problem, algorithm, src, dst)
+    if 'error' in result:
+        return jsonify(result), 400
+    return jsonify(result)
 
 
 # ── Graph PageRank ─────────────────────────────────────────────────────────────

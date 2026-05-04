@@ -144,6 +144,13 @@ added:       set  = set()   # (lo_idx, hi_idx)
 edges:       list = []      # {'from','to','distance','ferry','ocean'}
 edge_index:  dict = {}      # key → index into edges (for flag upgrades)
 
+def _road_reliability(ferry: bool, ocean: bool, dist_km: float) -> float:
+    """Deterministic reliability score: wetter and longer roads are less reliable."""
+    base  = 0.85 if ocean else 0.91 if ferry else 0.97
+    decay = min(dist_km / 100_000.0, 0.05)   # −0.01 per 1000 km, cap −0.05
+    return round(max(base - decay, 0.70), 4)
+
+
 def add_edge(i: int, j: int, dist_km: float,
              ferry: bool = False, ocean: bool = False) -> None:
     key = (min(i, j), max(i, j))
@@ -157,11 +164,14 @@ def add_edge(i: int, j: int, dist_km: float,
     lo, hi = key
     edge_index[key] = len(edges)
     edges.append({
-        'from':     cities[lo]['id'],
-        'to':       cities[hi]['id'],
-        'distance': str(round(dist_km, 1)),
-        'ferry':    '1' if ferry else '0',
-        'ocean':    '1' if ocean else '0',
+        'from':        cities[lo]['id'],
+        'to':          cities[hi]['id'],
+        'distance':    str(round(dist_km, 1)),
+        'ferry':       '1' if ferry else '0',
+        'ocean':       '1' if ocean else '0',
+        'cost_adj':    '0.0',
+        'reliability': str(_road_reliability(ferry, ocean, dist_km)),
+        'capacity':    '100',
     })
     city_degree[lo] += 1
     city_degree[hi] += 1

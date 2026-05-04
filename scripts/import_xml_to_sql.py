@@ -48,6 +48,23 @@ conn.autocommit = False
 cur  = conn.cursor()
 cur.fast_executemany = True   # array binding: 10–50× faster than row-by-row
 
+print('Migrating schema — adding extended columns if absent …')
+_EXT_COLS = [
+    ('CostAdjustment',  'FLOAT', '0.0'),
+    ('ReliabilityScore','FLOAT', '0.95'),
+    ('Capacity',        'INT',   '100'),
+]
+for _col, _dtype, _default in _EXT_COLS:
+    cur.execute(
+        f"IF NOT EXISTS ("
+        f"  SELECT 1 FROM sys.columns"
+        f"  WHERE object_id = OBJECT_ID('EuropeGraph.dbo.EuropeRoad') AND name = '{_col}'"
+        f") ALTER TABLE EuropeGraph.dbo.EuropeRoad"
+        f"  ADD {_col} {_dtype} NULL DEFAULT {_default}"
+    )
+conn.commit()
+print('  Extended columns ready.')
+
 print('Clearing old data …')
 cur.execute("DELETE FROM EuropeGraph.dbo.EuropeRoad")
 cur.execute("DELETE FROM EuropeGraph.dbo.EuropeCity")
@@ -74,14 +91,18 @@ road_rows = [
     (int(r.get('from')), int(r.get('to')),
      float(r.get('distance')),
      int(r.get('ferry', 0)),
-     2 if r.get('ocean') == '1' else (1 if r.get('ferry') == '1' else 0))
+     2 if r.get('ocean') == '1' else (1 if r.get('ferry') == '1' else 0),
+     float(r.get('cost_adj',    '0.0')),
+     float(r.get('reliability', '0.95')),
+     int(r.get('capacity',      '100')))
     for r in roads
 ]
 for i in range(0, len(road_rows), BATCH):
     cur.executemany(
         "INSERT INTO EuropeGraph.dbo.EuropeRoad"
-        " (FromCityID, ToCityID, DistanceKM, IsFerry, CrossingType)"
-        " VALUES (?,?,?,?,?)",
+        " (FromCityID, ToCityID, DistanceKM, IsFerry, CrossingType,"
+        "  CostAdjustment, ReliabilityScore, Capacity)"
+        " VALUES (?,?,?,?,?,?,?,?)",
         road_rows[i:i + BATCH],
     )
 conn.commit()
