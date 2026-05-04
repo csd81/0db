@@ -29,10 +29,12 @@ from scipy.spatial import cKDTree
 INPUT  = '/tmp/cities1000.txt'
 OUTPUT = os.path.join(os.path.dirname(__file__), '..', 'northwind-control-center', 'data', 'europe_graph.xml')
 
-MIN_POP       = 40_000    # ~14k cities globally at this threshold
-MIN_KNN       = 5         # Optuna best: guaranteed connections per city
-MAX_VALENCE   = 7         # Optuna best: hard degree ceiling (ferry bridges excluded)
-LOCAL_KM      = 81        # Optuna best: always-add radius for urban clusters
+MIN_POP_MAIN     = 40_000   # Afro-Eurasia + islands: horse-cart topology, dense nodes
+MIN_POP_AMERICAS = 15_000   # Americas + Oceania: automobile/railroad sprawl
+MIN_KNN          = 5        # Optuna best: guaranteed connections per city
+MAX_VALENCE      = 7        # Optuna best: hard degree ceiling (ferry bridges excluded)
+LOCAL_KM         = 81       # Optuna best: always-add radius for EU urban clusters
+LOCAL_KM_SPREAD  = 120      # Americas/Oceania: railroad-era ~100-mile town spacing
 EXTRA_BRIDGES = 5         # redundant short bridges between large components
 FERRY_PENALTY = 1.5       # weight multiplier for short ferry / island bridges
 OCEAN_PENALTY = 5.0       # weight multiplier for intercontinental ocean corridors
@@ -63,6 +65,9 @@ ALL_CC      = CONTINENTAL_CC | ISLAND_CC | AMERICAS_CC | OCEANIA_CC
 
 # Force-include below-threshold cities needed as geographic stepping stones
 STRATEGIC_INCLUSIONS = {'Nome': 'US', 'Anadyr': 'RU'}
+
+# Countries that use the lower population threshold (automobile/railroad settlement pattern)
+_SPREAD_CC = AMERICAS_CC | OCEANIA_CC
 
 
 def _chord(km: float) -> float:
@@ -99,7 +104,8 @@ with open(INPUT, encoding='utf-8') as f:
         if not name or name in seen_names:
             continue
         is_strategic = STRATEGIC_INCLUSIONS.get(name) == cc
-        if pop_int < MIN_POP and not is_strategic:
+        threshold    = MIN_POP_AMERICAS if cc in _SPREAD_CC else MIN_POP_MAIN
+        if pop_int < threshold and not is_strategic:
             continue
         seen_names.add(name)
         cities.append({
@@ -114,7 +120,8 @@ with open(INPUT, encoding='utf-8') as f:
 
 n = len(cities)
 island_n = sum(1 for c in cities if c['_island'])
-print(f'   → {n} cities  ({n - island_n} continental + {island_n} island, pop ≥ {MIN_POP:,})')
+print(f'   → {n} cities  ({n - island_n} continental + {island_n} island) '
+      f'[main ≥ {MIN_POP_MAIN:,}  Americas/Oceania ≥ {MIN_POP_AMERICAS:,}]')
 city_degree = [0] * n
 
 # ── 2. Build KDTree ───────────────────────────────────────────────────────────
@@ -206,8 +213,8 @@ for i in range(n):
             mandatory_found += 1
         elif at_cap:
             break   # past mandatory zone and at degree cap → done with this city
-        elif d <= LOCAL_KM:
-            add_edge(i, j, d)  # local edges are always < 150 km → land
+        elif d <= (LOCAL_KM_SPREAD if cities[i]['country'] in _SPREAD_CC else LOCAL_KM):
+            add_edge(i, j, d)
 
 print(f'   → {len(edges):,} edges after valence-capped generation')
 
@@ -260,10 +267,13 @@ if n_comp > 1:
         d, i, j = heapq.heappop(heap)
         cross = _cross_continental(i, j)
         if union(i, j):
-            add_edge(i, j, d, ferry=not cross, ocean=cross)
+            # Any Kruskal bridge > 1500 km is a trans-oceanic crossing regardless of
+            # continental group (handles Hawaii→US-mainland, Fiji→NZ, NZ→AU, etc.)
+            is_ocean = cross or d > 1500
+            add_edge(i, j, d, ferry=not is_ocean, ocean=is_ocean)
             bridge_count += 1
             n_comp -= 1
-            label = 'Ocean bridge' if cross else 'Ferry bridge'
+            label = 'Ocean bridge' if is_ocean else 'Ferry bridge'
             print(f'   ⚠ {label}: {cities[i]["name"]} ({cities[i]["country"]}) ↔ '
                   f'{cities[j]["name"]} ({cities[j]["country"]})  {d:.1f} km')
         elif n_comp == 1 and extra > 0:
@@ -306,13 +316,13 @@ BERING_BRIDGES = [
     ('Nome', 'US', 'Anadyr', 'RU'),
 ]
 EXPLICIT_FERRY_ROUTES = [
-    ('Dublin', 'IE', 'Liverpool', 'GB'),  # Irish Sea — guarantees IE↔GB even if KNN misses
+    ('Dublin', 'IE', 'Glasgow', 'GB'),  # Irish Sea — Dublin↔Glasgow ~300 km; Liverpool AU stole 'Liverpool'
 ]
 OCEAN_CORRIDORS = [
-    ('Natal',     'BR', 'Dakar',     'SN'),   # narrowest Atlantic, ~3150 km
-    ('New York City', 'US', 'Liverpool', 'GB'),  # North Atlantic, ~5380 km
-    ('Seattle',   'US', 'Tokyo',     'JP'),   # North Pacific, ~7700 km
-    ('Sydney',    'AU', 'Singapore', 'SG'),   # South Pacific gateway, ~6300 km
+    ('Natal',         'BR', 'Dakar',   'SN'),   # narrowest Atlantic, ~3150 km
+    ('New York City', 'US', 'Leeds',   'GB'),   # North Atlantic, ~5380 km; Leeds is unique (Liverpool AU collision)
+    ('Seattle',       'US', 'Tokyo',   'JP'),   # North Pacific, ~7700 km
+    ('Sydney',        'AU', 'Singapore','SG'),  # South Pacific gateway, ~6300 km
 ]
 
 print('4c. Global bridges …')
