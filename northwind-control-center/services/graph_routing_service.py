@@ -408,7 +408,13 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
             return
 
         # ── 6. FOUND PATH ────────────────────────────────────────────────
-        path_names    = (last_step or {}).get('path', [])
+        path_names = (last_step or {}).get('path', [])
+        if not path_names:
+            _gr_step(phase='error',
+                     phase_label=f'No path found between {start} and {end}',
+                     error=f'A* could not reach "{end}" from "{start}" — graph may be disconnected.')
+            return
+
         total_dist    = 0.0
         path_with_geo = []
         for i, name in enumerate(path_names):
