@@ -1,9 +1,8 @@
 """
 Graph Algorithm Laboratory — coordinator and algorithm registry.
 
-Phase 0  — infrastructure: StepEvent schema, dual graph cache, /solve endpoint.
-           All algorithms served by A* backbone; step lists are empty.
-Phase 1  — BFS / DFS / Dijkstra / A* with full step-by-step animation.
+Phase 0  — infrastructure skeleton (StepEvent, dual graph cache, /solve endpoint).
+Phase 1  — BFS / DFS / Dijkstra / A* with step-by-step animation.
 Phase 2  — Bellman-Ford with negative-edge highlight (reduced graph).
 Phase 3  — Reliability routing: max-probability path via -log(p) weights.
 Phase 4  — Floyd-Warshall / flow algorithms on reduced graph.
@@ -17,14 +16,27 @@ from graph_algorithms.common import (
     get_full_graph, get_reduced_graph,
     haversine_km, REDUCED_N,
 )
+from graph_algorithms import bfs, dfs, dijkstra, astar
 
-_ASTAR_EPSILON = 1.1   # heuristic inflation — matches graph_routing_service.py
+_ASTAR_EPSILON = 1.1
+
+# ── Algorithm runners (Phase 1) ───────────────────────────────────────────────
+# Maps algorithm key → generator function.  Each generator yields StepEvent
+# objects; the final event is always 'found_path' or 'no_path'.
+
+_ALGO_RUNNERS: dict = {
+    'bfs':      bfs.run,
+    'dfs':      dfs.run,
+    'dijkstra': dijkstra.run,
+    'astar':    astar.run,
+}
+
+# Maximum animation frames returned to the frontend.
+# Steps are subsampled so the animation never takes more than ~30 s at 1×.
+MAX_ANIM_STEPS = 300
 
 
 # ── Algorithm registry ────────────────────────────────────────────────────────
-# Each entry describes a single algorithm: which problem category it solves,
-# whether it needs the reduced graph, which edge-weight attribute to use,
-# and which Phase adds step-by-step animation.
 
 ALGORITHM_REGISTRY: dict[str, dict] = {
     'astar': {
@@ -34,7 +46,7 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'weight_attr':   'weight',
         'description':   (
             'Uses Haversine distance to the goal as a heuristic to "aim" the search. '
-            'Fastest for long-range point-to-point routing.'
+            'Visits far fewer cities than Dijkstra — a "flashlight beam" effect.'
         ),
         'phase': 1,
     },
@@ -55,8 +67,8 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'needs_reduced': False,
         'weight_attr':   None,
         'description':   (
-            'Breadth-First Search ignores distance — finds the route '
-            'with the fewest city-to-city transfers (minimum hops).'
+            'Breadth-First Search ignores distance — finds the route with the fewest '
+            'city-to-city transfers. Explores like a uniform expanding ring.'
         ),
         'phase': 1,
     },
@@ -67,7 +79,7 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         'weight_attr':   None,
         'description':   (
             'Depth-First Search plunges down one branch before backtracking. '
-            'Shows network reachability rather than optimal routing.'
+            'Shows network reachability — the "drunk explorer" effect.'
         ),
         'phase': 1,
     },
@@ -106,10 +118,6 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
     },
 }
 
-# ── Problem registry ──────────────────────────────────────────────────────────
-# Groups algorithms by the class of problem they solve; drives the frontend
-# dual-dropdown (problem → available algorithms).
-
 PROBLEM_REGISTRY: dict[str, dict] = {
     'nav': {
         'label':      'Point-to-Point Navigation',
@@ -140,10 +148,27 @@ def get_registry() -> dict:
     }
 
 
-# ── Path geometry helper ──────────────────────────────────────────────────────
+# ── Step throttling ───────────────────────────────────────────────────────────
+
+def _throttle(steps: list[StepEvent], n: int) -> list[StepEvent]:
+    """
+    Subsample a step list to at most n frames.
+    Always preserves the first 5 and last 5; samples the middle uniformly.
+    This retains the algorithm's search signature without grinding through
+    thousands of identical visit_node events.
+    """
+    if len(steps) <= n:
+        return steps
+    head   = steps[:5]
+    tail   = steps[-5:]
+    mid    = steps[5:-5]
+    stride = max(1, len(mid) // max(n - 10, 1))
+    return head + mid[::stride] + tail
+
+
+# ── Path helpers ──────────────────────────────────────────────────────────────
 
 def _path_to_geo(G: nx.Graph, path: list[str], city_by_name: dict) -> list[dict]:
-    """Convert a name-list path into the hop-annotated GeoJSON list the frontend expects."""
     result    = []
     actual_km = 0.0
     for i, name in enumerate(path):
@@ -167,16 +192,45 @@ def _path_to_geo(G: nx.Graph, path: list[str], city_by_name: dict) -> list[dict]
     return result
 
 
-# ── Phase 0 solver ────────────────────────────────────────────────────────────
+def _city_coords_for_steps(G: nx.Graph, steps: list[StepEvent],
+                            path_names: list[str],
+                            city_by_name: dict) -> dict:
+    """
+    Build a {name: {lat, lng, country}} lookup for every city referenced in
+    the step list + final path.  The frontend uses this to place markers
+    without needing the full 18k-city list.
+    """
+    mentioned: set[str] = set(path_names)
+    for s in steps:
+        if s.node:   mentioned.add(s.node)
+        if s.source: mentioned.add(s.source)
+        if s.target: mentioned.add(s.target)
+    result = {}
+    for name in mentioned:
+        if name and name in G.nodes:
+            nd   = G.nodes[name]
+            meta = city_by_name.get(name, {})
+            result[name] = {
+                'lat':     nd['lat'],
+                'lng':     nd['lng'],
+                'country': meta.get('country', ''),
+            }
+    return result
+
+
+# ── Solver ────────────────────────────────────────────────────────────────────
 
 def solve(conn_str: str, problem: str, algorithm: str,
           src: str, dst: str) -> dict:
     """
-    Route a solve request to the appropriate algorithm.
+    Route a solve request to the appropriate algorithm generator.
 
-    Phase 0: Every algorithm uses A* internally (correct weight_attr, no heuristic
-    inflation for BFS/DFS — those use hop count). The 'steps' list is always empty;
-    step-by-step animation generators are added per-algorithm in Phases 1–4.
+    Phase 1 algorithms (bfs/dfs/dijkstra/astar) run their full generators,
+    throttle the step list to MAX_ANIM_STEPS, and return city_coords for the
+    frontend to place markers without fetching all 18k cities.
+
+    Unimplemented algorithms (phase > 1) fall back to the A* backbone and
+    return an empty steps list.
     """
     if algorithm not in ALGORITHM_REGISTRY:
         return {'error': f'Unknown algorithm: {algorithm!r}'}
@@ -194,26 +248,70 @@ def solve(conn_str: str, problem: str, algorithm: str,
         return {'error': f'City not found: {dst!r}'}
 
     weight_attr = meta['weight_attr'] or 'weight'
+    runner      = _ALGO_RUNNERS.get(algorithm)
 
-    # A* heuristic — for BFS/DFS (no weight) we still use geographic aim in the stub
+    # ── Phase 1+ algorithms: real generators ─────────────────────────────
+    if runner:
+        raw = list(runner(G, src, dst, weight=weight_attr))
+
+        # Split terminal event from traversal steps
+        terminal     = next((s for s in reversed(raw)
+                             if s.type in ('found_path', 'no_path')), None)
+        visit_steps  = [s for s in raw if s.type not in ('found_path', 'no_path')]
+
+        if terminal is None or terminal.type == 'no_path':
+            return {'error': f'No route found: {src!r} → {dst!r}'}
+
+        path_names = terminal.flags.get('path', [])
+        if not path_names:
+            return {'error': f'No route found: {src!r} → {dst!r}'}
+
+        throttled = _throttle(visit_steps, MAX_ANIM_STEPS)
+        throttled.append(terminal)
+
+        path_geo   = _path_to_geo(G, path_names, city_by_name)
+        total_km   = sum(G[path_names[i]][path_names[i + 1]].get('dist_km', 0.0)
+                         for i in range(len(path_names) - 1))
+        total_cost = sum(G[path_names[i]][path_names[i + 1]].get(weight_attr, 0.0)
+                         for i in range(len(path_names) - 1))
+        n_visited  = sum(1 for s in visit_steps if s.type == 'visit_node')
+
+        return {
+            'algorithm':    algorithm,
+            'algo_label':   meta['label'],
+            'problem':      problem,
+            'src':          src,
+            'dst':          dst,
+            'path':         path_geo,
+            'total_km':     round(total_km, 1),
+            'total_cost':   round(total_cost, 3),
+            'hop_count':    len(path_names) - 1,
+            'n_visited':    n_visited,
+            'confidence':   None,
+            'graph_mode':   'reduced' if meta['needs_reduced'] else 'full',
+            'n_nodes':      G.number_of_nodes(),
+            'n_edges':      G.number_of_edges(),
+            'city_coords':  _city_coords_for_steps(G, throttled, path_names, city_by_name),
+            'steps':        [s.to_dict() for s in throttled],
+            'warnings':     [],
+            'has_extended': cache.get('has_extended', False),
+        }
+
+    # ── Phase 0 fallback: A* backbone, empty steps ───────────────────────
     def _h(u: str, v: str) -> float:
         nu, nv = G.nodes[u], G.nodes[v]
         return haversine_km(nu['lat'], nu['lng'], nv['lat'], nv['lng']) * _ASTAR_EPSILON
 
     try:
-        path = nx.astar_path(G, src, dst, heuristic=_h, weight=weight_attr)
+        path_names = list(nx.astar_path(G, src, dst, heuristic=_h, weight=weight_attr))
     except nx.NetworkXNoPath:
         return {'error': f'No route found: {src!r} → {dst!r}'}
 
-    path_geo   = _path_to_geo(G, path, city_by_name)
-    total_km   = sum(
-        G[path[i]][path[i + 1]].get('dist_km', 0.0)
-        for i in range(len(path) - 1)
-    )
-    total_cost = sum(
-        G[path[i]][path[i + 1]].get(weight_attr, 0.0)
-        for i in range(len(path) - 1)
-    )
+    path_geo   = _path_to_geo(G, path_names, city_by_name)
+    total_km   = sum(G[path_names[i]][path_names[i + 1]].get('dist_km', 0.0)
+                     for i in range(len(path_names) - 1))
+    total_cost = sum(G[path_names[i]][path_names[i + 1]].get(weight_attr, 0.0)
+                     for i in range(len(path_names) - 1))
 
     return {
         'algorithm':    algorithm,
@@ -224,12 +322,14 @@ def solve(conn_str: str, problem: str, algorithm: str,
         'path':         path_geo,
         'total_km':     round(total_km, 1),
         'total_cost':   round(total_cost, 3),
-        'hop_count':    len(path) - 1,
+        'hop_count':    len(path_names) - 1,
+        'n_visited':    0,
         'confidence':   None,
         'graph_mode':   'reduced' if meta['needs_reduced'] else 'full',
         'n_nodes':      G.number_of_nodes(),
         'n_edges':      G.number_of_edges(),
+        'city_coords':  _city_coords_for_steps(G, [], path_names, city_by_name),
         'steps':        [],
-        'warnings':     [],
+        'warnings':     [f'Step animation arrives in Phase {meta["phase"]}.'],
         'has_extended': cache.get('has_extended', False),
     }

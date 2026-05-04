@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Graph Algorithm Lab{% endblock %}
+
+{% block content %}
+<style>
+#gl-shell {
+  margin: -1rem -1.5rem 0;
+  height: calc(100vh - 56px);
+  display: flex;
+  overflow: hidden;
+  background: #08090d;
+}
+
+/* ── Sidebar ─────────────────────────────── */
+#gl-sidebar {
+  width: 300px;
+  min-width: 300px;
+  height: 100%;
+  overflow-y: auto;
+  background: #0e1014;
+  border-right: 1px solid #1e2028;
+  display: flex;
+  flex-direction: column;
+  padding: .875rem;
+  gap: .55rem;
+}
+#gl-sidebar::-webkit-scrollbar { width: 3px; }
+#gl-sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+/* ── Map ────────────────────────────────── */
+#gl-map { flex: 1; height: 100%; }
+
+/* ── Metric cards ───────────────────────── */
+.m-card {
+  background: #080a0e;
+  border: 1px solid #1e2028;
+  border-radius: .3rem;
+  padding: .35rem .5rem;
+}
+.m-label { font-size: .6rem; color: #5a6070; letter-spacing: .08em; text-transform: uppercase; }
+.m-val   { font-size: 1.2rem; font-weight: 700; line-height: 1.1; }
+
+/* ── Misc ───────────────────────────────── */
+.section-lbl { font-size: .6rem; color: #5a6070; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .2rem; }
+.phase-badge { font-size: .65rem; }
+.speed-btn        { opacity: .45; }
+.speed-btn.active { opacity: 1; }
+
+/* ── Form controls dark theme ───────────── */
+.form-select.bg-dark option { background: #1a1d24; }
+</style>
+
+<div id="gl-shell">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+  <div id="gl-sidebar">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center gap-2">
+      <span class="fw-bold" style="color:#e9c46a;font-size:.9rem">⚗ Algorithm Lab</span>
+      <span id="phase-badge" class="badge bg-secondary phase-badge ms-auto">idle</span>
+    </div>
+
+    <!-- City inputs -->
+    <div>
+      <div class="section-lbl">From</div>
+      <input id="sel-src" list="cities-dl"
+             class="form-control form-control-sm bg-dark text-light border-secondary"
+             placeholder="City (Country)…" value="Paris" autocomplete="off">
+    </div>
+    <div>
+      <div class="section-lbl">To</div>
+      <input id="sel-dst" list="cities-dl"
+             class="form-control form-control-sm bg-dark text-light border-secondary"
+             placeholder="City (Country)…" value="Berlin" autocomplete="off">
+    </div>
+    <datalist id="cities-dl"></datalist>
+
+    <!-- Problem dropdown -->
+    <div>
+      <div class="section-lbl">Problem</div>
+      <select id="sel-problem"
+              class="form-select form-select-sm bg-dark text-light border-secondary">
+      </select>
+    </div>
+
+    <!-- Algorithm dropdown -->
+    <div>
+      <div class="section-lbl">Algorithm</div>
+      <select id="sel-algo"
+              class="form-select form-select-sm bg-dark text-light border-secondary">
+      </select>
+    </div>
+
+    <!-- Algorithm description -->
+    <div id="algo-desc" class="text-muted" style="font-size:.69rem;min-height:2.4rem;line-height:1.35">—</div>
+
+    <!-- Phase label -->
+    <div id="phase-label" class="small text-muted" style="min-height:.9rem;font-size:.72rem">—</div>
+
+    <!-- Run / Reset -->
+    <div class="d-flex gap-2">
+      <button id="btn-run"   class="btn btn-sm btn-success flex-fill">▶ Run</button>
+      <button id="btn-reset" class="btn btn-sm btn-outline-danger">↺</button>
+    </div>
+
+    <!-- Speed -->
+    <div class="btn-group btn-group-sm w-100">
+      <button class="btn btn-outline-secondary speed-btn" data-ms="600">¼×</button>
+      <button class="btn btn-outline-secondary speed-btn" data-ms="200">½×</button>
+      <button class="btn btn-outline-secondary speed-btn active" data-ms="80">1×</button>
+      <button class="btn btn-outline-secondary speed-btn" data-ms="30">2×</button>
+      <button class="btn btn-outline-secondary speed-btn" data-ms="8">8×</button>
+    </div>
+
+    <!-- Metric cards -->
+    <div class="row g-1">
+      <div class="col-6">
+        <div class="m-card">
+          <div class="m-label">Distance</div>
+          <div id="m-dist" class="m-val text-info">—</div>
+          <div class="m-label">km</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="m-card">
+          <div class="m-label">Hops</div>
+          <div id="m-hops" class="m-val text-warning">—</div>
+          <div class="m-label">cities</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="m-card">
+          <div class="m-label">Visited</div>
+          <div id="m-visited" class="m-val" style="color:#0dcaf0">—</div>
+          <div class="m-label">nodes</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="m-card">
+          <div class="m-label">Solve time</div>
+          <div id="m-time" class="m-val" style="color:#6c757d">—</div>
+          <div class="m-label">ms</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-auto d-flex flex-wrap gap-x-2 gap-y-1"
+         style="font-size:.67rem;column-gap:.55rem;row-gap:.15rem">
+      <span><span style="color:#394050">●</span> Settled</span>
+      <span><span style="color:#0dcaf0">●</span> Frontier</span>
+      <span><span style="color:#ffc107">●</span> Current</span>
+      <span><span style="color:#198754">●</span> Path</span>
+      <span><span style="color:#0d6efd">—</span> Land</span>
+      <span><span style="color:#fd7e14">╌</span> Ferry</span>
+      <span><span style="color:#9c4dcc">╌╌</span> Ocean</span>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ── MAP ───────────────────────────────────────────────────────── -->
+  <div id="gl-map"></div>
+
+</div><!-- /gl-shell -->
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/demos/graph_lab.js') }}"></script>
+{% endblock %}

@@ -477,6 +477,12 @@ def graph_routing_fast():
 
 # ── Graph Algorithm Laboratory ────────────────────────────────────────────────
 
+@demos_bp.route('/graph_lab')
+@login_required
+def graph_lab_page():
+    return render_template('demos/graph_lab.html')
+
+
 @demos_bp.route('/graph_lab/algorithms')
 @login_required
 def graph_lab_algorithms():
