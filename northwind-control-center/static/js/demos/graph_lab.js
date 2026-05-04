@@ -63,12 +63,31 @@ function buildAlgoDropdown(problem) {
 }
 
 function updateAlgoUI() {
-    const algo    = document.getElementById('sel-algo').value;
+    const algo     = document.getElementById('sel-algo').value;
     const algoMeta = registry?.algorithms[algo] || {};
-    // Show/hide the "To" row for algorithms that don't need a destination
+
+    // Show/hide the "To" row
     const needsDst = algoMeta.needs_dst !== false;
     document.getElementById('dst-row').style.display = needsDst ? '' : 'none';
-    // Update description
+
+    // Build extra-param inputs (e.g. walk-length k)
+    const extraParams = algoMeta.extra_params || [];
+    const epRow    = document.getElementById('extra-params-row');
+    const epInputs = document.getElementById('extra-params-inputs');
+    if (extraParams.length) {
+        epInputs.innerHTML = extraParams.map(p => `
+            <div>
+              <div class="section-lbl">${esc(p.label)}</div>
+              <input id="ep-${esc(p.id)}" type="number"
+                     class="form-control form-control-sm bg-dark text-light border-secondary"
+                     value="${p.default}" min="${p.min}" max="${p.max}">
+            </div>`).join('');
+        epRow.classList.remove('d-none');
+    } else {
+        epInputs.innerHTML = '';
+        epRow.classList.add('d-none');
+    }
+
     document.getElementById('algo-desc').textContent = algoMeta.description || '—';
 }
 
@@ -242,9 +261,13 @@ function applyStep(step, cityCoords) {
         if (tc) ensureMarker(step.target, tc, COLORS.frontier, 4);
     }
     else if (step.type === 'check_node') {
-        // Euler check: odd-degree city — flash red
-        const c = cityCoords[step.node];
-        if (c) ensureMarker(step.node, c, '#ff2255', 6);
+        const c    = cityCoords[step.node];
+        const role = step.flags?.role;
+        // walk_count: source = blue, dest = orange; euler/matrix: red
+        const color = role === 'source' ? '#0dcaf0'
+                    : role === 'dest'   ? '#fd7e14'
+                    : '#ff2255';
+        if (c) ensureMarker(step.node, c, color, 7);
     }
     else if (step.type === 'negative_relax') {
         const tc = cityCoords[step.target];
@@ -314,6 +337,15 @@ async function runLab() {
     const algorithm = document.getElementById('sel-algo').value;
     const needsDst  = registry?.algorithms[algorithm]?.needs_dst !== false;
 
+    // Collect any extra params (e.g. k for walk_count)
+    const extraParams = {};
+    for (const p of (registry?.algorithms[algorithm]?.extra_params || [])) {
+        const el = document.getElementById(`ep-${p.id}`);
+        if (el) extraParams[p.id] = p.type === 'int'
+            ? Math.max(p.min, Math.min(p.max, parseInt(el.value, 10) || p.default))
+            : parseFloat(el.value) || p.default;
+    }
+
     setBadge('computing…', 'warning');
     setLabel(needsDst
         ? `${registry?.algorithms[algorithm]?.label || algorithm}: ${src} → ${dst}`
@@ -325,7 +357,7 @@ async function runLab() {
         const r = await fetch('/demos/graph_lab/solve', {
             method:  'POST',
             headers: {'Content-Type': 'application/json'},
-            body:    JSON.stringify({problem, algorithm, src, dst}),
+            body:    JSON.stringify({problem, algorithm, src, dst, params: extraParams}),
         });
         data = await r.json();
     } catch (e) {

@@ -7,6 +7,8 @@ Phase 2  — Bellman-Ford with negative-edge highlight (reduced graph).
 Phase 3  — Reliability routing: max-probability path via -log(p) weights.
 Phase 4  — Floyd-Warshall all-pairs shortest paths (reduced graph).
 Phase 5  — Minimum Spanning Tree: Kruskal + Prim (reduced graph).
+Phase 6  — Connectivity Analysis: Euler check + TSP 2-approximation.
+Phase 7  — Matrix Analysis: Walk Counting (A^k) + Spanning Tree Count.
 """
 from __future__ import annotations
 
@@ -24,6 +26,7 @@ from graph_algorithms import (
     bellman_ford, reliability, floyd_warshall,
     kruskal, prim,
     euler_check, tsp_approx,
+    walk_count, spanning_tree_count,
 )
 
 _ASTAR_EPSILON = 1.1
@@ -44,8 +47,10 @@ _ALGO_RUNNERS: dict = {
     'floyd_warshall': floyd_warshall.run,
     'kruskal':        kruskal.run,
     'prim':           prim.run,
-    'euler_check':    euler_check.run,
-    'tsp_approx':     tsp_approx.run,
+    'euler_check':          euler_check.run,
+    'tsp_approx':           tsp_approx.run,
+    'walk_count':           walk_count.run,
+    'spanning_tree_count':  spanning_tree_count.run,
 }
 
 MAX_ANIM_STEPS = 300
@@ -192,6 +197,36 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         ),
         'phase': 6,
     },
+    'walk_count': {
+        'label':         'Walk Count (A^k)',
+        'problem':       'matrix',
+        'needs_reduced': True,
+        'needs_dst':     True,
+        'weight_attr':   None,
+        'extra_params':  [
+            {'id': 'k', 'label': 'Walk length k', 'type': 'int',
+             'default': 2, 'min': 1, 'max': 6},
+        ],
+        'description':   (
+            'Counts walks of exactly length k using the 4.8. Theorem: '
+            'A^k[src, dst] = number of k-hop routes (may revisit cities). '
+            f'Computes on the {REDUCED_N}-city adjacency matrix.'
+        ),
+        'phase': 7,
+    },
+    'spanning_tree_count': {
+        'label':         'Spanning Tree Count',
+        'problem':       'matrix',
+        'needs_reduced': True,
+        'needs_dst':     False,
+        'weight_attr':   None,
+        'description':   (
+            'Kirchhoff\'s Matrix-Tree Theorem: det(cofactor of L) counts all '
+            f'distinct spanning trees. L = D − A. Runs on the {REDUCED_N}-city graph. '
+            'Uses slogdet to handle counts that reach 10^300+.'
+        ),
+        'phase': 7,
+    },
 }
 
 PROBLEM_REGISTRY: dict[str, dict] = {
@@ -218,6 +253,10 @@ PROBLEM_REGISTRY: dict[str, dict] = {
     'connectivity': {
         'label':      'Connectivity Analysis',
         'algorithms': ['euler_check', 'tsp_approx'],
+    },
+    'matrix': {
+        'label':      'Matrix Analysis',
+        'algorithms': ['walk_count', 'spanning_tree_count'],
     },
 }
 
@@ -331,10 +370,26 @@ def _city_coords_for_steps(G: nx.Graph,
     return result
 
 
+# ── Extra-param coercion ──────────────────────────────────────────────────────
+
+def _coerce(param_spec: dict, raw_value) -> int | float | str:
+    """Cast a raw extra-param value to the type declared in the registry."""
+    t = param_spec.get('type', 'int')
+    try:
+        if t == 'int':
+            v = int(raw_value)
+            return max(param_spec.get('min', v), min(param_spec.get('max', v), v))
+        if t == 'float':
+            return float(raw_value)
+    except (TypeError, ValueError):
+        pass
+    return param_spec.get('default', raw_value)
+
+
 # ── Solver ────────────────────────────────────────────────────────────────────
 
 def solve(conn_str: str, problem: str, algorithm: str,
-          src: str, dst: str) -> dict:
+          src: str, dst: str, params: dict | None = None) -> dict:
     """
     Route a solve request to the appropriate algorithm generator.
 
@@ -359,13 +414,15 @@ def solve(conn_str: str, problem: str, algorithm: str,
     if needs_dst and dst not in G.nodes:
         return {'error': f'City not found: {dst!r}'}
 
-    weight_attr  = meta['weight_attr'] or 'weight'
+    weight_attr   = meta['weight_attr'] or 'weight'
     effective_dst = dst if needs_dst else None
+    extra_params  = {p['id']: _coerce(p, (params or {}).get(p['id'], p['default']))
+                     for p in meta.get('extra_params', [])}
     runner        = _ALGO_RUNNERS.get(algorithm)
 
     # ── Algorithms with real generators ──────────────────────────────────
     if runner:
-        raw = list(runner(G, src, effective_dst, weight=weight_attr))
+        raw = list(runner(G, src, effective_dst, weight=weight_attr, **extra_params))
 
         terminal    = next((s for s in reversed(raw) if s.type in _TERMINAL), None)
         visit_steps = [s for s in raw if s.type not in _TERMINAL]

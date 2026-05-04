@@ -498,8 +498,9 @@ def graph_lab_solve():
     algorithm = data.get('algorithm', 'astar')
     src       = data.get('src', '')
     dst       = data.get('dst', '')
+    params    = data.get('params', {})
     conn_str  = _build_conn_str(current_app.config)
-    result    = gl.solve(conn_str, problem, algorithm, src, dst)
+    result    = gl.solve(conn_str, problem, algorithm, src, dst, params=params)
     if 'error' in result:
         return jsonify(result), 400
     return jsonify(result)
