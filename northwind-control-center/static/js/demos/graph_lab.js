@@ -24,6 +24,11 @@ const COLORS = {
     mst:      '#adb5bd',
 };
 
+const PALETTE = [
+    '#e63946', '#2a9d8f', '#e9c46a', '#457b9d',
+    '#f4a261', '#8338ec', '#06d6a0', '#fb5607',
+];
+
 // ── State ────────────────────────────────────────────────────────────────────
 let registry    = null;   // {problems, algorithms, reduced_n}
 let cityNameMap = {};     // "Name (CC)" → raw name
@@ -209,6 +214,15 @@ function renderFinalPath(path, cityCoords) {
     }
 }
 
+function renderColoring(coloring, cityCoords) {
+    for (const [name, colorIdx] of Object.entries(coloring)) {
+        const c = cityCoords[name];
+        if (c) ensureMarker(name, c, PALETTE[colorIdx % PALETTE.length], 5);
+    }
+    const pts = Object.values(cityCoords).map(c => [c.lat, c.lng]);
+    if (pts.length) map.fitBounds(L.latLngBounds(pts), {padding: [32, 32]});
+}
+
 function clearLines() {
     landLine.setLatLngs([]);
     ferryLine.setLatLngs([]);
@@ -269,6 +283,14 @@ function applyStep(step, cityCoords) {
                     : '#ff2255';
         if (c) ensureMarker(step.node, c, color, 7);
     }
+    else if (step.type === 'color_node') {
+        const c = cityCoords[step.node];
+        const color = PALETTE[(step.flags?.color ?? 0) % PALETTE.length];
+        if (c) {
+            ensureMarker(step.node, c, COLORS.current, 6);
+            setTimeout(() => ensureMarker(step.node, c, color, 4), 150);
+        }
+    }
     else if (step.type === 'negative_relax') {
         const tc = cityCoords[step.target];
         if (tc) ensureMarker(step.target, tc, '#ff2255', 5);
@@ -293,7 +315,16 @@ function setResultPanel(text) {
 function _onComplete(data, cityCoords, solveMs) {
     setBadge('done', 'success');
 
-    if (data.result_type === 'tree') {
+    if (data.result_type === 'coloring') {
+        renderColoring(data.coloring || {}, cityCoords);
+        const chi = data.chromatic_number ?? '?';
+        setLabel(data.verdict || `χ(G) = ${chi} colours`);
+        setResultPanel(data.detail || '');
+        document.getElementById('m-dist').textContent    = chi;
+        document.getElementById('m-hops').textContent    = '—';
+        document.getElementById('m-visited').textContent = data.n_visited ?? '—';
+
+    } else if (data.result_type === 'tree') {
         renderTreeEdges(data.tree_edges || [], cityCoords);
         const edgeCount = (data.tree_edges || []).length;
         setLabel(`${edgeCount} edges · ${(data.total_km ?? 0).toLocaleString()} km MST · ${solveMs} ms`);

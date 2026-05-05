@@ -27,6 +27,7 @@ from graph_algorithms import (
     kruskal, prim,
     euler_check, tsp_approx,
     walk_count, spanning_tree_count,
+    graph_coloring, planarity_check,
 )
 
 _ASTAR_EPSILON = 1.1
@@ -51,6 +52,8 @@ _ALGO_RUNNERS: dict = {
     'tsp_approx':           tsp_approx.run,
     'walk_count':           walk_count.run,
     'spanning_tree_count':  spanning_tree_count.run,
+    'graph_coloring':       graph_coloring.run,
+    'planarity_check':      planarity_check.run,
 }
 
 MAX_ANIM_STEPS = 300
@@ -227,6 +230,35 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         ),
         'phase': 7,
     },
+    'graph_coloring': {
+        'label':         'Graph Coloring χ(G)',
+        'problem':       'structural',
+        'needs_reduced': True,
+        'needs_dst':     False,
+        'weight_attr':   None,
+        'description':   (
+            'Greedy largest-first assigns each city the smallest colour '
+            'unused by its neighbours. Computes χ(G) (chromatic number). '
+            f'Runs on the {REDUCED_N}-city graph. '
+            "Brooks' theorem: χ ≤ Δ for most graphs. "
+            '4-Color theorem: any planar map needs ≤ 4 colours.'
+        ),
+        'phase': 8,
+    },
+    'planarity_check': {
+        'label':         'Planarity Check',
+        'problem':       'structural',
+        'needs_reduced': True,
+        'needs_dst':     False,
+        'weight_attr':   None,
+        'description':   (
+            'Tests if the graph can be drawn without edge crossings. '
+            'Boyer-Myrvold LR-planarity algorithm O(V+E). '
+            'Kuratowski: planar ⟺ no K₅/K₃,₃ minor. '
+            '4-Color theorem applies to all planar graphs.'
+        ),
+        'phase': 8,
+    },
 }
 
 PROBLEM_REGISTRY: dict[str, dict] = {
@@ -257,6 +289,10 @@ PROBLEM_REGISTRY: dict[str, dict] = {
     'matrix': {
         'label':      'Matrix Analysis',
         'algorithms': ['walk_count', 'spanning_tree_count'],
+    },
+    'structural': {
+        'label':      'Structural Analysis',
+        'algorithms': ['graph_coloring', 'planarity_check'],
     },
 }
 
@@ -438,7 +474,7 @@ def solve(conn_str: str, problem: str, algorithm: str,
         throttled.append(terminal)
 
         n_visited = sum(1 for s in visit_steps
-                        if s.type in ('visit_node', 'pivot_node'))
+                        if s.type in ('visit_node', 'pivot_node', 'color_node'))
 
         base = {
             'algorithm':    algorithm,
@@ -489,6 +525,27 @@ def solve(conn_str: str, problem: str, algorithm: str,
                 'confidence':  None,
                 'analysis':    analysis,
                 'city_coords': _city_coords_for_steps(G, throttled, all_cities, city_by_name),
+            }
+
+        # ── Coloring result (graph_coloring) ─────────────────────────
+        if terminal.type == 'found_coloring':
+            flags    = terminal.flags
+            coloring = flags.get('coloring', {})
+            return {
+                **base,
+                'result_type':      'coloring',
+                'path':             [],
+                'tree_edges':       [],
+                'total_km':         0,
+                'total_cost':       0,
+                'hop_count':        0,
+                'confidence':       None,
+                'coloring':         coloring,
+                'chromatic_number': flags.get('chromatic_number', 0),
+                'verdict':          flags.get('verdict', ''),
+                'detail':           flags.get('detail', ''),
+                'city_coords': _city_coords_for_steps(
+                    G, throttled, list(coloring.keys()), city_by_name),
             }
 
         # ── Path result (navigation / traversal algorithms) ───────────
