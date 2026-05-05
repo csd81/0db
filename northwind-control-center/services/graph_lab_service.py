@@ -28,6 +28,8 @@ from graph_algorithms import (
     euler_check, tsp_approx,
     walk_count, spanning_tree_count,
     graph_coloring, planarity_check,
+    articulation,
+    max_flow,
 )
 
 _ASTAR_EPSILON = 1.1
@@ -54,6 +56,8 @@ _ALGO_RUNNERS: dict = {
     'spanning_tree_count':  spanning_tree_count.run,
     'graph_coloring':       graph_coloring.run,
     'planarity_check':      planarity_check.run,
+    'articulation':         articulation.run,
+    'max_flow':             max_flow.run,
 }
 
 MAX_ANIM_STEPS = 300
@@ -200,6 +204,20 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         ),
         'phase': 6,
     },
+    'articulation': {
+        'label':         'Cut-Vertices & Bridges',
+        'problem':       'connectivity',
+        'needs_reduced': True,
+        'needs_dst':     False,
+        'weight_attr':   None,
+        'description':   (
+            'Tarjan DFS identifies cut-vertices (single-node failures that split the '
+            'network) and bridges (single-edge failures). '
+            'Cut-vertices shown in red; bridges drawn as red links. '
+            'Based on 1.36. Definíció (k-connectivity).'
+        ),
+        'phase': 9,
+    },
     'walk_count': {
         'label':         'Walk Count (A^k)',
         'problem':       'matrix',
@@ -259,6 +277,20 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
         ),
         'phase': 8,
     },
+    'max_flow': {
+        'label':         'Max-Flow / Min-Cut',
+        'problem':       'flow',
+        'needs_reduced': True,
+        'needs_dst':     True,
+        'weight_attr':   'capacity',
+        'description':   (
+            'Edmonds-Karp (BFS Ford-Fulkerson): finds maximum concurrent '
+            'logistics throughput from source to sink. '
+            'Min-Cut Theorem: max-flow = capacity of the bottleneck cut. '
+            f'Road=1000, Ferry=200, Ocean=100 units. {REDUCED_N}-city graph.'
+        ),
+        'phase': 10,
+    },
 }
 
 PROBLEM_REGISTRY: dict[str, dict] = {
@@ -284,7 +316,7 @@ PROBLEM_REGISTRY: dict[str, dict] = {
     },
     'connectivity': {
         'label':      'Connectivity Analysis',
-        'algorithms': ['euler_check', 'tsp_approx'],
+        'algorithms': ['euler_check', 'tsp_approx', 'articulation'],
     },
     'matrix': {
         'label':      'Matrix Analysis',
@@ -293,6 +325,10 @@ PROBLEM_REGISTRY: dict[str, dict] = {
     'structural': {
         'label':      'Structural Analysis',
         'algorithms': ['graph_coloring', 'planarity_check'],
+    },
+    'flow': {
+        'label':      'Network Flow',
+        'algorithms': ['max_flow'],
     },
 }
 
@@ -510,15 +546,19 @@ def solve(conn_str: str, problem: str, algorithm: str,
                 'city_coords': _city_coords_for_steps(G, throttled, all_cities, city_by_name),
             }
 
-        # ── Analysis result (Euler check, planarity, matrix, …) ──────
+        # ── Analysis result (Euler check, planarity, matrix, articulation) ──
         if terminal.type == 'found_analysis':
-            analysis   = terminal.flags
-            all_cities = [s.node for s in visit_steps if s.node]
+            analysis    = terminal.flags
+            all_cities  = [s.node for s in visit_steps if s.node]
+            # Convert bridge pairs to geo so the frontend can draw them
+            raw_bridges = analysis.get('bridges', [])
+            bridge_geo  = (_tree_edges_to_geo(G, raw_bridges, city_by_name)
+                           if raw_bridges else [])
             return {
                 **base,
                 'result_type': 'analysis',
                 'path':        [],
-                'tree_edges':  [],
+                'tree_edges':  bridge_geo,
                 'total_km':    0,
                 'total_cost':  0,
                 'hop_count':   0,

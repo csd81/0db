@@ -214,6 +214,16 @@ function renderFinalPath(path, cityCoords) {
     }
 }
 
+function renderBridgeEdges(treeEdges, cityCoords) {
+    for (const e of treeEdges) {
+        const c1 = cityCoords[e.u] || {lat: e.lat1, lng: e.lng1};
+        const c2 = cityCoords[e.v] || {lat: e.lat2, lng: e.lng2};
+        const pl = L.polyline([[c1.lat, c1.lng], [c2.lat, c2.lng]],
+                              {color: '#ff2255', weight: 2.5, opacity: 0.9}).addTo(map);
+        mstPolylines.push(pl);
+    }
+}
+
 function renderColoring(coloring, cityCoords) {
     for (const [name, colorIdx] of Object.entries(coloring)) {
         const c = cityCoords[name];
@@ -291,6 +301,15 @@ function applyStep(step, cityCoords) {
             setTimeout(() => ensureMarker(step.node, c, color, 4), 150);
         }
     }
+    else if (step.type === 'bridge_edge') {
+        const c1 = cityCoords[step.source];
+        const c2 = cityCoords[step.target];
+        if (c1 && c2) {
+            const pl = L.polyline([[c1.lat, c1.lng], [c2.lat, c2.lng]],
+                                  {color: '#ff2255', weight: 2.5, opacity: 0.9}).addTo(map);
+            mstPolylines.push(pl);
+        }
+    }
     else if (step.type === 'negative_relax') {
         const tc = cityCoords[step.target];
         if (tc) ensureMarker(step.target, tc, '#ff2255', 5);
@@ -335,10 +354,19 @@ function _onComplete(data, cityCoords, solveMs) {
 
     } else if (data.result_type === 'analysis') {
         const a = data.analysis || {};
+        // Bridges: rendered as red lines using the tree_edges slot
+        if ((data.tree_edges || []).length) {
+            renderBridgeEdges(data.tree_edges, cityCoords);
+        }
+        // Cut-vertices: re-apply red markers after animation settles
+        for (const name of (a.cut_vertices || [])) {
+            const c = cityCoords[name];
+            if (c) ensureMarker(name, c, '#ff2255', 8);
+        }
         setLabel(a.verdict || 'Analysis complete');
         setResultPanel(a.detail || '');
-        document.getElementById('m-dist').textContent    = '—';
-        document.getElementById('m-hops').textContent    = a.n_odd != null ? `${a.n_odd} odd` : '—';
+        document.getElementById('m-dist').textContent    = a.n_cut  != null ? a.n_cut  : (a.n_odd != null ? `${a.n_odd} odd` : '—');
+        document.getElementById('m-hops').textContent    = a.n_bridges != null ? a.n_bridges : '—';
         document.getElementById('m-visited').textContent = data.n_visited ?? '—';
 
     } else {
