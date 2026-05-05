@@ -196,10 +196,209 @@
         </tr>
       </tbody>
     </table>
-    <div style="font-size:.68rem;color:#5a6070">
-      SQL wins for small datasets; MapReduce overhead is amortised across massive distributed input splits.
+  </div>
+</div>
+
+<!-- ── Educational Summary ──────────────────────────────────────────────── -->
+
+<!-- Concept banner -->
+<div class="d-flex gap-2 mb-2 flex-wrap" style="font-size:.68rem">
+  <div style="flex:1;min-width:160px;background:#080f0a;border:1px solid #06d6a0;border-radius:.3rem;padding:.35rem .6rem;color:#06d6a0">
+    <strong>Map</strong> — (k1,v1) → list(k2,v2)<br>
+    <span style="color:#5a6070">One record in, zero or more pairs out. Stateless, parallelisable.</span>
+  </div>
+  <div style="flex:1;min-width:160px;background:#0f0e06;border:1px solid #e9c46a;border-radius:.3rem;padding:.35rem .6rem;color:#e9c46a">
+    <strong>Shuffle &amp; Sort</strong> — group by key<br>
+    <span style="color:#5a6070">Framework sorts all intermediate pairs so each Reduce sees one key at a time.</span>
+  </div>
+  <div style="flex:1;min-width:160px;background:#06100d;border:1px solid #2a9d8f;border-radius:.3rem;padding:.35rem .6rem;color:#2a9d8f">
+    <strong>Reduce</strong> — (k2, list(v2)) → list(v2)<br>
+    <span style="color:#5a6070">Merge all values for a key into one output. Produces final result.</span>
+  </div>
+  <div style="flex:1;min-width:160px;background:#0a060f;border:1px solid #8338ec;border-radius:.3rem;padding:.35rem .6rem;color:#8338ec">
+    <strong>Combiner</strong> — partial reduce on mapper<br>
+    <span style="color:#5a6070">Pre-aggregates before network transfer. Same code as Reduce. Saves bandwidth.</span>
+  </div>
+</div>
+
+<!-- Three detail cards -->
+<div class="row g-2 mb-2">
+
+  <!-- Programming Model -->
+  <div class="col-4">
+    <div class="pipe-card" style="min-height:220px">
+      <div class="pipe-hdr" style="color:#06d6a0"><i class="bi bi-code-slash"></i> Programming Model</div>
+      <div class="pipe-body" style="font-size:.67rem;line-height:1.7;overflow-y:auto">
+        <div style="font-family:monospace;background:#06080a;border:1px solid #1e2028;border-radius:.25rem;padding:.35rem .5rem;margin-bottom:.4rem;color:#8892a4;font-size:.63rem">
+          map&nbsp;&nbsp;&nbsp;(k1,v1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ list(k2,v2)<br>
+          reduce (k2, list(v2)) → list(v2)
+        </div>
+        <div><strong style="color:#cdd3de">WordCount</strong> — map emits <span style="color:#e9c46a">(word,"1")</span>; reduce sums counts</div>
+        <div><strong style="color:#cdd3de">Distributed Grep</strong> — map emits matching lines; reduce = identity</div>
+        <div><strong style="color:#cdd3de">Inverted Index</strong> — map emits <span style="color:#e9c46a">(word, docID)</span>; reduce builds posting list</div>
+        <div><strong style="color:#cdd3de">This demo</strong> — map emits <span style="color:#e9c46a">(country, revenue)</span>; reduce sums → revenue by country</div>
+        <div style="margin-top:.4rem;color:#5a6070">Inspiration: Lisp's <em>map</em> and <em>fold</em>. Restricting the model enables automatic parallelisation and fault-tolerance hidden from the programmer.</div>
+      </div>
     </div>
   </div>
+
+  <!-- Implementation Details -->
+  <div class="col-4">
+    <div class="pipe-card" style="min-height:220px">
+      <div class="pipe-hdr" style="color:#e9c46a"><i class="bi bi-diagram-3"></i> Implementation Details</div>
+      <div class="pipe-body" style="font-size:.67rem;line-height:1.7;overflow-y:auto">
+        <div><strong style="color:#cdd3de">Locality optimisation</strong></div>
+        <div style="color:#5a6070">Master schedules map tasks <em>on the machine holding the GFS block</em>. Most input is read from local disk — zero network bandwidth consumed. Move computation to data, not data to computation.</div>
+        <div style="margin-top:.35rem"><strong style="color:#cdd3de">Backup tasks (straggler mitigation)</strong></div>
+        <div style="color:#5a6070">Near completion, master launches duplicate executions of remaining tasks. First to finish wins. Disabling this causes <strong style="color:#e63946">44% slowdown</strong> on sort benchmark. Stragglers arise from bad disks, shared scheduling, CPU cache disabled by bugs.</div>
+        <div style="margin-top:.35rem"><strong style="color:#cdd3de">Fault tolerance</strong></div>
+        <div style="color:#5a6070">Master pings workers periodically. Failed worker → re-execute all its map tasks (output on local disk, inaccessible). Killing 200/1746 workers mid-sort → only <strong style="color:#06d6a0">5% slowdown</strong>. Re-execution is the primary fault-tolerance mechanism.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- At Google Scale -->
+  <div class="col-4">
+    <div class="pipe-card" style="min-height:220px">
+      <div class="pipe-hdr" style="color:#8338ec"><i class="bi bi-speedometer2"></i> At Google Scale — August 2004</div>
+      <div class="pipe-body" style="font-size:.67rem;overflow-y:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.65rem">
+          <tr style="border-bottom:1px solid #1e2028">
+            <td style="color:#5a6070;padding:.2rem .3rem">Jobs run</td>
+            <td style="color:#cdd3de;text-align:right;font-family:monospace;padding:.2rem .3rem">29,423</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e2028">
+            <td style="color:#5a6070;padding:.2rem .3rem">Input data read</td>
+            <td style="color:#e9c46a;text-align:right;font-family:monospace;padding:.2rem .3rem">3,288 TB</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e2028">
+            <td style="color:#5a6070;padding:.2rem .3rem">Intermediate data</td>
+            <td style="color:#cdd3de;text-align:right;font-family:monospace;padding:.2rem .3rem">758 TB</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e2028">
+            <td style="color:#5a6070;padding:.2rem .3rem">Output written</td>
+            <td style="color:#cdd3de;text-align:right;font-family:monospace;padding:.2rem .3rem">193 TB</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e2028">
+            <td style="color:#5a6070;padding:.2rem .3rem">Avg machines/job</td>
+            <td style="color:#cdd3de;text-align:right;font-family:monospace;padding:.2rem .3rem">157</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e2028">
+            <td style="color:#5a6070;padding:.2rem .3rem">Avg map tasks/job</td>
+            <td style="color:#cdd3de;text-align:right;font-family:monospace;padding:.2rem .3rem">3,351</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e2028">
+            <td style="color:#5a6070;padding:.2rem .3rem">Grep 1 TB</td>
+            <td style="color:#06d6a0;text-align:right;font-family:monospace;padding:.2rem .3rem">150 s</td>
+          </tr>
+          <tr>
+            <td style="color:#5a6070;padding:.2rem .3rem">Sort 1 TB</td>
+            <td style="color:#06d6a0;text-align:right;font-family:monospace;padding:.2rem .3rem">891 s</td>
+          </tr>
+        </table>
+        <div style="margin-top:.5rem;color:#5a6070;font-size:.63rem;line-height:1.5">
+          SQL wins here (small Northwind dataset, single machine). MapReduce overhead is amortised only when input is split across <strong style="color:#cdd3de">hundreds of nodes</strong> — each reading its local GFS block in parallel.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Why Big Data needs distributed processing -->
+<div class="d-flex gap-2 mb-2 flex-wrap" style="font-size:.68rem">
+  <div style="flex:1;min-width:160px;background:#0a0a0f;border:1px solid #457b9d;border-radius:.3rem;padding:.35rem .6rem">
+    <strong style="color:#457b9d">CPU-bound → I/O-bound</strong><br>
+    <span style="color:#5a6070">Old HPC: algorithms, simulations (MPI/OpenMP). Modern Big Data: datasets too large for any single machine. The bottleneck is reading data, not computing it.</span>
+  </div>
+  <div style="flex:1;min-width:160px;background:#080f0a;border:1px solid #06d6a0;border-radius:.3rem;padding:.35rem .6rem">
+    <strong style="color:#06d6a0">3V Model</strong> — Volume · Velocity · Variety<br>
+    <span style="color:#5a6070"><strong style="color:#cdd3de">Volume</strong>: orders of magnitude beyond one machine. <strong style="color:#cdd3de">Velocity</strong>: continuous ingestion speed. <strong style="color:#cdd3de">Variety</strong>: logs, images, JSON, sensor streams — not just rows.</span>
+  </div>
+  <div style="flex:1;min-width:160px;background:#0f0e06;border:1px solid #e9c46a;border-radius:.3rem;padding:.35rem .6rem">
+    <strong style="color:#e9c46a">Big Data lifecycle</strong><br>
+    <span style="color:#5a6070">
+      <strong style="color:#cdd3de">1. Ingest</strong> — extract, sort, label, transform<br>
+      <strong style="color:#cdd3de">2. Persist</strong> — HDFS or distributed DB<br>
+      <strong style="color:#cdd3de">3. Process</strong> — batch or stream<br>
+      <strong style="color:#cdd3de">4. Visualise</strong> — trends, insights
+    </span>
+  </div>
+</div>
+
+<!-- Hadoop components + Framework taxonomy -->
+<div class="row g-2 mb-2">
+
+  <!-- Hadoop 4 components -->
+  <div class="col-5">
+    <div class="pipe-card" style="min-height:200px">
+      <div class="pipe-hdr" style="color:#457b9d"><i class="bi bi-boxes"></i> Hadoop — 4 Components</div>
+      <div class="pipe-body" style="font-size:.67rem;line-height:1.7;overflow-y:auto">
+        <div style="margin-bottom:.3rem">
+          <strong style="color:#cdd3de">Hadoop Common</strong>
+          <span style="color:#5a6070"> — shared utilities and libraries used by all modules</span>
+        </div>
+        <div style="margin-bottom:.3rem">
+          <strong style="color:#e9c46a">HDFS</strong>
+          <span style="color:#5a6070"> — high-performance distributed filesystem. Splits files into 128 MB blocks, replicates 3×. All Map input and Reduce output goes here. Locality optimisation: YARN schedules map tasks on the node holding the block.</span>
+        </div>
+        <div style="margin-bottom:.3rem">
+          <strong style="color:#2a9d8f">YARN</strong>
+          <span style="color:#5a6070"> — cluster coordinator. <strong style="color:#cdd3de">Resource Manager</strong> (global scheduler) → <strong style="color:#cdd3de">Node Managers</strong> (per machine) → <strong style="color:#cdd3de">App Master</strong> per job negotiates containers. Clients submit jobs to Resource Manager.</span>
+        </div>
+        <div>
+          <strong style="color:#06d6a0">MapReduce</strong>
+          <span style="color:#5a6070"> — batch processing engine running inside YARN containers. Implements the Map → Shuffle/Sort → Reduce pipeline. Java-native, accessible from other languages via Hadoop Streaming.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Framework taxonomy -->
+  <div class="col-7">
+    <div class="pipe-card" style="min-height:200px">
+      <div class="pipe-hdr" style="color:#8338ec"><i class="bi bi-layers"></i> Processing Framework Taxonomy</div>
+      <div class="pipe-body" style="font-size:.67rem;overflow-y:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.65rem">
+          <thead>
+            <tr style="border-bottom:1px solid #2a2d35;color:#5a6070;font-size:.6rem">
+              <th style="padding:.2rem .4rem">Mode</th>
+              <th style="padding:.2rem .4rem">Dataset</th>
+              <th style="padding:.2rem .4rem">Granularity</th>
+              <th style="padding:.2rem .4rem">Frameworks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #1e2028">
+              <td style="padding:.25rem .4rem;color:#e9c46a;font-weight:700">Batch</td>
+              <td style="padding:.25rem .4rem;color:#8892a4">Large, static, finite</td>
+              <td style="padding:.25rem .4rem;color:#8892a4">Full dataset</td>
+              <td style="padding:.25rem .4rem;color:#cdd3de">Hadoop MapReduce, Spark</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1e2028">
+              <td style="padding:.25rem .4rem;color:#2a9d8f;font-weight:700">Stream</td>
+              <td style="padding:.25rem .4rem;color:#8892a4">Unbounded, continuous</td>
+              <td style="padding:.25rem .4rem;color:#8892a4">Item or window</td>
+              <td style="padding:.25rem .4rem;color:#cdd3de">Storm, Samza, Kinesis, Trident</td>
+            </tr>
+            <tr>
+              <td style="padding:.25rem .4rem;color:#8338ec;font-weight:700">Hybrid</td>
+              <td style="padding:.25rem .4rem;color:#8892a4">Both</td>
+              <td style="padding:.25rem .4rem;color:#8892a4">Both</td>
+              <td style="padding:.25rem .4rem;color:#cdd3de">Spark Streaming, Flink, Beam</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:.5rem;font-size:.63rem;color:#5a6070;line-height:1.65">
+          <strong style="color:#cdd3de">Apache</strong> — open-source: Hadoop (MapReduce), Spark, Storm, Flink, Kafka Streams, Akka<br>
+          <strong style="color:#cdd3de">GCP</strong> — Pub/Sub (ingest) + <strong style="color:#457b9d">Dataflow</strong> (Beam runner, batch &amp; stream) + <strong style="color:#457b9d">Dataproc</strong> (native Hadoop/Spark jobs)<br>
+          <strong style="color:#cdd3de">AWS</strong> — Kinesis (stream ingest) + Lambda (serverless event processing) + EMR (managed Hadoop/Spark)<br>
+          <span style="color:#5a6070;font-style:italic">Hadoop MapReduce: batch only, highest latency, lowest cost per TB. Choose Spark when you need in-memory speed or iterative ML. Choose Flink/Beam when you need true unified batch+stream.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Log feed -->

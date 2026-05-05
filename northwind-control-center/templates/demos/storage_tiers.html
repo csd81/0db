@@ -203,6 +203,154 @@
   </div>
 
 </div>
+
+<!-- ─── Educational panels ──────────────────────────────────────────── -->
+
+<!-- GCP Storage Taxonomy banner -->
+<div class="d-flex gap-2 mt-3 mb-2 flex-wrap" style="font-size:.68rem">
+
+  <div style="flex:1;min-width:150px;background:#06111a;border:1px solid #457b9d;border-radius:.35rem;padding:.45rem .6rem;line-height:1.55">
+    <strong style="color:#457b9d">Cloud Storage</strong><br>
+    Object store — immutable blobs in buckets.<br>
+    <span style="color:#5a6070">4 classes: Standard / Nearline / Coldline / Archive. REST API only, no mount. 11 nines durability.</span>
+  </div>
+
+  <div style="flex:1;min-width:150px;background:#061412;border:1px solid #2a9d8f;border-radius:.35rem;padding:.45rem .6rem;line-height:1.55">
+    <strong style="color:#2a9d8f">Cloud SQL / Spanner</strong><br>
+    Managed relational databases.<br>
+    <span style="color:#5a6070">Cloud SQL: MySQL / PostgreSQL / SQL Server, zonal. Cloud Spanner: global, 99.999% SLA, distributed ACID transactions.</span>
+  </div>
+
+  <div style="flex:1;min-width:150px;background:#0a0614;border:1px solid #8338ec;border-radius:.35rem;padding:.45rem .6rem;line-height:1.55">
+    <strong style="color:#8338ec">Cloud Bigtable</strong><br>
+    Wide-column NoSQL — petabyte scale.<br>
+    <span style="color:#5a6070">Sub-10ms latency. Row key + column families + timestamped cells. Ideal for IoT, time-series, financial, graph data.</span>
+  </div>
+
+  <div style="flex:1;min-width:150px;background:#0a1000;border:1px solid #6abf4b;border-radius:.35rem;padding:.45rem .6rem;line-height:1.55">
+    <strong style="color:#6abf4b">Firestore / Memorystore</strong><br>
+    Document NoSQL &amp; managed cache.<br>
+    <span style="color:#5a6070">Firestore: serverless, ACID transactions, live sync (formerly Datastore). Memorystore: managed Redis / Memcached.</span>
+  </div>
+
+</div>
+
+<!-- Three detail cards -->
+<div class="row g-2 mb-2">
+
+  <!-- Cloud Storage 4 classes -->
+  <div class="col-4">
+    <div class="st-card">
+      <div class="st-hdr" style="color:#e9c46a"><i class="bi bi-bucket"></i> Cloud Storage — 4 Storage Classes</div>
+      <div class="st-body">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.65rem">
+          <thead>
+            <tr style="color:#5a6070;font-size:.6rem;border-bottom:1px solid #1e2028">
+              <th>Class</th><th>Access frequency</th><th>Min. duration</th><th>Retrieval fee</th>
+            </tr>
+          </thead>
+          <tbody style="color:#cdd3de">
+            <tr>
+              <td style="color:#2a9d8f;font-weight:700">Standard</td>
+              <td>Frequent / hot</td>
+              <td style="color:#5a6070">none</td>
+              <td style="color:#5a6070">none</td>
+            </tr>
+            <tr>
+              <td style="color:#6abf4b;font-weight:700">Nearline</td>
+              <td>~ once / month</td>
+              <td>30 days</td>
+              <td style="color:#e9c46a">yes</td>
+            </tr>
+            <tr>
+              <td style="color:#e9c46a;font-weight:700">Coldline</td>
+              <td>~ once / quarter</td>
+              <td>90 days</td>
+              <td style="color:#e9c46a">yes</td>
+            </tr>
+            <tr>
+              <td style="color:#8338ec;font-weight:700">Archive</td>
+              <td>~ once / year</td>
+              <td>365 days</td>
+              <td style="color:#e63946">yes (highest)</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:.62rem;color:#5a6070;margin-top:.5rem;line-height:1.6">
+          All four classes live in the same API — you only change the <strong style="color:#cdd3de">storage class</strong> flag on the bucket or individual object.
+          Lifecycle rules can automatically migrate objects from Standard → Nearline → Coldline → Archive as they age,
+          cutting costs without manual intervention.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bigtable data model -->
+  <div class="col-4">
+    <div class="st-card">
+      <div class="st-hdr" style="color:#8338ec"><i class="bi bi-table"></i> Cloud Bigtable — Data Model</div>
+      <div class="st-body">
+        <div style="font-size:.65rem;font-family:monospace;background:#06080a;border:1px solid #1e2028;border-radius:.3rem;padding:.5rem;line-height:1.9;color:#8892a4">
+<span style="color:#8338ec">Row key</span>  │ <span style="color:#2a9d8f">cf1</span>:<span style="color:#6abf4b">col_a</span>  │ <span style="color:#2a9d8f">cf1</span>:<span style="color:#6abf4b">col_b</span>  │ <span style="color:#e9c46a">cf2</span>:<span style="color:#6abf4b">col_x</span>
+──────────┼─────────────┼─────────────┼─────────────
+sensor#01 │ t3: 22.1°   │ t3: 48%     │ t2: OK
+          │ t2: 21.8°   │             │
+sensor#02 │ t3: 19.3°   │ t3: 51%     │ t3: WARN
+        </div>
+        <div style="font-size:.62rem;color:#5a6070;margin-top:.4rem;line-height:1.7">
+          <div><strong style="color:#8338ec">Row key</strong> — single index; lexicographic scan. Design it to spread load evenly.</div>
+          <div><strong style="color:#2a9d8f">Column family</strong> — group of related columns declared at table creation; stored together on disk.</div>
+          <div><strong style="color:#6abf4b">Column qualifier</strong> — dynamic; unlimited per row; only populated cells stored (<em>sparse</em>).</div>
+          <div><strong style="color:#e9c46a">Timestamps</strong> — multiple versioned values per cell; older versions auto-expired by GC policy.</div>
+        </div>
+        <div style="font-size:.62rem;color:#5a6070;margin-top:.4rem">
+          Best for: IoT telemetry, financial tick data, time-series, graph adjacency. Scales to petabytes with sub-10ms reads.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GCP reference pipelines -->
+  <div class="col-4">
+    <div class="st-card">
+      <div class="st-hdr" style="color:#2a9d8f"><i class="bi bi-diagram-3"></i> GCP Reference Architectures</div>
+      <div class="st-body">
+
+        <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.25rem">IoT Pipeline</div>
+        <div style="font-size:.65rem;font-family:monospace;line-height:1.8;color:#8892a4">
+          <span style="color:#e9c46a">Devices</span>
+          → <span style="color:#2a9d8f">Pub/Sub</span>
+          → <span style="color:#2a9d8f">Dataflow</span>
+          → <span style="color:#8338ec">Bigtable</span> <span style="color:#5a6070">(hot reads)</span><br>
+          <span style="color:#5a6070" style="padding-left:6rem">↘ </span><span style="color:#457b9d">BigQuery</span> <span style="color:#5a6070">(analytics)</span><br>
+          <span style="color:#5a6070" style="padding-left:6rem">→ </span><span style="color:#6abf4b">GKE / App Engine</span>
+        </div>
+
+        <hr style="border-color:#1e2028;margin:.4rem 0">
+
+        <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.25rem">Financial Analysis Pipeline</div>
+        <div style="font-size:.65rem;font-family:monospace;line-height:1.8;color:#8892a4">
+          <span style="color:#e9c46a">Cloud Storage</span>
+          → <span style="color:#2a9d8f">Pub/Sub</span>
+          → <span style="color:#2a9d8f">Dataflow</span>
+          → <span style="color:#457b9d">BigQuery</span><br>
+          <span style="color:#5a6070" style="padding-left:6rem">↘ </span><span style="color:#8338ec">Bigtable</span>
+          → <span style="color:#6abf4b">AI Platform / Dataproc</span>
+        </div>
+
+        <hr style="border-color:#1e2028;margin:.4rem 0">
+
+        <div style="font-size:.62rem;color:#5a6070;line-height:1.65;margin-top:.3rem">
+          <strong style="color:#cdd3de">Recurring pattern</strong>: ingest via <strong style="color:#2a9d8f">Pub/Sub</strong> (durable queue),
+          transform with <strong style="color:#2a9d8f">Dataflow</strong> (Apache Beam, auto-scale),
+          serve low-latency reads from <strong style="color:#8338ec">Bigtable</strong>,
+          run analytical queries on <strong style="color:#457b9d">BigQuery</strong> (columnar, serverless, pay-per-query).
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
 {% endblock %}
 
 {% block scripts %}

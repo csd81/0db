@@ -80,11 +80,12 @@
 </div>
 
 <!-- Proto tabs + content -->
-<div class="d-flex gap-2 mb-2">
+<div class="d-flex gap-2 mb-1">
   <button class="proto-tab proto-rpc active"  data-proto="rpc">&#xBB; RPC (XDR)</button>
   <button class="proto-tab proto-soap" data-proto="soap">&#x2666; SOAP/XML</button>
   <button class="proto-tab proto-rest" data-proto="rest">&#x2714; REST/JSON</button>
 </div>
+<div id="proto-desc" class="mb-2" style="font-size:.7rem;color:#8892a4;padding:.35rem .6rem;background:#080a10;border:1px solid #1e2028;border-radius:.3rem;line-height:1.5"></div>
 
 <div class="row g-2">
 
@@ -161,6 +162,11 @@ const TTITLES = {
     soap: 'Protocol Stack — SOAP / XML Envelope',
     rest: 'Protocol Stack — REST / JSON',
 };
+const DESCS = {
+    rpc:  '<strong style="color:#457b9d">Sun RPC / CORBA (1988)</strong> — Procedures called by ID over a raw TCP socket. Arguments are serialised into a compact binary format called <strong style="color:#cdd3de">XDR (External Data Representation)</strong>: fixed-width integers, null-padded strings, no field names. The client and server share a generated stub — change the signature and both sides must be recompiled. Fast and compact, but tightly coupled; useless across organisational boundaries or language ecosystems.',
+    soap: '<strong style="color:#e9c46a">SOAP / WS-* (1998–2010)</strong> — Every call is wrapped in a verbose <strong style="color:#cdd3de">XML Envelope</strong> (Header + Body) described by a WSDL schema. Designed for enterprise interoperability: language-neutral, self-describing, supports WS-Security / WS-ReliableMessaging. The price: a 40-byte answer arrives inside 800 bytes of XML. Toolchains generate stubs from WSDL, but WSDL files themselves can exceed 1,400 lines. Dominated enterprise SOA until REST proved that simplicity wins.',
+    rest: '<strong style="color:#2a9d8f">REST / JSON (2000 → today)</strong> — Resources identified by URLs, manipulated with standard HTTP verbs (GET / POST / PUT / DELETE). No generated stub needed — any HTTP library works. Responses are lightweight <strong style="color:#cdd3de">JSON</strong>: human-readable, easily cached, trivially consumed by browsers. Stateless by design; scales horizontally. Coined by Roy Fielding in his 2000 dissertation. Now the default for public APIs (Twitter, AWS, Stripe). gRPC (2016) revisits binary efficiency for internal microservices.',
+};
 
 let currentProto = 'rpc';
 let lastData     = null;
@@ -171,6 +177,8 @@ function renderProto(proto) {
 
     document.getElementById('proto-title').textContent = TTITLES[proto];
     document.getElementById('proto-title').style.color  = col;
+    document.getElementById('proto-desc').innerHTML     = DESCS[proto];
+    document.getElementById('proto-desc').style.borderColor = col;
 
     document.querySelectorAll('.proto-tab').forEach(b => {
         b.classList.toggle('active', b.dataset.proto === proto);
@@ -178,14 +186,16 @@ function renderProto(proto) {
 
     if (!lastData) return;
 
-    const rep    = lastData[proto + '_rep'];
+    const rep    = lastData.protocols[proto];
     const steps  = rep.steps || [];
     const sb     = document.getElementById('steps-box');
     sb.innerHTML = steps.map(s =>
-        `<div class="step-line"><span style="color:${col}">▶</span> ${s}</div>`
+        `<div class="step-line"><span style="color:${col}">▶</span> <strong style="color:#cdd3de">${s.label}</strong>
+         <span style="color:#5a6070"> — ${s.detail}</span></div>`
     ).join('');
 
-    document.getElementById('payload-box').textContent = rep.payload || '–';
+    const payloadText = rep.payload || rep.payload_hex || '–';
+    document.getElementById('payload-box').textContent = payloadText;
     document.getElementById('size-label').textContent  = rep.size_bytes + ' bytes';
 
     const vb = document.getElementById('verdict-box');
@@ -248,5 +258,6 @@ document.querySelectorAll('.proto-tab').forEach(b =>
     b.addEventListener('click', () => renderProto(b.dataset.proto))
 );
 document.getElementById('invoke-btn').addEventListener('click', invokeAll);
+renderProto('rpc');  // populate description on load
 </script>
 {% endblock %}

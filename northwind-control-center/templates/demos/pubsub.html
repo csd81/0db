@@ -142,7 +142,7 @@
 </div>
 
 <!-- Architecture row: Publisher → Topic → Subscribers -->
-<div class="d-flex gap-0 mb-2" style="height:260px">
+<div class="d-flex gap-0 mb-2" style="min-height:260px">
 
   <!-- Publisher -->
   <div style="flex:0 0 210px">
@@ -211,59 +211,67 @@
           independent pull subscriptions
         </span>
       </div>
-      <div class="ps-body d-flex flex-column gap-0">
+      <div class="ps-body p-1">
+        <div class="row g-1 h-100">
 
-        <!-- Inventory -->
-        <div class="sub-card" id="sub-inventory">
-          <div class="d-flex align-items-center gap-2">
-            <span class="sub-name" style="color:#2a9d8f">Inventory Service</span>
-            <span class="sub-speed">fast</span>
-            <span class="ms-auto badge" style="background:#0d2520;color:#2a9d8f;font-size:.58rem">2 ack/tick</span>
+          <!-- Inventory -->
+          <div class="col-4">
+            <div class="sub-card h-100 mb-0" id="sub-inventory">
+              <div class="d-flex align-items-center gap-1 flex-wrap">
+                <span class="sub-name" style="color:#2a9d8f">Inventory</span>
+                <span class="sub-speed">fast</span>
+                <span class="ms-auto badge" style="background:#0d2520;color:#2a9d8f;font-size:.58rem">2 ack/tick</span>
+              </div>
+              <div class="sub-stats">
+                <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="inv-acked" style="color:#2a9d8f">0</span></div>
+                <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="inv-lag">0</span></div>
+              </div>
+              <div class="lag-wrap">
+                <div class="lag-bar-outer"><div class="lag-bar-inner" id="inv-bar" style="background:#2a9d8f;width:0%"></div></div>
+              </div>
+              <div class="sub-recent" id="inv-recent"></div>
+            </div>
           </div>
-          <div class="sub-stats">
-            <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="inv-acked" style="color:#2a9d8f">0</span></div>
-            <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="inv-lag">0</span></div>
+
+          <!-- Shipping -->
+          <div class="col-4">
+            <div class="sub-card h-100 mb-0" id="sub-shipping">
+              <div class="d-flex align-items-center gap-1 flex-wrap">
+                <span class="sub-name" style="color:#e9c46a">Shipping</span>
+                <span class="sub-speed">medium</span>
+                <span class="ms-auto badge" style="background:#2a2000;color:#e9c46a;font-size:.58rem">1 ack/tick</span>
+              </div>
+              <div class="sub-stats">
+                <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="ship-acked" style="color:#e9c46a">0</span></div>
+                <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="ship-lag">0</span></div>
+              </div>
+              <div class="lag-wrap">
+                <div class="lag-bar-outer"><div class="lag-bar-inner" id="ship-bar" style="background:#e9c46a;width:0%"></div></div>
+              </div>
+              <div class="sub-recent" id="ship-recent"></div>
+            </div>
           </div>
-          <div class="lag-wrap">
-            <div class="lag-bar-outer"><div class="lag-bar-inner" id="inv-bar" style="background:#2a9d8f;width:0%"></div></div>
+
+          <!-- Analytics -->
+          <div class="col-4">
+            <div class="sub-card h-100 mb-0" id="sub-analytics">
+              <div class="d-flex align-items-center gap-1 flex-wrap">
+                <span class="sub-name" style="color:#e63946">Analytics</span>
+                <span class="sub-speed">slow</span>
+                <span class="ms-auto badge" style="background:#200a0b;color:#e63946;font-size:.58rem">1 ack/3 ticks</span>
+              </div>
+              <div class="sub-stats">
+                <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="ana-acked" style="color:#e63946">0</span></div>
+                <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="ana-lag">0</span></div>
+              </div>
+              <div class="lag-wrap">
+                <div class="lag-bar-outer"><div class="lag-bar-inner" id="ana-bar" style="background:#e63946;width:0%"></div></div>
+              </div>
+              <div class="sub-recent" id="ana-recent"></div>
+            </div>
           </div>
-          <div class="sub-recent" id="inv-recent"></div>
+
         </div>
-
-        <!-- Shipping -->
-        <div class="sub-card" id="sub-shipping">
-          <div class="d-flex align-items-center gap-2">
-            <span class="sub-name" style="color:#e9c46a">Shipping Service</span>
-            <span class="sub-speed">medium</span>
-            <span class="ms-auto badge" style="background:#2a2000;color:#e9c46a;font-size:.58rem">1 ack/tick</span>
-          </div>
-          <div class="sub-stats">
-            <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="ship-acked" style="color:#e9c46a">0</span></div>
-            <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="ship-lag">0</span></div>
-          </div>
-          <div class="lag-wrap">
-            <div class="lag-bar-outer"><div class="lag-bar-inner" id="ship-bar" style="background:#e9c46a;width:0%"></div></div>
-          </div>
-          <div class="sub-recent" id="ship-recent"></div>
-        </div>
-
-        <!-- Analytics -->
-        <div class="sub-card mb-0" id="sub-analytics">
-          <div class="d-flex align-items-center gap-2">
-            <span class="sub-name" style="color:#e63946">Analytics Service</span>
-            <span class="sub-speed">slow</span>
-            <span class="ms-auto badge" style="background:#200a0b;color:#e63946;font-size:.58rem">1 ack/3 ticks</span>
-          </div>
-          <div class="sub-stats">
-            <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="ana-acked" style="color:#e63946">0</span></div>
-            <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="ana-lag">0</span></div>
-          </div>
-          <div class="lag-wrap">
-            <div class="lag-bar-outer"><div class="lag-bar-inner" id="ana-bar" style="background:#e63946;width:0%"></div></div>
-          </div>
-          <div class="sub-recent" id="ana-recent"></div>
-        </div>
-
       </div>
     </div>
   </div>

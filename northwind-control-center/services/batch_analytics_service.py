@@ -132,14 +132,14 @@ def ba_run(conn_str: str) -> dict:
         t_load = time.perf_counter()
         cur.execute("SELECT OrderID, CustomerID, ShipCountry FROM Orders")
         df_orders = __import__('pandas').DataFrame(
-            cur.fetchall(), columns=['OrderID', 'CustomerID', 'ShipCountry'])
+            [tuple(r) for r in cur.fetchall()], columns=['OrderID', 'CustomerID', 'ShipCountry'])
         cur.execute("SELECT OrderID, ProductID, UnitPrice, Quantity, Discount FROM [Order Details]")
         df_details = __import__('pandas').DataFrame(
-            cur.fetchall(), columns=['OrderID', 'ProductID', 'UnitPrice', 'Quantity', 'Discount'])
+            [tuple(r) for r in cur.fetchall()], columns=['OrderID', 'ProductID', 'UnitPrice', 'Quantity', 'Discount'])
         df_details = df_details.astype({'UnitPrice': float, 'Quantity': float, 'Discount': float})
         cur.execute("SELECT ProductID, ProductName FROM Products")
         df_products = __import__('pandas').DataFrame(
-            cur.fetchall(), columns=['ProductID', 'ProductName'])
+            [tuple(r) for r in cur.fetchall()], columns=['ProductID', 'ProductName'])
         pandas_results['load_ms'] = round((time.perf_counter() - t_load) * 1000, 2)
         pandas_results.update(_run_pandas(df_orders, df_details, df_products))
         pandas_ok = True

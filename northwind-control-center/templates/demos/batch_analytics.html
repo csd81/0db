@@ -13,7 +13,7 @@
   letter-spacing: .08em; text-transform: uppercase;
   display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
 }
-.ba-body { flex: 1; padding: .5rem .65rem; overflow-y: auto; font-size: .74rem; }
+.ba-body { flex: 1; padding: .5rem .65rem; font-size: .74rem; }
 .ba-body::-webkit-scrollbar { width: 3px; }
 .ba-body::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
@@ -59,13 +59,21 @@
 <div class="d-flex gap-2 mb-2 align-items-stretch">
   <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
     <strong style="color:#457b9d">Row-store (SQL Server)</strong> — stores one row contiguously.
-    Fast for: INSERT/UPDATE, single-row SELECT by PK.
-    Slow for: full-table scans, column aggregations (must read unused columns).
+    Fast for: INSERT/UPDATE, single-row SELECT by PK (clustered index).
+    Slow for: full-table scans, column aggregations — must read <em>all</em> columns even when only 2 are needed.
   </div>
   <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
-    <strong style="color:#06d6a0">Columnar (BigQuery / pandas)</strong> — stores one column contiguously.
-    Fast for: aggregations, GROUP BY, analytics. Cache-friendly for vectorised ops.
-    Slow for: single-row point lookups (must scan all columns separately).
+    <strong style="color:#06d6a0">Columnar (Dremel / BigQuery / pandas)</strong> — stores one column contiguously as a <em>column stripe</em>.
+    Fast for: aggregations, GROUP BY — skips unneeded stripes entirely.
+    Slow for: point lookups — must reconstruct a row from many separate stripes.
+    <span style="color:#5a6070">— Melnik et al., VLDB 2010</span>
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Dremel column skipping</strong> — Q1 only needs
+    <code style="color:#e9c46a">ShipCountry</code> + <code style="color:#e9c46a">Revenue</code>.
+    SQL Server must read every column in every row page.
+    Dremel reads 2 stripes, ignores the rest → proportionally less I/O at scale.
+    At 87 TB (Dremel T1), skipping 268 of 270 columns saves &gt;99% of I/O.
   </div>
 </div>
 
@@ -74,7 +82,7 @@
 
   <!-- Q1: Revenue by country -->
   <div class="col-4">
-    <div class="ba-card" style="height:340px">
+    <div class="ba-card" style="min-height:340px">
       <div class="ba-hdr" style="color:#e9c46a">
         <i class="bi bi-globe2"></i> Q1 — Revenue by Country
         <span class="ms-auto" style="font-size:.58rem;color:#5a6070">GROUP BY scan</span>
@@ -84,6 +92,11 @@
           <div class="t-box"><span class="lbl">SQL</span><span class="val" id="q1-sql">—</span><span class="sub">ms</span></div>
           <div class="vs-arrow">→</div>
           <div class="t-box"><span class="lbl">Pandas</span><span class="val" id="q1-pd">—</span><span class="sub">ms (+load)</span></div>
+        </div>
+        <div class="mb-2" style="font-size:.67rem;color:#5a6070">
+          Dremel reads only the <code style="color:#e9c46a">ShipCountry</code> &amp; <code style="color:#e9c46a">Revenue</code>
+          column stripes — all other columns are skipped.
+          SQL Server must page through every row, reading all columns.
         </div>
         <div class="q-label">Top results</div>
         <table class="table table-sm table-bordered q-tbl mb-0">
@@ -96,7 +109,7 @@
 
   <!-- Q2: Single row lookup -->
   <div class="col-4">
-    <div class="ba-card" style="height:340px">
+    <div class="ba-card" style="min-height:340px">
       <div class="ba-hdr" style="color:#457b9d">
         <i class="bi bi-search"></i> Q2 — PK Lookup (Order #10248)
         <span class="ms-auto" style="font-size:.58rem;color:#5a6070">point query</span>
@@ -111,7 +124,9 @@
         <div id="q2-row" class="ba-card" style="padding:.4rem .6rem;font-size:.72rem;color:#cdd3de"></div>
         <div class="mt-2" style="font-size:.67rem;color:#5a6070">
           SQL uses clustered index on OrderID → direct page lookup.<br>
-          Pandas must scan all rows in the mask array — O(n).
+          Pandas must scan all rows in the mask array — O(n).<br>
+          Dremel has no B-tree index — to find one DocId it must scan the entire
+          DocId column stripe. Point lookups are its known weakness (§5, Melnik 2010).
         </div>
       </div>
     </div>
@@ -119,7 +134,7 @@
 
   <!-- Q3: Top products -->
   <div class="col-4">
-    <div class="ba-card" style="height:340px">
+    <div class="ba-card" style="min-height:340px">
       <div class="ba-hdr" style="color:#2a9d8f">
         <i class="bi bi-box-seam"></i> Q3 — Top Products by Units Sold
         <span class="ms-auto" style="font-size:.58rem;color:#5a6070">scan + sort</span>
@@ -129,6 +144,10 @@
           <div class="t-box"><span class="lbl">SQL</span><span class="val" id="q3-sql">—</span><span class="sub">ms</span></div>
           <div class="vs-arrow">→</div>
           <div class="t-box"><span class="lbl">Pandas</span><span class="val" id="q3-pd">—</span><span class="sub">ms</span></div>
+        </div>
+        <div class="mt-1 mb-2" style="font-size:.67rem;color:#5a6070">
+          SQL uses an index join + TOP N pushdown → stops early.<br>
+          Pandas must merge() two DataFrames, GroupBy, then sort — O(n log n) overhead.
         </div>
         <div class="q-label">Top 10</div>
         <table class="table table-sm table-bordered q-tbl mb-0">
@@ -183,12 +202,111 @@
           In a real BigQuery pipeline this is the <strong style="color:#cdd3de">ingestion cost</strong> —
           data is loaded once into columnar storage and amortised across many queries.
           For 2,155 rows the load dominates; for 10M rows the per-query gain dominates.
+          Dremel amortises this across thousands of concurrent users sharing the same tablets.
         </div>
       </div>
     </div>
   </div>
 
 </div>
+
+<!-- Dremel Architecture -->
+<div class="ba-card mb-2">
+  <div class="ba-hdr" style="color:#8338ec">
+    <i class="bi bi-diagram-3"></i> Dremel Architecture — Melnik et al., VLDB 2010
+    <span class="ms-auto" style="font-size:.58rem;color:#5a6070;text-transform:none;letter-spacing:0">
+      the paper behind BigQuery
+    </span>
+  </div>
+  <div class="ba-body">
+    <div class="row g-2">
+
+      <!-- Nested columnar storage -->
+      <div class="col-md-4">
+        <div style="background:#080a0d;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .65rem;height:100%">
+          <div style="font-size:.68rem;font-weight:700;color:#8338ec;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">
+            <i class="bi bi-columns-gap me-1"></i>Nested Columnar Storage
+          </div>
+          <div style="font-size:.7rem;color:#8892a4;line-height:1.55">
+            Dremel extends columnar storage to <strong style="color:#cdd3de">nested records</strong>
+            (Protocol Buffers). Each value carries two extra integers:
+          </div>
+          <div class="mt-2" style="font-size:.68rem;color:#8892a4;line-height:1.6">
+            <span style="color:#e9c46a">r</span> — <strong style="color:#cdd3de">repetition level</strong>:
+            which repeated field in the path repeated. Lets the reader know when a new record starts
+            vs. a repeated sub-field.<br>
+            <span style="color:#2a9d8f">d</span> — <strong style="color:#cdd3de">definition level</strong>:
+            how many optional/repeated fields in the path are actually present. Encodes NULLs without
+            storing them explicitly.
+          </div>
+          <div class="mt-2" style="font-size:.65rem;color:#5a6070;font-style:italic">
+            Example: <code style="color:#e9c46a">Name.Language.Code = 'en-us'</code>
+            with r=0, d=2 means: new top-level record, both Name and Language are defined.
+          </div>
+        </div>
+      </div>
+
+      <!-- Serving tree -->
+      <div class="col-md-4">
+        <div style="background:#080a0d;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .65rem;height:100%">
+          <div style="font-size:.68rem;font-weight:700;color:#457b9d;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">
+            <i class="bi bi-diagram-2 me-1"></i>Multi-Level Serving Tree
+          </div>
+          <div style="font-size:.7rem;color:#8892a4;line-height:1.55">
+            Borrowed from web search. A query is rewritten at each level and partial aggregates
+            flow upward:
+          </div>
+          <div class="mt-2" style="font-size:.69rem;line-height:1.7">
+            <div style="color:#06d6a0">① Root server</div>
+            <div style="color:#5a6070;margin-left:.8rem">receives query, determines tablets, rewrites to sub-queries</div>
+            <div style="color:#e9c46a">② Intermediate servers</div>
+            <div style="color:#5a6070;margin-left:.8rem">partial aggregation of leaf results; re-aggregate upward</div>
+            <div style="color:#e63946">③ Leaf servers (local disk)</div>
+            <div style="color:#5a6070;margin-left:.8rem">scan column stripes in tablets; emit (key, partial_agg) pairs</div>
+          </div>
+          <div class="mt-2" style="font-size:.65rem;color:#5a6070">
+            Stragglers rescheduled by the query dispatcher. 95% read-ahead cache hit rate on tablets.
+            A 3,000-leaf cluster provides 24,000 execution slots.
+          </div>
+        </div>
+      </div>
+
+      <!-- Real Dremel scale -->
+      <div class="col-md-4">
+        <div style="background:#080a0d;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .65rem;height:100%">
+          <div style="font-size:.68rem;font-weight:700;color:#06d6a0;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">
+            <i class="bi bi-database me-1"></i>Real Dremel Scale (Figure 8)
+          </div>
+          <table class="table table-sm table-bordered mb-0" style="font-size:.67rem">
+            <thead>
+              <tr style="background:#060809">
+                <th style="color:#5a6070;border-color:#1e2028">Table</th>
+                <th style="color:#5a6070;border-color:#1e2028">Records</th>
+                <th style="color:#5a6070;border-color:#1e2028">Size</th>
+                <th style="color:#5a6070;border-color:#1e2028">Fields</th>
+              </tr>
+            </thead>
+            <tbody style="background:#060809">
+              <tr><td style="color:#cdd3de;border-color:#141618">T1</td><td style="color:#e9c46a;border-color:#141618">85 B</td><td style="color:#cdd3de;border-color:#141618">87 TB</td><td style="color:#cdd3de;border-color:#141618">270</td></tr>
+              <tr><td style="color:#cdd3de;border-color:#141618">T2</td><td style="color:#e9c46a;border-color:#141618">24 B</td><td style="color:#cdd3de;border-color:#141618">13 TB</td><td style="color:#cdd3de;border-color:#141618">530</td></tr>
+              <tr><td style="color:#cdd3de;border-color:#141618">T3</td><td style="color:#e9c46a;border-color:#141618">4 B</td><td style="color:#cdd3de;border-color:#141618">70 TB</td><td style="color:#cdd3de;border-color:#141618">1200</td></tr>
+              <tr><td style="color:#cdd3de;border-color:#141618">T4</td><td style="color:#e63946;border-color:#141618">1 T+</td><td style="color:#cdd3de;border-color:#141618">105 TB</td><td style="color:#cdd3de;border-color:#141618">50</td></tr>
+              <tr><td style="color:#cdd3de;border-color:#141618">T5</td><td style="color:#e63946;border-color:#141618">1 T+</td><td style="color:#cdd3de;border-color:#141618">20 TB</td><td style="color:#cdd3de;border-color:#141618">30</td></tr>
+            </tbody>
+          </table>
+          <div class="mt-2" style="font-size:.65rem;color:#5a6070;line-height:1.5">
+            T4 has <strong style="color:#cdd3de">1+ trillion records</strong> across 105 TB.
+            Dremel executes aggregation queries on it in <strong style="color:#06d6a0">seconds</strong>
+            on 1,000–4,000 nodes. Column skipping on T3's 1,200 fields is critical —
+            most queries touch fewer than 10.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

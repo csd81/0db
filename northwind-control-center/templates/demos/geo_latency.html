@@ -158,6 +158,141 @@
   </div>
 
 </div>
+
+<!-- ─── Educational panels ──────────────────────────────────────────── -->
+
+<!-- GCP geography concept banner -->
+<div class="d-flex gap-2 mt-3 mb-2 flex-wrap" style="font-size:.68rem">
+
+  <div style="flex:1;min-width:150px;background:#06111a;border:1px solid #457b9d;border-radius:.35rem;padding:.45rem .6rem;line-height:1.55">
+    <strong style="color:#457b9d">Zone</strong> — single failure domain<br>
+    <span style="color:#5a6070">A zone is an independent data-centre within a region. VMs and Persistent Disks live in a zone. Intra-zone RTT is <strong style="color:#cdd3de">&lt; 1 ms</strong>. One power/network failure can take down a zone — always spread critical workloads across ≥ 2 zones.</span>
+  </div>
+
+  <div style="flex:1;min-width:150px;background:#061412;border:1px solid #2a9d8f;border-radius:.35rem;padding:.45rem .6rem;line-height:1.55">
+    <strong style="color:#2a9d8f">Region</strong> — group of zones<br>
+    <span style="color:#5a6070">A region (e.g. <code style="color:#cdd3de">us-central1</code>) contains 3–5 zones (<code style="color:#cdd3de">-a / -b / -c / -f</code>). Regional resources — like static external IPs and Cloud SQL replicas — are available to all zones in the region. Choose a region close to your users to minimise RTT.</span>
+  </div>
+
+  <div style="flex:1;min-width:150px;background:#0a060f;border:1px solid #8338ec;border-radius:.35rem;padding:.45rem .6rem;line-height:1.55">
+    <strong style="color:#8338ec">Global</strong> — across all regions<br>
+    <span style="color:#5a6070">Global resources (disk images, snapshots, VPC networks, Cloud CDN) are replicated or accessible worldwide. Cloud CDN is a global resource — edge PoPs serve cached content from the nearest node regardless of where your origin VM lives.</span>
+  </div>
+
+  <div style="flex:1;min-width:150px;background:#0f0e06;border:1px solid #e9c46a;border-radius:.35rem;padding:.45rem .6rem;line-height:1.55">
+    <strong style="color:#e9c46a">Why it matters for latency</strong><br>
+    <span style="color:#5a6070">Placing an origin in the wrong region adds a fixed RTT penalty to every dynamic request. <strong style="color:#cdd3de">CDN offloads static content globally</strong>, but dynamic API calls, WebSockets, and gRPC streams still pay the speed-of-light cost to the nearest zonal instance.</span>
+  </div>
+
+</div>
+
+<!-- GCP regions table + fault tolerance card -->
+<div class="row g-2 mb-2">
+
+  <!-- GCP region list -->
+  <div class="col-5">
+    <div class="gl-card">
+      <div class="gl-hdr" style="color:#2a9d8f"><i class="bi bi-pin-map"></i> GCP Regions & Zones (examples)</div>
+      <div class="gl-body">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.65rem">
+          <thead>
+            <tr style="color:#5a6070;font-size:.6rem;border-bottom:1px solid #1e2028">
+              <th>Region ID</th><th>Location</th><th>Zones</th><th>Approx RTT to EU</th>
+            </tr>
+          </thead>
+          <tbody style="color:#8892a4">
+            <tr>
+              <td style="color:#cdd3de;font-family:monospace">us-east1</td>
+              <td>South Carolina</td><td>b, c, d</td>
+              <td style="color:#e9c46a">~90 ms</td>
+            </tr>
+            <tr>
+              <td style="color:#cdd3de;font-family:monospace">us-central1</td>
+              <td>Iowa</td><td>a, b, c, f</td>
+              <td style="color:#e9c46a">~105 ms</td>
+            </tr>
+            <tr>
+              <td style="color:#cdd3de;font-family:monospace">us-west1</td>
+              <td>Oregon</td><td>a, b, c</td>
+              <td style="color:#e63946">~145 ms</td>
+            </tr>
+            <tr>
+              <td style="color:#cdd3de;font-family:monospace">europe-west1</td>
+              <td>Belgium</td><td>b, c, d</td>
+              <td style="color:#2a9d8f">~10 ms</td>
+            </tr>
+            <tr>
+              <td style="color:#cdd3de;font-family:monospace">europe-west3</td>
+              <td>Frankfurt</td><td>a, b, c</td>
+              <td style="color:#2a9d8f">~8 ms</td>
+            </tr>
+            <tr>
+              <td style="color:#cdd3de;font-family:monospace">asia-east1</td>
+              <td>Taiwan</td><td>a, b, c</td>
+              <td style="color:#e63946">~220 ms</td>
+            </tr>
+            <tr>
+              <td style="color:#cdd3de;font-family:monospace">asia-northeast1</td>
+              <td>Tokyo</td><td>a, b, c</td>
+              <td style="color:#e63946">~235 ms</td>
+            </tr>
+            <tr>
+              <td style="color:#cdd3de;font-family:monospace">australia-southeast1</td>
+              <td>Sydney</td><td>a, b, c</td>
+              <td style="color:#e63946">~285 ms</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:.62rem;color:#5a6070;margin-top:.4rem">
+          Zone naming: <code style="color:#cdd3de">us-central1-a</code> = region <code style="color:#cdd3de">us-central1</code>, zone suffix <code style="color:#cdd3de">a</code>. Zones within a region are connected by high-bandwidth, low-latency internal links.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fault tolerance + resource scope -->
+  <div class="col-7">
+    <div class="gl-card">
+      <div class="gl-hdr" style="color:#e9c46a"><i class="bi bi-shield-check"></i> Resource Scope & Fault Tolerance Design</div>
+      <div class="gl-body">
+        <div class="row g-2" style="font-size:.66rem">
+          <div class="col-6">
+            <div style="color:#5a6070;text-transform:uppercase;font-size:.6rem;margin-bottom:.3rem">Resource scope</div>
+            <table style="width:100%;font-size:.64rem;border-collapse:collapse">
+              <tr style="border-bottom:1px solid #1e2028">
+                <td style="color:#5a6070;padding:.2rem .3rem">Scope</td>
+                <td style="color:#5a6070;padding:.2rem .3rem">Examples</td>
+              </tr>
+              <tr style="border-bottom:1px solid #1e2028">
+                <td style="padding:.2rem .3rem;color:#8338ec;font-weight:700">Global</td>
+                <td style="padding:.2rem .3rem;color:#8892a4">Disk images, snapshots, VPC networks, Cloud CDN, static routes</td>
+              </tr>
+              <tr style="border-bottom:1px solid #1e2028">
+                <td style="padding:.2rem .3rem;color:#2a9d8f;font-weight:700">Regional</td>
+                <td style="padding:.2rem .3rem;color:#8892a4">Static external IPs, Cloud SQL, regional GCS buckets, subnets</td>
+              </tr>
+              <tr>
+                <td style="padding:.2rem .3rem;color:#457b9d;font-weight:700">Zonal</td>
+                <td style="padding:.2rem .3rem;color:#8892a4">VM instances, Persistent Disks, GPUs, GKE node pools</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-6">
+            <div style="color:#5a6070;text-transform:uppercase;font-size:.6rem;margin-bottom:.3rem">Fault tolerance patterns</div>
+            <div style="line-height:1.75;color:#8892a4">
+              <div><strong style="color:#e63946">Single zone</strong> — one failure takes down the app. Never for production.</div>
+              <div><strong style="color:#e9c46a">Multi-zone</strong> — VMs in <code style="color:#cdd3de">-a</code> and <code style="color:#cdd3de">-b</code>. Survives zone outage. Standard HA.</div>
+              <div><strong style="color:#2a9d8f">Multi-region</strong> — VMs in <code style="color:#cdd3de">us-east1</code> + <code style="color:#cdd3de">europe-west1</code>. Survives regional disaster + cuts latency for global users.</div>
+              <div style="margin-top:.4rem;color:#5a6070">A <strong style="color:#cdd3de">global HTTP(S) load balancer</strong> routes each user to the nearest healthy region automatically — combining fault tolerance with geo-latency reduction in one resource.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {% endblock %}
 
 {% block scripts %}

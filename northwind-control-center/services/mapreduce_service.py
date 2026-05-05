@@ -175,7 +175,7 @@ def _run_inner(conn_str: str):
     counts: dict[str, int]  = {}
 
     for pair in map_pairs:
-        k = pair['key']
+        k = pair['key'] or '(unknown)'
         groups.setdefault(k, [])
         counts[k] = counts.get(k, 0) + 1
         if len(groups[k]) < 5:          # keep at most 5 sample values per bucket

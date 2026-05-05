@@ -59,8 +59,8 @@ def _worker(worker_id: int):
     while not _stop.is_set():
         batch = []
         for _ in range(20):
-            x      = random.uniform(-1.0, 1.0)
-            y      = random.uniform(-1.0, 1.0)
+            x      = random.uniform(0.0, 1.0)
+            y      = random.uniform(0.0, 1.0)
             inside = (x * x + y * y) <= 1.0
             batch.append({'x': round(x, 4), 'y': round(y, 4), 'inside': inside})
             local_pts += 1

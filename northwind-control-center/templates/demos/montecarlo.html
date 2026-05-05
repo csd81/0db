@@ -162,8 +162,8 @@ drawBase();
 function drawDots(samples) {
     // samples: [{x, y, inside}] — x,y in [-1,1]
     for (const s of samples) {
-        const px = ((s.x + 1) / 2) * CANVAS_SIZE;
-        const py = ((1 - s.y) / 2) * CANVAS_SIZE;   // flip y
+        const px = s.x * CANVAS_SIZE;
+        const py = (1 - s.y) * CANVAS_SIZE;   // flip y: y=1 → top, y=0 → bottom
         ctx.fillStyle = s.inside ? 'rgba(42,157,143,0.55)' : 'rgba(230,57,70,0.45)';
         ctx.fillRect(px - 1, py - 1, 2, 2);
     }
