@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}RPC → REST Protocol Evolution{% endblock %}
+
+{% block content %}
+<style>
+.rpc-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.rpc-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem;
+}
+.rpc-body { flex: 1; padding: .5rem .65rem; overflow-y: auto; }
+
+.proto-tab {
+  border: 1px solid #1e2028; background: #080a0d;
+  border-radius: .3rem; cursor: pointer; transition: background .15s;
+  padding: .45rem .8rem; font-size: .72rem; font-weight: 700;
+  letter-spacing: .05em; color: #8892a4;
+}
+.proto-tab:hover { background: #12141a; }
+.proto-tab.active { color: #fff; }
+.proto-rpc.active  { background: #0a111a; border-color: #457b9d; color: #457b9d; }
+.proto-soap.active { background: #1a0f00; border-color: #e9c46a; color: #e9c46a; }
+.proto-rest.active { background: #061412; border-color: #2a9d8f; color: #2a9d8f; }
+
+.size-bar-outer { background: #1a1d24; border-radius: 3px; height: 14px; }
+.size-bar-inner  { height: 14px; border-radius: 3px; display: flex; align-items: center;
+                   padding-left: .4rem; font-size: .6rem; font-weight: 700; color: #fff; transition: width .6s; }
+
+.step-anim {
+  border-left: 2px solid #1e2028; padding-left: .5rem; margin-left: .25rem;
+}
+.step-line {
+  font-size: .67rem; font-family: monospace; color: #8892a4;
+  padding: .1rem 0; animation: fadein .3s;
+}
+@keyframes fadein { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; } }
+
+.payload-box {
+  background: #06080a; border: 1px solid #1e2028; border-radius: .3rem;
+  padding: .5rem; font-family: monospace; font-size: .63rem;
+  color: #8892a4; overflow-x: auto; white-space: pre-wrap; max-height: 220px; overflow-y: auto;
+}
+
+.verdict-box {
+  font-size: .68rem; padding: .4rem .6rem; border-radius: .3rem;
+  border-left: 3px solid;
+}
+.verdict-rpc  { border-color: #457b9d; background: #06111a; color: #457b9d; }
+.verdict-soap { border-color: #e9c46a; background: #1a1300; color: #e9c46a; }
+.verdict-rest { border-color: #2a9d8f; background: #061412; color: #2a9d8f; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#457b9d">&#9654; RPC → REST Protocol Evolution</span>
+  <span style="font-size:.75rem;color:#5a6070">XDR Binary → SOAP/XML → REST/JSON — payload size & protocol overhead</span>
+</div>
+
+<!-- Controls -->
+<div class="d-flex align-items-center gap-2 mb-2">
+  <label style="font-size:.72rem;color:#8892a4">Order ID:</label>
+  <select id="order-sel" class="form-select form-select-sm" style="width:110px;background:#0e1014;color:#cdd3de;border-color:#2a2d35">
+    <option value="10248">10248</option>
+    <option value="10249">10249</option>
+    <option value="10250">10250</option>
+    <option value="10251">10251</option>
+    <option value="10252">10252</option>
+    <option value="10999">10999</option>
+  </select>
+  <button id="invoke-btn" class="btn btn-sm"
+          style="background:#457b9d;color:#fff;border:none">
+    <i class="bi bi-send me-1"></i>Invoke All Protocols
+  </button>
+  <div id="invoke-status" style="font-size:.7rem;color:#5a6070"></div>
+</div>
+
+<!-- Proto tabs + content -->
+<div class="d-flex gap-2 mb-2">
+  <button class="proto-tab proto-rpc active"  data-proto="rpc">&#xBB; RPC (XDR)</button>
+  <button class="proto-tab proto-soap" data-proto="soap">&#x2666; SOAP/XML</button>
+  <button class="proto-tab proto-rest" data-proto="rest">&#x2714; REST/JSON</button>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT+MIDDLE: Protocol detail -->
+  <div class="col-8">
+    <div class="rpc-card" style="height:480px">
+      <div class="rpc-hdr" id="proto-title" style="color:#457b9d">
+        <i class="bi bi-hdd-network"></i> Protocol Stack — RPC (XDR Binary)
+      </div>
+      <div class="rpc-body row g-2">
+
+        <!-- Stack animation -->
+        <div class="col-5">
+          <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.3rem">Protocol Stack</div>
+          <div class="step-anim" id="steps-box">
+            <div class="step-line" style="color:#5a6070">Invoke to see steps…</div>
+          </div>
+        </div>
+
+        <!-- Payload -->
+        <div class="col-7">
+          <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.3rem">
+            Payload <span id="size-label" style="color:#8892a4;margin-left:.4rem">–</span>
+          </div>
+          <div class="payload-box" id="payload-box">–</div>
+          <div class="verdict-box verdict-rpc mt-2" id="verdict-box">Invoke to see verdict…</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Size comparison + timeline -->
+  <div class="col-4">
+    <div class="rpc-card mb-2" style="height:220px">
+      <div class="rpc-hdr" style="color:#e9c46a"><i class="bi bi-bar-chart-fill"></i> Payload Size Comparison</div>
+      <div class="rpc-body">
+        <div id="size-bars">
+          <div style="color:#5a6070;font-size:.72rem">Invoke to compare…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rpc-card" style="height:250px">
+      <div class="rpc-hdr" style="color:#8338ec"><i class="bi bi-clock-history"></i> Evolution Timeline</div>
+      <div class="rpc-body">
+        <div style="font-size:.68rem;line-height:2;font-family:monospace">
+          <div><span style="color:#457b9d">1988</span> <strong style="color:#cdd3de">Sun RPC / ONC RPC</strong></div>
+          <div style="color:#5a6070;font-size:.6rem;padding-left:.8rem">XDR binary marshalling, portmapper, NFS</div>
+          <div><span style="color:#e9c46a">1998</span> <strong style="color:#cdd3de">SOAP 1.0</strong></div>
+          <div style="color:#5a6070;font-size:.6rem;padding-left:.8rem">XML envelope, WSDL contracts, WS-* standards</div>
+          <div><span style="color:#e9c46a">2003</span> <strong style="color:#cdd3de">SOAP 1.2 / WS-Security</strong></div>
+          <div style="color:#5a6070;font-size:.6rem;padding-left:.8rem">Enterprise dominance — SAP, .NET, Java EE</div>
+          <div><span style="color:#2a9d8f">2000</span> <strong style="color:#cdd3de">REST coined (Fielding thesis)</strong></div>
+          <div style="color:#5a6070;font-size:.6rem;padding-left:.8rem">HTTP verbs, stateless, JSON over XML</div>
+          <div><span style="color:#2a9d8f">2008–</span> <strong style="color:#cdd3de">REST dominates APIs</strong></div>
+          <div style="color:#5a6070;font-size:.6rem;padding-left:.8rem">Twitter, Facebook, AWS REST APIs; gRPC (2016+)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+const COLORS = { rpc: '#457b9d', soap: '#e9c46a', rest: '#2a9d8f' };
+const VCLS   = { rpc: 'verdict-rpc', soap: 'verdict-soap', rest: 'verdict-rest' };
+const TTITLES = {
+    rpc:  'Protocol Stack — RPC (XDR Binary)',
+    soap: 'Protocol Stack — SOAP / XML Envelope',
+    rest: 'Protocol Stack — REST / JSON',
+};
+
+let currentProto = 'rpc';
+let lastData     = null;
+
+function renderProto(proto) {
+    currentProto = proto;
+    const col = COLORS[proto];
+
+    document.getElementById('proto-title').textContent = TTITLES[proto];
+    document.getElementById('proto-title').style.color  = col;
+
+    document.querySelectorAll('.proto-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.proto === proto);
+    });
+
+    if (!lastData) return;
+
+    const rep    = lastData[proto + '_rep'];
+    const steps  = rep.steps || [];
+    const sb     = document.getElementById('steps-box');
+    sb.innerHTML = steps.map(s =>
+        `<div class="step-line"><span style="color:${col}">▶</span> ${s}</div>`
+    ).join('');
+
+    document.getElementById('payload-box').textContent = rep.payload || '–';
+    document.getElementById('size-label').textContent  = rep.size_bytes + ' bytes';
+
+    const vb = document.getElementById('verdict-box');
+    vb.className   = 'verdict-box ' + VCLS[proto] + ' mt-2';
+    vb.textContent = rep.verdict || '';
+
+    if (lastData.size_comparison) renderSizeBars(lastData.size_comparison);
+}
+
+function renderSizeBars(cmp) {
+    const max = Math.max(cmp.rpc_bytes, cmp.soap_bytes, cmp.rest_bytes, 1);
+    const bars = [
+        { label: 'RPC (XDR)', key: 'rpc_bytes',  color: '#457b9d' },
+        { label: 'SOAP/XML',  key: 'soap_bytes',  color: '#e9c46a' },
+        { label: 'REST/JSON', key: 'rest_bytes',  color: '#2a9d8f' },
+    ];
+    document.getElementById('size-bars').innerHTML = bars.map(b => {
+        const sz  = cmp[b.key] || 0;
+        const pct = Math.min(100, (sz / max) * 100).toFixed(1);
+        return `
+          <div class="mb-2">
+            <div class="d-flex justify-content-between mb-1" style="font-size:.65rem">
+              <span style="color:${b.color}">${b.label}</span>
+              <span style="color:#cdd3de;font-family:monospace">${sz} bytes</span>
+            </div>
+            <div class="size-bar-outer">
+              <div class="size-bar-inner" style="width:${pct}%;background:${b.color}">${sz >= 60 ? sz + 'B' : ''}</div>
+            </div>
+          </div>`;
+    }).join('');
+}
+
+async function invokeAll() {
+    const orderId = parseInt(document.getElementById('order-sel').value);
+    const btn     = document.getElementById('invoke-btn');
+    btn.disabled  = true;
+    document.getElementById('invoke-status').textContent = 'Invoking…';
+
+    let data;
+    try {
+        data = await fetch('/demos/rpc/invoke', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({order_id: orderId}),
+        }).then(r => r.json());
+    } catch (e) {
+        document.getElementById('invoke-status').textContent = 'Error: ' + e.message;
+        btn.disabled = false;
+        return;
+    }
+
+    lastData = data;
+    document.getElementById('invoke-status').textContent =
+        'Done — order ' + orderId;
+    btn.disabled = false;
+    renderProto(currentProto);
+}
+
+document.querySelectorAll('.proto-tab').forEach(b =>
+    b.addEventListener('click', () => renderProto(b.dataset.proto))
+);
+document.getElementById('invoke-btn').addEventListener('click', invokeAll);
+</script>
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block title %}Kafka Consumer Groups — Persistent Log{% endblock %}
+
+{% block content %}
+<style>
+.kf-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.kf-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+}
+.kf-body { flex: 1; padding: .5rem .65rem; overflow-y: auto; }
+
+/* Log tape */
+.log-msg {
+  font-family: monospace; font-size: .65rem; border-bottom: 1px solid #0e1014;
+  padding: .08rem 0; display: flex; gap: .4rem;
+}
+.log-offset  { color: #5a6070; min-width: 2.5rem; }
+.log-key     { color: #457b9d; min-width: 3.5rem; }
+.log-country { color: #e9c46a; min-width: 4rem; }
+.log-amount  { color: #2a9d8f; }
+.log-ts      { color: #2a2d35; margin-left: auto; }
+
+/* Consumer group rows */
+.grp-bar-outer { background: #1a1d24; border-radius: 3px; height: 10px; }
+.grp-bar-inner { height: 10px; border-radius: 3px; transition: width .4s; }
+
+.lag-badge {
+  font-size: .6rem; font-family: monospace; border-radius: .2rem;
+  padding: .04rem .3rem; border: 1px solid;
+}
+.lag-ok   { background: #061412; color: #2a9d8f; border-color: #0e2e28; }
+.lag-warn { background: #1a1300; color: #e9c46a; border-color: #2a2200; }
+.lag-high { background: #180508; color: #e63946; border-color: #2a0510; }
+
+/* Contrast box */
+.contrast-box {
+  background: #0a0d14; border: 1px solid #1e2028; border-radius: .3rem;
+  padding: .5rem .65rem; font-size: .68rem; color: #8892a4; line-height: 1.7;
+}
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#e9c46a">&#9654; Kafka Consumer Groups</span>
+  <span style="font-size:.75rem;color:#5a6070">Persistent append-only log — independent offsets per consumer group</span>
+  <div class="ms-auto d-flex gap-2">
+    <button id="start-btn" class="btn btn-sm" style="background:#e9c46a;color:#000;border:none">
+      <i class="bi bi-play-fill me-1"></i>Produce Orders
+    </button>
+    <button id="reset-btn" class="btn btn-sm btn-outline-danger">Reset</button>
+  </div>
+</div>
+
+<!-- Phase banner -->
+<div id="phase-banner" class="mb-2" style="font-size:.72rem;color:#5a6070;padding:.2rem .4rem;
+     background:#080a0d;border:1px solid #1e2028;border-radius:.3rem">
+  Phase: <strong id="phase-text">idle</strong>
+  &nbsp;·&nbsp; Log size: <strong id="log-size">0</strong>
+  &nbsp;·&nbsp; Produced: <strong id="total-produced">0</strong>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: Topic log -->
+  <div class="col-5">
+    <div class="kf-card" style="height:520px">
+      <div class="kf-hdr" style="color:#e9c46a">
+        <i class="bi bi-journal-code"></i> Topic: northwind.orders
+        <span id="log-badge" class="badge ms-auto"
+              style="background:#1a1300;color:#e9c46a;font-size:.62rem">append-only</span>
+      </div>
+      <div class="kf-body">
+        <div class="d-flex gap-2 mb-2" style="font-size:.58rem;color:#5a6070">
+          <span style="min-width:2.5rem">OFFSET</span>
+          <span style="min-width:3.5rem">ORDER</span>
+          <span style="min-width:4rem">COUNTRY</span>
+          <span>AMOUNT</span>
+          <span class="ms-auto">TIME</span>
+        </div>
+        <div id="log-body" style="max-height:445px;overflow-y:auto">
+          <div style="color:#5a6070;font-size:.72rem">Start to produce messages…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Consumer groups -->
+  <div class="col-4">
+    <div class="kf-card mb-2" style="min-height:300px">
+      <div class="kf-hdr" style="color:#2a9d8f"><i class="bi bi-people-fill"></i> Consumer Groups</div>
+      <div class="kf-body" id="groups-body">
+        <div style="color:#5a6070;font-size:.72rem">Consumers will start reading once messages are produced…</div>
+      </div>
+    </div>
+    <div class="kf-card">
+      <div class="kf-hdr" style="color:#5a6070"><i class="bi bi-terminal"></i> Operations Log</div>
+      <div class="kf-body" id="ops-log"
+           style="font-size:.67rem;font-family:monospace;max-height:180px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Key concepts -->
+  <div class="col-3">
+    <div class="kf-card" style="height:520px">
+      <div class="kf-hdr" style="color:#8338ec"><i class="bi bi-book"></i> Kafka vs Pub/Sub</div>
+      <div class="kf-body">
+        <div class="contrast-box mb-2">
+          <strong style="color:#e9c46a">Kafka (log model)</strong><br>
+          Messages stored on disk forever (or by retention policy).<br>
+          Each consumer group tracks its own <em>offset</em>.<br>
+          New consumer groups can replay from offset 0.<br>
+          Message <strong>never deleted</strong> on acknowledgement.
+        </div>
+        <div class="contrast-box mb-2">
+          <strong style="color:#2a9d8f">Pub/Sub (ephemeral)</strong><br>
+          Message deleted once all subscribers acknowledge.<br>
+          No replay — if a subscriber misses it, it's gone.<br>
+          Lower storage cost; simpler delivery semantics.
+        </div>
+        <div style="font-size:.65rem;color:#5a6070;line-height:1.6">
+          <strong style="color:#cdd3de">Consumer lag</strong> = log_size − offset<br>
+          Zero lag = consumer is caught up.<br>
+          High lag = consumer is falling behind the producer.<br><br>
+          <strong style="color:#cdd3de">Three speeds in this demo:</strong><br>
+          · Analytics: reads every message (fast)<br>
+          · Search: reads every 2nd message (medium)<br>
+          · Archiver: reads every 4th message (slow)
+        </div>
+        <hr style="border-color:#1e2028">
+        <div style="font-size:.65rem;color:#5a6070;line-height:1.6">
+          <strong style="color:#cdd3de">Use Kafka when:</strong>
+          <ul style="padding-left:1rem;margin:0">
+            <li>Multiple teams consume same events</li>
+            <li>Event replay / audit trail needed</li>
+            <li>High-throughput streaming pipelines</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+let pollTimer = null;
+
+const GROUP_COLORS = { analytics: '#2a9d8f', search: '#8338ec', archive: '#e9c46a' };
+
+function lagCls(lag) {
+    if (lag === 0)  return 'lag-ok';
+    if (lag < 5)    return 'lag-warn';
+    return 'lag-high';
+}
+
+function updateGroups(state) {
+    const groups   = state.groups || {};
+    const offsets  = state.offsets || {};
+    const consumed = state.consumed || {};
+    const lag      = state.lag || {};
+    const logSize  = state.log_size || 0;
+    const el       = document.getElementById('groups-body');
+
+    const html = Object.entries(groups).map(([gid, meta]) => {
+        const off  = offsets[gid]  || 0;
+        const con  = consumed[gid] || 0;
+        const lgv  = lag[gid]     ?? 0;
+        const col  = GROUP_COLORS[gid] || '#8892a4';
+        const pct  = logSize > 0 ? Math.min(100, (off / logSize) * 100).toFixed(1) : 0;
+        return `
+          <div class="mb-3">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span style="color:${col};font-weight:700;font-size:.72rem">${meta.label}</span>
+              <span class="lag-badge ${lagCls(lgv)}">lag ${lgv}</span>
+              <span style="font-size:.6rem;color:#5a6070;margin-left:auto">offset ${off} / ${logSize}</span>
+            </div>
+            <div class="grp-bar-outer">
+              <div class="grp-bar-inner" style="width:${pct}%;background:${col}"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-1" style="font-size:.6rem;color:#5a6070">
+              <span>consumed: ${con}</span>
+              <span>${meta.speed} · every ${meta.lag_every} msg</span>
+            </div>
+          </div>`;
+    }).join('');
+    el.innerHTML = html || '<div style="color:#5a6070;font-size:.72rem">No groups yet</div>';
+}
+
+function updateLog(preview) {
+    const lb = document.getElementById('log-body');
+    if (!preview || !preview.length) return;
+    lb.innerHTML = preview.slice().reverse().map(m => {
+        const v = m.value || {};
+        return `<div class="log-msg">
+          <span class="log-offset">${m.offset}</span>
+          <span class="log-key">${m.key}</span>
+          <span class="log-country">${v.country || '?'}</span>
+          <span class="log-amount">$${(v.amount || 0).toFixed(0)}</span>
+          <span class="log-ts">${m.ts || ''}</span>
+        </div>`;
+    }).join('');
+}
+
+function updateUI(s) {
+    const phase = s.phase || 'idle';
+    const phaseCols = { idle:'#5a6070', producing:'#e9c46a', done:'#2a9d8f', error:'#e63946' };
+    const phaseEl = document.getElementById('phase-text');
+    phaseEl.textContent = phase;
+    phaseEl.style.color = phaseCols[phase] || '#8892a4';
+
+    document.getElementById('log-size').textContent      = s.log_size       || 0;
+    document.getElementById('total-produced').textContent = s.total_produced || 0;
+
+    document.getElementById('start-btn').disabled = phase === 'producing';
+
+    updateLog(s.log_preview || []);
+    updateGroups(s);
+
+    const opsEl = document.getElementById('ops-log');
+    opsEl.innerHTML = (s.ops_log || []).slice(-20).reverse().map(o =>
+        `<div><span style="color:#5a6070">[${o.ts}]</span> ${o.msg}</div>`
+    ).join('');
+    opsEl.scrollTop = 0;
+
+    if (phase === 'done' || phase === 'idle') {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+}
+
+async function poll() {
+    let s;
+    try { s = await fetch('/demos/kafka/state').then(r => r.json()); }
+    catch (_) { return; }
+    updateUI(s);
+}
+
+document.getElementById('start-btn').addEventListener('click', async () => {
+    await fetch('/demos/kafka/start', {method:'POST'});
+    if (!pollTimer) pollTimer = setInterval(poll, 350);
+});
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    await fetch('/demos/kafka/reset', {method:'POST'});
+    document.getElementById('log-body').innerHTML =
+        '<div style="color:#5a6070;font-size:.72rem">Start to produce messages…</div>';
+    document.getElementById('groups-body').innerHTML =
+        '<div style="color:#5a6070;font-size:.72rem">Consumers will start reading…</div>';
+    document.getElementById('ops-log').innerHTML    = '';
+    document.getElementById('log-size').textContent = '0';
+    document.getElementById('total-produced').textContent = '0';
+    document.getElementById('phase-text').textContent = 'idle';
+    document.getElementById('start-btn').disabled   = false;
+});
+
+poll();
+</script>
+{% endblock %}

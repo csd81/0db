@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% block title %}Data Stream Processing{% endblock %}
+
+{% block content %}
+<style>
+.st-card {
+  background: #0e1014;
+  border: 1px solid #1e2028;
+  border-radius: .4rem;
+  display: flex;
+  flex-direction: column;
+}
+.st-hdr {
+  background: #13151b;
+  border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-shrink: 0;
+}
+.st-body {
+  flex: 1;
+  padding: .5rem .65rem;
+  overflow: hidden;
+}
+
+.m-pill {
+  display: flex; flex-direction: column;
+  background: #080a0d; border: 1px solid #1e2028;
+  border-radius: .3rem; padding: .3rem .55rem; text-align: center;
+}
+.m-pill .lbl { font-size: .57rem; color: #5a6070; text-transform: uppercase; letter-spacing: .07em; }
+.m-pill .val { font-size: 1.1rem; font-weight: 700; line-height: 1.15; }
+
+/* Ping feed rows */
+.ping-row {
+  display: flex; gap: .35rem; align-items: baseline;
+  border-bottom: 1px solid #12141a; padding: .17rem .05rem;
+  font-size: .72rem;
+}
+.p-ts   { color: #3a4050; width: 5.4rem; flex-shrink: 0; font-family: monospace; font-size: .67rem; }
+.p-city { color: #e9c46a; flex: 1; }
+.p-ctry { color: #8892a4; width: 6rem; flex-shrink: 0; font-size: .67rem; }
+.p-spd  { color: #06d6a0; text-align: right; width: 4.2rem; flex-shrink: 0; font-weight: 600; }
+
+/* Window table */
+.win-tbl td, .win-tbl th { font-size: .72rem; padding: .18rem .4rem; }
+.win-tbl th { color: #5a6070; background: #0e1014; border-color: #1e2028; }
+.win-tbl td { background: #080a0d; border-color: #1a1d24; color: #cdd3de; }
+
+/* Log */
+#st-log {
+  background: #080a0d; border: 1px solid #1e2028; border-radius: .35rem;
+  font-size: .7rem; color: #8892a4; height: 90px; overflow-y: auto;
+  padding: .35rem .55rem; font-family: monospace;
+}
+#st-log::-webkit-scrollbar { width: 3px; }
+#st-log::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+.log-ts { color: #3a4050; }
+
+.algo-box {
+  background: #080a0d; border: 1px solid #1e2028; border-radius: .35rem;
+  padding: .5rem .7rem; font-size: .72rem; color: #8892a4;
+}
+.algo-box code { color: #2a9d8f; background: #0d1a18; padding: .05rem .25rem; border-radius: .2rem; font-size: .68rem; }
+</style>
+
+<!-- Controls -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#fb5607">&#9654; Stream</span>
+  <span style="font-size:.75rem;color:#5a6070">GPS Logistics Stream — Welford Online Stats + Tumbling Windows</span>
+
+  <button id="start-btn" class="btn btn-success btn-sm ms-2">
+    <i class="bi bi-play-fill me-1"></i>Start Stream
+  </button>
+  <button id="stop-btn" class="btn btn-warning btn-sm" disabled>
+    <i class="bi bi-stop-fill me-1"></i>Stop
+  </button>
+  <button id="reset-btn" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+  </button>
+  <span id="phase-badge" class="badge bg-secondary ms-1">idle</span>
+  <span style="font-size:.7rem;color:#5a6070">2 Hz · 30 s windows · 40 cities</span>
+</div>
+
+<!-- Metric row -->
+<div class="d-flex gap-2 mb-2">
+  <div class="m-pill">
+    <span class="lbl">Pings</span>
+    <span class="val" id="m-pings" style="color:#fb5607">0</span>
+  </div>
+  <div class="m-pill">
+    <span class="lbl">Mean speed</span>
+    <span class="val" id="m-mean" style="color:#2a9d8f">—</span>
+  </div>
+  <div class="m-pill">
+    <span class="lbl">σ (std dev)</span>
+    <span class="val" id="m-std" style="color:#e9c46a">—</span>
+  </div>
+  <div class="m-pill">
+    <span class="lbl">Windows</span>
+    <span class="val" id="m-windows" style="color:#8338ec">0</span>
+  </div>
+  <div class="m-pill">
+    <span class="lbl">Window pings</span>
+    <span class="val" id="m-wcount" style="color:#457b9d">0</span>
+  </div>
+  <div class="algo-box ms-auto" style="max-width:300px">
+    <strong style="color:#cdd3de">Welford's Algorithm</strong> — one-pass online mean/σ:<br>
+    <code>δ₁ = x − μₙ₋₁</code>&nbsp;&nbsp;<code>μₙ = μₙ₋₁ + δ₁/n</code><br>
+    <code>M₂ += δ₁·(x − μₙ)</code>&nbsp;&nbsp;<code>σ² = M₂/n</code>
+  </div>
+</div>
+
+<!-- Main grid: chart row + ping feed -->
+<div class="row g-2 mb-2">
+
+  <!-- Running mean/σ line chart -->
+  <div class="col-7">
+    <div class="st-card" style="height:230px">
+      <div class="st-hdr" style="color:#2a9d8f">
+        <i class="bi bi-graph-up"></i> Running Mean ± 1σ (Welford)
+        <span class="ms-auto" style="color:#5a6070;font-size:.62rem;font-weight:400;text-transform:none;letter-spacing:0">last 120 pings</span>
+      </div>
+      <div class="st-body" style="padding:.3rem .4rem">
+        <canvas id="mean-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ping feed -->
+  <div class="col-5">
+    <div class="st-card" style="height:230px">
+      <div class="st-hdr" style="color:#fb5607">
+        <i class="bi bi-reception-4"></i> Live Ping Feed
+        <span id="b-buf" class="ms-auto badge bg-secondary" style="font-size:.58rem">0 in buffer</span>
+      </div>
+      <div class="st-body" style="overflow-y:auto;padding:.35rem .5rem">
+        <div id="ping-feed"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Second row: window bar chart + window history -->
+<div class="row g-2 mb-2">
+
+  <!-- Current window: avg speed by country -->
+  <div class="col-6">
+    <div class="st-card" style="height:210px">
+      <div class="st-hdr" style="color:#8338ec">
+        <i class="bi bi-window-stack"></i> Current Window — Avg Speed by Country
+        <span id="win-time" class="ms-auto" style="color:#5a6070;font-size:.62rem;font-weight:400;text-transform:none;letter-spacing:0"></span>
+      </div>
+      <div class="st-body" style="padding:.3rem .4rem">
+        <canvas id="window-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completed windows -->
+  <div class="col-6">
+    <div class="st-card" style="height:210px">
+      <div class="st-hdr" style="color:#457b9d">
+        <i class="bi bi-clock-history"></i> Completed Windows
+      </div>
+      <div class="st-body" style="overflow-y:auto;padding:.3rem .5rem">
+        <table class="table table-sm table-borderless win-tbl mb-0">
+          <thead>
+            <tr>
+              <th>Window</th>
+              <th>Pings</th>
+              <th>Avg (km/h)</th>
+              <th>Top region</th>
+            </tr>
+          </thead>
+          <tbody id="win-history"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Log -->
+<div style="font-size:.63rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Event log</div>
+<div id="st-log"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+let pollTimer  = null;
+let lastLogLen = 0;
+
+// ── Chart.js setup ────────────────────────────────────────────────────────────
+
+const CHART_OPTS = {
+    animation:  false,
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#8892a4', font: {size: 10} } } },
+    scales: {
+        x: { ticks: { color: '#5a6070', font: {size: 9}, maxTicksLimit: 10 },
+             grid: { color: '#1a1d24' } },
+        y: { ticks: { color: '#8892a4', font: {size: 9} },
+             grid: { color: '#1a1d24' } },
+    },
+};
+
+const meanChart = new Chart(
+    document.getElementById('mean-chart').getContext('2d'), {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            { label: 'Mean (km/h)',   data: [], borderColor: '#2a9d8f',
+              borderWidth: 1.5, pointRadius: 0, tension: .35, fill: false },
+            { label: 'Mean + σ',      data: [], borderColor: '#e9c46a',
+              borderWidth: 1, borderDash: [3,3], pointRadius: 0, tension: .35, fill: false },
+            { label: 'Mean − σ',      data: [], borderColor: '#e9c46a',
+              borderWidth: 1, borderDash: [3,3], pointRadius: 0, tension: .35, fill: false },
+        ],
+    },
+    options: { ...CHART_OPTS, scales: {
+        x: { display: false },
+        y: { min: 20, max: 160,
+             ticks: { color: '#8892a4', font: {size: 9} },
+             grid: { color: '#1a1d24' } },
+    }},
+});
+
+const windowChart = new Chart(
+    document.getElementById('window-chart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: [], datasets: [{
+        label: 'Avg speed (km/h)',
+        data: [],
+        backgroundColor: 'rgba(131,56,236,0.55)',
+        borderColor: '#8338ec', borderWidth: 1,
+    }]},
+    options: { ...CHART_OPTS,
+        indexAxis: 'y',
+        scales: {
+            x: { min: 0, max: 160,
+                 ticks: { color: '#8892a4', font: {size: 9} },
+                 grid: { color: '#1a1d24' } },
+            y: { ticks: { color: '#e9c46a', font: {size: 9} },
+                 grid: { color: '#1a1d24' } },
+        },
+        plugins: { legend: { display: false } },
+    },
+});
+
+// ── Renderers ─────────────────────────────────────────────────────────────────
+
+function renderMeanChart(series) {
+    if (!series || !series.length) return;
+    meanChart.data.labels              = series.map(p => p.n);
+    meanChart.data.datasets[0].data    = series.map(p => p.mean);
+    meanChart.data.datasets[1].data    = series.map(p => +(p.mean + p.std_dev).toFixed(2));
+    meanChart.data.datasets[2].data    = series.map(p => +(p.mean - p.std_dev).toFixed(2));
+    meanChart.update('none');
+}
+
+function renderWindowChart(win) {
+    if (!win || !win.country_stats) return;
+    const entries = Object.entries(win.country_stats)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 12);
+    windowChart.data.labels           = entries.map(e => e[0]);
+    windowChart.data.datasets[0].data = entries.map(e => e[1].avg_speed);
+    windowChart.update('none');
+
+    const el = document.getElementById('win-time');
+    el.textContent = win.start_ts && win.end_ts
+        ? `${win.start_ts} → ${win.end_ts}`
+        : '';
+}
+
+function renderPingFeed(pings) {
+    const el = document.getElementById('ping-feed');
+    if (!pings || !pings.length) { el.innerHTML = ''; return; }
+    el.innerHTML = pings.slice().reverse().map(p => {
+        const spd    = Number(p.speed);
+        const color  = spd > 110 ? '#e63946' : spd > 80 ? '#06d6a0' : '#e9c46a';
+        return `<div class="ping-row">
+          <span class="p-ts">${p.ts}</span>
+          <span class="p-city">${p.city}</span>
+          <span class="p-ctry">${p.country}</span>
+          <span class="p-spd" style="color:${color}">${spd.toFixed(1)}</span>
+        </div>`;
+    }).join('');
+}
+
+function renderWindowHistory(windows) {
+    const el = document.getElementById('win-history');
+    if (!windows || !windows.length) { el.innerHTML = ''; return; }
+    el.innerHTML = windows.slice().reverse().map((w, i) =>
+        `<tr>
+           <td style="color:#5a6070">${w.start_ts}→${w.end_ts}</td>
+           <td style="color:#fb5607">${w.count}</td>
+           <td style="color:#2a9d8f">${w.avg_speed}</td>
+           <td style="color:#e9c46a">${w.top_country}</td>
+         </tr>`
+    ).join('');
+}
+
+function renderLog(entries) {
+    if (!entries || entries.length === lastLogLen) return;
+    lastLogLen = entries.length;
+    const el = document.getElementById('st-log');
+    el.innerHTML = entries.map(e =>
+        `<span class="log-ts">[${e.ts}]</span> ${e.msg}`
+    ).join('<br>');
+    el.scrollTop = el.scrollHeight;
+}
+
+// ── Phase badge ───────────────────────────────────────────────────────────────
+
+const PHASE_COLORS = {
+    idle: 'secondary', streaming: 'success', stopped: 'warning', error: 'danger'
+};
+
+function setPhaseBadge(phase) {
+    const el = document.getElementById('phase-badge');
+    el.textContent = phase;
+    el.className   = `badge bg-${PHASE_COLORS[phase] ?? 'secondary'} ms-1`;
+}
+
+// ── Main poll ─────────────────────────────────────────────────────────────────
+
+async function poll() {
+    let s;
+    try { s = await fetch('/demos/stream/state').then(r => r.json()); }
+    catch (_) { return; }
+
+    setPhaseBadge(s.phase);
+
+    const wf = s.welford || {};
+    document.getElementById('m-pings').textContent   = (s.ping_count ?? 0).toLocaleString();
+    document.getElementById('m-mean').textContent    = wf.mean    ? wf.mean.toFixed(1) + ' km/h' : '—';
+    document.getElementById('m-std').textContent     = wf.std_dev ? '±' + wf.std_dev.toFixed(1)  : '—';
+    document.getElementById('m-windows').textContent = (s.completed_windows?.length ?? 0);
+    document.getElementById('m-wcount').textContent  = s.current_window?.count ?? 0;
+    document.getElementById('b-buf').textContent     = (s.ring_buffer?.length ?? 0) + ' in buffer';
+
+    renderMeanChart(s.speed_series);
+    renderWindowChart(s.current_window);
+    renderPingFeed(s.ring_buffer);
+    renderWindowHistory(s.completed_windows);
+    renderLog(s.log);
+
+    if (s.phase === 'stopped') {
+        stopPoll();
+        document.getElementById('start-btn').disabled = false;
+        document.getElementById('stop-btn').disabled  = true;
+    }
+}
+
+function startPoll() {
+    if (pollTimer) return;
+    pollTimer = setInterval(poll, 500);
+    poll();
+}
+
+function stopPoll() {
+    clearInterval(pollTimer);
+    pollTimer = null;
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+
+document.getElementById('start-btn').addEventListener('click', async () => {
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('stop-btn').disabled  = false;
+    await fetch('/demos/stream/start', {method: 'POST'});
+    startPoll();
+});
+
+document.getElementById('stop-btn').addEventListener('click', async () => {
+    document.getElementById('stop-btn').disabled = true;
+    await fetch('/demos/stream/stop', {method: 'POST'});
+});
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    stopPoll();
+    await fetch('/demos/stream/reset', {method: 'POST'});
+
+    meanChart.data.labels = [];
+    meanChart.data.datasets.forEach(d => d.data = []);
+    meanChart.update('none');
+    windowChart.data.labels = [];
+    windowChart.data.datasets[0].data = [];
+    windowChart.update('none');
+
+    ['m-pings','m-mean','m-std','m-windows','m-wcount'].forEach(id =>
+        document.getElementById(id).textContent = id === 'm-pings' || id === 'm-windows' || id === 'm-wcount' ? '0' : '—');
+    document.getElementById('ping-feed').innerHTML   = '';
+    document.getElementById('win-history').innerHTML = '';
+    document.getElementById('st-log').innerHTML      = '';
+    document.getElementById('b-buf').textContent     = '0 in buffer';
+    lastLogLen = 0;
+
+    setPhaseBadge('idle');
+    document.getElementById('start-btn').disabled = false;
+    document.getElementById('stop-btn').disabled  = true;
+});
+
+// Initial state check
+poll();
+</script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Checkout — Northwind Shop{% endblock %}
+
+{% block content %}
+<style>
+  .checkout-card { background:#161b22; border:1px solid #30363d; border-radius:8px; }
+  .step-badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.8rem; }
+  .step-VALIDATING_STOCK  { background:#1f3d6b; color:#58a6ff; }
+  .step-INSERTING_ORDER   { background:#1a3d2b; color:#3fb950; }
+  .step-CALCULATING_ROUTE { background:#3d2d0d; color:#d29922; }
+  .progress { height:6px; background:#21262d; }
+  #state-processing, #state-confirmed, #state-failed { display:none; }
+</style>
+
+<div class="container py-4" style="max-width:700px">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{{ url_for('shop.cart_view') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Back to Cart
+    </a>
+    <h4 class="mb-0"><i class="bi bi-credit-card me-2 text-primary"></i>Checkout</h4>
+  </div>
+
+  <!-- STATE 1: Form -->
+  <div id="state-form">
+    <div class="checkout-card p-4 mb-3">
+      <h6 class="text-muted mb-3">Customer &amp; Shipping</h6>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label small text-muted">Customer ID (e.g. AROUT)</label>
+          <input id="inp-customer" type="text" class="form-control bg-dark border-secondary text-light text-uppercase"
+                 placeholder="AROUT" value="{{ customer_id }}" maxlength="5">
+          <div class="form-text">Northwind CustomerID — 5 chars</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small text-muted">Ship City</label>
+          <input id="inp-city" type="text" class="form-control bg-dark border-secondary text-light"
+                 placeholder="Paris" value="{{ ship_city }}">
+          <div class="form-text">Must exist in EuropeGraph for routing</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="checkout-card p-4 mb-3">
+      <h6 class="text-muted mb-3">Order Summary</h6>
+      <table class="table table-sm" style="color:#cdd5df">
+        {% for pid, item in cart.items() %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td class="text-end">{{ item.qty }} × ${{ "%.2f"|format(item.unit_price) }}</td>
+          <td class="text-end">${{ "%.2f"|format(item.unit_price * item.qty) }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="border-top">
+          <td colspan="2" class="text-muted">Subtotal</td>
+          <td class="text-end">${{ "%.2f"|format(subtotal) }}</td>
+        </tr>
+        <tr>
+          <td colspan="2" class="text-muted">Freight (5%)</td>
+          <td class="text-end">${{ "%.2f"|format(freight) }}</td>
+        </tr>
+        <tr class="border-top">
+          <td colspan="2" class="fw-bold">Total</td>
+          <td class="text-end fw-bold text-primary">${{ "%.2f"|format(total) }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="d-grid">
+      <button id="place-btn" class="btn btn-primary btn-lg" onclick="placeOrder()">
+        <i class="bi bi-check2-circle me-1"></i> Place Order
+      </button>
+    </div>
+  </div>
+
+  <!-- STATE 2: Processing -->
+  <div id="state-processing">
+    <div class="checkout-card p-5 text-center">
+      <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem"></div>
+      <h5>Processing your order…</h5>
+      <div class="progress my-3">
+        <div id="progress-bar" class="progress-bar bg-primary progress-bar-striped progress-bar-animated"
+             style="width:10%"></div>
+      </div>
+      <div id="step-label" class="mt-2">
+        <span class="step-badge step-VALIDATING_STOCK">VALIDATING_STOCK</span>
+      </div>
+      <p class="text-muted small mt-3">
+        SQL Server transaction: UPDLOCK stock check → INSERT Orders OUTPUT INSERTED.OrderID → COMMIT
+      </p>
+    </div>
+  </div>
+
+  <!-- STATE 3A: Confirmed -->
+  <div id="state-confirmed">
+    <div class="checkout-card p-5 text-center">
+      <i class="bi bi-check-circle-fill text-success display-3 d-block mb-3"></i>
+      <h4 class="text-success">Order Placed!</h4>
+      <p class="text-muted">Order <strong id="order-id-display">#—</strong> has been confirmed.</p>
+      <a id="order-link" href="#" class="btn btn-primary mt-2">
+        <i class="bi bi-map me-1"></i> View Order &amp; Logistics Map
+      </a>
+    </div>
+  </div>
+
+  <!-- STATE 3B: Failed -->
+  <div id="state-failed">
+    <div class="checkout-card p-5 text-center">
+      <i class="bi bi-x-circle-fill text-danger display-3 d-block mb-3"></i>
+      <h4 class="text-danger">Order Failed</h4>
+      <p id="error-msg" class="text-muted"></p>
+      <a href="{{ url_for('shop.cart_view') }}" class="btn btn-outline-secondary mt-2">
+        <i class="bi bi-arrow-left me-1"></i> Return to Cart
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+const STEP_PROGRESS = {
+  VALIDATING_STOCK:  25,
+  INSERTING_ORDER:   55,
+  CALCULATING_ROUTE: 85,
+};
+const ERROR_MESSAGES = {
+  INSUFFICIENT_STOCK: 'An item in your cart is out of stock. Please update quantities and try again.',
+  SERVER_ERROR:       'A system error occurred. Please try again later.',
+};
+
+let pollTimer = null;
+
+function show(id) {
+  ['state-form','state-processing','state-confirmed','state-failed'].forEach(s => {
+    document.getElementById(s).style.display = (s === id) ? 'block' : 'none';
+  });
+}
+
+function setStep(step) {
+  const bar   = document.getElementById('progress-bar');
+  const label = document.getElementById('step-label');
+  const pct   = STEP_PROGRESS[step] || 10;
+  bar.style.width = pct + '%';
+  label.innerHTML = `<span class="step-badge step-${step}">${step}</span>`;
+}
+
+async function placeOrder() {
+  const customer_id = document.getElementById('inp-customer').value.trim().toUpperCase();
+  const ship_city   = document.getElementById('inp-city').value.trim();
+  if (!customer_id || !ship_city) {
+    alert('Please enter both Customer ID and Ship City.');
+    return;
+  }
+  document.getElementById('place-btn').disabled = true;
+  show('state-processing');
+
+  const res  = await fetch('{{ url_for("shop.checkout_submit") }}', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({customer_id, ship_city}),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    showFailed(data.error || 'SERVER_ERROR');
+    return;
+  }
+  pollStatus(data.job_id);
+}
+
+async function pollStatus(jobId) {
+  const res  = await fetch(`{{ url_for("shop.checkout_status", job_id="__JOB__") }}`.replace('__JOB__', jobId));
+  const data = await res.json();
+  const status = data.status;
+
+  if (status === 'PROCESSING' || status === 'RECEIVED') {
+    setStep(data.step || 'VALIDATING_STOCK');
+    pollTimer = setTimeout(() => pollStatus(jobId), 1200);
+  } else if (status === 'CONFIRMED') {
+    document.getElementById('progress-bar').style.width = '100%';
+    document.getElementById('order-id-display').textContent = '#' + data.order_id;
+    const link = document.getElementById('order-link');
+    link.href = `/shop/order/${data.order_id}?job=${jobId}`;
+    show('state-confirmed');
+  } else {
+    showFailed(data.error_code || 'SERVER_ERROR');
+  }
+}
+
+function showFailed(code) {
+  document.getElementById('error-msg').textContent =
+    ERROR_MESSAGES[code] || ERROR_MESSAGES.SERVER_ERROR;
+  show('state-failed');
+}
+
+show('state-form');
+</script>
+{% endblock %}

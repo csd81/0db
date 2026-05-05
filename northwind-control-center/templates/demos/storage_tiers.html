@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% block title %}Cloud Storage Tiers{% endblock %}
+
+{% block content %}
+<style>
+.st-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.st-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem;
+}
+.st-body { flex: 1; padding: .6rem .75rem; }
+
+.tier-card {
+  border: 1px solid; border-radius: .4rem; padding: .6rem .75rem;
+  cursor: pointer; transition: all .2s; margin-bottom: .4rem;
+}
+.tier-card:hover { filter: brightness(1.15); }
+.tier-card.active { box-shadow: 0 0 0 2px; }
+
+.tier-block    { border-color: #1a3a5c; background: #06111a; }
+.tier-file     { border-color: #1a2e00; background: #0a1400; }
+.tier-object   { border-color: #1a1300; background: #0e0900; }
+.tier-archive  { border-color: #2a1a4e; background: #0a0614; }
+
+.tier-block.active   { box-shadow: 0 0 0 2px #457b9d; }
+.tier-file.active    { box-shadow: 0 0 0 2px #6abf4b; }
+.tier-object.active  { box-shadow: 0 0 0 2px #e9c46a; }
+.tier-archive.active { box-shadow: 0 0 0 2px #8338ec; }
+
+.tier-icon  { font-size: 1.5rem; }
+.tier-name  { font-size: .85rem; font-weight: 700; }
+.tier-sub   { font-size: .62rem; color: #8892a4; }
+.tier-price { font-size: .7rem; font-family: monospace; color: #e9c46a; }
+
+.prop-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .18rem 0; border-bottom: 1px solid #1e2028; font-size: .7rem;
+}
+.prop-label { color: #5a6070; }
+.prop-val   { color: #cdd3de; font-family: monospace; }
+
+.access-meter { height: 8px; border-radius: 4px; background: #1a1d24; }
+.access-fill  { height: 8px; border-radius: 4px; }
+
+.use-case-tag {
+  display: inline-block; margin: .1rem; padding: .08rem .35rem;
+  border-radius: 1rem; font-size: .62rem; border: 1px solid;
+}
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2">
+  <span class="fw-bold" style="color:#e9c46a">&#9654; Cloud Storage Tiers</span>
+  <span style="font-size:.75rem;color:#5a6070">Block vs File vs Object vs Archive — cost, latency, use-case</span>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: Tier selector -->
+  <div class="col-3">
+    <div class="st-card">
+      <div class="st-hdr" style="color:#e9c46a"><i class="bi bi-layers"></i> Storage Type</div>
+      <div class="st-body">
+
+        <div class="tier-card tier-block active" data-tier="block">
+          <div class="d-flex align-items-center gap-2">
+            <span class="tier-icon">🖴</span>
+            <div>
+              <div class="tier-name" style="color:#457b9d">Block Storage</div>
+              <div class="tier-sub">GCP Persistent Disk / AWS EBS</div>
+            </div>
+          </div>
+          <div class="tier-price mt-1">$0.17 / GB·month (SSD)</div>
+        </div>
+
+        <div class="tier-card tier-file" data-tier="file">
+          <div class="d-flex align-items-center gap-2">
+            <span class="tier-icon">📁</span>
+            <div>
+              <div class="tier-name" style="color:#6abf4b">File Storage</div>
+              <div class="tier-sub">GCP Filestore / AWS EFS</div>
+            </div>
+          </div>
+          <div class="tier-price mt-1">$0.20 / GB·month (SSD)</div>
+        </div>
+
+        <div class="tier-card tier-object" data-tier="object">
+          <div class="d-flex align-items-center gap-2">
+            <span class="tier-icon">🪣</span>
+            <div>
+              <div class="tier-name" style="color:#e9c46a">Object Storage</div>
+              <div class="tier-sub">GCS Standard / AWS S3</div>
+            </div>
+          </div>
+          <div class="tier-price mt-1">$0.023 / GB·month (Standard)</div>
+        </div>
+
+        <div class="tier-card tier-archive" data-tier="archive">
+          <div class="d-flex align-items-center gap-2">
+            <span class="tier-icon">🗄</span>
+            <div>
+              <div class="tier-name" style="color:#8338ec">Archive Storage</div>
+              <div class="tier-sub">GCS Archive / AWS Glacier</div>
+            </div>
+          </div>
+          <div class="tier-price mt-1">$0.0012 / GB·month</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Properties -->
+  <div class="col-5">
+    <div class="st-card" style="min-height:400px">
+      <div class="st-hdr" id="detail-hdr" style="color:#457b9d">
+        <i class="bi bi-info-circle"></i> Block Storage — Properties
+      </div>
+      <div class="st-body" id="detail-body"><!-- populated by JS --></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Comparison matrix -->
+  <div class="col-4">
+    <div class="st-card">
+      <div class="st-hdr" style="color:#8338ec"><i class="bi bi-grid"></i> Comparison Matrix</div>
+      <div class="st-body">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.65rem">
+          <thead>
+            <tr style="color:#5a6070;font-size:.6rem;border-bottom:1px solid #1e2028">
+              <th></th><th>Block</th><th>File</th><th>Object</th><th>Archive</th>
+            </tr>
+          </thead>
+          <tbody style="color:#cdd3de">
+            <tr>
+              <td style="color:#5a6070">Latency</td>
+              <td style="color:#2a9d8f">0.1ms</td>
+              <td style="color:#2a9d8f">1ms</td>
+              <td style="color:#e9c46a">50ms</td>
+              <td style="color:#e63946">hours</td>
+            </tr>
+            <tr>
+              <td style="color:#5a6070">Throughput</td>
+              <td>16 GB/s</td>
+              <td>1 GB/s</td>
+              <td>unlimited</td>
+              <td>limited</td>
+            </tr>
+            <tr>
+              <td style="color:#5a6070">Cost/GB</td>
+              <td style="color:#e63946">$0.17</td>
+              <td style="color:#e9c46a">$0.20</td>
+              <td style="color:#2a9d8f">$0.023</td>
+              <td style="color:#2a9d8f">$0.001</td>
+            </tr>
+            <tr>
+              <td style="color:#5a6070">Access</td>
+              <td>block</td>
+              <td>POSIX</td>
+              <td>REST API</td>
+              <td>async</td>
+            </tr>
+            <tr>
+              <td style="color:#5a6070">Mount</td>
+              <td>1 VM</td>
+              <td>many VMs</td>
+              <td>no mount</td>
+              <td>no mount</td>
+            </tr>
+            <tr>
+              <td style="color:#5a6070">Max size</td>
+              <td>64 TB</td>
+              <td>100 TB</td>
+              <td>∞</td>
+              <td>∞</td>
+            </tr>
+            <tr>
+              <td style="color:#5a6070">Durability</td>
+              <td>99.999%</td>
+              <td>99.999%</td>
+              <td>99.999999999%</td>
+              <td>99.999999999%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <hr style="border-color:#1e2028">
+        <div style="font-size:.63rem;color:#5a6070;line-height:1.6">
+          <strong style="color:#cdd3de">Cost example: 1 TB for 1 year</strong><br>
+          Block: <span style="color:#e63946">$2,040</span> (SSD attached to VM)<br>
+          File:  <span style="color:#e9c46a">$2,400</span> (shared NFS)<br>
+          Object:<span style="color:#2a9d8f"> $276</span> (S3 Standard)<br>
+          Archive:<span style="color:#2a9d8f"> $14.4</span> (Glacier)<br><br>
+          Object storage is <strong style="color:#2a9d8f">7× cheaper</strong> than block for cold data.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+const TIERS = {
+  block: {
+    color: '#457b9d',
+    title: 'Block Storage — Properties',
+    icon: '🖴',
+    latency: '< 0.1 ms',
+    throughput: 'up to 16 GB/s',
+    cost: '$0.17 / GB·month (SSD)\n$0.08 / GB·month (HDD)',
+    interfaces: 'Low-level block device (formatted as ext4, NTFS)',
+    concurrency: 'Single VM mount (ReadWriteOnce)',
+    durability: '99.999% (GCP PD)',
+    examples: 'GCP Persistent Disk, AWS EBS, Azure Managed Disk',
+    access_speed: 95,
+    use_cases: ['OS boot volumes','Databases (MySQL, PostgreSQL)','VM scratch disks','High-IOPS workloads'],
+    not_for: ['Sharing across VMs','Long-term archival','Unstructured blobs'],
+    learn: 'Block storage is the equivalent of a raw hard drive attached to a VM. The OS formats it and uses it like a local disk. Very fast (NVMe SSD: 0.1ms latency), but can only be mounted on one VM at a time and is the most expensive per GB.',
+  },
+  file: {
+    color: '#6abf4b',
+    title: 'File Storage — Properties',
+    icon: '📁',
+    latency: '1–5 ms',
+    throughput: 'up to 1 GB/s',
+    cost: '$0.20 / GB·month (SSD Filestore)\n$0.06 / GB·month (HDD)',
+    interfaces: 'POSIX filesystem (NFS, SMB/CIFS)',
+    concurrency: 'Multiple VMs simultaneously (ReadWriteMany)',
+    durability: '99.999% (GCP Filestore)',
+    examples: 'GCP Filestore, AWS EFS, Azure Files',
+    access_speed: 70,
+    use_cases: ['Shared home directories','Content management (CMS)','Rendering farms','ML training data shared across workers'],
+    not_for: ['Single-VM high-IOPS','Archival','Blob storage'],
+    learn: 'File storage provides an NFS/SMB share that multiple VMs can mount at the same time. Slower than block but enables shared access — essential for multi-VM workloads where all nodes read the same dataset.',
+  },
+  object: {
+    color: '#e9c46a',
+    title: 'Object Storage — Properties',
+    icon: '🪣',
+    latency: '10–100 ms (first byte)',
+    throughput: 'theoretically unlimited (parallel requests)',
+    cost: '$0.023 / GB·month (Standard)\n$0.004 / GB·month (Coldline)',
+    interfaces: 'REST API (GET, PUT, DELETE) — no filesystem',
+    concurrency: 'Unlimited concurrent readers/writers',
+    durability: '99.999999999% (11 nines) — GCS, S3',
+    examples: 'Google Cloud Storage, Amazon S3, Azure Blob Storage',
+    access_speed: 35,
+    use_cases: ['Static web assets (images, JS, CSS)','Data lake storage','ML training datasets','Backup & snapshots','Log archival'],
+    not_for: ['Low-latency databases','Mounted as filesystem','Random byte-range writes at high freq'],
+    learn: 'Object storage is the most cost-effective, durable, and scalable storage tier. Objects are accessed via HTTP REST — no mounting required. Each object is an immutable blob identified by a key. Ideal for data lakes, backups, and serving static content via CDN.',
+  },
+  archive: {
+    color: '#8338ec',
+    title: 'Archive Storage — Properties',
+    icon: '🗄',
+    latency: 'Minutes to hours (retrieval)',
+    throughput: 'Limited (throttled)',
+    cost: '$0.0012 / GB·month (GCS Archive)\n+ retrieval fee $0.05 / GB',
+    interfaces: 'REST API (same as object storage)',
+    concurrency: 'Unlimited uploads; throttled retrieval',
+    durability: '99.999999999% (11 nines)',
+    examples: 'GCS Archive, AWS Glacier Deep Archive, Azure Archive',
+    access_speed: 5,
+    use_cases: ['Regulatory data retention','Disaster recovery cold copy','Historical audit logs','Medical imaging archives'],
+    not_for: ['Frequently accessed data','Real-time applications','Any workload needing sub-hour retrieval'],
+    learn: 'Archive storage is the cheapest cloud storage tier — 100× less expensive than block storage. Retrieval takes minutes to hours and incurs extra fees. Used for data that must be retained for years (compliance, legal) but almost never accessed.',
+  },
+};
+
+function renderDetail(key) {
+    const t = TIERS[key];
+    document.getElementById('detail-hdr').textContent = t.title;
+    document.getElementById('detail-hdr').style.color = t.color;
+
+    const useTags = t.use_cases.map(u =>
+        `<span class="use-case-tag" style="border-color:${t.color};color:${t.color};background:${t.color}15">${u}</span>`
+    ).join('');
+    const notTags = t.not_for.map(u =>
+        `<span class="use-case-tag" style="border-color:#e63946;color:#e63946;background:#18050810">${u}</span>`
+    ).join('');
+
+    document.getElementById('detail-body').innerHTML = `
+      <div class="prop-row"><span class="prop-label">Latency</span><span class="prop-val">${t.latency}</span></div>
+      <div class="prop-row"><span class="prop-label">Throughput</span><span class="prop-val">${t.throughput}</span></div>
+      <div class="prop-row"><span class="prop-label">Cost</span><span class="prop-val" style="white-space:pre">${t.cost}</span></div>
+      <div class="prop-row"><span class="prop-label">Interface</span><span class="prop-val">${t.interfaces}</span></div>
+      <div class="prop-row"><span class="prop-label">Concurrency</span><span class="prop-val">${t.concurrency}</span></div>
+      <div class="prop-row"><span class="prop-label">Durability</span><span class="prop-val">${t.durability}</span></div>
+      <div class="prop-row"><span class="prop-label">Examples</span><span class="prop-val" style="color:#8892a4;text-align:right">${t.examples}</span></div>
+      <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin:.5rem 0 .2rem">Access Speed</div>
+      <div class="access-meter mb-3">
+        <div class="access-fill" style="width:${t.access_speed}%;background:${t.color}"></div>
+      </div>
+      <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.2rem">Good for</div>
+      <div class="mb-2">${useTags}</div>
+      <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.2rem">Not for</div>
+      <div class="mb-3">${notTags}</div>
+      <div style="font-size:.68rem;color:#8892a4;line-height:1.6;background:#06080a;padding:.4rem .5rem;border-radius:.25rem;border:1px solid #1e2028">${t.learn}</div>
+    `;
+}
+
+document.querySelectorAll('.tier-card').forEach(card => {
+    card.addEventListener('click', () => {
+        document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        renderDetail(card.dataset.tier);
+    });
+});
+
+renderDetail('block');
+</script>
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+{% block title %}Word Count MapReduce — Classic Hadoop{% endblock %}
+
+{% block content %}
+<style>
+.wc-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.wc-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+}
+.wc-body { flex: 1; padding: .5rem .65rem; overflow-y: auto; }
+
+.phase-pill {
+  font-size: .65rem; font-weight: 700; border-radius: 1rem;
+  padding: .12rem .6rem; border: 1px solid;
+}
+.ph-idle    { background:#080a0d; color:#5a6070; border-color:#2a2d35; }
+.ph-input   { background:#06111a; color:#457b9d; border-color:#1a3a5c; }
+.ph-map     { background:#0a111a; color:#8338ec; border-color:#1a1a4e; }
+.ph-shuffle { background:#1a1300; color:#e9c46a; border-color:#2a2200; }
+.ph-reduce  { background:#061412; color:#2a9d8f; border-color:#0e2e28; }
+.ph-done    { background:#061412; color:#2a9d8f; border-color:#0e2e28; }
+.ph-error   { background:#180508; color:#e63946; border-color:#2a0510; }
+
+.word-bar-outer { background: #1a1d24; border-radius: 2px; height: 10px; display: inline-block; }
+.word-bar-inner { height: 10px; border-radius: 2px; background: #2a9d8f; }
+
+.shuffle-key {
+  font-family: monospace; font-size: .65rem; color: #e9c46a;
+  background: #1a1300; border: 1px solid #2a2200;
+  border-radius: .2rem; padding: .03rem .25rem;
+}
+
+.timing-cmp th, .timing-cmp td { font-size: .68rem; padding: .18rem .4rem; }
+.timing-cmp th { color: #5a6070; background: #080a0d; border-color: #1e2028; }
+.timing-cmp td { background: #060809; border-color: #141618; color: #cdd3de; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#2a9d8f">&#9654; Word Count MapReduce</span>
+  <span style="font-size:.75rem;color:#5a6070">Classic Hadoop "Hello World" on Northwind product descriptions</span>
+  <div class="ms-auto d-flex gap-2 align-items-center">
+    <span class="phase-pill ph-idle" id="phase-badge">idle</span>
+    <button id="run-btn"   class="btn btn-sm" style="background:#2a9d8f;color:#fff;border:none">Run</button>
+    <button id="reset-btn" class="btn btn-sm btn-outline-danger">Reset</button>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="progress mb-2" style="height:6px;background:#1a1d24;border-radius:3px">
+  <div id="progress-bar" class="progress-bar"
+       style="width:0%;background:#2a9d8f;transition:width .4s"></div>
+</div>
+
+<!-- Summary line -->
+<div id="summary-line" class="mb-2" style="font-size:.7rem;color:#5a6070;display:none">
+  <span id="sum-docs">?</span> docs · <span id="sum-pairs">?</span> pairs emitted ·
+  <span id="sum-words">?</span> unique words after reduce
+</div>
+
+<div class="row g-2">
+
+  <!-- INPUT -->
+  <div class="col-3">
+    <div class="wc-card" style="height:480px">
+      <div class="wc-hdr" style="color:#457b9d">
+        <i class="bi bi-file-text"></i> Input Docs
+        <span id="input-count" class="badge ms-auto"
+              style="background:#1e2028;color:#8892a4;font-size:.62rem">0</span>
+      </div>
+      <div class="wc-body">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.65rem">
+          <thead>
+            <tr style="color:#5a6070;font-size:.6rem;border-bottom:1px solid #1e2028">
+              <th>ID</th><th>Text</th><th>#</th>
+            </tr>
+          </thead>
+          <tbody id="input-body">
+            <tr><td colspan="3" style="color:#5a6070">Run to load…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="col-2">
+    <div class="wc-card" style="height:480px">
+      <div class="wc-hdr" style="color:#8338ec">
+        <i class="bi bi-arrow-right-circle"></i> Map Pairs
+        <span id="pairs-count" class="badge ms-auto"
+              style="background:#1e2028;color:#8892a4;font-size:.62rem">0</span>
+      </div>
+      <div class="wc-body" id="map-body">
+        <div style="color:#5a6070;font-size:.7rem">(word, 1) pairs…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHUFFLE -->
+  <div class="col-2">
+    <div class="wc-card" style="height:480px">
+      <div class="wc-hdr" style="color:#e9c46a"><i class="bi bi-sort-alpha-down"></i> Shuffle</div>
+      <div class="wc-body" id="shuffle-body">
+        <div style="color:#5a6070;font-size:.7rem">Grouped by key…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REDUCE / CHART -->
+  <div class="col-5">
+    <div class="wc-card" style="height:480px">
+      <div class="wc-hdr" style="color:#2a9d8f">
+        <i class="bi bi-bar-chart-horizontal-fill"></i> Reduce Output (Top Words)
+        <span id="words-count" class="badge ms-auto"
+              style="background:#1e2028;color:#8892a4;font-size:.62rem">0</span>
+      </div>
+      <div class="wc-body">
+        <canvas id="wc-chart" style="width:100%;height:380px;display:none"></canvas>
+        <div id="reduce-body">
+          <div style="color:#5a6070;font-size:.7rem">Top words will appear here…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Timing table -->
+<div class="wc-card mt-2">
+  <div class="wc-hdr" style="color:#5a6070"><i class="bi bi-stopwatch"></i> Timing Comparison</div>
+  <div class="wc-body" style="overflow-x:auto">
+    <table class="table table-sm table-bordered timing-cmp mb-0">
+      <thead>
+        <tr><th>Algorithm</th><th>Input</th><th>Map</th><th>Shuffle</th><th>Reduce</th><th>Total</th><th>Note</th></tr>
+      </thead>
+      <tbody id="timing-body">
+        <tr><td colspan="7" style="color:#5a6070">Run to see timing…</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:.62rem;color:#5a6070;margin-top:.3rem">
+      SQL GROUP BY + COUNT wins for small datasets on a single node.
+      MapReduce scales horizontally across thousands of machines.
+    </div>
+  </div>
+</div>
+
+<!-- Log -->
+<div class="wc-card mt-2" style="height:100px">
+  <div class="wc-hdr" style="color:#5a6070"><i class="bi bi-terminal"></i> Log</div>
+  <div class="wc-body" id="wc-log"
+       style="overflow-y:auto;font-size:.72rem;font-family:monospace;color:#8892a4;height:60px"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+let pollTimer = null;
+let wcChart   = null;
+
+const PHASE_CLS = {
+    idle:'ph-idle', input:'ph-input', map:'ph-map',
+    shuffle:'ph-shuffle', reduce:'ph-reduce', done:'ph-done', error:'ph-error'
+};
+
+function updatePhase(phase) {
+    const b = document.getElementById('phase-badge');
+    b.textContent = phase;
+    b.className   = 'phase-pill ' + (PHASE_CLS[phase] || 'ph-idle');
+}
+
+function renderChart(top30) {
+    if (wcChart) { wcChart.destroy(); wcChart = null; }
+    const el = document.getElementById('wc-chart');
+    el.style.display = '';
+    document.getElementById('reduce-body').style.display = 'none';
+    wcChart = new Chart(el, {
+        type: 'bar',
+        data: {
+            labels: top30.map(w => w.word),
+            datasets: [{
+                label: 'count',
+                data: top30.map(w => w.count),
+                backgroundColor: 'rgba(42,157,143,0.7)',
+                borderColor: '#2a9d8f',
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false, animation: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#5a6070', font:{size:9} }, grid: { color: '#1e2028' } },
+                y: { ticks: { color: '#cdd3de', font:{size:9} }, grid: { color: '#1e2028' } },
+            }
+        }
+    });
+}
+
+function updateUI(s) {
+    const phase = s.phase || 'idle';
+    updatePhase(phase);
+
+    document.getElementById('progress-bar').style.width = (s.progress || 0) + '%';
+
+    const running = !['idle','done','error'].includes(phase);
+    document.getElementById('run-btn').disabled = running;
+
+    // Summary
+    if (s.total_docs) {
+        document.getElementById('summary-line').style.display = '';
+        document.getElementById('sum-docs').textContent  = s.total_docs;
+        document.getElementById('sum-pairs').textContent = (s.total_pairs || 0).toLocaleString();
+        document.getElementById('sum-words').textContent = s.total_words || 0;
+    }
+
+    // Input docs
+    const idocs = s.input_docs || [];
+    document.getElementById('input-count').textContent = s.total_docs || 0;
+    if (idocs.length) {
+        document.getElementById('input-body').innerHTML = idocs.map(d =>
+            `<tr>
+               <td style="color:#457b9d">${d.id}</td>
+               <td style="color:#8892a4;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.text}">${d.text}</td>
+               <td style="color:#e9c46a">${d.word_count}</td>
+             </tr>`
+        ).join('');
+    }
+
+    // Map pairs
+    const mp = s.map_pairs || [];
+    document.getElementById('pairs-count').textContent = (s.total_pairs || 0).toLocaleString();
+    if (mp.length) {
+        document.getElementById('map-body').innerHTML = mp.map(p =>
+            `<div style="font-size:.63rem;font-family:monospace;border-bottom:1px solid #0e1014;padding:.08rem 0">
+               (<span style="color:#8338ec">${p.word}</span>, <span style="color:#5a6070">1</span>) <span style="color:#2a2d35;font-size:.58rem">#${p.doc_id}</span>
+             </div>`
+        ).join('');
+    }
+
+    // Shuffle
+    const sg = s.shuffle_groups || {};
+    if (Object.keys(sg).length) {
+        const maxCnt = Math.max(...Object.values(sg), 1);
+        document.getElementById('shuffle-body').innerHTML =
+            Object.entries(sg).sort((a,b) => b[1]-a[1]).map(([w, c]) => {
+                const pct = Math.min(100, (c / maxCnt) * 100).toFixed(0);
+                return `<div style="margin-bottom:.2rem;display:flex;align-items:center;gap:.3rem">
+                  <span class="shuffle-key">${w}</span>
+                  <span style="font-size:.6rem;color:#5a6070">${c}</span>
+                  <div class="word-bar-outer" style="width:${pct}%">
+                    <div class="word-bar-inner" style="width:100%"></div>
+                  </div>
+                </div>`;
+            }).join('');
+    }
+
+    // Reduce output / chart
+    document.getElementById('words-count').textContent = s.total_words || 0;
+    const top = s.top30 || [];
+    if (phase === 'done' && top.length) {
+        renderChart(top);
+    } else if (top.length) {
+        document.getElementById('wc-chart').style.display = 'none';
+        document.getElementById('reduce-body').style.display = '';
+        const maxCnt = Math.max(...top.map(w => w.count), 1);
+        document.getElementById('reduce-body').innerHTML = top.map(w => {
+            const pct = Math.min(100, (w.count / maxCnt) * 100).toFixed(0);
+            return `<div style="margin-bottom:.25rem;display:flex;align-items:center;gap:.4rem">
+              <span style="color:#cdd3de;font-family:monospace;font-size:.68rem;min-width:80px">${w.word}</span>
+              <span style="color:#2a9d8f;font-size:.68rem;min-width:25px">${w.count}</span>
+              <div class="word-bar-outer flex-grow-1"><div class="word-bar-inner" style="width:${pct}%"></div></div>
+            </div>`;
+        }).join('');
+    }
+
+    // Timing
+    const t  = s.timing || {};
+    const sq = s.sql_count;
+    if (Object.keys(t).length) {
+        const total = (t.input_ms||0)+(t.map_ms||0)+(t.shuffle_ms||0)+(t.reduce_ms||0);
+        document.getElementById('timing-body').innerHTML = `
+          ${sq ? `<tr>
+            <td style="color:#e9c46a">SQL GROUP BY</td>
+            <td colspan="4" style="color:#5a6070;text-align:center">—</td>
+            <td style="color:#e9c46a;font-family:monospace">${sq.elapsed_ms} ms</td>
+            <td style="color:#5a6070">single machine</td>
+          </tr>` : ''}
+          <tr>
+            <td style="color:#2a9d8f">MapReduce (sim)</td>
+            <td style="font-family:monospace;color:#cdd3de">${t.input_ms||0} ms</td>
+            <td style="font-family:monospace;color:#cdd3de">${t.map_ms||0} ms</td>
+            <td style="font-family:monospace;color:#cdd3de">${t.shuffle_ms||0} ms</td>
+            <td style="font-family:monospace;color:#cdd3de">${t.reduce_ms||0} ms</td>
+            <td style="font-family:monospace;color:#2a9d8f">${total} ms</td>
+            <td style="color:#5a6070">scales horizontally</td>
+          </tr>`;
+    }
+
+    // Log
+    const logEl = document.getElementById('wc-log');
+    logEl.innerHTML = (s.log || []).slice(-15).map(l =>
+        `<div><span style="color:#5a6070">[${l.ts}]</span> ${l.msg}</div>`
+    ).join('');
+    logEl.scrollTop = logEl.scrollHeight;
+
+    if (!running && pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+async function poll() {
+    let s;
+    try { s = await fetch('/demos/wordcount/state').then(r => r.json()); }
+    catch (_) { return; }
+    updateUI(s);
+}
+
+document.getElementById('run-btn').addEventListener('click', async () => {
+    await fetch('/demos/wordcount/run', {method:'POST'});
+    if (!pollTimer) pollTimer = setInterval(poll, 450);
+});
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    await fetch('/demos/wordcount/reset', {method:'POST'});
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('summary-line').style.display = 'none';
+    document.getElementById('input-body').innerHTML = '<tr><td colspan="3" style="color:#5a6070">Run to load…</td></tr>';
+    document.getElementById('map-body').innerHTML = '<div style="color:#5a6070;font-size:.7rem">(word, 1) pairs…</div>';
+    document.getElementById('shuffle-body').innerHTML = '<div style="color:#5a6070;font-size:.7rem">Grouped by key…</div>';
+    document.getElementById('reduce-body').innerHTML = '<div style="color:#5a6070;font-size:.7rem">Top words will appear here…</div>';
+    document.getElementById('timing-body').innerHTML = '<tr><td colspan="7" style="color:#5a6070">Run to see timing…</td></tr>';
+    document.getElementById('wc-log').innerHTML = '';
+    document.getElementById('wc-chart').style.display = 'none';
+    document.getElementById('run-btn').disabled = false;
+    if (wcChart) { wcChart.destroy(); wcChart = null; }
+    updatePhase('idle');
+});
+</script>
+{% endblock %}

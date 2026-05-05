@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}Batch Analytics — Row vs Columnar{% endblock %}
+
+{% block content %}
+<style>
+.ba-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.ba-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+}
+.ba-body { flex: 1; padding: .5rem .65rem; overflow-y: auto; font-size: .74rem; }
+.ba-body::-webkit-scrollbar { width: 3px; }
+.ba-body::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.q-label { font-size: .63rem; color: #5a6070; text-transform: uppercase;
+           letter-spacing: .07em; margin-bottom: .25rem; }
+.q-tbl th, .q-tbl td { font-size: .72rem; padding: .18rem .4rem; }
+.q-tbl th { color: #5a6070; background: #080a0d; border-color: #1e2028; }
+.q-tbl td { background: #060809; border-color: #141618; color: #cdd3de; }
+
+.timing-cmp {
+  display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; flex-wrap: wrap;
+}
+.t-box {
+  background: #080a0d; border: 1px solid #1e2028; border-radius: .3rem;
+  padding: .35rem .6rem; text-align: center; min-width: 90px;
+}
+.t-box .lbl { font-size: .58rem; color: #5a6070; text-transform: uppercase; letter-spacing: .07em; }
+.t-box .val { font-size: 1.05rem; font-weight: 700; line-height: 1.15; }
+.t-box .sub { font-size: .6rem; color: #5a6070; }
+
+.vs-arrow { color: #2a3040; font-size: 1.2rem; }
+.winner   { color: #06d6a0; }
+.loser    { color: #e63946; }
+
+.scale-tbl th, .scale-tbl td { font-size: .7rem; padding: .2rem .45rem; }
+.scale-tbl th { color: #5a6070; background: #080a0d; border-color: #1e2028; }
+.scale-tbl td { background: #060809; border-color: #141618; color: #cdd3de; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#06d6a0">&#9654; Batch Analytics</span>
+  <span style="font-size:.75rem;color:#5a6070">SQL Server (row-store) vs pandas/NumPy (columnar)</span>
+
+  <button id="run-btn" class="btn btn-success btn-sm ms-2">
+    <i class="bi bi-play-fill me-1"></i>Run Benchmarks
+  </button>
+  <span id="run-badge" class="badge bg-secondary ms-1">idle</span>
+  <span id="run-ts"   style="font-size:.65rem;color:#5a6070"></span>
+</div>
+
+<!-- Concept banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Row-store (SQL Server)</strong> — stores one row contiguously.
+    Fast for: INSERT/UPDATE, single-row SELECT by PK.
+    Slow for: full-table scans, column aggregations (must read unused columns).
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Columnar (BigQuery / pandas)</strong> — stores one column contiguously.
+    Fast for: aggregations, GROUP BY, analytics. Cache-friendly for vectorised ops.
+    Slow for: single-row point lookups (must scan all columns separately).
+  </div>
+</div>
+
+<!-- Three query panels -->
+<div class="row g-2 mb-2">
+
+  <!-- Q1: Revenue by country -->
+  <div class="col-4">
+    <div class="ba-card" style="height:340px">
+      <div class="ba-hdr" style="color:#e9c46a">
+        <i class="bi bi-globe2"></i> Q1 — Revenue by Country
+        <span class="ms-auto" style="font-size:.58rem;color:#5a6070">GROUP BY scan</span>
+      </div>
+      <div class="ba-body">
+        <div class="timing-cmp" id="q1-timing">
+          <div class="t-box"><span class="lbl">SQL</span><span class="val" id="q1-sql">—</span><span class="sub">ms</span></div>
+          <div class="vs-arrow">→</div>
+          <div class="t-box"><span class="lbl">Pandas</span><span class="val" id="q1-pd">—</span><span class="sub">ms (+load)</span></div>
+        </div>
+        <div class="q-label">Top results</div>
+        <table class="table table-sm table-bordered q-tbl mb-0">
+          <thead><tr><th>Country</th><th>Orders</th><th>Revenue</th></tr></thead>
+          <tbody id="q1-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q2: Single row lookup -->
+  <div class="col-4">
+    <div class="ba-card" style="height:340px">
+      <div class="ba-hdr" style="color:#457b9d">
+        <i class="bi bi-search"></i> Q2 — PK Lookup (Order #10248)
+        <span class="ms-auto" style="font-size:.58rem;color:#5a6070">point query</span>
+      </div>
+      <div class="ba-body">
+        <div class="timing-cmp" id="q2-timing">
+          <div class="t-box"><span class="lbl">SQL</span><span class="val" id="q2-sql">—</span><span class="sub">ms</span></div>
+          <div class="vs-arrow">→</div>
+          <div class="t-box"><span class="lbl">Pandas</span><span class="val" id="q2-pd">—</span><span class="sub">ms</span></div>
+        </div>
+        <div class="q-label">Result row</div>
+        <div id="q2-row" class="ba-card" style="padding:.4rem .6rem;font-size:.72rem;color:#cdd3de"></div>
+        <div class="mt-2" style="font-size:.67rem;color:#5a6070">
+          SQL uses clustered index on OrderID → direct page lookup.<br>
+          Pandas must scan all rows in the mask array — O(n).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q3: Top products -->
+  <div class="col-4">
+    <div class="ba-card" style="height:340px">
+      <div class="ba-hdr" style="color:#2a9d8f">
+        <i class="bi bi-box-seam"></i> Q3 — Top Products by Units Sold
+        <span class="ms-auto" style="font-size:.58rem;color:#5a6070">scan + sort</span>
+      </div>
+      <div class="ba-body">
+        <div class="timing-cmp" id="q3-timing">
+          <div class="t-box"><span class="lbl">SQL</span><span class="val" id="q3-sql">—</span><span class="sub">ms</span></div>
+          <div class="vs-arrow">→</div>
+          <div class="t-box"><span class="lbl">Pandas</span><span class="val" id="q3-pd">—</span><span class="sub">ms</span></div>
+        </div>
+        <div class="q-label">Top 10</div>
+        <table class="table table-sm table-bordered q-tbl mb-0">
+          <thead><tr><th>Product</th><th>Units</th></tr></thead>
+          <tbody id="q3-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Scaling projection + load time note -->
+<div class="row g-2 mb-2">
+
+  <div class="col-7">
+    <div class="ba-card">
+      <div class="ba-hdr" style="color:#8338ec">
+        <i class="bi bi-arrows-expand-vertical"></i> Scaling Projection — Q1 (GROUP BY aggregation)
+        <span class="ms-auto" style="font-size:.58rem;color:#5a6070;text-transform:none;letter-spacing:0">extrapolated from measured baseline</span>
+      </div>
+      <div class="ba-body" style="padding:.4rem .6rem">
+        <table class="table table-sm table-bordered scale-tbl mb-0">
+          <thead>
+            <tr>
+              <th>Row count</th>
+              <th>SQL Server est.</th>
+              <th>Columnar est.</th>
+              <th>Advantage</th>
+            </tr>
+          </thead>
+          <tbody id="scale-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-5">
+    <div class="ba-card" style="height:100%">
+      <div class="ba-hdr" style="color:#fb5607">
+        <i class="bi bi-cloud-upload"></i> pandas Load Time
+      </div>
+      <div class="ba-body">
+        <div class="t-box mb-2" style="text-align:left">
+          <span class="lbl">SQL → pandas (in-memory load)</span>
+          <div class="d-flex align-items-baseline gap-1">
+            <span class="val" id="pd-load" style="color:#fb5607">—</span>
+            <span style="font-size:.72rem;color:#5a6070">ms</span>
+          </div>
+        </div>
+        <div style="font-size:.67rem;color:#8892a4;line-height:1.5">
+          In a real BigQuery pipeline this is the <strong style="color:#cdd3de">ingestion cost</strong> —
+          data is loaded once into columnar storage and amortised across many queries.
+          For 2,155 rows the load dominates; for 10M rows the per-query gain dominates.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+function fmtMs(v) { return v == null ? '—' : Number(v).toFixed(2); }
+function fmtN(n)  {
+    if (n >= 1_000_000) return (n/1_000_000).toFixed(0) + 'M';
+    if (n >= 1_000)     return (n/1_000).toFixed(0) + 'k';
+    return String(n);
+}
+
+function colorWinner(sqlEl, pdEl, sqlMs, pdMs) {
+    if (sqlMs == null || pdMs == null) return;
+    if (sqlMs < pdMs) {
+        sqlEl.classList.add('winner'); pdEl.classList.add('loser');
+    } else {
+        pdEl.classList.add('winner'); sqlEl.classList.add('loser');
+    }
+}
+
+document.getElementById('run-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    document.getElementById('run-badge').textContent  = 'running…';
+    document.getElementById('run-badge').className    = 'badge bg-warning ms-1';
+
+    let d;
+    try {
+        d = await fetch('/demos/batch_analytics/run', {method: 'POST'}).then(r => r.json());
+    } catch (e) {
+        document.getElementById('run-badge').textContent = 'error';
+        document.getElementById('run-badge').className   = 'badge bg-danger ms-1';
+        btn.disabled = false;
+        return;
+    }
+
+    document.getElementById('run-badge').textContent = 'done';
+    document.getElementById('run-badge').className   = 'badge bg-success ms-1';
+    document.getElementById('run-ts').textContent    = d.ts;
+    btn.disabled = false;
+
+    const sql = d.sql    || {};
+    const pd  = d.pandas || {};
+
+    // Q1 timing
+    const q1sql = document.getElementById('q1-sql');
+    const q1pd  = document.getElementById('q1-pd');
+    q1sql.textContent = fmtMs(sql.q1_ms);
+    q1pd.textContent  = d.pandas_available ? fmtMs(pd.q1_ms) : 'N/A';
+    colorWinner(q1sql, q1pd, sql.q1_ms, pd.q1_ms);
+
+    // Q1 rows
+    document.getElementById('q1-rows').innerHTML = (sql.q1_rows || []).slice(0,8).map(r =>
+        `<tr><td>${r.country}</td><td>${r.orders}</td><td style="color:#06d6a0">$${r.revenue.toLocaleString()}</td></tr>`
+    ).join('');
+
+    // Q2 timing
+    const q2sql = document.getElementById('q2-sql');
+    const q2pd  = document.getElementById('q2-pd');
+    q2sql.textContent = fmtMs(sql.q2_ms);
+    q2pd.textContent  = d.pandas_available ? fmtMs(pd.q2_ms) : 'N/A';
+    colorWinner(q2sql, q2pd, sql.q2_ms, pd.q2_ms);
+
+    const r = sql.q2_row || {};
+    document.getElementById('q2-row').innerHTML = r.order_id
+        ? `<div><strong style="color:#e9c46a">#${r.order_id}</strong> — ${r.customer}</div>
+           <div>Country: ${r.country} &nbsp;|&nbsp; Total: <span style="color:#06d6a0">$${r.total}</span></div>`
+        : '<span style="color:#5a6070">—</span>';
+
+    // Q3 timing
+    const q3sql = document.getElementById('q3-sql');
+    const q3pd  = document.getElementById('q3-pd');
+    q3sql.textContent = fmtMs(sql.q3_ms);
+    q3pd.textContent  = d.pandas_available ? fmtMs(pd.q3_ms) : 'N/A';
+    colorWinner(q3sql, q3pd, sql.q3_ms, pd.q3_ms);
+
+    document.getElementById('q3-rows').innerHTML = (sql.q3_rows || []).map(r =>
+        `<tr><td>${r.product}</td><td style="color:#2a9d8f">${r.units}</td></tr>`
+    ).join('');
+
+    // Pandas load
+    document.getElementById('pd-load').textContent = d.pandas_available
+        ? fmtMs(pd.load_ms) : 'pandas not installed';
+
+    // Scaling table
+    const scaling = d.scaling || [];
+    document.getElementById('scale-rows').innerHTML = scaling.map(row => {
+        const advantage = row.pd_ms != null
+            ? (row.sql_ms > row.pd_ms
+                ? `<span style="color:#06d6a0">Columnar ×${(row.sql_ms/row.pd_ms).toFixed(1)}</span>`
+                : `<span style="color:#457b9d">SQL ×${(row.pd_ms/row.sql_ms).toFixed(1)}</span>`)
+            : '<span style="color:#5a6070">N/A</span>';
+        return `<tr>
+          <td style="color:#e9c46a">${fmtN(row.n)}</td>
+          <td>${row.sql_ms.toLocaleString()} ms</td>
+          <td>${row.pd_ms != null ? row.pd_ms.toLocaleString() + ' ms' : '—'}</td>
+          <td>${advantage}</td>
+        </tr>`;
+    }).join('');
+});
+</script>
+{% endblock %}

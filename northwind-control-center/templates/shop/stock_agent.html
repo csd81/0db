@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% block title %}SQL Server Agent — Stock Refill Demo{% endblock %}
+
+{% block content %}
+<style>
+  .agent-card   { background:#161b22; border:1px solid #30363d; border-radius:8px; }
+  .sp-code      { background:#0d1117; border:1px solid #21262d; border-radius:6px;
+                  font-family:monospace; font-size:.8rem; color:#c9d1d9; white-space:pre; overflow-x:auto; }
+  .kw  { color:#ff7b72; }   /* SQL keywords */
+  .cm  { color:#8b949e; }   /* comments */
+  .fn  { color:#d2a8ff; }   /* functions/identifiers */
+
+  .hist-table th { color:#8b949e; font-size:.78rem; text-transform:uppercase; border-bottom:1px solid #30363d; }
+  .hist-table td { border-color:#21262d; font-size:.85rem; vertical-align:middle; }
+  .badge-ok   { background:#1a3d2b; color:#3fb950; }
+  .badge-fail { background:#3d1a1a; color:#f85149; }
+  .badge-man  { background:#1f3d6b; color:#58a6ff; }
+  .badge-sch  { background:#2d2010; color:#d29922; }
+
+  .arch-box   { border:1px solid #30363d; border-radius:6px; padding:10px 14px;
+                background:#0d1117; font-size:.82rem; }
+  .arch-arrow { color:#58a6ff; font-size:1.2rem; line-height:1; text-align:center; }
+  .low-row-critical { border-left:3px solid #f85149 !important; }
+  .low-row-warn     { border-left:3px solid #d29922 !important; }
+
+  #sched-indicator { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .sched-on  { background:#3fb950; box-shadow:0 0 6px #3fb950; }
+  .sched-off { background:#8b949e; }
+</style>
+
+<div class="container-fluid px-4 py-3">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0">
+        <i class="bi bi-robot me-2 text-warning"></i>SQL Server Agent — Stock Refill
+      </h4>
+      <small class="text-muted">
+        Stored Procedure · Job · Schedule · Alert · Operator
+        &nbsp;·&nbsp;
+        <a href="{{ url_for('shop.catalog') }}">← Shop</a>
+        &nbsp;·&nbsp;
+        <a href="{{ url_for('shop.dashboard') }}">Dashboard</a>
+      </small>
+    </div>
+    <a href="{{ url_for('shop.cart_view') }}" class="btn btn-outline-primary btn-sm position-relative">
+      <i class="bi bi-cart3"></i>
+      {% if cart_count %}<span class="badge bg-primary ms-1">{{ cart_count }}</span>{% endif %}
+    </a>
+  </div>
+
+  <!-- Inventory health summary -->
+  <div class="row g-3 mb-4">
+    <div class="col-4">
+      <div class="agent-card p-3 text-center">
+        <div id="active-total" class="fs-3 fw-bold">{{ summary.active_total }}</div>
+        <div class="text-muted small">Active products</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="agent-card p-3 text-center" style="border-color:#d29922">
+        <div id="low-count" class="fs-3 fw-bold text-warning">{{ summary.low_count }}</div>
+        <div class="text-muted small">Below reorder level</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="agent-card p-3 text-center" style="border-color:#f85149">
+        <div id="out-count" class="fs-3 fw-bold text-danger">{{ summary.out_count }}</div>
+        <div class="text-muted small">Out of stock</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- LEFT: Low-stock table + SP DDL -->
+    <div class="col-lg-7">
+
+      <!-- Low-stock table -->
+      <div class="agent-card p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0 text-warning">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Products below reorder level
+            <span id="low-count-badge" class="badge bg-warning text-dark ms-1">{{ summary.low_count }}</span>
+          </h6>
+          <small class="text-muted">Auto-refreshes every 8s</small>
+        </div>
+        <div style="max-height:280px;overflow-y:auto">
+          <table class="table table-sm hist-table mb-0" id="low-stock-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th class="text-center">In Stock</th>
+                <th class="text-center">Reorder At</th>
+                <th class="text-center">Deficit</th>
+              </tr>
+            </thead>
+            <tbody id="low-stock-body">
+              {% for p in low_stock %}
+              <tr class="{% if p.UnitsInStock == 0 %}low-row-critical{% else %}low-row-warn{% endif %}">
+                <td><a href="{{ url_for('shop.product_detail', pid=p.ProductID) }}" class="text-decoration-none text-info">{{ p.ProductName }}</a></td>
+                <td class="text-muted">{{ p.CategoryName }}</td>
+                <td class="text-center {% if p.UnitsInStock == 0 %}text-danger{% else %}text-warning{% endif %}">{{ p.UnitsInStock }}</td>
+                <td class="text-center text-muted">{{ p.ReorderLevel }}</td>
+                <td class="text-center text-danger fw-semibold">{{ p.Deficit }}</td>
+              </tr>
+              {% endfor %}
+              {% if not low_stock %}
+              <tr><td colspan="5" class="text-center text-success py-3">
+                <i class="bi bi-check-circle-fill me-1"></i>All products above reorder level
+              </td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Stored Procedure DDL -->
+      <div class="agent-card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0"><i class="bi bi-code-slash me-1 text-primary"></i>sp_RefillStock — T-SQL</h6>
+          {% if sp_err %}
+          <span class="badge bg-warning text-dark" title="{{ sp_err }}">
+            <i class="bi bi-exclamation-triangle"></i> DDL permission denied — shown for reference
+          </span>
+          {% else %}
+          <span class="badge" style="background:#1a3d2b;color:#3fb950">
+            <i class="bi bi-check-circle"></i> Created on server
+          </span>
+          {% endif %}
+        </div>
+        <div class="sp-code p-3">
+<span class="kw">CREATE OR ALTER PROCEDURE</span> <span class="fn">sp_RefillStock</span>
+<span class="kw">AS</span>
+<span class="kw">BEGIN</span>
+    <span class="kw">SET NOCOUNT ON</span>;
+    <span class="cm">-- Bring every active low-stock product back to ReorderLevel + 100</span>
+    <span class="kw">UPDATE</span> <span class="fn">Products</span>
+    <span class="kw">SET</span>    <span class="fn">UnitsInStock</span> = <span class="fn">UnitsInStock</span> + 100
+    <span class="kw">WHERE</span>  <span class="fn">UnitsInStock</span> &lt;= <span class="fn">ReorderLevel</span>
+      <span class="kw">AND</span>  <span class="fn">Discontinued</span> = 0;
+<span class="kw">END</span>;
+        </div>
+        <div class="mt-2 text-muted" style="font-size:.78rem">
+          <i class="bi bi-info-circle me-1"></i>
+          A <strong>Job Step</strong> in SQL Server Agent would contain: <code>EXEC sp_RefillStock;</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Job control + History + Architecture -->
+    <div class="col-lg-5">
+
+      <!-- Job control panel -->
+      <div class="agent-card p-3 mb-4">
+        <h6 class="mb-3"><i class="bi bi-play-circle me-1 text-success"></i>Job Control</h6>
+
+        <!-- Manual run -->
+        <div class="d-flex gap-2 align-items-center mb-3">
+          <button id="run-btn" class="btn btn-warning btn-sm" onclick="runNow()">
+            <i class="bi bi-lightning-fill"></i> Run Now (MANUAL)
+          </button>
+          <span id="run-status" class="text-muted small"></span>
+        </div>
+
+        <!-- Scheduler (Python daemon = SQL Agent schedule) -->
+        <div style="border-top:1px solid #30363d;padding-top:12px">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span id="sched-indicator" class="sched-{{ 'on' if sched.running else 'off' }}"></span>
+            <span class="small fw-semibold">
+              Python Scheduler
+              <span class="text-muted">(simulates SQL Agent recurring schedule)</span>
+            </span>
+          </div>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <select id="interval-select" class="form-select form-select-sm bg-dark border-secondary text-light" style="width:auto">
+              <option value="60"   {% if sched.interval_seconds == 60   %}selected{% endif %}>Every 1 min</option>
+              <option value="300"  {% if sched.interval_seconds == 300  %}selected{% endif %}>Every 5 min</option>
+              <option value="3600" {% if sched.interval_seconds == 3600 %}selected{% endif %}>Every 1 hour</option>
+              <option value="86400"{% if sched.interval_seconds == 86400%}selected{% endif %}>Daily midnight</option>
+            </select>
+            {% if sched.running %}
+            <button class="btn btn-outline-danger btn-sm" onclick="schedAction('stop')">
+              <i class="bi bi-stop-circle"></i> Stop
+            </button>
+            {% else %}
+            <button class="btn btn-outline-success btn-sm" onclick="schedAction('start')">
+              <i class="bi bi-play-circle"></i> Start
+            </button>
+            {% endif %}
+            <button class="btn btn-outline-secondary btn-sm" onclick="schedAction('set_interval')">
+              <i class="bi bi-clock"></i> Apply Interval
+            </button>
+          </div>
+          <div class="mt-2 text-muted" style="font-size:.76rem">
+            Current interval: <strong id="interval-display">{{ sched.interval_seconds }}s</strong>
+            &nbsp;·&nbsp; Status: <strong id="sched-status">{{ 'RUNNING' if sched.running else 'STOPPED' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Job history (mirrors msdb.dbo.sysjobhistory) -->
+      <div class="agent-card p-3 mb-4">
+        <h6 class="mb-2">
+          <i class="bi bi-clock-history me-1"></i>Job History
+          <small class="text-muted ms-1">mirrors msdb.dbo.sysjobhistory</small>
+        </h6>
+        <div style="max-height:220px;overflow-y:auto">
+          <table class="table table-sm hist-table mb-0">
+            <thead>
+              <tr><th>Time</th><th>Trigger</th><th>Rows</th><th>ms</th><th>Result</th></tr>
+            </thead>
+            <tbody id="history-body">
+              {% for h in history %}
+              <tr>
+                <td class="text-muted" style="font-size:.75rem">{{ h.run_at }}</td>
+                <td><span class="badge badge-{{ 'man' if h.trigger=='MANUAL' else 'sch' }}">{{ h.trigger }}</span></td>
+                <td class="text-center">{{ h.rows_updated }}</td>
+                <td class="text-muted text-center">{{ h.duration_ms }}</td>
+                <td>
+                  <span class="badge badge-{{ 'ok' if h.status=='SUCCEEDED' else 'fail' }}">
+                    {{ h.status }}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+              {% if not history %}
+              <tr><td colspan="5" class="text-muted text-center py-2">No runs yet</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Architecture breakdown -->
+      <div class="agent-card p-3">
+        <h6 class="mb-3"><i class="bi bi-diagram-3 me-1 text-info"></i>SQL Server Agent Architecture</h6>
+        <div class="d-flex flex-column gap-1">
+          <div class="arch-box">
+            <strong class="text-warning">Job</strong> — "NW_StockRefill"
+            <div class="text-muted" style="font-size:.76rem">Container for all steps and schedules</div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-box">
+            <strong class="text-primary">Job Step</strong> — T-SQL: <code>EXEC sp_RefillStock;</code>
+            <div class="text-muted" style="font-size:.76rem">Runs on subsystem: T-SQL · database: Northwind</div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-box">
+            <strong class="text-success">Schedule</strong> — Recurring: daily at 00:00
+            <div class="text-muted" style="font-size:.76rem">Or: CPU idle · Or: every N minutes</div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-box">
+            <strong class="text-danger">Alert</strong> — Low-stock trigger (performance condition)
+            <div class="text-muted" style="font-size:.76rem">Fires job immediately when UnitsInStock hits threshold</div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-box">
+            <strong class="text-secondary">Operator</strong> — admin@northwind.com
+            <div class="text-muted" style="font-size:.76rem">Notified by email on FAILED status via msdb mail</div>
+          </div>
+        </div>
+        <div class="mt-3 text-muted" style="font-size:.76rem">
+          <i class="bi bi-shield-check me-1"></i>
+          Security: <code>SQLAgentUserRole</code> in msdb controls non-admin access ·
+          Proxy manages step credentials
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Run Now ───────────────────────────────────────────────────────────────────
+async function runNow() {
+  const btn = document.getElementById('run-btn');
+  const st  = document.getElementById('run-status');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Running…';
+  st.textContent = '';
+  try {
+    const res  = await fetch('{{ url_for("shop.stock_agent_run") }}', {method:'POST'});
+    const data = await res.json();
+    const ok   = data.status === 'SUCCEEDED';
+    btn.innerHTML = '<i class="bi bi-lightning-fill"></i> Run Now (MANUAL)';
+    btn.disabled  = false;
+    st.innerHTML  = ok
+      ? `<span class="text-success">✓ ${data.rows_updated} rows updated (${data.duration_ms}ms)</span>`
+      : `<span class="text-danger">✗ ${data.error}</span>`;
+    refreshStatus();
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-lightning-fill"></i> Run Now (MANUAL)';
+    st.textContent = 'Request failed';
+  }
+}
+
+// ── Scheduler control ─────────────────────────────────────────────────────────
+async function schedAction(action) {
+  const secs = parseInt(document.getElementById('interval-select').value);
+  const res  = await fetch('{{ url_for("shop.stock_agent_scheduler") }}', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({action, interval: secs}),
+  });
+  const data = await res.json();
+  updateSchedUI(data.state);
+}
+
+function updateSchedUI(state) {
+  const ind  = document.getElementById('sched-indicator');
+  const stat = document.getElementById('sched-status');
+  const disp = document.getElementById('interval-display');
+  ind.className  = 'sched-' + (state.running ? 'on' : 'off');
+  stat.textContent = state.running ? 'RUNNING' : 'STOPPED';
+  disp.textContent = state.interval_seconds + 's';
+}
+
+// ── Live status refresh ───────────────────────────────────────────────────────
+function renderLowStock(rows) {
+  const tbody = document.getElementById('low-stock-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-success py-3">' +
+      '<i class="bi bi-check-circle-fill me-1"></i>All products above reorder level</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(p => {
+    const cls = p.UnitsInStock === 0 ? 'low-row-critical' : 'low-row-warn';
+    const sc  = p.UnitsInStock === 0 ? 'text-danger' : 'text-warning';
+    return `<tr class="${cls}">
+      <td><a href="/shop/product/${p.ProductID}" class="text-decoration-none text-info">${p.ProductName}</a></td>
+      <td class="text-muted">${p.CategoryName}</td>
+      <td class="text-center ${sc}">${p.UnitsInStock}</td>
+      <td class="text-center text-muted">${p.ReorderLevel}</td>
+      <td class="text-center text-danger fw-semibold">${p.Deficit}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderHistory(rows) {
+  const tbody = document.getElementById('history-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center py-2">No runs yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(h => {
+    const tc = h.trigger === 'MANUAL' ? 'badge-man' : 'badge-sch';
+    const sc = h.status  === 'SUCCEEDED' ? 'badge-ok' : 'badge-fail';
+    return `<tr>
+      <td class="text-muted" style="font-size:.75rem">${h.run_at}</td>
+      <td><span class="badge ${tc}">${h.trigger}</span></td>
+      <td class="text-center">${h.rows_updated}</td>
+      <td class="text-muted text-center">${h.duration_ms}</td>
+      <td><span class="badge ${sc}">${h.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function refreshStatus() {
+  try {
+    const res  = await fetch('{{ url_for("shop.stock_agent_status") }}');
+    const data = await res.json();
+    // Summary numbers
+    document.getElementById('low-count').textContent       = data.summary.low_count;
+    document.getElementById('out-count').textContent       = data.summary.out_count;
+    document.getElementById('active-total').textContent    = data.summary.active_total;
+    document.getElementById('low-count-badge').textContent = data.summary.low_count;
+    renderLowStock(data.low_stock);
+    renderHistory(data.history);
+    updateSchedUI(data.scheduler);
+  } catch(e) { /* silent */ }
+}
+
+// Auto-refresh every 8 seconds
+setInterval(refreshStatus, 8000);
+</script>
+{% endblock %}

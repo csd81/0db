@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Micro-Batch vs True Stream{% endblock %}
+
+{% block content %}
+<style>
+.mb-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.mb-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+}
+.mb-body { flex: 1; padding: .5rem .65rem; overflow-y: auto; }
+
+.latency-meter {
+  font-size: 1.8rem; font-weight: 800; font-family: monospace;
+  letter-spacing: .04em;
+}
+.lat-stream { color: #2a9d8f; }
+.lat-batch  { color: #e9c46a; }
+
+.event-row {
+  font-size: .67rem; font-family: monospace;
+  border-bottom: 1px solid #0e1014; padding: .12rem 0;
+}
+.batch-flush {
+  font-size: .67rem; background: #1a1300; border: 1px solid #2a2200;
+  border-radius: .25rem; padding: .2rem .4rem; margin-bottom: .25rem;
+}
+
+.buffer-bar-outer { background: #1a1d24; border-radius: 3px; height: 10px; }
+.buffer-bar-inner  { height: 10px; border-radius: 3px; background: #e9c46a; transition: width .3s; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#e9c46a">&#9654; Micro-Batch vs True Stream</span>
+  <span style="font-size:.75rem;color:#5a6070">Flink (true stream) vs Spark Streaming (micro-batch) — latency tradeoff</span>
+  <div class="ms-auto d-flex gap-2 align-items-center">
+    <label style="font-size:.72rem;color:#8892a4">Window:</label>
+    <select id="window-sel" class="form-select form-select-sm" style="width:80px;background:#0e1014;color:#cdd3de;border-color:#2a2d35">
+      <option value="1">1 s</option>
+      <option value="5">5 s</option>
+      <option value="10">10 s</option>
+    </select>
+    <button id="start-btn" class="btn btn-sm" style="background:#e9c46a;color:#000;border:none">Start</button>
+    <button id="stop-btn"  class="btn btn-sm btn-outline-secondary" disabled>Stop</button>
+    <button id="reset-btn" class="btn btn-sm btn-outline-danger">Reset</button>
+  </div>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: True Stream -->
+  <div class="col-4">
+    <div class="mb-card" style="height:520px">
+      <div class="mb-hdr" style="color:#2a9d8f">
+        <i class="bi bi-lightning-fill"></i> True Stream
+        <span style="font-size:.6rem;color:#5a6070;font-weight:400;margin-left:.3rem">Apache Flink model</span>
+        <span id="stream-ping-count" class="badge ms-auto" style="background:#1e2028;color:#8892a4;font-size:.62rem">0 pings</span>
+      </div>
+      <div class="mb-body">
+        <div class="text-center mb-2">
+          <div style="font-size:.62rem;color:#5a6070">Avg Latency</div>
+          <div class="latency-meter lat-stream" id="stream-avg-lat">– ms</div>
+          <div style="font-size:.6rem;color:#5a6070">per event (process immediately)</div>
+        </div>
+        <div id="stream-events" style="max-height:360px;overflow-y:auto">
+          <div style="color:#5a6070;font-size:.72rem">Waiting for events…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Micro-Batch -->
+  <div class="col-4">
+    <div class="mb-card" style="height:520px">
+      <div class="mb-hdr" style="color:#e9c46a">
+        <i class="bi bi-collection-fill"></i> Micro-Batch
+        <span style="font-size:.6rem;color:#5a6070;font-weight:400;margin-left:.3rem">Spark Streaming model</span>
+      </div>
+      <div class="mb-body">
+        <div class="text-center mb-2">
+          <div style="font-size:.62rem;color:#5a6070">Avg Batch Latency</div>
+          <div class="latency-meter lat-batch" id="batch-avg-lat">– ms</div>
+          <div style="font-size:.6rem;color:#5a6070">oldest event → flush</div>
+        </div>
+        <!-- Buffer progress -->
+        <div class="mb-2">
+          <div class="d-flex justify-content-between" style="font-size:.62rem;color:#8892a4">
+            <span>Buffer fill</span>
+            <span id="buffer-count">0 events</span>
+          </div>
+          <div class="buffer-bar-outer mt-1">
+            <div class="buffer-bar-inner" id="buffer-bar" style="width:0%"></div>
+          </div>
+          <div style="font-size:.58rem;color:#5a6070;margin-top:.15rem">
+            Flushed when window expires (<span id="window-label">1s</span>)
+          </div>
+        </div>
+        <!-- Completed batches -->
+        <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.3rem">Completed Batches</div>
+        <div id="batch-list" style="max-height:280px;overflow-y:auto">
+          <div style="color:#5a6070;font-size:.72rem">No batches flushed yet…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Latency chart + comparison -->
+  <div class="col-4">
+    <div class="mb-card mb-2" style="height:310px">
+      <div class="mb-hdr" style="color:#8338ec"><i class="bi bi-graph-up"></i> Latency Comparison</div>
+      <div class="mb-body">
+        <canvas id="lat-chart" style="width:100%;height:235px"></canvas>
+      </div>
+    </div>
+    <div class="mb-card" style="height:200px">
+      <div class="mb-hdr" style="color:#5a6070"><i class="bi bi-info-circle"></i> Tradeoff Analysis</div>
+      <div class="mb-body" style="font-size:.68rem;color:#8892a4;line-height:1.7">
+        <div><strong style="color:#2a9d8f">True Stream (Flink)</strong></div>
+        <div>Each event processed instantly. Latency ≈ 0 ms (only compute time).</div>
+        <div>Complex state management; harder to implement.</div>
+        <br>
+        <div><strong style="color:#e9c46a">Micro-Batch (Spark)</strong></div>
+        <div>Buffer W seconds → flush all at once. Latency ≈ W/2 on average.</div>
+        <div>Reuses batch infrastructure; simpler fault recovery.</div>
+        <br>
+        <div style="color:#5a6070;font-size:.63rem">
+          Choose Flink for fraud detection, trading, real-time dashboards.<br>
+          Choose Spark Streaming for ETL, log aggregation, reporting.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Log -->
+<div class="mb-card mt-2" style="height:90px">
+  <div class="mb-hdr" style="color:#5a6070"><i class="bi bi-terminal"></i> Log</div>
+  <div class="mb-body" id="mb-log"
+       style="overflow-y:auto;font-size:.72rem;font-family:monospace;color:#8892a4;height:55px"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+let pollTimer = null;
+let latChart  = null;
+
+function buildChart() {
+    if (latChart) { latChart.destroy(); latChart = null; }
+    latChart = new Chart(document.getElementById('lat-chart'), {
+        type: 'line',
+        data: {
+            datasets: [
+                { label: 'Stream latency (ms)', data: [], borderColor: '#2a9d8f',
+                  borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: false },
+                { label: 'Batch latency (ms)',  data: [], borderColor: '#e9c46a',
+                  borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: false },
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, animation: false,
+            plugins: { legend: { labels: { color: '#8892a4', font: {size: 9} } } },
+            scales: {
+                x: { type: 'linear', title: { display: true, text: 'Event #', color: '#5a6070', font:{size:9} },
+                     ticks: { color: '#5a6070', font:{size:9} }, grid: { color: '#1e2028' } },
+                y: { title: { display: true, text: 'ms', color: '#5a6070', font:{size:9} },
+                     ticks: { color: '#5a6070', font:{size:9} }, grid: { color: '#1e2028' } },
+            }
+        }
+    });
+}
+
+function updateChart(streamLats, batchLats) {
+    if (!latChart) return;
+    latChart.data.datasets[0].data = streamLats.map(p => ({x: p.n, y: p.latency_ms}));
+    latChart.data.datasets[1].data = batchLats.map(p => ({x: p.n, y: p.latency_ms}));
+    latChart.update('none');
+}
+
+const SPEED_COLOR = s => s > 120 ? '#e63946' : s > 80 ? '#e9c46a' : '#2a9d8f';
+
+function updateUI(s) {
+    const running = s.phase === 'running';
+    document.getElementById('start-btn').disabled   = running;
+    document.getElementById('stop-btn').disabled    = !running;
+    document.getElementById('window-sel').disabled  = running;
+
+    document.getElementById('stream-ping-count').textContent = (s.ping_count || 0) + ' pings';
+    document.getElementById('window-label').textContent = (s.batch_window_s || 1) + 's';
+
+    // Stream avg latency
+    document.getElementById('stream-avg-lat').textContent =
+        s.stream_avg_lat != null ? s.stream_avg_lat.toFixed(3) + ' ms' : '– ms';
+
+    // Batch avg latency
+    document.getElementById('batch-avg-lat').textContent =
+        s.batch_avg_lat != null ? s.batch_avg_lat.toFixed(1) + ' ms' : '– ms';
+
+    // Buffer
+    const buf     = s.batch_buffer || 0;
+    const winSz   = s.batch_window_s || 1;
+    const maxBuf  = winSz * 3;  // PING_HZ = 3
+    const bufPct  = Math.min(100, (buf / maxBuf) * 100).toFixed(1);
+    document.getElementById('buffer-count').textContent = buf + ' events';
+    document.getElementById('buffer-bar').style.width   = bufPct + '%';
+
+    // Stream events
+    const evts = s.stream_events || [];
+    const evEl  = document.getElementById('stream-events');
+    if (evts.length) {
+        evEl.innerHTML = evts.slice().reverse().map(e =>
+            `<div class="event-row d-flex gap-2">
+               <span style="color:#5a6070">${e.ts}</span>
+               <span style="color:#cdd3de">${e.city}</span>
+               <span style="color:${SPEED_COLOR(e.speed)}">${e.speed} km/h</span>
+               <span style="color:#8892a4;margin-left:auto">${e.latency_ms.toFixed(3)} ms</span>
+             </div>`
+        ).join('');
+    }
+
+    // Batches
+    const batches = s.batches || [];
+    const bEl     = document.getElementById('batch-list');
+    if (batches.length) {
+        bEl.innerHTML = batches.slice().reverse().map(b =>
+            `<div class="batch-flush">
+               <div class="d-flex justify-content-between">
+                 <span style="color:#e9c46a">${b.window_start} → ${b.window_end}</span>
+                 <span style="color:#8892a4">${b.events} events</span>
+               </div>
+               <div class="d-flex justify-content-between" style="color:#5a6070;font-size:.62rem">
+                 <span>avg ${b.avg_speed} km/h · top: ${b.top_city}</span>
+                 <span style="color:#e63946">lat ${b.latency_ms} ms</span>
+               </div>
+             </div>`
+        ).join('');
+    }
+
+    updateChart(s.stream_latencies || [], s.batch_latencies || []);
+
+    // Log
+    const logEl = document.getElementById('mb-log');
+    logEl.innerHTML = (s.log || []).slice(-15).map(l =>
+        `<div><span style="color:#5a6070">[${l.ts}]</span> ${l.msg}</div>`
+    ).join('');
+    logEl.scrollTop = logEl.scrollHeight;
+
+    if (!running && pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+async function poll() {
+    let s;
+    try { s = await fetch('/demos/microbatch/state').then(r => r.json()); }
+    catch (_) { return; }
+    updateUI(s);
+}
+
+document.getElementById('start-btn').addEventListener('click', async () => {
+    const ws = parseInt(document.getElementById('window-sel').value);
+    buildChart();
+    await fetch('/demos/microbatch/start', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({window_s: ws}),
+    });
+    if (!pollTimer) pollTimer = setInterval(poll, 400);
+});
+
+document.getElementById('stop-btn').addEventListener('click', async () => {
+    await fetch('/demos/microbatch/stop', {method:'POST'});
+});
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    await fetch('/demos/microbatch/reset', {method:'POST'});
+    document.getElementById('stream-events').innerHTML = '<div style="color:#5a6070;font-size:.72rem">Waiting for events…</div>';
+    document.getElementById('batch-list').innerHTML    = '<div style="color:#5a6070;font-size:.72rem">No batches flushed yet…</div>';
+    document.getElementById('stream-avg-lat').textContent = '– ms';
+    document.getElementById('batch-avg-lat').textContent  = '– ms';
+    document.getElementById('buffer-bar').style.width = '0%';
+    document.getElementById('mb-log').innerHTML = '';
+    document.getElementById('start-btn').disabled = false;
+    document.getElementById('stop-btn').disabled  = true;
+    if (latChart) { latChart.destroy(); latChart = null; }
+});
+</script>
+{% endblock %}

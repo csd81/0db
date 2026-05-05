@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Order Confirmed — Northwind Shop{% endblock %}
+
+{% block content %}
+<style>
+  .success-card  { background:#161b22; border:1px solid #30363d; border-radius:8px; }
+  .line-table th { color:#8b949e; font-size:.8rem; text-transform:uppercase; border-bottom:1px solid #30363d; }
+  .line-table td { border-color:#21262d; vertical-align:middle; }
+  #route-map     { height:380px; border-radius:8px; border:1px solid #30363d; }
+  .node-ferry    { color:#d29922; }
+  .edu-note      { background:#1f3d1f22; border:1px solid #3fb950; border-radius:6px; font-size:.82rem; }
+</style>
+
+<div class="container py-4" style="max-width:900px">
+
+  <!-- Confirmation header -->
+  <div class="success-card p-4 mb-4 text-center">
+    <i class="bi bi-check-circle-fill text-success display-3 d-block mb-3"></i>
+    <h3 class="text-success">Order #{{ order.OrderID }} Confirmed</h3>
+    <p class="text-muted mb-1">Customer: <strong>{{ order.Customer }}</strong></p>
+    <p class="text-muted mb-0">Ship to: {{ order.ShipCity }}{% if order.ShipCountry %}, {{ order.ShipCountry }}{% endif %}</p>
+  </div>
+
+  <div class="row g-4">
+    <!-- Order lines -->
+    <div class="col-lg-5">
+      <div class="success-card p-4 h-100">
+        <h6 class="text-muted mb-3"><i class="bi bi-list-ul me-1"></i>Order Lines</h6>
+        <table class="table table-sm line-table">
+          <thead>
+            <tr><th>Product</th><th class="text-center">Qty</th><th class="text-end">Total</th></tr>
+          </thead>
+          <tbody>
+            {% for line in order.lines %}
+            <tr>
+              <td>{{ line.ProductName }}</td>
+              <td class="text-center">{{ line.Quantity }}</td>
+              <td class="text-end">${{ "%.2f"|format(line.LineTotal) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="border-top">
+              <td colspan="2" class="text-muted small">Subtotal</td>
+              <td class="text-end">${{ "%.2f"|format(order.subtotal) }}</td>
+            </tr>
+            <tr>
+              <td colspan="2" class="text-muted small">Freight</td>
+              <td class="text-end">${{ "%.2f"|format(order.Freight) }}</td>
+            </tr>
+            <tr class="border-top">
+              <td colspan="2" class="fw-bold">Total</td>
+              <td class="text-end fw-bold text-primary">
+                ${{ "%.2f"|format(order.subtotal + order.Freight) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+
+        {% if order.Shipper %}
+        <div class="mt-2 text-muted small"><i class="bi bi-truck me-1"></i>Carrier: {{ order.Shipper }}</div>
+        {% endif %}
+        {% if order.OrderDate %}
+        <div class="text-muted small"><i class="bi bi-calendar me-1"></i>Ordered: {{ order.OrderDate }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Logistics map -->
+    <div class="col-lg-7">
+      {% if logistics and logistics.path %}
+      <div class="success-card p-3 h-100">
+        <h6 class="text-muted mb-2">
+          <i class="bi bi-geo-alt me-1"></i>Logistics Route
+          <small class="text-muted ms-2">London → {{ order.ShipCity }}</small>
+        </h6>
+        <div id="route-map"></div>
+        <div class="d-flex gap-3 mt-2 text-muted small">
+          <span><i class="bi bi-rulers me-1"></i>{{ logistics.total_distance }} km</span>
+          <span><i class="bi bi-diagram-3 me-1"></i>{{ logistics.hop_count }} hops</span>
+        </div>
+        <div class="edu-note p-2 mt-3">
+          <i class="bi bi-info-circle me-1 text-success"></i>
+          Route computed with A* on EuropeGraph (NetworkX) — same service used in the Graph Routing demo.
+        </div>
+      </div>
+      {% else %}
+      <div class="success-card p-4 h-100 d-flex align-items-center justify-content-center text-muted">
+        <div class="text-center">
+          <i class="bi bi-geo-alt display-4 d-block mb-2"></i>
+          <p>Logistics route unavailable for "{{ order.ShipCity }}".<br>
+          City may not be in EuropeGraph.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mt-4 text-center">
+    <a href="{{ url_for('shop.catalog') }}" class="btn btn-primary">
+      <i class="bi bi-bag me-1"></i> Continue Shopping
+    </a>
+    <a href="{{ url_for('shop.dashboard') }}" class="btn btn-outline-secondary ms-2">
+      <i class="bi bi-bar-chart me-1"></i> View Dashboard
+    </a>
+  </div>
+</div>
+
+{% if logistics and logistics.path %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const PATH = {{ logistics.path | tojson }};
+
+const map = L.map('route-map', {zoomControl: true});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO', maxZoom: 18
+}).addTo(map);
+
+const latlngs = PATH.map(n => [n.lat, n.lng]);
+
+// Route polyline
+L.polyline(latlngs, {color: '#1f6feb', weight: 3, opacity: 0.85}).addTo(map);
+
+// Markers
+PATH.forEach((node, i) => {
+  const isFirst = i === 0;
+  const isLast  = i === PATH.length - 1;
+  const color   = isFirst ? '#3fb950' : isLast ? '#f85149' : (node.ferry ? '#d29922' : '#58a6ff');
+  const icon = L.circleMarker([node.lat, node.lng], {
+    radius: isFirst || isLast ? 8 : 5,
+    color,
+    fillColor: color,
+    fillOpacity: 0.9,
+    weight: 2,
+  });
+  let popup = `<strong>${node.name}</strong><br>${node.country}`;
+  if (node.ferry)  popup += '<br><span style="color:#d29922">⛴ ferry crossing</span>';
+  if (node.dist_from_start > 0) popup += `<br>${node.dist_from_start} km from start`;
+  icon.bindPopup(popup).addTo(map);
+});
+
+map.fitBounds(latlngs, {padding: [20, 20]});
+</script>
+{% endif %}
+{% endblock %}

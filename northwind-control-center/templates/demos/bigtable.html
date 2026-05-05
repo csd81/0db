@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% block title %}Bigtable Wide-Column Store{% endblock %}
+
+{% block content %}
+<style>
+.bt-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.bt-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+}
+.bt-body { flex: 1; padding: .5rem .65rem; overflow-y: auto; }
+
+.cell-badge {
+  display: inline-block; border-radius: .2rem; padding: .05rem .3rem;
+  font-size: .65rem; font-family: monospace; margin: .05rem;
+}
+.cf-sensor { background: #0a1a2e; border: 1px solid #1a3a5c; color: #457b9d; }
+.cf-meta   { background: #1a0f00; border: 1px solid #3a2200; color: #e9c46a; }
+
+.row-key-chip {
+  font-family: monospace; font-size: .7rem; color: #2a9d8f;
+  background: #061412; border: 1px solid #0e2e28; border-radius: .2rem;
+  padding: .08rem .35rem; cursor: pointer;
+}
+.row-key-chip:hover { background: #0e2e28; }
+
+.ver-tag {
+  font-size: .58rem; color: #8338ec; background: #1a0a2e;
+  border: 1px solid #2a1a4e; border-radius: .15rem;
+  padding: 0 .22rem; vertical-align: middle; margin-left: .2rem;
+}
+
+.ops-row { font-size: .67rem; }
+.ops-op  { font-size: .6rem; font-weight: 700; padding: .05rem .3rem; border-radius: .2rem; }
+.op-INSERT       { background: #0e2e28; color: #2a9d8f; }
+.op-READ_ROW     { background: #06111a; color: #457b9d; }
+.op-GET_VERSIONS { background: #1a0a2e; color: #8338ec; }
+.op-RANGE_SCAN   { background: #1a1300; color: #e9c46a; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#e9c46a">&#9654; Bigtable Wide-Column Store</span>
+  <span style="font-size:.75rem;color:#5a6070">Sparse versioned cells — Google Bigtable / HBase model</span>
+  <button id="reset-btn" class="btn btn-outline-danger btn-sm ms-auto">Reset</button>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: Insert + Scan controls -->
+  <div class="col-3">
+    <div class="bt-card mb-2">
+      <div class="bt-hdr" style="color:#2a9d8f"><i class="bi bi-plus-circle"></i> Insert GPS Ping</div>
+      <div class="bt-body">
+        <div class="mb-2">
+          <label style="font-size:.65rem;color:#8892a4">City</label>
+          <select id="ins-city" class="form-select form-select-sm"
+                  style="background:#0e1014;color:#cdd3de;border-color:#2a2d35;font-size:.72rem">
+            <option>Paris</option><option>London</option><option>Berlin</option>
+            <option>Madrid</option><option>Rome</option><option>Vienna</option>
+            <option>Warsaw</option><option>Amsterdam</option><option>Prague</option>
+            <option>Budapest</option><option>Stockholm</option><option>Oslo</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label style="font-size:.65rem;color:#8892a4">Speed (km/h)</label>
+          <input id="ins-speed" type="number" value="88" min="10" max="160"
+                 class="form-control form-control-sm"
+                 style="background:#0e1014;color:#cdd3de;border-color:#2a2d35;font-size:.72rem">
+        </div>
+        <div class="mb-2">
+          <label style="font-size:.65rem;color:#8892a4">Country</label>
+          <input id="ins-country" type="text" value="France"
+                 class="form-control form-control-sm"
+                 style="background:#0e1014;color:#cdd3de;border-color:#2a2d35;font-size:.72rem">
+        </div>
+        <div class="mb-2">
+          <label style="font-size:.65rem;color:#8892a4">Lat / Lng</label>
+          <div class="d-flex gap-1">
+            <input id="ins-lat" type="number" value="48.85" step="0.01"
+                   class="form-control form-control-sm"
+                   style="background:#0e1014;color:#cdd3de;border-color:#2a2d35;font-size:.72rem">
+            <input id="ins-lng" type="number" value="2.35" step="0.01"
+                   class="form-control form-control-sm"
+                   style="background:#0e1014;color:#cdd3de;border-color:#2a2d35;font-size:.72rem">
+          </div>
+        </div>
+        <button id="ins-btn" class="btn btn-sm w-100"
+                style="background:#2a9d8f;color:#fff;border:none;font-size:.72rem">
+          <i class="bi bi-plus me-1"></i>Insert Row
+        </button>
+        <div id="ins-result" style="font-size:.65rem;color:#2a9d8f;margin-top:.4rem"></div>
+      </div>
+    </div>
+
+    <div class="bt-card">
+      <div class="bt-hdr" style="color:#e9c46a"><i class="bi bi-search"></i> Range Scan</div>
+      <div class="bt-body">
+        <label style="font-size:.65rem;color:#8892a4">Key prefix (e.g. paris)</label>
+        <div class="d-flex gap-1 mt-1">
+          <input id="scan-prefix" type="text" placeholder="paris"
+                 class="form-control form-control-sm"
+                 style="background:#0e1014;color:#cdd3de;border-color:#2a2d35;font-size:.72rem">
+          <button id="scan-btn" class="btn btn-sm"
+                  style="background:#e9c46a;color:#000;border:none;font-size:.72rem">Scan</button>
+        </div>
+        <div id="scan-result" class="mt-2" style="font-size:.65rem;color:#8892a4;max-height:140px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Table viewer -->
+  <div class="col-6">
+    <div class="bt-card" style="height:520px">
+      <div class="bt-hdr" style="color:#e9c46a">
+        <i class="bi bi-table"></i> Wide-Column Table
+        <span id="row-count" class="badge ms-auto"
+              style="background:#1e2028;color:#8892a4;font-size:.62rem">0 rows</span>
+        <span id="cell-count" class="badge"
+              style="background:#1e2028;color:#8892a4;font-size:.62rem">0 cells</span>
+        <span id="sparse-badge" class="badge"
+              style="background:#0e2e28;color:#2a9d8f;font-size:.62rem">sparse saving: 0</span>
+      </div>
+      <div class="bt-body">
+        <!-- Column family legend -->
+        <div class="d-flex gap-2 mb-2" style="font-size:.62rem">
+          <span class="cell-badge cf-sensor">sensor: lat · lng · speed</span>
+          <span class="cell-badge cf-meta">meta: city · country</span>
+        </div>
+        <table class="table table-sm table-borderless mb-0" style="font-size:.67rem">
+          <thead>
+            <tr style="color:#5a6070;font-size:.6rem;border-bottom:1px solid #1e2028">
+              <th>Row Key</th>
+              <th style="color:#457b9d">sensor:lat</th>
+              <th style="color:#457b9d">sensor:lng</th>
+              <th style="color:#457b9d">sensor:speed</th>
+              <th style="color:#e9c46a">meta:city</th>
+              <th style="color:#e9c46a">meta:country</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr><td colspan="6" style="color:#5a6070;text-align:center">No rows yet — insert a ping</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Row detail + ops log -->
+  <div class="col-3">
+    <div class="bt-card mb-2" style="height:240px">
+      <div class="bt-hdr" style="color:#8338ec"><i class="bi bi-layers"></i> Cell Versions</div>
+      <div class="bt-body" id="versions-body">
+        <div style="color:#5a6070;font-size:.7rem">Click a row key to inspect cell versions (up to 5 per cell).</div>
+      </div>
+    </div>
+    <div class="bt-card" style="height:268px">
+      <div class="bt-hdr" style="color:#5a6070"><i class="bi bi-list-ul"></i> Operations Log</div>
+      <div class="bt-body" id="ops-log" style="font-family:monospace"></div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+let pollTimer = null;
+
+function fmtCell(val, nVer) {
+    const vt = nVer > 1 ? `<span class="ver-tag">v${nVer}</span>` : '';
+    return `<span style="color:#cdd3de">${val}</span>${vt}`;
+}
+
+async function loadState() {
+    let s;
+    try { s = await fetch('/demos/bigtable/state').then(r => r.json()); }
+    catch (_) { return; }
+
+    document.getElementById('row-count').textContent   = s.total_rows + ' rows';
+    document.getElementById('cell-count').textContent  = s.total_cells + ' cells';
+    document.getElementById('sparse-badge').textContent = 'sparse saving: ' + s.sparse_saving;
+
+    const tb = document.getElementById('table-body');
+    if (!s.rows || !s.rows.length) {
+        tb.innerHTML = '<tr><td colspan="6" style="color:#5a6070;text-align:center">No rows yet</td></tr>';
+    } else {
+        tb.innerHTML = s.rows.slice().reverse().map(row => {
+            const c = row.cells;
+            const rk = row.row_key;
+            return `<tr>
+              <td><span class="row-key-chip" data-rk="${rk}" title="Click to read row">${rk}</span></td>
+              <td>${c['sensor:lat']  ? fmtCell(c['sensor:lat'].value,  c['sensor:lat'].n_ver)  : '<span style="color:#2a2d35">—</span>'}</td>
+              <td>${c['sensor:lng']  ? fmtCell(c['sensor:lng'].value,  c['sensor:lng'].n_ver)  : '<span style="color:#2a2d35">—</span>'}</td>
+              <td>${c['sensor:speed']? fmtCell(c['sensor:speed'].value,c['sensor:speed'].n_ver): '<span style="color:#2a2d35">—</span>'}</td>
+              <td>${c['meta:city']   ? fmtCell(c['meta:city'].value,   c['meta:city'].n_ver)   : '<span style="color:#2a2d35">—</span>'}</td>
+              <td>${c['meta:country']? fmtCell(c['meta:country'].value,c['meta:country'].n_ver): '<span style="color:#2a2d35">—</span>'}</td>
+            </tr>`;
+        }).join('');
+        // re-attach click
+        document.querySelectorAll('.row-key-chip').forEach(el => {
+            el.addEventListener('click', () => readRow(el.dataset.rk));
+        });
+    }
+
+    // Ops log
+    const ops = s.ops_log || [];
+    document.getElementById('ops-log').innerHTML = ops.slice().reverse().map(op => {
+        const cls = 'op-' + (op.op || '').replace(/[^A-Z_]/g,'');
+        return `<div class="ops-row d-flex gap-1 align-items-start mb-1">
+          <span class="ops-op ${cls}">${op.op}</span>
+          <span style="color:#5a6070;font-size:.58rem">${op.ts}</span>
+          <span style="color:#2a9d8f;word-break:break-all">${op.row_key}</span>
+          <span style="color:#8892a4">${op.detail}</span>
+        </div>`;
+    }).join('');
+}
+
+async function readRow(rk) {
+    let data;
+    try { data = await fetch('/demos/bigtable/read?row_key=' + encodeURIComponent(rk)).then(r=>r.json()); }
+    catch (_) { return; }
+    if (!data || data.error) { document.getElementById('versions-body').innerHTML = '<div style="color:#e63946">Row not found</div>'; return; }
+
+    const vb = document.getElementById('versions-body');
+    const cells = data.cells || {};
+    let html = `<div style="font-size:.63rem;color:#2a9d8f;margin-bottom:.3rem;font-family:monospace">${data.row_key}</div>`;
+    for (const [col, info] of Object.entries(cells)) {
+        const cfCls = col.startsWith('sensor') ? 'cf-sensor' : 'cf-meta';
+        html += `<div class="d-flex align-items-center gap-1 mb-1">
+          <span class="cell-badge ${cfCls}">${col}</span>
+          <span style="color:#cdd3de;font-size:.68rem;font-family:monospace">${info.value}</span>
+          <span class="ver-tag">v${info.versions}</span>
+          <button class="btn btn-sm ms-auto" style="font-size:.55rem;padding:.05rem .3rem;background:#1a0a2e;color:#8338ec;border:1px solid #2a1a4e"
+                  onclick="loadVersions('${rk}','${col}')">versions</button>
+        </div>`;
+    }
+    vb.innerHTML = html;
+}
+
+async function loadVersions(rk, colFull) {
+    const [cf, col] = colFull.split(':');
+    let data;
+    try { data = await fetch(`/demos/bigtable/versions?row_key=${encodeURIComponent(rk)}&cf=${cf}&col=${col}`).then(r=>r.json()); }
+    catch (_) { return; }
+
+    const vb = document.getElementById('versions-body');
+    let html = `<div style="font-size:.63rem;color:#8338ec;margin-bottom:.3rem">${rk} → ${colFull} (${data.length} versions)</div>`;
+    html += (data || []).slice().reverse().map((v, i) => {
+        const ts = new Date(v.ts).toISOString().slice(11,23);
+        return `<div class="d-flex gap-2 align-items-center mb-1" style="font-size:.65rem">
+          <span style="color:#5a6070">${ts}</span>
+          <span class="cell-badge ${cf==='sensor'?'cf-sensor':'cf-meta'}">${v.value}</span>
+          ${i === 0 ? '<span style="font-size:.58rem;color:#2a9d8f">← latest</span>' : ''}
+        </div>`;
+    }).join('');
+    vb.innerHTML = html;
+}
+
+document.getElementById('ins-btn').addEventListener('click', async () => {
+    const ping = {
+        city:    document.getElementById('ins-city').value,
+        speed:   parseFloat(document.getElementById('ins-speed').value) || 88,
+        country: document.getElementById('ins-country').value,
+        lat:     parseFloat(document.getElementById('ins-lat').value) || 48.85,
+        lng:     parseFloat(document.getElementById('ins-lng').value) || 2.35,
+    };
+    const res = await fetch('/demos/bigtable/insert', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(ping),
+    }).then(r=>r.json());
+    document.getElementById('ins-result').textContent = 'Row: ' + res.row_key;
+    loadState();
+});
+
+document.getElementById('scan-btn').addEventListener('click', async () => {
+    const prefix = document.getElementById('scan-prefix').value.trim();
+    let rows;
+    try { rows = await fetch('/demos/bigtable/scan?prefix=' + encodeURIComponent(prefix)).then(r=>r.json()); }
+    catch (_) { return; }
+    const el = document.getElementById('scan-result');
+    if (!rows.length) {
+        el.innerHTML = '<div style="color:#5a6070">No rows matching prefix "' + prefix + '"</div>';
+        return;
+    }
+    el.innerHTML = rows.map(r =>
+        `<div style="margin-bottom:.3rem">
+          <span class="row-key-chip" style="cursor:default">${r.row_key}</span>
+          <span style="color:#5a6070;margin-left:.3rem;font-size:.62rem">
+            speed=${r.cells['sensor:speed'] ?? '?'} · ${r.cells['meta:city'] ?? '?'}
+          </span>
+        </div>`
+    ).join('');
+});
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    await fetch('/demos/bigtable/reset', {method:'POST'});
+    document.getElementById('ins-result').textContent = '';
+    document.getElementById('scan-result').innerHTML  = '';
+    document.getElementById('versions-body').innerHTML =
+        '<div style="color:#5a6070;font-size:.7rem">Click a row key to inspect cell versions.</div>';
+    loadState();
+});
+
+// Poll every 2s for background updates
+loadState();
+pollTimer = setInterval(loadState, 2000);
+</script>
+{% endblock %}

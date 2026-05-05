@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% block title %}Apache Beam — Portable Pipeline{% endblock %}
+
+{% block content %}
+<style>
+.bm-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.bm-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem;
+}
+.bm-body { flex: 1; padding: .6rem .75rem; }
+
+.transform-node {
+  border: 1px solid; border-radius: .4rem; padding: .4rem .6rem;
+  margin-bottom: .3rem; cursor: pointer; transition: all .2s;
+}
+.transform-node:hover { filter: brightness(1.2); }
+.transform-node.active { box-shadow: 0 0 0 2px; }
+
+.t-read     { border-color: #1a3a5c; background: #06111a; }
+.t-filter   { border-color: #1a2e00; background: #0a1400; }
+.t-map      { border-color: #1a1a4e; background: #0a0614; }
+.t-groupby  { border-color: #2a2200; background: #1a1300; }
+.t-combine  { border-color: #0e2e28; background: #061412; }
+.t-write    { border-color: #2a0510; background: #180508; }
+
+.t-read.active     { box-shadow: 0 0 0 2px #457b9d; border-color: #457b9d; }
+.t-filter.active   { box-shadow: 0 0 0 2px #6abf4b; border-color: #6abf4b; }
+.t-map.active      { box-shadow: 0 0 0 2px #8338ec; border-color: #8338ec; }
+.t-groupby.active  { box-shadow: 0 0 0 2px #e9c46a; border-color: #e9c46a; }
+.t-combine.active  { box-shadow: 0 0 0 2px #2a9d8f; border-color: #2a9d8f; }
+.t-write.active    { box-shadow: 0 0 0 2px #e63946; border-color: #e63946; }
+
+.runner-tab {
+  border: 1px solid #1e2028; border-radius: .3rem; padding: .3rem .6rem;
+  font-size: .7rem; cursor: pointer; background: #080a0d; color: #8892a4;
+  transition: all .15s;
+}
+.runner-tab:hover { background: #12141a; }
+.runner-tab.active { border-color: #8338ec; color: #8338ec; background: #0a0614; }
+
+.pcollection-flow {
+  background: #06080a; border: 1px solid #1e2028; border-radius: .3rem;
+  padding: .4rem .5rem; font-family: monospace; font-size: .65rem;
+  color: #8892a4; overflow-x: auto; min-height: 80px;
+}
+
+.arrow-down {
+  text-align: center; color: #2a9d8f; font-size: 1rem; line-height: 1;
+  margin: .1rem 0;
+}
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2">
+  <span class="fw-bold" style="color:#8338ec">&#9654; Apache Beam Portable Pipeline</span>
+  <span style="font-size:.75rem;color:#5a6070">Write once — run on any runner (Direct, Spark, Flink, Dataflow)</span>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: Pipeline graph -->
+  <div class="col-3">
+    <div class="bm-card">
+      <div class="bm-hdr" style="color:#8338ec"><i class="bi bi-diagram-3"></i> Pipeline DAG</div>
+      <div class="bm-body">
+        <div style="font-size:.62rem;color:#5a6070;margin-bottom:.4rem">Click a transform to see details</div>
+
+        <div class="transform-node t-read active" data-t="read">
+          <span style="color:#457b9d;font-weight:700">Read</span>
+          <span style="color:#5a6070;font-size:.63rem;margin-left:.3rem">BigQuery source</span>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="transform-node t-filter" data-t="filter">
+          <span style="color:#6abf4b;font-weight:700">Filter</span>
+          <span style="color:#5a6070;font-size:.63rem;margin-left:.3rem">Freight &gt; $100</span>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="transform-node t-map" data-t="map">
+          <span style="color:#8338ec;font-weight:700">Map (ParDo)</span>
+          <span style="color:#5a6070;font-size:.63rem;margin-left:.3rem">Extract country + revenue</span>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="transform-node t-groupby" data-t="groupby">
+          <span style="color:#e9c46a;font-weight:700">GroupByKey</span>
+          <span style="color:#5a6070;font-size:.63rem;margin-left:.3rem">country → [revenues]</span>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="transform-node t-combine" data-t="combine">
+          <span style="color:#2a9d8f;font-weight:700">Combine.PerKey</span>
+          <span style="color:#5a6070;font-size:.63rem;margin-left:.3rem">Sum revenues</span>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="transform-node t-write" data-t="write">
+          <span style="color:#e63946;font-weight:700">Write</span>
+          <span style="color:#5a6070;font-size:.63rem;margin-left:.3rem">BigQuery sink</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Transform detail + code -->
+  <div class="col-5">
+    <div class="bm-card mb-2" style="min-height:300px">
+      <div class="bm-hdr" id="t-detail-hdr" style="color:#457b9d">
+        <i class="bi bi-braces"></i> Read — BigQuery Source
+      </div>
+      <div class="bm-body">
+        <!-- PCollection flow -->
+        <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.2rem">PCollection flow</div>
+        <div class="pcollection-flow" id="t-flow">–</div>
+        <div class="mt-2" style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.2rem">Python SDK</div>
+        <div class="pcollection-flow" id="t-code">–</div>
+        <div class="mt-2" style="font-size:.68rem;color:#8892a4;line-height:1.6" id="t-explain">–</div>
+      </div>
+    </div>
+
+    <!-- Runner comparison -->
+    <div class="bm-card">
+      <div class="bm-hdr" style="color:#e9c46a"><i class="bi bi-play-circle"></i> Runner Selection</div>
+      <div class="bm-body">
+        <div class="d-flex gap-2 mb-2 flex-wrap">
+          <button class="runner-tab active" data-runner="direct">Direct Runner</button>
+          <button class="runner-tab" data-runner="dataflow">Cloud Dataflow</button>
+          <button class="runner-tab" data-runner="spark">Apache Spark</button>
+          <button class="runner-tab" data-runner="flink">Apache Flink</button>
+        </div>
+        <div id="runner-detail" style="font-size:.68rem;color:#8892a4;line-height:1.6"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Key concepts -->
+  <div class="col-4">
+    <div class="bm-card mb-2">
+      <div class="bm-hdr" style="color:#2a9d8f"><i class="bi bi-book"></i> Beam Model</div>
+      <div class="bm-body" style="font-size:.68rem;color:#8892a4;line-height:1.7">
+        <div style="margin-bottom:.5rem">
+          <strong style="color:#cdd3de">PCollection</strong><br>
+          Immutable distributed dataset — the data flowing between transforms.
+          Can be bounded (batch) or unbounded (streaming).
+        </div>
+        <div style="margin-bottom:.5rem">
+          <strong style="color:#cdd3de">PTransform</strong><br>
+          A data processing operation (Read, Filter, Map, GroupByKey, Combine, Write).
+          Transforms PCollections into new PCollections.
+        </div>
+        <div style="margin-bottom:.5rem">
+          <strong style="color:#cdd3de">Runner</strong><br>
+          The execution backend. Same Beam program runs on Direct, Spark, Flink, or Dataflow
+          by changing one line: <code style="color:#8338ec">--runner=DataflowRunner</code>
+        </div>
+        <div style="margin-bottom:.5rem">
+          <strong style="color:#cdd3de">Windowing</strong><br>
+          For streaming: tumbling, sliding, session windows group unbounded data
+          so GroupByKey + Combine can apply.
+        </div>
+        <div>
+          <strong style="color:#cdd3de">Portability</strong><br>
+          Beam SDK (Python/Java/Go) compiles to a portable format.
+          Runners receive the same graph regardless of SDK language.
+        </div>
+      </div>
+    </div>
+
+    <div class="bm-card">
+      <div class="bm-hdr" style="color:#5a6070"><i class="bi bi-arrow-left-right"></i> Batch vs Stream</div>
+      <div class="bm-body">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.65rem">
+          <thead>
+            <tr style="color:#5a6070;border-bottom:1px solid #1e2028">
+              <th></th><th>Batch</th><th>Streaming</th>
+            </tr>
+          </thead>
+          <tbody style="color:#8892a4">
+            <tr><td>PCollection</td><td>bounded</td><td>unbounded</td></tr>
+            <tr><td>Source</td><td>BQ / GCS file</td><td>Pub/Sub / Kafka</td></tr>
+            <tr><td>Window</td><td>global</td><td>tumbling/sliding</td></tr>
+            <tr><td>Watermark</td><td>not needed</td><td>required</td></tr>
+            <tr><td>Trigger</td><td>once</td><td>per-window</td></tr>
+            <tr><td>Runner</td><td>Direct / Spark</td><td>Flink / Dataflow</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+const TRANSFORMS = {
+  read: {
+    color: '#457b9d',
+    title: 'Read — BigQuery Source',
+    flow: 'Source → PCollection<Row>',
+    code: `pipeline = beam.Pipeline(options=options)\n\norders = (\n  pipeline\n  | 'ReadOrders' >> beam.io.ReadFromBigQuery(\n      table='northwind.orders',\n      use_standard_sql=True\n  )\n)`,
+    explain: 'Read creates the initial PCollection by pulling data from a source (BigQuery, GCS, Pub/Sub, Kafka). The pipeline does not execute yet — Beam builds a DAG first, then submits it to the runner.',
+  },
+  filter: {
+    color: '#6abf4b',
+    title: 'Filter — Freight > $100',
+    flow: 'PCollection<Row> → PCollection<Row> (subset)',
+    code: `filtered = (\n  orders\n  | 'FilterHighFreight' >> beam.Filter(\n      lambda row: row['Freight'] > 100.0\n  )\n)`,
+    explain: 'Filter applies a predicate function to each element. Elements that return True are kept; the rest are dropped. This is equivalent to a SQL WHERE clause but runs in parallel across workers.',
+  },
+  map: {
+    color: '#8338ec',
+    title: 'Map / ParDo — Extract Fields',
+    flow: 'PCollection<Row> → PCollection<(country, revenue)>',
+    code: `def extract(row):\n    yield (row['ShipCountry'],\n           row['Freight'])\n\npairs = (\n  filtered\n  | 'ExtractPairs' >> beam.FlatMap(extract)\n)`,
+    explain: 'ParDo (Parallel Do) applies a DoFn to each element. FlatMap is the shorthand when each input produces 0 or more outputs. This stage tokenises rows into (key, value) pairs for grouping.',
+  },
+  groupby: {
+    color: '#e9c46a',
+    title: 'GroupByKey — country → [revenues]',
+    flow: 'PCollection<(k, v)> → PCollection<(k, Iterable[v])>',
+    code: `grouped = (\n  pairs\n  | 'GroupByCountry' >> beam.GroupByKey()\n)\n# → ('Germany', [120.3, 98.5, 204.1, ...])\n# → ('France',  [77.2, 550.0, ...])\n# → ('UK',      [...])`,
+    explain: 'GroupByKey is the Beam equivalent of the MapReduce shuffle. All values with the same key are collected into an iterable on one worker. This is the most expensive operation — it requires a network shuffle across the cluster.',
+  },
+  combine: {
+    color: '#2a9d8f',
+    title: 'Combine.PerKey — Sum per country',
+    flow: 'PCollection<(k, Iterable[v])> → PCollection<(k, v)>',
+    code: `totals = (\n  grouped\n  | 'SumRevenue' >> beam.CombinePerKey(sum)\n)\n# → ('Germany', 8240.5)\n# → ('France',  5310.2)\n# → ('UK',      4820.7)`,
+    explain: 'CombinePerKey applies an associative, commutative function to all values for each key. Unlike GroupByKey + custom reduce, Beam can apply partial combines on the mapper side (combiner optimization) to reduce shuffle data volume.',
+  },
+  write: {
+    color: '#e63946',
+    title: 'Write — BigQuery Sink',
+    flow: 'PCollection<Row> → BigQuery table',
+    code: `(\n  totals\n  | 'FormatOutput' >> beam.Map(\n      lambda kv: {'country': kv[0], 'revenue': kv[1]}\n  )\n  | 'WriteToBQ' >> beam.io.WriteToBigQuery(\n      table='northwind.country_revenue',\n      write_disposition=BigQueryDisposition.WRITE_TRUNCATE,\n  )\n)\n\npipeline.run().wait_until_finish()`,
+    explain: 'Write materialises the final PCollection into a sink (BigQuery, GCS, Pub/Sub). pipeline.run() is when Beam submits the DAG to the runner. The pipeline is lazy — nothing executes until run() is called.',
+  },
+};
+
+const RUNNERS = {
+  direct: {
+    title: 'Direct Runner — local in-process',
+    best: 'Development, unit testing',
+    scale: 'Single machine, single process',
+    parallelism: 'Threads only',
+    cost: 'Free',
+    latency: 'Instant startup',
+    note: 'Default runner — no cluster needed. Use for rapid iteration, then switch runner for production.',
+  },
+  dataflow: {
+    title: 'Cloud Dataflow — managed Google service',
+    best: 'Production batch & streaming on GCP',
+    scale: 'Auto-scales from 1 to thousands of workers',
+    parallelism: 'Distributed workers on GCE VMs',
+    cost: '$0.056/vCPU·hr + $0.003/GB·hr',
+    latency: '3–5 min startup (job launch)',
+    note: 'Fully managed — Dataflow handles worker provisioning, scaling, and fault recovery. Ideal for production workloads.',
+  },
+  spark: {
+    title: 'Apache Spark Runner',
+    best: 'Existing Spark cluster reuse',
+    scale: 'Limited by Spark cluster size',
+    parallelism: 'Spark executor RDDs',
+    cost: 'Cluster cost (self-managed or Dataproc)',
+    latency: 'Seconds (if cluster warm)',
+    note: 'Translates Beam DAG into Spark RDD operations. Best if you already run Spark for other jobs and want a unified API.',
+  },
+  flink: {
+    title: 'Apache Flink Runner',
+    best: 'Low-latency streaming',
+    scale: 'Limited by Flink cluster',
+    parallelism: 'Flink TaskManagers',
+    cost: 'Cluster cost',
+    latency: 'Sub-second (true stream)',
+    note: 'Best runner for streaming with low latency requirements. Flink\'s event-time processing and watermarks integrate natively with Beam\'s windowing model.',
+  },
+};
+
+function renderTransform(key) {
+    const t = TRANSFORMS[key];
+    document.getElementById('t-detail-hdr').textContent = t.title;
+    document.getElementById('t-detail-hdr').style.color = t.color;
+    document.getElementById('t-flow').textContent   = t.flow;
+    document.getElementById('t-code').textContent   = t.code;
+    document.getElementById('t-explain').textContent = t.explain;
+    document.querySelectorAll('.transform-node').forEach(n =>
+        n.classList.toggle('active', n.dataset.t === key)
+    );
+}
+
+function renderRunner(key) {
+    const r = RUNNERS[key];
+    document.getElementById('runner-detail').innerHTML = `
+      <div><strong style="color:#cdd3de">${r.title}</strong></div>
+      <div><span style="color:#5a6070">Best for:</span> ${r.best}</div>
+      <div><span style="color:#5a6070">Scale:</span> ${r.scale}</div>
+      <div><span style="color:#5a6070">Parallelism:</span> ${r.parallelism}</div>
+      <div><span style="color:#5a6070">Cost:</span> ${r.cost}</div>
+      <div><span style="color:#5a6070">Startup:</span> ${r.latency}</div>
+      <div style="margin-top:.4rem;color:#5a6070;font-size:.63rem">${r.note}</div>
+    `;
+}
+
+document.querySelectorAll('.transform-node').forEach(n =>
+    n.addEventListener('click', () => renderTransform(n.dataset.t))
+);
+document.querySelectorAll('.runner-tab').forEach(b =>
+    b.addEventListener('click', () => {
+        document.querySelectorAll('.runner-tab').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        renderRunner(b.dataset.runner);
+    })
+);
+
+renderTransform('read');
+renderRunner('direct');
+</script>
+{% endblock %}

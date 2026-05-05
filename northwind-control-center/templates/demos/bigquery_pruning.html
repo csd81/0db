@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% block title %}BigQuery Column + Partition Pruning{% endblock %}
+
+{% block content %}
+<style>
+.bq-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.bq-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem;
+}
+.bq-body { flex: 1; padding: .6rem .75rem; }
+
+.query-editor {
+  background: #06080a; border: 1px solid #1e2028; border-radius: .3rem;
+  padding: .5rem; font-family: monospace; font-size: .7rem; color: #8892a4;
+  min-height: 80px; white-space: pre-wrap;
+}
+
+/* Column grid */
+.col-cell {
+  border: 1px solid #1e2028; border-radius: .25rem;
+  padding: .2rem .35rem; font-size: .65rem; margin: .1rem;
+  display: inline-block; cursor: pointer; transition: all .15s;
+  font-family: monospace;
+}
+.col-cell:hover { border-color: #3a3d45; }
+.col-cell.scanned  { border-color: #e63946; background: #18050820; color: #e63946; }
+.col-cell.pruned   { border-color: #2a2d35; background: #06080a;   color: #2a2d35; }
+.col-cell.selected { border-color: #2a9d8f; background: #06141220; color: #2a9d8f; }
+
+/* Partition row */
+.part-row {
+  border: 1px solid #1e2028; border-radius: .25rem;
+  padding: .2rem .5rem; margin-bottom: .2rem; font-size: .67rem;
+  display: flex; align-items: center; gap: .5rem; cursor: pointer;
+}
+.part-row.scanned { border-color: #e63946; background: #18050815; }
+.part-row.pruned  { border-color: #2a2d35; background: #06080a; opacity: .5; }
+
+.cost-box {
+  border: 1px solid; border-radius: .35rem; padding: .4rem .6rem;
+  text-align: center;
+}
+.cost-bad  { border-color: #e63946; background: #18050820; }
+.cost-good { border-color: #2a9d8f; background: #06141220; }
+
+.saving-pct { font-size: 2rem; font-weight: 800; font-family: monospace; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2">
+  <span class="fw-bold" style="color:#457b9d">&#9654; BigQuery Pruning</span>
+  <span style="font-size:.75rem;color:#5a6070">Column pruning + partition pruning — slash query cost by 95%+</span>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: Query builder -->
+  <div class="col-4">
+    <div class="bq-card mb-2">
+      <div class="bq-hdr" style="color:#457b9d"><i class="bi bi-code-slash"></i> Query Builder</div>
+      <div class="bq-body">
+        <div style="font-size:.62rem;color:#5a6070;margin-bottom:.3rem">Select columns (SELECT clause):</div>
+        <div id="col-selector" class="mb-2"><!-- filled by JS --></div>
+
+        <div style="font-size:.62rem;color:#5a6070;margin-bottom:.2rem">WHERE clause:</div>
+        <select id="where-sel" class="form-select form-select-sm mb-2"
+                style="background:#0e1014;color:#cdd3de;border-color:#2a2d35;font-size:.7rem">
+          <option value="none">No filter</option>
+          <option value="country">ShipCountry = 'Germany'</option>
+          <option value="date" selected>OrderDate >= '1997-01-01'</option>
+          <option value="both">ShipCountry + OrderDate</option>
+          <option value="id">OrderID = 10248</option>
+        </select>
+
+        <div style="font-size:.62rem;color:#5a6070;margin-bottom:.2rem">Generated SQL:</div>
+        <div class="query-editor" id="gen-sql">–</div>
+      </div>
+    </div>
+
+    <div class="bq-card">
+      <div class="bq-hdr" style="color:#e9c46a"><i class="bi bi-calculator"></i> Cost Estimate</div>
+      <div class="bq-body">
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <div class="cost-box cost-bad">
+              <div style="font-size:.6rem;color:#e63946">Without pruning</div>
+              <div class="saving-pct" style="color:#e63946" id="cost-bad">–</div>
+              <div style="font-size:.6rem;color:#5a6070" id="cost-bad-gb">– GB scanned</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="cost-box cost-good">
+              <div style="font-size:.6rem;color:#2a9d8f">With pruning</div>
+              <div class="saving-pct" style="color:#2a9d8f" id="cost-good">–</div>
+              <div style="font-size:.6rem;color:#5a6070" id="cost-good-gb">– GB scanned</div>
+            </div>
+          </div>
+        </div>
+        <div id="saving-line" style="font-size:.72rem;text-align:center;color:#2a9d8f;margin-bottom:.4rem"></div>
+        <div style="font-size:.62rem;color:#5a6070;line-height:1.5">
+          BigQuery pricing: <span style="color:#e9c46a">$5 / TB scanned</span><br>
+          Pruning reduces scanned bytes → lower cost.<br>
+          First 1 TB/month is free.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Table layout visualizer -->
+  <div class="col-5">
+    <div class="bq-card mb-2">
+      <div class="bq-hdr" style="color:#e9c46a"><i class="bi bi-columns-gap"></i> Columnar Storage — Column Pruning</div>
+      <div class="bq-body">
+        <div style="font-size:.62rem;color:#5a6070;margin-bottom:.3rem">
+          BigQuery stores each column separately. Only requested columns are read.
+        </div>
+        <div id="col-grid" class="mb-2"><!-- filled by JS --></div>
+        <div id="col-stats" style="font-size:.67rem;color:#8892a4"></div>
+      </div>
+    </div>
+
+    <div class="bq-card">
+      <div class="bq-hdr" style="color:#8338ec"><i class="bi bi-calendar-range"></i> Partition Pruning (by OrderDate)</div>
+      <div class="bq-body">
+        <div style="font-size:.62rem;color:#5a6070;margin-bottom:.3rem">
+          Table is partitioned by month. WHERE on OrderDate skips unneeded partitions.
+        </div>
+        <div id="partition-grid"><!-- filled by JS --></div>
+        <div id="part-stats" class="mt-1" style="font-size:.67rem;color:#8892a4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Key concepts -->
+  <div class="col-3">
+    <div class="bq-card mb-2">
+      <div class="bq-hdr" style="color:#2a9d8f"><i class="bi bi-book"></i> Columnar Storage</div>
+      <div class="bq-body" style="font-size:.68rem;color:#8892a4;line-height:1.7">
+        <div><strong style="color:#cdd3de">Row store (OLTP)</strong></div>
+        <div>All columns of a row stored together.<br>
+          Fast for INSERT/UPDATE (write one row).<br>
+          Slow for analytics (must read unused columns).
+        </div>
+        <br>
+        <div><strong style="color:#cdd3de">Columnar store (OLAP)</strong></div>
+        <div>Each column stored as a separate file stripe.<br>
+          Fast for analytics (read only needed columns).<br>
+          Excellent compression (same-type values).<br>
+          Used by: BigQuery, Parquet, ORC, DuckDB.
+        </div>
+        <br>
+        <div style="font-size:.63rem">
+          <strong style="color:#e9c46a">Example:</strong> Query 2 of 15 columns on 10 TB table.<br>
+          Columnar reads: <span style="color:#2a9d8f">2/15 × 10 TB = 1.33 TB</span><br>
+          Row store reads: <span style="color:#e63946">10 TB</span><br>
+          Savings: <strong style="color:#2a9d8f">87%</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="bq-card">
+      <div class="bq-hdr" style="color:#5a6070"><i class="bi bi-grid-1x2"></i> Pruning Best Practices</div>
+      <div class="bq-body" style="font-size:.68rem;color:#8892a4;line-height:1.7">
+        <div style="color:#e63946;margin-bottom:.25rem">❌ Never use SELECT *</div>
+        <div style="color:#2a9d8f;margin-bottom:.5rem">✓ Always list required columns</div>
+        <div style="color:#e63946;margin-bottom:.25rem">❌ WHERE on non-partition col</div>
+        <div style="color:#2a9d8f;margin-bottom:.5rem">✓ Filter on partition column first</div>
+        <div style="color:#e63946;margin-bottom:.25rem">❌ Cluster key not in WHERE</div>
+        <div style="color:#2a9d8f;margin-bottom:.5rem">✓ Use cluster key in filter</div>
+        <div style="color:#e63946;margin-bottom:.25rem">❌ OR across partition col</div>
+        <div style="color:#2a9d8f">✓ Use BETWEEN or IN with known values</div>
+        <hr style="border-color:#1e2028">
+        <div style="font-size:.62rem;color:#5a6070">
+          Partitioning = coarse pruning (whole partitions skipped).<br>
+          Clustering = fine pruning (blocks within partition skipped).
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+// Northwind Orders-like schema
+const COLUMNS = [
+  { name: 'OrderID',       size_gb: 0.8,  type: 'INT64',    pk: true  },
+  { name: 'CustomerID',    size_gb: 0.5,  type: 'STRING'              },
+  { name: 'EmployeeID',    size_gb: 0.4,  type: 'INT64'               },
+  { name: 'OrderDate',     size_gb: 0.6,  type: 'DATE',     partition: true },
+  { name: 'RequiredDate',  size_gb: 0.6,  type: 'DATE'                },
+  { name: 'ShippedDate',   size_gb: 0.6,  type: 'DATE'                },
+  { name: 'ShipVia',       size_gb: 0.3,  type: 'INT64'               },
+  { name: 'Freight',       size_gb: 0.7,  type: 'FLOAT64'             },
+  { name: 'ShipName',      size_gb: 1.1,  type: 'STRING'              },
+  { name: 'ShipAddress',   size_gb: 1.4,  type: 'STRING'              },
+  { name: 'ShipCity',      size_gb: 0.9,  type: 'STRING'              },
+  { name: 'ShipRegion',    size_gb: 0.7,  type: 'STRING'              },
+  { name: 'ShipPostalCode',size_gb: 0.6,  type: 'STRING'              },
+  { name: 'ShipCountry',   size_gb: 0.5,  type: 'STRING'              },
+  { name: 'TotalAmount',   size_gb: 0.8,  type: 'FLOAT64'             },
+];
+
+const PARTITIONS = [
+  { label: '1996-Q3', months: 3, size_frac: 0.08 },
+  { label: '1996-Q4', months: 3, size_frac: 0.12 },
+  { label: '1997-Q1', months: 3, size_frac: 0.18 },
+  { label: '1997-Q2', months: 3, size_frac: 0.20 },
+  { label: '1997-Q3', months: 3, size_frac: 0.19 },
+  { label: '1997-Q4', months: 3, size_frac: 0.23 },
+];
+
+const TOTAL_GB = COLUMNS.reduce((s, c) => s + c.size_gb, 0);
+
+let selectedCols  = new Set(['OrderID', 'ShipCountry', 'Freight']);
+let whereMode     = 'date';
+
+function renderColSelector() {
+    document.getElementById('col-selector').innerHTML = COLUMNS.map(c =>
+        `<label style="display:inline-flex;align-items:center;gap:.25rem;margin:.1rem;cursor:pointer;font-size:.67rem">
+           <input type="checkbox" value="${c.name}" ${selectedCols.has(c.name) ? 'checked' : ''}
+                  style="accent-color:#2a9d8f">
+           <span style="color:${c.partition ? '#e9c46a' : '#cdd3de'}">${c.name}</span>
+         </label>`
+    ).join('');
+    document.querySelectorAll('#col-selector input').forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (cb.checked) selectedCols.add(cb.value);
+            else            selectedCols.delete(cb.value);
+            update();
+        });
+    });
+}
+
+function whereFilter() {
+    return {
+        none:    { cols: [],              parts_skipped: 0 },
+        country: { cols: ['ShipCountry'], parts_skipped: 0 },
+        date:    { cols: ['OrderDate'],   parts_skipped: 2 },  // skip 1996
+        both:    { cols: ['ShipCountry','OrderDate'], parts_skipped: 2 },
+        id:      { cols: ['OrderID'],     parts_skipped: 5 },
+    }[whereMode];
+}
+
+function genSQL() {
+    const cols = selectedCols.size === COLUMNS.length
+        ? ['*']
+        : [...selectedCols];
+    const wheres = {
+        none: '',
+        country: "WHERE ShipCountry = 'Germany'",
+        date:    "WHERE OrderDate >= '1997-01-01'",
+        both:    "WHERE ShipCountry = 'Germany'\n  AND OrderDate >= '1997-01-01'",
+        id:      "WHERE OrderID = 10248",
+    };
+    return `SELECT ${cols.join(', ')}\nFROM \`northwind.orders\`\n${wheres[whereMode]}`;
+}
+
+function update() {
+    const wf = whereFilter();
+
+    // SQL
+    document.getElementById('gen-sql').textContent = genSQL();
+
+    // Col grid
+    document.getElementById('col-grid').innerHTML = COLUMNS.map(c => {
+        let cls = 'col-cell';
+        if (selectedCols.has(c.name)) cls += ' scanned';
+        else                           cls += ' pruned';
+        const mark = c.partition ? ' 🗓' : '';
+        return `<span class="${cls}" title="${c.type} — ${c.size_gb} GB">${c.name}${mark}</span>`;
+    }).join('');
+
+    // Col stats
+    const scannedGB = COLUMNS
+        .filter(c => selectedCols.has(c.name))
+        .reduce((s, c) => s + c.size_gb, 0);
+    const prunedGB  = TOTAL_GB - scannedGB;
+    const colPct    = (prunedGB / TOTAL_GB * 100).toFixed(0);
+    document.getElementById('col-stats').innerHTML =
+        `<span style="color:#2a9d8f">Scanned: ${scannedGB.toFixed(1)} GB</span>
+         &nbsp;·&nbsp; <span style="color:#5a6070">Pruned: ${prunedGB.toFixed(1)} GB (${colPct}%)</span>`;
+
+    // Partition grid
+    const ps = wf.parts_skipped;
+    document.getElementById('partition-grid').innerHTML = PARTITIONS.map((p, i) => {
+        const skip = i < ps;
+        const cls  = skip ? 'part-row pruned' : 'part-row scanned';
+        return `<div class="${cls}">
+          <span style="color:${skip?'#2a2d35':'#e9c46a'};min-width:70px">${p.label}</span>
+          <span style="color:#5a6070;font-size:.62rem">${(p.size_frac * TOTAL_GB).toFixed(1)} GB</span>
+          <span style="margin-left:auto;font-size:.62rem;color:${skip?'#2a2d35':'#e63946'}">${skip?'PRUNED':'read'}</span>
+        </div>`;
+    }).join('');
+
+    const partScanned = PARTITIONS.slice(ps).reduce((s, p) => s + p.size_frac, 0);
+    const partPct     = ((1 - partScanned) * 100).toFixed(0);
+    document.getElementById('part-stats').innerHTML =
+        `<span style="color:#2a9d8f">${(partScanned * scannedGB).toFixed(2)} GB after partition pruning</span>
+         &nbsp;·&nbsp; <span style="color:#5a6070">skipped ${ps} of ${PARTITIONS.length} partitions (${partPct}%)</span>`;
+
+    // Cost
+    const full_gb    = TOTAL_GB;
+    const pruned_gb  = partScanned * scannedGB;
+    const full_cost  = (full_gb  / 1024 * 5).toFixed(2);
+    const good_cost  = (pruned_gb / 1024 * 5).toFixed(4);
+    const saving_pct = ((1 - pruned_gb / full_gb) * 100).toFixed(0);
+
+    document.getElementById('cost-bad').textContent    = '$' + full_cost;
+    document.getElementById('cost-bad-gb').textContent  = full_gb.toFixed(1) + ' GB scanned';
+    document.getElementById('cost-good').textContent   = '$' + good_cost;
+    document.getElementById('cost-good-gb').textContent = pruned_gb.toFixed(2) + ' GB scanned';
+    document.getElementById('saving-line').textContent  =
+        `Saved ${saving_pct}% — $${(parseFloat(full_cost) - parseFloat(good_cost)).toFixed(2)} cheaper`;
+}
+
+document.getElementById('where-sel').addEventListener('change', e => {
+    whereMode = e.target.value;
+    update();
+});
+
+renderColSelector();
+update();
+</script>
+{% endblock %}

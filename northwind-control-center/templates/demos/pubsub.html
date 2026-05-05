@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+{% block title %}Cloud Pub/Sub — Event Bus{% endblock %}
+
+{% block content %}
+<style>
+/* ── Layout shells ──────────────────────────────────────────────────────── */
+.ps-card {
+  background: #0e1014;
+  border: 1px solid #1e2028;
+  border-radius: .4rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.ps-hdr {
+  background: #13151b;
+  border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.ps-body {
+  flex: 1;
+  padding: .5rem .65rem;
+  overflow-y: auto;
+  font-size: .74rem;
+}
+.ps-body::-webkit-scrollbar { width: 3px; }
+.ps-body::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+/* ── Metric pills ───────────────────────────────────────────────────────── */
+.m-pill {
+  display: flex;
+  flex-direction: column;
+  background: #080a0d;
+  border: 1px solid #1e2028;
+  border-radius: .3rem;
+  padding: .28rem .5rem;
+  text-align: center;
+  min-width: 64px;
+}
+.m-pill .lbl { font-size: .58rem; color: #5a6070; text-transform: uppercase; letter-spacing: .07em; }
+.m-pill .val { font-size: 1.15rem; font-weight: 700; line-height: 1.1; }
+
+/* ── Arrow connector ────────────────────────────────────────────────────── */
+.ps-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2a3040;
+  font-size: 1.6rem;
+  padding: 0 .1rem;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* ── Subscriber cards ────────────────────────────────────────────────────  */
+.sub-card {
+  background: #080a0d;
+  border: 1px solid #1e2028;
+  border-radius: .35rem;
+  padding: .4rem .6rem;
+  margin-bottom: .45rem;
+}
+.sub-name  { font-weight: 600; font-size: .8rem; }
+.sub-speed { font-size: .62rem; opacity: .5; text-transform: uppercase; letter-spacing: .06em; }
+.sub-stats { display: flex; gap: .5rem; margin-top: .3rem; font-size: .72rem; }
+.sub-stat  { display: flex; flex-direction: column; }
+.sub-stat .s-lbl { font-size: .58rem; color: #5a6070; }
+.sub-stat .s-val { font-weight: 600; }
+.sub-recent { margin-top: .35rem; font-size: .67rem; color: #5a6070; line-height: 1.55; }
+
+/* ── Lag bar ─────────────────────────────────────────────────────────────  */
+.lag-wrap { display: flex; align-items: center; gap: .35rem; margin-top: .25rem; }
+.lag-bar-outer { flex: 1; background: #1a1d24; border-radius: 2px; height: 5px; }
+.lag-bar-inner { height: 5px; border-radius: 2px; transition: width .5s; max-width: 100%; }
+
+/* ── Message feed ────────────────────────────────────────────────────────  */
+.msg-feed { font-size: .72rem; }
+.msg-row {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .18rem .1rem;
+  border-bottom: 1px solid #12141a;
+}
+.msg-id  { color: #5a6070; width: 3.4rem; flex-shrink: 0; font-family: monospace; }
+.msg-cust{ flex: 1; color: #e9c46a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg-amt { color: #06d6a0; text-align: right; flex-shrink: 0; width: 4.5rem; }
+.msg-ack { display: flex; gap: .2rem; flex-shrink: 0; }
+.ack-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1px solid #2a2d35;
+  transition: background .3s;
+}
+.ack-dot.acked   { border-color: transparent; }
+
+/* ── Log ────────────────────────────────────────────────────────────────── */
+#ps-log {
+  background: #080a0d;
+  border: 1px solid #1e2028;
+  border-radius: .375rem;
+  font-size: .71rem;
+  color: #8892a4;
+  height: 110px;
+  overflow-y: auto;
+  padding: .4rem .6rem;
+  font-family: 'Consolas', 'Fira Mono', monospace;
+}
+#ps-log::-webkit-scrollbar { width: 3px; }
+#ps-log::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+.log-ts { color: #3a4050; }
+
+/* ── Recent list items ───────────────────────────────────────────────────  */
+.rec-item { color: #8892a4; }
+.rec-item span { color: #cdd3de; }
+</style>
+
+<!-- Controls bar -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#8338ec">&#9654; Pub/Sub</span>
+  <span style="font-size:.75rem;color:#5a6070">Northwind Order Event Bus</span>
+
+  <button id="run-btn" class="btn btn-success btn-sm ms-2">
+    <i class="bi bi-broadcast me-1"></i>Start Publishing
+  </button>
+  <button id="reset-btn" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+  </button>
+  <span id="phase-badge" class="badge bg-secondary ms-1">idle</span>
+
+  <div class="flex-grow-1" style="min-width:120px">
+    <div class="progress" style="height:5px">
+      <div id="ps-progress" class="progress-bar" style="width:0%;background:#8338ec;transition:width .4s"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Architecture row: Publisher → Topic → Subscribers -->
+<div class="d-flex gap-0 mb-2" style="height:260px">
+
+  <!-- Publisher -->
+  <div style="flex:0 0 210px">
+    <div class="ps-card">
+      <div class="ps-hdr" style="color:#457b9d">
+        <i class="bi bi-cloud-upload"></i> Publisher
+      </div>
+      <div class="ps-body">
+        <div class="fw-semibold mb-1" style="color:#cdd3de;font-size:.78rem">Order Service</div>
+        <div class="d-flex gap-2 mb-2">
+          <div class="m-pill">
+            <span class="lbl">Published</span>
+            <span class="val" id="pub-count" style="color:#457b9d">0</span>
+          </div>
+          <div class="m-pill">
+            <span class="lbl">Total</span>
+            <span class="val" id="pub-total" style="color:#5a6070">—</span>
+          </div>
+        </div>
+        <div style="font-size:.63rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem">Recent events</div>
+        <div id="pub-recent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ps-arrow">&#10140;</div>
+
+  <!-- Topic -->
+  <div style="flex:0 0 190px">
+    <div class="ps-card">
+      <div class="ps-hdr" style="color:#8338ec">
+        <i class="bi bi-diagram-3"></i> Topic
+      </div>
+      <div class="ps-body">
+        <div class="fw-semibold mb-1" style="color:#cdd3de;font-size:.78rem">northwind-orders</div>
+        <div class="d-flex gap-2 mb-2">
+          <div class="m-pill">
+            <span class="lbl">Messages</span>
+            <span class="val" id="topic-total" style="color:#8338ec">0</span>
+          </div>
+          <div class="m-pill">
+            <span class="lbl">Backlog</span>
+            <span class="val" id="topic-backlog" style="color:#e63946">0</span>
+          </div>
+        </div>
+        <div style="font-size:.63rem;color:#5a6070;margin-bottom:.35rem">
+          Fan-out to 3 subscriptions.<br>
+          Messages retained until all subscribers ack.
+        </div>
+        <div style="font-size:.63rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em">3 subscriptions</div>
+        <div style="font-size:.68rem;color:#2a9d8f;margin-top:.2rem">● inventory-sub</div>
+        <div style="font-size:.68rem;color:#e9c46a">● shipping-sub</div>
+        <div style="font-size:.68rem;color:#e63946">● analytics-sub</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ps-arrow">&#10140;</div>
+
+  <!-- Subscribers -->
+  <div style="flex:1">
+    <div class="ps-card">
+      <div class="ps-hdr" style="color:#06d6a0">
+        <i class="bi bi-cloud-download"></i> Subscribers
+        <span class="ms-auto" style="color:#5a6070;font-size:.62rem;font-weight:400;text-transform:none;letter-spacing:0">
+          independent pull subscriptions
+        </span>
+      </div>
+      <div class="ps-body d-flex flex-column gap-0">
+
+        <!-- Inventory -->
+        <div class="sub-card" id="sub-inventory">
+          <div class="d-flex align-items-center gap-2">
+            <span class="sub-name" style="color:#2a9d8f">Inventory Service</span>
+            <span class="sub-speed">fast</span>
+            <span class="ms-auto badge" style="background:#0d2520;color:#2a9d8f;font-size:.58rem">2 ack/tick</span>
+          </div>
+          <div class="sub-stats">
+            <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="inv-acked" style="color:#2a9d8f">0</span></div>
+            <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="inv-lag">0</span></div>
+          </div>
+          <div class="lag-wrap">
+            <div class="lag-bar-outer"><div class="lag-bar-inner" id="inv-bar" style="background:#2a9d8f;width:0%"></div></div>
+          </div>
+          <div class="sub-recent" id="inv-recent"></div>
+        </div>
+
+        <!-- Shipping -->
+        <div class="sub-card" id="sub-shipping">
+          <div class="d-flex align-items-center gap-2">
+            <span class="sub-name" style="color:#e9c46a">Shipping Service</span>
+            <span class="sub-speed">medium</span>
+            <span class="ms-auto badge" style="background:#2a2000;color:#e9c46a;font-size:.58rem">1 ack/tick</span>
+          </div>
+          <div class="sub-stats">
+            <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="ship-acked" style="color:#e9c46a">0</span></div>
+            <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="ship-lag">0</span></div>
+          </div>
+          <div class="lag-wrap">
+            <div class="lag-bar-outer"><div class="lag-bar-inner" id="ship-bar" style="background:#e9c46a;width:0%"></div></div>
+          </div>
+          <div class="sub-recent" id="ship-recent"></div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="sub-card mb-0" id="sub-analytics">
+          <div class="d-flex align-items-center gap-2">
+            <span class="sub-name" style="color:#e63946">Analytics Service</span>
+            <span class="sub-speed">slow</span>
+            <span class="ms-auto badge" style="background:#200a0b;color:#e63946;font-size:.58rem">1 ack/3 ticks</span>
+          </div>
+          <div class="sub-stats">
+            <div class="sub-stat"><span class="s-lbl">Acked</span><span class="s-val" id="ana-acked" style="color:#e63946">0</span></div>
+            <div class="sub-stat"><span class="s-lbl">Lag</span><span class="s-val" id="ana-lag">0</span></div>
+          </div>
+          <div class="lag-wrap">
+            <div class="lag-bar-outer"><div class="lag-bar-inner" id="ana-bar" style="background:#e63946;width:0%"></div></div>
+          </div>
+          <div class="sub-recent" id="ana-recent"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Message feed -->
+<div class="ps-card mb-2" style="height:auto">
+  <div class="ps-hdr" style="color:#8892a4">
+    <i class="bi bi-envelope-paper"></i> Message Feed
+    <span style="color:#5a6070;font-size:.62rem;font-weight:400;text-transform:none;letter-spacing:0;margin-left:.3rem">(last 25)</span>
+    <div class="ms-auto d-flex gap-3" style="font-size:.63rem;color:#5a6070">
+      <span><span class="ack-dot acked d-inline-block" style="background:#2a9d8f"></span> Inv</span>
+      <span><span class="ack-dot acked d-inline-block" style="background:#e9c46a"></span> Ship</span>
+      <span><span class="ack-dot acked d-inline-block" style="background:#e63946"></span> Ana</span>
+      <span><span class="ack-dot d-inline-block" style="background:#1a1d24"></span> pending</span>
+    </div>
+  </div>
+  <div class="ps-body" style="max-height:175px">
+    <!-- Header row -->
+    <div class="msg-row" style="border-bottom:1px solid #1e2028;padding-bottom:.25rem;margin-bottom:.1rem">
+      <span class="msg-id" style="color:#3a4050">Order ID</span>
+      <span class="msg-cust" style="color:#3a4050">Customer</span>
+      <span class="msg-amt" style="color:#3a4050">Value</span>
+      <span class="msg-ack" style="color:#3a4050;font-size:.62rem;gap:.4rem">
+        <span style="width:10px;text-align:center">I</span>
+        <span style="width:10px;text-align:center">S</span>
+        <span style="width:10px;text-align:center">A</span>
+      </span>
+    </div>
+    <div id="msg-feed" class="msg-feed"></div>
+  </div>
+</div>
+
+<!-- Log -->
+<div style="font-size:.63rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Event log</div>
+<div id="ps-log"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+let pollTimer  = null;
+let lastLogLen = 0;
+
+const PHASE_COLORS = {
+  idle:       'secondary',
+  connecting: 'info',
+  publishing: 'primary',
+  delivering: 'warning',
+  done:       'success',
+  error:      'danger',
+};
+
+const SUB_PREFIX = {
+  inventory: 'inv',
+  shipping:  'ship',
+  analytics: 'ana',
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmt(n) { return (n ?? 0).toLocaleString(); }
+
+function setPhaseBadge(phase) {
+    const el = document.getElementById('phase-badge');
+    el.textContent = phase;
+    el.className   = `badge bg-${PHASE_COLORS[phase] ?? 'secondary'} ms-1`;
+}
+
+// ── Publisher panel ───────────────────────────────────────────────────────────
+
+function renderPublisher(pub, total) {
+    document.getElementById('pub-count').textContent = fmt(pub.published);
+    document.getElementById('pub-total').textContent = fmt(total);
+    const el = document.getElementById('pub-recent');
+    if (!pub.recent || !pub.recent.length) { el.innerHTML = ''; return; }
+    el.innerHTML = pub.recent.slice().reverse().map(m =>
+        `<div class="rec-item">#${m.id} <span>${m.customer.slice(0,22)}</span></div>`
+    ).join('');
+}
+
+// ── Topic panel ───────────────────────────────────────────────────────────────
+
+function renderTopic(topic) {
+    document.getElementById('topic-total').textContent   = fmt(topic.published);
+    document.getElementById('topic-backlog').textContent = fmt(topic.backlog);
+}
+
+// ── Subscriber panels ─────────────────────────────────────────────────────────
+
+function renderSubscriber(key, sub, total) {
+    const p      = SUB_PREFIX[key] || key.slice(0, 3);
+    const lagPct = total > 0 ? Math.min(100, (sub.lag / Math.max(1, total)) * 100 * 5) : 0;
+    document.getElementById(`${p}-acked`).textContent = fmt(sub.acked);
+    document.getElementById(`${p}-lag`).textContent   = fmt(sub.lag);
+    document.getElementById(`${p}-bar`).style.width   = lagPct + '%';
+
+    const el = document.getElementById(`${p}-recent`);
+    if (!sub.recent || !sub.recent.length) { el.innerHTML = ''; return; }
+    el.innerHTML = sub.recent.slice().reverse().map(m =>
+        `<span class="rec-item">✓ #${m.id} <span>${m.customer.slice(0,20)}</span></span>`
+    ).join('<br>');
+}
+
+// ── Message feed ──────────────────────────────────────────────────────────────
+
+function renderFeed(messages) {
+    const el = document.getElementById('msg-feed');
+    if (!messages || !messages.length) { el.innerHTML = ''; return; }
+    el.innerHTML = messages.slice().reverse().map(m => {
+        const inv  = m.acked_by.includes('inventory');
+        const ship = m.acked_by.includes('shipping');
+        const ana  = m.acked_by.includes('analytics');
+        const allAcked = inv && ship && ana;
+        return `<div class="msg-row${allAcked ? ' opacity-50' : ''}">
+          <span class="msg-id">#${m.id}</span>
+          <span class="msg-cust">${m.customer}</span>
+          <span class="msg-amt">$${Number(m.amount).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+          <span class="msg-ack">
+            <span class="ack-dot ${inv  ? 'acked' : ''}" style="${inv  ? 'background:#2a9d8f' : ''}"></span>
+            <span class="ack-dot ${ship ? 'acked' : ''}" style="${ship ? 'background:#e9c46a' : ''}"></span>
+            <span class="ack-dot ${ana  ? 'acked' : ''}" style="${ana  ? 'background:#e63946' : ''}"></span>
+          </span>
+        </div>`;
+    }).join('');
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────────
+
+function renderLog(entries) {
+    if (!entries || entries.length === lastLogLen) return;
+    lastLogLen = entries.length;
+    const el = document.getElementById('ps-log');
+    el.innerHTML = entries.map(e =>
+        `<span class="log-ts">[${e.ts}]</span> ${e.msg}`
+    ).join('<br>');
+    el.scrollTop = el.scrollHeight;
+}
+
+// ── Main poll ─────────────────────────────────────────────────────────────────
+
+async function poll() {
+    let s;
+    try {
+        s = await fetch('/demos/pubsub/state').then(r => r.json());
+    } catch (_) { return; }
+
+    setPhaseBadge(s.phase);
+    document.getElementById('ps-progress').style.width = (s.progress ?? 0) + '%';
+
+    renderPublisher(s.publisher || {}, s.total_orders);
+    renderTopic(s.topic || {});
+
+    const subs = s.subscribers || {};
+    renderSubscriber('inventory', subs.inventory || {}, s.total_orders);
+    renderSubscriber('shipping',  subs.shipping  || {}, s.total_orders);
+    renderSubscriber('analytics', subs.analytics || {}, s.total_orders);
+
+    renderFeed(s.messages);
+    renderLog(s.log);
+
+    if (s.phase === 'done' || s.phase === 'error') {
+        stopPoll();
+        document.getElementById('run-btn').disabled = false;
+    }
+}
+
+function startPoll() {
+    if (pollTimer) return;
+    pollTimer = setInterval(poll, 600);
+    poll();
+}
+
+function stopPoll() {
+    clearInterval(pollTimer);
+    pollTimer = null;
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+
+document.getElementById('run-btn').addEventListener('click', async () => {
+    document.getElementById('run-btn').disabled = true;
+    await fetch('/demos/pubsub/run', {method: 'POST'});
+    startPoll();
+});
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    stopPoll();
+    await fetch('/demos/pubsub/reset', {method: 'POST'});
+
+    ['pub-count','pub-total','topic-total','topic-backlog',
+     'inv-acked','inv-lag','ship-acked','ship-lag','ana-acked','ana-lag']
+        .forEach(id => { document.getElementById(id).textContent = '0'; });
+    ['inv-bar','ship-bar','ana-bar']
+        .forEach(id => { document.getElementById(id).style.width = '0%'; });
+    ['pub-recent','inv-recent','ship-recent','ana-recent','msg-feed']
+        .forEach(id => { document.getElementById(id).innerHTML = ''; });
+    document.getElementById('ps-log').innerHTML = '';
+    lastLogLen = 0;
+
+    document.getElementById('ps-progress').style.width = '0%';
+    setPhaseBadge('idle');
+    document.getElementById('run-btn').disabled = false;
+});
+
+// Initial poll on load
+poll();
+</script>
+{% endblock %}

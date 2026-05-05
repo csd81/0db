@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Northwind Shop{% endblock %}
+
+{% block content %}
+<style>
+  .product-card { background:#161b22; border:1px solid #30363d; border-radius:8px; transition:border-color .2s; }
+  .product-card:hover { border-color:#58a6ff; }
+  .stock-ok   { color:#3fb950; }
+  .stock-warn { color:#d29922; }
+  .stock-none { color:#f85149; }
+  .cat-btn.active { background:#1f6feb; border-color:#1f6feb; color:#fff; }
+  .search-hero { background:linear-gradient(135deg,#1f6feb22,#3fb95011); border:1px solid #30363d; border-radius:12px; }
+  #cart-badge { transition:transform .15s; }
+  #cart-badge.bump { transform:scale(1.4); }
+</style>
+
+<div class="container-fluid px-4 py-3">
+
+  <!-- Header row -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h4 class="mb-0"><i class="bi bi-bag me-2 text-primary"></i>Northwind Shop</h4>
+      <small class="text-muted">SQL Server catalog · difflib fuzzy search · in-memory cart</small>
+    </div>
+    <a href="{{ url_for('shop.cart_view') }}" class="btn btn-outline-primary position-relative">
+      <i class="bi bi-cart3"></i> Cart
+      <span id="cart-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary {% if cart_count == 0 %}d-none{% endif %}">
+        {{ cart_count }}
+      </span>
+    </a>
+  </div>
+
+  <!-- Search bar -->
+  <div class="search-hero p-3 mb-4">
+    <form action="{{ url_for('shop.search') }}" method="get" class="d-flex gap-2">
+      <input name="q" type="search" class="form-control bg-dark border-secondary text-light"
+             placeholder="Search products… (Elasticsearch fuzzy search)"
+             value="{{ search_query or '' }}" autocomplete="off">
+      <button class="btn btn-primary px-4">
+        <i class="bi bi-search"></i> Search
+      </button>
+    </form>
+    {% if search_query %}
+    <div class="mt-2">
+      <small class="text-muted">
+        <i class="bi bi-lightning-fill text-warning"></i>
+        difflib fuzzy search for "<strong>{{ search_query }}</strong>" — {{ total }} hit(s)
+        &nbsp;·&nbsp;<a href="{{ url_for('shop.catalog') }}">Back to catalog</a>
+      </small>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-3">
+    <!-- Category sidebar (hidden on search) -->
+    {% if not search_query %}
+    <div class="col-md-2">
+      <div class="sticky-top" style="top:70px">
+        <p class="text-uppercase text-muted small fw-bold mb-2">Categories</p>
+        <div class="d-grid gap-1">
+          <a href="{{ url_for('shop.catalog') }}"
+             class="btn btn-sm btn-outline-secondary cat-btn text-start {% if not active_cat %}active{% endif %}">
+            All Products
+          </a>
+          {% for cat in categories %}
+          <a href="{{ url_for('shop.catalog', category=cat.CategoryID) }}"
+             class="btn btn-sm btn-outline-secondary cat-btn text-start {% if active_cat == cat.CategoryID %}active{% endif %}">
+            {{ cat.CategoryName }}
+          </a>
+          {% endfor %}
+        </div>
+        <hr class="my-3">
+        <a href="{{ url_for('shop.dashboard') }}" class="btn btn-sm btn-outline-info w-100 mb-1">
+          <i class="bi bi-bar-chart"></i> Dashboard
+        </a>
+        <a href="{{ url_for('shop.stock_agent') }}" class="btn btn-sm btn-outline-warning w-100">
+          <i class="bi bi-robot"></i> Stock Agent
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Product grid -->
+    <div class="{% if not search_query %}col-md-10{% else %}col-12{% endif %}">
+
+      {% if not products %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox display-4 d-block mb-2"></i>
+        No products found.
+      </div>
+      {% else %}
+      <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" id="product-grid">
+        {% for p in products %}
+        {% set stock = p.UnitsInStock|int %}
+        {% set reorder = p.ReorderLevel|int %}
+        <div class="col">
+          <div class="product-card h-100 p-3 d-flex flex-column">
+            <a href="{{ url_for('shop.product_detail', pid=p.ProductID) }}"
+               class="text-decoration-none text-light flex-grow-1">
+              <div class="fw-semibold mb-1" style="font-size:.92rem">{{ p.ProductName }}</div>
+              {% if p.CategoryName %}
+              <small class="badge bg-secondary mb-2">{{ p.CategoryName }}</small>
+              {% endif %}
+              {% if p.Supplier %}
+              <div class="text-muted" style="font-size:.78rem">{{ p.Supplier }}</div>
+              {% endif %}
+            </a>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <span class="fw-bold text-primary">${{ "%.2f"|format(p.UnitPrice|float) }}</span>
+              {% if stock == 0 %}
+              <span class="badge bg-danger stock-badge">Out of stock</span>
+              {% elif stock <= reorder %}
+              <span class="badge bg-warning text-dark stock-badge">Low: {{ stock }}</span>
+              {% else %}
+              <span class="badge bg-success stock-badge">{{ stock }} in stock</span>
+              {% endif %}
+            </div>
+            <button class="btn btn-sm btn-outline-primary mt-2 add-btn"
+                    data-pid="{{ p.ProductID }}"
+                    data-name="{{ p.ProductName|e }}"
+                    data-price="{{ p.UnitPrice|float }}"
+                    {% if stock == 0 %}disabled{% endif %}>
+              <i class="bi bi-cart-plus"></i> Add to Cart
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if pages > 1 %}
+      <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if page > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('shop.catalog', category=active_cat, page=page-1) }}">
+              &laquo; Prev
+            </a>
+          </li>
+          {% endif %}
+          {% for pg in range(1, pages+1) %}
+          <li class="page-item {% if pg == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('shop.catalog', category=active_cat, page=pg) }}">{{ pg }}</a>
+          </li>
+          {% endfor %}
+          {% if page < pages %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('shop.catalog', category=active_cat, page=page+1) }}">
+              Next &raquo;
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+
+      <div class="text-muted small mt-2">{{ total }} product(s) · Page {{ page }}/{{ pages }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.add-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const pid   = btn.dataset.pid;
+    const name  = btn.dataset.name;
+    const price = parseFloat(btn.dataset.price);
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    const res  = await fetch('{{ url_for("shop.cart_add") }}', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({product_id: pid, name, qty: 1, unit_price: price}),
+    });
+    const data = await res.json();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check-circle"></i> Added';
+    setTimeout(() => { btn.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart'; }, 1500);
+    const badge = document.getElementById('cart-badge');
+    badge.textContent = data.cart_count;
+    badge.classList.remove('d-none');
+    badge.classList.add('bump');
+    setTimeout(() => badge.classList.remove('bump'), 200);
+  });
+});
+</script>
+{% endblock %}

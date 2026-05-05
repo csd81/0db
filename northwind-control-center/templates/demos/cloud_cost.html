@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+{% block title %}Cloud Cost Calculator{% endblock %}
+
+{% block content %}
+<style>
+.cc-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.cc-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem;
+}
+.cc-body { flex: 1; padding: .6rem .75rem; }
+
+.model-card {
+  border: 1px solid #1e2028; border-radius: .35rem;
+  padding: .5rem .65rem; margin-bottom: .5rem; cursor: pointer;
+  transition: border-color .15s;
+}
+.model-card:hover { border-color: #3a3d45; }
+.model-card.sel-iaas  { border-color: #457b9d; background: #06111a; }
+.model-card.sel-paas  { border-color: #6abf4b; background: #0a1400; }
+.model-card.sel-caas  { border-color: #8338ec; background: #0a0614; }
+.model-card.sel-faas  { border-color: #2a9d8f; background: #061412; }
+
+.cost-total { font-size: 2rem; font-weight: 800; font-family: monospace; color: #e63946; }
+.cost-mo    { font-size: .75rem; color: #5a6070; }
+
+.breakdown-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .18rem 0; border-bottom: 1px solid #1e2028; font-size: .7rem;
+}
+.breakdown-label { color: #8892a4; }
+.breakdown-val   { color: #cdd3de; font-family: monospace; }
+
+.slider-row { margin-bottom: .6rem; }
+.slider-row label { font-size: .65rem; color: #5a6070; display: block; margin-bottom: .1rem; }
+input[type=range] { width: 100%; accent-color: #2a9d8f; }
+.slider-val { font-size: .7rem; font-family: monospace; color: #cdd3de; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2">
+  <span class="fw-bold" style="color:#e63946">&#9654; Cloud Cost Calculator</span>
+  <span style="font-size:.75rem;color:#5a6070">IaaS vs PaaS vs CaaS vs FaaS — total monthly cost comparison</span>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: Sliders -->
+  <div class="col-3">
+    <div class="cc-card">
+      <div class="cc-hdr" style="color:#8892a4"><i class="bi bi-sliders"></i> Workload Parameters</div>
+      <div class="cc-body">
+
+        <div class="slider-row">
+          <label>Requests / day <span class="slider-val" id="v-req">100,000</span></label>
+          <input type="range" id="s-req" min="1000" max="10000000" step="1000" value="100000">
+        </div>
+        <div class="slider-row">
+          <label>Avg request duration (ms) <span class="slider-val" id="v-dur">200</span></label>
+          <input type="range" id="s-dur" min="10" max="5000" step="10" value="200">
+        </div>
+        <div class="slider-row">
+          <label>Memory per request (MB) <span class="slider-val" id="v-mem">256</span></label>
+          <input type="range" id="s-mem" min="64" max="8192" step="64" value="256">
+        </div>
+        <div class="slider-row">
+          <label>Peak concurrency <span class="slider-val" id="v-con">50</span></label>
+          <input type="range" id="s-con" min="1" max="1000" step="1" value="50">
+        </div>
+        <div class="slider-row">
+          <label>Storage needed (GB) <span class="slider-val" id="v-store">20</span></label>
+          <input type="range" id="s-store" min="1" max="5000" step="1" value="20">
+        </div>
+        <div class="slider-row">
+          <label>Traffic pattern
+            <select id="s-pattern" class="form-select form-select-sm mt-1"
+                    style="background:#0e1014;color:#cdd3de;border-color:#2a2d35;font-size:.7rem">
+              <option value="uniform">Uniform (24/7)</option>
+              <option value="bursty" selected>Bursty (8h peak)</option>
+              <option value="batch">Batch (2h/day)</option>
+            </select>
+          </label>
+        </div>
+
+        <hr style="border-color:#1e2028">
+        <div style="font-size:.63rem;color:#5a6070;line-height:1.5">
+          Adjust sliders to model your workload.<br>
+          Costs reflect public GCP/AWS list prices.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Model cards -->
+  <div class="col-5">
+    <div class="cc-card">
+      <div class="cc-hdr" style="color:#e63946"><i class="bi bi-currency-dollar"></i> Monthly Cost by Model</div>
+      <div class="cc-body">
+
+        <div class="model-card sel-iaas" id="card-iaas">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div style="color:#457b9d;font-weight:700;font-size:.82rem">IaaS — VM (GCE / EC2)</div>
+              <div style="font-size:.62rem;color:#8892a4">You manage: OS, runtime, scaling, patching</div>
+            </div>
+            <div class="cost-total" id="cost-iaas" style="font-size:1.4rem">$?</div>
+          </div>
+          <div id="breakdown-iaas" class="mt-2"></div>
+        </div>
+
+        <div class="model-card" id="card-paas">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div style="color:#6abf4b;font-weight:700;font-size:.82rem">PaaS — App Engine / Elastic Beanstalk</div>
+              <div style="font-size:.62rem;color:#8892a4">Cloud manages: OS, runtime, basic scaling</div>
+            </div>
+            <div class="cost-total" id="cost-paas" style="font-size:1.4rem">$?</div>
+          </div>
+          <div id="breakdown-paas" class="mt-2"></div>
+        </div>
+
+        <div class="model-card" id="card-caas">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div style="color:#8338ec;font-weight:700;font-size:.82rem">CaaS — Cloud Run / GKE Autopilot</div>
+              <div style="font-size:.62rem;color:#8892a4">Cloud manages: containers, auto-scaling to 0</div>
+            </div>
+            <div class="cost-total" id="cost-caas" style="font-size:1.4rem">$?</div>
+          </div>
+          <div id="breakdown-caas" class="mt-2"></div>
+        </div>
+
+        <div class="model-card" id="card-faas">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div style="color:#2a9d8f;font-weight:700;font-size:.82rem">FaaS — Cloud Functions / Lambda</div>
+              <div style="font-size:.62rem;color:#8892a4">Cloud manages: everything; pay per invocation</div>
+            </div>
+            <div class="cost-total" id="cost-faas" style="font-size:1.4rem">$?</div>
+          </div>
+          <div id="breakdown-faas" class="mt-2"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Chart + guidance -->
+  <div class="col-4">
+    <div class="cc-card mb-2" style="height:260px">
+      <div class="cc-hdr" style="color:#8338ec"><i class="bi bi-bar-chart"></i> Cost Comparison</div>
+      <div class="cc-body">
+        <canvas id="cost-chart" style="width:100%;height:200px"></canvas>
+      </div>
+    </div>
+    <div class="cc-card" style="height:220px">
+      <div class="cc-hdr" style="color:#5a6070"><i class="bi bi-lightbulb"></i> Selection Guidance</div>
+      <div class="cc-body" id="guidance-box" style="font-size:.68rem;color:#8892a4;line-height:1.6"></div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+let costChart = null;
+
+// GCP pricing (approximate, public list, 2024)
+const PRICING = {
+    vm_per_vcpu_hr: 0.04749,   // n1-standard-1 vCPU
+    vm_per_gb_hr:   0.006375,  // n1-standard-1 RAM
+    vm_os_hrs_per_day: 24,
+    paas_instance_hr: 0.05,    // App Engine F1 instance
+    run_cpu_per_vcpu_s: 0.00002400,
+    run_mem_per_gb_s:   0.00000250,
+    run_req_per_m:      0.40,  // per million requests
+    fn_per_req:         0.0000004,  // per invocation
+    fn_per_gb_s:        0.0000025,  // GB-seconds compute
+    storage_obj_gb:     0.023,      // GCS Standard per GB
+};
+
+function fmtDollar(v) {
+    if (v >= 1000) return '$' + v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (v >= 10)   return '$' + v.toFixed(2);
+    return '$' + v.toFixed(4);
+}
+
+function calcCosts(req_day, dur_ms, mem_mb, concurrency, store_gb, pattern) {
+    const req_mo    = req_day * 30;
+    const dur_s     = dur_ms / 1000;
+    const mem_gb    = mem_mb / 1024;
+    const load_fact = { uniform: 1.0, bursty: 2.5, batch: 8.0 }[pattern] || 1.0;
+    const vcpu_need = Math.max(1, Math.ceil(concurrency / 4));
+    const ram_need  = Math.max(2, Math.ceil(concurrency * mem_gb));
+
+    // IaaS: always-on VMs sized for peak concurrency
+    const iaas_vm_cost = (vcpu_need * PRICING.vm_per_vcpu_hr + ram_need * PRICING.vm_per_gb_hr) * 24 * 30;
+    const iaas_store   = store_gb * PRICING.storage_obj_gb;
+    const iaas_total   = iaas_vm_cost + iaas_store;
+
+    // PaaS: App Engine — min 1 instance, scales to handle peak
+    const paas_inst    = Math.max(1, Math.ceil(concurrency / 20));
+    const paas_vm_cost = paas_inst * PRICING.paas_instance_hr * 24 * 30;
+    const paas_store   = store_gb * PRICING.storage_obj_gb;
+    const paas_total   = paas_vm_cost + paas_store;
+
+    // CaaS: Cloud Run — only pay while serving (scale to 0)
+    const cpu_s_mo = req_mo * dur_s * (vcpu_need / Math.max(1, concurrency));
+    const mem_s_mo = req_mo * dur_s * mem_gb;
+    const caas_compute = cpu_s_mo * PRICING.run_cpu_per_vcpu_s + mem_s_mo * PRICING.run_mem_per_gb_s;
+    const caas_req     = (req_mo / 1e6) * PRICING.run_req_per_m;
+    const caas_store   = store_gb * PRICING.storage_obj_gb;
+    const caas_total   = caas_compute + caas_req + caas_store;
+
+    // FaaS: Cloud Functions — 2M free invocations/month
+    const fn_billable  = Math.max(0, req_mo - 2_000_000);
+    const fn_inv_cost  = fn_billable * PRICING.fn_per_req;
+    const fn_gb_s      = req_mo * dur_s * mem_gb;
+    const fn_free_gbs  = 400_000;
+    const fn_compute   = Math.max(0, fn_gb_s - fn_free_gbs) * PRICING.fn_per_gb_s;
+    const fn_store     = store_gb * PRICING.storage_obj_gb;
+    const fn_total     = fn_inv_cost + fn_compute + fn_store;
+
+    return {
+        iaas: { total: iaas_total, vm: iaas_vm_cost, store: iaas_store },
+        paas: { total: paas_total, vm: paas_vm_cost, store: paas_store },
+        caas: { total: caas_total, compute: caas_compute, req: caas_req, store: caas_store },
+        faas: { total: fn_total,   inv: fn_inv_cost, compute: fn_compute, store: fn_store },
+    };
+}
+
+function renderBreakdown(id, rows) {
+    document.getElementById(id).innerHTML = rows.map(([l, v]) =>
+        `<div class="breakdown-row">
+           <span class="breakdown-label">${l}</span>
+           <span class="breakdown-val">${fmtDollar(v)}</span>
+         </div>`
+    ).join('');
+}
+
+function guidance(req_day, pattern, costs) {
+    const sorted  = Object.entries(costs).sort((a,b) => a[1].total - b[1].total);
+    const cheapest = sorted[0][0];
+    const names    = {iaas:'IaaS (VM)', paas:'PaaS', caas:'CaaS (Cloud Run)', faas:'FaaS (Functions)'};
+    const colors   = {iaas:'#457b9d', paas:'#6abf4b', caas:'#8338ec', faas:'#2a9d8f'};
+    const c = colors[cheapest];
+    let text = `<strong style="color:${c}">${names[cheapest]} is cheapest</strong> for this workload.<br><br>`;
+
+    if (pattern === 'batch' || req_day < 10000) {
+        text += 'Low/bursty traffic → FaaS or CaaS saves cost (scale to 0 when idle).<br>';
+    } else if (req_day > 1000000) {
+        text += 'Very high request volume → IaaS/CaaS may be more efficient (FaaS per-invocation overhead).<br>';
+    }
+    if (pattern === 'uniform') {
+        text += 'Uniform 24/7 load → reserved VMs (IaaS/PaaS) become competitive.<br>';
+    }
+    text += '<br><span style="color:#5a6070;font-size:.62rem">Remember: cost is only one factor. Operational overhead (IaaS = you manage everything), cold starts (FaaS), and vendor lock-in also matter.</span>';
+    document.getElementById('guidance-box').innerHTML = text;
+}
+
+function updateChart(costs) {
+    const labels = ['IaaS (VM)', 'PaaS', 'CaaS (Run)', 'FaaS'];
+    const vals   = [costs.iaas.total, costs.paas.total, costs.caas.total, costs.faas.total];
+    const colors = ['#457b9d', '#6abf4b', '#8338ec', '#2a9d8f'];
+    if (costChart) { costChart.destroy(); costChart = null; }
+    costChart = new Chart(document.getElementById('cost-chart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 0 }] },
+        options: {
+            responsive: true, maintainAspectRatio: false, animation: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#8892a4', font:{size:9} }, grid: { color: '#1e2028' } },
+                y: { ticks: { color: '#5a6070', font:{size:9},
+                               callback: v => v >= 1000 ? '$' + (v/1000).toFixed(0) + 'k' : '$' + v.toFixed(0) },
+                     grid: { color: '#1e2028' } },
+            }
+        }
+    });
+}
+
+function recalc() {
+    const req    = parseInt(document.getElementById('s-req').value);
+    const dur    = parseInt(document.getElementById('s-dur').value);
+    const mem    = parseInt(document.getElementById('s-mem').value);
+    const con    = parseInt(document.getElementById('s-con').value);
+    const store  = parseInt(document.getElementById('s-store').value);
+    const pat    = document.getElementById('s-pattern').value;
+
+    document.getElementById('v-req').textContent   = req.toLocaleString();
+    document.getElementById('v-dur').textContent   = dur;
+    document.getElementById('v-mem').textContent   = mem;
+    document.getElementById('v-con').textContent   = con;
+    document.getElementById('v-store').textContent = store;
+
+    const c = calcCosts(req, dur, mem, con, store, pat);
+
+    document.getElementById('cost-iaas').textContent = fmtDollar(c.iaas.total);
+    document.getElementById('cost-paas').textContent  = fmtDollar(c.paas.total);
+    document.getElementById('cost-caas').textContent  = fmtDollar(c.caas.total);
+    document.getElementById('cost-faas').textContent  = fmtDollar(c.faas.total);
+
+    renderBreakdown('breakdown-iaas', [
+        ['VMs (always-on)', c.iaas.vm],
+        ['Storage', c.iaas.store],
+    ]);
+    renderBreakdown('breakdown-paas', [
+        ['Instances', c.paas.vm],
+        ['Storage', c.paas.store],
+    ]);
+    renderBreakdown('breakdown-caas', [
+        ['CPU+RAM compute', c.caas.compute],
+        ['Requests', c.caas.req],
+        ['Storage', c.caas.store],
+    ]);
+    renderBreakdown('breakdown-faas', [
+        ['Invocations', c.faas.inv],
+        ['GB-seconds', c.faas.compute],
+        ['Storage', c.faas.store],
+    ]);
+
+    // Highlight cheapest
+    const cheapest = Object.entries(c).sort((a,b) => a[1].total - b[1].total)[0][0];
+    ['iaas','paas','caas','faas'].forEach(k => {
+        const el = document.getElementById('card-' + k);
+        el.className = 'model-card' + (k === cheapest ? ' sel-' + k : '');
+    });
+
+    updateChart(c);
+    guidance(req, pat, c);
+}
+
+['s-req','s-dur','s-mem','s-con','s-store'].forEach(id =>
+    document.getElementById(id).addEventListener('input', recalc)
+);
+document.getElementById('s-pattern').addEventListener('change', recalc);
+
+recalc();
+</script>
+{% endblock %}

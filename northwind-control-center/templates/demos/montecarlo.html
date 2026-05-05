@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block title %}Monte Carlo π — Embarrassingly Parallel{% endblock %}
+
+{% block content %}
+<style>
+.mc-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.mc-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+}
+.mc-body { flex: 1; padding: .5rem .65rem; overflow: hidden; }
+
+.pi-display {
+  font-size: 2.6rem; font-weight: 800; font-family: monospace;
+  color: #2a9d8f; letter-spacing: .04em;
+}
+.pi-error { font-size: .75rem; color: #8892a4; margin-top: .1rem; }
+.pi-actual { font-size: .65rem; color: #5a6070; }
+
+.worker-bar-outer { background: #1a1d24; border-radius: 3px; height: 6px; }
+.worker-bar-inner { height: 6px; border-radius: 3px; transition: width .4s; }
+
+.stat-chip {
+  background: #080a0d; border: 1px solid #1e2028; border-radius: .3rem;
+  padding: .25rem .5rem; text-align: center; min-width: 80px;
+}
+.stat-chip-v { font-size: .95rem; font-weight: 700; }
+.stat-chip-l { font-size: .55rem; color: #5a6070; text-transform: uppercase; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#2a9d8f">&#9654; Monte Carlo π</span>
+  <span style="font-size:.75rem;color:#5a6070">Embarrassingly Parallel — Hadoop/Spark Mapper Model</span>
+  <div class="ms-auto d-flex gap-2 align-items-center">
+    <label style="font-size:.72rem;color:#8892a4">Workers:</label>
+    <select id="n-workers" class="form-select form-select-sm" style="width:75px;background:#0e1014;color:#cdd3de;border-color:#2a2d35">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="4" selected>4</option>
+      <option value="8">8</option>
+      <option value="16">16</option>
+    </select>
+    <button id="start-btn" class="btn btn-sm" style="background:#2a9d8f;color:#fff;border:none">Start</button>
+    <button id="stop-btn"  class="btn btn-sm btn-outline-secondary" disabled>Stop</button>
+    <button id="reset-btn" class="btn btn-sm btn-outline-danger">Reset</button>
+  </div>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: Canvas scatter plot -->
+  <div class="col-5">
+    <div class="mc-card" style="height:490px">
+      <div class="mc-hdr" style="color:#2a9d8f"><i class="bi bi-grid-3x3"></i> Dart Board</div>
+      <div class="mc-body d-flex flex-column align-items-center">
+        <canvas id="dart-canvas" width="340" height="340"
+                style="border:1px solid #1e2028;border-radius:.3rem;display:block"></canvas>
+        <div class="d-flex gap-3 mt-2" style="font-size:.67rem;color:#8892a4">
+          <span><span style="color:#2a9d8f">●</span> inside quarter-circle (hit)</span>
+          <span><span style="color:#e63946">●</span> outside (miss)</span>
+        </div>
+        <div class="mt-2 text-center">
+          <div class="pi-display" id="pi-val">–</div>
+          <div class="pi-error" id="pi-err"></div>
+          <div class="pi-actual">π = 3.14159265…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Worker progress + stats -->
+  <div class="col-4">
+    <div class="mc-card mb-2" style="height:230px">
+      <div class="mc-hdr" style="color:#8338ec"><i class="bi bi-cpu"></i> Worker Threads (Mappers)</div>
+      <div class="mc-body" id="workers-body" style="overflow-y:auto">
+        <div style="color:#5a6070;font-size:.72rem">Start to see mapper threads…</div>
+      </div>
+    </div>
+    <div class="mc-card" style="height:250px">
+      <div class="mc-hdr" style="color:#e9c46a"><i class="bi bi-graph-up"></i> Live Stats</div>
+      <div class="mc-body">
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <div class="stat-chip">
+            <div class="stat-chip-v" id="stat-pts" style="color:#2a9d8f">0</div>
+            <div class="stat-chip-l">Total Darts</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-v" id="stat-hits" style="color:#8338ec">0</div>
+            <div class="stat-chip-l">Hits</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-v" id="stat-err" style="color:#e63946">–</div>
+            <div class="stat-chip-l">|π error|</div>
+          </div>
+        </div>
+        <div style="font-size:.68rem;color:#5a6070;line-height:1.7">
+          <div><strong style="color:#cdd3de">Embarrassingly parallel</strong></div>
+          <div>Each worker throws darts independently — zero communication.</div>
+          <div>Global π = 4 × (total hits / total darts).</div>
+          <div>More workers = faster convergence per wall-clock second.</div>
+          <div style="margin-top:.4rem"><strong style="color:#cdd3de">Convergence</strong>: error ∝ 1/√N darts</div>
+          <div>Doubling workers halves time-to-convergence.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Convergence chart -->
+  <div class="col-3">
+    <div class="mc-card" style="height:490px">
+      <div class="mc-hdr" style="color:#e9c46a"><i class="bi bi-bezier2"></i> Convergence</div>
+      <div class="mc-body">
+        <canvas id="conv-chart" style="width:100%;height:400px"></canvas>
+        <div style="font-size:.62rem;color:#5a6070;margin-top:.3rem;text-align:center">
+          π estimate vs dart count
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Log -->
+<div class="mc-card mt-2" style="height:110px">
+  <div class="mc-hdr" style="color:#5a6070"><i class="bi bi-terminal"></i> Log</div>
+  <div class="mc-body" id="mc-log"
+       style="overflow-y:auto;font-size:.72rem;font-family:monospace;color:#8892a4;height:70px"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+const CANVAS_SIZE = 340;
+const ctx = document.getElementById('dart-canvas').getContext('2d');
+let convChart = null;
+let pollTimer = null;
+let drawnSamples = 0;
+
+// Draw quarter-circle once
+function drawBase() {
+    ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    ctx.strokeStyle = '#2a2d35';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    ctx.beginPath();
+    ctx.arc(0, CANVAS_SIZE, CANVAS_SIZE, -Math.PI/2, 0);
+    ctx.strokeStyle = '#2a9d8f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+}
+drawBase();
+
+function drawDots(samples) {
+    // samples: [{x, y, inside}] — x,y in [-1,1]
+    for (const s of samples) {
+        const px = ((s.x + 1) / 2) * CANVAS_SIZE;
+        const py = ((1 - s.y) / 2) * CANVAS_SIZE;   // flip y
+        ctx.fillStyle = s.inside ? 'rgba(42,157,143,0.55)' : 'rgba(230,57,70,0.45)';
+        ctx.fillRect(px - 1, py - 1, 2, 2);
+    }
+}
+
+function buildConvChart() {
+    if (convChart) { convChart.destroy(); convChart = null; }
+    const cfg = {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'π estimate',
+                    data: [],
+                    borderColor: '#2a9d8f',
+                    backgroundColor: 'rgba(42,157,143,.1)',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: false,
+                },
+                {
+                    label: 'π actual',
+                    data: [],
+                    borderColor: '#e9c46a',
+                    borderWidth: 1,
+                    borderDash: [4,3],
+                    pointRadius: 0,
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            animation: false,
+            plugins: { legend: { labels: { color: '#8892a4', font: { size: 10 } } } },
+            scales: {
+                x: { type: 'linear', title: { display: true, text: 'Darts', color: '#5a6070', font:{size:9} },
+                     ticks: { color: '#5a6070', font:{size:9} }, grid: { color: '#1e2028' } },
+                y: { min: 2.8, max: 3.5,
+                     title: { display: true, text: 'π estimate', color: '#5a6070', font:{size:9} },
+                     ticks: { color: '#5a6070', font:{size:9} }, grid: { color: '#1e2028' } },
+            }
+        }
+    };
+    convChart = new Chart(document.getElementById('conv-chart'), cfg);
+}
+
+function updateConv(series) {
+    if (!convChart) return;
+    convChart.data.datasets[0].data = series.map(p => ({ x: p.n, y: p.pi }));
+    convChart.data.datasets[1].data = series.map(p => ({ x: p.n, y: 3.14159265 }));
+    convChart.update('none');
+}
+
+function fmtNum(n) {
+    if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n/1e3).toFixed(1) + 'k';
+    return String(n);
+}
+
+const WORKER_COLORS = ['#2a9d8f','#8338ec','#e9c46a','#e63946',
+                        '#457b9d','#f4a261','#a8dadc','#06d6a0',
+                        '#ff6b6b','#4cc9f0','#7bf1a8','#ffd166',
+                        '#c77dff','#3a0ca3','#f72585','#4361ee'];
+
+function updateWorkers(workers) {
+    const el = document.getElementById('workers-body');
+    if (!workers || !workers.length) return;
+    el.innerHTML = workers.map((w, i) => {
+        const pct = w.points ? Math.min(100, (w.pi_local / 3.14159 * 100)) : 0;
+        const col = WORKER_COLORS[i % WORKER_COLORS.length];
+        return `
+          <div class="mb-1">
+            <div class="d-flex justify-content-between" style="font-size:.65rem;color:#8892a4">
+              <span><span style="color:${col}">▐</span> Worker-${w.id}</span>
+              <span style="font-family:monospace">${w.pi_local.toFixed(5)}</span>
+              <span style="color:#5a6070">${fmtNum(w.points)} darts</span>
+            </div>
+            <div class="worker-bar-outer mt-1">
+              <div class="worker-bar-inner" style="width:${Math.min(100,w.pi_local/3.14159*100).toFixed(1)}%;background:${col}"></div>
+            </div>
+          </div>`;
+    }).join('');
+}
+
+function updateLog(log) {
+    const el = document.getElementById('mc-log');
+    el.innerHTML = (log || []).slice(-20).map(l =>
+        `<div><span style="color:#5a6070">[${l.ts}]</span> ${l.msg}</div>`
+    ).join('');
+    el.scrollTop = el.scrollHeight;
+}
+
+function updateUI(s) {
+    const phase = s.phase;
+
+    // π display
+    if (s.pi_estimate) {
+        document.getElementById('pi-val').textContent = s.pi_estimate.toFixed(8);
+        document.getElementById('pi-err').textContent = s.pi_error != null
+            ? `error: ${s.pi_error.toFixed(8)}` : '';
+    }
+
+    // Stats chips
+    document.getElementById('stat-pts').textContent  = fmtNum(s.total_points || 0);
+    document.getElementById('stat-hits').textContent = fmtNum(s.hits || 0);
+    if (s.pi_error != null)
+        document.getElementById('stat-err').textContent = s.pi_error.toExponential(2);
+
+    updateWorkers(s.workers || []);
+
+    // Scatter — only draw new samples
+    const all = s.samples || [];
+    if (all.length > drawnSamples) {
+        drawDots(all.slice(drawnSamples));
+        drawnSamples = all.length;
+    }
+
+    updateConv(s.convergence || []);
+    updateLog(s.log);
+
+    // Button states
+    const running = phase === 'running';
+    document.getElementById('start-btn').disabled = running;
+    document.getElementById('stop-btn').disabled  = !running;
+    document.getElementById('n-workers').disabled = running;
+
+    if (!running && pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+}
+
+async function poll() {
+    let s;
+    try { s = await fetch('/demos/montecarlo/state').then(r => r.json()); }
+    catch (_) { return; }
+    updateUI(s);
+}
+
+document.getElementById('start-btn').addEventListener('click', async () => {
+    const n = parseInt(document.getElementById('n-workers').value);
+    drawnSamples = 0;
+    drawBase();
+    buildConvChart();
+    await fetch('/demos/montecarlo/start', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({n_workers: n}),
+    });
+    if (!pollTimer) pollTimer = setInterval(poll, 350);
+});
+
+document.getElementById('stop-btn').addEventListener('click', async () => {
+    await fetch('/demos/montecarlo/stop', {method:'POST'});
+});
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    await fetch('/demos/montecarlo/reset', {method:'POST'});
+    drawnSamples = 0;
+    drawBase();
+    document.getElementById('pi-val').textContent = '–';
+    document.getElementById('pi-err').textContent = '';
+    document.getElementById('stat-pts').textContent  = '0';
+    document.getElementById('stat-hits').textContent = '0';
+    document.getElementById('stat-err').textContent  = '–';
+    document.getElementById('workers-body').innerHTML =
+        '<div style="color:#5a6070;font-size:.72rem">Start to see mapper threads…</div>';
+    document.getElementById('mc-log').innerHTML = '';
+    document.getElementById('start-btn').disabled = false;
+    document.getElementById('stop-btn').disabled  = true;
+    if (convChart) { convChart.destroy(); convChart = null; }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}{{ product.ProductName }} — Northwind Shop{% endblock %}
+
+{% block content %}
+<style>
+  .detail-card { background:#161b22; border:1px solid #30363d; border-radius:8px; }
+  .co-card { background:#0d1117; border:1px solid #21262d; border-radius:6px; transition:border-color .2s; }
+  .co-card:hover { border-color:#58a6ff; }
+</style>
+
+<div class="container-fluid px-4 py-3">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('shop.catalog') }}">Shop</a></li>
+      <li class="breadcrumb-item active">{{ product.ProductName }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Product detail -->
+    <div class="col-lg-7">
+      <div class="detail-card p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h4 class="mb-1">{{ product.ProductName }}</h4>
+            <span class="badge bg-secondary me-1">{{ product.CategoryName }}</span>
+            <span class="badge bg-dark border border-secondary">{{ product.Supplier }}</span>
+          </div>
+          <a href="{{ url_for('shop.cart_view') }}" class="btn btn-outline-primary position-relative">
+            <i class="bi bi-cart3"></i>
+            {% if cart_count > 0 %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">{{ cart_count }}</span>
+            {% endif %}
+          </a>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="text-muted small">Unit Price</div>
+            <div class="fs-3 fw-bold text-primary">${{ "%.2f"|format(product.UnitPrice) }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Stock</div>
+            {% set stock = product.UnitsInStock|int %}
+            {% set reorder = product.ReorderLevel|int %}
+            {% if stock == 0 %}
+            <div class="fs-5 fw-semibold text-danger"><i class="bi bi-x-circle"></i> Out of stock</div>
+            {% elif stock <= reorder %}
+            <div class="fs-5 fw-semibold text-warning"><i class="bi bi-exclamation-triangle"></i> {{ stock }} (low)</div>
+            {% else %}
+            <div class="fs-5 fw-semibold text-success"><i class="bi bi-check-circle"></i> {{ stock }} units</div>
+            {% endif %}
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Pack size</div>
+            <div>{{ product.QuantityPerUnit }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Reorder level</div>
+            <div>{{ product.ReorderLevel }}</div>
+          </div>
+        </div>
+
+        <!-- Add to cart -->
+        {% if stock > 0 %}
+        <div class="d-flex gap-2 align-items-center">
+          <input type="number" id="qty-input" class="form-control bg-dark border-secondary text-light"
+                 value="1" min="1" max="{{ stock }}" style="width:90px">
+          <button id="add-btn" class="btn btn-primary"
+                  data-pid="{{ product.ProductID }}"
+                  data-name="{{ product.ProductName|e }}"
+                  data-price="{{ product.UnitPrice }}">
+            <i class="bi bi-cart-plus"></i> Add to Cart
+          </button>
+        </div>
+        {% else %}
+        <button class="btn btn-secondary" disabled>Out of stock</button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Monthly sales sparkline -->
+    <div class="col-lg-5">
+      <div class="detail-card p-4 h-100">
+        <h6 class="text-muted mb-3"><i class="bi bi-graph-up me-1"></i>Monthly Order Volume (12 months)</h6>
+        {% if product.monthly %}
+        <canvas id="monthly-chart" height="160"></canvas>
+        {% else %}
+        <div class="text-muted text-center py-4">No recent order data</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Co-purchase panel -->
+    {% if product.co_purchase %}
+    <div class="col-12">
+      <h6 class="text-muted mb-3"><i class="bi bi-people me-1"></i>Customers who bought this also bought</h6>
+      <div class="d-flex gap-3 flex-wrap">
+        {% for cp in product.co_purchase %}
+        <a href="{{ url_for('shop.product_detail', pid=cp.ProductID) }}" class="text-decoration-none">
+          <div class="co-card p-3" style="min-width:160px">
+            <div class="text-light fw-semibold small">{{ cp.ProductName }}</div>
+            <div class="text-primary mt-1">${{ "%.2f"|format(cp.UnitPrice|float) }}</div>
+            <div class="text-muted" style="font-size:.75rem">{{ cp.CoCount }} co-orders</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if product.monthly %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const monthly = {{ product.monthly|tojson }};
+const labels  = monthly.map(m => MONTH_NAMES[m.mo-1] + ' ' + String(m.yr).slice(2));
+const data    = monthly.map(m => m.qty);
+new Chart(document.getElementById('monthly-chart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Units ordered',
+      data,
+      borderColor: '#1f6feb',
+      backgroundColor: '#1f6feb22',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color:'#8b949e' }, grid: { color:'#21262d' } },
+      y: { ticks: { color:'#8b949e' }, grid: { color:'#21262d' }, beginAtZero: true },
+    },
+  }
+});
+</script>
+{% endif %}
+
+<script>
+const addBtn = document.getElementById('add-btn');
+if (addBtn) {
+  addBtn.addEventListener('click', async () => {
+    const qty = parseInt(document.getElementById('qty-input').value) || 1;
+    addBtn.disabled = true;
+    addBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    const res  = await fetch('{{ url_for("shop.cart_add") }}', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        product_id: addBtn.dataset.pid,
+        name: addBtn.dataset.name,
+        qty,
+        unit_price: parseFloat(addBtn.dataset.price),
+      }),
+    });
+    const data = await res.json();
+    addBtn.disabled = false;
+    addBtn.innerHTML = '<i class="bi bi-check-circle"></i> Added!';
+    setTimeout(() => { addBtn.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart'; }, 1500);
+  });
+}
+</script>
+{% endblock %}

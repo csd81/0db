@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Your Cart — Northwind Shop{% endblock %}
+
+{% block content %}
+<style>
+  .cart-table th { color:#8b949e; font-size:.8rem; text-transform:uppercase; border-bottom:1px solid #30363d; }
+  .cart-table td { vertical-align:middle; border-color:#21262d; }
+  .redis-badge { background:#dc382522; border:1px solid #dc3825; color:#ff6b6b; border-radius:6px; font-size:.78rem; }
+  .qty-input { width:70px; }
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{{ url_for('shop.catalog') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Continue Shopping
+    </a>
+    <h4 class="mb-0"><i class="bi bi-cart3 me-2 text-primary"></i>Your Cart</h4>
+    <span class="redis-badge px-2 py-1 ms-auto">
+      <i class="bi bi-lightning-fill"></i> Redis simulation — Python dict + Lock
+    </span>
+  </div>
+
+  {% if not cart %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-cart-x display-4 d-block mb-3"></i>
+    <p>Your cart is empty.</p>
+    <a href="{{ url_for('shop.catalog') }}" class="btn btn-primary">Browse Products</a>
+  </div>
+  {% else %}
+
+  <table class="table cart-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th class="text-end">Unit Price</th>
+        <th class="text-center">Qty</th>
+        <th class="text-end">Line Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="cart-body">
+      {% for pid, item in cart.items() %}
+      <tr id="row-{{ pid }}">
+        <td class="fw-semibold">{{ item.name }}</td>
+        <td class="text-end">${{ "%.2f"|format(item.unit_price) }}</td>
+        <td class="text-center">
+          <input type="number" class="form-control form-control-sm bg-dark border-secondary text-light qty-input text-center"
+                 value="{{ item.qty }}" min="1"
+                 data-pid="{{ pid }}"
+                 data-name="{{ item.name|e }}"
+                 data-price="{{ item.unit_price }}"
+                 onchange="updateQty(this)">
+        </td>
+        <td class="text-end line-total" id="lt-{{ pid }}">
+          ${{ "%.2f"|format(item.unit_price * item.qty) }}
+        </td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-danger" onclick="removeItem('{{ pid }}')">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Order summary -->
+  <div class="d-flex justify-content-end">
+    <div style="min-width:280px">
+      <table class="table table-sm text-end">
+        <tr><td class="text-muted">Subtotal</td><td id="subtotal" class="fw-semibold">${{ "%.2f"|format(subtotal) }}</td></tr>
+        <tr><td class="text-muted">Freight (5%)</td><td id="freight">${{ "%.2f"|format(freight) }}</td></tr>
+        <tr class="border-top">
+          <td class="fw-bold fs-5">Total</td>
+          <td class="fw-bold fs-5 text-primary" id="total">${{ "%.2f"|format(total) }}</td>
+        </tr>
+      </table>
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-danger btn-sm" onclick="clearCart()">
+          <i class="bi bi-trash"></i> Clear Cart
+        </button>
+        <a href="{{ url_for('shop.checkout') }}" class="btn btn-primary">
+          <i class="bi bi-credit-card"></i> Proceed to Checkout
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+async function removeItem(pid) {
+  await fetch('{{ url_for("shop.cart_remove") }}', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({product_id: pid}),
+  });
+  document.getElementById('row-' + pid)?.remove();
+  if (!document.querySelector('#cart-body tr')) location.reload();
+}
+
+async function updateQty(input) {
+  const pid   = input.dataset.pid;
+  const name  = input.dataset.name;
+  const price = parseFloat(input.dataset.price);
+  const qty   = parseInt(input.value) || 1;
+  if (qty < 1) { input.value = 1; return; }
+  // Set absolute qty: remove then add
+  await fetch('{{ url_for("shop.cart_remove") }}', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({product_id: pid}),
+  });
+  await fetch('{{ url_for("shop.cart_add") }}', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({product_id: pid, name, qty, unit_price: price}),
+  });
+  const lineTotal = document.getElementById('lt-' + pid);
+  if (lineTotal) lineTotal.textContent = '$' + (price * qty).toFixed(2);
+}
+
+async function clearCart() {
+  await fetch('{{ url_for("shop.cart_clear") }}', {method:'POST'});
+  location.reload();
+}
+</script>
+{% endblock %}

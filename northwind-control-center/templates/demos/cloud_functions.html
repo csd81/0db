@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% block title %}Cloud Functions — FaaS Simulation{% endblock %}
+
+{% block content %}
+<style>
+.cf-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.cf-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+}
+.cf-body { flex: 1; padding: .5rem .65rem; overflow-y: auto; }
+.cf-body::-webkit-scrollbar { width: 3px; }
+.cf-body::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+/* Function cards */
+.fn-card {
+  background: #080a0d; border: 1px solid #1e2028; border-radius: .35rem;
+  padding: .45rem .65rem; margin-bottom: .45rem; cursor: pointer;
+  transition: border-color .2s;
+}
+.fn-card:hover { border-color: #3a4050; }
+.fn-card.selected { border-color: #f4a261; }
+.fn-card.invoking { border-color: #fb5607; animation: pulse-border .7s infinite alternate; }
+@keyframes pulse-border {
+  from { border-color: #fb5607; } to { border-color: #3a4050; }
+}
+.fn-label { font-size: .8rem; font-weight: 600; }
+.fn-desc  { font-size: .67rem; color: #5a6070; margin-top: .15rem; line-height: 1.4; }
+.fn-meta  { display: flex; gap: .5rem; margin-top: .3rem; font-size: .65rem; }
+
+/* Warm bar */
+.warm-wrap { display: flex; align-items: center; gap: .35rem; margin-top: .25rem; }
+.warm-lbl  { font-size: .6rem; color: #5a6070; width: 3.5rem; flex-shrink: 0; }
+.warm-outer { flex: 1; background: #1a1d24; border-radius: 2px; height: 5px; }
+.warm-inner { height: 5px; border-radius: 2px; background: #2a9d8f; transition: width .8s; }
+.warm-pct  { font-size: .6rem; color: #5a6070; width: 2.5rem; text-align: right; flex-shrink: 0; }
+
+/* Invocation result card */
+.result-card {
+  background: #080a0d; border: 1px solid #1e2028; border-radius: .35rem; padding: .5rem .7rem;
+}
+.result-latency { font-size: 2rem; font-weight: 700; line-height: 1; }
+.result-type    { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+
+/* Timeline log */
+.tl-row {
+  display: flex; gap: .4rem; align-items: center;
+  padding: .22rem .1rem; border-bottom: 1px solid #12141a; font-size: .72rem;
+}
+.tl-ts     { color: #3a4050; width: 6rem; flex-shrink: 0; font-family: monospace; font-size: .67rem; }
+.tl-fn     { color: #e9c46a; flex: 1; }
+.tl-type   { width: 4rem; flex-shrink: 0; text-align: center; }
+.tl-lat    { width: 5rem; flex-shrink: 0; text-align: right; font-weight: 600; }
+.tl-cold   { color: #e63946; }
+.tl-warm   { color: #2a9d8f; }
+
+/* Concept comparison table */
+.cmp-tbl th, .cmp-tbl td { font-size: .72rem; padding: .2rem .45rem; }
+.cmp-tbl th { color: #5a6070; background: #0e1014; border-color: #1e2028; }
+.cmp-tbl td { background: #080a0d; border-color: #1a1d24; color: #cdd3de; }
+.highlight  { color: #06d6a0; font-weight: 600; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#f4a261">&#9654; Cloud Functions</span>
+  <span style="font-size:.75rem;color:#5a6070">FaaS Cold/Warm Start · HTTP + Background Triggers</span>
+  <button id="reset-btn" class="btn btn-outline-secondary btn-sm ms-auto">
+    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset all instances
+  </button>
+</div>
+
+<div class="row g-2 mb-2">
+
+  <!-- LEFT: Function registry -->
+  <div class="col-4">
+    <div class="cf-card" style="height:420px">
+      <div class="cf-hdr" style="color:#f4a261">
+        <i class="bi bi-code-square"></i> Function Registry
+        <span class="ms-auto" style="font-size:.6rem;color:#5a6070;text-transform:none;letter-spacing:0">click to invoke</span>
+      </div>
+      <div class="cf-body" id="fn-list"></div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Invocation panel -->
+  <div class="col-4">
+    <div class="cf-card" style="height:420px">
+      <div class="cf-hdr" style="color:#06d6a0">
+        <i class="bi bi-lightning-charge"></i> Invocation
+        <span id="invoke-phase" class="ms-auto badge bg-secondary" style="font-size:.58rem">ready</span>
+      </div>
+      <div class="cf-body">
+        <div id="no-selection" style="color:#5a6070;font-size:.75rem;margin-top:.5rem">
+          ← Select a function to invoke
+        </div>
+
+        <div id="invoke-panel" style="display:none">
+          <div class="fw-semibold mb-1" id="sel-label" style="color:#f4a261;font-size:.82rem"></div>
+          <div class="mb-2" id="sel-desc" style="font-size:.67rem;color:#8892a4;line-height:1.4"></div>
+
+          <div class="mb-2">
+            <label style="font-size:.63rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em">Trigger type</label>
+            <div id="sel-trigger" class="mt-1" style="font-size:.75rem;color:#cdd3de"></div>
+          </div>
+
+          <div class="mb-2">
+            <label style="font-size:.63rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em">Payload (JSON)</label>
+            <textarea id="payload-input" class="form-control form-control-sm bg-dark text-light border-secondary mt-1"
+              rows="3" style="font-family:monospace;font-size:.72rem">{}</textarea>
+          </div>
+
+          <button id="invoke-btn" class="btn btn-success btn-sm w-100">
+            <i class="bi bi-play-fill me-1"></i>Invoke Function
+          </button>
+
+          <div id="result-area" style="margin-top:.7rem;display:none">
+            <div class="result-card">
+              <div class="d-flex align-items-baseline gap-2 mb-1">
+                <span class="result-latency" id="res-latency">—</span>
+                <span style="font-size:.72rem;color:#5a6070">ms</span>
+                <span class="ms-auto badge" id="res-type-badge">cold</span>
+              </div>
+              <div class="result-type mb-2" id="res-type-text"></div>
+              <div style="font-size:.67rem;color:#5a6070;margin-bottom:.25rem">Response</div>
+              <pre id="res-json" style="font-size:.67rem;color:#06d6a0;background:#030506;padding:.35rem .5rem;border-radius:.25rem;margin:0;overflow-x:auto;max-height:90px"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Concept comparison + warm status -->
+  <div class="col-4">
+    <div class="cf-card" style="height:420px">
+      <div class="cf-hdr" style="color:#8338ec">
+        <i class="bi bi-table"></i> IaaS vs PaaS vs FaaS
+      </div>
+      <div class="cf-body">
+        <table class="table table-sm table-bordered cmp-tbl mb-2">
+          <thead>
+            <tr><th></th><th>IaaS VM</th><th>PaaS App</th><th class="highlight">FaaS</th></tr>
+          </thead>
+          <tbody>
+            <tr><td style="color:#5a6070">Billing</td>
+                <td>per hour</td><td>per hour</td><td class="highlight">per invocation</td></tr>
+            <tr><td style="color:#5a6070">Idle cost</td>
+                <td>full rate</td><td>full rate</td><td class="highlight">$0</td></tr>
+            <tr><td style="color:#5a6070">State</td>
+                <td>stateful</td><td>stateful</td><td class="highlight">stateless</td></tr>
+            <tr><td style="color:#5a6070">Scaling</td>
+                <td>manual</td><td>auto</td><td class="highlight">instant</td></tr>
+            <tr><td style="color:#5a6070">Cold start</td>
+                <td>minutes</td><td>seconds</td><td style="color:#e63946">ms – 2s ⚠</td></tr>
+            <tr><td style="color:#5a6070">Max runtime</td>
+                <td>unlimited</td><td>unlimited</td><td class="highlight">60 min</td></tr>
+          </tbody>
+        </table>
+
+        <div style="font-size:.63rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Instance warm status</div>
+        <div id="warm-status"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Invocation timeline -->
+<div class="cf-card">
+  <div class="cf-hdr" style="color:#457b9d">
+    <i class="bi bi-list-columns-reverse"></i> Invocation Timeline
+    <span class="ms-auto" style="color:#5a6070;font-size:.62rem;font-weight:400;text-transform:none;letter-spacing:0">
+      <span style="color:#e63946">■</span> cold start &nbsp;
+      <span style="color:#2a9d8f">■</span> warm execution
+    </span>
+  </div>
+  <div class="cf-body" style="max-height:160px;padding:.4rem .6rem">
+    <div id="timeline"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+let selectedFn  = null;
+let invoking    = false;
+let pollTimer   = null;
+
+// ── Load state on boot ────────────────────────────────────────────────────────
+
+async function refreshState() {
+    let s;
+    try { s = await fetch('/demos/cloud_functions/state').then(r => r.json()); }
+    catch (_) { return; }
+    renderFunctionList(s.functions);
+    renderWarmStatus(s.functions);
+    renderTimeline(s.invocations);
+}
+
+// ── Function list ─────────────────────────────────────────────────────────────
+
+function renderFunctionList(fns) {
+    const el = document.getElementById('fn-list');
+    el.innerHTML = '';
+    for (const [key, fn] of Object.entries(fns)) {
+        const div = document.createElement('div');
+        div.className = 'fn-card' + (key === selectedFn ? ' selected' : '');
+        div.dataset.key = key;
+
+        const triggerColor = fn.trigger === 'http' ? '#457b9d' : '#8338ec';
+        const triggerLabel = fn.trigger === 'http' ? 'HTTP' : 'Pub/Sub';
+
+        div.innerHTML = `
+          <div class="fn-label" style="color:#f4a261">${fn.label}</div>
+          <div class="fn-desc">${fn.description}</div>
+          <div class="fn-meta">
+            <span class="badge" style="background:#1a1a2e;color:${triggerColor};font-size:.58rem">${triggerLabel}</span>
+            <span style="color:#5a6070">warm: ${fn.warm_ms} ms</span>
+          </div>
+        `;
+        div.addEventListener('click', () => selectFunction(key, fn));
+        el.appendChild(div);
+    }
+}
+
+function selectFunction(key, fn) {
+    if (invoking) return;
+    selectedFn = key;
+
+    document.querySelectorAll('.fn-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.key === key);
+    });
+
+    document.getElementById('no-selection').style.display  = 'none';
+    document.getElementById('invoke-panel').style.display  = '';
+    document.getElementById('result-area').style.display   = 'none';
+
+    document.getElementById('sel-label').textContent   = fn.label;
+    document.getElementById('sel-desc').textContent    = fn.description;
+    document.getElementById('sel-trigger').textContent =
+        fn.trigger === 'http' ? '🌐 HTTP request' : '📨 Pub/Sub message';
+
+    // Suggest a relevant payload
+    const payloads = {
+        get_order:          '{"order_id": 10248}',
+        calc_discount:      '{"customer_id": "ALFKI"}',
+        update_inventory:   '{"product_id": 1, "quantity": 3}',
+        send_notification:  '{"email": "customer@example.com", "order_id": 10248}',
+        generate_report:    '{"days": 30, "format": "csv"}',
+    };
+    document.getElementById('payload-input').value = payloads[key] ?? '{}';
+}
+
+// ── Warm status panel ─────────────────────────────────────────────────────────
+
+function renderWarmStatus(fns) {
+    const el = document.getElementById('warm-status');
+    el.innerHTML = Object.entries(fns).map(([key, fn]) => {
+        const color = fn.warm_pct > 60 ? '#2a9d8f' : fn.warm_pct > 20 ? '#e9c46a' : '#e63946';
+        return `<div class="warm-wrap">
+          <span class="warm-lbl">${fn.label.split(' ')[0]}</span>
+          <div class="warm-outer">
+            <div class="warm-inner" style="width:${fn.warm_pct}%;background:${color}"></div>
+          </div>
+          <span class="warm-pct" style="color:${color}">${fn.warm_pct}%</span>
+        </div>
+        <div style="font-size:.6rem;color:#5a6070;margin-left:3.9rem;margin-bottom:.3rem">${fn.status}</div>`;
+    }).join('');
+}
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+
+function renderTimeline(invocations) {
+    const el = document.getElementById('timeline');
+    if (!invocations || !invocations.length) {
+        el.innerHTML = '<span style="color:#5a6070;font-size:.72rem">No invocations yet</span>';
+        return;
+    }
+    el.innerHTML = invocations.slice().reverse().map(inv => {
+        const cold   = inv.start_type === 'cold';
+        const latCol = cold ? '#e63946' : '#2a9d8f';
+        const badge  = cold
+            ? '<span class="badge" style="background:#200a0b;color:#e63946;font-size:.58rem">COLD</span>'
+            : '<span class="badge" style="background:#0d2520;color:#2a9d8f;font-size:.58rem">WARM</span>';
+        return `<div class="tl-row">
+          <span class="tl-ts">${inv.ts}</span>
+          <span class="tl-fn">${inv.label}</span>
+          <span class="tl-type">${badge}</span>
+          <span class="tl-lat" style="color:${latCol}">${inv.latency_ms} ms</span>
+        </div>`;
+    }).join('');
+}
+
+// ── Invoke button ─────────────────────────────────────────────────────────────
+
+document.getElementById('invoke-btn').addEventListener('click', async () => {
+    if (!selectedFn || invoking) return;
+    invoking = true;
+
+    let payload = {};
+    try { payload = JSON.parse(document.getElementById('payload-input').value); }
+    catch (_) { payload = {}; }
+
+    document.getElementById('invoke-btn').disabled = true;
+    document.getElementById('invoke-phase').textContent  = 'invoking…';
+    document.getElementById('invoke-phase').className    = 'ms-auto badge bg-warning';
+    document.querySelectorAll('.fn-card').forEach(c => {
+        if (c.dataset.key === selectedFn) c.classList.add('invoking');
+    });
+
+    let result;
+    try {
+        result = await fetch('/demos/cloud_functions/invoke', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({fn_key: selectedFn, payload}),
+        }).then(r => r.json());
+    } catch (e) {
+        result = {error: String(e)};
+    }
+
+    invoking = false;
+    document.getElementById('invoke-btn').disabled = false;
+    document.getElementById('invoke-phase').textContent = 'ready';
+    document.getElementById('invoke-phase').className   = 'ms-auto badge bg-secondary';
+    document.querySelectorAll('.fn-card').forEach(c => c.classList.remove('invoking'));
+
+    // Show result
+    if (!result.error) {
+        const cold = result.start_type === 'cold';
+        document.getElementById('res-latency').textContent  = result.latency_ms;
+        document.getElementById('res-latency').style.color  = cold ? '#e63946' : '#2a9d8f';
+        document.getElementById('res-type-badge').textContent = cold ? 'COLD START' : 'WARM';
+        document.getElementById('res-type-badge').style.background = cold ? '#200a0b' : '#0d2520';
+        document.getElementById('res-type-badge').style.color      = cold ? '#e63946' : '#2a9d8f';
+        document.getElementById('res-type-text').textContent = cold
+            ? `Cold start: container spin-up (${result.latency_ms - result.warm_ms} ms) + execution (${result.warm_ms} ms)`
+            : `Warm execution (instance reused, ${result.warm_ms} ms)`;
+        document.getElementById('res-type-text').style.color = cold ? '#e63946' : '#2a9d8f';
+        document.getElementById('res-json').textContent = JSON.stringify(result.result, null, 2);
+        document.getElementById('result-area').style.display = '';
+    }
+
+    refreshState();
+});
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    await fetch('/demos/cloud_functions/reset', {method: 'POST'});
+    selectedFn = null;
+    document.getElementById('no-selection').style.display = '';
+    document.getElementById('invoke-panel').style.display = 'none';
+    refreshState();
+});
+
+// ── Poll warm status every 10s (so the warm-% bar decays) ────────────────────
+
+setInterval(refreshState, 10_000);
+refreshState();
+</script>
+{% endblock %}

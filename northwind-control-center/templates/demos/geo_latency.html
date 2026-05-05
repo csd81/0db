@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% block title %}Geographic Latency & CDN Edge{% endblock %}
+
+{% block content %}
+<style>
+.gl-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.gl-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem;
+}
+.gl-body { flex: 1; padding: .6rem .75rem; }
+
+.region-btn {
+  border: 1px solid #1e2028; background: #080a0d;
+  border-radius: .3rem; padding: .3rem .55rem; font-size: .7rem;
+  cursor: pointer; transition: all .15s; color: #8892a4;
+}
+.region-btn:hover { background: #12141a; }
+.region-btn.sel   { border-color: #2a9d8f; color: #2a9d8f; background: #061412; }
+
+.lat-bar-outer { background: #1a1d24; border-radius: 3px; height: 12px; display: inline-block; }
+.lat-bar-inner { height: 12px; border-radius: 3px; }
+
+.scenario-row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .2rem 0; border-bottom: 1px solid #1e2028; font-size: .7rem;
+}
+.scenario-label { color: #8892a4; flex: 0 0 140px; }
+.scenario-val   { color: #cdd3de; font-family: monospace; flex: 0 0 70px; }
+.scenario-bar   { flex: 1; }
+
+.hop-chain {
+  display: flex; align-items: center; gap: .25rem;
+  font-size: .65rem; font-family: monospace; flex-wrap: wrap;
+}
+.hop-node {
+  background: #0e1014; border: 1px solid #2a2d35;
+  border-radius: .25rem; padding: .1rem .35rem; color: #cdd3de;
+}
+.hop-arrow { color: #2a9d8f; }
+.hop-edge  { color: #5a6070; font-size: .58rem; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2">
+  <span class="fw-bold" style="color:#2a9d8f">&#9654; Geographic Latency & CDN Edge</span>
+  <span style="font-size:.75rem;color:#5a6070">Origin server vs CDN edge — speed-of-light limits + network hops</span>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: Region selector + latency table -->
+  <div class="col-4">
+    <div class="gl-card mb-2">
+      <div class="gl-hdr" style="color:#2a9d8f"><i class="bi bi-geo-alt"></i> Origin Region</div>
+      <div class="gl-body">
+        <div style="font-size:.62rem;color:#5a6070;margin-bottom:.4rem">Select your origin data-center:</div>
+        <div class="d-flex flex-wrap gap-1 mb-3" id="origin-btns">
+          <button class="region-btn sel" data-region="us-east">US East</button>
+          <button class="region-btn" data-region="us-west">US West</button>
+          <button class="region-btn" data-region="eu-west">EU West</button>
+          <button class="region-btn" data-region="eu-central">EU Central</button>
+          <button class="region-btn" data-region="ap-tokyo">Asia Tokyo</button>
+          <button class="region-btn" data-region="ap-sydney">Asia Sydney</button>
+        </div>
+        <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;margin-bottom:.3rem">Raw TCP Latency (no CDN)</div>
+        <div id="latency-table"><!-- filled by JS --></div>
+      </div>
+    </div>
+
+    <div class="gl-card">
+      <div class="gl-hdr" style="color:#e9c46a"><i class="bi bi-lightning"></i> CDN Improvement</div>
+      <div class="gl-body">
+        <div id="cdn-savings"><!-- filled by JS --></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Hop chain + scenarios -->
+  <div class="col-5">
+    <div class="gl-card mb-2">
+      <div class="gl-hdr" style="color:#8338ec"><i class="bi bi-diagram-3"></i> Network Hop Chain</div>
+      <div class="gl-body">
+        <div style="font-size:.62rem;color:#5a6070;margin-bottom:.3rem">Select a client region to trace hops:</div>
+        <div class="d-flex flex-wrap gap-1 mb-2" id="client-btns">
+          <button class="region-btn sel" data-client="eu-central">EU Central user</button>
+          <button class="region-btn" data-client="ap-tokyo">Tokyo user</button>
+          <button class="region-btn" data-client="us-west">US West user</button>
+          <button class="region-btn" data-client="sa-east">S. America user</button>
+        </div>
+        <div id="hop-no-cdn" class="mb-2"><!-- filled by JS --></div>
+        <div id="hop-with-cdn"><!-- filled by JS --></div>
+      </div>
+    </div>
+
+    <div class="gl-card">
+      <div class="gl-hdr" style="color:#e9c46a"><i class="bi bi-table"></i> Latency Scenarios</div>
+      <div class="gl-body">
+        <div id="scenarios"><!-- filled by JS --></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Key concepts -->
+  <div class="col-3">
+    <div class="gl-card mb-2">
+      <div class="gl-hdr" style="color:#457b9d"><i class="bi bi-book"></i> Speed of Light</div>
+      <div class="gl-body" style="font-size:.68rem;color:#8892a4;line-height:1.7">
+        <div><strong style="color:#cdd3de">Physical minimum</strong></div>
+        <div>Light in fiber travels at ~200,000 km/s (≈ 2/3 of c in vacuum).</div>
+        <br>
+        <div>New York → London = 5,570 km</div>
+        <div>RTT minimum = <span style="color:#e9c46a">5,570 / 200,000 × 2 = 55.7 ms</span></div>
+        <div>Real RTT ≈ <span style="color:#e63946">80–90 ms</span> (routing, queuing)</div>
+        <br>
+        <div>NY → Tokyo = 10,800 km</div>
+        <div>RTT minimum = <span style="color:#e9c46a">108 ms</span></div>
+        <div>Real RTT ≈ <span style="color:#e63946">150–180 ms</span></div>
+        <br>
+        <div><strong style="color:#cdd3de">CDN principle</strong></div>
+        <div>Move static content to edge nodes close to users.
+          A London user hits a London PoP instead of a US data-center.</div>
+        <br>
+        <div><strong style="color:#cdd3de">What CDN cannot help</strong></div>
+        <div>Dynamic, personalised, or real-time data must still come from origin.
+          Only cache-able (idempotent GET) responses benefit.</div>
+      </div>
+    </div>
+
+    <div class="gl-card">
+      <div class="gl-hdr" style="color:#5a6070"><i class="bi bi-globe2"></i> Major CDN Providers</div>
+      <div class="gl-body">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.65rem">
+          <thead>
+            <tr style="color:#5a6070;font-size:.6rem;border-bottom:1px solid #1e2028">
+              <th>Provider</th><th>PoPs</th><th>Edge Nodes</th>
+            </tr>
+          </thead>
+          <tbody style="color:#8892a4">
+            <tr><td style="color:#cdd3de">Cloudflare</td><td>310+</td><td>250+ cities</td></tr>
+            <tr><td style="color:#cdd3de">AWS CloudFront</td><td>450+</td><td>90+ cities</td></tr>
+            <tr><td style="color:#cdd3de">Akamai</td><td>4,000+</td><td>1,300+ cities</td></tr>
+            <tr><td style="color:#cdd3de">GCP Cloud CDN</td><td>200+</td><td>GCP PoPs</td></tr>
+            <tr><td style="color:#cdd3de">Fastly</td><td>75+</td><td>global</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size:.62rem;color:#5a6070;margin-top:.5rem;line-height:1.5">
+          CDN cache-hit rate of 90%+ means 9 in 10 requests served from edge
+          (< 10 ms) rather than from origin (50–200 ms).
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+// Approximate RTT ms from origin to various client regions (TCP, no CDN)
+const RTT_TABLE = {
+  'us-east': {
+    'US East': 5, 'US West': 70, 'EU West': 85, 'EU Central': 100,
+    'Tokyo': 165, 'Sydney': 195, 'S. America': 125,
+  },
+  'us-west': {
+    'US East': 70, 'US West': 5, 'EU West': 145, 'EU Central': 160,
+    'Tokyo': 100, 'Sydney': 160, 'S. America': 175,
+  },
+  'eu-west': {
+    'US East': 85, 'US West': 145, 'EU West': 8, 'EU Central': 25,
+    'Tokyo': 220, 'Sydney': 280, 'S. America': 210,
+  },
+  'eu-central': {
+    'US East': 100, 'US West': 160, 'EU West': 25, 'EU Central': 8,
+    'Tokyo': 235, 'Sydney': 290, 'S. America': 225,
+  },
+  'ap-tokyo': {
+    'US East': 165, 'US West': 100, 'EU West': 220, 'EU Central': 235,
+    'Tokyo': 5, 'Sydney': 95, 'S. America': 250,
+  },
+  'ap-sydney': {
+    'US East': 195, 'US West': 160, 'EU West': 280, 'EU Central': 290,
+    'Tokyo': 95, 'Sydney': 5, 'S. America': 295,
+  },
+};
+
+// CDN edge RTT to client (always ~10-20ms from nearest edge)
+const CDN_RTT = {
+  'US East': 8, 'US West': 8, 'EU West': 9, 'EU Central': 10,
+  'Tokyo': 11, 'Sydney': 12, 'S. America': 15,
+};
+
+const REGION_NAMES = {
+  'us-east': 'US East (Virginia)', 'us-west': 'US West (Oregon)',
+  'eu-west': 'EU West (Ireland)', 'eu-central': 'EU Central (Frankfurt)',
+  'ap-tokyo': 'Asia (Tokyo)', 'ap-sydney': 'Asia (Sydney)',
+};
+
+const CLIENT_REGIONS = {
+  'eu-central': { name: 'EU Central (Frankfurt)', key: 'EU Central', hops_no_cdn: 9, hops_cdn: 2 },
+  'ap-tokyo':   { name: 'Asia (Tokyo)',            key: 'Tokyo',      hops_no_cdn: 14, hops_cdn: 2 },
+  'us-west':    { name: 'US West (California)',    key: 'US West',    hops_no_cdn: 6,  hops_cdn: 2 },
+  'sa-east':    { name: 'South America (São Paulo)', key: 'S. America', hops_no_cdn: 16, hops_cdn: 3 },
+};
+
+let selectedOrigin = 'us-east';
+let selectedClient = 'eu-central';
+
+function latColor(ms) {
+    if (ms < 30)  return '#2a9d8f';
+    if (ms < 100) return '#e9c46a';
+    return '#e63946';
+}
+
+function renderLatTable() {
+    const table = RTT_TABLE[selectedOrigin];
+    const max   = Math.max(...Object.values(table));
+    document.getElementById('latency-table').innerHTML = Object.entries(table).map(([region, ms]) => {
+        const pct  = (ms / max * 100).toFixed(0);
+        const col  = latColor(ms);
+        return `<div class="scenario-row">
+          <span class="scenario-label">${region}</span>
+          <span class="scenario-val" style="color:${col}">${ms} ms</span>
+          <span class="scenario-bar">
+            <div class="lat-bar-outer" style="width:${pct}%">
+              <div class="lat-bar-inner" style="background:${col};width:100%"></div>
+            </div>
+          </span>
+        </div>`;
+    }).join('');
+
+    // CDN savings
+    document.getElementById('cdn-savings').innerHTML = Object.entries(table).map(([region, nocdn]) => {
+        const cdn  = CDN_RTT[region] || 15;
+        const save = nocdn - cdn;
+        const savePct = (save / nocdn * 100).toFixed(0);
+        return `<div class="scenario-row">
+          <span class="scenario-label">${region}</span>
+          <span class="scenario-val" style="color:#2a9d8f">${cdn} ms</span>
+          <span class="scenario-bar" style="font-size:.62rem;color:#5a6070">
+            save ${save} ms (${savePct}%)
+          </span>
+        </div>`;
+    }).join('');
+}
+
+function renderHops() {
+    const client = CLIENT_REGIONS[selectedClient];
+    const origin = REGION_NAMES[selectedOrigin];
+    const rtTable = RTT_TABLE[selectedOrigin] || {};
+    const rtt_nocdn = rtTable[client.key] || '?';
+    const rtt_cdn   = CDN_RTT[client.key]  || 12;
+
+    document.getElementById('hop-no-cdn').innerHTML = `
+      <div style="font-size:.62rem;color:#e63946;text-transform:uppercase;margin-bottom:.2rem">
+        Without CDN — ${client.hops_no_cdn} hops / ${rtt_nocdn} ms RTT
+      </div>
+      <div class="hop-chain">
+        <span class="hop-node">User (${client.name})</span>
+        <span class="hop-arrow">→</span><span class="hop-edge">ISP</span><span class="hop-arrow">→</span>
+        <span class="hop-node">Backbone router</span>
+        <span class="hop-arrow">→</span><span class="hop-edge">transit</span><span class="hop-arrow">→</span>
+        <span class="hop-node">Trans-ocean cable</span>
+        <span class="hop-arrow">→</span><span class="hop-edge">IXP</span><span class="hop-arrow">→</span>
+        <span class="hop-node">Origin DC (${origin})</span>
+      </div>`;
+
+    document.getElementById('hop-with-cdn').innerHTML = `
+      <div style="font-size:.62rem;color:#2a9d8f;text-transform:uppercase;margin:.4rem 0 .2rem">
+        With CDN — ${client.hops_cdn} hops / ${rtt_cdn} ms RTT (cache hit)
+      </div>
+      <div class="hop-chain">
+        <span class="hop-node">User (${client.name})</span>
+        <span class="hop-arrow">→</span><span class="hop-edge">ISP</span><span class="hop-arrow">→</span>
+        <span class="hop-node" style="border-color:#2a9d8f;color:#2a9d8f">CDN Edge PoP</span>
+        <span style="color:#2a9d8f;font-size:.63rem">← cached content served here</span>
+      </div>`;
+}
+
+function renderScenarios() {
+    const table = RTT_TABLE[selectedOrigin];
+    const rows = [
+        { label: 'API call (no cache)',       base: 20,  mul: 1.0, note: 'dynamic' },
+        { label: 'HTML page (cacheable)',      base: 0,   mul: 0,   cdn: true },
+        { label: 'Image (CDN edge)',           base: 0,   mul: 0,   cdn: true },
+        { label: 'WebSocket (real-time)',      base: 30,  mul: 1.2, note: 'origin only' },
+        { label: 'gRPC (streaming)',           base: 25,  mul: 1.0, note: 'keep-alive' },
+    ];
+    const eu = table['EU Central'] || 100;
+    const max = eu * 1.5;
+    document.getElementById('scenarios').innerHTML = rows.map(r => {
+        const ms  = r.cdn ? (CDN_RTT['EU Central'] || 10) : (eu + r.base) * r.mul;
+        const pct = Math.min(100, (ms / max) * 100).toFixed(0);
+        const col = latColor(ms);
+        return `<div class="scenario-row">
+          <span class="scenario-label">${r.label}</span>
+          <span class="scenario-val" style="color:${col}">${ms.toFixed(0)} ms</span>
+          <span class="scenario-bar">
+            <div class="lat-bar-outer" style="width:${pct}%">
+              <div class="lat-bar-inner" style="background:${col};width:100%"></div>
+            </div>
+          </span>
+        </div>`;
+    }).join('');
+}
+
+function render() {
+    renderLatTable();
+    renderHops();
+    renderScenarios();
+}
+
+document.querySelectorAll('#origin-btns .region-btn').forEach(b =>
+    b.addEventListener('click', () => {
+        document.querySelectorAll('#origin-btns .region-btn').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+        selectedOrigin = b.dataset.region;
+        render();
+    })
+);
+document.querySelectorAll('#client-btns .region-btn').forEach(b =>
+    b.addEventListener('click', () => {
+        document.querySelectorAll('#client-btns .region-btn').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+        selectedClient = b.dataset.client;
+        render();
+    })
+);
+
+render();
+</script>
+{% endblock %}

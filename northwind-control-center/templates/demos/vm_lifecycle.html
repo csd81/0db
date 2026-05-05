@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% block title %}VM Lifecycle — Cold / Warm / Hot{% endblock %}
+
+{% block content %}
+<style>
+.vm-card {
+  background: #0e1014; border: 1px solid #1e2028;
+  border-radius: .4rem; display: flex; flex-direction: column;
+}
+.vm-hdr {
+  background: #13151b; border-bottom: 1px solid #1e2028;
+  padding: .38rem .7rem; font-size: .68rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
+}
+.vm-body { flex: 1; padding: .6rem .75rem; overflow-y: auto; }
+
+/* State indicator */
+.vm-state-box {
+  width: 140px; height: 140px; border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 3px solid; margin: 0 auto .5rem;
+  transition: all .5s;
+}
+.vm-state-name { font-size: 1.1rem; font-weight: 700; }
+.vm-state-sub  { font-size: .65rem; color: #8892a4; text-transform: uppercase; letter-spacing: .06em; }
+
+.state-stopped  { border-color: #2a2d35; background: #0a0b0e; color: #5a6070; }
+.state-cold     { border-color: #457b9d; background: #06111a; color: #457b9d; }
+.state-warm     { border-color: #e9c46a; background: #1a1300; color: #e9c46a; }
+.state-hot      { border-color: #e63946; background: #180508; color: #e63946; }
+.state-transition { border-style: dashed; animation: spin-border 1.5s linear infinite; }
+@keyframes spin-border {
+  from { box-shadow: 0 0 0 0 rgba(255,255,255,0.05); }
+  50%  { box-shadow: 0 0 12px 4px rgba(255,255,255,0.12); }
+  to   { box-shadow: 0 0 0 0 rgba(255,255,255,0.05); }
+}
+
+/* Transition progress */
+.trans-bar-outer { background: #1a1d24; border-radius: 3px; height: 7px; }
+.trans-bar-inner { height: 7px; border-radius: 3px; background: #8338ec; transition: width .3s; }
+
+/* State buttons */
+.state-btn {
+  width: 100%; margin-bottom: .4rem;
+  font-size: .78rem; padding: .35rem .5rem;
+  border-radius: .3rem; border: 1px solid;
+  background: #080a0d; cursor: pointer; text-align: left;
+  transition: background .2s, border-color .2s;
+}
+.state-btn:hover:not(:disabled)  { background: #12141a; }
+.state-btn:disabled               { opacity: .35; cursor: not-allowed; }
+.state-btn.active                 { border-color: #e9c46a !important; background: #1a1300; }
+
+.cost-tag { float: right; font-size: .62rem; opacity: .7; }
+
+/* History table */
+.hist-tbl th, .hist-tbl td { font-size: .7rem; padding: .18rem .4rem; }
+.hist-tbl th { color: #5a6070; background: #080a0d; border-color: #1e2028; }
+.hist-tbl td { background: #060809; border-color: #141618; color: #cdd3de; }
+
+/* Cost meter */
+.cost-meter { font-size: 1.4rem; font-weight: 700; color: #e63946; font-family: monospace; }
+.cost-small { font-size: .65rem; color: #5a6070; }
+
+/* FaaS comparison note */
+.faas-note {
+  background: #0a0d14; border: 1px solid #1e2028; border-radius: .35rem;
+  padding: .5rem .7rem; font-size: .7rem; color: #8892a4; line-height: 1.5;
+}
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+  <span class="fw-bold" style="color:#e9c46a">&#9654; VM Lifecycle</span>
+  <span style="font-size:.75rem;color:#5a6070">Cold / Warm / Hot State Machine — IaaS Compute Engine</span>
+  <button id="reset-btn" class="btn btn-outline-secondary btn-sm ms-auto">
+    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset VM
+  </button>
+</div>
+
+<div class="row g-2">
+
+  <!-- LEFT: VM state + controls -->
+  <div class="col-4">
+    <div class="vm-card" style="height:480px">
+      <div class="vm-hdr" style="color:#e9c46a"><i class="bi bi-server"></i> VM Instance</div>
+      <div class="vm-body d-flex flex-column align-items-center">
+
+        <!-- State circle -->
+        <div id="state-circle" class="vm-state-box state-stopped">
+          <span class="vm-state-name" id="state-name">stopped</span>
+          <span class="vm-state-sub"  id="state-sub">deallocated</span>
+        </div>
+
+        <!-- Transition progress -->
+        <div id="trans-area" style="width:100%;display:none;margin-bottom:.5rem">
+          <div style="font-size:.67rem;color:#8892a4;margin-bottom:.25rem" id="trans-label"></div>
+          <div class="trans-bar-outer">
+            <div class="trans-bar-inner" id="trans-bar" style="width:0%"></div>
+          </div>
+          <div style="font-size:.62rem;color:#5a6070;margin-top:.15rem" id="trans-time"></div>
+        </div>
+
+        <!-- Cost accumulator -->
+        <div class="mb-2 text-center">
+          <div class="cost-small">Cost accrued</div>
+          <div class="cost-meter">$<span id="cost-val">0.000000</span></div>
+          <div class="cost-small" id="cost-rate">$0.00/hr (stopped)</div>
+        </div>
+
+        <!-- State buttons -->
+        <div style="width:100%">
+          <div style="font-size:.62rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Target state</div>
+          <button class="state-btn" data-target="stopped"
+                  style="border-color:#2a2d35;color:#5a6070">
+            <i class="bi bi-stop-circle me-1"></i> Stopped
+            <span class="cost-tag">$0.00/hr</span>
+          </button>
+          <button class="state-btn" data-target="cold"
+                  style="border-color:#1a3345;color:#457b9d">
+            <i class="bi bi-snow me-1"></i> Cold
+            <span class="cost-tag">$0.048/hr</span>
+          </button>
+          <button class="state-btn" data-target="warm"
+                  style="border-color:#332200;color:#e9c46a">
+            <i class="bi bi-thermometer-half me-1"></i> Warm
+            <span class="cost-tag">$0.096/hr</span>
+          </button>
+          <button class="state-btn" data-target="hot"
+                  style="border-color:#200a0b;color:#e63946">
+            <i class="bi bi-fire me-1"></i> Hot
+            <span class="cost-tag">$0.096/hr</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Transition history -->
+  <div class="col-4">
+    <div class="vm-card" style="height:480px">
+      <div class="vm-hdr" style="color:#8338ec"><i class="bi bi-clock-history"></i> Transition History</div>
+      <div class="vm-body">
+        <table class="table table-sm table-bordered hist-tbl mb-2">
+          <thead>
+            <tr><th>Time</th><th>From</th><th>To</th><th>Duration</th></tr>
+          </thead>
+          <tbody id="hist-body">
+            <tr><td colspan="4" style="color:#5a6070;text-align:center">No transitions yet</td></tr>
+          </tbody>
+        </table>
+
+        <div class="faas-note mt-2">
+          <strong style="color:#cdd3de">IaaS cost lesson</strong><br>
+          A VM in <span style="color:#e9c46a">warm</span> or <span style="color:#e63946">hot</span>
+          state bills at <strong>$0.096/hr</strong> even with zero traffic.
+          Over 30 days: <strong style="color:#e63946">$69/month</strong> per idle VM.<br><br>
+          <strong style="color:#cdd3de">FaaS alternative</strong> — Cloud Functions:<br>
+          First <strong>2 million invocations/month free</strong>.
+          Beyond that: $0.40 per million invocations.
+          Zero cost when idle — no provisioned resources.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: State machine diagram + uptime -->
+  <div class="col-4">
+    <div class="vm-card" style="height:480px">
+      <div class="vm-hdr" style="color:#457b9d"><i class="bi bi-diagram-2"></i> State Machine</div>
+      <div class="vm-body">
+
+        <!-- ASCII-ish state flow -->
+        <div style="font-size:.72rem;color:#8892a4;line-height:2;font-family:monospace;margin-bottom:.5rem">
+          <div><span style="color:#5a6070">●</span> <strong style="color:#5a6070">stopped</strong>  &nbsp;← disk persists, IP released</div>
+          <div style="color:#2a3040">  │ boot (~8s)</div>
+          <div><span style="color:#457b9d">●</span> <strong style="color:#457b9d">cold</strong>  &nbsp;&nbsp;&nbsp;&nbsp;← OS up, app not loaded</div>
+          <div style="color:#2a3040">  │ load app (~4s)</div>
+          <div><span style="color:#e9c46a">●</span> <strong style="color:#e9c46a">warm</strong>  &nbsp;&nbsp;&nbsp;&nbsp;← accepting traffic, idle</div>
+          <div style="color:#2a3040">  │ scale up (~3s)</div>
+          <div><span style="color:#e63946">●</span> <strong style="color:#e63946">hot</strong>   &nbsp;&nbsp;&nbsp;&nbsp;← pre-warmed, min latency</div>
+        </div>
+
+        <hr style="border-color:#1e2028">
+
+        <!-- Live stats -->
+        <div style="font-size:.63rem;color:#5a6070;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem">Live stats</div>
+        <div class="d-flex gap-2 flex-wrap mb-2">
+          <div style="background:#080a0d;border:1px solid #1e2028;border-radius:.3rem;padding:.28rem .5rem;text-align:center;min-width:70px">
+            <div style="font-size:.57rem;color:#5a6070">Uptime</div>
+            <div style="font-size:.9rem;font-weight:700;color:#2a9d8f" id="vm-uptime">0s</div>
+          </div>
+          <div style="background:#080a0d;border:1px solid #1e2028;border-radius:.3rem;padding:.28rem .5rem;text-align:center;min-width:70px">
+            <div style="font-size:.57rem;color:#5a6070">Transitions</div>
+            <div style="font-size:.9rem;font-weight:700;color:#8338ec" id="vm-transitions">0</div>
+          </div>
+        </div>
+
+        <div class="faas-note">
+          <strong style="color:#cdd3de">Cold → Warm vs FaaS cold start</strong><br>
+          IaaS cold start: <span style="color:#e63946">60–180 s</span> (real GCP boot time)<br>
+          FaaS cold start: <span style="color:#e9c46a">0.8–2 s</span> (container spin-up)<br>
+          FaaS warm:       <span style="color:#2a9d8f">&lt; 50 ms</span> (reused container)<br><br>
+          FaaS eliminates the always-on warm/hot cost but introduces cold-start latency.
+          Choose based on traffic pattern and latency SLA.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+let pollTimer = null;
+
+const STATE_META = {
+    stopped:    { cls: 'state-stopped', sub: 'deallocated · $0/hr',       icon: '⬛' },
+    cold:       { cls: 'state-cold',    sub: 'booting · $0.048/hr',        icon: '❄' },
+    warm:       { cls: 'state-warm',    sub: 'idle · accepting traffic',   icon: '☀' },
+    hot:        { cls: 'state-hot',     sub: 'pre-scaled · min latency',   icon: '🔥' },
+};
+
+function fmtUptime(s) {
+    if (s < 60)    return s + 's';
+    if (s < 3600)  return Math.floor(s/60) + 'm ' + (s%60) + 's';
+    return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+}
+
+function updateUI(state) {
+    const circle  = document.getElementById('state-circle');
+    const nameEl  = document.getElementById('state-name');
+    const subEl   = document.getElementById('state-sub');
+    const trans   = state.transition;
+
+    const displayState = trans ? trans.from : state.current;
+    const meta = STATE_META[displayState] || STATE_META.stopped;
+    circle.className   = 'vm-state-box ' + meta.cls + (trans ? ' state-transition' : '');
+    nameEl.textContent = displayState;
+    subEl.textContent  = trans ? trans.label : meta.sub;
+
+    // Transition bar
+    const transArea = document.getElementById('trans-area');
+    if (trans) {
+        transArea.style.display = '';
+        document.getElementById('trans-label').textContent =
+            `${trans.from} → ${trans.to}: ${trans.label}`;
+        document.getElementById('trans-bar').style.width = (trans.pct || 0) + '%';
+        document.getElementById('trans-time').textContent =
+            `${(trans.elapsed_s || 0).toFixed(1)}s / ${trans.duration_s}s`;
+    } else {
+        transArea.style.display = 'none';
+    }
+
+    // Cost
+    document.getElementById('cost-val').textContent  = (state.cost_accrued || 0).toFixed(6);
+    document.getElementById('cost-rate').textContent  = state.cost_label || '';
+
+    // Uptime
+    document.getElementById('vm-uptime').textContent      = fmtUptime(state.uptime_s || 0);
+    document.getElementById('vm-transitions').textContent = (state.history || []).length;
+
+    // Highlight active state button
+    document.querySelectorAll('.state-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.target === state.current);
+        btn.disabled = (state.transition !== null) ||
+                       (btn.dataset.target === state.current);
+    });
+
+    // History
+    const hist = state.history || [];
+    const tbody = document.getElementById('hist-body');
+    if (!hist.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="color:#5a6070;text-align:center">No transitions yet</td></tr>';
+    } else {
+        tbody.innerHTML = hist.slice().reverse().map(h => {
+            const col = STATE_META[h.to]?.cls.replace('state-', '') || 'white';
+            return `<tr>
+              <td style="color:#5a6070">${h.ts}</td>
+              <td>${h.from}</td>
+              <td style="color:${getStateColor(h.to)}">${h.to}</td>
+              <td style="color:#8892a4">${h.duration_ms} ms</td>
+            </tr>`;
+        }).join('');
+    }
+}
+
+function getStateColor(s) {
+    return {stopped:'#5a6070', cold:'#457b9d', warm:'#e9c46a', hot:'#e63946'}[s] || '#cdd3de';
+}
+
+async function poll() {
+    let s;
+    try { s = await fetch('/demos/vm_lifecycle/state').then(r => r.json()); }
+    catch (_) { return; }
+    updateUI(s);
+}
+
+function startPoll() {
+    if (pollTimer) return;
+    pollTimer = setInterval(poll, 400);
+}
+
+function stopPoll() {
+    clearInterval(pollTimer);
+    pollTimer = null;
+}
+
+// State transition buttons
+document.querySelectorAll('.state-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const target = btn.dataset.target;
+        await fetch('/demos/vm_lifecycle/transition', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({target}),
+        });
+        startPoll();
+        // Keep polling until transition finishes (poll stops itself when idle)
+        setTimeout(() => {
+            // After 30s max, polling can slow down
+        }, 30_000);
+    });
+});
+
+// Reset
+document.getElementById('reset-btn').addEventListener('click', async () => {
+    await fetch('/demos/vm_lifecycle/reset', {method: 'POST'});
+    poll();
+});
+
+// Start polling on load + keep alive (warm bar decays)
+startPoll();
+</script>
+{% endblock %}

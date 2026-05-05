@@ -10,6 +10,18 @@ from services import demo_service
 from services import graph_routing_service as grs
 from services import graph_pagerank_service as gprs
 from services import graph_lab_service as gl
+from services import mapreduce_service as mrs
+from services import pubsub_service as pss
+from services import stream_service as sts
+from services import cloud_functions_service as cfs
+from services import batch_analytics_service as bas
+from services import vm_service as vms
+from services import montecarlo_service as mcs
+from services import bigtable_service as bts
+from services import rpc_service as rpcs
+from services import microbatch_service as mbs
+from services import kafka_service as kfs
+from services import wordcount_service as wcs
 
 demos_bp = Blueprint("demos", __name__, url_prefix="/demos")
 
@@ -522,3 +534,445 @@ def graph_pagerank_data():
         return jsonify(gprs.get_pagerank_data(conn_str))
     except Exception as exc:
         return jsonify({'error': str(exc)}), 500
+
+
+# ── MapReduce Batch Processing ─────────────────────────────────────────────────
+
+@demos_bp.route('/mapreduce')
+@login_required
+def mapreduce_page():
+    return render_template('demos/mapreduce.html')
+
+
+@demos_bp.route('/mapreduce/run', methods=['POST'])
+@login_required
+def mapreduce_run():
+    mrs.mr_start(_build_conn_str(current_app.config))
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/mapreduce/state')
+@login_required
+def mapreduce_state():
+    return Response(
+        json.dumps(mrs.mr_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/mapreduce/reset', methods=['POST'])
+@login_required
+def mapreduce_reset():
+    mrs.mr_reset()
+    return jsonify({'ok': True})
+
+
+# ── Cloud Pub/Sub ──────────────────────────────────────────────────────────────
+
+@demos_bp.route('/pubsub')
+@login_required
+def pubsub_page():
+    return render_template('demos/pubsub.html')
+
+
+@demos_bp.route('/pubsub/run', methods=['POST'])
+@login_required
+def pubsub_run():
+    pss.ps_start(_build_conn_str(current_app.config))
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/pubsub/state')
+@login_required
+def pubsub_state():
+    return Response(
+        json.dumps(pss.ps_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/pubsub/reset', methods=['POST'])
+@login_required
+def pubsub_reset():
+    pss.ps_reset()
+    return jsonify({'ok': True})
+
+
+# ── Data Stream Processing ────────────────────────────────────────────────────
+
+@demos_bp.route('/stream')
+@login_required
+def stream_page():
+    return render_template('demos/stream.html')
+
+
+@demos_bp.route('/stream/start', methods=['POST'])
+@login_required
+def stream_start():
+    sts.st_start()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/stream/stop', methods=['POST'])
+@login_required
+def stream_stop():
+    sts.st_stop()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/stream/state')
+@login_required
+def stream_state():
+    return Response(
+        json.dumps(sts.st_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/stream/reset', methods=['POST'])
+@login_required
+def stream_reset():
+    sts.st_reset()
+    return jsonify({'ok': True})
+
+
+# ── Cloud Functions ───────────────────────────────────────────────────────────
+
+@demos_bp.route('/cloud_functions')
+@login_required
+def cloud_functions_page():
+    return render_template('demos/cloud_functions.html')
+
+
+@demos_bp.route('/cloud_functions/invoke', methods=['POST'])
+@login_required
+def cloud_functions_invoke():
+    data    = request.json or {}
+    fn_key  = data.get('fn_key', '')
+    payload = data.get('payload', {})
+    result  = cfs.cf_invoke(fn_key, payload)
+    if 'error' in result:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+@demos_bp.route('/cloud_functions/state')
+@login_required
+def cloud_functions_state():
+    return Response(
+        json.dumps(cfs.cf_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/cloud_functions/reset', methods=['POST'])
+@login_required
+def cloud_functions_reset():
+    cfs.cf_reset()
+    return jsonify({'ok': True})
+
+
+# ── Batch Analytics ───────────────────────────────────────────────────────────
+
+@demos_bp.route('/batch_analytics')
+@login_required
+def batch_analytics_page():
+    return render_template('demos/batch_analytics.html')
+
+
+@demos_bp.route('/batch_analytics/run', methods=['POST'])
+@login_required
+def batch_analytics_run():
+    result = bas.ba_run(_build_conn_str(current_app.config))
+    if 'error' in result:
+        return jsonify(result), 500
+    return jsonify(result)
+
+
+# ── VM Lifecycle ──────────────────────────────────────────────────────────────
+
+@demos_bp.route('/vm_lifecycle')
+@login_required
+def vm_lifecycle_page():
+    vms.vm_start_cost_ticker()
+    return render_template('demos/vm_lifecycle.html')
+
+
+@demos_bp.route('/vm_lifecycle/state')
+@login_required
+def vm_lifecycle_state():
+    return Response(
+        json.dumps(vms.vm_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/vm_lifecycle/transition', methods=['POST'])
+@login_required
+def vm_lifecycle_transition():
+    data   = request.json or {}
+    target = data.get('target', '')
+    result = vms.vm_transition(target)
+    if 'error' in result:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+@demos_bp.route('/vm_lifecycle/reset', methods=['POST'])
+@login_required
+def vm_lifecycle_reset():
+    vms.vm_reset()
+    return jsonify({'ok': True})
+
+
+# ── Monte Carlo π ─────────────────────────────────────────────────────────────
+
+@demos_bp.route('/montecarlo')
+@login_required
+def montecarlo_page():
+    return render_template('demos/montecarlo.html')
+
+
+@demos_bp.route('/montecarlo/start', methods=['POST'])
+@login_required
+def montecarlo_start():
+    data = request.json or {}
+    n    = max(1, min(16, int(data.get('n_workers', 4))))
+    mcs.mc_start(n)
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/montecarlo/stop', methods=['POST'])
+@login_required
+def montecarlo_stop():
+    mcs.mc_stop()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/montecarlo/state')
+@login_required
+def montecarlo_state():
+    return Response(
+        json.dumps(mcs.mc_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/montecarlo/reset', methods=['POST'])
+@login_required
+def montecarlo_reset():
+    mcs.mc_reset()
+    return jsonify({'ok': True})
+
+
+# ── Bigtable Wide-Column Store ────────────────────────────────────────────────
+
+@demos_bp.route('/bigtable')
+@login_required
+def bigtable_page():
+    return render_template('demos/bigtable.html')
+
+
+@demos_bp.route('/bigtable/insert', methods=['POST'])
+@login_required
+def bigtable_insert():
+    ping = request.json or {}
+    row_key = bts.bt_insert_ping(ping)
+    return jsonify({'ok': True, 'row_key': row_key})
+
+
+@demos_bp.route('/bigtable/read', methods=['GET'])
+@login_required
+def bigtable_read():
+    rk = request.args.get('row_key', '')
+    return jsonify(bts.bt_read_row(rk) or {'error': 'not found'})
+
+
+@demos_bp.route('/bigtable/versions', methods=['GET'])
+@login_required
+def bigtable_versions():
+    rk  = request.args.get('row_key', '')
+    cf  = request.args.get('cf', 'sensor')
+    col = request.args.get('col', 'speed')
+    return jsonify(bts.bt_get_versions(rk, cf, col))
+
+
+@demos_bp.route('/bigtable/scan', methods=['GET'])
+@login_required
+def bigtable_scan():
+    prefix = request.args.get('prefix', '')
+    return jsonify(bts.bt_range_scan(prefix))
+
+
+@demos_bp.route('/bigtable/state')
+@login_required
+def bigtable_state():
+    return Response(
+        json.dumps(bts.bt_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/bigtable/reset', methods=['POST'])
+@login_required
+def bigtable_reset():
+    bts.bt_reset()
+    return jsonify({'ok': True})
+
+
+# ── RPC → REST Evolution ──────────────────────────────────────────────────────
+
+@demos_bp.route('/rpc')
+@login_required
+def rpc_page():
+    return render_template('demos/rpc.html')
+
+
+@demos_bp.route('/rpc/invoke', methods=['POST'])
+@login_required
+def rpc_invoke():
+    data     = request.json or {}
+    order_id = int(data.get('order_id', 10248))
+    return jsonify(rpcs.rpc_invoke(order_id))
+
+
+# ── Micro-Batch vs True Stream ────────────────────────────────────────────────
+
+@demos_bp.route('/microbatch')
+@login_required
+def microbatch_page():
+    return render_template('demos/microbatch.html')
+
+
+@demos_bp.route('/microbatch/start', methods=['POST'])
+@login_required
+def microbatch_start():
+    data     = request.json or {}
+    window_s = int(data.get('window_s', 1))
+    mbs.mb_start(window_s)
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/microbatch/stop', methods=['POST'])
+@login_required
+def microbatch_stop():
+    mbs.mb_stop()
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/microbatch/state')
+@login_required
+def microbatch_state():
+    return Response(
+        json.dumps(mbs.mb_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/microbatch/reset', methods=['POST'])
+@login_required
+def microbatch_reset():
+    mbs.mb_reset()
+    return jsonify({'ok': True})
+
+
+# ── Kafka Consumer Groups ─────────────────────────────────────────────────────
+
+@demos_bp.route('/kafka')
+@login_required
+def kafka_page():
+    return render_template('demos/kafka.html')
+
+
+@demos_bp.route('/kafka/start', methods=['POST'])
+@login_required
+def kafka_start():
+    kfs.kafka_start(_build_conn_str(current_app.config))
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/kafka/state')
+@login_required
+def kafka_state():
+    return Response(
+        json.dumps(kfs.kafka_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/kafka/reset', methods=['POST'])
+@login_required
+def kafka_reset():
+    kfs.kafka_reset()
+    return jsonify({'ok': True})
+
+
+# ── Word Count MapReduce ───────────────────────────────────────────────────────
+
+@demos_bp.route('/wordcount')
+@login_required
+def wordcount_page():
+    return render_template('demos/wordcount.html')
+
+
+@demos_bp.route('/wordcount/run', methods=['POST'])
+@login_required
+def wordcount_run():
+    wcs.wc_start(_build_conn_str(current_app.config))
+    return jsonify({'ok': True})
+
+
+@demos_bp.route('/wordcount/state')
+@login_required
+def wordcount_state():
+    return Response(
+        json.dumps(wcs.wc_get_state(), default=str),
+        mimetype='application/json',
+    )
+
+
+@demos_bp.route('/wordcount/reset', methods=['POST'])
+@login_required
+def wordcount_reset():
+    wcs.wc_reset()
+    return jsonify({'ok': True})
+
+
+# ── Storage Tiers ─────────────────────────────────────────────────────────────
+
+@demos_bp.route('/storage_tiers')
+@login_required
+def storage_tiers_page():
+    return render_template('demos/storage_tiers.html')
+
+
+# ── Cloud Cost Calculator ─────────────────────────────────────────────────────
+
+@demos_bp.route('/cloud_cost')
+@login_required
+def cloud_cost_page():
+    return render_template('demos/cloud_cost.html')
+
+
+# ── Apache Beam Portable Pipeline ─────────────────────────────────────────────
+
+@demos_bp.route('/beam')
+@login_required
+def beam_page():
+    return render_template('demos/beam.html')
+
+
+# ── Geographic Latency / CDN Edge ─────────────────────────────────────────────
+
+@demos_bp.route('/geo_latency')
+@login_required
+def geo_latency_page():
+    return render_template('demos/geo_latency.html')
+
+
+# ── BigQuery Column + Partition Pruning ───────────────────────────────────────
+
+@demos_bp.route('/bigquery_pruning')
+@login_required
+def bigquery_pruning_page():
+    return render_template('demos/bigquery_pruning.html')
