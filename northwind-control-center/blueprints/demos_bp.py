@@ -1156,3 +1156,28 @@ def cn_byd():
 @login_required
 def cn_tencent():
     return render_template('demos/cn_tencent.html')
+
+@demos_bp.route('/bp/llm-moe')
+@login_required
+def bp_llm_moe():
+    return render_template('demos/bp_llm_moe.html')
+
+@demos_bp.route('/bp/db-convergence')
+@login_required
+def bp_db_convergence():
+    return render_template('demos/bp_db_convergence.html')
+
+@demos_bp.route('/bp/wasm-edge')
+@login_required
+def bp_wasm_edge():
+    return render_template('demos/bp_wasm_edge.html')
+
+@demos_bp.route('/bp/edge-ai')
+@login_required
+def bp_edge_ai():
+    return render_template('demos/bp_edge_ai.html')
+
+@demos_bp.route('/bp/space-cloud')
+@login_required
+def bp_space_cloud():
+    return render_template('demos/bp_space_cloud.html')

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Breaking Point: LLM Architecture — MoE & Agentic AI{% endblock %}
+{% block content %}
+<style>
+:root { --a: #c026d3; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(192,38,211,.15); color:var(--a); border:1px solid rgba(192,38,211,.3); }
+.crisis-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.7rem; font-weight:700; background:rgba(255,100,0,.2); color:#ff6b35; border:1px solid rgba(255,100,0,.3); margin:.15rem; }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(192,38,211,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(192,38,211,.1); border:1px solid rgba(192,38,211,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(192,38,211,.15); color:var(--a); border:1px solid rgba(192,38,211,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.expert-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.5rem; margin:1rem 0; }
+.expert-box { border-radius:6px; padding:.65rem; text-align:center; font-size:.75rem; font-weight:600; }
+.react-step { display:flex; gap:.75rem; padding:.6rem 0; border-bottom:1px solid rgba(255,255,255,.05); align-items:start; }
+.react-badge { min-width:60px; padding:.2rem .5rem; border-radius:4px; font-size:.65rem; font-weight:800; text-align:center; text-transform:uppercase; flex-shrink:0; }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="mb-4">
+    <span class="era-badge">2022 – 2026</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">From Chatbots to Autonomous Agents</h1>
+    <p class="lead" style="color:#8892a4">Dense models burned entire trillion-parameter networks for every token. Mixture of Experts cut inference cost 10×. Agentic frameworks gave frozen LLMs tools, memory, and the ability to take action — transforming AI from a text generator into an autonomous software engineer.</p>
+  </div>
+
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">2 of 8</span><span class="stat-lbl">Experts activated per token (MoE)</span></div>
+    <div class="stat-box"><span class="stat-num">10×</span><span class="stat-lbl">Inference cost reduction vs dense</span></div>
+    <div class="stat-box"><span class="stat-num">∞</span><span class="stat-lbl">Tool calls per agentic loop</span></div>
+    <div class="stat-box"><span class="stat-num">&lt;200ms</span><span class="stat-lbl">MoE token generation (2025)</span></div>
+  </div>
+
+  <!-- Problem: Dense Models -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Breaking Point: Every Token Burns the Entire Model</h4>
+    <p style="color:#c0c9d6">GPT-3 had 175B parameters. GPT-4 is estimated at ~1.7T parameters. In a <strong style="color:#fff">dense model</strong>, answering "what is 2+2?" fires the same 1.7T parameters as translating a legal contract from French. Every neuron participates in every forward pass. This created three compounding crises:</p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Inference Cost Explosion</h6>
+        <p style="font-size:.82rem;color:#8892a4">A single H100 GPU can process ~120 tokens/second for a 70B dense model. To serve 1M requests/day at 500 tokens average, you need ~70 H100s running continuously. At $3/hr each, that's $5M/month — per application.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">The Frozen-in-Time Problem</h6>
+        <p style="font-size:.82rem;color:#8892a4">LLMs have a training cutoff. Ask GPT-4 about a news event from last week: it hallucinates or declines. More critically: it cannot <em>act</em>. It can draft an email but cannot send it. It can write SQL but cannot run it. It is a very sophisticated autocomplete — not an agent.</p>
+      </div>
+    </div>
+    <div class="mt-3">
+      <span class="crisis-badge">Dense model GPU waste</span>
+      <span class="crisis-badge">Knowledge cutoff</span>
+      <span class="crisis-badge">No action capability</span>
+      <span class="crisis-badge">Inference latency (seconds)</span>
+    </div>
+  </div>
+
+  <!-- MoE Solution -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Mixture of Experts: One Prompt, Selective Activation</h4>
+    <p style="color:#c0c9d6">Instead of one monolithic neural network, MoE architectures contain <strong style="color:#fff">N specialized expert networks</strong> (each a smaller Feed-Forward Network) plus a lightweight <strong style="color:#fff">gating router</strong>. For each token, the router outputs a probability distribution over experts and activates only the top-K. A 56B-parameter MoE model with 8 experts activating 2 at a time has the capability of a ~56B model but the inference cost of a ~14B model.</p>
+  </div>
+
+  <h5 class="fw-bold mb-2" style="color:#fff">Mixtral 8×7B: Expert Routing per Token</h5>
+  <div class="expert-grid mb-3">
+    <div class="expert-box" style="background:rgba(192,38,211,.3);border:1px solid rgba(192,38,211,.5);color:#fff">Expert 1<br><small style="opacity:.7">Math / Logic</small><br><span style="color:var(--a);font-size:.8rem">✓ ACTIVE</span></div>
+    <div class="expert-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#8892a4">Expert 2<br><small>Code</small></div>
+    <div class="expert-box" style="background:rgba(192,38,211,.3);border:1px solid rgba(192,38,211,.5);color:#fff">Expert 3<br><small style="opacity:.7">Reasoning</small><br><span style="color:var(--a);font-size:.8rem">✓ ACTIVE</span></div>
+    <div class="expert-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#8892a4">Expert 4<br><small>French</small></div>
+    <div class="expert-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#8892a4">Expert 5<br><small>Biology</small></div>
+    <div class="expert-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#8892a4">Expert 6<br><small>Legal</small></div>
+    <div class="expert-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#8892a4">Expert 7<br><small>History</small></div>
+    <div class="expert-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#8892a4">Expert 8<br><small>Creative</small></div>
+  </div>
+  <p style="font-size:.78rem;color:#8892a4">Query: "What is the derivative of x³?" → Router activates Expert 1 (Math) + Expert 3 (Reasoning). Experts 2,4–8 consume zero compute for this token. Total FLOPs: 2/8 = 25% of dense equivalent.</p>
+
+  <pre class="code-block mb-4"><span class="cm"># Mixtral / GPT-4-style MoE forward pass (simplified)</span>
+<span class="cm"># Each transformer layer has N experts instead of one FFN</span>
+
+<span class="kw">class</span> MoELayer:
+    experts: List[FeedForwardNetwork]  <span class="cm"># N smaller FFN networks</span>
+    router:  Linear                    <span class="cm"># maps token embedding → expert logits</span>
+    top_k:   int = <span class="num">2</span>                  <span class="cm"># activate 2 experts per token</span>
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x: Tensor) -> Tensor:
+        <span class="cm"># Router: compute expert relevance scores for this token</span>
+        logits = self.router(x)                   <span class="cm"># shape: [batch, seq, N_experts]</span>
+        weights, indices = <span class="fn">topk</span>(softmax(logits), k=self.top_k)
+
+        <span class="cm"># Dispatch: only top-K experts process this token</span>
+        output = <span class="num">0</span>
+        <span class="kw">for</span> i, expert_idx <span class="kw">in</span> <span class="fn">enumerate</span>(indices):
+            output += weights[i] * self.experts[expert_idx](x)
+
+        <span class="kw">return</span> output
+        <span class="cm"># N-2 experts: ZERO compute this token. Zero memory bandwidth. Zero cost.</span>
+
+<span class="cm"># Result: Mixtral 8×7B (56B total params) costs same as 12B dense model to run</span>
+<span class="cm"># Quality equivalent to Llama 70B dense — at 6× lower inference cost</span></pre>
+
+  <!-- Agentic Workflows -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Agentic Frameworks: Giving the LLM Hands</h4>
+    <p style="color:#c0c9d6">The <strong style="color:#fff">ReAct pattern</strong> (Reason + Act) gives an LLM an inner monologue loop: <em>think about what action to take → call a tool → observe the result → think again → call another tool → repeat until done</em>. The LLM is no longer answering a question — it is an autonomous process running inside a company's backend.</p>
+  </div>
+
+  <h5 class="fw-bold mb-2" style="color:#fff">ReAct Loop: "Email me last quarter's top 5 customers"</h5>
+  <div class="mb-3">
+    <div class="react-step">
+      <div class="react-badge" style="background:rgba(192,38,211,.3);color:#e879f9">THINK</div>
+      <div style="font-size:.8rem;color:#c0c9d6">I need top 5 customers by revenue for Q3 2024. I should query the orders database.</div>
+    </div>
+    <div class="react-step">
+      <div class="react-badge" style="background:rgba(59,130,246,.3);color:#60a5fa">ACT</div>
+      <div style="font-size:.8rem;color:#c0c9d6"><code style="color:#82aaff">execute_sql("SELECT customer_id, SUM(total) FROM orders WHERE quarter='Q3-2024' GROUP BY 1 ORDER BY 2 DESC LIMIT 5")</code></div>
+    </div>
+    <div class="react-step">
+      <div class="react-badge" style="background:rgba(34,197,94,.3);color:#4ade80">OBSERVE</div>
+      <div style="font-size:.8rem;color:#c0c9d6">Results: AROUT $84K, BOLID $71K, ERNSH $68K, HANAR $55K, QUICK $52K</div>
+    </div>
+    <div class="react-step">
+      <div class="react-badge" style="background:rgba(192,38,211,.3);color:#e879f9">THINK</div>
+      <div style="font-size:.8rem;color:#c0c9d6">I have the data. Now draft a professional email summarizing these results for the sales team.</div>
+    </div>
+    <div class="react-step">
+      <div class="react-badge" style="background:rgba(59,130,246,.3);color:#60a5fa">ACT</div>
+      <div style="font-size:.8rem;color:#c0c9d6"><code style="color:#82aaff">send_email(to="sales@acme.com", subject="Q3 Top Customers", body=draft)</code></div>
+    </div>
+    <div class="react-step" style="border-bottom:none">
+      <div class="react-badge" style="background:rgba(34,197,94,.3);color:#4ade80">DONE</div>
+      <div style="font-size:.8rem;color:#c0c9d6">Email sent. Task complete. Total: 2 tool calls, 0 human interventions.</div>
+    </div>
+  </div>
+
+  <pre class="code-block"><span class="cm"># Anthropic tool-use API: giving Claude access to company backend</span>
+
+tools = [
+    {<span class="st">"name"</span>: <span class="st">"execute_sql"</span>,
+     <span class="st">"description"</span>: <span class="st">"Run a SELECT query on the Northwind database"</span>,
+     <span class="st">"input_schema"</span>: {<span class="st">"type"</span>:<span class="st">"object"</span>, <span class="st">"properties"</span>: {<span class="st">"query"</span>:{<span class="st">"type"</span>:<span class="st">"string"</span>}}}},
+    {<span class="st">"name"</span>: <span class="st">"send_email"</span>,
+     <span class="st">"description"</span>: <span class="st">"Send an email via the company SMTP gateway"</span>,
+     <span class="st">"input_schema"</span>: {<span class="st">"type"</span>:<span class="st">"object"</span>, <span class="st">"properties"</span>: {<span class="st">"to"</span>:{<span class="st">"type"</span>:<span class="st">"string"</span>},<span class="st">"subject"</span>:{<span class="st">"type"</span>:<span class="st">"string"</span>},<span class="st">"body"</span>:{<span class="st">"type"</span>:<span class="st">"string"</span>}}}}
+]
+
+<span class="cm"># Agentic loop: runs until stop_reason == "end_turn"</span>
+messages = [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: <span class="st">"Email me last quarter's top 5 customers"</span>}]
+<span class="kw">while</span> <span class="kw">True</span>:
+    response = client.messages.<span class="fn">create</span>(model=<span class="st">"claude-opus-4-7"</span>, tools=tools, messages=messages)
+    <span class="kw">if</span> response.stop_reason == <span class="st">"end_turn"</span>: <span class="kw">break</span>
+    <span class="kw">for</span> block <span class="kw">in</span> response.content:
+        <span class="kw">if</span> block.type == <span class="st">"tool_use"</span>:
+            result = <span class="fn">dispatch_tool</span>(block.name, block.input)   <span class="cm"># real execution</span>
+            messages.<span class="fn">append</span>({<span class="st">"role"</span>:<span class="st">"user"</span>, <span class="st">"content"</span>:[{<span class="st">"type"</span>:<span class="st">"tool_result"</span>, <span class="st">"tool_use_id"</span>:block.id, <span class="st">"content"</span>:result}]})</pre>
+
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">Mixtral 8×7B / 8×22B</span>
+    <span class="tech-pill">GPT-4o (MoE)</span>
+    <span class="tech-pill">Gemini 1.5 Pro (MoE)</span>
+    <span class="tech-pill">Anthropic Claude Tool Use</span>
+    <span class="tech-pill">LangChain / LangGraph</span>
+    <span class="tech-pill">AutoGen (Microsoft)</span>
+    <span class="tech-pill">ReAct Pattern</span>
+    <span class="tech-pill">Chain of Thought</span>
+    <span class="tech-pill">Function Calling API</span>
+    <span class="tech-pill">vLLM (MoE serving)</span>
+    <span class="tech-pill">Expert parallelism</span>
+    <span class="tech-pill">MCP (Model Context Protocol)</span>
+  </div>
+
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">MoE proved that AI scaling doesn't require proportionally more compute — it requires smarter routing. Agentic frameworks proved that intelligence without agency is a library, not an employee. The combination — cheap-to-run MoE models with tool-calling loops — is what made "AI replacing knowledge workers" transition from a prediction to a measurable trend in 2025.</p>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(192,38,211,.15);color:var(--a);border:1px solid rgba(192,38,211,.3)">← Back to Demos</a>
+  </div>
+
+</div>
+{% endblock %}
