@@ -1,0 +1,565 @@
+{% extends "base.html" %}
+{% block title %}Chapter 17 — MongoDB Schema Validation, CQRS &amp; pgvector{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center gap-3 mb-1">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:#1a1d24;color:#8b949e;border:1px solid #2a2d35">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+    <div>
+      <h4 class="mb-0 fw-bold" style="color:#e6edf3">
+        <i class="bi bi-leaf me-2" style="color:#34d399"></i>Chapter 17 — MongoDB Schema Validation, CQRS &amp; pgvector
+      </h4>
+      <div style="font-size:.75rem;color:#8b949e">$jsonSchema Validation · CQRS Read/Write Split · Semantic Search with pgvector</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mt-3 mb-3" style="border-bottom:1px solid #2a2d35">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-schema" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-check2-square me-1" style="color:#34d399"></i>Schema Validation
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-cqrs" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-arrow-left-right me-1" style="color:#34d399"></i>CQRS
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-pgvector" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-cpu me-1" style="color:#34d399"></i>pgvector
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+  <!-- ── TAB 1: Schema Validation ──────────────────────────────────────────── -->
+  <div class="tab-pane fade show active" id="tab-schema">
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+
+        <!-- Problem statement -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#f87171;font-size:.85rem"><i class="bi bi-exclamation-triangle me-1"></i>The Schema-less Footgun</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.77rem;color:#c9d1d9">In a relational database, inserting a row without a required column is a compile-time error. In MongoDB, inserting a document without <code>unit_price</code> succeeds silently and corrupts every aggregation that depends on that field.</p>
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="p-2 rounded" style="background:#1a0a0a;border:1px solid rgba(248,113,113,.3)">
+                  <div style="font-size:.7rem;color:#f87171;font-weight:600">✗ Silent failure (MongoDB without validator)</div>
+                  <pre class="m-0 mt-1" style="font-size:.67rem;color:#f9826c">db.products.insertOne({
+  product_name: "Chai"
+  // unit_price missing — no error!
+})
+// aggregations on unit_price now return NaN</pre>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 rounded" style="background:#0a1a0f;border:1px solid rgba(52,211,153,.3)">
+                  <div style="font-size:.7rem;color:#34d399;font-weight:600">✓ Explicit rejection (with $jsonSchema)</div>
+                  <pre class="m-0 mt-1" style="font-size:.67rem;color:#93c5fd">db.products.insertOne({
+  product_name: "Chai"
+  // unit_price missing
+})
+// WriteError: Document failed validation</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- $jsonSchema operator -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem"><i class="bi bi-code-square me-1"></i>The <code>$jsonSchema</code> Validator</span>
+          </div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="font-size:.7rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">db.runCommand({
+  collMod: 'products',
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: ['product_id', 'product_name', 'unit_price'],
+      properties: {
+        product_id:     { bsonType: 'int' },
+        product_name:   { bsonType: 'string' },
+        unit_price:     { bsonType: 'double', minimum: 0 },
+        units_in_stock: { bsonType: 'int' },
+        discontinued:   { bsonType: 'bool' }
+      }
+    }
+  },
+  validationLevel:  'moderate',
+  validationAction: 'warn'
+})</pre>
+          </div>
+        </div>
+
+        <!-- BSON types reference -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#8b949e;font-size:.85rem">Key <code>bsonType</code> Values</span>
+          </div>
+          <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+              {% for t in ['string','int','long','double','bool','array','object','date','objectId'] %}
+              <span class="badge" style="background:#1a1d24;color:#34d399;border:1px solid rgba(52,211,153,.3);font-size:.72rem">{{ t }}</span>
+              {% endfor %}
+            </div>
+            <div class="mt-2 p-2 rounded" style="background:#0a0c10;font-size:.72rem;color:#8b949e">
+              Unlike JSON Schema's <code>number</code>, BSON distinguishes <code>int</code> from <code>double</code> — which matters when aggregations multiply quantities by prices.
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="col-lg-6">
+
+        <!-- validationLevel -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem"><code>validationLevel</code> — moderate vs strict</span>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm mb-0" style="font-size:.75rem">
+              <thead><tr style="color:#8b949e;border-color:#2a2d35"><th>Level</th><th>Behavior</th></tr></thead>
+              <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                <tr>
+                  <td><span class="badge" style="background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.3)">strict</span> (default)</td>
+                  <td>All inserts AND updates must satisfy the schema.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge" style="background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)">moderate</span></td>
+                  <td>Only new documents and updates to already-valid documents are checked. Existing invalid documents untouched.</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-2 rounded mt-2" style="background:#0a0c10;font-size:.72rem;color:#8b949e">
+              Use <strong style="color:#fbbf24">moderate</strong> when retrofitting a validator onto an existing collection — avoids blocking legitimate update operations on legacy documents.
+            </div>
+          </div>
+        </div>
+
+        <!-- validationAction -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem"><code>validationAction</code> — error vs warn</span>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm mb-0" style="font-size:.75rem">
+              <thead><tr style="color:#8b949e;border-color:#2a2d35"><th>Action</th><th>Behavior</th></tr></thead>
+              <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                <tr>
+                  <td><span class="badge" style="background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.3)">error</span></td>
+                  <td>Write is rejected; driver receives a <code>WriteError</code>.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge" style="background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)">warn</span></td>
+                  <td>Write is allowed but violation is logged to MongoDB server log.</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-2 rounded mt-2" style="background:#0a0c10;font-size:.72rem;color:#8b949e">
+              <strong style="color:#fbbf24">warn</strong> is right during migration/audit phase — scan log to find which paths produce invalid data before switching to <strong style="color:#f87171">error</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- SQL vs MongoDB comparison -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#8b949e;font-size:.85rem">SQL Constraints vs MongoDB $jsonSchema</span>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm mb-0" style="font-size:.73rem">
+              <thead><tr style="color:#8b949e;border-color:#2a2d35"><th>Aspect</th><th>SQL (NOT NULL, CHECK…)</th><th>$jsonSchema</th></tr></thead>
+              <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                <tr><td>Enforcement layer</td><td>Storage engine</td><td>Server-side rule</td></tr>
+                <tr><td>Always active</td><td style="color:#34d399">Yes</td><td style="color:#fbbf24">Optional, configurable</td></tr>
+                <tr><td>Runtime changes</td><td style="color:#f87171">Requires ALTER TABLE</td><td style="color:#34d399">collMod at any time</td></tr>
+                <tr><td>Validation timing</td><td style="color:#34d399">Before write</td><td style="color:#fbbf24">After BSON parse</td></tr>
+                <tr><td>Per-collection control</td><td style="color:#f87171">No (per-table)</td><td style="color:#34d399">Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MongoDB Explorer cross-link -->
+        <div class="p-3 rounded" style="background:rgba(52,211,153,.05);border:1px solid rgba(52,211,153,.2)">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-box-arrow-up-right" style="color:#34d399"></i>
+            <span class="fw-bold" style="color:#34d399;font-size:.82rem">Live Demo — MongoDB Explorer</span>
+          </div>
+          <p style="font-size:.76rem;color:#8b949e;margin:0 0 10px 0">The <strong>MongoDB Browser</strong> in the Northwind Control Center ships two preset validators (<code>products</code> and <code>orders</code>). Apply them, view current validator JSON, and dry-run documents from the Schema Validation card.</p>
+          <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.3);color:#34d399">
+            <i class="bi bi-database me-1"></i>Open MongoDB Explorer
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /tab-schema -->
+
+
+  <!-- ── TAB 2: CQRS ───────────────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-cqrs">
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+
+        <!-- Problem -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#f87171;font-size:.85rem"><i class="bi bi-exclamation-triangle me-1"></i>The Contention Problem</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.77rem;color:#c9d1d9">A single MongoDB replica set node serving both the Northwind web shop and the analytics dashboard creates contention. An analyst running a 30-second aggregation over three million order documents saturates CPU and I/O — degrading checkout response times.</p>
+            <div class="p-2 rounded" style="background:#0a0c10;border:1px solid rgba(248,113,113,.3)">
+              <pre style="font-size:.7rem;color:#f9826c;margin:0">Single node:
+  checkout write (OLTP)  ←── contends ──→  analytics query (OLAP)
+  low latency needed          high throughput needed
+  small indexed reads         sequential full-collection scans</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- CQRS solution -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem"><i class="bi bi-arrow-left-right me-1"></i>CQRS — Command Query Responsibility Segregation</span>
+          </div>
+          <div class="card-body">
+            <div class="d-flex gap-3 mb-3">
+              <div class="flex-fill p-2 rounded" style="background:#0a1a0f;border:1px solid rgba(52,211,153,.3);text-align:center">
+                <div class="fw-bold" style="color:#34d399;font-size:.8rem"><i class="bi bi-pencil-square me-1"></i>Commands</div>
+                <div style="font-size:.72rem;color:#8b949e">Writes: insert, update, delete<br>→ always to <strong style="color:#34d399">Primary</strong> node<br>Ensures write durability &amp; immediate consistency</div>
+              </div>
+              <div class="flex-fill p-2 rounded" style="background:#0a0f1a;border:1px solid rgba(34,211,238,.3);text-align:center">
+                <div class="fw-bold" style="color:#22d3ee;font-size:.8rem"><i class="bi bi-search me-1"></i>Queries</div>
+                <div style="font-size:.72rem;color:#8b949e">Reads: find, aggregate<br>→ to <strong style="color:#22d3ee">Secondary</strong> (secondaryPreferred)<br>Slightly stale data — acceptable for analytics</div>
+              </div>
+            </div>
+            <pre class="p-2 rounded" style="font-size:.7rem;color:#93c5fd;background:#080a0e"># Command path — write to primary
+primary_client = MongoClient(uri, readPreference='primary')
+primary_client['northwind']['orders'].insert_one(order_doc)
+
+# Query path — read from replica
+replica_client = MongoClient(uri, readPreference='secondaryPreferred')
+results = replica_client['northwind']['orders'].aggregate(pipeline)</pre>
+          </div>
+        </div>
+
+        <!-- Tradeoffs -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#8b949e;font-size:.85rem">CQRS Trade-offs</span>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm mb-0" style="font-size:.73rem">
+              <thead><tr style="color:#8b949e;border-color:#2a2d35"><th>Concern</th><th>Detail</th></tr></thead>
+              <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                <tr><td style="color:#fbbf24">Eventual consistency</td><td>Inserted document may not appear in query path for up to a few seconds</td></tr>
+                <tr><td style="color:#fbbf24">Connection overhead</td><td>Two separate connection pools with separate auth and TLS config</td></tr>
+                <tr><td style="color:#fbbf24">Operational complexity</td><td>Replica set config, failover monitoring, oplog sizing</td></tr>
+                <tr><td style="color:#34d399">Read scale</td><td>Multiple secondaries scale read throughput horizontally</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      <div class="col-lg-6">
+
+        <!-- Architecture diagram -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem"><i class="bi bi-diagram-3 me-1"></i>MongoDB Replica Set — CQRS Architecture</span>
+          </div>
+          <div class="card-body">
+            <svg viewBox="0 0 400 260" style="width:100%;height:auto;background:#080a0e;border-radius:6px">
+              <!-- Application -->
+              <rect x="150" y="10" width="100" height="40" rx="4" fill="#1a1a2e" stroke="#a78bfa" stroke-width="1.5"/>
+              <text x="200" y="27" fill="#a78bfa" font-size="9" text-anchor="middle" font-weight="bold">Application</text>
+              <text x="200" y="40" fill="#8b949e" font-size="7" text-anchor="middle">Northwind Web Shop</text>
+
+              <!-- Command path -->
+              <line x1="170" y1="50" x2="100" y2="100" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#garr)"/>
+              <text x="100" y="85" fill="#34d399" font-size="7" text-anchor="middle">Commands</text>
+              <text x="100" y="93" fill="#34d399" font-size="7" text-anchor="middle">(Writes)</text>
+
+              <!-- Query path -->
+              <line x1="230" y1="50" x2="300" y2="100" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#barr)"/>
+              <text x="310" y="85" fill="#22d3ee" font-size="7" text-anchor="middle">Queries</text>
+              <text x="310" y="93" fill="#22d3ee" font-size="7" text-anchor="middle">(Reads)</text>
+
+              <!-- Primary -->
+              <rect x="40" y="100" width="120" height="60" rx="6" fill="#0a1a0f" stroke="#34d399" stroke-width="2"/>
+              <text x="100" y="120" fill="#34d399" font-size="9" text-anchor="middle" font-weight="bold">PRIMARY</text>
+              <text x="100" y="133" fill="#8b949e" font-size="7" text-anchor="middle">readPreference=primary</text>
+              <text x="100" y="146" fill="#8b949e" font-size="7" text-anchor="middle">All writes go here</text>
+
+              <!-- Secondary 1 -->
+              <rect x="240" y="100" width="120" height="60" rx="6" fill="#0a0f1a" stroke="#22d3ee" stroke-width="2"/>
+              <text x="300" y="120" fill="#22d3ee" font-size="9" text-anchor="middle" font-weight="bold">SECONDARY</text>
+              <text x="300" y="133" fill="#8b949e" font-size="7" text-anchor="middle">readPreference=secondaryPreferred</text>
+              <text x="300" y="146" fill="#8b949e" font-size="7" text-anchor="middle">Analytics queries</text>
+
+              <!-- Secondary 2 -->
+              <rect x="240" y="185" width="120" height="50" rx="6" fill="#0a0f1a" stroke="#22d3ee" stroke-width="1"/>
+              <text x="300" y="205" fill="#22d3ee" font-size="8" text-anchor="middle" font-weight="bold">SECONDARY 2</text>
+              <text x="300" y="218" fill="#8b949e" font-size="7" text-anchor="middle">(optional — add more readers)</text>
+
+              <!-- Replication arrows -->
+              <line x1="160" y1="130" x2="240" y2="130" stroke="#fbbf24" stroke-width="1" marker-end="url(#yarr)"/>
+              <text x="200" y="125" fill="#fbbf24" font-size="7" text-anchor="middle">oplog replication</text>
+              <text x="200" y="133" fill="#8b949e" font-size="7" text-anchor="middle">&lt;1s lag</text>
+              <line x1="300" y1="160" x2="300" y2="185" stroke="#22d3ee" stroke-width="1" stroke-dasharray="3,2"/>
+
+              <!-- Lag indicator -->
+              <rect x="60" y="185" width="140" height="50" rx="4" fill="#1a1400" stroke="#fbbf24" stroke-width="1"/>
+              <text x="130" y="202" fill="#fbbf24" font-size="7" text-anchor="middle" font-weight="bold">Replication Lag</text>
+              <text x="130" y="215" fill="#8b949e" font-size="7" text-anchor="middle">Typically &lt; 1 second on healthy network</text>
+              <text x="130" y="228" fill="#8b949e" font-size="7" text-anchor="middle">Check: rs.status().members[*].optimeDate</text>
+
+              <defs>
+                <marker id="garr" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#34d399"/></marker>
+                <marker id="barr" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22d3ee"/></marker>
+                <marker id="yarr" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#fbbf24"/></marker>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        <!-- When CQRS makes sense -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#8b949e;font-size:.85rem">When CQRS Becomes Essential</span>
+          </div>
+          <div class="card-body">
+            <div class="d-flex gap-3">
+              <div class="flex-fill p-2 rounded" style="background:#0a0c10;border:1px solid rgba(251,191,36,.2)">
+                <div style="font-size:.7rem;color:#fbbf24;font-weight:600">Northwind scale (830 orders)</div>
+                <div style="font-size:.7rem;color:#8b949e;margin-top:4px">CQRS is over-engineering. Single node is fine.</div>
+              </div>
+              <div class="flex-fill p-2 rounded" style="background:#0a1a0f;border:1px solid rgba(52,211,153,.2)">
+                <div style="font-size:.7rem;color:#34d399;font-weight:600">Production scale (50K orders/hr)</div>
+                <div style="font-size:.7rem;color:#8b949e;margin-top:4px">CQRS essential. Dashboards refresh every 30 sec.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /tab-cqrs -->
+
+
+  <!-- ── TAB 3: pgvector ───────────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-pgvector">
+
+    <div class="row g-3">
+      <div class="col-lg-5">
+
+        <!-- Limits of traditional indexing -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#f87171;font-size:.85rem"><i class="bi bi-search me-1"></i>Limits of Traditional Indexing</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.77rem;color:#c9d1d9">A B-tree index on <code>product_name</code> supports exact matches and prefix searches efficiently. <code>LIKE '%beverage%'</code> forces a sequential scan. Neither approach captures <em>meaning</em>.</p>
+            <div class="p-2 rounded" style="background:#1a0a0a;border:1px solid rgba(248,113,113,.3);font-size:.72rem;color:#f87171">
+              A user searching for <strong>"chai"</strong> should find <em>Chai</em>, <em>Chang</em>, and <em>Ipoh Coffee</em> — all beverages — not only documents that literally contain "chai".
+            </div>
+          </div>
+        </div>
+
+        <!-- Embeddings -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem"><i class="bi bi-cpu me-1"></i>Embeddings &amp; Vector Indexes</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.77rem;color:#c9d1d9">An embedding model converts text into a high-dimensional vector of floating-point numbers. Similar meanings map to geometrically close points.</p>
+            <div class="p-2 rounded mb-2" style="background:#080a0e;border:1px solid rgba(52,211,153,.2);font-size:.72rem;color:#8b949e">
+              The embedding for <strong style="color:#34d399">"chai"</strong> and <strong style="color:#34d399">"Ipoh Coffee"</strong> have high cosine similarity — both appear in similar contexts in the training corpus.
+            </div>
+            <table class="table table-sm mb-0" style="font-size:.73rem">
+              <thead><tr style="color:#8b949e;border-color:#2a2d35"><th>Operator</th><th>Metric</th><th>Use Case</th></tr></thead>
+              <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                <tr><td><code style="color:#34d399">&lt;=&gt;</code></td><td>Cosine distance</td><td>Semantic similarity (normalized)</td></tr>
+                <tr><td><code style="color:#34d399">&lt;-&gt;</code></td><td>Euclidean (L2)</td><td>Absolute magnitude matters</td></tr>
+                <tr><td><code style="color:#34d399">&lt;#&gt;</code></td><td>Neg. inner product</td><td>Maximum inner product search</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SQL LIKE vs pgvector -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#8b949e;font-size:.85rem">SQL LIKE vs pgvector Cosine Search</span>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm mb-0" style="font-size:.73rem">
+              <thead><tr style="color:#8b949e;border-color:#2a2d35"><th>Dimension</th><th>LIKE '%chai%'</th><th>pgvector</th></tr></thead>
+              <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                <tr><td>Match basis</td><td>Literal substring</td><td style="color:#34d399">Semantic meaning</td></tr>
+                <tr><td>Index support</td><td style="color:#f87171">None (full scan)</td><td style="color:#34d399">HNSW / IVFFlat ANN</td></tr>
+                <tr><td>Query latency</td><td style="color:#f87171">O(n)</td><td style="color:#34d399">O(log n) approximate</td></tr>
+                <tr><td>Language-aware</td><td style="color:#f87171">No</td><td style="color:#34d399">Yes (multilingual models)</td></tr>
+                <tr><td>Setup cost</td><td style="color:#34d399">Zero</td><td style="color:#fbbf24">Embedding model + extension</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      <div class="col-lg-7">
+
+        <!-- Code examples -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header d-flex justify-content-between align-items-center" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem"><i class="bi bi-code-square me-1"></i>pgvector Setup &amp; Semantic Query</span>
+            <div class="d-flex gap-1" id="pvTabs">
+              <button class="btn btn-sm active" onclick="showPv('setup')" style="background:rgba(52,211,153,.2);color:#34d399;border:1px solid rgba(52,211,153,.4);font-size:.65rem">Setup</button>
+              <button class="btn btn-sm" onclick="showPv('query')" style="background:#1a1d24;color:#8b949e;border:1px solid #2a2d35;font-size:.65rem">Semantic Query</button>
+              <button class="btn btn-sm" onclick="showPv('embed')" style="background:#1a1d24;color:#8b949e;border:1px solid #2a2d35;font-size:.65rem">Embedding</button>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div id="pv-setup">
+              <pre class="m-0 p-3" style="font-size:.7rem;color:#93c5fd;background:#080a0e">-- 1. Install extension
+CREATE EXTENSION vector;
+
+-- 2. Add embedding column (1536-dim for OpenAI, 384 for MiniLM)
+ALTER TABLE products
+  ADD COLUMN embedding vector(1536);
+
+-- 3. Create HNSW index for approximate nearest-neighbor
+CREATE INDEX ON products
+  USING hnsw (embedding vector_cosine_ops);
+-- IVFFlat alternative:
+-- CREATE INDEX ON products USING ivfflat (embedding vector_cosine_ops)
+--   WITH (lists = 100);</pre>
+            </div>
+            <div id="pv-query" style="display:none">
+              <pre class="m-0 p-3" style="font-size:.7rem;color:#93c5fd;background:#080a0e">-- Semantic search: "chai" → finds beverages by meaning
+-- query_embedding is the embedding of the search term
+SELECT product_name, category_name,
+       1 - (embedding &lt;=&gt; query_embedding) AS similarity
+FROM   products
+ORDER  BY embedding &lt;=&gt; query_embedding
+LIMIT  5;
+
+-- Result for query="chai":
+-- product_name         category_name  similarity
+-- ──────────────────── ────────────── ──────────
+-- Chai                 Beverages      0.98
+-- Chang                Beverages      0.87
+-- Ipoh Coffee          Beverages      0.83
+-- Chartreuse verte     Beverages      0.79
+-- Steeleye Stout       Beverages      0.77
+-- All top results are beverages -- none contain "chai"!</pre>
+            </div>
+            <div id="pv-embed" style="display:none">
+              <pre class="m-0 p-3" style="font-size:.7rem;color:#93c5fd;background:#080a0e">-- Backfill embeddings using sentence-transformers (Python)
+from sentence_transformers import SentenceTransformer
+import psycopg2, json
+
+model = SentenceTransformer('all-MiniLM-L6-v2')  # 384-dim
+conn  = psycopg2.connect(DSN)
+cur   = conn.cursor()
+
+cur.execute("SELECT product_id, product_name FROM products")
+products = cur.fetchall()
+
+for pid, name in products:
+    embedding = model.encode(name).tolist()
+    cur.execute(
+        "UPDATE products SET embedding = %s WHERE product_id = %s",
+        (json.dumps(embedding), pid)
+    )
+
+conn.commit()
+print(f"Backfilled {len(products)} product embeddings")</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Semantic search results visualization -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem">Northwind Lab: Semantic Search for "chai"</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.75rem;color:#8b949e">After embedding all 77 Northwind product names into a <code>vector(1536)</code> column, a cosine search for "chai" returns:</p>
+            <div class="d-flex flex-column gap-2">
+              {% set results = [
+                ('Chai', 'Beverages', 0.98, '#34d399'),
+                ('Chang', 'Beverages', 0.87, '#34d399'),
+                ('Ipoh Coffee', 'Beverages', 0.83, '#34d399'),
+                ('Chartreuse verte', 'Beverages', 0.79, '#34d399'),
+                ('Steeleye Stout', 'Beverages', 0.77, '#34d399'),
+              ] %}
+              {% for name, cat, sim, color in results %}
+              <div class="d-flex align-items-center gap-2">
+                <div style="width:130px;font-size:.75rem;color:#e6edf3;font-weight:{{ 'bold' if loop.first else 'normal' }}">{{ name }}</div>
+                <span class="badge" style="background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2);font-size:.65rem;width:70px">{{ cat }}</span>
+                <div class="flex-grow-1 rounded" style="height:8px;background:#1a1d24">
+                  <div style="width:{{ (sim*100)|int }}%;height:8px;background:{{ color }};border-radius:4px;opacity:{{ sim }}"></div>
+                </div>
+                <div style="font-size:.73rem;color:{{ color }};font-weight:600;width:35px;text-align:right">{{ '%.2f'|format(sim) }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="mt-2 p-2 rounded" style="background:#0a1a0f;border:1px solid rgba(52,211,153,.2);font-size:.72rem;color:#8b949e">
+              All top results are beverages — even though none of them (except the first) contain "chai" in their name. This is the power of semantic search.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /tab-pgvector -->
+
+  </div><!-- /tab-content -->
+</div><!-- /container -->
+
+<script>
+// Tab nav styling
+document.querySelectorAll('.nav-link[data-bs-toggle="tab"]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-link[data-bs-toggle="tab"]').forEach(b => {
+      b.style.color = '#8b949e'; b.style.borderBottom = 'none';
+    });
+    btn.style.color = '#34d399';
+    btn.style.borderBottom = '2px solid #34d399';
+  });
+});
+document.querySelector('.nav-link.active[data-bs-toggle="tab"]').style.color = '#34d399';
+document.querySelector('.nav-link.active[data-bs-toggle="tab"]').style.borderBottom = '2px solid #34d399';
+
+// pgvector code tabs
+function showPv(v) {
+  ['setup','query','embed'].forEach(k => {
+    const el = document.getElementById('pv-'+k);
+    if (el) el.style.display = k===v ? 'block' : 'none';
+  });
+  document.querySelectorAll('#pvTabs .btn').forEach(b => {
+    const active = b.getAttribute('onclick').includes("'"+v+"'");
+    b.style.background = active ? 'rgba(52,211,153,.2)' : '#1a1d24';
+    b.style.color = active ? '#34d399' : '#8b949e';
+    b.style.borderColor = active ? 'rgba(52,211,153,.4)' : '#2a2d35';
+    if (active) b.classList.add('active'); else b.classList.remove('active');
+  });
+}
+</script>
+{% endblock %}

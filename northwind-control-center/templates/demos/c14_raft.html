@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+{% block title %}Chapter 14 — Distributed Consensus: PoW vs Raft{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+<div class="d-flex align-items-center mb-3 gap-3">
+  <div>
+    <h4 class="mb-0 fw-bold" style="color:#818cf8">Chapter 14 — Distributed Consensus: PoW vs Raft</h4>
+    <div style="font-size:.75rem;color:#6b7280">Leader Election · Log Replication · rqlite · Chaos Monkey Lab</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="c14tabs" style="border-color:rgba(129,140,248,.3)">
+  <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('why',this)">Why Consensus?</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('pow',this)">PoW vs Raft</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('raft',this)">Raft Algorithm</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('rqlite',this)">rqlite &amp; HTTP API</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('chaos',this)">Chaos Monkey Lab</a></li>
+</ul>
+
+<!-- Tab: Why Consensus -->
+<div id="tab-why">
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-question-circle me-2"></i>The Distributed Consensus Problem</div>
+      <p style="font-size:.8rem;color:#9ca3af">A single-node database is simple: one writer, one truth. The moment you add a second node for fault tolerance, every node must agree on the <strong>same sequence of writes</strong> — even when messages are lost, delayed, or nodes crash.</p>
+      <div class="mt-2">
+        <table class="table table-sm" style="font-size:.75rem;color:#9ca3af">
+          <thead><tr style="color:#d1d5db"><th>Node A writes</th><th>Node B reads</th><th>Result without consensus</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>INSERT order 999</code></td>
+              <td><code>SELECT * FROM orders</code></td>
+              <td style="color:#f87171">May return 0 or 1 rows depending on timing</td>
+            </tr>
+            <tr>
+              <td>Two nodes accept conflicting updates</td>
+              <td>—</td>
+              <td style="color:#f87171"><strong>Split brain</strong> — two different "truths"</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-diagram-3 me-2"></i>Who Solves It and How</div>
+      <div class="row g-2">
+        {% for db,algo,color in [
+          ('PostgreSQL streaming','Raft variant / quorum','#60a5fa'),
+          ('MySQL Group Replication','Paxos (XCom)','#f59e0b'),
+          ('CockroachDB','Raft per range','#34d399'),
+          ('MongoDB replica sets','Raft-like','#22c55e'),
+          ('rqlite','Raft (hashicorp/raft)','#818cf8'),
+          ('etcd / Consul','Raft','#818cf8'),
+        ] %}
+        <div class="col-12">
+          <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid {{color}};border-radius:4px;display:flex;justify-content:space-between;align-items:center">
+            <span class="fw-bold" style="color:{{color}};font-size:.78rem">{{db}}</span>
+            <span class="badge" style="background:rgba(129,140,248,.15);color:#a5b4fc;font-size:.65rem">{{algo}}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-exclamation-diamond me-2"></i>What Can Go Wrong Without Consensus</div>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="p-2 text-center" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px">
+        <div style="color:#f87171;font-size:1.5rem"><i class="bi bi-split"></i></div>
+        <div class="fw-bold" style="color:#f87171;font-size:.8rem">Split Brain</div>
+        <div style="font-size:.73rem;color:#9ca3af">Two nodes become leaders simultaneously. Both accept writes. Data diverges permanently.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-2 text-center" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:6px">
+        <div style="color:#f59e0b;font-size:1.5rem"><i class="bi bi-arrow-repeat"></i></div>
+        <div class="fw-bold" style="color:#f59e0b;font-size:.8rem">Phantom Read</div>
+        <div style="font-size:.73rem;color:#9ca3af">A committed write appears on one node but not others. Read returns stale answer.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-2 text-center" style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:6px">
+        <div style="color:#a78bfa;font-size:1.5rem"><i class="bi bi-trash"></i></div>
+        <div class="fw-bold" style="color:#a78bfa;font-size:.8rem">Write Loss</div>
+        <div style="font-size:.73rem;color:#9ca3af">Leader fails after ack but before majority replication. Data disappears after failover.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-why -->
+
+<!-- Tab: PoW vs Raft -->
+<div id="tab-pow" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="p-3" style="background:#13141a;border:1px solid rgba(129,140,248,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-table me-2"></i>PoW vs Raft — Full Comparison</div>
+      <table class="table table-sm mb-0" style="font-size:.78rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>Dimension</th><th style="color:#f59e0b">Proof-of-Work (Ch.4)</th><th style="color:#818cf8">Raft (this chapter)</th></tr></thead>
+        <tbody>
+          {% for dim,pow,raft,rc in [
+            ('Problem solved','Byzantine fault tolerance in open networks','Crash fault tolerance in closed clusters','#a5b4fc'),
+            ('Write latency','Seconds to minutes (mining)','1–5 ms','#34d399'),
+            ('Throughput','~7 TPS (Bitcoin)','Thousands of TPS','#34d399'),
+            ('Energy','Proportional to hash rate','Negligible','#34d399'),
+            ('Participant model','Anonymous, untrusted','Known, trusted peers','#a5b4fc'),
+            ('Leader','None — emergent via longest chain','Elected explicitly per term','#a5b4fc'),
+            ('Failure tolerance','51 % of hash power can be honest','Any minority of nodes can fail','#a5b4fc'),
+            ('Use case','Cryptocurrency, public blockchain','Distributed databases, key-value stores','#a5b4fc'),
+            ('Examples','Bitcoin, Ethereum PoW','rqlite, etcd, CockroachDB, Consul','#a5b4fc'),
+          ] %}
+          <tr>
+            <td style="color:#d1d5db"><strong>{{dim}}</strong></td>
+            <td style="color:#fbbf24">{{pow}}</td>
+            <td style="color:{{rc}}">{{raft}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(245,158,11,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f59e0b"><i class="bi bi-cpu me-2"></i>Proof-of-Work Mechanism</div>
+      <ol style="font-size:.8rem;color:#9ca3af;padding-left:1.2rem">
+        <li>Node that wants to add data must solve a <strong>cryptographic puzzle</strong>: find a <code>nonce</code> such that <code>SHA256(payload + nonce)</code> starts with N zeros</li>
+        <li>First solver broadcasts the solution</li>
+        <li>All nodes verify (cheap) and accept the block</li>
+      </ol>
+      <div class="mt-2 p-2" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:4px">
+        <span style="color:#f87171;font-size:.75rem">Mining latency is a <strong>security feature</strong> for Bitcoin. For OLTP it is catastrophic. Ch.4 simulation showed VMs racing to find the nonce — that latency is your write latency in PoW.</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-shield-check me-2"></i>Raft Core Guarantee</div>
+      <p style="font-size:.8rem;color:#9ca3af">Raft (Ongaro &amp; Ousterhout, 2014) was designed to be <strong>understandable</strong>. It solves consensus for crash-fault-tolerant clusters of known peers.</p>
+      <div class="p-2 mt-1" style="background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.3);border-radius:6px;text-align:center">
+        <div style="color:#a5b4fc;font-size:.85rem;font-weight:600">"If a log entry is committed, every future leader will also have that entry."</div>
+        <div style="color:#6b7280;font-size:.72rem;margin-top:4px">This prevents the "revert accepted write" failure mode</div>
+      </div>
+      <div class="mt-2">
+        <div class="fw-bold mb-1" style="color:#a5b4fc;font-size:.75rem">Fault Tolerance Formula</div>
+        <div style="font-size:.8rem;color:#9ca3af">With <strong>N nodes</strong>, Raft tolerates up to <strong>⌊(N−1)/2⌋</strong> simultaneous failures.</div>
+        <div style="font-size:.78rem;color:#9ca3af;margin-top:4px">3 nodes → 1 failure &nbsp;|&nbsp; 5 nodes → 2 failures &nbsp;|&nbsp; 7 nodes → 3 failures</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-pow -->
+
+<!-- Tab: Raft Algorithm -->
+<div id="tab-raft" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-person-badge me-2"></i>Node Roles</div>
+      {% for role,color,desc in [
+        ('Leader','#f59e0b','Accepts ALL client writes. Replicates to followers. Sends heartbeats every ~50ms.'),
+        ('Follower','#60a5fa','Passive. Applies log entries from leader. Waits for heartbeat. Exactly one per normal operation.'),
+        ('Candidate','#a78bfa','Temporary during election. Has timed out waiting for leader heartbeat. Sends RequestVote RPCs.'),
+      ] %}
+      <div class="mb-2 p-2" style="background:rgba(0,0,0,.3);border-left:3px solid {{color}};border-radius:4px">
+        <div class="fw-bold" style="color:{{color}};font-size:.8rem">{{role}}</div>
+        <div style="font-size:.73rem;color:#9ca3af">{{desc}}</div>
+      </div>
+      {% endfor %}
+      <div class="p-2 mt-1" style="background:rgba(129,140,248,.08);border:1px solid rgba(129,140,248,.2);border-radius:4px">
+        <span style="color:#a5b4fc;font-size:.73rem">There is exactly <strong>one leader</strong> at a time, or zero during election.</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-ballot me-2"></i>Leader Election</div>
+      <ol style="font-size:.78rem;color:#9ca3af;padding-left:1.2rem">
+        <li>Each follower has a <strong>randomized election timeout</strong> (150–300 ms)</li>
+        <li>On timeout: transition to Candidate, increment <strong>term</strong>, send <code>RequestVote</code> RPCs</li>
+        <li>A node votes YES if:<br>— has not voted in this term AND<br>— candidate log ≥ own log</li>
+        <li>Majority of votes → becomes new leader for this term</li>
+        <li>Leader sends immediate heartbeat to suppress new elections</li>
+      </ol>
+      <div class="mt-2 p-2" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:4px">
+        <span style="color:#34d399;font-size:.73rem"><i class="bi bi-lightbulb me-1"></i>Randomized timeouts prevent all followers from calling elections simultaneously and splitting votes forever.</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-arrow-left-right me-2"></i>Log Replication</div>
+      <pre class="m-0" style="font-size:.68rem;color:#93c5fd;background:#080a0e;padding:8px;border-radius:4px;white-space:pre">Client   Leader   Follower2  Follower3
+  |  INSERT  |           |          |
+  |--------->|           |          |
+  |          |--AppendE->|          |
+  |          |--AppendE------------>|
+  |          |&lt;--ACK-----|          |
+  |          |&lt;--ACK----------------|
+  |          | (majority)            |
+  |          | COMMIT locally        |
+  |&lt;--OK ----|           |          |
+  |          |--Notify-->|          |
+  |          |--Notify------------->|</pre>
+      <div class="mt-2" style="font-size:.73rem;color:#9ca3af">Write committed once <strong>majority</strong> of nodes have it in their log — even if some followers are slow or disconnected.</div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-diagram-2 me-2"></i>Term Counter — The Logical Clock</div>
+  <div class="row g-3">
+    <div class="col-md-7">
+      <p style="font-size:.8rem;color:#9ca3af">Raft uses a monotonically increasing <strong>term number</strong> as a logical clock. Each term begins with an election. Terms are used to detect stale leaders:</p>
+      <ul style="font-size:.78rem;color:#9ca3af;padding-left:1.2rem">
+        <li>If a node receives a message from a lower term → reject</li>
+        <li>If a node discovers a higher term → step down to follower</li>
+        <li>Prevents "zombie leaders" from confusing the cluster after recovering from partition</li>
+      </ul>
+    </div>
+    <div class="col-md-5">
+      <div style="font-family:monospace;font-size:.75rem;color:#a5b4fc;background:#0a0c12;padding:10px;border-radius:6px">
+        <div style="color:#6b7280">Term 1: Node1 elected leader</div>
+        <div style="color:#6b7280">Term 1: Node1 replicates 10 writes</div>
+        <div style="color:#f87171">Term 1: Node1 crashes</div>
+        <div style="color:#34d399">Term 2: Node2 wins election (timeout)</div>
+        <div style="color:#34d399">Term 2: Node2 becomes leader</div>
+        <div style="color:#60a5fa">Term 2: Node1 rejoins as follower</div>
+        <div style="color:#60a5fa">Term 2: Node1 catches up the log</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-raft -->
+
+<!-- Tab: rqlite -->
+<div id="tab-rqlite" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-database me-2"></i>rqlite Architecture</div>
+      <pre class="m-0" style="font-size:.72rem;color:#a5b4fc;background:#080a0e;padding:10px;border-radius:6px;white-space:pre-wrap">┌──────────────────────────────────┐
+│           HTTP API               │ ← Flask (requests library)
+│  GET /db/query  POST /db/execute │
+├──────────────────────────────────┤
+│         SQLite engine            │ ← per-node embedded DB
+├──────────────────────────────────┤
+│           Raft log               │ ← replicated WAL
+└──────────────────────────────────┘
+   Node 1        Node 2       Node 3
+   :4001         :4003        :4005</pre>
+      <div class="mt-2">
+        <div class="fw-bold mb-1" style="color:#a5b4fc;font-size:.75rem">Key Properties</div>
+        {% for prop,color in [
+          ('No driver needed — pure HTTP: works from curl, Python requests, any language','#34d399'),
+          ('Strong consistency by default — reads go through the leader','#818cf8'),
+          ('<code>?level=weak</code> — any node answers reads (may be slightly stale)','#60a5fa'),
+          ('Full SQLite SQL support: SELECT, INSERT, UPDATE, DELETE, PRAGMA','#f59e0b'),
+          ('Automatic failover — leader dies → new election in ~1 s','#f87171'),
+        ] %}
+        <div class="mb-1" style="font-size:.73rem;color:{{color}}"><i class="bi bi-check-circle me-1"></i>{{prop|safe}}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-terminal me-2"></i>HTTP API Quick Reference</div>
+      <div class="mb-2">
+        <div class="fw-bold mb-1" style="color:#34d399;font-size:.73rem">READ (query)</div>
+        <pre class="m-0" style="font-size:.7rem;color:#86efac;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap"># Strong consistency (leader only):
+curl 'http://localhost:4001/db/query?q=SELECT+*+FROM+orders+LIMIT+5'
+
+# Weak consistency (any node, possibly stale):
+curl 'http://localhost:4003/db/query?q=SELECT+COUNT(*)+FROM+orders&level=weak'</pre>
+      </div>
+      <div class="mb-2">
+        <div class="fw-bold mb-1" style="color:#f59e0b;font-size:.73rem">WRITE (execute)</div>
+        <pre class="m-0" style="font-size:.7rem;color:#fde68a;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">curl -XPOST http://localhost:4001/db/execute \
+  -H 'Content-Type: application/json' \
+  -d '["INSERT INTO orders VALUES (10999,\"ALFKI\",\"Germany\",999.99)"]'
+
+# Response:
+# {"results": [{"last_insert_id": 10999, "rows_affected": 1}]}</pre>
+      </div>
+      <div>
+        <div class="fw-bold mb-1" style="color:#60a5fa;font-size:.73rem">CLUSTER STATUS</div>
+        <pre class="m-0" style="font-size:.7rem;color:#93c5fd;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">curl http://localhost:4001/status  # full node info
+curl http://localhost:4001/nodes   # peer list + leader flag</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-code-slash me-2"></i>Flask Integration (Python requests)</div>
+  <div class="row g-3">
+    <div class="col-md-7">
+{% raw %}
+      <pre class="m-0" style="font-size:.71rem;color:#a5b4fc;background:#080a0e;padding:10px;border-radius:6px;white-space:pre-wrap">import requests
+
+class RqliteClient:
+    def __init__(self, url):
+        self.url = url.rstrip('/')
+
+    def query(self, sql):
+        r = requests.get(f'{self.url}/db/query',
+                         params={'q': sql, 'level': 'weak'})
+        r.raise_for_status()
+        result = r.json()['results'][0]
+        return result.get('columns', []), result.get('values', []) or []
+
+    def execute(self, sql):
+        r = requests.post(f'{self.url}/db/execute', json=[sql])
+        r.raise_for_status()
+        return r.json()['results'][0]</pre>
+{% endraw %}
+    </div>
+    <div class="col-md-5">
+      <div class="fw-bold mb-1" style="color:#a5b4fc;font-size:.75rem">Register in Northwind CC</div>
+      <ol style="font-size:.78rem;color:#9ca3af;padding-left:1.2rem">
+        <li>Control Plane → Connections → New Connection</li>
+        <li>Type: <code>rqlite</code>, URL: <code>http://127.0.0.1:4001</code></li>
+        <li>Name: <code>rqlite-node1</code></li>
+        <li>Test Connection → green</li>
+        <li>Query Studio: select rqlite connection in Target Engine dropdown</li>
+      </ol>
+      <div class="p-2 mt-2" style="background:rgba(129,140,248,.08);border:1px solid rgba(129,140,248,.2);border-radius:4px">
+        <span style="color:#a5b4fc;font-size:.73rem"><strong>No ORM, no driver, no connection pool</strong> — just HTTP. This is what makes rqlite language-agnostic.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-rqlite -->
+
+<!-- Tab: Chaos Monkey -->
+<div id="tab-chaos" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-7">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(239,68,68,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f87171"><i class="bi bi-lightning-charge me-2"></i>Chaos Monkey Lab — Kill the Leader</div>
+      <p style="font-size:.8rem;color:#9ca3af">This experiment demonstrates Raft's automatic failover. Nodes 2 and 3 detect heartbeat timeout (~300 ms) and elect a new leader in ~1 second. <strong>Zero app downtime required.</strong></p>
+      <div class="row g-2 mt-1">
+        {% for step,title,color,cmd in [
+          ('1','Baseline query','#34d399','curl \'http://127.0.0.1:4001/db/query?q=SELECT+COUNT(*)+FROM+orders\''),
+          ('2','Kill the leader','#f87171','pkill -f "node-id node1"\n# Node 1 is dead. Election starts in ~300 ms.'),
+          ('3','Query via Node 2','#60a5fa','curl \'http://127.0.0.1:4003/db/query?q=SELECT+COUNT(*)+FROM+orders\'\n# Succeeds! New leader elected automatically.'),
+          ('4','Check election logs','#f59e0b','grep -E "election|leader|term" /tmp/rqlite/logs/node2.log | tail -20'),
+          ('5','Restart Node 1','#a78bfa','rqlited -node-id node1 -http-addr 127.0.0.1:4001 \\\n  -raft-addr 127.0.0.1:4002 \\\n  -join http://127.0.0.1:4003 /tmp/rqlite/node1 &\n# Node 1 rejoins as follower, catches up log'),
+        ] %}
+        <div class="col-12">
+          <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid {{color}};border-radius:4px">
+            <div class="d-flex justify-content-between">
+              <span class="fw-bold" style="color:{{color}};font-size:.78rem">Step {{step}}: {{title}}</span>
+            </div>
+            <pre class="m-0 mt-1" style="font-size:.68rem;color:#d1d5db;white-space:pre-wrap">{{cmd}}</pre>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(239,68,68,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f87171"><i class="bi bi-journal-text me-2"></i>Expected Election Log</div>
+      <pre class="m-0" style="font-size:.72rem;color:#fca5a5;background:#080a0e;padding:10px;border-radius:6px;white-space:pre-wrap">raft: heartbeat timeout, start election
+raft: entering candidate state
+     node=node2 term=2
+raft: received vote
+     granted=true from=node3
+raft: election won tally=2
+raft: entering leader state
+     node=node2</pre>
+      <div class="mt-3">
+        <div class="fw-bold mb-1" style="color:#fca5a5;font-size:.75rem">Compare to Single-Node SQL Server</div>
+        <div class="p-2" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:4px">
+          <span style="color:#f87171;font-size:.73rem">Without Raft: connection error until you manually restore. Manual recovery can take minutes to hours.</span>
+        </div>
+        <div class="fw-bold mb-1 mt-2" style="color:#fca5a5;font-size:.75rem">With Raft (rqlite)</div>
+        <div class="p-2" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:4px">
+          <span style="color:#34d399;font-size:.73rem">~1 second automatic failover. Zero configuration change. Zero app restart. Queries continue on surviving nodes.</span>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="fw-bold mb-2" style="color:#fca5a5;font-size:.75rem">Cluster Start Script</div>
+        <pre class="m-0" style="font-size:.7rem;color:#fca5a5;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">bash start_rqlite_cluster.sh
+# 1. Kills existing rqlited processes
+# 2. Starts Node 1 on :4001/:4002
+# 3. Waits for Node 1, starts Node 2 (:4003/:4004)
+#    and Node 3 (:4005/:4006) with -join Node 1
+# 4. Seeds orders + products tables</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(129,140,248,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#818cf8"><i class="bi bi-book me-2"></i>Chapter Exercises</div>
+  <div class="row g-2">
+    {% for q,desc in [
+      ('1. Read Consistency Levels','Run same SELECT against Node 1 with <code>?level=strong</code> and <code>?level=weak</code>. Measure latency difference with <code>curl -v</code>. Explain why strong reads are slower.'),
+      ('2. Concurrent Writes','Send 50 INSERTs from two terminals simultaneously. Verify final <code>COUNT(*)</code> = exactly 100. No lost writes, no duplicates.'),
+      ('3. Network Partition','Use <code>iptables</code> to block traffic between Node 1 and Nodes 2+3. What happens to writes on Node 1? What to reads on Node 2?'),
+      ('4. Log Inspection','After 10 writes, run <code>PRAGMA wal_checkpoint</code> and examine rqlite log files. How does the Raft log index compare to SQLite WAL?'),
+      ('5. Design Question','Compare rqlite, Redis Sentinel, and MongoDB replica set for a session store (10k reads/s, 100 writes/s). Which fits best and why?'),
+    ] %}
+    <div class="col-12">
+      <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid rgba(129,140,248,.4);border-radius:4px">
+        <span class="fw-bold" style="color:#a5b4fc;font-size:.78rem">{{q}}</span>
+        <div style="font-size:.73rem;color:#9ca3af">{{desc|safe}}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+</div><!-- /tab-chaos -->
+
+</div><!-- container -->
+
+<style>
+.nav-tabs .nav-link { color: #9ca3af; border-color: transparent; }
+.nav-tabs .nav-link:hover { color: #818cf8; border-color: transparent; }
+.nav-tabs .nav-link.active { background: rgba(129,140,248,.15); color: #818cf8; border-color: rgba(129,140,248,.4) rgba(129,140,248,.4) transparent; }
+</style>
+
+<script>
+function showTab(id, el) {
+  ['why','pow','raft','rqlite','chaos'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === id ? '' : 'none';
+  });
+  document.querySelectorAll('#c14tabs .nav-link').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+  return false;
+}
+</script>
+{% endblock %}

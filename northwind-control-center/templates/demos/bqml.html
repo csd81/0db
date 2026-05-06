@@ -1,0 +1,874 @@
+{% extends "base.html" %}
+{% block title %}BigQuery ML — Cloud Database Technologies{% endblock %}
+{% block content %}
+<style>
+:root {
+  --bq-blue:   #4285f4;
+  --bq-green:  #34a853;
+  --bq-yellow: #fbbc05;
+  --bq-red:    #ea4335;
+  --bq-l:      #38bdf8;
+  --bq-m:      #a78bfa;
+  --bq-h:      #f97316;
+  --ok:        #06d6a0;
+  --err:       #ef4444;
+}
+.tab-nav { display:flex; gap:.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+.tab-btn {
+  padding:.4rem 1.1rem; border-radius:6px; border:1px solid #2a2d3a;
+  background:#13141a; color:#8892a4; cursor:pointer; font-size:.82rem;
+  transition:all .15s;
+}
+.tab-btn.active { border-color:var(--accent); color:var(--accent); background:#1a1b26; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* Pipeline step */
+.pipe-step {
+  display:flex; flex-direction:column; align-items:center; gap:.3rem;
+  flex:1; min-width:80px;
+}
+.pipe-icon {
+  width:46px; height:46px; border-radius:12px; display:flex;
+  align-items:center; justify-content:center; font-size:1.2rem;
+  flex-shrink:0;
+}
+.pipe-arrow { color:#374151; font-size:1.3rem; align-self:center; padding-top:.8rem; }
+.pipe-label { font-size:.62rem; color:#8892a4; text-align:center; line-height:1.3; }
+.pipe-sub   { font-size:.6rem; color:#5a6070; text-align:center; line-height:1.2; margin-top:.1rem; }
+
+/* Metric card */
+.metric-card {
+  background:#0d0f16; border-radius:8px; padding:.8rem 1rem;
+  border:1px solid #1e2028; text-align:center;
+}
+.metric-val  { font-size:1.8rem; font-weight:700; line-height:1; }
+.metric-label{ font-size:.62rem; color:#8892a4; margin-top:.2rem; text-transform:uppercase; letter-spacing:.06em; }
+.metric-ref  { font-size:.6rem; color:#5a6070; margin-top:.15rem; }
+
+/* SQL box */
+.sql-box {
+  background:#080a10; border:1px solid #1e2028; border-radius:6px;
+  padding:.7rem .9rem; font-size:.66rem; line-height:1.6;
+  color:#c9d1d9; overflow-x:auto; white-space:pre;
+  font-family:'JetBrains Mono','Cascadia Code',monospace;
+}
+.kw{color:#569cd6} .fn{color:#dcdcaa} .cm{color:#6a9955}
+.st{color:#ce9178} .nu{color:#b5cea8} .ty{color:#4ec9b0}
+.op{color:#a78bfa} .bt{color:#4285f4}
+
+/* Coef bar */
+.coef-row { display:flex; align-items:center; gap:.4rem; margin:.2rem 0; }
+.coef-name { font-size:.63rem; color:#8892a4; min-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.coef-bar-wrap { flex:1; background:#0a0c14; border-radius:3px; height:10px; overflow:hidden; }
+.coef-bar-fill { height:100%; border-radius:3px; transition:width .6s; }
+.coef-val  { font-size:.63rem; color:#e2e8f0; min-width:55px; text-align:right; }
+
+/* Confusion matrix */
+.cm-grid { display:grid; gap:2px; width:fit-content; }
+.cm-cell {
+  width:52px; height:40px; display:flex; align-items:center;
+  justify-content:center; border-radius:4px; font-size:.75rem; font-weight:700;
+}
+.cm-header { font-size:.6rem; color:#5a6070; text-align:center; }
+
+/* Class badge */
+.cls-badge {
+  display:inline-block; padding:.2rem .65rem; border-radius:5px;
+  font-size:.72rem; font-weight:700; margin:.1rem;
+}
+
+/* Natality form */
+.nat-row { display:flex; align-items:center; gap:.6rem; margin:.4rem 0; }
+.nat-label { min-width:130px; font-size:.72rem; color:#8892a4; }
+.nat-input { background:#0a0c14; border:1px solid #2a2d3a; border-radius:4px;
+  color:#e2e8f0; padding:.25rem .5rem; font-size:.75rem; width:100px; }
+.nat-result {
+  background:#0d0f16; border:1px solid rgba(6,214,160,.3); border-radius:8px;
+  padding:1rem; text-align:center; margin-top:.8rem;
+}
+
+/* Table */
+.pred-table { width:100%; border-collapse:collapse; font-size:.7rem; }
+.pred-table th { padding:.35rem .5rem; border-bottom:1px solid #1e2028; color:#8892a4; font-weight:600; text-align:left; }
+.pred-table td { padding:.3rem .5rem; border-bottom:1px solid #0d0f16; }
+
+/* Pro/con cards */
+.pro-con { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+@media(max-width:600px){.pro-con{grid-template-columns:1fr}}
+</style>
+
+<div class="mb-3">
+  <h4 class="fw-bold mb-0" style="color:#e2e8f0">
+    <i class="bi bi-cloud-fill me-2" style="color:#4285f4"></i>Chapter 7 — Cloud Database Technologies &amp; BigQuery ML
+  </h4>
+  <div style="font-size:.73rem;color:#5a6070">GCP · BigQuery · Dremel · BQML → local sklearn mirror on Northwind</div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" style="--accent:#4285f4" onclick="switchTab('arch',this)">
+    <i class="bi bi-diagram-3 me-1"></i>Cloud Architecture
+  </button>
+  <button class="tab-btn" style="--accent:#34a853" onclick="switchTab('linreg',this)">
+    <i class="bi bi-graph-up me-1"></i>Linear Regression
+  </button>
+  <button class="tab-btn" style="--accent:#fbbc05" onclick="switchTab('nominal',this)">
+    <i class="bi bi-tags me-1"></i>Classification
+  </button>
+  <button class="tab-btn" style="--accent:#a78bfa" onclick="switchTab('natality',this)">
+    <i class="bi bi-heart-pulse me-1"></i>Natality Model
+  </button>
+</div>
+
+<!-- ═══════════ TAB 1: Cloud Architecture ═══════════ -->
+<div id="tab-arch" class="tab-panel active">
+
+  <div class="pro-con mb-3">
+    <div class="card" style="background:#0d0f16;border:1px solid rgba(52,168,83,.25)">
+      <div class="card-header py-2 px-3 small fw-semibold" style="color:#34a853;background:#0a0c14;border-bottom:1px solid rgba(52,168,83,.15)">
+        <i class="bi bi-check-circle me-1"></i>Cloud DB Advantages
+      </div>
+      <div class="card-body p-3" style="font-size:.72rem;color:#8892a4;line-height:1.8">
+        <div><span style="color:#34a853">●</span> <strong style="color:#e2e8f0">High availability</strong> — geographically distributed infrastructure, typically better than corporate servers</div>
+        <div><span style="color:#34a853">●</span> <strong style="color:#e2e8f0">Auto scalability</strong> — on-demand, load-proportional billing; no capacity planning</div>
+        <div><span style="color:#34a853">●</span> <strong style="color:#e2e8f0">Ecosystem integration</strong> — NLP, image processing, ML, Pub/Sub, Dataflow all in-cloud and latency-free to the DB</div>
+        <div><span style="color:#34a853">●</span> <strong style="color:#e2e8f0">No operational overhead</strong> — patching, backups, HA failover managed by provider</div>
+      </div>
+    </div>
+    <div class="card" style="background:#0d0f16;border:1px solid rgba(234,67,53,.25)">
+      <div class="card-header py-2 px-3 small fw-semibold" style="color:#ea4335;background:#0a0c14;border-bottom:1px solid rgba(234,67,53,.15)">
+        <i class="bi bi-exclamation-circle me-1"></i>Cloud DB Disadvantages
+      </div>
+      <div class="card-body p-3" style="font-size:.72rem;color:#8892a4;line-height:1.8">
+        <div><span style="color:#ea4335">●</span> <strong style="color:#e2e8f0">Reduced functionality</strong> — cloud DBs often lack features of on-prem; workarounds required</div>
+        <div><span style="color:#ea4335">●</span> <strong style="color:#e2e8f0">Fixed + variable costs</strong> — storage always billed even when idle; total cost must be modelled</div>
+        <div><span style="color:#ea4335">●</span> <strong style="color:#e2e8f0">Data sovereignty</strong> — sensitive data (healthcare records) physically leaving the network is a compliance risk</div>
+        <div><span style="color:#ea4335">●</span> <strong style="color:#e2e8f0">Internet dependency</strong> — critical production systems should not depend on Internet (→ private cloud)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GCP stack -->
+  <div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+    <div class="card-header py-2 px-3 small fw-semibold" style="color:#4285f4;background:#0a0c14;border-bottom:1px solid #1e2028">
+      <i class="bi bi-cloud me-1"></i>GCP Stack Used in This Course
+    </div>
+    <div class="card-body p-3">
+      <div class="d-flex gap-2 flex-wrap mb-3" style="font-size:.72rem">
+        <div class="p-2 rounded" style="background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.3);color:#4285f4;min-width:110px;text-align:center">
+          <div style="font-size:1.1rem">⚙️</div>
+          <div class="fw-bold">App Engine</div>
+          <div style="font-size:.6rem;color:#5a6070">Flask app deployment<br>PaaS, auto-scaling</div>
+        </div>
+        <div class="p-2 rounded" style="background:rgba(52,168,83,.1);border:1px solid rgba(52,168,83,.3);color:#34a853;min-width:110px;text-align:center">
+          <div style="font-size:1.1rem">🗄️</div>
+          <div class="fw-bold">Cloud SQL</div>
+          <div style="font-size:.6rem;color:#5a6070">Managed PostgreSQL<br>public IP, Query Insights</div>
+        </div>
+        <div class="p-2 rounded" style="background:rgba(251,188,5,.1);border:1px solid rgba(251,188,5,.3);color:#fbbc05;min-width:110px;text-align:center">
+          <div style="font-size:1.1rem">🔥</div>
+          <div class="fw-bold">Firestore</div>
+          <div style="font-size:.6rem;color:#5a6070">Document store<br>Native mode, real-time</div>
+        </div>
+        <div class="p-2 rounded" style="background:rgba(66,133,244,.12);border:1px solid rgba(66,133,244,.25);color:#4285f4;min-width:110px;text-align:center">
+          <div style="font-size:1.1rem">📊</div>
+          <div class="fw-bold">BigQuery</div>
+          <div style="font-size:.6rem;color:#5a6070">Columnar OLAP<br>Dremel storage</div>
+        </div>
+        <div class="p-2 rounded" style="background:rgba(234,67,53,.1);border:1px solid rgba(234,67,53,.3);color:#ea4335;min-width:110px;text-align:center">
+          <div style="font-size:1.1rem">🤖</div>
+          <div class="fw-bold">BigQuery ML</div>
+          <div style="font-size:.6rem;color:#5a6070">SQL-based ML<br>CREATE MODEL</div>
+        </div>
+        <div class="p-2 rounded" style="background:rgba(52,168,83,.08);border:1px solid rgba(52,168,83,.2);color:#34a853;min-width:110px;text-align:center">
+          <div style="font-size:1.1rem">🔍</div>
+          <div class="fw-bold">Dataplex</div>
+          <div style="font-size:.6rem;color:#5a6070">Data quality scans<br>Column profiling</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BigQuery Dremel architecture -->
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card h-100" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#4285f4;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-layers me-1"></i>BigQuery — Dremel Columnar Storage
+        </div>
+        <div class="card-body p-3" style="font-size:.72rem;color:#8892a4;line-height:1.7">
+          <div>BigQuery stores data in <strong style="color:#e2e8f0">Dremel</strong> — a compressed, optionally-partitioned column store. All data encrypted at rest. Queries are <strong style="color:#e2e8f0">read-only OLAP</strong> — no UPDATE/DELETE on live tables.</div>
+          <div class="mt-2">Logical model: <code>project.dataset.table</code> — datasets contain related tables with a fixed schema.</div>
+          <div class="mt-2">For best performance, external data (Bigtable, Cloud Storage, Google Drive) should be first imported into Dremel.</div>
+          <div class="mt-2"><strong style="color:#fbbc05">Denormalized data preferred</strong> — joins across huge tables are expensive; BigQuery expects pre-flattened fact tables.</div>
+          <div class="mt-2" style="color:#5a6070;font-size:.65rem">Reference: Panoply BigQuery Architecture, Google BigQuery Explained Storage Overview</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#ea4335;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-robot me-1"></i>BigQuery ML Workflow
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-1 align-items-start">
+            <div class="pipe-step">
+              <div class="pipe-icon" style="background:rgba(66,133,244,.15);color:#4285f4"><i class="bi bi-table"></i></div>
+              <div class="pipe-label">Export view<br>to CSV</div>
+              <div class="pipe-sub">SQL Server<br>→ flat file</div>
+            </div>
+            <div class="pipe-arrow">→</div>
+            <div class="pipe-step">
+              <div class="pipe-icon" style="background:rgba(52,168,83,.15);color:#34a853"><i class="bi bi-upload"></i></div>
+              <div class="pipe-label">Load to<br>BigQuery</div>
+              <div class="pipe-sub">project.northwind<br>.nw table</div>
+            </div>
+            <div class="pipe-arrow">→</div>
+            <div class="pipe-step">
+              <div class="pipe-icon" style="background:rgba(251,188,5,.15);color:#fbbc05"><i class="bi bi-graph-up-arrow"></i></div>
+              <div class="pipe-label">CREATE MODEL<br>(linear_reg)</div>
+              <div class="pipe-sub">80/20 auto-split<br>~30 seconds</div>
+            </div>
+            <div class="pipe-arrow">→</div>
+            <div class="pipe-step">
+              <div class="pipe-icon" style="background:rgba(234,67,53,.15);color:#ea4335"><i class="bi bi-check2-circle"></i></div>
+              <div class="pipe-label">ML.EVALUATE<br>ML.PREDICT</div>
+              <div class="pipe-sub">MAE=342<br>Var=53%</div>
+            </div>
+          </div>
+          <div class="mt-3" style="font-size:.67rem;color:#5a6070">
+            The same pipeline runs locally below using <strong style="color:#e2e8f0">scikit-learn LinearRegression</strong> on Northwind — compare your local MAE and R² to the BigQuery reference values.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB 2: Linear Regression ═══════════ -->
+<div id="tab-linreg" class="tab-panel">
+
+  <!-- BQML SQL -->
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6">
+      <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#4285f4;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-code-slash me-1"></i>BigQuery ML — CREATE MODEL
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-0"><span class="cm">-- Step 1: Denormalized view → CSV → BigQuery table 'northwind.nw'</span>
+<span class="cm">-- Step 2: Create linear regression model</span>
+<span class="bt">CREATE MODEL</span> `northwind.nw_model`
+<span class="kw">OPTIONS</span> (
+    model_type=<span class="st">'linear_reg'</span>,
+    input_label_cols=[<span class="st">'value_numeric'</span>]
+) <span class="kw">AS</span>
+<span class="kw">SELECT</span> value_numeric, country, categoryid,
+       p_unitprice, discount, pyear
+<span class="kw">FROM</span> `northwind.nw`
+<span class="kw">WHERE</span> value_numeric <span class="kw">IS NOT NULL</span>
+
+<span class="cm">-- Evaluate: MAE ≈ 342, explained variance ≈ 53%</span>
+<span class="bt">SELECT</span> * <span class="kw">FROM</span> <span class="fn">ML.EVALUATE</span>(<span class="bt">MODEL</span> `northwind.nw_model`, (
+  <span class="kw">SELECT</span> value_numeric, country, categoryid,
+         p_unitprice, discount, pyear
+  <span class="kw">FROM</span> `northwind.nw`
+))
+
+<span class="cm">-- Predict: only rows where abs error &lt; 40%</span>
+<span class="bt">SELECT</span> * <span class="kw">FROM</span> <span class="fn">ML.PREDICT</span>(<span class="bt">MODEL</span> `northwind.nw_model`, (
+  <span class="kw">SELECT</span> value_numeric, country, categoryid,
+         p_unitprice, discount, pyear
+  <span class="kw">FROM</span> `northwind.nw`
+))
+<span class="kw">WHERE</span> <span class="fn">ABS</span>((predicted_value_numeric - value_numeric))
+      / value_numeric &lt; <span class="nu">0.4</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#0d0f16;border:1px solid rgba(52,168,83,.3)">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#34a853;background:#0a0c14;border-bottom:1px solid rgba(52,168,83,.2)">
+          <i class="bi bi-cpu me-1"></i>Local Mirror — sklearn LinearRegression (Northwind)
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-2" style="background:#080a10"><span class="cm"># Source: SQL Server Northwind → pandas DataFrame</span>
+<span class="cm"># Features: country (OHE), categoryid (OHE),</span>
+<span class="cm">#           p_unitprice, discount, pyear</span>
+<span class="cm"># Target:   value_numeric = UnitPrice*Quantity*(1-Discount)</span>
+
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression
+<span class="kw">from</span> sklearn.compose <span class="kw">import</span> ColumnTransformer
+<span class="kw">from</span> sklearn.pipeline <span class="kw">import</span> Pipeline
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> OneHotEncoder
+
+pipe = Pipeline([
+    (<span class="st">'pre'</span>, ColumnTransformer([
+        (<span class="st">'cat'</span>, OneHotEncoder(), [<span class="st">'country'</span>,<span class="st">'categoryid'</span>]),
+        (<span class="st">'num'</span>, <span class="st">'passthrough'</span>, [<span class="st">'p_unitprice'</span>,<span class="st">'discount'</span>,<span class="st">'pyear'</span>]),
+    ])),
+    (<span class="st">'lr'</span>, LinearRegression()),
+])
+pipe.fit(X_train, y_train)</pre>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-sm" style="background:#34a853;color:#fff;border:none" onclick="loadSourceData()">
+              <i class="bi bi-database me-1"></i>Load Source Data
+            </button>
+            <button class="btn btn-sm" style="background:#4285f4;color:#fff;border:none" onclick="trainModel()">
+              <i class="bi bi-graph-up me-1"></i>Train &amp; Evaluate
+            </button>
+            <span id="train-status" style="font-size:.7rem;color:#8892a4"></span>
+          </div>
+          <div id="source-info" class="mt-2" style="font-size:.7rem;color:#5a6070"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics + results -->
+  <div id="metrics-area" style="display:none">
+    <div class="row g-2 mb-3">
+      <div class="col-4">
+        <div class="metric-card">
+          <div class="metric-val" style="color:#34a853" id="m-mae">—</div>
+          <div class="metric-label">Mean Absolute Error</div>
+          <div class="metric-ref">BigQuery reference: 342</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="metric-card">
+          <div class="metric-val" style="color:#fbbc05" id="m-r2">—</div>
+          <div class="metric-label">R² Score</div>
+          <div class="metric-ref">BigQuery reference: 53%</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="metric-card">
+          <div class="metric-val" style="color:#4285f4" id="m-evs">—</div>
+          <div class="metric-label">Explained Variance</div>
+          <div class="metric-ref">BigQuery reference: 53%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+          <div class="card-header py-2 px-3 small fw-semibold" style="color:#8892a4;background:#0a0c14;border-bottom:1px solid #1e2028">
+            Actual vs Predicted — scatter (test set)
+          </div>
+          <div class="card-body p-2">
+            <canvas id="scatter-chart" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+          <div class="card-header py-2 px-3 small fw-semibold" style="color:#8892a4;background:#0a0c14;border-bottom:1px solid #1e2028">
+            Top Regression Coefficients (abs value)
+          </div>
+          <div class="card-body p-3" id="coef-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Predict panel -->
+  <div class="card mt-3" style="background:#0d0f16;border:1px solid #1e2028">
+    <div class="card-header py-2 px-3 small fw-semibold" style="color:#ea4335;background:#0a0c14;border-bottom:1px solid #1e2028">
+      <i class="bi bi-bullseye me-1"></i>ML.PREDICT — Filter by Error Threshold
+    </div>
+    <div class="card-body p-3">
+      <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+        <label style="font-size:.72rem;color:#8892a4">Error threshold:</label>
+        <select id="threshold-sel" class="form-select form-select-sm" style="width:auto;background:#0a0c14;color:#e2e8f0;border-color:#2a2d3a">
+          <option value="0.2">20%</option>
+          <option value="0.4" selected>40%</option>
+          <option value="0.6">60%</option>
+        </select>
+        <button class="btn btn-sm" style="background:#ea4335;color:#fff;border:none" onclick="runPredict()">
+          <i class="bi bi-play-fill me-1"></i>Run Predict
+        </button>
+        <span id="predict-status" style="font-size:.7rem;color:#8892a4"></span>
+      </div>
+      <div id="predict-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB 3: Classification (value_nominal) ═══════════ -->
+<div id="tab-nominal" class="tab-panel">
+
+  <div class="row g-3 mb-3">
+    <div class="col-lg-7">
+      <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#fbbc05;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-code-slash me-1"></i>BigQuery ML — value_nominal Classification
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-0"><span class="cm">-- Practice: add value_nominal (L/M/H) field to the view</span>
+<span class="kw">SELECT</span>
+  od.unitprice * od.quantity * (<span class="nu">1</span> - od.discount) <span class="kw">AS</span> value,
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> (od.unitprice*od.quantity*(<span class="nu">1</span>-od.discount)) &lt;  <span class="nu">200</span>  <span class="kw">THEN</span> <span class="st">'L'</span>
+    <span class="kw">WHEN</span> (od.unitprice*od.quantity*(<span class="nu">1</span>-od.discount)) &lt;  <span class="nu">1200</span> <span class="kw">THEN</span> <span class="st">'M'</span>
+    <span class="kw">WHEN</span> (od.unitprice*od.quantity*(<span class="nu">1</span>-od.discount)) &gt;= <span class="nu">1200</span> <span class="kw">THEN</span> <span class="st">'H'</span>
+    <span class="kw">ELSE</span> <span class="st">'N/A'</span>
+  <span class="kw">END AS</span> value_nominal,
+  c.Country, p.CategoryID,
+  p.UnitPrice <span class="kw">AS</span> p_unitprice,
+  od.Discount, <span class="fn">YEAR</span>(o.OrderDate) <span class="kw">AS</span> pyear
+  <span class="cm">-- ... (full join from Customers → Orders → [Order Details] → Products)</span>
+
+<span class="cm">-- BQML classifier (BigQuery)</span>
+<span class="bt">CREATE MODEL</span> `northwind.nominal_model`
+<span class="kw">OPTIONS</span> (
+    model_type=<span class="st">'BOOSTED_TREE_CLASSIFIER'</span>,  <span class="cm">-- or 'LOGISTIC_REG'</span>
+    input_label_cols=[<span class="st">'value_nominal'</span>]
+) <span class="kw">AS</span>
+<span class="kw">SELECT</span> value_nominal, country, categoryid,
+       p_unitprice, discount, pyear
+<span class="kw">FROM</span> `northwind.nw_with_nominal`
+<span class="kw">WHERE</span> value_nominal &lt;&gt; <span class="st">'N/A'</span>
+
+<span class="cm">-- Local mirror: LogisticRegression in sklearn (button below)</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card h-100" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#fbbc05;background:#0a0c14;border-bottom:1px solid #1e2028">
+          Class Distribution
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-3">
+            <span class="cls-badge" style="background:rgba(56,189,248,.15);color:var(--bq-l)">L — Low</span>
+            <span style="font-size:.7rem;color:#8892a4"> value &lt; 200</span>
+          </div>
+          <div class="mb-3">
+            <span class="cls-badge" style="background:rgba(167,139,250,.15);color:var(--bq-m)">M — Medium</span>
+            <span style="font-size:.7rem;color:#8892a4"> 200 ≤ value &lt; 1200</span>
+          </div>
+          <div class="mb-3">
+            <span class="cls-badge" style="background:rgba(249,115,22,.15);color:var(--bq-h)">H — High</span>
+            <span style="font-size:.7rem;color:#8892a4"> value ≥ 1200</span>
+          </div>
+          <div id="class-dist" style="font-size:.7rem;color:#5a6070">Train the classifier to see distribution.</div>
+          <div class="mt-3">
+            <button class="btn btn-sm w-100" style="background:#fbbc05;color:#0d0f16;border:none" onclick="trainNominal()">
+              <i class="bi bi-tags me-1"></i>Train L/M/H Classifier (LogisticRegression)
+            </button>
+            <span id="nominal-status" class="d-block mt-1" style="font-size:.7rem;color:#8892a4"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Classifier results -->
+  <div id="nominal-results" style="display:none">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-val" style="color:#fbbc05" id="nm-acc">—</div>
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-ref">% of test rows correctly classified</div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+          <div class="card-header py-2 px-3 small fw-semibold" style="color:#8892a4;background:#0a0c14;border-bottom:1px solid #1e2028">
+            Per-class Precision / Recall / F1
+          </div>
+          <div class="card-body p-2" id="per-class-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-md-5">
+        <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+          <div class="card-header py-2 px-3 small fw-semibold" style="color:#8892a4;background:#0a0c14;border-bottom:1px solid #1e2028">
+            Confusion Matrix (test set)
+          </div>
+          <div class="card-body p-3" id="cm-display"></div>
+        </div>
+      </div>
+      <div class="col-md-7">
+        <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+          <div class="card-header py-2 px-3 small fw-semibold" style="color:#8892a4;background:#0a0c14;border-bottom:1px solid #1e2028">
+            Interpretation
+          </div>
+          <div class="card-body p-3" style="font-size:.71rem;color:#8892a4;line-height:1.7">
+            <div>A logistic regression classifier with OneHotEncoded <code>country</code> + <code>categoryid</code> mirrors the BigQuery <code>LOGISTIC_REG</code> model type.</div>
+            <div class="mt-2">The <strong style="color:#e2e8f0">BOOSTED_TREE_CLASSIFIER</strong> in BigQuery (gradient boosted decision trees) typically achieves higher accuracy than logistic regression — try it on BigQuery to compare.</div>
+            <div class="mt-2">The <code>value_nominal</code> threshold split (200/1200) is a business rule — an expert choice about what constitutes "low", "medium", "high" order value.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB 4: Natality Model ═══════════ -->
+<div id="tab-natality" class="tab-panel">
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#a78bfa;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-code-slash me-1"></i>BigQuery ML — Natality Model (public dataset)
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-0"><span class="cm">-- Public table: bigquery-public-data.samples.natality</span>
+<span class="cm">-- ~137M birth records in the USA</span>
+<span class="cm">-- Sample with RAND() &lt; 0.0001 (~13,700 rows)</span>
+
+<span class="bt">CREATE MODEL</span> `us_dataset.natality_model`
+<span class="kw">OPTIONS</span> (
+    model_type=<span class="st">'linear_reg'</span>,
+    input_label_cols=[<span class="st">'weight_pounds'</span>]
+) <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    weight_pounds,
+    is_male,
+    gestation_weeks,
+    mother_age,
+    <span class="fn">CAST</span>(mother_race <span class="kw">AS STRING</span>) <span class="kw">AS</span> mother_race
+<span class="kw">FROM</span> `bigquery-public-data.samples.natality`
+<span class="kw">WHERE</span> weight_pounds <span class="kw">IS NOT NULL</span>
+  <span class="kw">AND RAND</span>() &lt; <span class="nu">0.0001</span>
+
+<span class="cm">-- Training info</span>
+<span class="bt">SELECT</span> * <span class="kw">FROM</span> <span class="fn">ML.TRAINING_INFO</span>(
+    <span class="bt">MODEL</span> `us_dataset.natality_model`)
+
+<span class="cm">-- Single prediction</span>
+<span class="bt">SELECT</span> * <span class="kw">FROM</span> <span class="fn">ML.PREDICT</span>(
+    <span class="bt">MODEL</span> `us_dataset.natality_model`,
+    (<span class="kw">SELECT</span> <span class="kw">TRUE AS</span> is_male,
+            <span class="nu">40</span>   <span class="kw">AS</span> gestation_weeks,
+            <span class="nu">30</span>   <span class="kw">AS</span> mother_age,
+            <span class="st">'38'</span> <span class="kw">AS</span> mother_race))</pre>
+        </div>
+      </div>
+
+      <div class="card mt-3" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#8892a4;background:#0a0c14;border-bottom:1px solid #1e2028">
+          Dataset Notes
+        </div>
+        <div class="card-body p-3" style="font-size:.71rem;color:#8892a4;line-height:1.7">
+          <div><strong style="color:#e2e8f0">Dataset location matters:</strong> the natality public table is in the <code>US</code> multi-region. Your BigQuery dataset must also be in <code>US</code>, otherwise you must set <em>More → Query settings → Advanced → Data location</em> to US.</div>
+          <div class="mt-2"><strong style="color:#e2e8f0">RAND() sampling:</strong> the table has 137M rows. <code>WHERE RAND() &lt; 0.0001</code> samples approximately 13,700 rows for training — keeps cost and time low.</div>
+          <div class="mt-2">
+            Mother race codes (NCHS):
+            <span class="cls-badge" style="background:rgba(66,133,244,.1);color:#4285f4">1=White</span>
+            <span class="cls-badge" style="background:rgba(234,67,53,.1);color:#ea4335">2=Black</span>
+            <span class="cls-badge" style="background:rgba(52,168,83,.1);color:#34a853">3=Am.Indian</span>
+            <span class="cls-badge" style="background:rgba(251,188,5,.1);color:#fbbc05">6=Asian/PI</span>
+            <span class="cls-badge" style="background:rgba(167,139,250,.1);color:#a78bfa">38=Korean</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card" style="background:#0d0f16;border:1px solid rgba(167,139,250,.3)">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#a78bfa;background:#0a0c14;border-bottom:1px solid rgba(167,139,250,.2)">
+          <i class="bi bi-heart-pulse me-1"></i>Interactive Prediction Simulator
+        </div>
+        <div class="card-body p-3">
+          <div style="font-size:.72rem;color:#8892a4;margin-bottom:.8rem">
+            Simulate <code>ML.PREDICT</code> output using a formula derived from the BigQuery ML natality model coefficients:
+            <code style="font-size:.63rem">weight ≈ 7.30 + 0.28·is_male + 0.46·(gest−39) + 0.012·(age−28) + race_adj</code>
+          </div>
+
+          <div class="nat-row">
+            <div class="nat-label">Is male?</div>
+            <select id="nat-male" class="nat-input">
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+          <div class="nat-row">
+            <div class="nat-label">Gestation weeks</div>
+            <input id="nat-gest" type="number" class="nat-input" value="40" min="22" max="46">
+          </div>
+          <div class="nat-row">
+            <div class="nat-label">Mother age</div>
+            <input id="nat-age" type="number" class="nat-input" value="28" min="12" max="55">
+          </div>
+          <div class="nat-row">
+            <div class="nat-label">Mother race</div>
+            <select id="nat-race" class="nat-input" style="width:160px">
+              <option value="1">1 — White</option>
+              <option value="2">2 — Black/African Am.</option>
+              <option value="3">3 — Am. Indian/AK Native</option>
+              <option value="6">6 — Asian/Pacific Islander</option>
+              <option value="38" selected>38 — Korean</option>
+              <option value="7">7 — Other</option>
+            </select>
+          </div>
+
+          <button class="btn btn-sm mt-2" style="background:#a78bfa;color:#0d0f16;border:none" onclick="predictNatality()">
+            <i class="bi bi-calculator me-1"></i>Predict Birth Weight
+          </button>
+
+          <div id="nat-result" class="nat-result mt-3" style="display:none">
+            <div style="font-size:.63rem;color:#5a6070;margin-bottom:.3rem">PREDICTED WEIGHT</div>
+            <div id="nat-weight-lb" style="font-size:2.2rem;font-weight:700;color:#a78bfa;line-height:1">—</div>
+            <div style="font-size:.75rem;color:#8892a4" id="nat-weight-kg">— kg</div>
+            <div style="font-size:.63rem;color:#5a6070;margin-top:.5rem" id="nat-inputs-echo"></div>
+          </div>
+
+          <div class="mt-3" style="font-size:.67rem;color:#5a6070">
+            BigQuery reference prediction for (male, 40 weeks, age 30, race '38'):
+            <span style="color:#a78bfa">≈ 7.73 lbs (3.51 kg)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key model insights -->
+      <div class="card mt-3" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#8892a4;background:#0a0c14;border-bottom:1px solid #1e2028">
+          Key Coefficients (from published BQML natality model)
+        </div>
+        <div class="card-body p-3">
+          <div class="coef-row">
+            <div class="coef-name">gestation_weeks</div>
+            <div class="coef-bar-wrap"><div class="coef-bar-fill" style="background:#34a853;width:100%"></div></div>
+            <div class="coef-val" style="color:#34a853">+0.460</div>
+          </div>
+          <div class="coef-row">
+            <div class="coef-name">is_male (TRUE)</div>
+            <div class="coef-bar-wrap"><div class="coef-bar-fill" style="background:#4285f4;width:60%"></div></div>
+            <div class="coef-val" style="color:#4285f4">+0.276</div>
+          </div>
+          <div class="coef-row">
+            <div class="coef-name">mother_age</div>
+            <div class="coef-bar-wrap"><div class="coef-bar-fill" style="background:#fbbc05;width:26%"></div></div>
+            <div class="coef-val" style="color:#fbbc05">+0.012</div>
+          </div>
+          <div class="coef-row">
+            <div class="coef-name">mother_race=2 (Black)</div>
+            <div class="coef-bar-wrap"><div class="coef-bar-fill" style="background:#ea4335;width:46%"></div></div>
+            <div class="coef-val" style="color:#ea4335">−0.210</div>
+          </div>
+          <div style="font-size:.63rem;color:#5a6070;margin-top:.4rem">
+            Gestation weeks dominates — each additional week adds ~0.46 lbs.
+            Male babies average 0.28 lbs heavier. Mother age has a small positive effect.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let scatterChart = null;
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Source data ────────────────────────────────────────────────────────
+async function loadSourceData() {
+  setEl('train-status', '⏳ Loading…');
+  const r = await fetch('/demos/bqml/source-data');
+  const d = await r.json();
+  if (!d.ok) return setEl('train-status', '✗ ' + d.error);
+  setEl('source-info',
+    `<span style="color:#34a853">${d.n_rows} rows</span> · ` +
+    `${d.countries} countries · years ${d.years.join(',')} · ` +
+    `categories ${d.categories.join(',')} · ` +
+    `value range ${d.value_min}–${d.value_max} (mean ${d.value_mean})`);
+  setEl('train-status', '✓ Data loaded — click Train & Evaluate');
+}
+
+// ── Train linear regression ────────────────────────────────────────────
+async function trainModel() {
+  setEl('train-status', '⏳ Training…');
+  const r = await fetch('/demos/bqml/train', {method:'POST'});
+  const d = await r.json();
+  if (!d.ok) return setEl('train-status', '✗ ' + d.error);
+
+  setEl('train-status', `✓ Trained on ${d.n_train} rows, tested on ${d.n_test}`);
+  setEl('m-mae', d.mae);
+  setEl('m-r2', d.r2 + '%');
+  setEl('m-evs', d.evs + '%');
+  document.getElementById('metrics-area').style.display = '';
+
+  // Scatter
+  const ctx = document.getElementById('scatter-chart').getContext('2d');
+  if (scatterChart) scatterChart.destroy();
+  const pts = d.scatter.actual.map((a, i) => ({x: a, y: d.scatter.predicted[i]}));
+  const maxV = Math.max(...d.scatter.actual, ...d.scatter.predicted);
+  scatterChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {label:'Predicted vs Actual', data: pts, backgroundColor:'rgba(66,133,244,.35)',
+         pointRadius:3, pointHoverRadius:5},
+        {label:'Perfect prediction', data:[{x:0,y:0},{x:maxV,y:maxV}],
+         type:'line', borderColor:'rgba(6,214,160,.5)', borderWidth:1, pointRadius:0, fill:false},
+      ]
+    },
+    options: {
+      responsive:true, animation:{duration:500},
+      plugins:{legend:{labels:{color:'#8892a4',font:{size:10}}}},
+      scales:{
+        x:{title:{display:true,text:'Actual value_numeric',color:'#5a6070'},ticks:{color:'#5a6070'},grid:{color:'#12141a'}},
+        y:{title:{display:true,text:'Predicted',color:'#5a6070'},ticks:{color:'#5a6070'},grid:{color:'#12141a'}},
+      }
+    }
+  });
+
+  // Coefficients
+  const maxAbs = Math.max(...d.coefs.map(c => Math.abs(c[1])));
+  const coefHtml = d.coefs.map(([name, val]) => {
+    const pct = Math.round(Math.abs(val) / maxAbs * 100);
+    const color = val >= 0 ? '#34a853' : '#ea4335';
+    return `<div class="coef-row">
+      <div class="coef-name" title="${name}">${name}</div>
+      <div class="coef-bar-wrap"><div class="coef-bar-fill" style="background:${color};width:${pct}%"></div></div>
+      <div class="coef-val" style="color:${color}">${val >= 0 ? '+' : ''}${val}</div>
+    </div>`;
+  }).join('');
+  setEl('coef-list', coefHtml);
+}
+
+// ── Predict with threshold ─────────────────────────────────────────────
+async function runPredict() {
+  const threshold = parseFloat(document.getElementById('threshold-sel').value);
+  setEl('predict-status', '⏳ Predicting…');
+  const r = await fetch('/demos/bqml/predict', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({threshold})
+  });
+  const d = await r.json();
+  if (!d.ok) return setEl('predict-status', '✗ ' + d.error);
+  setEl('predict-status', `${d.n_within}/${d.n_test} rows within ${d.threshold_pct}% error`);
+
+  let html = `<div style="font-size:.7rem;color:#8892a4;margin-bottom:.5rem">
+    <span style="color:#34a853">✓ Within ${d.threshold_pct}% error: ${d.n_within} / ${d.n_test} rows (${Math.round(d.n_within/d.n_test*100)}%)</span>
+  </div>`;
+
+  html += '<div style="font-size:.65rem;color:#5a6070;margin-bottom:.2rem">Best predictions (sample):</div>';
+  html += renderPredTable(d.good, '#34a853');
+  html += '<div style="font-size:.65rem;color:#5a6070;margin:.5rem 0 .2rem">Worst predictions:</div>';
+  html += renderPredTable(d.worst, '#ea4335');
+  setEl('predict-result', html);
+}
+
+function renderPredTable(rows, color) {
+  let h = `<table class="pred-table"><thead><tr>
+    <th>Country</th><th>Actual</th><th>Predicted</th><th>Error %</th>
+  </tr></thead><tbody>`;
+  rows.forEach(r => {
+    h += `<tr>
+      <td style="color:#8892a4">${r.country}</td>
+      <td style="color:#e2e8f0">${r.actual}</td>
+      <td style="color:${color}">${r.predicted}</td>
+      <td style="color:${color}">${r.error_pct}%</td>
+    </tr>`;
+  });
+  return h + '</tbody></table>';
+}
+
+// ── Classifier ─────────────────────────────────────────────────────────
+async function trainNominal() {
+  setEl('nominal-status', '⏳ Training LogisticRegression…');
+  const r = await fetch('/demos/bqml/train-nominal', {method:'POST'});
+  const d = await r.json();
+  if (!d.ok) return setEl('nominal-status', '✗ ' + d.error);
+
+  setEl('nominal-status', `✓ Done — ${d.n_total} rows, ${d.n_train} train, ${d.n_test} test`);
+  setEl('nm-acc', d.accuracy + '%');
+  document.getElementById('nominal-results').style.display = '';
+
+  // Distribution
+  const total = Object.values(d.dist).reduce((a,b) => a+b, 0);
+  const distHtml = Object.entries(d.dist).map(([k,v]) => {
+    const cls = k === 'L' ? 'var(--bq-l)' : k === 'M' ? 'var(--bq-m)' : 'var(--bq-h)';
+    return `<span class="cls-badge" style="background:rgba(167,139,250,.1);color:${cls}">${k}: ${v} (${Math.round(v/total*100)}%)</span>`;
+  }).join(' ');
+  setEl('class-dist', distHtml);
+
+  // Per-class table
+  const classes = [
+    {k:'L', color:'var(--bq-l)'}, {k:'M', color:'var(--bq-m)'}, {k:'H', color:'var(--bq-h)'}
+  ];
+  let tbl = `<table style="width:100%;border-collapse:collapse;font-size:.7rem">
+    <thead><tr>
+      <th style="padding:.3rem .4rem;border-bottom:1px solid #1e2028;color:#8892a4">Class</th>
+      <th style="padding:.3rem .4rem;border-bottom:1px solid #1e2028;color:#8892a4">Precision</th>
+      <th style="padding:.3rem .4rem;border-bottom:1px solid #1e2028;color:#8892a4">Recall</th>
+      <th style="padding:.3rem .4rem;border-bottom:1px solid #1e2028;color:#8892a4">F1</th>
+    </tr></thead><tbody>`;
+  classes.forEach(({k, color}) => {
+    const m = d.per_class[k] || {};
+    tbl += `<tr>
+      <td style="padding:.3rem .4rem"><span class="cls-badge" style="background:rgba(167,139,250,.1);color:${color}">${k}</span></td>
+      <td style="padding:.3rem .4rem;color:${color}">${m.precision ?? '—'}%</td>
+      <td style="padding:.3rem .4rem;color:${color}">${m.recall ?? '—'}%</td>
+      <td style="padding:.3rem .4rem;color:${color}">${m.f1 ?? '—'}%</td>
+    </tr>`;
+  });
+  setEl('per-class-table', tbl + '</tbody></table>');
+
+  // Confusion matrix
+  const labels = d.cm_labels;
+  const cls_colors = ['var(--bq-l)', 'var(--bq-m)', 'var(--bq-h)'];
+  const maxVal = Math.max(...d.cm.flat());
+  let cmHtml = `<div style="font-size:.6rem;color:#5a6070;margin-bottom:.4rem">
+    Rows = Actual, Cols = Predicted
+  </div>
+  <div style="display:grid;grid-template-columns:40px repeat(3,52px);gap:2px;font-size:.65rem">
+    <div></div>`;
+  labels.forEach((l,i) => {
+    cmHtml += `<div class="cm-header" style="color:${cls_colors[i]}">pred ${l}</div>`;
+  });
+  d.cm.forEach((row, ri) => {
+    cmHtml += `<div style="color:${cls_colors[ri]};font-size:.65rem;display:flex;align-items:center;justify-content:flex-end;padding-right:.3rem">act ${labels[ri]}</div>`;
+    row.forEach((v, ci) => {
+      const alpha = maxVal ? v / maxVal : 0;
+      const bg = ri === ci
+        ? `rgba(6,214,160,${0.1 + alpha * 0.5})`
+        : `rgba(239,68,68,${alpha * 0.4})`;
+      cmHtml += `<div class="cm-cell" style="background:${bg};color:${ri===ci?'#06d6a0':'#ef4444'}">${v}</div>`;
+    });
+  });
+  cmHtml += '</div>';
+  setEl('cm-display', cmHtml);
+}
+
+// ── Natality prediction ────────────────────────────────────────────────
+async function predictNatality() {
+  const is_male        = document.getElementById('nat-male').value === '1';
+  const gestation_weeks = parseInt(document.getElementById('nat-gest').value);
+  const mother_age     = parseInt(document.getElementById('nat-age').value);
+  const mother_race    = document.getElementById('nat-race').value;
+
+  const r = await fetch('/demos/bqml/natality-predict', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({is_male, gestation_weeks, mother_age, mother_race})
+  });
+  const d = await r.json();
+  if (!d.ok) return;
+
+  document.getElementById('nat-result').style.display = '';
+  setEl('nat-weight-lb', d.weight_pounds + ' lbs');
+  setEl('nat-weight-kg', d.weight_kg + ' kg');
+  setEl('nat-inputs-echo',
+    `is_male=${d.inputs.is_male} · gestation=${d.inputs.gestation_weeks}w · age=${d.inputs.mother_age} · race=${d.inputs.mother_race}`);
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function setEl(id, html) { const e = document.getElementById(id); if(e) e.innerHTML = html; }
+</script>
+{% endblock %}

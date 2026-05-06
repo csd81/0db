@@ -93,7 +93,7 @@ code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.7
   status,
   amount / 100  AS amount_usd,
   LOWER(currency) AS currency
-FROM {{ source('postgres', 'raw_orders') }}
+FROM {{ '{{' }} source('postgres', 'raw_orders') {{ '}}' }}
 WHERE created_at >= '2020-01-01'</div>
         </div>
         <div class="col-md-4">
@@ -106,10 +106,10 @@ WHERE created_at >= '2020-01-01'</div>
   o.amount_usd,
   DATEDIFF(day,o.ordered_at,
     s.shipped_at) AS days_to_ship
-FROM {{ ref('stg_orders') }} o
-LEFT JOIN {{ ref('stg_customers') }} c
+FROM {{ '{{' }} ref('stg_orders') {{ '}}' }} o
+LEFT JOIN {{ '{{' }} ref('stg_customers') {{ '}}' }} c
   ON o.customer_id = c.customer_id
-LEFT JOIN {{ ref('stg_shipments') }} s
+LEFT JOIN {{ '{{' }} ref('stg_shipments') {{ '}}' }} s
   ON o.order_id = s.order_id</div>
         </div>
         <div class="col-md-4">
@@ -122,7 +122,7 @@ LEFT JOIN {{ ref('stg_shipments') }} s
   COUNT(*)         AS order_count,
   AVG(amount_usd)  AS avg_order_value,
   AVG(days_to_ship) AS avg_ship_days
-FROM {{ ref('fct_orders') }}
+FROM {{ '{{' }} ref('fct_orders') {{ '}}' }}
 WHERE status = 'completed'
 GROUP BY 1, 2</div>
         </div>
@@ -279,7 +279,7 @@ const steps = [
   { title: 'Source DBs', detail: 'Production databases: PostgreSQL (orders, users), MySQL (product catalog), MongoDB (events), Salesforce (CRM), Stripe API (payment data), Google Analytics (web events). Each has different schemas, update frequencies, and extraction methods. Direct queries to production would add load — use read replicas. Analytical queries (GROUP BY, full table scans) are destructive to OLTP performance — must isolate completely.' },
   { title: 'Fivetran Extract', detail: 'Fivetran connects to source via read replica + logical replication (WAL log for Postgres). CDC tracks changes: INSERT/UPDATE/DELETE events streamed in real-time. No full table scans after initial sync. 500+ connectors with automatic schema detection. Handles: type conversions, null handling, column renaming normalization. Delivers raw data to warehouse staging schema unchanged — no transformation. Sync frequency: 1 minute to 24 hours depending on table.' },
   { title: 'Data Lake (Raw Zone)', detail: 'Raw files landed in S3: <code>s3://data-lake/raw/{source}/{table}/year=2025/month=05/day=06/{timestamp}.parquet</code>. Partitioned by date for efficient historical queries. Parquet format: columnar, compressed, schema embedded. Size: ~50 MB compressed per partition per table per day. Catalogued in AWS Glue Catalog (or Hive Metastore) — makes S3 files queryable via SQL in Athena/Presto without loading. Raw zone: never modified, immutable historical record.' },
-  { title: 'dbt Transform', detail: 'dbt models: staging (clean raw), intermediate (join logic), marts (aggregated for BI). Runs as SQL on Snowflake/BigQuery — leverages MPP for free. <code>dbt run --select +revenue_by_country</code> runs that model and all its ancestors. Incremental models: <code>WHERE updated_at &gt; (SELECT MAX(updated_at) FROM {{ this }})</code> — only processes new rows. dbt Cloud schedules runs, sends Slack alerts on failure. Generates docs: every column described, every dependency traced.' },
+  { title: 'dbt Transform', detail: 'dbt models: staging (clean raw), intermediate (join logic), marts (aggregated for BI). Runs as SQL on Snowflake/BigQuery — leverages MPP for free. <code>dbt run --select +revenue_by_country</code> runs that model and all its ancestors. Incremental models: <code>WHERE updated_at &gt; (SELECT MAX(updated_at) FROM {{ '{{' }} this {{ '}}' }})</code> — only processes new rows. dbt Cloud schedules runs, sends Slack alerts on failure. Generates docs: every column described, every dependency traced.' },
   { title: 'Data Warehouse (Snowflake)', detail: 'Snowflake automatically manages micro-partitions (~100 MB each). Query: optimizer determines which partitions contain relevant data (min/max metadata) → pruning. Virtual Warehouse (compute cluster) sizes: XS (1 node, $2/hr) to 4X-Large (128 nodes, $256/hr). Auto-suspend after 2 min idle → zero cost when not querying. Concurrency: separate Virtual Warehouses for ETL vs BI vs data science → no resource contention. Zero-copy clone: <code>CREATE DATABASE dev CLONE production</code> — instant, no storage cost.' },
   { title: 'BI Query Layer', detail: 'Looker connects to Snowflake via JDBC. LookML defines dimensions (columns), measures (aggregations), and joins — business logic in one place, re-used across all dashboards. Looker generates SQL from UI interactions: user clicks "Revenue by Country" → LookML compiles to SQL → submitted to Snowflake → results rendered. Looker caching (PDTs): pre-computed results for common queries (refreshed hourly). Dashboard queries: 100 users opening a dashboard = 1 Snowflake query (cached) not 100.' },
   { title: 'Dashboard / Report', detail: 'Tableau: vizQL language converts chart spec to SQL. Extracts: copy warehouse data into Tableau\'s columnar format (hyper) for fast local queries (avoids warehouse cost). Live connection for real-time. Scheduled email delivery of dashboards. Row-level security: filter data based on viewer\'s role (region managers see only their region). Alerting: "If daily revenue drops &gt;20% vs 7-day average → email CFO". Embedded analytics: Tableau/Looker SDKs embed dashboards in internal tools.' }

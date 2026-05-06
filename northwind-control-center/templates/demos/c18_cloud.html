@@ -1,0 +1,824 @@
+{% extends "base.html" %}
+{% block title %}Chapter 18 — Cloud Database Ecosystems{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center gap-3 mb-1">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:#1a1d24;color:#8b949e;border:1px solid #2a2d35">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+    <div>
+      <h4 class="mb-0 fw-bold" style="color:#e6edf3">
+        <i class="bi bi-cloud me-2" style="color:#38bdf8"></i>Chapter 18 — Cloud Database Ecosystems: GCP, AWS &amp; Azure
+      </h4>
+      <div style="font-size:.75rem;color:#8b949e">Managed Services · Global Distribution · HTAP · Ledger Databases · Vendor Lock-in</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mt-3 mb-3" style="border-bottom:1px solid #2a2d35">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-oltp" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-database me-1" style="color:#38bdf8"></i>Managed OLTP
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-global" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-globe2 me-1" style="color:#38bdf8"></i>Global Distributed
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-nosql" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-braces me-1" style="color:#38bdf8"></i>NoSQL / Wide-Column
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-olap" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-bar-chart me-1" style="color:#38bdf8"></i>OLAP / Warehouse
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-htap" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-lightning me-1" style="color:#38bdf8"></i>HTAP &amp; Ledger
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-decision" style="color:#8b949e;background:none;border:none">
+        <i class="bi bi-diagram-2 me-1" style="color:#38bdf8"></i>Decision Guide
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+  <!-- ── TAB 1: Managed OLTP ───────────────────────────────────────────────── -->
+  <div class="tab-pane fade show active" id="tab-oltp">
+
+    <!-- Why managed -->
+    <div class="row g-2 mb-3">
+      {% set benefits = [
+        ('bi-patch-check', '#38bdf8', 'No-DBA Patching', 'OS patches, engine upgrades, automated backups with PITR handled by provider'),
+        ('bi-arrow-up-circle', '#34d399', 'Elastic Scaling', 'Storage autogrows; compute resized with minutes of downtime (or zero on serverless tiers)'),
+        ('bi-globe2', '#fbbf24', 'Global Distribution', 'Read replicas, multi-region writes, automatic failover as first-class features'),
+        ('bi-shield-check', '#a78bfa', 'SLA-Backed Availability', '99.95%–99.999% uptime SLAs with financial credits for violations'),
+      ] %}
+      {% for icon, color, title, desc in benefits %}
+      <div class="col-md-3">
+        <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-body p-3">
+            <i class="bi {{ icon }} mb-2 d-block" style="color:{{ color }};font-size:1.3rem"></i>
+            <div class="fw-bold mb-1" style="color:#e6edf3;font-size:.8rem">{{ title }}</div>
+            <div style="font-size:.72rem;color:#8b949e">{{ desc }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Comparison table -->
+    <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#38bdf8;font-size:.85rem"><i class="bi bi-table me-1"></i>Managed OLTP — GCP vs AWS vs Azure</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0" style="font-size:.75rem">
+            <thead>
+              <tr style="border-color:#2a2d35">
+                <th style="color:#8b949e;background:#1a1d24">Feature</th>
+                <th style="color:#4285f4;background:#1a1d24"><i class="bi bi-google me-1"></i>GCP Cloud SQL</th>
+                <th style="color:#ff9900;background:#1a1d24"><i class="bi bi-amazon me-1"></i>AWS RDS</th>
+                <th style="color:#0078d4;background:#1a1d24"><i class="bi bi-microsoft me-1"></i>Azure SQL Database</th>
+              </tr>
+            </thead>
+            <tbody style="color:#c9d1d9;border-color:#2a2d35">
+              <tr>
+                <td style="color:#8b949e">Engines</td>
+                <td>PostgreSQL, MySQL, SQL Server</td>
+                <td>PG, MySQL, MariaDB, Oracle, SQL Server</td>
+                <td>SQL Server, PostgreSQL, MySQL</td>
+              </tr>
+              <tr>
+                <td style="color:#8b949e">Max storage</td>
+                <td>64 TB</td>
+                <td>64 TB</td>
+                <td>4 TB (General Purpose)</td>
+              </tr>
+              <tr>
+                <td style="color:#8b949e">Read replicas</td>
+                <td style="color:#34d399">Yes</td>
+                <td style="color:#34d399">Yes</td>
+                <td style="color:#34d399">Active geo-replication</td>
+              </tr>
+              <tr>
+                <td style="color:#8b949e">Auto backups</td>
+                <td>Yes (PITR 7–35 days)</td>
+                <td>Yes (automated snapshots)</td>
+                <td>Yes (automated)</td>
+              </tr>
+              <tr>
+                <td style="color:#8b949e">Serverless option</td>
+                <td style="color:#f87171">No</td>
+                <td style="color:#34d399">Aurora Serverless v2</td>
+                <td style="color:#34d399">Serverless tier</td>
+              </tr>
+              <tr>
+                <td style="color:#8b949e">Best for</td>
+                <td>Standard web apps, GCP-native</td>
+                <td>AWS-first workloads</td>
+                <td>Azure-first workloads</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Connection pooling -->
+      <div class="col-md-6">
+        <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#8b949e;font-size:.85rem">Connection Pooling</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.76rem;color:#c9d1d9">A naive app opens one DB connection per HTTP request. At 500 concurrent users → 500 connections, each consuming ~5 MB RAM on the DB server.</p>
+            <div class="d-flex flex-column gap-2">
+              <div class="p-2 rounded" style="background:#0d1117;border:1px solid rgba(56,189,248,.2)">
+                <div class="fw-bold" style="color:#38bdf8;font-size:.72rem">PgBouncer (GCP/AWS)</div>
+                <div style="font-size:.7rem;color:#8b949e">Lightweight pooler between app and PostgreSQL. Transaction-mode pooling allows pool much smaller than thread count.</div>
+              </div>
+              <div class="p-2 rounded" style="background:#0d1117;border:1px solid rgba(255,153,0,.2)">
+                <div class="fw-bold" style="color:#ff9900;font-size:.72rem">RDS Proxy (AWS)</div>
+                <div style="font-size:.7rem;color:#8b949e">Fully managed pooler native to RDS/Aurora. Integrates with IAM for credential rotation without connection drops — ideal for Lambda.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Maintenance windows -->
+      <div class="col-md-6">
+        <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#8b949e;font-size:.85rem">Maintenance Windows</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.76rem;color:#c9d1d9">Managed services apply patches during a configurable 30-minute slot during off-peak hours.</p>
+            <ol style="font-size:.73rem;color:#8b949e;padding-left:16px;margin:0">
+              <li>Set window to lowest-traffic period (e.g., Sunday 03:00–03:30)</li>
+              <li>Enable notifications so on-call engineers are aware</li>
+              <li>Test next minor version on staging replica before window</li>
+            </ol>
+            <div class="mt-2 p-2 rounded" style="background:#0a0c10;font-size:.72rem;color:#8b949e">
+              Parameter changes: <strong style="color:#fbbf24">static params</strong> require reboot · <strong style="color:#34d399">dynamic params</strong> apply immediately
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-oltp -->
+
+
+  <!-- ── TAB 2: Global Distributed ─────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-global">
+
+    <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#38bdf8;font-size:.85rem">Globally Distributed Relational — GCP vs AWS vs Azure</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0" style="font-size:.75rem">
+            <thead>
+              <tr style="border-color:#2a2d35">
+                <th style="color:#8b949e;background:#1a1d24">Feature</th>
+                <th style="color:#4285f4;background:#1a1d24">GCP Cloud Spanner</th>
+                <th style="color:#ff9900;background:#1a1d24">AWS Aurora Global</th>
+                <th style="color:#0078d4;background:#1a1d24">Azure Cosmos DB (SQL API)</th>
+              </tr>
+            </thead>
+            <tbody style="color:#c9d1d9;border-color:#2a2d35">
+              <tr><td style="color:#8b949e">Consistency</td><td style="color:#34d399">External (true linearizability)</td><td>Eventual / strongly consistent</td><td>Tunable (5 levels)</td></tr>
+              <tr><td style="color:#8b949e">Multi-region writes</td><td style="color:#34d399">Yes</td><td style="color:#fbbf24">Primary + read replicas</td><td style="color:#34d399">Yes (multi-master)</td></tr>
+              <tr><td style="color:#8b949e">SQL support</td><td>ANSI SQL with extensions</td><td>MySQL/PostgreSQL dialect</td><td>SQL API (subset)</td></tr>
+              <tr><td style="color:#8b949e">CAP position</td><td>CP</td><td>CP</td><td>AP (default) / CP (strong)</td></tr>
+              <tr><td style="color:#8b949e">Price model</td><td>Per node + I/O</td><td>Per ACU</td><td>Per RU (Request Unit)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Spanner TrueTime -->
+      <div class="col-lg-4">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(66,133,244,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(66,133,244,.2)">
+            <span class="fw-bold" style="color:#4285f4;font-size:.85rem"><i class="bi bi-clock me-1"></i>Spanner TrueTime</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.76rem;color:#c9d1d9">Cloud Spanner achieves external consistency without a global lock via <strong style="color:#4285f4">TrueTime</strong> — GPS receivers and atomic clocks in every Google data center.</p>
+            <div class="d-flex flex-column gap-2">
+              <div class="p-2 rounded" style="background:#0a0f1a;border:1px solid rgba(66,133,244,.2)">
+                <div style="font-size:.7rem;color:#4285f4;font-weight:600">TrueTime API</div>
+                <div style="font-size:.7rem;color:#8b949e">Returns interval [earliest, latest] — guaranteed to contain true wall-clock time. Uncertainty: typically 1–7 ms.</div>
+              </div>
+              <div class="p-2 rounded" style="background:#0a0f1a;border:1px solid rgba(66,133,244,.2)">
+                <div style="font-size:.7rem;color:#4285f4;font-weight:600">Commit Wait</div>
+                <div style="font-size:.7rem;color:#8b949e">Spanner waits out the TrueTime uncertainty interval before declaring commit complete. Timestamp is provably in the past for all subsequent readers.</div>
+              </div>
+              <div class="p-2 rounded" style="background:#0a0f1a;border:1px solid rgba(66,133,244,.2)">
+                <div style="font-size:.7rem;color:#fbbf24;font-weight:600">Clock Drift Effect</div>
+                <div style="font-size:.7rem;color:#8b949e">If GPS drifts, TrueTime widens the interval → higher commit-wait latency. System remains correct at the cost of throughput.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aurora Global -->
+      <div class="col-lg-4">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(255,153,0,.2)">
+            <span class="fw-bold" style="color:#ff9900;font-size:.85rem"><i class="bi bi-globe2 me-1"></i>Aurora Global Database</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.76rem;color:#c9d1d9">One primary region (read/write) + up to 5 secondary regions (read-only). Dedicated log-shipping layer with typical lag under 1 second.</p>
+            <div class="p-2 rounded mb-2" style="background:#1a1200;border:1px solid rgba(255,153,0,.2)">
+              <div style="font-size:.7rem;color:#ff9900">Disaster Recovery</div>
+              <div style="font-size:.7rem;color:#8b949e">Secondary region promoted to primary in under 1 minute.</div>
+            </div>
+            <div class="p-2 rounded" style="background:#1a0a0a;border:1px solid rgba(248,113,113,.2)">
+              <div style="font-size:.7rem;color:#f87171">Limitation</div>
+              <div style="font-size:.7rem;color:#8b949e">Does not offer true multi-region writes — primary region is still the single write authority.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cosmos DB consistency -->
+      <div class="col-lg-4">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,120,212,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(0,120,212,.2)">
+            <span class="fw-bold" style="color:#0078d4;font-size:.85rem"><i class="bi bi-sliders me-1"></i>Cosmos DB Consistency Levels</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.73rem;color:#8b949e;margin-bottom:8px">Five tunable levels, from strongest to weakest:</p>
+            {% for level, desc, color in [
+              ('Strong', 'Linearizable — always sees latest committed write', '#34d399'),
+              ('Bounded staleness', 'Reads lag by at most K versions or T seconds', '#34d399'),
+              ('Session', 'Monotonic reads within a client session', '#fbbf24'),
+              ('Consistent prefix', 'No gaps, no out-of-order writes, may be stale', '#fbbf24'),
+              ('Eventual', 'Lowest latency, no ordering guarantee', '#f87171'),
+            ] %}
+            <div class="d-flex align-items-start gap-2 mb-1">
+              <span style="color:{{ color }};font-size:.65rem;min-width:8px;margin-top:3px">●</span>
+              <div>
+                <span style="font-size:.73rem;color:{{ color }};font-weight:600">{{ level }}</span>
+                <span style="font-size:.7rem;color:#8b949e"> — {{ desc }}</span>
+              </div>
+            </div>
+            {% endfor %}
+            <div class="mt-2 p-2 rounded" style="background:#0a0c10;font-size:.7rem;color:#8b949e">
+              Most multi-region deployments use <strong style="color:#fbbf24">Session</strong> — covers the common case (users always see their own writes) without the latency cost of Strong.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-global -->
+
+
+  <!-- ── TAB 3: NoSQL / Wide-Column ────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-nosql">
+
+    <div class="row g-3">
+      <div class="col-lg-7">
+
+        <!-- Document stores comparison -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#38bdf8;font-size:.85rem"><i class="bi bi-braces me-1"></i>NoSQL Document Stores</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm mb-0" style="font-size:.75rem">
+                <thead>
+                  <tr style="border-color:#2a2d35">
+                    <th style="color:#8b949e;background:#1a1d24">Feature</th>
+                    <th style="color:#4285f4;background:#1a1d24">GCP Firestore</th>
+                    <th style="color:#ff9900;background:#1a1d24">AWS DynamoDB</th>
+                    <th style="color:#0078d4;background:#1a1d24">Azure Cosmos DB</th>
+                  </tr>
+                </thead>
+                <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                  <tr><td style="color:#8b949e">Model</td><td>Document (JSON)</td><td>Key-value + document</td><td>Document (JSON)</td></tr>
+                  <tr><td style="color:#8b949e">Real-time sync</td><td style="color:#34d399">Yes (listeners)</td><td style="color:#fbbf24">DynamoDB Streams</td><td style="color:#f87171">No</td></tr>
+                  <tr><td style="color:#8b949e">Serverless</td><td style="color:#34d399">Yes</td><td style="color:#34d399">Yes (on-demand)</td><td style="color:#34d399">Yes</td></tr>
+                  <tr><td style="color:#8b949e">Offline sync</td><td style="color:#34d399">Yes (mobile SDK)</td><td style="color:#f87171">No</td><td style="color:#f87171">No</td></tr>
+                  <tr><td style="color:#8b949e">Best for</td><td>Mobile/web real-time apps</td><td>High-throughput K/V (AWS-native)</td><td>Multi-model, Azure-native</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wide-column comparison -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#38bdf8;font-size:.85rem"><i class="bi bi-grid me-1"></i>Wide-Column / Time-Series</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm mb-0" style="font-size:.75rem">
+                <thead>
+                  <tr style="border-color:#2a2d35">
+                    <th style="color:#8b949e;background:#1a1d24">Feature</th>
+                    <th style="color:#4285f4;background:#1a1d24">GCP Bigtable</th>
+                    <th style="color:#ff9900;background:#1a1d24">AWS Keyspaces</th>
+                    <th style="color:#0078d4;background:#1a1d24">Azure Cosmos DB (Cassandra)</th>
+                  </tr>
+                </thead>
+                <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                  <tr><td style="color:#8b949e">Model</td><td>Wide-column (proprietary)</td><td>CQL compatible</td><td>CQL compatible</td></tr>
+                  <tr><td style="color:#8b949e">Latency p99</td><td style="color:#34d399">&lt;10 ms</td><td style="color:#34d399">&lt;10 ms</td><td style="color:#34d399">&lt;10 ms</td></tr>
+                  <tr><td style="color:#8b949e">Min cost</td><td>~$0.65/hr/node</td><td>Serverless (per RCU/WCU)</td><td>Serverless</td></tr>
+                  <tr><td style="color:#8b949e">Best for</td><td>IoT sensor streams, ML features</td><td>Existing Cassandra migration</td><td>Azure-native Cassandra</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="col-lg-5">
+
+        <!-- Bigtable row key design -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid rgba(66,133,244,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(66,133,244,.2)">
+            <span class="fw-bold" style="color:#4285f4;font-size:.85rem"><i class="bi bi-key me-1"></i>Bigtable Row Key Design</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.76rem;color:#c9d1d9">The row key is the <em>only</em> indexed field. Its design determines whether load is spread evenly or concentrated on a hotspot.</p>
+
+            <div class="p-2 rounded mb-2" style="background:#1a0a0a;border:1px solid rgba(248,113,113,.3)">
+              <div style="font-size:.7rem;color:#f87171;font-weight:600;margin-bottom:4px">✗ Anti-pattern — Monotonic Timestamp</div>
+              <pre class="m-0" style="font-size:.67rem;color:#f9826c"># BAD: all writes go to same tablet (hotspot)
+row_key = f"{timestamp_ms}#sensor_{sensor_id}"
+# Example: "1714694400000#sensor_42"
+# New writes always land on the LAST tablet</pre>
+            </div>
+
+            <div class="p-2 rounded mb-2" style="background:#0a1a0f;border:1px solid rgba(52,211,153,.3)">
+              <div style="font-size:.7rem;color:#34d399;font-weight:600;margin-bottom:4px">✓ Pattern 1 — Reverse Timestamp</div>
+              <pre class="m-0" style="font-size:.67rem;color:#93c5fd">MAX_TIMESTAMP = 9999999999999
+row_key = f"{MAX_TIMESTAMP - timestamp_ms}#sensor_{sensor_id}"
+# Newest data sorts first; avoids leading-edge hotspot</pre>
+            </div>
+
+            <div class="p-2 rounded" style="background:#0a1a0f;border:1px solid rgba(52,211,153,.3)">
+              <div style="font-size:.7rem;color:#34d399;font-weight:600;margin-bottom:4px">✓ Pattern 2 — Salted Prefix</div>
+              <pre class="m-0" style="font-size:.67rem;color:#93c5fd">import hashlib
+
+def make_row_key(sensor_id, timestamp_ms, buckets=100):
+    salt = int(hashlib.md5(sensor_id.encode()
+             ).hexdigest(), 16) % buckets
+    return f"{salt:03d}#{sensor_id}#{timestamp_ms}"
+# "042#sensor_42#1714694400000"
+# Distributes sensors across 100 evenly-spaced prefixes</pre>
+              <div style="font-size:.69rem;color:#fbbf24;margin-top:4px">Tradeoff: to read all data for one sensor, must query all 100 buckets and merge.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DynamoDB SDK sample -->
+        <div class="card" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(255,153,0,.2)">
+            <span class="fw-bold" style="color:#ff9900;font-size:.85rem">DynamoDB — boto3 Pattern</span>
+          </div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="font-size:.67rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">table = dynamodb.Table("NorthwindOrders")
+
+# Write (CustomerId=partition key, OrderId=sort key)
+table.put_item(Item={
+    "CustomerId": "ALFKI",
+    "OrderId":    "ORD-10248",
+    "OrderDate":  "1996-07-04",
+    "TotalAmount": 440.0,
+})
+
+# Query all orders for a customer
+response = table.query(
+    KeyConditionExpression=Key("CustomerId").eq("ALFKI")
+)
+# All queries MUST include the partition key</pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /tab-nosql -->
+
+
+  <!-- ── TAB 4: OLAP / Warehouse ───────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-olap">
+
+    <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#38bdf8;font-size:.85rem"><i class="bi bi-bar-chart me-1"></i>Data Warehouses (OLAP) — GCP vs AWS vs Azure</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0" style="font-size:.75rem">
+            <thead>
+              <tr style="border-color:#2a2d35">
+                <th style="color:#8b949e;background:#1a1d24">Feature</th>
+                <th style="color:#4285f4;background:#1a1d24">GCP BigQuery</th>
+                <th style="color:#ff9900;background:#1a1d24">AWS Redshift</th>
+                <th style="color:#0078d4;background:#1a1d24">Azure Synapse Analytics</th>
+              </tr>
+            </thead>
+            <tbody style="color:#c9d1d9;border-color:#2a2d35">
+              <tr><td style="color:#8b949e">Architecture</td><td>Serverless, columnar</td><td>Cluster-based (RA3), serverless option</td><td>Dedicated pool + serverless</td></tr>
+              <tr><td style="color:#8b949e">Pricing</td><td>$5/TB scanned</td><td>~$0.25/hr/node</td><td>Per DWU-hour</td></tr>
+              <tr><td style="color:#8b949e">ML integration</td><td style="color:#4285f4">BigQuery ML (SQL)</td><td>Redshift ML (SageMaker)</td><td>Azure ML</td></tr>
+              <tr><td style="color:#8b949e">Streaming ingest</td><td>Pub/Sub → BigQuery</td><td>Kinesis → Redshift</td><td>Event Hubs → Synapse</td></tr>
+              <tr><td style="color:#8b949e">Best for</td><td>Ad-hoc analytics, petabyte scale</td><td>AWS-native analytics</td><td>Azure BI workloads</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- BigQuery ML -->
+      <div class="col-lg-6">
+        <div class="card mb-3" style="background:#13141a;border:1px solid rgba(66,133,244,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(66,133,244,.2)">
+            <span class="fw-bold" style="color:#4285f4;font-size:.85rem"><i class="bi bi-cpu me-1"></i>BigQuery ML — Train &amp; Score in SQL</span>
+          </div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="font-size:.68rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">-- Train a linear regression model on Northwind orders
+CREATE OR REPLACE MODEL northwind.revenue_model
+OPTIONS (
+    model_type = 'linear_reg',
+    input_label_cols = ['total_revenue']
+) AS
+SELECT
+    c.country,
+    p.category_id,
+    EXTRACT(MONTH FROM o.order_date) AS order_month,
+    SUM(od.unit_price * od.quantity * (1 - od.discount))
+        AS total_revenue
+FROM northwind.orders o
+JOIN northwind.order_details od ON o.order_id = od.order_id
+JOIN northwind.customers c ON o.customer_id = c.customer_id
+JOIN northwind.products p ON od.product_id = p.product_id
+GROUP BY 1, 2, 3;
+
+-- Score new data with the trained model
+SELECT * FROM ML.PREDICT(
+    MODEL northwind.revenue_model,
+    (SELECT 'Germany' AS country, 1 AS category_id, 12 AS order_month)
+);</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cost optimization -->
+      <div class="col-lg-6">
+        <div class="card mb-3" style="background:#13141a;border:1px solid rgba(66,133,244,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(66,133,244,.2)">
+            <span class="fw-bold" style="color:#4285f4;font-size:.85rem"><i class="bi bi-currency-dollar me-1"></i>BigQuery Cost Optimization — Partition Filters</span>
+          </div>
+          <div class="card-body">
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <div class="p-2 rounded" style="background:#1a0a0a;border:1px solid rgba(248,113,113,.3);text-align:center">
+                  <div style="font-size:1.1rem;color:#f87171;font-weight:700">$2.50</div>
+                  <div style="font-size:.68rem;color:#8b949e">per query without partition filter<br>500 GB × $5/TB</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 rounded" style="background:#0a1a0f;border:1px solid rgba(52,211,153,.3);text-align:center">
+                  <div style="font-size:1.1rem;color:#34d399;font-weight:700">$0.025</div>
+                  <div style="font-size:.68rem;color:#8b949e">per query with partition filter<br>5 GB × $5/TB — 100× cheaper</div>
+                </div>
+              </div>
+            </div>
+            <pre class="p-2 rounded" style="font-size:.67rem;color:#93c5fd;background:#080a0e;margin:0">-- Expensive: scans entire table (500 GB)
+SELECT customer_id, SUM(freight)
+FROM northwind.orders GROUP BY customer_id;
+
+-- Cheap: partition filter limits scan to ~5 GB
+SELECT customer_id, SUM(freight)
+FROM northwind.orders
+WHERE order_date &gt;= DATE_TRUNC(CURRENT_DATE(), MONTH)
+GROUP BY customer_id;</pre>
+          </div>
+        </div>
+
+        <!-- Serverless cold starts -->
+        <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#8b949e;font-size:.85rem">Aurora Serverless — Cold Start Retry</span>
+          </div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="font-size:.67rem;color:#93c5fd;background:#080a0e">def connect_with_retry(dsn, max_attempts=5):
+    delay = 1.0
+    for attempt in range(max_attempts):
+        try:
+            return psycopg2.connect(dsn)
+        except psycopg2.OperationalError as e:
+            if attempt == max_attempts - 1:
+                raise
+            time.sleep(delay)
+            delay = min(delay * 2, 30.0)
+# Aurora Serverless pause → 25–35s resume latency</pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /tab-olap -->
+
+
+  <!-- ── TAB 5: HTAP & Ledger ──────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-htap">
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+
+        <!-- HTAP concept -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#38bdf8;font-size:.85rem"><i class="bi bi-lightning me-1"></i>HTAP — Hybrid Transactional + Analytical</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.76rem;color:#c9d1d9">HTAP eliminates the ETL lag by maintaining both a row store (OLTP) and a columnar store (OLAP) within the same engine, automatically routing queries to the appropriate store.</p>
+            <div class="d-flex flex-column gap-2">
+              {% for name, desc, color in [
+                ('TiDB + TiFlash', 'TiKV row store for OLTP + TiFlash columnar replica. Query planner routes automatically. TiFlash updated via Raft replication — no ETL.', '#38bdf8'),
+                ('SingleStore', 'In-memory rowstore (OLTP) + disk-based columnstore (OLAP). Rows migrate from rowstore to columnstore after a configurable threshold.', '#38bdf8'),
+                ('AlloyDB for PostgreSQL (GCP)', 'PostgreSQL-compatible with adaptive columnar engine. OLAP queries transparently accelerated by columnar cache layer. Full PG wire protocol.', '#4285f4'),
+                ('SQL Server 2019 HTAP', 'Columnstore indexes alongside B-tree indexes on the same table. Query optimizer chooses automatically. ADR reduces recovery time.', '#0078d4'),
+              ] %}
+              <div class="p-2 rounded" style="background:#0a0f1a;border:1px solid rgba(56,189,248,.2)">
+                <div class="fw-bold" style="color:{{ color }};font-size:.73rem">{{ name }}</div>
+                <div style="font-size:.7rem;color:#8b949e;margin-top:2px">{{ desc }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- HTAP SQL Server example -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,120,212,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(0,120,212,.2)">
+            <span class="fw-bold" style="color:#0078d4;font-size:.85rem">SQL Server Columnstore Index (Northwind)</span>
+          </div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="font-size:.67rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">-- Create NCCI alongside the clustered B-tree index
+CREATE NONCLUSTERED COLUMNSTORE INDEX ncci_OrderDetails
+ON dbo.[Order Details] (OrderID, ProductID, UnitPrice, Quantity, Discount);
+
+-- This aggregation is routed to the columnstore:
+SELECT cat.category_name,
+       SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS total_revenue,
+       COUNT(DISTINCT o.OrderID) AS order_count
+FROM dbo.Orders o
+JOIN dbo.[Order Details] od ON o.OrderID = od.OrderID
+JOIN dbo.Products p ON od.ProductID = p.ProductID
+JOIN dbo.Categories cat ON p.CategoryID = cat.CategoryID
+GROUP BY cat.category_name
+ORDER BY total_revenue DESC;
+-- B-tree used for individual order lookups
+-- Columnstore used for this aggregation — both optimal from same table</pre>
+          </div>
+        </div>
+
+      </div>
+      <div class="col-lg-6">
+
+        <!-- Ledger tables -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#38bdf8;font-size:.85rem"><i class="bi bi-shield-lock me-1"></i>Immutable Ledger Databases</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.76rem;color:#c9d1d9">Append-only: records can be inserted but never updated or deleted. Every insert is cryptographically chained to the previous one — tamper-evident history.</p>
+            <table class="table table-sm mb-0" style="font-size:.73rem">
+              <thead><tr style="color:#8b949e;border-color:#2a2d35"><th>Feature</th><th>AWS QLDB</th><th>SQL Server Ledger</th><th>Blockchain</th></tr></thead>
+              <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                <tr><td>Centralized</td><td style="color:#34d399">Yes</td><td style="color:#34d399">Yes</td><td style="color:#f87171">No</td></tr>
+                <tr><td>Throughput</td><td>~1,000 TPS</td><td>Full SQL Server TPS</td><td style="color:#f87171">~7 TPS</td></tr>
+                <tr><td>Queryable</td><td>PartiQL</td><td>T-SQL</td><td style="color:#f87171">Requires indexer</td></tr>
+                <tr><td>Immutability proof</td><td>Cryptographic digest</td><td>SHA-256 hash chain</td><td>Merkle tree</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SQL Server Ledger Tables -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,120,212,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(0,120,212,.2)">
+            <span class="fw-bold" style="color:#0078d4;font-size:.85rem">SQL Server 2022 Ledger Tables</span>
+          </div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="font-size:.67rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">-- Create a ledger-enabled transactions table
+CREATE TABLE dbo.AccountTransactions (
+    TransactionId   INT IDENTITY PRIMARY KEY,
+    AccountId       INT NOT NULL,
+    Amount          DECIMAL(18, 2) NOT NULL,
+    Description     NVARCHAR(255),
+    TransactionDate DATETIME2 DEFAULT GETDATE()
+) WITH (SYSTEM_VERSIONING = ON, LEDGER = ON);
+-- SQL Server auto-creates: dbo.AccountTransactions_Ledger
+
+-- Query full immutable history
+SELECT lt.ledger_transaction_id, lt.commit_time,
+       lt.principal_name, t.AccountId, t.Amount,
+       lt.ledger_operation_type_desc  -- INSERT/UPDATE/DELETE
+FROM dbo.AccountTransactions_Ledger lt
+WHERE lt.AccountId = 1001
+ORDER BY lt.commit_time;
+
+-- Generate cryptographic digest for audit submission
+EXECUTE sp_generate_database_ledger_digest;
+-- Returns Merkle root — auditors store this independently
+-- Later: sp_verify_database_ledger to detect tampering</pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /tab-htap -->
+
+
+  <!-- ── TAB 6: Decision Guide ─────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-decision">
+
+    <div class="row g-3">
+      <div class="col-lg-7">
+
+        <!-- Decision tree -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid rgba(56,189,248,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(56,189,248,.2)">
+            <span class="fw-bold" style="color:#38bdf8;font-size:.85rem"><i class="bi bi-diagram-2 me-1"></i>Service Selection Decision Tree</span>
+          </div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="font-size:.72rem;color:#c9d1d9;background:#080a0e;line-height:1.9">Need <span style="color:#38bdf8">SQL</span>?
+  → Global multi-region writes required?
+      YES → <span style="color:#4285f4">Spanner</span> / <span style="color:#ff9900">Aurora Global</span> / <span style="color:#0078d4">Cosmos DB SQL API</span> (multi-master)
+      NO  → Single-region OLTP?
+              YES → <span style="color:#4285f4">Cloud SQL</span> / <span style="color:#ff9900">RDS</span> / <span style="color:#0078d4">Azure SQL Database</span>
+              NO  → Analytical queries on petabyte scale?
+                      YES → <span style="color:#4285f4">BigQuery</span> / <span style="color:#ff9900">Redshift</span> / <span style="color:#0078d4">Synapse Analytics</span>
+
+Need <span style="color:#34d399">NoSQL</span>?
+  → Real-time mobile/web push sync?
+      YES → <span style="color:#4285f4">Firestore</span>
+      NO  → High-throughput key-value / document?
+              YES → <span style="color:#ff9900">DynamoDB</span> (AWS-native) / <span style="color:#0078d4">Cosmos DB NoSQL API</span>
+              NO  → Graph traversal?
+                      YES → <span style="color:#ff9900">Neptune</span> / <span style="color:#0078d4">Cosmos DB Gremlin</span> / Neo4j AuraDB
+                      NO  → Time-series / IoT sensor streams?
+                              YES → <span style="color:#4285f4">Bigtable</span> / <span style="color:#ff9900">Keyspaces</span> / InfluxDB Cloud
+
+Need <span style="color:#fbbf24">HTAP</span> (OLTP + OLAP, no ETL lag)?
+  → TiDB / AlloyDB / SingleStore / <span style="color:#0078d4">SQL Server columnstore</span>
+
+Need <span style="color:#a78bfa">immutable audit trail</span>?
+  → <span style="color:#ff9900">AWS QLDB</span> / <span style="color:#0078d4">SQL Server Ledger Tables</span></pre>
+          </div>
+        </div>
+
+        <!-- Service summary table -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#38bdf8;font-size:.85rem">Workload → Service Summary</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm mb-0" style="font-size:.73rem">
+                <thead>
+                  <tr style="border-color:#2a2d35">
+                    <th style="color:#8b949e;background:#1a1d24">Workload</th>
+                    <th style="color:#4285f4;background:#1a1d24">GCP</th>
+                    <th style="color:#ff9900;background:#1a1d24">AWS</th>
+                    <th style="color:#0078d4;background:#1a1d24">Azure</th>
+                  </tr>
+                </thead>
+                <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                  {% for workload, gcp, aws, azure in [
+                    ('Standard OLTP', 'Cloud SQL', 'RDS', 'Azure SQL Database'),
+                    ('Global writes', 'Cloud Spanner', 'Aurora Global + QLDB', 'Cosmos DB'),
+                    ('Document NoSQL', 'Firestore', 'DynamoDB', 'Cosmos DB NoSQL API'),
+                    ('Wide-column / IoT', 'Bigtable', 'Keyspaces', 'Cosmos DB Cassandra'),
+                    ('Data warehouse', 'BigQuery', 'Redshift', 'Synapse Analytics'),
+                    ('HTAP', 'AlloyDB', 'Aurora + Redshift', 'SQL Server 2022'),
+                    ('Immutable ledger', '—', 'QLDB', 'Azure SQL Ledger'),
+                    ('Graph', '—', 'Neptune', 'Cosmos DB Gremlin API'),
+                  ] %}
+                  <tr>
+                    <td style="color:#8b949e">{{ workload }}</td>
+                    <td>{{ gcp }}</td>
+                    <td>{{ aws }}</td>
+                    <td>{{ azure }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="col-lg-5">
+
+        <!-- Vendor lock-in table -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#f87171;font-size:.85rem"><i class="bi bi-lock me-1"></i>Vendor Lock-in Risk</span>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm mb-2" style="font-size:.73rem">
+              <thead><tr style="color:#8b949e;border-color:#2a2d35"><th>Technology</th><th>Risk</th><th>Open Alternative</th></tr></thead>
+              <tbody style="color:#c9d1d9;border-color:#2a2d35">
+                <tr><td>BigQuery</td><td><span style="color:#f87171">High</span></td><td>Apache Spark</td></tr>
+                <tr><td>DynamoDB</td><td><span style="color:#f87171">High</span></td><td>Apache Cassandra</td></tr>
+                <tr><td>Spanner</td><td><span style="color:#f87171">High</span></td><td>CockroachDB</td></tr>
+                <tr><td>RDS PostgreSQL</td><td><span style="color:#34d399">Low</span></td><td>Any PostgreSQL host</td></tr>
+                <tr><td>Cosmos DB</td><td><span style="color:#fbbf24">Medium</span></td><td>MongoDB</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cost gotchas -->
+        <div class="card mb-3" style="background:#13141a;border:1px solid rgba(251,191,36,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(251,191,36,.2)">
+            <span class="fw-bold" style="color:#fbbf24;font-size:.85rem"><i class="bi bi-exclamation-triangle me-1"></i>Cost Gotchas</span>
+          </div>
+          <div class="card-body">
+            <div class="d-flex flex-column gap-2">
+              {% for title, detail in [
+                ('Egress fees', '$0.08–0.12/GB out of region. 10 TB/month export = $800–$1,200/month.'),
+                ('Cross-region replication', 'Charged separately from storage. Cosmos DB multi-master: per region added.'),
+                ('Reserved Instances', '1- or 3-year commitments save 30–60% vs on-demand. Evaluate for stable workloads.'),
+                ('Read replica costs', 'Each replica is a full copy at the same instance rate. 5 replicas = 6× primary cost.'),
+              ] %}
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-dash-circle" style="color:#fbbf24;flex-shrink:0;margin-top:2px;font-size:.8rem"></i>
+                <div>
+                  <div style="font-size:.73rem;color:#fbbf24;font-weight:600">{{ title }}</div>
+                  <div style="font-size:.7rem;color:#8b949e">{{ detail }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Portability strategies -->
+        <div class="card" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid rgba(52,211,153,.2)">
+            <span class="fw-bold" style="color:#34d399;font-size:.85rem"><i class="bi bi-shuffle me-1"></i>Portability Strategies</span>
+          </div>
+          <div class="card-body">
+            <ol style="font-size:.73rem;color:#8b949e;padding-left:16px;margin:0;line-height:1.8">
+              <li><strong style="color:#34d399">Use standard engines</strong> — RDS PostgreSQL is dramatically more portable than DynamoDB. PostgreSQL wire protocol supported everywhere.</li>
+              <li><strong style="color:#34d399">Abstract behind an interface</strong> — A thin data access layer hides provider-specific query patterns behind a repository interface.</li>
+              <li><strong style="color:#34d399">Export data regularly</strong> — Daily export to cloud storage (Parquet/CSV) ensures data is never hostage to the vendor.</li>
+            </ol>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /tab-decision -->
+
+  </div><!-- /tab-content -->
+</div><!-- /container -->
+
+<script>
+// Tab nav styling
+const tabAccent = '#38bdf8';
+document.querySelectorAll('.nav-link[data-bs-toggle="tab"]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-link[data-bs-toggle="tab"]').forEach(b => {
+      b.style.color = '#8b949e'; b.style.borderBottom = 'none';
+    });
+    btn.style.color = tabAccent;
+    btn.style.borderBottom = '2px solid ' + tabAccent;
+  });
+});
+document.querySelector('.nav-link.active[data-bs-toggle="tab"]').style.color = tabAccent;
+document.querySelector('.nav-link.active[data-bs-toggle="tab"]').style.borderBottom = '2px solid ' + tabAccent;
+</script>
+{% endblock %}

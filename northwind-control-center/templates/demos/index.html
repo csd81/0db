@@ -1013,6 +1013,47 @@
     </div>
   </div>
 
+  <!-- Chapter 1: Core SQL Skills -->
+  <div class="col-12 mt-2 mb-1">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#818cf8;letter-spacing:.1em">Chapter 1 — Core T-SQL Skills (Northwind)</div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(99,102,241,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#818cf8">T-SQL Script Lab</h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">The order-processing problem: run the broken script (no transaction), watch the DB corrupt, then run the fixed version with <code>BEGIN TRAN / TRY / CATCH / ROLLBACK</code> and see ACID in action against live Northwind data.</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.tsql_primer') }}" class="btn btn-sm w-100" style="background:#6366f1;color:#fff;border:none">Launch Lab</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(16,185,129,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">Loose Coupling Demo</h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">The black-box trading app problem: a trigger that only logs events into <code>order_log</code>, a SQL Agent job that processes them async. Contrast tight coupling (trigger crashes the INSERT) vs loose coupling (errors stay in the log, never touch the trading system).</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.loose_coupling') }}" class="btn btn-sm w-100" style="background:#10b981;color:#fff;border:none">Launch</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(239,68,68,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#f87171">Isolation Level Visualizer</h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">Two sessions race to buy the same horse. At <code>READ COMMITTED</code>: double-sell bug. At <code>REPEATABLE READ</code>: deadlock. Animated timeline shows exactly which locks are held and when — and how <code>WITH (UPDLOCK)</code> solves both problems cleanly.</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.isolation_demo') }}" class="btn btn-sm w-100" style="background:#ef4444;color:#fff;border:none">Launch</a>
+      </div>
+    </div>
+  </div>
+
   <!-- Industry 4.0 -->
   <div class="col-12 mt-2 mb-1">
     <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#fbbf24;letter-spacing:.1em">🏭 Industry 4.0 — IT/OT Convergence (Tesla · SpaceX · xAI)</div>
@@ -1067,4 +1108,1784 @@
   </div>
 
 </div>
+
+<!-- Chapter 18: Cloud Database Ecosystems -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#38bdf8;letter-spacing:.1em">Chapter 18 — Cloud Database Ecosystems: GCP, AWS &amp; Azure</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-cloud" style="color:#38bdf8;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">Managed OLTP &amp; Global Distribution</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">GCP Cloud SQL vs AWS RDS vs Azure SQL Database. Connection pooling, maintenance windows. Spanner TrueTime, Aurora Global, Cosmos DB consistency levels.</p>
+        <a href="{{ url_for('demos.c18_cloud') }}" class="btn btn-sm mt-auto" style="background:#38bdf8;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-braces" style="color:#38bdf8;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">NoSQL, OLAP &amp; Bigtable Row Keys</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Firestore vs DynamoDB vs Cosmos DB. BigQuery ML, partition filter cost optimization. Bigtable row key anti-patterns: monotonic timestamp → reverse timestamp → salted prefix.</p>
+        <a href="{{ url_for('demos.c18_cloud') }}#tab-nosql" class="btn btn-sm mt-auto" style="background:#38bdf8;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-lightning" style="color:#38bdf8;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">HTAP, Ledger &amp; Decision Guide</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">TiDB TiFlash, AlloyDB, SQL Server columnstore. SQL Server 2022 Ledger Tables with <code>sp_generate_database_ledger_digest</code>. Full workload-to-service decision tree.</p>
+        <a href="{{ url_for('demos.c18_cloud') }}#tab-htap" class="btn btn-sm mt-auto" style="background:#38bdf8;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chapter 17: MongoDB Schema Validation, CQRS & pgvector -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#34d399;letter-spacing:.1em">Chapter 17 — MongoDB Schema Validation, CQRS &amp; Semantic Search (pgvector)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-check2-square" style="color:#34d399;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">$jsonSchema Validation</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Enforce data contracts in MongoDB without sacrificing the document model. <code>validationLevel</code> (strict/moderate) and <code>validationAction</code> (error/warn) for migration safety.</p>
+        <a href="{{ url_for('demos.c17_mongo') }}" class="btn btn-sm mt-auto" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-arrow-left-right" style="color:#34d399;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">CQRS — Command Query Split</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Separate write path (primary) from read path (secondaryPreferred). Eliminate OLTP/OLAP contention on MongoDB replica sets. Replication lag diagram.</p>
+        <a href="{{ url_for('demos.c17_mongo') }}#tab-cqrs" class="btn btn-sm mt-auto" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-cpu" style="color:#34d399;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">pgvector Semantic Search</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Embedding-based search with HNSW index and cosine distance (<code>&lt;=&gt;</code>). Find "chai" → Ipoh Coffee by meaning. SQL LIKE vs pgvector comparison.</p>
+        <a href="{{ url_for('demos.c17_mongo') }}#tab-pgvector" class="btn btn-sm mt-auto" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chapter 16: CDC, Kafka, Flyway & ACID Test Lab -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#a78bfa;letter-spacing:.1em">Chapter 16 — CDC, Kafka, Flyway &amp; ACID Test Lab</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-database-check" style="color:#a78bfa;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">CDC &amp; Debezium</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Change Data Capture via transaction log tap. Enable CDC on Northwind SQL Server live. Query <code>cdc.dbo_Orders_CT</code>. Debezium connector config and change event format (<code>op</code>: c/u/d/r).</p>
+        <a href="{{ url_for('demos.c16_cdc') }}" class="btn btn-sm mt-auto" style="background:#a78bfa;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-lightning-charge" style="color:#a78bfa;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">Apache Kafka Pipeline</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Kafka decouples SQL Server from MongoDB/Elasticsearch consumers. Topics, partitions, offsets, consumer groups, backpressure. Northwind Orders pipeline architecture diagram.</p>
+        <a href="{{ url_for('demos.c16_cdc') }}#tab-kafka" class="btn btn-sm mt-auto" style="background:#a78bfa;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-shield-check" style="color:#a78bfa;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">Flyway CI/CD &amp; ACID Test Lab</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Versioned SQL migrations (<code>V{n}__{desc}.sql</code>), <code>flyway_schema_history</code>. Live ACID test runner: 20 concurrent threads, compare isolation levels READ_UNCOMMITTED → SERIALIZABLE.</p>
+        <a href="{{ url_for('demos.c16_cdc') }}#tab-acid" class="btn btn-sm mt-auto" style="background:#a78bfa;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chapter 13: Neo4j — Native Graph Database -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#34d399;letter-spacing:.1em">Chapter 13 — Neo4j: Native Graph Database (Property Graph, Cypher, Pathfinding)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-diagram-3" style="color:#34d399;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">Property Graph Model</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Nodes, relationships, and properties. How Neo4j models the Social Graph and Northwind data. Schema-first vs graph-native storage.</p>
+        <a href="{{ url_for('demos.c13_neo4j') }}" class="btn btn-sm mt-auto" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-code-square" style="color:#34d399;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">Cypher vs SQL</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Side-by-side T-SQL MATCH syntax vs Cypher. 7 basic + 10 advanced queries: friends-of-friends, shortest path, variable-length traversal, OPTIONAL MATCH.</p>
+        <a href="{{ url_for('demos.c13_neo4j') }}#tab-basic" class="btn btn-sm mt-auto" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 gap-2">
+          <i class="bi bi-lightning-charge" style="color:#34d399;font-size:1.2rem"></i>
+          <span class="fw-bold" style="color:#e6edf3">Live Graph Sandbox</span>
+        </div>
+        <p style="font-size:.78rem;color:#8b949e">Load the Social + Northwind graph into Neo4j, run Cypher queries live, and explore shortest path via <code>shortestPath()</code> and custom Cypher editor.</p>
+        <a href="{{ url_for('demos.c13_neo4j') }}#tab-adv" class="btn btn-sm mt-auto" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chapter 12: Database Administration & Security -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#f87171;letter-spacing:.1em">Chapter 12 — Appendix B: Database Administration &amp; Security</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2" style="font-size:1.4rem">🛡️</span>
+          <h6 class="mb-0 fw-bold" style="color:#f87171">Files, Integrity &amp; Backup</h6>
+        </div>
+        <p class="small mb-3" style="color:#8b949e">DBCC CHECKDB live integrity scan, page allocation DMV, recovery modes, 3 backup strategies with data-loss tradeoffs, RESTORE syntax.</p>
+        <div class="mb-2">
+          <span class="badge me-1" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">DBCC CHECKDB</span>
+          <span class="badge me-1" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">SIMPLE / FULL</span>
+          <span class="badge" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">Backup #1/#2/#3</span>
+        </div>
+        <a href="{{ url_for('demos.c12_dba') }}" class="btn btn-sm w-100" style="background:#f87171;color:#0d0f16;border:none">Open Lab →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2" style="font-size:1.4rem">👤</span>
+          <h6 class="mb-0 fw-bold" style="color:#f87171">Principals, Roles &amp; Procedures</h6>
+        </div>
+        <p class="small mb-3" style="color:#8b949e">Server logins → DB users → roles hierarchy, GRANT / REVOKE / DENY, live role membership query, stored procedure with parameter demo.</p>
+        <div class="mb-2">
+          <span class="badge me-1" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">CREATE LOGIN/USER</span>
+          <span class="badge me-1" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">GRANT/DENY</span>
+          <span class="badge" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">Roles</span>
+        </div>
+        <a href="{{ url_for('demos.c12_dba') }}" class="btn btn-sm w-100" style="background:rgba(248,113,113,.2);border:1px solid rgba(248,113,113,.4);color:#f87171">Open Lab →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2" style="font-size:1.4rem">🔒</span>
+          <h6 class="mb-0 fw-bold" style="color:#f87171">Masking, Encryption &amp; SSL</h6>
+        </div>
+        <p class="small mb-3" style="color:#8b949e">6-step Dynamic Data Masking demo (partial/email masks, UNMASK privilege), AES_256 backup encryption key chain, TDE vs Always Encrypted comparison.</p>
+        <div class="mb-2">
+          <span class="badge me-1" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">DDM</span>
+          <span class="badge me-1" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">AES_256</span>
+          <span class="badge" style="background:rgba(248,113,113,.15);color:#f87171;font-size:.65rem">Always Encrypted</span>
+        </div>
+        <a href="{{ url_for('demos.c12_dba') }}" class="btn btn-sm w-100" style="background:#7f1d1d;color:#fca5a5;border:none">Open Lab →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 11: SQL DML Self-Learning Lab -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#22d3ee;letter-spacing:.1em">Chapter 11 — Appendix A: SQL DML Self-Learning Lab (12 Progressive Exercises)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(34,211,238,.3)">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2" style="font-size:1.4rem">🔍</span>
+          <h6 class="mb-0 fw-bold" style="color:#22d3ee">SELECT · Subqueries · JOINs</h6>
+        </div>
+        <p class="small mb-3" style="color:#8b949e">Basic SELECT, IN/LIKE filters, aggregate subqueries, 3-level nesting, 4-table INNER JOIN. Run every query live against Northwind.</p>
+        <div class="mb-2">
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">SELECT · WHERE</span>
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">IN · LIKE</span>
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Subqueries</span>
+          <span class="badge" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">4-table JOIN</span>
+        </div>
+        <a href="{{ url_for('demos.c11_sql_lab') }}" class="btn btn-sm w-100" style="background:#22d3ee;color:#0d0f16;border:none">Open Lab →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(34,211,238,.3)">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2" style="font-size:1.4rem">⚠️</span>
+          <h6 class="mb-0 fw-bold" style="color:#22d3ee">GROUP BY Pitfalls · Self-Join</h6>
+        </div>
+        <p class="small mb-3" style="color:#8b949e">5-step GROUP BY progression, COUNT(*) vs COUNT(col), LEFT vs INNER JOIN gaps, self-join for hierarchies, IS NULL anti-join pattern.</p>
+        <div class="mb-2">
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">GROUP BY</span>
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Self-Join</span>
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">LEFT JOIN</span>
+          <span class="badge" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">IS NULL</span>
+        </div>
+        <a href="{{ url_for('demos.c11_sql_lab') }}" class="btn btn-sm w-100" style="background:rgba(34,211,238,.2);border:1px solid rgba(34,211,238,.4);color:#22d3ee">Open Lab →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(34,211,238,.3)">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2" style="font-size:1.4rem">🎓</span>
+          <h6 class="mb-0 fw-bold" style="color:#22d3ee">HAVING · TOP · CASE · Homework</h6>
+        </div>
+        <p class="small mb-3" style="color:#8b949e">HAVING, TOP N, date functions, CASE expressions, derived tables, and two homework solutions — including a CTE-based double-boss-revenue query.</p>
+        <div class="mb-2">
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">HAVING</span>
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">CASE</span>
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Derived Table</span>
+          <span class="badge" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">CTE</span>
+        </div>
+        <a href="{{ url_for('demos.c11_sql_lab') }}" class="btn btn-sm w-100" style="background:#0e7490;color:#cffafe;border:none">Open Lab →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 9: In-Memory OLTP -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#fbbf24;letter-spacing:.1em">Chapter 9 — In-Memory OLTP (Memory-Optimized Tables)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,191,36,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#fbbf24">
+          <i class="bi bi-lightning-charge me-1"></i>3-Scenario Benchmark
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Live performance comparison on a dedicated <code>mot_bench</code> database.
+          Scenario 1: disk-based table + interpreted T-SQL WHILE loop.
+          Scenario 2: memory-optimized table (hash index) + interpreted T-SQL.
+          Scenario 3: MOT + natively compiled stored procedure (<code>NATIVE_COMPILATION</code>).
+          Shows wall-clock ms and speedup factor for each.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">~1× disk</span>
+          <span class="badge me-1" style="background:rgba(251,191,36,.12);color:#fbbf24;font-size:.65rem">~6–7× MOT</span>
+          <span class="badge" style="background:rgba(167,139,250,.12);color:#a78bfa;font-size:.65rem">~25× native</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c9_inmemory') }}" class="btn btn-sm w-100" style="background:#fbbf24;color:#0d0f16;border:none">
+          <i class="bi bi-play-fill me-1"></i>Run Benchmark
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,191,36,.2)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#fcd34d">
+          <i class="bi bi-cpu me-1"></i>Lock-Free Concurrency &amp; Row Versioning
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          MOT uses row versioning instead of locks — readers never block writers, writers never block readers.
+          Deletes are logical (old versions GC'd when safe). Automatic snapshot isolation.
+          Supports <code>SCHEMA_AND_DATA</code> (durable) and <code>SCHEMA_ONLY</code> (non-durable, zero disk I/O)
+          durability modes. Hash index (O(1) point lookup) and BTree index (range queries).
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(52,211,153,.12);color:#34d399;font-size:.65rem">No locks</span>
+          <span class="badge me-1" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">SCHEMA_ONLY</span>
+          <span class="badge" style="background:rgba(251,191,36,.12);color:#fbbf24;font-size:.65rem">Hash O(1)</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c9_inmemory') }}" class="btn btn-sm w-100" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:#fbbf24;border:none">
+          <i class="bi bi-book me-1"></i>View Concepts
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,191,36,.15)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#d97706">
+          <i class="bi bi-arrow-repeat me-1"></i>Migration Advisor Workflow
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          7-step realistic scenario: load-test Northwind <code>sp_new_order()</code> baseline,
+          run Transaction Performance Analysis Overview (SSMS), identify candidate tables
+          (Products, Orders, Order Details, Customers), fix duplicate FK blockers in dump,
+          run Table Memory Optimization Advisor, set <code>MEMORY_OPTIMIZED_ELEVATE_TO_SNAPSHOT = ON</code>,
+          retest with interpreted then natively compiled proc.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.12);color:#f59e0b;font-size:.65rem">NATIVE_COMPILATION</span>
+          <span class="badge" style="background:rgba(251,191,36,.12);color:#fbbf24;font-size:.65rem">ELEVATE_TO_SNAPSHOT</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c9_inmemory') }}" class="btn btn-sm w-100" style="background:#92400e;color:#fde68a;border:none">
+          <i class="bi bi-diagram-3 me-1"></i>Migration Guide
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 8: Special Data Types -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#a78bfa;letter-spacing:.1em">Chapter 8 — Special Data Types (Graph · Neo4j · BLOB)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#a78bfa">
+          <i class="bi bi-diagram-3 me-1"></i>SQL Server Graph Tables
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Create <code>person</code>, <code>restaurant</code>, <code>city</code> node tables
+          with <code>AS NODE</code>; <code>likes</code>, <code>friendof</code>, <code>livesin</code>,
+          <code>locatedin</code> edge tables with <code>AS EDGE</code>.
+          Edge constraint: <code>CONNECTION (person TO person)</code>.
+          Run 7 MATCH queries including multi-constraint AND patterns and <code>SHORTEST_PATH</code>
+          with <code>STRING_AGG … WITHIN GROUP (GRAPH PATH)</code>.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(167,139,250,.12);color:#a78bfa;font-size:.65rem">AS NODE</span>
+          <span class="badge me-1" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">AS EDGE</span>
+          <span class="badge" style="background:rgba(52,211,153,.12);color:#34d399;font-size:.65rem">SHORTEST_PATH</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c8_graph') }}" class="btn btn-sm w-100" style="background:#a78bfa;color:#0d0f16;border:none">
+          <i class="bi bi-play-fill me-1"></i>Open Demo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-share me-1"></i>Neo4j / Cypher Reference
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Native graph DB vs SQL Server graph: pointer-based O(1) hop traversal vs nested-loop
+          temp-table approach. Cypher examples: <code>MERGE</code>, <code>MATCH</code>,
+          variable-length paths <code>-[:REL*1..3]-&gt;</code>, <code>shortestPath()</code>,
+          diameter calculation, <code>LOAD CSV</code>, implicit aggregation without <code>GROUP BY</code>.
+          GraphQL ≠ Graph DB clarification.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(52,211,153,.12);color:#34d399;font-size:.65rem">Cypher MATCH</span>
+          <span class="badge me-1" style="background:rgba(167,139,250,.12);color:#a78bfa;font-size:.65rem">MERGE</span>
+          <span class="badge" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">shortestPath()</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c8_graph') }}" class="btn btn-sm w-100" style="background:#059669;color:#fff;border:none">
+          <i class="bi bi-book me-1"></i>View Reference
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,146,60,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#fb923c">
+          <i class="bi bi-image me-1"></i>BLOB Storage
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Three BLOB strategies compared: <code>VARBINARY(MAX)</code> (in-row, up to 2 GB),
+          FILESTREAM (OS-limit, UNC path + T-SQL), FileTables (full Windows share, large video/CAD).
+          Load binary data via <code>OPENROWSET(BULK …, SINGLE_BLOB)</code>.
+          Decision matrix: ACID support, backup inclusion, file-system access, and when to use
+          Azure Blob Storage with a URL pointer pattern instead.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(251,146,60,.12);color:#fb923c;font-size:.65rem">VARBINARY(MAX)</span>
+          <span class="badge me-1" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">FILESTREAM</span>
+          <span class="badge" style="background:rgba(52,211,153,.12);color:#34d399;font-size:.65rem">FileTable</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c8_graph') }}" class="btn btn-sm w-100" style="background:#c2410c;color:#fff;border:none">
+          <i class="bi bi-hdd me-1"></i>View Storage Guide
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 7: Cloud DB / BigQuery ML -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#4285f4;letter-spacing:.1em">Chapter 7 — Cloud Database Technologies &amp; BigQuery ML</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(66,133,244,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#4285f4">
+          <i class="bi bi-graph-up me-1"></i>Linear Regression (value_numeric)
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Mirrors BigQuery ML <code>CREATE MODEL … linear_reg</code> locally using sklearn.
+          Fetches the 5-field denormalized view from SQL Server Northwind, trains a
+          <code>LinearRegression</code> with OneHotEncoded country + categoryid, evaluates MAE/R²,
+          plots actual vs predicted scatter, and runs <code>ML.PREDICT</code>-style error filtering.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(52,168,83,.12);color:#34a853;font-size:.65rem">MAE ≈ 342</span>
+          <span class="badge me-1" style="background:rgba(251,188,5,.12);color:#fbbc05;font-size:.65rem">Var 53%</span>
+          <span class="badge" style="background:rgba(66,133,244,.12);color:#4285f4;font-size:.65rem">Scatter plot</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.bqml') }}" class="btn btn-sm w-100" style="background:#4285f4;color:#fff;border:none">
+          <i class="bi bi-play-fill me-1"></i>Open Demo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,188,5,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#fbbc05">
+          <i class="bi bi-tags me-1"></i>Classification (value_nominal L/M/H)
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          BQML practice exercise: classify order line value as Low (&lt;200), Medium (200–1200),
+          or High (≥1200). Local <code>LogisticRegression</code> mirrors BigQuery
+          <code>LOGISTIC_REG</code>. Shows accuracy, precision/recall/F1 per class,
+          and confusion matrix with colour-coded cells.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">L &lt;200</span>
+          <span class="badge me-1" style="background:rgba(167,139,250,.12);color:#a78bfa;font-size:.65rem">M 200–1200</span>
+          <span class="badge" style="background:rgba(249,115,22,.12);color:#f97316;font-size:.65rem">H ≥1200</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.bqml') }}" class="btn btn-sm w-100" style="background:#d97706;color:#fff;border:none">
+          <i class="bi bi-tags me-1"></i>Train Classifier
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#a78bfa">
+          <i class="bi bi-heart-pulse me-1"></i>Natality Model (public BigQuery dataset)
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Reference SQL for the BigQuery public <code>samples.natality</code> dataset (137M records).
+          Predicts baby birth weight from <code>is_male</code>, <code>gestation_weeks</code>,
+          <code>mother_age</code>, <code>mother_race</code>. Interactive simulator using
+          published model coefficients — enter parameters and get a predicted weight in lbs/kg.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(52,168,83,.12);color:#34a853;font-size:.65rem">gest_weeks +0.46/wk</span>
+          <span class="badge" style="background:rgba(66,133,244,.12);color:#4285f4;font-size:.65rem">male +0.28 lbs</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.bqml') }}" class="btn btn-sm w-100" style="background:#7c3aed;color:#fff;border:none">
+          <i class="bi bi-calculator me-1"></i>Simulate Prediction
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 3: Replication, Log Shipping & Failover -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#f59e0b;letter-spacing:.1em">Chapter 3 — Replication, Log Shipping &amp; Failover</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(245,158,11,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#f59e0b">
+          <i class="bi bi-diagram-3 me-1"></i>Replication Types
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Publisher → Distributor → Subscriber pipeline. Snapshot (bcp, drop/re-create),
+          Transactional (Log Reader agent, near real-time), Merge (MSmerge_* triggers,
+          conflict resolution), Peer-to-Peer (writes on any node, no conflicts allowed).
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">Snapshot</span>
+          <span class="badge me-1" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">Transactional</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Merge</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c3_replication') }}" class="btn btn-sm mt-auto w-100" style="background:#f59e0b;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#f87171">
+          <i class="bi bi-ship me-1"></i>Log Shipping — Warm Standby
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Three jobs: Backup (primary logs new WAL portion), Copy (secondary copies log to
+          destination), Restore (secondary applies log to standby DB). Latency window between
+          jobs is configurable — useful for recovering from accidental deletes.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">Backup Job</span>
+          <span class="badge me-1" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">Copy Job</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Restore Job</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c3_replication') }}#tab-logship" class="btn btn-sm mt-auto w-100" style="background:#f87171;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-shuffle me-1"></i>Merge &amp; CAP Theorem
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Merge replication for offline mobile workers: MSmerge triggers log changes at every
+          node; Merge Agent reconciles conflicts. Default resolver: "first to Publisher wins."
+          Demonstrates eventual consistency and the CAP trade-off (C ↔ A).
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Eventual Consistency</span>
+          <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">CAP Theorem</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c3_replication') }}#tab-merge" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 6: Database Migration -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#34d399;letter-spacing:.1em">Chapter 6 — Database Migration (SQL Server → PostgreSQL → Cloud Firestore)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-arrow-repeat me-1"></i>Relational Migration
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Live migration from SQL Server Northwind to PostgreSQL. Creates <code>products</code>,
+          <code>customers</code>, <code>orders</code>, <code>orderdetails</code> tables with
+          migrated DDL (BIT→BOOLEAN, IDENTITY→SERIAL, <code>[Order Details]</code>→<code>orderdetails</code>).
+          Loads data via pyodbc, creates the <code>new_order()</code> stored function in plpgsql.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">SQL Server</span>
+          <span class="badge me-1" style="background:rgba(52,211,153,.12);color:#34d399;font-size:.65rem">→ PostgreSQL</span>
+          <span class="badge" style="background:rgba(167,139,250,.12);color:#a78bfa;font-size:.65rem">plpgsql function</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.migration') }}" class="btn btn-sm w-100" style="background:#34d399;color:#0d0f16;border:none">
+          <i class="bi bi-play-fill me-1"></i>Open Demo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(6,214,160,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#06d6a0">
+          <i class="bi bi-shield-check me-1"></i>Transaction Atomicity Demo
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Demonstrates ACID atomicity with live execution trace. Injects a FK error
+          (<code>customerid = 'ERROR'</code>) mid-transaction after balance is already
+          decremented — shows automatic rollback restoring both balance and stock.
+          Interactive before/after state comparison.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(6,214,160,.15);color:#06d6a0;font-size:.65rem">Normal COMMIT</span>
+          <span class="badge me-1" style="background:rgba(239,68,68,.15);color:#fca5a5;font-size:.65rem">FK Error → ROLLBACK</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.migration') }}" class="btn btn-sm w-100" style="background:#059669;color:#fff;border:none">
+          <i class="bi bi-x-circle me-1"></i>Test Rollback
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,146,60,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#fb923c">
+          <i class="bi bi-cloud me-1"></i>Document Store Migration
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Architecture of a Firestore-based migration: schema-on-read vs schema-on-write,
+          many-to-many mapping challenges, Collections vs sub-collections, concurrency
+          bugs without transactions, and the critical Firestore limitation: Atomicity XOR Isolation
+          (batched writes cannot be combined with transactions).
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(251,146,60,.12);color:#fb923c;font-size:.65rem">Firestore</span>
+          <span class="badge me-1" style="background:rgba(251,191,36,.12);color:#fbbf24;font-size:.65rem">schema-on-read</span>
+          <span class="badge" style="background:rgba(239,68,68,.12);color:#fca5a5;font-size:.65rem">Atomicity XOR Isolation</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.migration') }}" class="btn btn-sm w-100" style="background:#c2410c;color:#fff;border:none">
+          <i class="bi bi-cloud me-1"></i>View Architecture
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 5: Columnstore & Partitioning -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#38bdf8;letter-spacing:.1em">Chapter 5 — Columnstore &amp; Partitioning (AdventureWorksDW2019 · PostgreSQL)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(56,189,248,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#38bdf8">
+          <i class="bi bi-hdd-stack me-1"></i>Storage Format Benchmark
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Live comparison of B-Tree (row store), Page Compression, and Clustered Columnstore Index (CCI)
+          on <code>FactInternetSales</code>. Click Setup → Run Benchmark to see actual elapsed-ms and
+          KB used for each format. Course reference: 11.6M-row table shows CCI 19× faster, 4.8× smaller.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">B-Tree 100%</span>
+          <span class="badge me-1" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">Page 27%</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">CCI 21%</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.columnstore') }}" class="btn btn-sm w-100" style="background:#38bdf8;color:#0d0f16;border:none">
+          <i class="bi bi-play-fill me-1"></i>Open Demo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(56,189,248,.2)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#7dd3fc">
+          <i class="bi bi-grid-3x3-gap me-1"></i>Partition Switching
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          7-step interactive walkthrough: create partition function &amp; scheme, build the
+          <code>InternetSales</code> table partitioned by year (TINYINT), load 2010–2012,
+          create aligned CCI, then add 2013 via <code>ALTER TABLE … SWITCH</code> — a
+          metadata-only operation. Zero data copied.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(251,191,36,.15);color:#fbbf24;font-size:.65rem">RANGE LEFT</span>
+          <span class="badge me-1" style="background:rgba(56,189,248,.12);color:#38bdf8;font-size:.65rem">Aligned CCI</span>
+          <span class="badge" style="background:rgba(6,214,160,.15);color:#06d6a0;font-size:.65rem">SWITCH (metadata-only)</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.columnstore') }}#partition" class="btn btn-sm w-100" style="background:#0284c7;color:#fff;border:none">
+          <i class="bi bi-diagram-3 me-1"></i>Step Through
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-diagram-2 me-1"></i>PostgreSQL Partitioning
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Declarative partitioning (PG 10+, recommended) vs Table Inheritance (legacy RULE-based approach).
+          Both demo against Northwind <code>products</code> (77 rows) split by first letter A–M / M–Z.
+          Side-by-side SQL + live results showing row counts per partition.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">PARTITION BY RANGE</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">INHERITS + RULE</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.columnstore') }}" class="btn btn-sm w-100" style="background:#059669;color:#fff;border:none">
+          <i class="bi bi-play-fill me-1"></i>Run PG Demo
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 4: Data Quality & Functional Dependency -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#a78bfa;letter-spacing:.1em">Chapter 4 — Data Quality &amp; Functional Dependency (AdventureWorksDW2019)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(139,92,246,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#a78bfa">
+          <i class="bi bi-diagram-3 me-1"></i>Functional Dependency Analyzer
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Detect hidden FDs using the GROUP BY double-count technique: compare
+          <code>COUNT(DISTINCT col_a)</code> vs <code>COUNT(*) FROM (SELECT DISTINCT col_a, col_b)</code>.
+          If N&nbsp;==&nbsp;M, col_b is functionally dependent on col_a — a potential 3NF violation.
+          Runs live queries against DimGeography, DimProduct, DimCustomer, DimEmployee, DimSalesReason.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(139,92,246,.2);color:#a78bfa;font-size:.65rem">StateProvinceCode → CountryRegionCode</span>
+          <span class="badge me-1" style="background:rgba(139,92,246,.2);color:#a78bfa;font-size:.65rem">Color → ProductLine</span>
+          <span class="badge" style="background:rgba(139,92,246,.2);color:#a78bfa;font-size:.65rem">Education → Occupation</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.data_quality') }}" class="btn btn-sm w-100" style="background:#8b5cf6;color:#fff;border:none">
+          <i class="bi bi-play-fill me-1"></i>Open Demo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(139,92,246,.2)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#c4b5fd">
+          <i class="bi bi-bar-chart-steps me-1"></i>Column Profiler
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Null percentage, distinct value count, and top-10 value frequency bars — all computed server-side from
+          AdventureWorksDW2019. Reveals data completeness issues instantly: a column with 40% nulls in a
+          dimension table is a data-quality red flag before any FD analysis begins.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(16,185,129,.15);color:#34d399;font-size:.65rem">Null %</span>
+          <span class="badge me-1" style="background:rgba(59,130,246,.15);color:#93c5fd;font-size:.65rem">Distinct Count</span>
+          <span class="badge" style="background:rgba(245,158,11,.15);color:#fcd34d;font-size:.65rem">Top-10 Values</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.data_quality') }}#profiler" class="btn btn-sm w-100" style="background:#7c3aed;color:#fff;border:none">
+          <i class="bi bi-search me-1"></i>Profile Columns
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(139,92,246,.2)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#c4b5fd">
+          <i class="bi bi-server me-1"></i>DQS Architecture Reference
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          SQL Server Data Quality Services: three system databases (DQS_MAIN, DQS_PROJECTS, DQS_STAGING_DATA),
+          Knowledge Base structure with Domains and leading-value synonym chains, five cleansing states
+          (Correct / Corrected / Suggested / New / Invalid), and the sp_adddistributor known bug.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(239,68,68,.15);color:#fca5a5;font-size:.65rem">DQS_MAIN</span>
+          <span class="badge me-1" style="background:rgba(139,92,246,.15);color:#c4b5fd;font-size:.65rem">KB → Domains</span>
+          <span class="badge" style="background:rgba(16,185,129,.15);color:#6ee7b7;font-size:.65rem">5 Cleansing States</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.data_quality') }}#dqs-arch" class="btn btn-sm w-100" style="background:#6d28d9;color:#fff;border:none">
+          <i class="bi bi-book me-1"></i>View Architecture
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 14: Distributed Consensus — PoW vs Raft -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#818cf8;letter-spacing:.1em">Chapter 14 — Distributed Consensus: PoW vs Raft (rqlite · Chaos Monkey)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#818cf8">
+          <i class="bi bi-diagram-3 me-1"></i>Raft Algorithm
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Three roles: Leader (accepts all writes), Follower (applies log entries), Candidate
+          (runs election on heartbeat timeout). Randomized election timeouts (150–300 ms) prevent
+          split-vote deadlocks. Majority acknowledgment = committed write.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">Leader Election</span>
+          <span class="badge me-1" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">Log Replication</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Safety Guarantee</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c14_raft') }}" class="btn btn-sm mt-auto w-100" style="background:#818cf8;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(129,140,248,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#a5b4fc">
+          <i class="bi bi-database me-1"></i>rqlite — SQLite over Raft
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Pure HTTP API — no driver, no connection pool. <code>GET /db/query</code> for reads
+          (strong or weak consistency), <code>POST /db/execute</code> for writes. 3-node cluster
+          on localhost ports 4001/4003/4005. Full SQLite SQL supported.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(129,140,248,.15);color:#a5b4fc;font-size:.65rem">HTTP API</span>
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">level=weak/strong</span>
+          <span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">SQLite SQL</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c14_raft') }}#tab-rqlite" class="btn btn-sm mt-auto w-100" style="background:#6366f1;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(239,68,68,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#f87171">
+          <i class="bi bi-lightning-charge me-1"></i>Chaos Monkey Lab
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Kill the Raft leader with <code>pkill</code>. Nodes 2 and 3 detect heartbeat timeout
+          (~300 ms) and elect a new leader in ~1 second. Query through Node 2 — succeeds.
+          Restart Node 1 as follower, catches up the log. Zero downtime.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(239,68,68,.15);color:#f87171;font-size:.65rem">~1s Failover</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Automatic</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c14_raft') }}#tab-chaos" class="btn btn-sm mt-auto w-100" style="background:#dc2626;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chapter 15: Full-Text Search with Elasticsearch -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#f97316;letter-spacing:.1em">Chapter 15 — Full-Text Search with Elasticsearch (Inverted Index · BM25 · Aggregations)</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#f97316">
+          <i class="bi bi-search me-1"></i>Inverted Index &amp; Analyzer
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          At index time: tokenizer splits text, token filters lowercase and stem words, result stored
+          in an inverted index. At query time: same analyzer runs, terms looked up in O(1). No table
+          scan. "Grandma's Boysenberry Spread" → ["grandma", "boysenberri", "spread"].
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(249,115,22,.15);color:#f97316;font-size:.65rem">Tokenizer</span>
+          <span class="badge me-1" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">Stemmer</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">O(1) Lookup</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c15_elasticsearch') }}" class="btn btn-sm mt-auto w-100" style="background:#f97316;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.25)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#fb923c">
+          <i class="bi bi-calculator me-1"></i>BM25 Relevance Scoring
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Best Match 25: IDF × TF saturation × length normalization. Rare terms score higher,
+          repeated occurrences have diminishing returns (k1=1.2), long documents penalized
+          (b=0.75). "Chai" title outranks a description mentioning chai 5 times.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(249,115,22,.15);color:#f97316;font-size:.65rem">IDF</span>
+          <span class="badge me-1" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">TF Saturation</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Length Norm</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c15_elasticsearch') }}#tab-bm25" class="btn btn-sm mt-auto w-100" style="background:#ea580c;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-pie-chart me-1"></i>Aggregations &amp; Dual-DB Architecture
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Bucket aggregations (≈ GROUP BY) + metric aggregations (≈ AVG/SUM) run in parallel
+          with search — one request. Typical architecture: SQL owns authoritative data, ES owns
+          the search projection; sync via trigger or CDC → Kafka → ES.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Bucket Aggs</span>
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">Metric Aggs</span>
+          <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">SQL + ES Dual-DB</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c15_elasticsearch') }}#tab-aggs" class="btn btn-sm mt-auto w-100" style="background:#059669;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Cloud Book — Chapter 12: Cloud Service Orchestration -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#f59e0b;letter-spacing:.1em">Cloud Book — Chapter 12 — Cloud Service Orchestration · OCR Pipeline · Pub/Sub · Vision AI · Translation · GCS</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(245,158,11,.3)">
+      <div class="card-body">
+        <h6 class="card-title" style="color:#f59e0b">Architecture &amp; Pipeline</h6>
+        <p class="card-text small text-muted">6-step serverless OCR + translation pipeline: GCS upload triggers Fn1 (Vision AI TEXT_DETECTION + language detect), publishes per-language to TRANSLATE_TOPIC, Fn2 translates, Fn3 saves result to GCS. Zero infrastructure.</p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">Orchestration</span>
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">Pub/Sub</span>
+          <span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">Event-Driven</span>
+        </div>
+      </div>
+      <div class="card-footer" style="background:transparent;border-top:1px solid rgba(245,158,11,.15)">
+        <a href="{{ url_for('demos.cloud_ch12') }}" class="btn btn-sm mt-auto w-100" style="background:#f59e0b;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(245,158,11,.3)">
+      <div class="card-body">
+        <h6 class="card-title" style="color:#f59e0b">Function 1 — OCR</h6>
+        <p class="card-text small text-muted">OcrProcessImage: BackgroundFunction&lt;GcsEvent&gt; reads image from GCS, calls Vision AI batchAnnotateImages() TEXT_DETECTION, detects source language via TranslationServiceClient, publishes one OcrTranslateApiMessage per target language to TRANSLATE_TOPIC.</p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">Vision AI</span>
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">GcsEvent</span>
+          <span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">detectLanguage</span>
+        </div>
+      </div>
+      <div class="card-footer" style="background:transparent;border-top:1px solid rgba(245,158,11,.15)">
+        <a href="{{ url_for('demos.cloud_ch12') }}#tab-ocr" class="btn btn-sm mt-auto w-100" style="background:#d97706;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(245,158,11,.3)">
+      <div class="card-body">
+        <h6 class="card-title" style="color:#f59e0b">Functions 2 &amp; 3 — Translate &amp; Save</h6>
+        <p class="card-text small text-muted">OcrTranslateText: BackgroundFunction&lt;PubSubMessage&gt; deserialises OcrTranslateApiMessage, calls translateText(), publishes to RESULT_TOPIC. OcrSaveResult: static Storage client, saves translated text as filename_to_lang.txt to result bucket.</p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">Translation</span>
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">GCS Save</span>
+          <span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.7rem">BlobInfo</span>
+        </div>
+      </div>
+      <div class="card-footer" style="background:transparent;border-top:1px solid rgba(245,158,11,.15)">
+        <a href="{{ url_for('demos.cloud_ch12') }}#tab-translate" class="btn btn-sm mt-auto w-100" style="background:#92400e;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Book — Chapter 11: GCP AI Service Examples -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#fb7185;letter-spacing:.1em">Cloud Book — Chapter 11 — GCP AI/ML Services · Vision AI · Cloud Translation · Text-to-Speech · Java APIs</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(251,113,133,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">🤖</span>
+          <h6 class="mb-0 fw-bold" style="color:#fb7185">GCP AI/ML Services Overview</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">All 8 GCP AI/ML services: AutoML, Vision AI, Video AI, Natural Language, Translation, Text-to-Speech, Speech-to-Text, Dialogflow — with capabilities table and chapter focus.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">AutoML</span>
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">Dialogflow</span>
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">NLP</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch11') }}" class="btn btn-sm mt-auto w-100" style="background:#fb7185;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(251,113,133,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">👁️</span>
+          <h6 class="mb-0 fw-bold" style="color:#fb7185">Vision AI</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">ImageAnnotatorClient, batchAnnotateImages(), all 11 feature types (TEXT_DETECTION, FACE, LABEL, LANDMARK, LOGO, OBJECT_LOCALIZATION, SAFE_SEARCH...), multi-feature request pattern.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">OCR</span>
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">Face Detection</span>
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">Java</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch11') }}#tab-vision" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(251,113,133,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">🔊</span>
+          <h6 class="mb-0 fw-bold" style="color:#fb7185">Translation &amp; Text-to-Speech</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">Cloud Translation: auto-detect, explicit source/target language, NMT premium model. Text-to-Speech: full QuickstartSample (SynthesisInput, VoiceSelectionParams, AudioConfig, MP3 output).</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">NMT</span>
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">SSML</span>
+          <span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185;font-size:.65rem">MP3</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch11') }}#tab-tts" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Book — Chapter 10: Pub/Sub -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#34d399;letter-spacing:.1em">Cloud Book — Chapter 10 — Google Pub/Sub · Topics &amp; Subscriptions · Message Flow · Pull/Push · Java API</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">📡</span>
+          <h6 class="mb-0 fw-bold" style="color:#34d399">Pub/Sub Overview &amp; Message Flow</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">Loose coupling vs RPC, Publishers/Topics/Subscriptions/Subscribers, N-to-M mapping, 6-step message delivery, At-Least-Once semantics, 7-day retention, Exactly-Once with Beam.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Async</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">N-to-M</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">At-Least-Once</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch10') }}" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">⚡</span>
+          <h6 class="mb-0 fw-bold" style="color:#34d399">Background Function + gcloud</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">HelloPubSub BackgroundFunction&lt;PubSubMessage&gt;, Base64 decoding, gcloud deploy with --trigger-topic, gcloud topic create, gcloud publish test message.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Base64</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">gcloud</span>
+          <span class="badge" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Java</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch10') }}#tab-function" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">📮</span>
+          <h6 class="mb-0 fw-bold" style="color:#34d399">Java Publish &amp; Subscribe</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">Publisher with ApiFuture async callbacks (onSuccess/onFailure, isRetryable), async Pull subscriber, MessageReceiver lambda, Ack semantics, Pull vs Push comparison.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">ApiFuture</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">MessageReceiver</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Ack</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch10') }}#tab-subscribe" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Book — Chapter 9: Cloud Functions / FaaS -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#a78bfa;letter-spacing:.1em">Cloud Book — Chapter 9 — Serverless · FaaS · HTTP Functions · Background Functions · GCP Triggers · Deploy</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">☁️</span>
+          <h6 class="mb-0 fw-bold" style="color:#a78bfa">FaaS &amp; HTTP Functions</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">Serverless paradigm, IaaS vs PaaS vs FaaS comparison, Java HttpFunction (service()), Node.js one-liner, lifecycle: Write → Deploy → Execute → Monitor.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Serverless</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">HttpFunction</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Java + Node.js</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch9') }}" class="btn btn-sm mt-auto w-100" style="background:#a78bfa;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">⚡</span>
+          <h6 class="mb-0 fw-bold" style="color:#a78bfa">Background Functions &amp; Triggers</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">Event-driven execution, BackgroundFunction&lt;T&gt; generic interface, GCS trigger Java example, all 8 trigger types, delivery guarantees (At-Most-Once / At-Least-Once).</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Pub/Sub</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">GCS Trigger</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Firebase</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch9') }}#tab-background" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">🚀</span>
+          <h6 class="mb-0 fw-bold" style="color:#a78bfa">Deploy &amp; Monitor</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">gcloud deploy from local machine, gcloud deploy from source control, 12-step GCP Console walkthrough, log viewing, integrated monitoring and debugging.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">gcloud deploy</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Console</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Logs</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch9') }}#tab-deploy" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Book — Chapter 8: Stream Data Processing -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#f472b6;letter-spacing:.1em">Cloud Book — Chapter 8 — Stream Algorithms · Spark Streaming · Flink · Storm · Kafka · Beam / Dataflow</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(244,114,182,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">📊</span>
+          <h6 class="mb-0 fw-bold" style="color:#f472b6">Stream Algorithms &amp; Welford</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">Why batch algorithms fail on streams, catastrophic cancellation, Welford's numerically stable online mean/variance, sliding windows, pipeline architecture.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Online Algorithm</span>
+          <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Welford</span>
+          <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Sliding Windows</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch8') }}" class="btn btn-sm mt-auto w-100" style="background:#f472b6;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(244,114,182,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">🌊</span>
+          <h6 class="mb-0 fw-bold" style="color:#f472b6">Spark Streaming &amp; Apache Flink</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">DStream microbatch model, Java socket WordCount. Flink's unified bounded/unbounded streams, stateful processing (TB-scale), event-time vs processing-time semantics.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">DStream</span>
+          <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Flink State</span>
+          <span class="badge" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Java</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch8') }}#tab-flink" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(244,114,182,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">☁️</span>
+          <h6 class="mb-0 fw-bold" style="color:#f472b6">Storm, Kafka &amp; Beam/Dataflow</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">Storm topology (Spouts/Bolts), Kafka pub-sub partitions, Kafka Streams API, Apache Beam Pipeline/PCollection/PTransform, GCP Dataflow runner, framework comparison matrix.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Kafka Topics</span>
+          <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Beam SDK</span>
+          <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Dataflow</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch8') }}#tab-beam" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Book — Chapter 7: Big Data, Hadoop/MapReduce & Spark -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#facc15;letter-spacing:.1em">Cloud Book — Chapter 7 — Big Data · Hadoop / MapReduce · Apache Spark · GCP Dataproc</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(250,204,21,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">📦</span>
+          <h6 class="mb-0 fw-bold" style="color:#facc15">Big Data &amp; the 3 Vs</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">Volume, Velocity, Variety — the 2-criteria definition, 4-stage data lifecycle (Ingest→Persist→Process→Visualise), and the case for distributed computing.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">Volume</span>
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">Velocity</span>
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">Variety</span>
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">Batch vs Stream</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch7') }}" class="btn btn-sm mt-auto w-100" style="background:#facc15;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(250,204,21,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">🗺️</span>
+          <h6 class="mb-0 fw-bold" style="color:#facc15">Hadoop &amp; MapReduce</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">HDFS, YARN, MapReduce pipeline — KV shuffle phases, fault tolerance, Java WordCount. The foundation of distributed batch processing.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">HDFS</span>
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">YARN</span>
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">MapReduce</span>
+          <span class="badge" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Java</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch7') }}#tab-hadoop" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100 d-flex flex-column" style="background:#13141a;border:1px solid rgba(250,204,21,.3)">
+      <div class="card-body flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="font-size:1.4rem">⚡</span>
+          <h6 class="mb-0 fw-bold" style="color:#facc15">Spark &amp; GCP Dataproc</h6>
+        </div>
+        <p class="small mb-2" style="color:#94a3b8">RDD in-memory processing (100× faster), Java Spark WordCount, execution modes (Standalone/YARN), and managed Dataproc with BigQuery/GCS integration.</p>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">Spark RDD</span>
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">Dataproc</span>
+          <span class="badge" style="background:rgba(250,204,21,.15);color:#facc15;font-size:.65rem">gcloud</span>
+          <span class="badge" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Java</span>
+        </div>
+      </div>
+      <div class="card-footer border-0" style="background:transparent">
+        <a href="{{ url_for('demos.cloud_ch7') }}#tab-dataproc" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Book — Chapters 5–6: Google Cloud Platform -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#22d3ee;letter-spacing:.1em">Cloud Book — Chapters 5 &amp; 6 — Google Cloud Platform · Compute Engine · Cloud Storage · gcloud</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(34,211,238,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#22d3ee">
+          <i class="bi bi-cpu me-1"></i>Compute Engine &amp; Pricing
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Four instance groups: E2/N1/N2/N2D (General), C2 (Compute), M2 (Memory), A2 (GPU).
+          Three discount tiers: automatic sustained use, committed use (50% off), preemptible VMs (80% off).
+          Confidential VMs (CPU-level encryption), Live Migration, Sole-tenant Nodes.
+          200+ countries · 24 regions · 73 zones.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Compute Engine</span>
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">80% Preemptible</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Confidential VM</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch5') }}" class="btn btn-sm mt-auto w-100" style="background:#22d3ee;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-hdd-stack me-1"></i>Cloud Storage, Network &amp; PaaS
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Four storage classes: Standard → Nearline (30d) → Coldline (90d) → Archive (365d).
+          11-nines durability. Network: Cloud Interconnect, VPC (global), Cloud Load Balancing, Cloud Armor (DDoS+WAF).
+          PaaS: App Engine auto-scales Go/Java/.NET/Node.js/Python/Ruby.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">Cloud Storage</span>
+          <span class="badge me-1" style="background:rgba(239,68,68,.15);color:#f87171;font-size:.65rem">Cloud Armor</span>
+          <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">App Engine</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch5') }}#tab-storage" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#a78bfa">
+          <i class="bi bi-terminal me-1"></i>gcloud CLI &amp; Java Client Library
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          gcloud command hierarchy (compute/projects/storage). Cloud Shell: 5GB disk, pre-installed SDK, built-in editor, auto-auth.
+          Java Client Library: list/start/stop Compute Engine instances, create COLDLINE bucket in ASIA region, list buckets. Operation.waitFor() async pattern.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.65rem">gcloud CLI</span>
+          <span class="badge me-1" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Cloud Shell</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Java SDK</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch5') }}#tab-sdk" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Cloud Book — Chapter 4: Amazon AWS -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#fb923c;letter-spacing:.1em">Cloud Book — Chapter 4 — Amazon AWS · EC2 · S3 · VPC · Elastic Beanstalk · AI SaaS</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,146,60,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#fb923c">
+          <i class="bi bi-cpu me-1"></i>EC2 Instance Types &amp; Storage
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Five EC2 instance groups (General Purpose through Accelerated/GPU). Full M4 specs table
+          (m4.large → m4.16xlarge, 2–64 vCPUs, 8–256 GiB). Burstable T-class credit model.
+          Spot (90% savings), Autoscaling, Batch. S3 (11 nines), EFS, EBS — three storage paradigms.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(251,146,60,.15);color:#fb923c;font-size:.65rem">EC2</span>
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">S3/EFS/EBS</span>
+          <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">Spot 90% off</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch4') }}" class="btn btn-sm mt-auto w-100" style="background:#fb923c;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-diagram-3 me-1"></i>Networking — VPC, ELB, Shield, WAF
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Build: VPC, Transit Gateway, PrivateLink, Route 53, VPN.
+          Scale: Elastic Load Balancing, Global Accelerator.
+          Secure: Shield (DDoS), WAF (OWASP Top 10), Firewall Manager.
+          Public vs private subnet rules. 245 countries, 24 regions, multi-AZ resilience.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">VPC</span>
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">ELB</span>
+          <span class="badge" style="background:rgba(239,68,68,.15);color:#f87171;font-size:.65rem">Shield/WAF</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch4') }}#tab-network" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#a78bfa">
+          <i class="bi bi-code-slash me-1"></i>Elastic Beanstalk, AI SaaS &amp; Java SDK
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          PaaS: deploy .war → Beanstalk auto-provisions EC2+ELB+scaling. SaaS: Comprehend, Translate,
+          Rekognition, Polly, Transcribe. AWS CLI examples. Java SDK: 73,000+ classes (10× Java SE).
+          Code: create EC2 instance, enable CloudWatch monitoring.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Elastic Beanstalk</span>
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">AI SaaS</span>
+          <span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c;font-size:.65rem">Java SDK</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch4') }}#tab-sdk" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Cloud Book — Chapter 2: The Road to Cloud Computing -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#2dd4bf;letter-spacing:.1em">Cloud Book — Chapter 2 — Mainframes · RPC/RMI · SOA · Grid · Virtualisation</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(45,212,191,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#2dd4bf">
+          <i class="bi bi-clock-history me-1"></i>Computing Eras — Mainframes to Cloud
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          The resource-sharing tension: centralise for efficiency (restrict freedom) vs distribute for autonomy
+          (waste resources). Trace the path from 1960s mainframe batch scheduling through PCs, LANs, and
+          supercomputers. Includes log-scale performance chart: CDC 6600 (2 MIPS) → Fugaku (415 PFlop/s).
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(45,212,191,.15);color:#2dd4bf;font-size:.65rem">Mainframes</span>
+          <span class="badge me-1" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">Client-Server</span>
+          <span class="badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">HPC</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch2') }}" class="btn btn-sm mt-auto w-100" style="background:#2dd4bf;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-arrow-left-right me-1"></i>RPC, RMI &amp; the SOA Evolution
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Raw sockets → Sun RPC (function call abstraction) → Java RMI (interface-based, BankServer demo) →
+          strong coupling failures → SOA (WSDL/UDDI/SOAP) → WS-* spec explosion (70+ specs) →
+          REST (Fielding 2000, resource-oriented, simple HTTP verbs).
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">RPC/RMI</span>
+          <span class="badge me-1" style="background:rgba(45,212,191,.15);color:#2dd4bf;font-size:.65rem">SOAP vs REST</span>
+          <span class="badge" style="background:rgba(239,68,68,.15);color:#f87171;font-size:.65rem">Loose Coupling</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch2') }}#tab-rpc" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#a78bfa">
+          <i class="bi bi-layers me-1"></i>Grid, Volunteer Computing &amp; Virtualisation
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Grid: Globus Toolkit (GRAM, RSL, broker), CERN DataGrid. Voluntary: SETI@home pull-model inversion,
+          BOINC (30+ projects, 800K computers, 40 PFlop/s). Virtualisation: full vs para vs hardware-assisted,
+          SUN Grid ($1/CPU-hour, 2005), Xen/KVM → EC2.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">Globus/Grid</span>
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">BOINC</span>
+          <span class="badge" style="background:rgba(45,212,191,.15);color:#2dd4bf;font-size:.65rem">Virtualisation</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_ch2') }}#tab-virt" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Cloud Book — Chapter 3: Cloud Technology Fundamentals -->
+<div class="row g-2 mb-2 mt-4">
+  <div class="col-12">
+    <div class="text-uppercase fw-bold" style="font-size:.7rem;color:#38bdf8;letter-spacing:.1em">Cloud Book — Chapter 3 — IaaS / PaaS / SaaS · Economy of Scale · Pricing</div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(56,189,248,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#38bdf8">
+          <i class="bi bi-layers me-1"></i>Service Layers (IaaS / PaaS / SaaS)
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Five cloud service models — IaaS (you manage OS up), PaaS (you manage app only),
+          CaaS (containers), FaaS (functions), SaaS (vendor manages all). Interactive pyramid
+          shows what the provider vs customer owns at each layer.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(56,189,248,.15);color:#38bdf8;font-size:.65rem">IaaS</span>
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">PaaS</span>
+          <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">SaaS</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_fundamentals') }}" class="btn btn-sm mt-auto w-100" style="background:#38bdf8;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#34d399">
+          <i class="bi bi-clock-history me-1"></i>Cloud History (Amazon → Azure → GCP)
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Amazon's SOA mandate (~2000) → S3/EC2/SQS (2006). Microsoft Windows Azure (2008) →
+          Azure (2010). Google App Engine (2008) → BigQuery (2010) → Compute Engine (2013).
+          IBM and Oracle join the race 2013–2016.
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:.65rem">AWS 2006</span>
+          <span class="badge me-1" style="background:rgba(56,189,248,.15);color:#38bdf8;font-size:.65rem">Azure 2010</span>
+          <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">GCP 2008</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_fundamentals') }}#tab-history" class="btn btn-sm mt-auto w-100" style="background:#34d399;color:#000;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+      <div class="card-body">
+        <h6 class="card-title fw-bold" style="color:#a78bfa">
+          <i class="bi bi-currency-dollar me-1"></i>Pricing: Pay-As-You-Go · Reserved · Spot
+        </h6>
+        <p class="card-text" style="font-size:.75rem;color:#8892a4">
+          Three pricing strategies: pay-as-you-go (hourly → 1-second billing evolution),
+          reserved instances (1–3 year upfront commitment for 30–75% discount), spot/preemptible
+          (auction price, 60–90% off, may be preempted with 30 s notice).
+        </p>
+        <div class="mt-2">
+          <span class="badge me-1" style="background:rgba(56,189,248,.15);color:#38bdf8;font-size:.65rem">On-Demand</span>
+          <span class="badge me-1" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">Reserved</span>
+          <span class="badge" style="background:rgba(239,68,68,.15);color:#f87171;font-size:.65rem">Spot / Auction</span>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.cloud_fundamentals') }}#tab-pricing" class="btn btn-sm mt-auto w-100" style="background:#7c3aed;color:#fff;font-weight:600">Launch →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {% endblock %}

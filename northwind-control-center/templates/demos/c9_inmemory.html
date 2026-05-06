@@ -1,0 +1,924 @@
+{% extends "base.html" %}
+{% block title %}C9 — In-Memory OLTP (MOT){% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <i class="bi bi-lightning-charge fs-2 me-3" style="color:#fbbf24"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Chapter 9 — In-Memory OLTP</h2>
+    <p class="text-muted mb-0">Memory-Optimized Tables · Hash Indexes · Native Compilation · Benchmark</p>
+  </div>
+</div>
+
+<!-- Status bar -->
+<div id="statusBar" class="alert mb-4" style="background:#13141a;border:1px solid #2a2d35;color:#8892a4;font-size:.82rem;padding:.6rem 1rem">
+  <i class="bi bi-circle me-2"></i><span id="statusMsg">Click <strong>Check Status</strong> to see if the benchmark database is ready.</span>
+  <button class="btn btn-sm ms-3" style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:#fbbf24;font-size:.75rem" onclick="checkStatus()">
+    <i class="bi bi-arrow-clockwise me-1"></i>Check Status
+  </button>
+</div>
+
+<!-- Tab nav -->
+<ul class="nav nav-tabs mb-4" id="c9tabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-concepts">
+      <i class="bi bi-book me-1"></i>Concepts
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-benchmark">
+      <i class="bi bi-speedometer2 me-1"></i>Benchmark
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-sql">
+      <i class="bi bi-code-slash me-1"></i>SQL Patterns
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-migration">
+      <i class="bi bi-arrow-repeat me-1"></i>Migration Guide
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- ── TAB 1: Concepts ──────────────────────────────────────────────────── -->
+  <div class="tab-pane fade show active" id="tab-concepts">
+
+    <!-- Hero blurb -->
+    <div class="card mb-4" style="background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(245,158,11,.04));border:1px solid rgba(251,191,36,.3)">
+      <div class="card-body">
+        <p class="mb-0" style="font-size:.9rem;color:#d1d5db">
+          Memory-Optimized Tables (MOT) — the <strong style="color:#fbbf24">Formula-1 of OLTP</strong> — store all data in RAM
+          using lock-free data structures. For every MOT table or natively compiled procedure,
+          SQL Server generates a <strong>dedicated DLL</strong> (compiled C code), bypassing the
+          interpreted T-SQL engine entirely. Full ACID is maintained via an append-only log on disk.
+        </p>
+      </div>
+    </div>
+
+    <!-- 4 feature cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,191,36,.3)">
+          <div class="card-body text-center">
+            <div style="font-size:2rem;margin-bottom:.5rem">🔒</div>
+            <h6 class="fw-bold" style="color:#fbbf24">Lock-Free Concurrency</h6>
+            <p style="font-size:.78rem;color:#8892a4;margin:0">
+              Row versioning instead of locks. When a row is updated, a <em>new version</em> is created.
+              Deletes are <em>logical</em> — old versions stay until all readers are done.
+              Result: no lock contention at peak concurrency.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+          <div class="card-body text-center">
+            <div style="font-size:2rem;margin-bottom:.5rem">⚙️</div>
+            <h6 class="fw-bold" style="color:#a78bfa">Native Compilation</h6>
+            <p style="font-size:.78rem;color:#8892a4;margin:0">
+              Stored procedures compiled to machine code (DLL) at CREATE time. Skip the T-SQL
+              interpreter, the query plan cache, and lock management. Only MOT tables allowed
+              inside; requires <code>BEGIN ATOMIC</code> block.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+          <div class="card-body text-center">
+            <div style="font-size:2rem;margin-bottom:.5rem">💾</div>
+            <h6 class="fw-bold" style="color:#34d399">Full ACID</h6>
+            <p style="font-size:.78rem;color:#8892a4;margin:0">
+              All changes written to the <em>non-volatile transaction log</em> on disk.
+              Crash recovery replays the log into RAM. MOT tables co-exist with disk-based
+              tables in the same database.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(56,189,248,.3)">
+          <div class="card-body text-center">
+            <div style="font-size:2rem;margin-bottom:.5rem">🗑️</div>
+            <h6 class="fw-bold" style="color:#38bdf8">Non-Durable Mode</h6>
+            <p style="font-size:.78rem;color:#8892a4;margin:0">
+              <code>DURABILITY = SCHEMA_ONLY</code>: data lost on restart, but schema survives.
+              Zero disk I/O → fastest possible cache or ETL staging table. Alternative to
+              <code>tempdb</code> temp tables (structure preserved, no re-CREATE needed).
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row versioning diagram -->
+    <div class="card mb-4" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#fbbf24"><i class="bi bi-diagram-2 me-1"></i>Row Versioning — Automatic Snapshot Isolation</span>
+      </div>
+      <div class="card-body">
+        <svg viewBox="0 0 720 160" style="width:100%;max-height:160px;font-family:monospace;font-size:11px">
+          <!-- Timeline axis -->
+          <line x1="40" y1="130" x2="680" y2="130" stroke="#2a2d35" stroke-width="1"/>
+          <!-- T labels -->
+          <text x="100" y="148" fill="#6b7280" text-anchor="middle">T1 begins</text>
+          <text x="240" y="148" fill="#6b7280" text-anchor="middle">T2 UPDATE</text>
+          <text x="400" y="148" fill="#6b7280" text-anchor="middle">T1 reads</text>
+          <text x="560" y="148" fill="#6b7280" text-anchor="middle">T1 commits</text>
+
+          <!-- T1 row: original version visible to T1 throughout -->
+          <rect x="80" y="30" width="460" height="34" rx="4"
+                fill="rgba(251,191,36,.12)" stroke="rgba(251,191,36,.4)" stroke-width="1"/>
+          <text x="100" y="52" fill="#fbbf24">T1 sees: id=42, val=100</text>
+          <text x="420" y="52" fill="#fbbf24">(original version — still valid for T1)</text>
+
+          <!-- T2 creates new version at T=240 -->
+          <rect x="220" y="72" width="300" height="34" rx="4"
+                fill="rgba(167,139,250,.12)" stroke="rgba(167,139,250,.4)" stroke-width="1"/>
+          <text x="240" y="94" fill="#c4b5fd">T2 creates: id=42, val=200</text>
+          <text x="400" y="94" fill="#8892a4">(new version, visible to T3+)</text>
+
+          <!-- arrow from T2 point down to new version -->
+          <line x1="240" y1="128" x2="240" y2="72" stroke="#a78bfa" stroke-width="1" stroke-dasharray="3,2"/>
+
+          <!-- GC annotation -->
+          <text x="540" y="52" fill="#6b7280" font-size="10">original version GC'd</text>
+          <text x="540" y="64" fill="#6b7280" font-size="10">after T1 commits</text>
+
+          <!-- timeline dots -->
+          <circle cx="100" cy="130" r="4" fill="#fbbf24"/>
+          <circle cx="240" cy="130" r="4" fill="#a78bfa"/>
+          <circle cx="400" cy="130" r="4" fill="#34d399"/>
+          <circle cx="560" cy="130" r="4" fill="#38bdf8"/>
+        </svg>
+        <p class="mb-0 mt-2" style="font-size:.78rem;color:#8892a4">
+          No reader ever blocks a writer. No writer ever blocks a reader. The garbage collector (GC thread) reclaims old
+          versions only after all transactions that could have read them have committed.
+        </p>
+      </div>
+    </div>
+
+    <!-- Index types + requirements table -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#fbbf24">Supported Index Types</span>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-dark table-sm mb-0" style="font-size:.78rem">
+              <thead>
+                <tr><th>Index Type</th><th>Lookup</th><th>Range Scan</th><th>Use When</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color:#fbbf24">HASH</td>
+                  <td><span class="badge bg-success">O(1)</span></td>
+                  <td><span class="badge bg-danger">No</span></td>
+                  <td>Point lookups (PK, equality)</td>
+                </tr>
+                <tr>
+                  <td style="color:#38bdf8">NONCLUSTERED BTree</td>
+                  <td><span class="badge bg-warning text-dark">O(log n)</span></td>
+                  <td><span class="badge bg-success">Yes</span></td>
+                  <td>Range queries, ORDER BY</td>
+                </tr>
+                <tr>
+                  <td style="color:#fca5a5">Clustered</td>
+                  <td colspan="3" style="color:#6b7280">Not supported on MOT tables</td>
+                </tr>
+                <tr>
+                  <td style="color:#fca5a5">Columnstore</td>
+                  <td colspan="3" style="color:#6b7280">Not supported on MOT tables</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#fca5a5">Key Limitations</span>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-dark table-sm mb-0" style="font-size:.78rem">
+              <tbody>
+                <tr><td style="color:#fca5a5">✗</td><td>No cross-database queries or transactions</td></tr>
+                <tr><td style="color:#fca5a5">✗</td><td>No table partitioning</td></tr>
+                <tr><td style="color:#fca5a5">✗</td><td>No page / row compression</td></tr>
+                <tr><td style="color:#fca5a5">✗</td><td>No DDL triggers</td></tr>
+                <tr><td style="color:#fca5a5">✗</td><td>DDL (CREATE/ALTER/DROP) inside transactions</td></tr>
+                <tr><td style="color:#fca5a5">✗</td><td>Native procs can only reference MOT tables</td></tr>
+                <tr><td style="color:#fca5a5">✗</td><td>Replication: subscriber only via transactional</td></tr>
+                <tr><td style="color:#34d399">✓</td><td>Identity primary keys supported</td></tr>
+                <tr><td style="color:#34d399">✓</td><td>Co-exists with disk-based tables in same DB</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Durability modes -->
+    <div class="card mt-3" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#fbbf24">Durability Modes &amp; Use Cases</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-dark table-sm mb-0" style="font-size:.78rem">
+          <thead>
+            <tr><th style="color:#8892a4">Mode</th><th style="color:#8892a4">Data on Crash</th><th style="color:#8892a4">Disk I/O</th><th style="color:#8892a4">Use Case</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code style="color:#34d399">SCHEMA_AND_DATA</code></td>
+              <td><span class="badge bg-success">Recovered</span></td>
+              <td>Transaction log writes</td>
+              <td>Stock exchange orders, financial ledger</td>
+            </tr>
+            <tr>
+              <td><code style="color:#38bdf8">SCHEMA_ONLY</code></td>
+              <td><span class="badge bg-danger">Lost</span></td>
+              <td><strong>Zero</strong></td>
+              <td>ETL staging, session cache, key-value store, tempdb replacement</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Memory sizing note -->
+    <div class="alert mt-3" style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.25);color:#fcd34d;font-size:.82rem">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong>Memory sizing rule of thumb:</strong> provision <strong>2× the expected size</strong> of all MOT tables and
+      their indexes — to accommodate row versioning overhead and incremental growth headroom.
+      Monitor <code>sys.dm_db_xtp_memory_consumers</code>.
+    </div>
+
+  </div>
+
+  <!-- ── TAB 2: Benchmark ──────────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-benchmark">
+
+    <div class="alert" style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.25);color:#7dd3fc;font-size:.82rem">
+      <i class="bi bi-info-circle me-2"></i>
+      Creates a separate <code>mot_bench</code> database with a MOT filegroup, a disk-based table,
+      a memory-optimized table (hash index), and a natively compiled stored procedure. Then runs
+      <em>N</em> inserts via T-SQL WHILE loop for each of the 3 scenarios and records wall-clock ms.
+    </div>
+
+    <!-- Setup + controls -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,191,36,.3)">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3" style="color:#fbbf24">Step 1 — Setup</h6>
+            <p style="font-size:.8rem;color:#8892a4;margin-bottom:1rem">
+              Creates <code>mot_bench</code> database, MOT filegroup (<code>CONTAINS MEMORY_OPTIMIZED_DATA</code>),
+              disk table, MOT table (hash index, BUCKET_COUNT=1024), and natively compiled <code>p_insert_mot</code>.
+              Also sets <code>MEMORY_OPTIMIZED_ELEVATE_TO_SNAPSHOT = ON</code>.
+            </p>
+            <button class="btn btn-sm w-100" style="background:#fbbf24;color:#0d0f16;border:none" onclick="runSetup()">
+              <i class="bi bi-play-fill me-1"></i>Create mot_bench Database
+            </button>
+            <div id="setupLog" class="mt-2" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,191,36,.3)">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3" style="color:#fbbf24">Step 2 — Run Benchmark</h6>
+            <div class="mb-3">
+              <label class="form-label" style="font-size:.8rem;color:#8892a4">Rows to insert:</label>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm bench-n active-n" data-n="500" onclick="setN(this,500)" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:#fbbf24">500</button>
+                <button class="btn btn-sm bench-n" data-n="1000" onclick="setN(this,1000)" style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#8892a4">1 000</button>
+                <button class="btn btn-sm bench-n" data-n="3000" onclick="setN(this,3000)" style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#8892a4">3 000</button>
+                <button class="btn btn-sm bench-n" data-n="5000" onclick="setN(this,5000)" style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#8892a4">5 000</button>
+              </div>
+            </div>
+            <button class="btn btn-sm w-100" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.5);color:#fbbf24" onclick="runBenchmark()" id="benchBtn">
+              <i class="bi bi-lightning-charge me-1"></i>Run 3-Scenario Benchmark
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="benchResults" style="display:none">
+      <h6 class="fw-bold mb-3" style="color:#8892a4">RESULTS — <span id="benchN"></span> INSERT ITERATIONS</h6>
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(56,189,248,.3)">
+            <div class="card-body text-center">
+              <div style="font-size:.72rem;color:#38bdf8;letter-spacing:.08em;font-weight:700;text-transform:uppercase;margin-bottom:.5rem">Scenario 1</div>
+              <div style="font-size:.75rem;color:#8892a4;margin-bottom:.5rem">Disk-based + Interpreted T-SQL</div>
+              <div id="diskMs" class="fw-bold" style="font-size:2.2rem;color:#7dd3fc">—</div>
+              <div style="font-size:.72rem;color:#8892a4">ms</div>
+              <div class="mt-2">
+                <div style="height:6px;background:#1e2228;border-radius:3px">
+                  <div id="diskBar" style="height:100%;width:100%;background:#38bdf8;border-radius:3px;transition:width .5s"></div>
+                </div>
+              </div>
+              <div class="mt-1" style="font-size:.72rem;color:#8892a4">baseline (100%)</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,191,36,.3)">
+            <div class="card-body text-center">
+              <div style="font-size:.72rem;color:#fbbf24;letter-spacing:.08em;font-weight:700;text-transform:uppercase;margin-bottom:.5rem">Scenario 2</div>
+              <div style="font-size:.75rem;color:#8892a4;margin-bottom:.5rem">MOT + Interpreted T-SQL</div>
+              <div id="motInterpMs" class="fw-bold" style="font-size:2.2rem;color:#fcd34d">—</div>
+              <div style="font-size:.72rem;color:#8892a4">ms</div>
+              <div class="mt-2">
+                <div style="height:6px;background:#1e2228;border-radius:3px">
+                  <div id="motInterpBar" style="height:100%;width:0%;background:#fbbf24;border-radius:3px;transition:width .5s"></div>
+                </div>
+              </div>
+              <div id="motInterpSpeedup" class="mt-1" style="font-size:.72rem;color:#fbbf24">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+            <div class="card-body text-center">
+              <div style="font-size:.72rem;color:#a78bfa;letter-spacing:.08em;font-weight:700;text-transform:uppercase;margin-bottom:.5rem">Scenario 3</div>
+              <div style="font-size:.75rem;color:#8892a4;margin-bottom:.5rem">MOT + Natively Compiled Proc</div>
+              <div id="motNativeMs" class="fw-bold" style="font-size:2.2rem;color:#c4b5fd">—</div>
+              <div style="font-size:.72rem;color:#8892a4">ms</div>
+              <div class="mt-2">
+                <div style="height:6px;background:#1e2228;border-radius:3px">
+                  <div id="motNativeBar" style="height:100%;width:0%;background:#a78bfa;border-radius:3px;transition:width .5s"></div>
+                </div>
+              </div>
+              <div id="motNativeSpeedup" class="mt-1" style="font-size:.72rem;color:#a78bfa">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speedup message -->
+      <div id="speedupMsg" class="card" style="background:#0d0f16;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-body">
+          <div id="speedupText" style="font-size:.85rem;color:#6ee7b7"></div>
+        </div>
+      </div>
+
+      <!-- MOT not available notice -->
+      <div id="motUnavailableNotice" class="card mt-3" style="background:#13141a;border:1px solid rgba(239,68,68,.3);display:none">
+        <div class="card-body">
+          <h6 class="fw-bold" style="color:#fca5a5"><i class="bi bi-exclamation-triangle me-1"></i>MOT Filegroup Unavailable</h6>
+          <p style="font-size:.82rem;color:#8892a4;margin:0">
+            The SQL Server instance could not create the MOT filegroup — this is a known issue on
+            <strong>SQL Server 2022 named instances</strong> and on instances with Always On Availability Groups.
+            Only Scenario 1 (disk-based) was measured.
+            Use a <strong>SQL Server 2019 default instance</strong> for the full benchmark.
+            Course reference values: 1000 rows — Disk ~800ms, MOT+interp ~120ms, MOT+native ~30ms.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reference values from course -->
+    <div class="card mt-4" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#8892a4"><i class="bi bi-book me-1"></i>Course Reference Values (SQL Server 2019, 1 000 rows)</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-dark table-sm mb-0" style="font-size:.78rem">
+          <thead>
+            <tr>
+              <th style="color:#8892a4">Scenario</th>
+              <th style="color:#8892a4">~Time</th>
+              <th style="color:#8892a4">Speedup vs Disk</th>
+              <th style="color:#8892a4">Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:#38bdf8">1 — Disk + Interpreted T-SQL</td>
+              <td>~800 ms</td>
+              <td>1× (baseline)</td>
+              <td>B-Tree latch acquisition, buffer pool, WAL flush per INSERT</td>
+            </tr>
+            <tr>
+              <td style="color:#fbbf24">2 — MOT + Interpreted T-SQL</td>
+              <td>~120 ms</td>
+              <td><strong style="color:#34d399">~6–7×</strong></td>
+              <td>No latches, hash index O(1) insert, log is sequential append-only</td>
+            </tr>
+            <tr>
+              <td style="color:#a78bfa">3 — MOT + Native Compilation</td>
+              <td>~30 ms</td>
+              <td><strong style="color:#fbbf24">~25–30×</strong></td>
+              <td>No T-SQL interpreter, compiled DLL, no plan cache lookup, no lock manager call</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Teardown -->
+    <div class="mt-4 d-flex align-items-center gap-3">
+      <button class="btn btn-sm" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5" onclick="runTeardown()">
+        <i class="bi bi-trash me-1"></i>Drop mot_bench Database
+      </button>
+      <span id="teardownStatus" class="text-muted small"></span>
+    </div>
+
+  </div>
+
+  <!-- ── TAB 3: SQL Patterns ───────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-sql">
+
+    <div class="row g-3">
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#fbbf24;font-size:.8rem;font-weight:700">1. Create MOT filegroup (prerequisite)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#fde68a;margin:0">-- Run on master / admin context
+ALTER DATABASE mot_bench
+ADD FILEGROUP mot_fg
+CONTAINS MEMORY_OPTIMIZED_DATA;
+
+ALTER DATABASE mot_bench
+ADD FILE (
+    NAME     = 'mot_xtp',
+    FILENAME = '/var/opt/mssql/data/mot_bench_xtp'
+) TO FILEGROUP mot_fg;
+
+-- Required if using MOT tables from
+-- interpreted (non-native) T-SQL:
+ALTER DATABASE mot_bench
+SET MEMORY_OPTIMIZED_ELEVATE_TO_SNAPSHOT = ON;</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#fbbf24;font-size:.8rem;font-weight:700">2. Durable MOT table (SCHEMA_AND_DATA)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#fde68a;margin:0">CREATE TABLE dbo.t_mot (
+    id  INT   NOT NULL,
+    val FLOAT NOT NULL,
+    -- Hash index: O(1) point lookup,
+    -- BUCKET_COUNT ≈ 2× expected unique keys
+    CONSTRAINT pk_t_mot
+        PRIMARY KEY NONCLUSTERED HASH (id)
+        WITH (BUCKET_COUNT = 1024)
+)
+WITH (
+    MEMORY_OPTIMIZED = ON,
+    DURABILITY = SCHEMA_AND_DATA  -- survive restart
+);</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#38bdf8;font-size:.8rem;font-weight:700">3. Non-durable cache table (SCHEMA_ONLY)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#93c5fd;margin:0">-- Zero disk I/O — data lost on restart
+-- Use as: cache, ETL staging, session store
+CREATE TABLE dbo.t_cache (
+    key_col VARCHAR(200)
+        COLLATE Latin1_General_100_BIN2
+        NOT NULL,
+    val_col NVARCHAR(MAX) NULL,
+    -- BTree index: supports range queries
+    PRIMARY KEY NONCLUSTERED (key_col)
+)
+WITH (
+    MEMORY_OPTIMIZED = ON,
+    DURABILITY = SCHEMA_ONLY  -- no log writes
+);</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#a78bfa;font-size:.8rem;font-weight:700">4. Natively compiled stored procedure</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#e9d5ff;margin:0">CREATE PROCEDURE dbo.p_insert_mot
+    @id  INT,
+    @val FLOAT
+WITH
+    NATIVE_COMPILATION,  -- compile to DLL
+    SCHEMABINDING        -- schema lock
+AS
+-- BEGIN ATOMIC required (explicit isolation)
+BEGIN ATOMIC WITH (
+    TRANSACTION ISOLATION LEVEL = SNAPSHOT,
+    LANGUAGE = N'english'
+)
+    INSERT INTO dbo.t_mot VALUES (@id, @val);
+END;
+GO
+
+-- Call normally:
+EXEC dbo.p_insert_mot 1, 3.14;</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#34d399;font-size:.8rem;font-weight:700">5. Memory-optimized table type (TVP)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#86efac;margin:0">-- Table types can also be memory-optimized
+-- → enables high-perf table-valued parameters
+CREATE TYPE dbo.OrderLinesType
+AS TABLE (
+    product_id INT     NOT NULL,
+    qty        SMALLINT NOT NULL,
+    price      MONEY   NOT NULL,
+    INDEX ix_prod NONCLUSTERED (product_id)
+)
+WITH (MEMORY_OPTIMIZED = ON);
+GO
+
+-- Used as TVP in a natively compiled proc:
+CREATE PROCEDURE dbo.bulk_insert_lines
+    @lines dbo.OrderLinesType READONLY
+WITH NATIVE_COMPILATION, SCHEMABINDING
+AS BEGIN ATOMIC WITH (...)
+    INSERT INTO dbo.order_lines
+    SELECT * FROM @lines;
+END;</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#fb923c;font-size:.8rem;font-weight:700">6. Monitoring memory consumers</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#fdba74;margin:0">-- Memory used by MOT tables + indexes
+SELECT object_name(object_id) tbl,
+       type_desc,
+       pages_allocated_count,
+       pages_used_count
+FROM sys.dm_db_xtp_memory_consumers
+WHERE object_id > 0
+ORDER BY pages_used_count DESC;
+
+-- Overall XTP memory usage
+SELECT memory_consumer_type_desc,
+       SUM(allocated_bytes)/1024/1024 mb_alloc,
+       SUM(used_bytes)/1024/1024      mb_used
+FROM sys.dm_xtp_system_memory_consumers
+GROUP BY memory_consumer_type_desc;</pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ELEVATE_TO_SNAPSHOT explanation -->
+    <div class="card mt-3" style="background:#13141a;border:1px solid rgba(251,191,36,.25)">
+      <div class="card-body">
+        <h6 class="fw-bold mb-2" style="color:#fbbf24"><i class="bi bi-info-circle me-1"></i>Why MEMORY_OPTIMIZED_ELEVATE_TO_SNAPSHOT = ON?</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <p style="font-size:.82rem;color:#8892a4;margin:0">
+              MOT tables are accessed using <em>optimistic concurrency control</em>. They cannot participate in
+              <code>READ COMMITTED</code> isolation (the SQL Server default). When interpreted T-SQL touches a MOT table,
+              SQL Server must upgrade the isolation level to at least <code>SNAPSHOT</code> — otherwise the
+              statement fails with error 41368.
+            </p>
+          </div>
+          <div class="col-md-6">
+            <pre style="font-size:.75rem;color:#fde68a;background:#0a0b0f;padding:.75rem;border-radius:4px;margin:0">-- Without this setting:
+--   MSG 41368: Accessing memory optimized tables
+--   using the READ COMMITTED isolation level is
+--   not supported with the current settings.
+
+ALTER DATABASE CURRENT
+SET MEMORY_OPTIMIZED_ELEVATE_TO_SNAPSHOT = ON;
+
+-- Now interpreted T-SQL can INSERT/SELECT
+-- from MOT tables without explicit WITH(SNAPSHOT)</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── TAB 4: Migration Guide ────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-migration">
+
+    <div class="alert" style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.25);color:#fcd34d;font-size:.82rem">
+      <i class="bi bi-info-circle me-2"></i>
+      SQL Server includes a <strong>Table Memory Optimization Advisor</strong> (SSMS → Table → Tasks) and a
+      <strong>Transaction Performance Analysis Overview</strong> report that identify candidate tables automatically.
+      The steps below replicate the course realistic scenario.
+    </div>
+
+    <!-- 7-step realistic scenario -->
+    <h6 class="fw-bold mb-3" style="color:#8892a4">REALISTIC SCENARIO — Northwind Order Processing</h6>
+    <div class="row g-2">
+
+      <div class="col-12">
+        <div class="card" style="background:#13141a;border:1px solid rgba(251,191,36,.2)">
+          <div class="card-body p-0">
+            <table class="table table-dark table-sm mb-0" style="font-size:.79rem">
+              <tbody>
+                <tr style="border-bottom:1px solid #2a2d35">
+                  <td style="width:3rem;text-align:center;color:#fbbf24;font-weight:700">1</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Baseline — drop &amp; recreate Northwind, create <code>sp_new_order()</code></strong><br>
+                    <span style="color:#8892a4">Run the corrected dump. Create the order-processing stored proc. Establish a clean baseline.</span>
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #2a2d35">
+                  <td style="text-align:center;color:#fbbf24;font-weight:700">2</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Load test — 10 000 executions × 3 parallel sessions (READ COMMITTED) + 100 × REPEATABLE READ</strong><br>
+                    <span style="color:#8892a4">Record runtime for each isolation level. This is the disk-based baseline.</span>
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #2a2d35">
+                  <td style="text-align:center;color:#fbbf24;font-weight:700">3</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Transaction Performance Analysis Overview</strong><br>
+                    <span style="color:#8892a4">
+                      Run via SSMS: DB → Reports → Standard Reports → Transaction Performance Analysis Overview.
+                      Recommended tables: <span style="color:#fbbf24">Products, Orders, Order Details, Territories, Customers</span>.
+                    </span>
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #2a2d35">
+                  <td style="text-align:center;color:#fbbf24;font-weight:700">4a</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Create <code>Northwind_mot</code> database, run corrected dump</strong><br>
+                    <span style="color:#8892a4">
+                      The Customers table has 36 migration blockers due to duplicate FK constraints in the original dump —
+                      correct these before proceeding.
+                    </span>
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #2a2d35">
+                  <td style="text-align:center;color:#fbbf24;font-weight:700">4b</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Drop FK constraints from/to candidate tables</strong><br>
+                    <span style="color:#8892a4">
+                      MOT migration requires dropping all foreign keys involving the candidate tables.
+                      They must be manually re-created as regular constraints after migration
+                      (MOT tables cannot have FKs to disk-based tables).
+                    </span>
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #2a2d35">
+                  <td style="text-align:center;color:#fbbf24;font-weight:700">4c</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Run Table Memory Optimization Advisor on each candidate table</strong><br>
+                    <span style="color:#8892a4">
+                      SSMS: Table → Table Memory Optimization Advisor → plan &amp; execute. The Advisor renames the old
+                      disk table and creates the MOT replacement. Select "include data" to copy existing rows.
+                    </span>
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #2a2d35">
+                  <td style="text-align:center;color:#fbbf24;font-weight:700">5</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Enable ELEVATE_TO_SNAPSHOT</strong><br>
+                    <pre class="mb-0 mt-1" style="font-size:.73rem;color:#fde68a">ALTER DATABASE CURRENT SET MEMORY_OPTIMIZED_ELEVATE_TO_SNAPSHOT = ON;</pre>
+                    <span style="color:#8892a4">Required for interpreted T-SQL to access MOT tables without explicit SNAPSHOT hint.</span>
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #2a2d35">
+                  <td style="text-align:center;color:#fbbf24;font-weight:700">6</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Re-run load test with the existing (interpreted) <code>sp_new_order()</code></strong><br>
+                    <span style="color:#8892a4">
+                      Same 10 000 × 3 sessions. Compare with disk-based baseline —
+                      expect <strong style="color:#34d399">~6–7×</strong> improvement from lock elimination alone.
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="text-align:center;color:#fbbf24;font-weight:700">7</td>
+                  <td>
+                    <strong style="color:#e2e8f0">Create natively compiled version of <code>sp_new_order()</code> and repeat</strong><br>
+                    <span style="color:#8892a4">
+                      Rewrite the proc with <code>WITH NATIVE_COMPILATION, SCHEMABINDING</code> and
+                      <code>BEGIN ATOMIC WITH (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = N'english')</code>.
+                      Expected total speedup: <strong style="color:#fbbf24">~25–30×</strong> over disk+interpreted baseline.
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Use case matrix -->
+    <h6 class="fw-bold mt-4 mb-3" style="color:#8892a4">RECOMMENDED USE CASES</h6>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span style="color:#34d399;font-weight:700;font-size:.82rem"><i class="bi bi-check-circle me-1"></i>Ideal for MOT</span>
+          </div>
+          <div class="card-body" style="font-size:.8rem;color:#8892a4">
+            <ul class="mb-0 ps-3">
+              <li><strong style="color:#e2e8f0">Stock exchange order entry</strong> — thousands of concurrent low-latency transactions</li>
+              <li><strong style="color:#e2e8f0">IoT sensor ingestion</strong> — real-time data acquisition from many sources; rotate to disk columnstore via SQL Agent job</li>
+              <li><strong style="color:#e2e8f0">ETL staging</strong> — SCHEMA_ONLY non-durable tables as staging area; zero disk I/O, no tempdb contention</li>
+              <li><strong style="color:#e2e8f0">Session cache / key-value store</strong> — replace Redis for small-to-medium caches accessible via T-SQL</li>
+              <li><strong style="color:#e2e8f0">Temporal tables</strong> — history stored on disk, hot rows in MOT; handles high-update temporal data</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card" style="background:#13141a;border:1px solid rgba(239,68,68,.25)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span style="color:#fca5a5;font-weight:700;font-size:.82rem"><i class="bi bi-x-circle me-1"></i>Poor fit for MOT</span>
+          </div>
+          <div class="card-body" style="font-size:.8rem;color:#8892a4">
+            <ul class="mb-0 ps-3">
+              <li>Tables with foreign keys to/from disk-based tables (must be dropped)</li>
+              <li>Analytics / reporting queries — no columnstore index support; use OLAP DB instead</li>
+              <li>Very large tables (&gt;available RAM) — entire dataset must fit in memory</li>
+              <li>Tables with DDL triggers, computed columns, page/row compression</li>
+              <li>Cross-database queries or distributed transactions</li>
+              <li>Any table where the CPU cost dominates reads (not writes) — read-heavy workloads benefit less</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- end tab-content -->
+
+<script>
+let currentN = 500;
+
+function setN(btn, n) {
+  currentN = n;
+  document.querySelectorAll('.bench-n').forEach(b => {
+    b.style.background  = 'rgba(251,191,36,.08)';
+    b.style.borderColor = 'rgba(251,191,36,.2)';
+    b.style.color       = '#8892a4';
+  });
+  btn.style.background  = 'rgba(251,191,36,.2)';
+  btn.style.borderColor = 'rgba(251,191,36,.4)';
+  btn.style.color       = '#fbbf24';
+}
+
+async function checkStatus() {
+  const bar = document.getElementById('statusBar');
+  const msg = document.getElementById('statusMsg');
+  msg.innerHTML = 'Checking…';
+  try {
+    const r = await fetch('/demos/c9-inmemory/status');
+    const d = await r.json();
+    if (!d.ok) {
+      msg.innerHTML = `<span style="color:#fca5a5">Error: ${d.error}</span>`;
+    } else if (!d.db) {
+      msg.innerHTML = '<span style="color:#8892a4"><i class="bi bi-circle me-1"></i>mot_bench database not yet created.</span>';
+      bar.style.borderColor = '#2a2d35';
+    } else {
+      const parts = [
+        d.disk_table ? '<span style="color:#34d399">✓ t_disk</span>' : '<span style="color:#fca5a5">✗ t_disk</span>',
+        d.mot_table  ? '<span style="color:#fbbf24">✓ t_mot</span>'  : '<span style="color:#fca5a5">✗ t_mot</span>',
+        d.proc       ? '<span style="color:#a78bfa">✓ p_insert_mot</span>' : '<span style="color:#fca5a5">✗ p_insert_mot</span>',
+      ];
+      msg.innerHTML = `mot_bench exists &nbsp;|&nbsp; ${parts.join(' &nbsp;|&nbsp; ')}`;
+      bar.style.borderColor = 'rgba(52,211,153,.3)';
+    }
+  } catch(e) {
+    msg.innerHTML = `<span style="color:#fca5a5">Fetch error: ${e}</span>`;
+  }
+}
+
+async function runSetup() {
+  const log = document.getElementById('setupLog');
+  log.style.display = 'block';
+  log.innerHTML = '<div class="text-muted small">Setting up… (this may take 10–30s)</div>';
+  try {
+    const r = await fetch('/demos/c9-inmemory/setup', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      log.innerHTML = d.log.map(l => {
+        const color = l.startsWith('WARNING') ? '#fbbf24' : l.startsWith('SKIPPED') ? '#fca5a5' : '#34d399';
+        return `<div style="font-size:.75rem;color:${color};font-family:monospace">▸ ${l}</div>`;
+      }).join('');
+    } else {
+      log.innerHTML = `<div style="font-size:.75rem;color:#fca5a5">Error: ${d.error}</div>`;
+    }
+    checkStatus();
+  } catch(e) {
+    log.innerHTML = `<div style="font-size:.75rem;color:#fca5a5">Fetch error: ${e}</div>`;
+  }
+}
+
+async function runBenchmark() {
+  const btn = document.getElementById('benchBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Running…';
+  document.getElementById('benchResults').style.display = 'none';
+  try {
+    const r = await fetch('/demos/c9-inmemory/benchmark', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({n: currentN}),
+    });
+    const d = await r.json();
+    if (!d.ok) {
+      alert('Error: ' + d.error);
+      return;
+    }
+    renderBenchmark(d);
+  } catch(e) {
+    alert('Fetch error: ' + e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-lightning-charge me-1"></i>Run 3-Scenario Benchmark';
+  }
+}
+
+function renderBenchmark(d) {
+  document.getElementById('benchResults').style.display = 'block';
+  document.getElementById('benchN').textContent = d.n.toLocaleString();
+
+  const diskMs = d.disk_ms;
+  document.getElementById('diskMs').textContent = diskMs;
+
+  if (d.mot_available && d.mot_interp_ms !== null) {
+    const mims = d.mot_interp_ms;
+    const mnms = d.mot_native_ms;
+    const su2  = (diskMs / mims).toFixed(1);
+    const su3  = (diskMs / mnms).toFixed(1);
+
+    document.getElementById('motInterpMs').textContent = mims;
+    document.getElementById('motNativeMs').textContent = mnms;
+    document.getElementById('motInterpBar').style.width  = Math.min(100, (mims / diskMs * 100)).toFixed(0) + '%';
+    document.getElementById('motNativeBar').style.width = Math.min(100, (mnms / diskMs * 100)).toFixed(0) + '%';
+    document.getElementById('motInterpSpeedup').textContent  = `${su2}× faster than disk`;
+    document.getElementById('motNativeSpeedup').textContent  = `${su3}× faster than disk`;
+    document.getElementById('speedupText').innerHTML =
+      `Inserting ${d.n.toLocaleString()} rows: disk-based took <strong>${diskMs} ms</strong>, ` +
+      `MOT+interpreted <strong>${mims} ms</strong> (<span style="color:#fbbf24">${su2}× speedup</span>), ` +
+      `MOT+native compiled <strong>${mnms} ms</strong> (<span style="color:#a78bfa">${su3}× speedup</span>). ` +
+      `The native compiled proc eliminates the T-SQL interpreter, plan cache lookup, and lock manager entirely.`;
+    document.getElementById('motUnavailableNotice').style.display = 'none';
+  } else {
+    document.getElementById('motInterpMs').textContent = 'N/A';
+    document.getElementById('motNativeMs').textContent = 'N/A';
+    document.getElementById('speedupText').innerHTML =
+      `Disk-based insert of ${d.n.toLocaleString()} rows: <strong>${diskMs} ms</strong>. ` +
+      `MOT filegroup unavailable on this instance — see notice below for details.`;
+    document.getElementById('motUnavailableNotice').style.display = 'block';
+  }
+}
+
+async function runTeardown() {
+  const el = document.getElementById('teardownStatus');
+  if (!confirm('Drop mot_bench database?')) return;
+  el.textContent = 'Dropping…';
+  el.style.color = '#fbbf24';
+  try {
+    const r = await fetch('/demos/c9-inmemory/teardown', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) { el.textContent = '✓ ' + d.message; el.style.color = '#34d399'; }
+    else       { el.textContent = '✗ ' + d.error;   el.style.color = '#fca5a5'; }
+    checkStatus();
+  } catch(e) { el.textContent = '✗ ' + e; el.style.color = '#fca5a5'; }
+}
+
+// Auto-check status on page load
+checkStatus();
+</script>
+{% endblock %}

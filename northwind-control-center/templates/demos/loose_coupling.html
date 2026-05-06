@@ -1,0 +1,598 @@
+{% extends "base.html" %}
+{% block title %}Loose Coupling Demo — Northwind CC{% endblock %}
+{% block content %}
+
+<style>
+/* ── shared ── */
+.lc-card{background:#0c0f18;border:1px solid #1e2530;border-radius:10px;padding:1.15rem 1.3rem}
+.lc-title{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:.75rem}
+.sql-mono{font-family:'JetBrains Mono','Fira Code',monospace;font-size:.7rem;line-height:1.75;white-space:pre}
+.sql-kw{color:#818cf8}.sql-fn{color:#34d399}.sql-str{color:#fbbf24}.sql-cmt{color:#3d4d63;font-style:italic}
+.sql-err{color:#f87171;background:rgba(239,68,68,.1);border-left:2px solid #ef4444;padding:0 .4rem;margin:0 -.4rem}
+.sql-ok {color:#34d399;background:rgba(16,185,129,.07);border-left:2px solid #10b981;padding:0 .4rem;margin:0 -.4rem}
+.code-box{background:#05070d;border:1px solid #1a2030;border-radius:6px;padding:.85rem 1rem;overflow-x:auto}
+
+/* ── architecture diagram ── */
+.arch-wrap{display:flex;align-items:center;gap:0;overflow-x:auto;padding:.4rem 0}
+.arch-node{background:#0c0f18;border:1px solid #1e2530;border-radius:7px;padding:.55rem .85rem;font-size:.7rem;text-align:center;white-space:nowrap;flex-shrink:0}
+.arch-node.bad{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}
+.arch-node.good{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)}
+.arch-node.neutral{border-color:rgba(99,102,241,.25)}
+.arch-node.log-node{border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.05)}
+.arch-label{font-size:.6rem;color:#5a6a82;margin-top:.15rem}
+.arch-arrow{color:#2a3547;font-size:1.1rem;flex-shrink:0;padding:0 .2rem;align-self:center}
+.arch-arrow.bad{color:#ef4444}
+.arch-arrow.good{color:#10b981}
+
+/* ── tabs ── */
+.lc-tab{border:none;background:transparent;border-bottom:2px solid transparent;padding:.4rem .9rem;font-size:.75rem;font-weight:600;color:#5a6a82;cursor:pointer;transition:all .15s;border-radius:4px 4px 0 0}
+.lc-tab.active-bad{color:#f87171;border-bottom-color:#ef4444;background:rgba(239,68,68,.07)}
+.lc-tab.active-good{color:#34d399;border-bottom-color:#10b981;background:rgba(16,185,129,.07)}
+.lc-tab:not(.active-bad):not(.active-good):hover{color:#a8b5cc}
+
+/* ── timeline (tight coupling) ── */
+.tl-wrap{position:relative;padding-left:80px}
+.tl-line{position:absolute;left:36px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,#1e2530,#2a3547,#1e2530)}
+.tl-event{position:relative;margin-bottom:.6rem;opacity:0;transform:translateX(-6px);transition:opacity .3s,transform .3s}
+.tl-event.vis{opacity:1;transform:translateX(0)}
+.tl-dot{position:absolute;left:-52px;top:50%;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;border:2px solid}
+.tl-time{position:absolute;left:-78px;top:50%;transform:translateY(-50%);font-size:.62rem;color:#5a6a82;width:22px;text-align:right;font-family:monospace}
+.tl-body{background:#080c14;border:1px solid #1a2030;border-radius:6px;padding:.5rem .8rem;font-size:.72rem}
+.tl-body.ev-insert{border-left:3px solid #818cf8;color:#a8b5cc}
+.tl-body.ev-trigger{border-left:3px solid #fbbf24;color:#fde68a}
+.tl-body.ev-wait{border-left:3px solid #60a5fa;color:#93c5fd;font-style:italic}
+.tl-body.ev-error{border-left:3px solid #ef4444;color:#f87171;font-weight:600}
+.tl-body.ev-rollback{border-left:3px solid #f43f5e;color:#fb7185;font-weight:700;animation:pulse-r 1.2s infinite}
+.tl-body.ev-ok{border-left:3px solid #10b981;color:#34d399}
+.tl-body.ev-log{border-left:3px solid #fbbf24;color:#fde68a}
+.tl-body.ev-job{border-left:3px solid #818cf8;color:#c4b5fd}
+@keyframes pulse-r{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── status badges ── */
+.status-pill{display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.62rem;font-weight:700}
+.s0{background:rgba(251,191,36,.15);color:#fde68a}
+.s1{background:rgba(239,68,68,.15);color:#fca5a5}
+.s2{background:rgba(16,185,129,.12);color:#6ee7b7}
+
+/* ── setup indicators ── */
+.setup-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.setup-dot.ok{background:#10b981}
+.setup-dot.missing{background:#3d4d63}
+
+/* ── live tables ── */
+.live-table{width:100%;border-collapse:collapse;font-size:.7rem}
+.live-table th{color:#5a6a82;font-size:.61rem;text-transform:uppercase;letter-spacing:.07em;padding:.4rem .6rem;border-bottom:1px solid #1e2530;text-align:left;font-weight:600}
+.live-table td{padding:.4rem .6rem;border-bottom:1px solid #10131e;color:#a8b5cc;transition:background .5s,color .4s;font-family:monospace;font-size:.69rem}
+.live-table tr.flash td{background:rgba(99,102,241,.15)}
+.live-table td.changed{color:#34d399;font-weight:700}
+.live-table td.err-val{color:#f87171;font-weight:700}
+
+/* ── log terminal ── */
+.log-term{background:#05070d;border:1px solid #1a2030;border-radius:6px;min-height:120px;max-height:220px;overflow-y:auto;padding:.6rem .9rem;font-family:'JetBrains Mono','Fira Code',monospace;font-size:.68rem;line-height:1.8}
+.log-l{padding:.05rem 0}
+.log-l.kind-header{color:#818cf8;font-weight:600}
+.log-l.kind-ok{color:#34d399}
+.log-l.kind-err{color:#f87171}
+.log-l.kind-warn{color:#fbbf24}
+.log-l.kind-info{color:#5a6a82}
+.log-l.kind-rollback{color:#10b981;font-weight:600}
+
+/* ── control buttons ── */
+.lc-btn{border:none;border-radius:6px;padding:.38rem .85rem;font-size:.73rem;font-weight:600;cursor:pointer;transition:all .18s}
+.lc-btn:disabled{opacity:.3;cursor:default}
+.btn-good{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.25)}
+.btn-good:hover:not(:disabled){background:rgba(16,185,129,.25)}
+.btn-bad{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25)}
+.btn-bad:hover:not(:disabled){background:rgba(239,68,68,.2)}
+.btn-process{background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.25)}
+.btn-process:hover:not(:disabled){background:rgba(99,102,241,.22)}
+.btn-setup{background:rgba(251,191,36,.1);color:#fde68a;border:1px solid rgba(251,191,36,.2)}
+.btn-setup:hover:not(:disabled){background:rgba(251,191,36,.18)}
+.btn-reset{background:#111418;color:#6b7a96;border:1px solid #1e2530}
+.btn-reset:hover:not(:disabled){color:#a8b5cc;border-color:#2a3547}
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-start mb-4 gap-3">
+  <div style="width:40px;height:40px;background:linear-gradient(135deg,#10b981,#059669);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+    <i class="bi bi-arrow-left-right" style="color:#fff;font-size:1.1rem"></i>
+  </div>
+  <div>
+    <h5 class="mb-0 fw-bold">Loose Coupling via Triggers &amp; Jobs</h5>
+    <div style="font-size:.78rem;color:#6b7a96">Chapter 2 · The black-box trading app problem — trigger as event logger, SQL Agent job as async processor</div>
+  </div>
+  <span class="ms-auto badge" style="background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.2);font-size:.67rem;font-weight:600;padding:.3rem .65rem;border-radius:5px;align-self:center">C2</span>
+</div>
+
+<!-- Two architecture diagrams -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="lc-card h-100">
+      <div class="lc-title" style="color:#f87171">⚠ Tight Coupling (the problem)</div>
+      <div class="arch-wrap">
+        <div class="arch-node neutral"><i class="bi bi-shop me-1"></i>Trading App<div class="arch-label">INSERT Orders</div></div>
+        <div class="arch-arrow bad">→</div>
+        <div class="arch-node bad"><i class="bi bi-lightning-charge-fill me-1" style="color:#fbbf24"></i>tr_demo_bad<div class="arch-label">heavy work inside trigger</div></div>
+        <div class="arch-arrow bad">→</div>
+        <div class="arch-node bad"><i class="bi bi-x-circle-fill me-1" style="color:#ef4444"></i>ERROR<div class="arch-label">INSERT rolled back</div></div>
+      </div>
+      <div class="mt-2" style="font-size:.7rem;color:#6b7a96">The trigger runs 10 s + crashes → the ORDER is lost. The trading system gets an error. The operator has no idea the data was not saved.</div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="lc-card h-100">
+      <div class="lc-title" style="color:#34d399">✓ Loose Coupling (the solution)</div>
+      <div class="arch-wrap flex-wrap" style="gap:.3rem">
+        <div class="arch-node neutral" style="font-size:.65rem"><i class="bi bi-shop me-1"></i>Trading App<div class="arch-label">INSERT Orders</div></div>
+        <div class="arch-arrow good" style="font-size:.9rem">→</div>
+        <div class="arch-node good" style="font-size:.65rem"><i class="bi bi-lightning-fill me-1" style="color:#fbbf24"></i>tr_log_order<div class="arch-label">fast: only logs event</div></div>
+        <div class="arch-arrow good" style="font-size:.9rem">→</div>
+        <div class="arch-node log-node" style="font-size:.65rem"><i class="bi bi-journal-text me-1" style="color:#fbbf24"></i>order_log<div class="arch-label">status=0 (pending)</div></div>
+        <div class="arch-arrow good" style="font-size:.9rem">→</div>
+        <div class="arch-node good" style="font-size:.65rem"><i class="bi bi-clock-history me-1"></i>SQL Agent Job<div class="arch-label">sp_order_process</div></div>
+        <div class="arch-arrow good" style="font-size:.9rem">→</div>
+        <div class="arch-node neutral" style="font-size:.65rem"><i class="bi bi-box-seam me-1"></i>Products<div class="arch-label">UnitsInStock ↓</div></div>
+      </div>
+      <div class="mt-2" style="font-size:.7rem;color:#6b7a96">The trigger is instant and infallible. Errors in job processing stay in the log (status=1). The trading system is never affected.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="d-flex gap-0 border-bottom mb-3" style="border-color:#1e2530!important">
+  <button class="lc-tab active-bad" id="tab-tight" onclick="switchTab('tight')">
+    <i class="bi bi-exclamation-triangle me-1"></i>Tight Coupling — the bad trigger
+  </button>
+  <button class="lc-tab" id="tab-loose" onclick="switchTab('loose')">
+    <i class="bi bi-check2-circle me-1"></i>Loose Coupling — live demo
+  </button>
+</div>
+
+<!-- ═══════════════════ TIGHT COUPLING PANEL ═══════════════════ -->
+<div id="panel-tight">
+  <div class="row g-3">
+    <!-- Code -->
+    <div class="col-lg-6">
+      <div class="lc-card h-100">
+        <div class="lc-title" style="color:#f87171">tr_demo_bad — what not to do</div>
+        <div class="code-box">
+<div class="sql-mono"><span class="sql-kw">CREATE TRIGGER</span> tr_demo_bad <span class="sql-kw">ON</span> Orders <span class="sql-kw">FOR INSERT AS</span>
+<span class="sql-kw">DECLARE</span> @orderid <span class="sql-fn">int</span>
+<span class="sql-kw">SELECT</span> @orderid = OrderID <span class="sql-kw">FROM</span> inserted
+<span class="sql-fn">PRINT</span> <span class="sql-str">'New order ID: '</span> + <span class="sql-fn">CAST</span>(@orderid <span class="sql-kw">AS</span> <span class="sql-fn">varchar</span>)
+
+<span class="sql-err">WAITFOR DELAY '00:00:10'  -- 10 seconds of blocking!</span>
+<span class="sql-err">SELECT 1/0               -- divide-by-zero error</span>
+</div>
+        </div>
+
+        <div class="mt-3" style="font-size:.72rem;color:#8892a4;line-height:1.7">
+          <strong style="color:#fbbf24">Why this kills the trading system:</strong><br>
+          The trigger runs <em>inside the same transaction</em> as the <code>INSERT Orders</code>. All table locks are held for the full 10 seconds. If the trigger raises an error, SQL Server automatically rolls back the entire INSERT — the order disappears.
+        </div>
+
+        <div class="mt-3 p-2" style="background:#060810;border-radius:6px;font-size:.7rem;border-left:3px solid #ef4444">
+          <div style="color:#fca5a5;font-weight:600;margin-bottom:.3rem">Three tests from the chapter:</div>
+          <div style="color:#8892a4;font-family:monospace">
+            Test 1 — no WAITFOR, no error → ORDER saved instantly ✓<br>
+            Test 2 — WAITFOR only → ORDER saved, but 10s delay ✗<br>
+            Test 3 — WAITFOR + error → ORDER lost, system crashes ✗✗
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline animation -->
+    <div class="col-lg-6">
+      <div class="lc-card h-100">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="lc-title mb-0" style="color:#f87171">What happens (Test 3)</div>
+          <div class="d-flex gap-2">
+            <button class="lc-btn btn-bad" id="btn-play-tight" onclick="playTight()">
+              <i class="bi bi-play-fill me-1"></i>Play
+            </button>
+            <button class="lc-btn btn-reset" onclick="resetTight()">
+              <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+            </button>
+          </div>
+        </div>
+
+        <div class="tl-wrap" id="tl">
+          <div class="tl-line"></div>
+
+          <div class="tl-event" id="te0">
+            <div class="tl-time">T+0</div>
+            <div class="tl-dot" style="border-color:#818cf8;background:#0c0f18"></div>
+            <div class="tl-body ev-insert"><i class="bi bi-shop me-1" style="color:#818cf8"></i><strong>Trading App:</strong> INSERT INTO Orders (CustomerID='AROUT', …)</div>
+          </div>
+          <div class="tl-event" id="te1">
+            <div class="tl-time">T+0</div>
+            <div class="tl-dot" style="border-color:#fbbf24;background:#0c0f18"></div>
+            <div class="tl-body ev-trigger"><i class="bi bi-lightning-charge-fill me-1"></i><strong>tr_demo_bad fires</strong> — runs inside the INSERT transaction. Table row is locked.</div>
+          </div>
+          <div class="tl-event" id="te2">
+            <div class="tl-time">T+0</div>
+            <div class="tl-dot" style="border-color:#60a5fa;background:#0c0f18"></div>
+            <div class="tl-body ev-wait"><i class="bi bi-hourglass-split me-1"></i>WAITFOR DELAY '00:00:10' — trigger sleeps 10 seconds. The INSERT is blocked. All locks held. Any concurrent SELECT on Orders is blocked too.</div>
+          </div>
+          <div class="tl-event" id="te3">
+            <div class="tl-time">T+10</div>
+            <div class="tl-dot" style="border-color:#ef4444;background:#0c0f18"></div>
+            <div class="tl-body ev-error"><i class="bi bi-x-circle-fill me-1"></i>SELECT 1/0 → Msg 8134: Divide by zero error. Trigger raises exception.</div>
+          </div>
+          <div class="tl-event" id="te4">
+            <div class="tl-time">T+10</div>
+            <div class="tl-dot" style="border-color:#f43f5e;background:#0c0f18;animation:pulse-r 1.2s infinite"></div>
+            <div class="tl-body ev-rollback"><i class="bi bi-arrow-counterclockwise me-1"></i>ROLLBACK — the INSERT Orders statement is undone. The order does not exist.</div>
+          </div>
+          <div class="tl-event" id="te5">
+            <div class="tl-time">T+10</div>
+            <div class="tl-dot" style="border-color:#f43f5e;background:#0c0f18"></div>
+            <div class="tl-body ev-error"><i class="bi bi-shop me-1"></i>Trading App receives the error. The operator sees a crash. The order must be re-entered manually — or is lost entirely.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ LOOSE COUPLING PANEL ═══════════════════ -->
+<div id="panel-loose" style="display:none">
+
+  <!-- Setup row -->
+  <div class="lc-card mb-3">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <div>
+        <div class="lc-title mb-1" style="color:#fbbf24">Step 0 — Setup</div>
+        <div class="d-flex gap-3" style="font-size:.72rem">
+          <div class="d-flex align-items-center gap-2">
+            <div class="setup-dot" id="dot-table"></div>
+            <span id="label-table" style="color:#6b7a96">order_log table</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="setup-dot" id="dot-trigger"></div>
+            <span id="label-trigger" style="color:#6b7a96">tr_log_order trigger</span>
+          </div>
+        </div>
+      </div>
+      <button class="lc-btn btn-setup ms-auto" id="btn-setup" onclick="doSetup()">
+        <i class="bi bi-gear-fill me-1"></i>Create order_log + Trigger
+      </button>
+    </div>
+    <div class="log-term mt-2" id="setup-log" style="min-height:50px;max-height:80px">
+      <span style="color:#3d4d63">Click "Create order_log + Trigger" to set up the schema objects.</span>
+    </div>
+  </div>
+
+  <!-- Demo controls -->
+  <div class="lc-card mb-3">
+    <div class="lc-title" style="color:#34d399">Step 1–3 — Run the Demo</div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <button class="lc-btn btn-good" id="btn-good" onclick="insertOrder('good')" disabled>
+        <i class="bi bi-plus-circle me-1"></i>Insert Good Order <span style="opacity:.6;font-size:.65rem">(qty 2+3)</span>
+      </button>
+      <button class="lc-btn btn-bad" id="btn-bad" onclick="insertOrder('bad')" disabled>
+        <i class="bi bi-exclamation-circle me-1"></i>Insert Bad Order <span style="opacity:.6;font-size:.65rem">(qty 9999 → fails inventory)</span>
+      </button>
+      <button class="lc-btn btn-process" id="btn-process" onclick="doProcess()" disabled>
+        <i class="bi bi-play-circle me-1"></i>Run Event Processor <span style="opacity:.6;font-size:.65rem">(sp_order_process)</span>
+      </button>
+      <button class="lc-btn btn-reset" id="btn-reset-demo" onclick="doReset()">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+      </button>
+      <div id="busy-indicator" style="display:none;font-size:.7rem;color:#6366f1">
+        <i class="bi bi-hourglass-split me-1"></i>Working…
+      </div>
+    </div>
+
+    <div class="row g-2 mt-1" style="font-size:.67rem;color:#5a6a82">
+      <div class="col-auto"><i class="bi bi-1-circle me-1"></i>Insert order → trigger fires → event appears in order_log (status=0)</div>
+      <div class="col-auto"><i class="bi bi-2-circle me-1"></i>Run processor → each event processed → status becomes 2 (OK) or 1 (FAILED)</div>
+      <div class="col-auto"><i class="bi bi-3-circle me-1"></i>Reset → test orders deleted, stock restored</div>
+    </div>
+  </div>
+
+  <!-- Live panels -->
+  <div class="row g-3 mb-3">
+
+    <!-- order_log table -->
+    <div class="col-lg-7">
+      <div class="lc-card h-100">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="lc-title mb-0" style="color:#fbbf24">order_log — event queue</div>
+          <button class="lc-btn btn-reset" style="padding:.2rem .6rem;font-size:.65rem" onclick="loadState()">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="live-table">
+            <thead>
+              <tr>
+                <th>event_id</th>
+                <th>event_type</th>
+                <th>order_id</th>
+                <th>status</th>
+                <th>created</th>
+                <th>duration</th>
+              </tr>
+            </thead>
+            <tbody id="log-tbody">
+              <tr><td colspan="6" style="color:#3d4d63;text-align:center;padding:1rem">No events yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-2 d-flex gap-3" style="font-size:.65rem;color:#5a6a82">
+          <span><span class="status-pill s0">0</span> pending</span>
+          <span><span class="status-pill s2">2</span> processed OK</span>
+          <span><span class="status-pill s1">1</span> failed</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products inventory -->
+    <div class="col-lg-5">
+      <div class="lc-card h-100">
+        <div class="lc-title" style="color:#818cf8">Products — UnitsInStock</div>
+        <table class="live-table">
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Stock</th><th>Reorder</th></tr>
+          </thead>
+          <tbody id="prod-tbody">
+            <tr><td colspan="4" style="color:#3d4d63;text-align:center">Loading…</td></tr>
+          </tbody>
+        </table>
+        <div class="mt-3 p-2" style="background:#060810;border-radius:6px;font-size:.68rem;color:#5a6a82;line-height:1.6">
+          <strong style="color:#c8d3e0">Good order</strong> (qty 2+3): reduces stock for Product 9 &amp; 10 by those amounts after processing.<br>
+          <strong style="color:#f87171">Bad order</strong> (qty 9999): the inventory UPDATE would go negative → CHECK constraint violation → status=1, stock unchanged.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Processing log -->
+  <div class="lc-card">
+    <div class="lc-title" style="color:#6366f1">Processing Log — sp_order_process output</div>
+    <div class="log-term" id="process-log">
+      <span style="color:#3d4d63">Click "Run Event Processor" to see output here.</span>
+    </div>
+  </div>
+
+  <!-- Stored procedure code (collapsed) -->
+  <div class="lc-card mt-3">
+    <div class="d-flex align-items-center justify-content-between" style="cursor:pointer" onclick="toggleCode()">
+      <div class="lc-title mb-0" style="color:#818cf8">sp_order_process — the job's stored procedure</div>
+      <i class="bi bi-chevron-down" id="code-chevron" style="color:#5a6a82;font-size:.85rem"></i>
+    </div>
+    <div id="sp-code" style="display:none;margin-top:.75rem">
+      <div class="code-box">
+<div class="sql-mono"><span class="sql-kw">CREATE PROC</span> sp_order_process <span class="sql-kw">AS</span>
+<span class="sql-kw">DECLARE</span> @event_id <span class="sql-fn">int</span>, @event_type <span class="sql-fn">varchar</span>(50), @order_id <span class="sql-fn">int</span>, @result <span class="sql-fn">int</span>
+<span class="sql-kw">DECLARE</span> cursor_events <span class="sql-kw">CURSOR FORWARD_ONLY STATIC FOR</span>
+    <span class="sql-kw">SELECT</span> event_id, event_type, order_id
+    <span class="sql-kw">FROM</span> order_log <span class="sql-kw">WHERE</span> status=0   <span class="sql-cmt">-- only unprocessed events</span>
+
+<span class="sql-kw">SET</span> XACT_ABORT <span class="sql-kw">ON</span>;  <span class="sql-kw">SET</span> NOCOUNT <span class="sql-kw">ON</span>
+<span class="sql-kw">OPEN</span> cursor_events
+<span class="sql-kw">FETCH NEXT FROM</span> cursor_events <span class="sql-kw">INTO</span> @event_id, @event_type, @order_id
+<span class="sql-kw">WHILE</span> @@fetch_status = 0
+<span class="sql-kw">BEGIN</span>
+    <span class="sql-kw">UPDATE</span> order_log <span class="sql-kw">SET</span> time_process_begin=<span class="sql-fn">GETDATE</span>() <span class="sql-kw">WHERE</span> event_id=@event_id
+    <span class="sql-kw">BEGIN TRAN</span>
+    <span class="sql-kw">IF</span> @event_type = <span class="sql-str">'new order'</span>
+        <span class="sql-kw">EXEC</span> sp_commit_new_order_to_inventory @order_id, @result <span class="sql-kw">OUTPUT</span>
+    <span class="sql-kw">ELSE IF</span> @event_type = <span class="sql-str">'address changed'</span>
+        ... <span class="sql-cmt">-- simulated</span>
+
+    <span class="sql-kw">IF</span> @result=0 <span class="sql-kw">COMMIT TRAN ELSE ROLLBACK TRAN</span>
+
+    <span class="sql-kw">UPDATE</span> order_log <span class="sql-kw">SET</span> time_process_end=<span class="sql-fn">GETDATE</span>(),
+        status=<span class="sql-kw">CASE WHEN</span> @result=0 <span class="sql-kw">THEN</span> 2 <span class="sql-kw">ELSE</span> 1 <span class="sql-kw">END</span>
+        <span class="sql-kw">WHERE</span> event_id=@event_id
+    <span class="sql-kw">FETCH NEXT FROM</span> cursor_events <span class="sql-kw">INTO</span> @event_id, @event_type, @order_id
+<span class="sql-kw">END</span>
+<span class="sql-kw">CLOSE</span> cursor_events; <span class="sql-kw">DEALLOCATE</span> cursor_events</div>
+      </div>
+      <div class="mt-2 p-2" style="background:#060810;border-radius:6px;font-size:.69rem;color:#8892a4;line-height:1.6">
+        <strong style="color:#c8d3e0">Design notes:</strong> The cursor is necessary here because completely different actions are needed per event type. Each event gets its own <code>BEGIN TRAN / COMMIT|ROLLBACK</code>. Failed events get status=1 and can be retried by resetting them to status=0. The <code>FORWARD_ONLY STATIC</code> cursor takes a snapshot so new events added during processing are not included in this run.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /panel-loose -->
+
+{% endblock %}
+{% block scripts %}
+<script>
+/* ── Tab switching ── */
+function switchTab(t) {
+  document.getElementById('panel-tight').style.display = t === 'tight' ? '' : 'none';
+  document.getElementById('panel-loose').style.display = t === 'loose' ? '' : 'none';
+  document.getElementById('tab-tight').className = 'lc-tab' + (t==='tight' ? ' active-bad' : '');
+  document.getElementById('tab-loose').className = 'lc-tab' + (t==='loose' ? ' active-good' : '');
+  if (t === 'loose') loadState();
+}
+
+/* ── Tight coupling animation ── */
+let tightTimeouts = [];
+function resetTight() {
+  tightTimeouts.forEach(clearTimeout); tightTimeouts = [];
+  document.querySelectorAll('.tl-event').forEach(el => el.classList.remove('vis'));
+  document.getElementById('btn-play-tight').disabled = false;
+}
+function playTight() {
+  resetTight();
+  document.getElementById('btn-play-tight').disabled = true;
+  const delays = [0, 300, 700, 3500, 3900, 4300];
+  delays.forEach((d,i) => {
+    tightTimeouts.push(setTimeout(() => {
+      document.getElementById('te'+i).classList.add('vis');
+      if (i === delays.length-1) document.getElementById('btn-play-tight').disabled = false;
+    }, d));
+  });
+}
+
+/* ── Loose coupling: state ── */
+let prevStock = {};
+async function loadState() {
+  try {
+    const r = await fetch("{{ url_for('demos.loose_coupling_state') }}");
+    const d = await r.json();
+    if (!d.ok) return;
+
+    // Setup indicators
+    setDot('dot-table',   d.has_table);
+    setDot('dot-trigger', d.has_trigger);
+    document.getElementById('label-table').textContent   = 'order_log table';
+    document.getElementById('label-trigger').textContent = 'tr_log_order trigger';
+
+    const ready = d.has_table && d.has_trigger;
+    ['btn-good','btn-bad','btn-process'].forEach(id => {
+      document.getElementById(id).disabled = !ready;
+    });
+
+    // order_log table
+    const tbody = document.getElementById('log-tbody');
+    if (d.log_rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:#3d4d63;text-align:center;padding:.8rem">No events in order_log</td></tr>';
+    } else {
+      tbody.innerHTML = d.log_rows.map(r => {
+        const sc = r.status===0?'s0':r.status===2?'s2':'s1';
+        const sl = r.status===0?'PENDING':r.status===2?'OK':'FAILED';
+        return `<tr>
+          <td>${r.event_id}</td>
+          <td>${r.event_type}</td>
+          <td>#${r.order_id}</td>
+          <td><span class="status-pill ${sc}">${r.status} ${sl}</span></td>
+          <td style="color:#5a6a82">${(r.created||'').substring(11)}</td>
+          <td style="color:#5a6a82">${r.duration!=null?r.duration+'s':'—'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Products table
+    const ptbody = document.getElementById('prod-tbody');
+    ptbody.innerHTML = d.products.map(p => {
+      const prev = prevStock[p.id];
+      const cls  = prev !== undefined && prev !== p.stock ? 'changed' : '';
+      prevStock[p.id] = p.stock;
+      return `<tr>
+        <td>${p.id}</td>
+        <td>${p.name}</td>
+        <td class="${cls}">${p.stock}</td>
+        <td style="color:#5a6a82">${p.reorder}</td>
+      </tr>`;
+    }).join('');
+
+  } catch(e) { console.error(e); }
+}
+
+function setDot(id, ok) {
+  const el = document.getElementById(id);
+  el.classList.toggle('ok', ok);
+  el.classList.toggle('missing', !ok);
+}
+
+/* ── Setup ── */
+async function doSetup() {
+  setBusy(true);
+  const logEl = document.getElementById('setup-log');
+  logEl.innerHTML = '<span style="color:#6366f1">Creating schema objects…</span>';
+  try {
+    const r = await fetch("{{ url_for('demos.loose_coupling_setup') }}", {method:'POST'});
+    const d = await r.json();
+    logEl.innerHTML = (d.steps||[]).map(s =>
+      `<div class="log-l kind-${s.kind}">${s.kind==='ok'?'✓ ':'✗ '}${s.msg}</div>`
+    ).join('') + (d.error ? `<div class="log-l kind-err">✗ ${d.error}</div>` : '');
+    await loadState();
+  } catch(e) { logEl.innerHTML = `<div class="log-l kind-err">Network error: ${e}</div>`; }
+  setBusy(false);
+}
+
+/* ── Insert order ── */
+async function insertOrder(scenario) {
+  setBusy(true);
+  try {
+    const r = await fetch("{{ url_for('demos.loose_coupling_insert_order') }}", {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({scenario})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      appendProcLog([{msg: `✓ ${d.note}`, kind:'ok'},
+                     {msg: `  → tr_log_order fired → order_log row inserted (status=0)`, kind:'info'}]);
+    } else {
+      appendProcLog([{msg:`✗ ${d.error}`, kind:'err'}]);
+    }
+    await loadState();
+  } catch(e) { appendProcLog([{msg:`Network error: ${e}`,kind:'err'}]); }
+  setBusy(false);
+}
+
+/* ── Process events ── */
+async function doProcess() {
+  setBusy(true);
+  const logEl = document.getElementById('process-log');
+  logEl.innerHTML = '<span style="color:#6366f1">Processing events…</span>';
+  try {
+    const r = await fetch("{{ url_for('demos.loose_coupling_process') }}", {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      logEl.innerHTML = (d.log||[]).map(l =>
+        `<div class="log-l kind-${l.kind}">${l.msg}</div>`
+      ).join('') || '<div class="log-l kind-info">No output</div>';
+    } else {
+      logEl.innerHTML = `<div class="log-l kind-err">Error: ${d.error}</div>`;
+    }
+    logEl.scrollTop = logEl.scrollHeight;
+    await loadState();
+  } catch(e) { logEl.innerHTML = `<div class="log-l kind-err">Network error: ${e}</div>`; }
+  setBusy(false);
+}
+
+/* ── Reset ── */
+async function doReset() {
+  setBusy(true);
+  try {
+    const r = await fetch("{{ url_for('demos.loose_coupling_reset') }}", {method:'POST'});
+    const d = await r.json();
+    document.getElementById('process-log').innerHTML =
+      `<span style="color:${d.ok?'#34d399':'#f87171'}">${d.ok?'✓ Reset complete — test orders deleted, stock restored':'Error: '+d.error}</span>`;
+    prevStock = {};
+    await loadState();
+  } catch(e) { console.error(e); }
+  setBusy(false);
+}
+
+function appendProcLog(entries) {
+  const logEl = document.getElementById('process-log');
+  if (logEl.innerHTML.includes('Click')) logEl.innerHTML = '';
+  entries.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'log-l kind-' + l.kind;
+    div.textContent = l.msg;
+    logEl.appendChild(div);
+  });
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setBusy(v) {
+  document.getElementById('busy-indicator').style.display = v ? '' : 'none';
+  ['btn-setup','btn-good','btn-bad','btn-process','btn-reset-demo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = v;
+  });
+}
+
+function toggleCode() {
+  const el = document.getElementById('sp-code');
+  const ch = document.getElementById('code-chevron');
+  const open = el.style.display === 'none';
+  el.style.display = open ? '' : 'none';
+  ch.className = open ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+  ch.style.color = open ? '#818cf8' : '#5a6a82';
+}
+
+// Init
+loadState();
+</script>
+{% endblock %}

@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+{% block title %}Ch. 11 — GCP AI Service Examples{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div style="width:4px;height:3rem;background:#fb7185;border-radius:2px;flex-shrink:0"></div>
+    <div>
+      <h2 class="mb-0 fw-bold" style="color:#fb7185">Chapter 11 — GCP Service Examples</h2>
+      <div class="small mt-1" style="color:#64748b">GCP AI/ML Services · Vision AI · Cloud Translation · Text-to-Speech · Java APIs</div>
+    </div>
+  </div>
+
+  <ul class="nav nav-pills mb-4 gap-2 flex-wrap">
+    <li class="nav-item"><button class="nav-link ch11-nav-link active" onclick="showTab('tab-overview',this)">🤖 AI/ML Services</button></li>
+    <li class="nav-item"><button class="nav-link ch11-nav-link" onclick="showTab('tab-vision',this)">👁️ Vision AI</button></li>
+    <li class="nav-item"><button class="nav-link ch11-nav-link" onclick="showTab('tab-translation',this)">🌐 Cloud Translation</button></li>
+    <li class="nav-item"><button class="nav-link ch11-nav-link" onclick="showTab('tab-tts',this)">🔊 Text-to-Speech</button></li>
+  </ul>
+
+  <!-- ══ TAB 1: AI/ML OVERVIEW ══ -->
+  <div id="tab-overview" class="ch11-tab">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(251,113,133,.25)">
+          <h5 class="fw-bold mb-2" style="color:#fb7185">High-Level GCP AI/ML Services</h5>
+          <p class="small mb-4" style="color:#94a3b8">Beyond IaaS and batch/stream compute, GCP offers <strong style="color:#f1f5f9">ready-to-use service components</strong> that dramatically increase application capabilities while reducing development effort. The most exciting are in AI and human-machine interfacing.</p>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0" style="color:#94a3b8;font-size:.8rem">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(251,113,133,.3)">
+                  <th style="color:#fb7185;width:20%">Service</th>
+                  <th style="color:#f1f5f9">Capabilities</th>
+                  <th style="color:#fb7185;width:12%">Chapter</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-bold" style="color:#f1f5f9">AutoML</td>
+                  <td>Custom ML models built on Google's ML capabilities: AutoML Natural Language, AutoML Vision (classification, object detection), AutoML Video Intelligence (tracking), AutoML Tables (data analysis).</td>
+                  <td><span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185">Overview</span></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold" style="color:#f1f5f9">Vision AI</td>
+                  <td>Image detection and recognition without training: text extraction (OCR), image labelling, face and landmark detection, content tagging, object localisation, product search, safe-search detection.</td>
+                  <td><span class="badge" style="background:rgba(251,113,133,.3);color:#fb7185">§ 11.1 ✓</span></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold" style="color:#f1f5f9">Video AI</td>
+                  <td>Content discovery, detection, object tracking and shot analysis in video sequences.</td>
+                  <td><span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185">Overview</span></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold" style="color:#f1f5f9">Cloud Natural Language</td>
+                  <td>Sentiment analysis, entity analysis, entity sentiment analysis, content classification, and syntax analysis from unstructured text.</td>
+                  <td><span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185">Overview</span></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold" style="color:#f1f5f9">Cloud Translation</td>
+                  <td>Dynamic translation between arbitrary language pairs. Auto language detection. NMT premium model. Batch translation and glossary support in Advanced mode.</td>
+                  <td><span class="badge" style="background:rgba(251,113,133,.3);color:#fb7185">§ 11.2 ✓</span></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold" style="color:#f1f5f9">Text-to-Speech</td>
+                  <td>Converts text or SSML input into natural-sounding speech using ML. Supports nearly all major languages with male and female voices and selectable synthesis technologies.</td>
+                  <td><span class="badge" style="background:rgba(251,113,133,.3);color:#fb7185">§ 11.3 ✓</span></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold" style="color:#f1f5f9">Speech-to-Text</td>
+                  <td>Send audio to the service, receive text transcription. Easy integration of Google speech recognition into developer applications.</td>
+                  <td><span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185">Overview</span></td>
+                </tr>
+                <tr>
+                  <td class="fw-bold" style="color:#f1f5f9">Dialogflow</td>
+                  <td>Build engaging voice and text-based conversational interfaces using conversational agents.</td>
+                  <td><span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185">Overview</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(251,113,133,.25)">
+          <h5 class="fw-bold mb-3" style="color:#fb7185">Three Services in Detail</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:2px solid #fb7185">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span style="font-size:1.3rem">👁️</span>
+                  <div class="fw-bold" style="color:#fb7185">Vision AI</div>
+                </div>
+                <div class="small mb-2" style="color:#94a3b8">Package: <code>com.google.cloud.vision.v1</code></div>
+                <div class="small mb-2" style="color:#94a3b8">Entry point: <code style="color:#fb7185">ImageAnnotatorClient</code></div>
+                <div class="small" style="color:#94a3b8">Hundreds of classes; only a handful needed. Performs detection tasks on local or remote images via <code>batchAnnotateImages()</code>.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span style="font-size:1.3rem">🌐</span>
+                  <div class="fw-bold" style="color:#fb7185">Cloud Translation</div>
+                </div>
+                <div class="small mb-2" style="color:#94a3b8">Package: <code>com.google.cloud.translate</code></div>
+                <div class="small mb-2" style="color:#94a3b8">Entry point: <code style="color:#fb7185">Translate</code> interface</div>
+                <div class="small" style="color:#94a3b8">Auto language detection or explicit source/target. Base and NMT (neural machine translation) models. Advanced mode: glossaries and batch translation.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span style="font-size:1.3rem">🔊</span>
+                  <div class="fw-bold" style="color:#fb7185">Text-to-Speech</div>
+                </div>
+                <div class="small mb-2" style="color:#94a3b8">Package: <code>com.google.cloud.texttospeech.v1</code></div>
+                <div class="small mb-2" style="color:#94a3b8">Entry point: <code style="color:#fb7185">TextToSpeechClient</code></div>
+                <div class="small" style="color:#94a3b8">Text or SSML input → MP3/WAV output. Supports nearly all major world languages with male and female voices.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 2: VISION AI ══ -->
+  <div id="tab-vision" class="ch11-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(251,113,133,.25)">
+          <h5 class="fw-bold mb-3" style="color:#fb7185">Vision AI — ImageAnnotatorClient</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">Client Usage Pattern</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1">1. Create <code style="color:#fb7185">ImageAnnotatorClient</code> (try-with-resources)</div>
+                  <div class="mb-1">2. Build a <code>List&lt;AnnotateImageRequest&gt;</code> with features</div>
+                  <div class="mb-1">3. Call <code>batchAnnotateImages(requests)</code></div>
+                  <div class="mb-1">4. Process <code>List&lt;AnnotateImageResponse&gt;</code></div>
+                  <div>5. Client auto-closed by try-with-resources</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">Works on Local &amp; Remote Images</div>
+                <div class="small" style="color:#94a3b8">The <code>img</code> parameter in <code>AnnotateImageRequest.setImage(img)</code> can reference a <strong style="color:#f1f5f9">local file</strong> or a <strong style="color:#f1f5f9">remote URL</strong> (GCS URI or public HTTPS). The API handles the transport transparently.</div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#fb7185">Client Creation &amp; Response Processing</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">// Client is created once and can be reused for multiple requests.
+// try-with-resources ensures close() is called to free background resources.
+try (ImageAnnotatorClient client = ImageAnnotatorClient.create()) {
+
+    BatchAnnotateImagesResponse response = client.batchAnnotateImages(requests);
+    List&lt;AnnotateImageResponse&gt; responses = response.getResponsesList();
+
+    for (AnnotateImageResponse res : responses) {
+        if (res.hasError()) {
+            System.out.printf("Error: %s\n", res.getError().getMessage());
+            return;
+        }
+        // process individual detection results ...
+    }
+}</pre>
+
+          <h6 class="fw-bold mt-3 mb-2" style="color:#fb7185">Building a Request — Single Feature (TEXT_DETECTION)</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">List&lt;AnnotateImageRequest&gt; requests = new ArrayList&lt;&gt;();
+
+Feature feat = Feature.newBuilder()
+    .setType(Feature.Type.TEXT_DETECTION)
+    .build();
+
+AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
+    .addFeatures(feat)
+    .setImage(img)   // local or remote image
+    .build();
+
+requests.add(request);</pre>
+
+          <h6 class="fw-bold mt-3 mb-2" style="color:#fb7185">Multi-Feature Request — Text + Document Text + Logos</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">List&lt;AnnotateImageRequest&gt; requests = new ArrayList&lt;&gt;();
+
+// Feature 1: printed text / OCR
+Feature feat1 = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build();
+AnnotateImageRequest req1 = AnnotateImageRequest.newBuilder()
+    .addFeatures(feat1).setImage(img).build();
+
+// Feature 2: handwritten text (dense document OCR)
+Feature feat2 = Feature.newBuilder()
+    .setType(Feature.Type.DOCUMENT_TEXT_DETECTION).build();
+AnnotateImageRequest req2 = AnnotateImageRequest.newBuilder()
+    .addFeatures(feat2).setImage(img).build();
+
+// Feature 3: corporate logos
+Feature feat3 = Feature.newBuilder().setType(Feature.Type.LOGO_DETECTION).build();
+AnnotateImageRequest req3 = AnnotateImageRequest.newBuilder()
+    .addFeatures(feat3).setImage(img).build();
+
+requests.add(req1);
+requests.add(req2);
+requests.add(req3);</pre>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(251,113,133,.25)">
+          <h5 class="fw-bold mb-3" style="color:#fb7185">All Supported Feature Types</h5>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <div class="d-flex flex-column gap-2">
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">TEXT_DETECTION</code>
+                  <div class="small" style="color:#64748b">OCR — extract printed text</div>
+                </div>
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">DOCUMENT_TEXT_DETECTION</code>
+                  <div class="small" style="color:#64748b">Dense OCR for documents and handwriting</div>
+                </div>
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">FACE_DETECTION</code>
+                  <div class="small" style="color:#64748b">Detect faces and facial features</div>
+                </div>
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">LABEL_DETECTION</code>
+                  <div class="small" style="color:#64748b">General image labels and categories</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex flex-column gap-2">
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">LANDMARK_DETECTION</code>
+                  <div class="small" style="color:#64748b">Identify geographic landmarks</div>
+                </div>
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">LOGO_DETECTION</code>
+                  <div class="small" style="color:#64748b">Detect corporate and product logos</div>
+                </div>
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">OBJECT_LOCALIZATION</code>
+                  <div class="small" style="color:#64748b">Locate and identify multiple objects</div>
+                </div>
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">PRODUCT_SEARCH</code>
+                  <div class="small" style="color:#64748b">Find similar products in a catalogue</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex flex-column gap-2">
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">IMAGE_PROPERTIES</code>
+                  <div class="small" style="color:#64748b">Compute dominant colours and other image properties</div>
+                </div>
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">SAFE_SEARCH_DETECTION</code>
+                  <div class="small" style="color:#64748b">Detect unsafe or undesirable content</div>
+                </div>
+                <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(251,113,133,.2)">
+                  <code class="flex-shrink-0" style="color:#fb7185;font-size:.72rem">CROP_HINTS</code>
+                  <div class="small" style="color:#64748b">Suggest optimal cropping regions</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 3: CLOUD TRANSLATION ══ -->
+  <div id="tab-translation" class="ch11-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(251,113,133,.25)">
+          <h5 class="fw-bold mb-3" style="color:#fb7185">Cloud Translation Java API</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">Entry Point</div>
+                <div class="small" style="color:#94a3b8">Package: <code>com.google.cloud.translate</code><br><br>Interface <code style="color:#fb7185">Translate</code> is a service proxy. Obtained via <code>TranslateOptions.getDefaultInstance().getService()</code>.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">Translation Models</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-2"><span class="badge" style="background:rgba(251,113,133,.15);color:#fb7185">base</span> — Standard translation model. Fast, lower cost.</div>
+                  <div><span class="badge" style="background:rgba(251,113,133,.3);color:#fb7185">nmt</span> — Neural Machine Translation. Premium, higher quality, more natural results.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">Advanced API</div>
+                <div class="small" style="color:#94a3b8"><code>TranslationServiceClient</code> + <code>client.translateText(request)</code> adds: translation glossaries, batch translation for large text volumes, custom models.</div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#fb7185">Auto-Detection (Simplest Case)</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">import com.google.cloud.translate.*;
+
+// Obtain default Translate service (uses application default credentials)
+Translate translate = TranslateOptions.getDefaultInstance().getService();
+
+// Language auto-detected from source text
+Translation translation = translate.translate("¡Hola Mundo!");
+
+System.out.printf("Translated Text:\n\t%s\n", translation.getTranslatedText());
+// → "Hello World!"</pre>
+
+          <h6 class="fw-bold mt-3 mb-2" style="color:#fb7185">Explicit Source / Target Languages + NMT Model</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">Translation translation = translate.translate(
+    "Hola Mundo!",
+    Translate.TranslateOption.sourceLanguage("es"),   // Spanish source
+    Translate.TranslateOption.targetLanguage("de"),   // German target
+    // "base" for standard edition, "nmt" for premium neural MT
+    Translate.TranslateOption.model("nmt")
+);
+// → "Hallo Welt!"</pre>
+
+          <div class="mt-3 p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+            <div class="fw-bold mb-2 small" style="color:#fb7185">Language Code Examples</div>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge" style="background:rgba(251,113,133,.12);color:#fb7185">en — English</span>
+              <span class="badge" style="background:rgba(251,113,133,.12);color:#fb7185">es — Spanish</span>
+              <span class="badge" style="background:rgba(251,113,133,.12);color:#fb7185">de — German</span>
+              <span class="badge" style="background:rgba(251,113,133,.12);color:#fb7185">fr — French</span>
+              <span class="badge" style="background:rgba(251,113,133,.12);color:#fb7185">hu — Hungarian</span>
+              <span class="badge" style="background:rgba(251,113,133,.12);color:#fb7185">ja — Japanese</span>
+              <span class="badge" style="background:rgba(251,113,133,.12);color:#fb7185">zh — Chinese</span>
+              <span class="badge" style="background:rgba(251,113,133,.12);color:#fb7185">ar — Arabic</span>
+              <span class="small" style="color:#64748b">… 100+ languages supported</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 4: TEXT-TO-SPEECH ══ -->
+  <div id="tab-tts" class="ch11-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(251,113,133,.25)">
+          <h5 class="fw-bold mb-3" style="color:#fb7185">Text-to-Speech — QuickstartSample</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">Key Classes</div>
+                <div class="d-flex flex-column gap-1 small" style="color:#94a3b8">
+                  <div><code style="color:#fb7185">TextToSpeechClient</code> — main service client</div>
+                  <div><code style="color:#fb7185">SynthesisInput</code> — text or SSML source</div>
+                  <div><code style="color:#fb7185">VoiceSelectionParams</code> — language + gender</div>
+                  <div><code style="color:#fb7185">AudioConfig</code> — output format (MP3, WAV, OGG)</div>
+                  <div><code style="color:#fb7185">SynthesizeSpeechResponse</code> — audio bytes</div>
+                  <div><code style="color:#fb7185">SsmlVoiceGender</code> — NEUTRAL / MALE / FEMALE</div>
+                  <div><code style="color:#fb7185">AudioEncoding</code> — MP3 / LINEAR16 / OGG_OPUS</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(251,113,133,.3)">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">Synthesis Steps</div>
+                <div class="d-flex flex-column gap-1 small" style="color:#94a3b8">
+                  <div>1. Create <code>TextToSpeechClient</code> (try-with-resources)</div>
+                  <div>2. Build <code>SynthesisInput</code> with text or SSML</div>
+                  <div>3. Set <code>VoiceSelectionParams</code>: language code + gender</div>
+                  <div>4. Set <code>AudioConfig</code>: output encoding (MP3)</div>
+                  <div>5. Call <code>synthesizeSpeech(input, voice, audioConfig)</code></div>
+                  <div>6. Extract <code>ByteString audioContents</code> from response</div>
+                  <div>7. Write bytes to output file (<code>output.mp3</code>)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#fb7185">Java — QuickstartSample (Full)</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">import com.google.cloud.texttospeech.v1.AudioConfig;
+import com.google.cloud.texttospeech.v1.AudioEncoding;
+import com.google.cloud.texttospeech.v1.SsmlVoiceGender;
+import com.google.cloud.texttospeech.v1.SynthesisInput;
+import com.google.cloud.texttospeech.v1.SynthesizeSpeechResponse;
+import com.google.cloud.texttospeech.v1.TextToSpeechClient;
+import com.google.cloud.texttospeech.v1.VoiceSelectionParams;
+import com.google.protobuf.ByteString;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+
+public class QuickstartSample {
+    public static void main(String... args) throws Exception {
+
+        try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
+
+            // 1. Text to synthesise
+            SynthesisInput input = SynthesisInput.newBuilder()
+                .setText("Hello, World!")
+                .build();
+
+            // 2. Voice: language code + gender
+            VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
+                .setLanguageCode("en-US")
+                .setSsmlGender(SsmlVoiceGender.NEUTRAL)
+                .build();
+
+            // 3. Output format: MP3
+            AudioConfig audioConfig = AudioConfig.newBuilder()
+                .setAudioEncoding(AudioEncoding.MP3)
+                .build();
+
+            // 4. Perform TTS request
+            SynthesizeSpeechResponse response =
+                textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
+
+            // 5. Extract audio bytes from response
+            ByteString audioContents = response.getAudioContent();
+
+            // 6. Write to file
+            try (OutputStream out = new FileOutputStream("output.mp3")) {
+                out.write(audioContents.toByteArray());
+                System.out.println("Audio content written to file \"output.mp3\"");
+            }
+        }
+    }
+}</pre>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">Voice Options</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1">Language codes: <code>en-US</code>, <code>de-DE</code>, <code>hu-HU</code>, <code>ja-JP</code> …</div>
+                  <div class="mb-1">Genders: <code>NEUTRAL</code> / <code>MALE</code> / <code>FEMALE</code></div>
+                  <div>Full list: cloud.google.com/text-to-speech/docs/voices</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#fb7185">SSML Support</div>
+                <div class="small" style="color:#94a3b8">Instead of <code>.setText()</code>, use <code>.setSsml()</code> to pass Speech Synthesis Markup Language for fine-grained control of pronunciation, pauses, emphasis, and pitch.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<style>
+.ch11-nav-link { background:#13141a; color:#94a3b8; border:1px solid rgba(251,113,133,.25); transition:all .2s; }
+.ch11-nav-link:hover { background:rgba(251,113,133,.15); color:#f1f5f9; }
+.ch11-nav-link.active { background:#fb7185 !important; color:#000 !important; font-weight:600; }
+</style>
+
+<script>
+function showTab(id, el) {
+    document.querySelectorAll('.ch11-tab').forEach(function(t){ t.classList.add('d-none'); });
+    document.querySelectorAll('.ch11-nav-link').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById(id).classList.remove('d-none');
+    el.classList.add('active');
+}
+(function(){
+    var h = location.hash.slice(1);
+    if (h) {
+        var btn = document.querySelector('.ch11-nav-link[onclick*="' + h + '"]');
+        if (btn) btn.click();
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,494 @@
+{% extends "base.html" %}
+{% block title %}Chapter 15 — Full-Text Search with Elasticsearch{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+<div class="d-flex align-items-center mb-3 gap-3">
+  <div>
+    <h4 class="mb-0 fw-bold" style="color:#f97316">Chapter 15 — Full-Text Search with Elasticsearch</h4>
+    <div style="font-size:.75rem;color:#6b7280">Inverted Index · BM25 · Fuzzy Search · Aggregations · SQL vs ES</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="c15tabs" style="border-color:rgba(249,115,22,.3)">
+  <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('limits',this)">SQL LIKE Limits</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('index',this)">Inverted Index</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('queries',this)">Query Types</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('bm25',this)">BM25 Scoring</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('aggs',this)">Aggregations &amp; When to Use</a></li>
+</ul>
+
+<!-- Tab: SQL LIKE Limits -->
+<div id="tab-limits">
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-bug me-2"></i>Why SQL LIKE Falls Short</div>
+      <pre class="m-0 mb-2" style="font-size:.72rem;color:#fcd34d;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">-- Find products containing "chai"
+SELECT ProductName FROM Products
+WHERE ProductName LIKE '%chai%';</pre>
+      <table class="table table-sm mb-0" style="font-size:.75rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>Limitation</th><th>Explanation</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#f87171">No relevance ranking</td><td>All matching rows are equally "good" — no score</td></tr>
+          <tr><td style="color:#f87171">No index use</td><td><code>LIKE '%chai%'</code> cannot use B-tree — scans every row</td></tr>
+          <tr><td style="color:#f87171">No tokenization</td><td><code>'chai tea'</code> ≠ <code>'tea chai'</code> without extra wildcards</td></tr>
+          <tr><td style="color:#f87171">No fuzziness</td><td><code>'Chaai'</code> (typo) returns nothing</td></tr>
+          <tr><td style="color:#f87171">Language-unaware</td><td>Plurals, stemming, synonyms need manual workarounds</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-check-circle me-2"></i>Elasticsearch Solutions</div>
+      <div class="row g-2">
+        {% for problem,solution,color in [
+          ('No ranking','BM25 <code>_score</code> on every hit — higher = more relevant','#34d399'),
+          ('Full table scan','Inverted index lookup is O(1) regardless of dataset size','#34d399'),
+          ('No tokenization','Analyzer tokenizes at index time; order-independent matching','#34d399'),
+          ('No typo tolerance','<code>fuzziness: AUTO</code> allows ≤2 edit-distance substitutions','#34d399'),
+          ('Language-unaware','Configurable analyzer: English stemmer, stopwords, synonyms','#34d399'),
+        ] %}
+        <div class="col-12">
+          <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid {{color}};border-radius:4px">
+            <span style="color:#f87171;font-size:.73rem;text-decoration:line-through">{{problem}}</span>
+            <span style="color:#9ca3af;font-size:.73rem"> → </span>
+            <span style="color:{{color}};font-size:.73rem">{{solution|safe}}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mt-3">
+        <div class="fw-bold mb-1" style="color:#fb923c;font-size:.75rem">Northwind Demo: Search for "cahai" (typo)</div>
+        <div class="p-2" style="background:#0a0c12;border-radius:4px;font-size:.75rem">
+          <div style="color:#f87171"><i class="bi bi-x-circle me-1"></i>SQL: <code>WHERE ProductName LIKE '%cahai%'</code> → 0 rows</div>
+          <div style="color:#34d399;margin-top:4px"><i class="bi bi-check-circle me-1"></i>ES: <code>fuzziness: AUTO</code> → "Chai" (1 edit distance)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-table me-2"></i>SQL vs Elasticsearch: Query-by-Query Comparison</div>
+  <table class="table table-sm mb-0" style="font-size:.75rem;color:#9ca3af">
+    <thead><tr style="color:#d1d5db"><th>Goal</th><th>SQL</th><th>Elasticsearch</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Exact match</td>
+        <td><code>WHERE name = 'Chai'</code></td>
+        <td><code style="color:#f97316">{"term": {"product_name.keyword": "Chai"}}</code></td>
+      </tr>
+      <tr>
+        <td>Substring</td>
+        <td><code>WHERE name LIKE '%chai%'</code></td>
+        <td><code style="color:#f97316">{"match": {"product_name": "chai"}}</code></td>
+      </tr>
+      <tr>
+        <td>Multi-field</td>
+        <td><code>WHERE name LIKE '%x%' OR desc LIKE '%x%'</code></td>
+        <td><code style="color:#f97316">{"multi_match": {"query": "x", "fields": ["*"]}}</code></td>
+      </tr>
+      <tr>
+        <td>Fuzzy (typo)</td>
+        <td style="color:#f87171">Not supported natively</td>
+        <td><code style="color:#34d399">{"match": {"product_name": {"query": "cahai", "fuzziness": "AUTO"}}}</code></td>
+      </tr>
+      <tr>
+        <td>Relevance sort</td>
+        <td><code>ORDER BY</code> computed column</td>
+        <td><code style="color:#f97316">Automatic <code>_score</code> based on BM25</code></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</div><!-- /tab-limits -->
+
+<!-- Tab: Inverted Index -->
+<div id="tab-index" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-7">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-file-text me-2"></i>Analyzer Pipeline</div>
+      <p style="font-size:.8rem;color:#9ca3af">When a document is indexed, Elasticsearch runs the field value through an <strong>analyzer pipeline</strong>:</p>
+      <div class="p-2 mb-2" style="background:#0a0c12;border-radius:6px;font-size:.75rem">
+        <div style="color:#fcd34d">"Grandma's Boysenberry Spread"</div>
+        <div style="color:#6b7280;padding-left:1rem">↓ tokenizer (standard)</div>
+        <div style="color:#86efac;padding-left:2rem">["Grandma's", "Boysenberry", "Spread"]</div>
+        <div style="color:#6b7280;padding-left:1rem">↓ token filters (lowercase, stop words, stemmer)</div>
+        <div style="color:#93c5fd;padding-left:2rem">["grandma", "boysenberri", "spread"]</div>
+        <div style="color:#6b7280;padding-left:1rem">↓ inverted index</div>
+        <div style="color:#c4b5fd;padding-left:2rem">grandma &nbsp;&nbsp;&nbsp;→ [doc 7]</div>
+        <div style="color:#c4b5fd;padding-left:2rem">boysenberri → [doc 7]</div>
+        <div style="color:#c4b5fd;padding-left:2rem">spread &nbsp;&nbsp;&nbsp;&nbsp;→ [doc 7, doc 12, doc 31]</div>
+      </div>
+      <p style="font-size:.78rem;color:#9ca3af">At query time, the same analyzer runs on the query text. Engine looks up matching terms in the inverted index in <strong>O(1)</strong> — no table scan required.</p>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-diagram-3 me-2"></i>Elasticsearch Data Model</div>
+      <table class="table table-sm mb-0" style="font-size:.75rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>ES Concept</th><th>SQL Equivalent</th><th>Description</th></tr></thead>
+        <tbody>
+          {% for es,sql,desc in [
+            ('Index','Table','Collection of documents with a common schema'),
+            ('Document','Row','A JSON object stored in an index'),
+            ('Field','Column','A named value inside a document'),
+            ('Mapping','DDL','Defines field types (text, keyword, integer…)'),
+            ('Shard','Partition','A Lucene index; ES distributes shards across nodes'),
+            ('Replica','Standby node','A copy of a shard for high availability'),
+          ] %}
+          <tr>
+            <td style="color:#f97316">{{es}}</td>
+            <td style="color:#60a5fa">{{sql}}</td>
+            <td>{{desc}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-download me-2"></i>Import Northwind Data — Step by Step</div>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="fw-bold mb-1" style="color:#fb923c;font-size:.75rem">Step 1: Register Connection</div>
+      <div style="font-size:.78rem;color:#9ca3af">Control Plane → Connections → New Connection:<br>Type: <code>elasticsearch</code>, URL: <code>https://localhost:9200</code>, Username: <code>elastic</code></div>
+      <div class="fw-bold mb-1 mt-2" style="color:#fb923c;font-size:.75rem">Step 2: Import from SQL</div>
+      <pre class="m-0" style="font-size:.7rem;color:#fcd34d;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">-- Products (→ northwind_products index):
+SELECT ProductID, ProductName, QuantityPerUnit,
+       UnitPrice, UnitsInStock, Discontinued
+FROM Products
+
+-- Categories (→ northwind_categories index):
+SELECT CategoryID, CategoryName, Description
+FROM Categories</pre>
+    </div>
+    <div class="col-md-6">
+      <div class="fw-bold mb-1" style="color:#fb923c;font-size:.75rem">Step 3: Search Query Sent to ES</div>
+      <pre class="m-0" style="font-size:.7rem;color:#86efac;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">{
+  "query": {
+    "multi_match": {
+      "query":     "chai",
+      "fields":    ["*"],
+      "fuzziness": "AUTO",
+      "operator":  "or"
+    }
+  },
+  "size": 50
+}</pre>
+      <div class="mt-2" style="font-size:.75rem;color:#9ca3af">Result: "Chai" and "Ipoh Coffee" (both beverages) returned with BM25 relevance scores. "Chai" ranks highest — exact title match.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-index -->
+
+<!-- Tab: Query Types -->
+<div id="tab-queries" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-search me-2"></i>Core Query Types</div>
+      <div class="mb-2">
+        <div class="fw-bold mb-1" style="color:#fb923c;font-size:.73rem">match — full-text on one field</div>
+        <pre class="m-0" style="font-size:.7rem;color:#86efac;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">{"match": {"product_name": "chai"}}</pre>
+      </div>
+      <div class="mb-2">
+        <div class="fw-bold mb-1" style="color:#fb923c;font-size:.73rem">multi_match — full-text across fields</div>
+        <pre class="m-0" style="font-size:.7rem;color:#86efac;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">{"multi_match": {"query": "chai", "fields": ["*"]}}</pre>
+      </div>
+      <div class="mb-2">
+        <div class="fw-bold mb-1" style="color:#fb923c;font-size:.73rem">fuzzy — typo-tolerant</div>
+        <pre class="m-0" style="font-size:.7rem;color:#86efac;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">{"match": {
+  "product_name": {
+    "query": "cahai",
+    "fuzziness": "AUTO"
+  }
+}}</pre>
+      </div>
+      <div>
+        <div class="fw-bold mb-1" style="color:#fb923c;font-size:.73rem">term — exact (keyword field)</div>
+        <pre class="m-0" style="font-size:.7rem;color:#86efac;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">{"term": {"product_name.keyword": "Chai"}}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-sliders me-2"></i>Fuzziness: AUTO Edit Distance</div>
+      <table class="table table-sm mb-2" style="font-size:.75rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>Term Length</th><th>Max Edits</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>1–2 chars</td><td>0 (exact)</td><td>"ce" → "ce" only</td></tr>
+          <tr><td>3–5 chars</td><td>1 edit</td><td>"cahi" → "chai"</td></tr>
+          <tr><td>6+ chars</td><td>2 edits</td><td>"cahoklate" → "chocolate"</td></tr>
+        </tbody>
+      </table>
+      <div class="fw-bold mb-1" style="color:#fb923c;font-size:.73rem">Northwind Fuzzy Search Results</div>
+      <div class="p-2" style="background:#0a0c12;border-radius:6px;font-size:.75rem">
+        <div style="color:#6b7280">Query: "chai" fuzziness=AUTO</div>
+        {% for name,score,color in [
+          ('Chai','0.98','#f97316'),
+          ('Chang','0.87','#fb923c'),
+          ('Ipoh Coffee','0.83','#fbbf24'),
+          ('Chartreuse verte','0.79','#fcd34d'),
+          ('Steeleye Stout','0.77','#fde68a'),
+        ] %}
+        <div class="d-flex align-items-center mt-1 gap-2">
+          <div style="width:{{(score|float * 100)|int}}px;height:6px;background:{{color}};border-radius:3px"></div>
+          <span style="color:{{color}};font-size:.72rem">{{name}}</span>
+          <span style="color:#6b7280;font-size:.68rem;margin-left:auto">score={{score}}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-gear me-2"></i>Custom Mapping — Explicit Field Types</div>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <pre class="m-0" style="font-size:.71rem;color:#fcd34d;background:#080a0e;padding:10px;border-radius:6px;white-space:pre-wrap">PUT /northwind_products
+{
+  "mappings": {
+    "properties": {
+      "product_name": {
+        "type": "text",
+        "analyzer": "english"
+      },
+      "unit_price": {
+        "type": "scaled_float",
+        "scaling_factor": 100
+      },
+      "category_name": {
+        "type": "keyword"
+      }
+    }
+  }
+}</pre>
+    </div>
+    <div class="col-md-6">
+      <div class="fw-bold mb-1" style="color:#fb923c;font-size:.75rem">text vs keyword</div>
+      <table class="table table-sm" style="font-size:.75rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>Type</th><th>Use for</th><th>Supports</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#f97316">text</td><td>Product names, descriptions</td><td>Full-text search, fuzziness</td></tr>
+          <tr><td style="color:#60a5fa">keyword</td><td>Categories, IDs, exact filters</td><td>Exact match, aggregations</td></tr>
+        </tbody>
+      </table>
+      <div class="p-2" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:4px">
+        <span style="color:#34d399;font-size:.73rem"><i class="bi bi-lightbulb me-1"></i>With English analyzer: "beverages" (plural) matches search for "beverage" (singular) via stemming.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-queries -->
+
+<!-- Tab: BM25 -->
+<div id="tab-bm25" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-7">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-calculator me-2"></i>BM25 Scoring Formula</div>
+      <div class="p-3 mb-2" style="background:#0a0c12;border-radius:6px;text-align:center">
+        <div style="color:#fcd34d;font-family:monospace;font-size:.82rem">
+          score(t, d) = IDF(t) × (tf(t,d) × (k1 + 1)) / (tf(t,d) + k1 × (1 − b + b × |d|/avgdl))
+        </div>
+      </div>
+      <div class="row g-2">
+        {% for var,name,default,desc in [
+          ('IDF(t)','Inverse Document Frequency','—','Rare terms score higher than common ones (e.g. "chai" > "the")'),
+          ('tf(t,d)','Term Frequency','—','How many times <em>t</em> appears in document <em>d</em>'),
+          ('k1','TF saturation','1.2','Diminishing returns after a few occurrences — prevents spam'),
+          ('b','Length normalization','0.75','Long documents are penalized slightly relative to average'),
+          ('|d|/avgdl','Relative document length','—','Document length divided by collection average'),
+        ] %}
+        <div class="col-12">
+          <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid rgba(249,115,22,.5);border-radius:4px;display:flex;align-items:flex-start;gap:8px">
+            <code style="color:#f97316;font-size:.8rem;white-space:nowrap">{{var}}</code>
+            <div>
+              <span style="color:#d1d5db;font-size:.75rem;font-weight:600">{{name}}</span>
+              {% if default != '—' %}<span class="badge ms-1" style="background:rgba(249,115,22,.15);color:#fb923c;font-size:.62rem">default={{default}}</span>{% endif %}
+              <div style="font-size:.72rem;color:#9ca3af">{{desc|safe}}</div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-bar-chart me-2"></i>Practical Implications</div>
+      <div class="mb-2">
+        <div class="fw-bold mb-1" style="color:#fb923c;font-size:.75rem">Example: Why "Chai" Outranks a Description</div>
+        <div class="p-2" style="background:#0a0c12;border-radius:4px;font-size:.73rem;color:#9ca3af">
+          <div style="color:#34d399"><i class="bi bi-trophy me-1"></i>Product name = "Chai" → high IDF × short doc → high score</div>
+          <div style="color:#9ca3af;margin-top:4px">Product description mentioning "chai" 5 times in a long paragraph → lower score due to length normalization + TF saturation</div>
+        </div>
+      </div>
+      <div class="fw-bold mb-1" style="color:#fb923c;font-size:.75rem">Rules of Thumb</div>
+      <ul style="font-size:.75rem;color:#9ca3af;padding-left:1.2rem">
+        <li>High IDF = rare term = more discriminating = higher weight</li>
+        <li>TF saturation: 1 occurrence ≫ 0, but 10 occurrences ≈ 3</li>
+        <li>Short documents with exact matches win over long ones with many mentions</li>
+        <li>Adding more search terms narrows results (all terms must match with <code>operator: and</code>)</li>
+      </ul>
+      <div class="mt-2 p-2" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:4px">
+        <span style="color:#34d399;font-size:.73rem">BM25 has been the industry standard for full-text ranking since the 1990s — used in Lucene, Solr, Elasticsearch, and many other systems.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-bm25 -->
+
+<!-- Tab: Aggregations & When to Use -->
+<div id="tab-aggs" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-pie-chart me-2"></i>Aggregations</div>
+      <p style="font-size:.8rem;color:#9ca3af">ES aggregations run in parallel with search — no second query needed. Two main types:</p>
+      <div class="mb-2">
+        <div class="fw-bold mb-1" style="color:#fb923c;font-size:.73rem">Bucket Aggregations (≈ GROUP BY)</div>
+        <pre class="m-0" style="font-size:.69rem;color:#fcd34d;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">{"aggs": {
+  "price_ranges": {
+    "range": {
+      "field": "unit_price",
+      "ranges": [
+        {"key": "$0–$10",  "from": 0,  "to": 10},
+        {"key": "$10–$25", "from": 10, "to": 25},
+        {"key": "$25+",    "from": 25}
+      ]
+    }
+  }
+}}</pre>
+      </div>
+      <div>
+        <div class="fw-bold mb-1" style="color:#fb923c;font-size:.73rem">Metric + Nested Aggregation (≈ AVG per GROUP)</div>
+        <pre class="m-0" style="font-size:.69rem;color:#fcd34d;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">{"aggs": {
+  "categories": {
+    "terms": {"field": "category_name.keyword"},
+    "aggs": {
+      "avg_price": {"avg": {"field": "unit_price"}}
+    }
+  }
+}}</pre>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-question-circle me-2"></i>When to Use ES Alongside SQL</div>
+      <p style="font-size:.8rem;color:#9ca3af">Elasticsearch is <strong>not</strong> a replacement for a relational database. The two are complementary:</p>
+      <table class="table table-sm mb-2" style="font-size:.73rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>Requirement</th><th>SQL</th><th>ES</th></tr></thead>
+        <tbody>
+          {% for req,sql,es in [
+            ('ACID transactions','✓','✗'),
+            ('Referential integrity (FK)','✓','✗'),
+            ('Precise normalized aggregations','✓','—'),
+            ('Full-text search + relevance','✗','✓'),
+            ('Fuzzy / typo-tolerant search','✗','✓'),
+            ('Log analytics at scale','Too slow','✓'),
+            ('Autocomplete / suggest','✗','✓'),
+            ('Horizontal read scaling','Limited','✓'),
+          ] %}
+          <tr>
+            <td>{{req}}</td>
+            <td style="color:{{'#34d399' if sql == '✓' else '#f87171' if sql == '✗' else '#9ca3af'}}">{{sql}}</td>
+            <td style="color:{{'#34d399' if es == '✓' else '#f87171' if es == '✗' else '#9ca3af'}}">{{es}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-diagram-2 me-2"></i>Dual-Database Architecture Pattern</div>
+  <div class="row g-3">
+    <div class="col-md-7">
+      <div class="p-2" style="background:#0a0c12;border-radius:6px;font-size:.75rem;font-family:monospace">
+        <div style="color:#60a5fa">Client App</div>
+        <div style="padding-left:1rem;color:#6b7280">
+          │<br>
+          ├─ <span style="color:#f59e0b">WRITE</span> → <span style="color:#60a5fa">SQL Server / PostgreSQL</span> (authoritative)<br>
+          │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:#9ca3af">trigger / message queue event</span><br>
+          │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+          │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#f97316">Elasticsearch index</span> (read-optimized projection)<br>
+          │<br>
+          └─ <span style="color:#34d399">SEARCH</span> → <span style="color:#f97316">Elasticsearch</span> (full-text, fuzzy, relevance)
+        </div>
+      </div>
+    </div>
+    <div class="col-md-5">
+      <ul style="font-size:.78rem;color:#9ca3af;padding-left:1.2rem">
+        <li>SQL owns authoritative data and ACID transactions</li>
+        <li>ES owns the search projection — a denormalized read view</li>
+        <li>Sync via trigger, CDC, or message queue (e.g. Debezium → Kafka → ES)</li>
+        <li>If ES is temporarily down: fall back to SQL <code>LIKE</code> (degraded UX, not data loss)</li>
+      </ul>
+      <div class="p-2" style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:4px">
+        <span style="color:#fb923c;font-size:.73rem">Used by e-commerce platforms, CMS systems, and SaaS applications at scale worldwide.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3 p-3" style="background:#13141a;border:1px solid rgba(249,115,22,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#f97316"><i class="bi bi-book me-2"></i>Chapter Exercises</div>
+  <div class="row g-2">
+    {% for q,desc in [
+      ('1. Fuzzy Search Experiment','Search for "choclate" with fuzziness 0, 1, 2. Record which products appear at each level and explain the edit-distance difference.'),
+      ('2. Aggregation vs SQL','Run "Products by price range" aggregation and compare counts to equivalent <code>CASE WHEN UnitPrice &lt; 10 THEN \'$0–$10\' … GROUP BY …</code>. Are counts identical? Why?'),
+      ('3. LIKE Performance','Measure elapsed time for <code>LIKE \'%sauce%\'</code> across 1M synthetic products. Compare same search in ES. Explain using inverted index concept.'),
+      ('4. Custom Mapping','Delete northwind_products, recreate with explicit mapping: product_name as text+English analyzer, unit_price as scaled_float. Does "beverage" now match "beverages"?'),
+      ('5. Design Question','Book retailer, 10M titles in SQL Server. Users mistype author names. Design ES integration: fields to index, analyzer, sync strategy, fallback when ES is down.'),
+    ] %}
+    <div class="col-12">
+      <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid rgba(249,115,22,.4);border-radius:4px">
+        <span class="fw-bold" style="color:#fb923c;font-size:.78rem">{{q}}</span>
+        <div style="font-size:.73rem;color:#9ca3af">{{desc|safe}}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+</div><!-- /tab-aggs -->
+
+</div><!-- container -->
+
+<style>
+.nav-tabs .nav-link { color: #9ca3af; border-color: transparent; }
+.nav-tabs .nav-link:hover { color: #f97316; border-color: transparent; }
+.nav-tabs .nav-link.active { background: rgba(249,115,22,.15); color: #f97316; border-color: rgba(249,115,22,.4) rgba(249,115,22,.4) transparent; }
+</style>
+
+<script>
+function showTab(id, el) {
+  ['limits','index','queries','bm25','aggs'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === id ? '' : 'none';
+  });
+  document.querySelectorAll('#c15tabs .nav-link').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+  return false;
+}
+</script>
+{% endblock %}

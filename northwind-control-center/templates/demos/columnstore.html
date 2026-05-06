@@ -1,0 +1,794 @@
+{% extends "base.html" %}
+{% block title %}Columnstore & Partitioning{% endblock %}
+{% block content %}
+<style>
+:root {
+  --cs-btree:   #f59e0b;
+  --cs-page:    #38bdf8;
+  --cs-cci:     #a78bfa;
+  --cs-pg:      #34d399;
+  --step-done:  #06d6a0;
+  --step-run:   #fbbf24;
+  --step-pend:  #374151;
+}
+.tab-nav { display:flex; gap:.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+.tab-btn {
+  padding:.4rem 1.1rem; border-radius:6px; border:1px solid #2a2d3a;
+  background:#13141a; color:#8892a4; cursor:pointer; font-size:.82rem;
+  transition: all .15s;
+}
+.tab-btn.active { border-color:var(--accent, #a78bfa); color:var(--accent, #a78bfa); background:#1a1b26; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* Storage cards */
+.storage-card {
+  background:#0d0f16; border-radius:10px; padding:1.2rem 1rem;
+  border:1px solid #1e2028; position:relative; overflow:hidden;
+}
+.storage-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+}
+.storage-card.btree::before  { background: var(--cs-btree); }
+.storage-card.page::before   { background: var(--cs-page); }
+.storage-card.cci::before    { background: var(--cs-cci); }
+
+.storage-tag {
+  display:inline-block; font-size:.6rem; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; padding:.15rem .5rem; border-radius:4px; margin-bottom:.5rem;
+}
+.bar-wrap { background:#0a0c14; border-radius:4px; height:10px; overflow:hidden; margin:.25rem 0; }
+.bar-fill  { height:100%; border-radius:4px; transition: width .8s ease; }
+
+/* Stepper */
+.stepper { display:flex; gap:0; flex-wrap:wrap; margin-bottom:1.2rem; }
+.step-item {
+  flex:1; min-width:90px; position:relative; text-align:center;
+  padding:.5rem .3rem .4rem; font-size:.65rem;
+}
+.step-item:not(:last-child)::after {
+  content:''; position:absolute; right:0; top:30%; width:1px; height:40%;
+  background:#2a2d3a;
+}
+.step-dot {
+  width:28px; height:28px; border-radius:50%; margin:0 auto .3rem;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.7rem; font-weight:700; border:2px solid #374151; color:#5a6070;
+  background:#0d0f16; transition: all .25s;
+}
+.step-item.done .step-dot   { border-color:var(--step-done); color:var(--step-done); }
+.step-item.running .step-dot { border-color:var(--step-run); color:var(--step-run); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.step-item.done .step-label   { color:var(--step-done); }
+.step-item.running .step-label { color:var(--step-run); }
+.step-label { color:#5a6070; line-height:1.2; }
+
+/* SQL box */
+.sql-box {
+  background:#080a10; border:1px solid #1e2028; border-radius:6px;
+  padding:.7rem .9rem; font-size:.67rem; line-height:1.55;
+  color:#c9d1d9; overflow-x:auto; white-space:pre;
+  font-family:'JetBrains Mono', 'Cascadia Code', monospace;
+}
+.kw { color:#569cd6; } .fn { color:#dcdcaa; } .cm { color:#6a9955; }
+.st { color:#ce9178; } .nu { color:#b5cea8; } .op { color:#a78bfa; }
+
+/* Partition chart */
+.part-bar-row { display:flex; align-items:center; gap:.5rem; margin:.3rem 0; }
+.part-bar-row .label { min-width:70px; font-size:.68rem; color:#8892a4; text-align:right; }
+.part-bar-row .bar   { flex:1; background:#0a0c14; border-radius:3px; height:14px; overflow:hidden; }
+.part-bar-row .fill  { height:100%; border-radius:3px; transition:width .6s; }
+.part-bar-row .count { min-width:55px; font-size:.68rem; color:#e2e8f0; }
+
+/* Comparison table */
+.cmp-table { width:100%; border-collapse:collapse; font-size:.73rem; }
+.cmp-table th { color:#8892a4; font-weight:600; border-bottom:1px solid #1e2028; padding:.4rem .5rem; text-align:left; }
+.cmp-table td { padding:.4rem .5rem; border-bottom:1px solid #12141a; }
+.badge-method { display:inline-block; padding:.1rem .4rem; border-radius:4px; font-size:.6rem; font-weight:700; }
+
+/* PG partition split */
+.pg-split { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+@media(max-width:700px) { .pg-split { grid-template-columns:1fr; } }
+
+.part-chip {
+  display:inline-block; padding:.15rem .55rem; border-radius:4px;
+  font-size:.65rem; font-weight:600; margin:.1rem .1rem;
+}
+</style>
+
+<div class="mb-3">
+  <h4 class="fw-bold mb-0" style="color:#e2e8f0">
+    <i class="bi bi-layers me-2" style="color:#a78bfa"></i>Chapter 5 — Columnstore &amp; Partitioning
+  </h4>
+  <div style="font-size:.73rem;color:#5a6070">
+    AdventureWorksDW2019 · SQL Server 2022 · PostgreSQL (Northwind)
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" style="--accent:#a78bfa" onclick="switchTab('storage',this)">
+    <i class="bi bi-hdd-stack me-1"></i>Storage Formats
+  </button>
+  <button class="tab-btn" style="--accent:#38bdf8" onclick="switchTab('partition',this)">
+    <i class="bi bi-grid-3x3-gap me-1"></i>Partition Switching (SQL Server)
+  </button>
+  <button class="tab-btn" style="--accent:#34d399" onclick="switchTab('pgpart',this)">
+    <i class="bi bi-diagram-2 me-1"></i>PostgreSQL Partitioning
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ TAB 1: Storage -->
+<div id="tab-storage" class="tab-panel active">
+  <div class="row g-3 mb-3">
+
+    <div class="col-12">
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <button class="btn btn-sm" style="background:#a78bfa;color:#fff;border:none" onclick="setupTables()">
+          <i class="bi bi-play-fill me-1"></i>1 — Setup Tables
+        </button>
+        <button class="btn btn-sm" style="background:#38bdf8;color:#0d0f16;border:none" onclick="runBenchmark()">
+          <i class="bi bi-speedometer2 me-1"></i>2 — Run Benchmark
+        </button>
+        <button class="btn btn-sm" style="background:#2a2d3a;color:#8892a4;border:none" onclick="loadSpace()">
+          <i class="bi bi-bar-chart me-1"></i>Space Used
+        </button>
+        <span id="cs-status" style="font-size:.72rem;color:#8892a4"></span>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="storage-card btree">
+        <span class="storage-tag" style="background:rgba(245,158,11,.15);color:#f59e0b">B-Tree / Row Store</span>
+        <div class="fw-bold mb-1" style="font-size:.82rem;color:#f59e0b">FactInternetSales_BTREE</div>
+        <div style="font-size:.68rem;color:#8892a4;margin-bottom:.6rem">
+          Traditional row-oriented heap. Each 8 KB page stores complete rows. Ideal for OLTP point lookups; inefficient for wide analytical scans — every column is read even if only 2 are needed.
+        </div>
+        <div style="font-size:.63rem;color:#5a6070">Space used</div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar-btree" style="background:#f59e0b;width:0%"></div></div>
+        <div id="kb-btree" style="font-size:.68rem;color:#f59e0b">— KB</div>
+        <div id="time-btree" style="font-size:.63rem;color:#8892a4;margin-top:.3rem"></div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="storage-card page">
+        <span class="storage-tag" style="background:rgba(56,189,248,.12);color:#38bdf8">Page Compression</span>
+        <div class="fw-bold mb-1" style="font-size:.82rem;color:#38bdf8">FactInternetSales_PageComp</div>
+        <div style="font-size:.68rem;color:#8892a4;margin-bottom:.6rem">
+          Row store + LZ-based page compression. SQL Server compresses repeated byte patterns across rows on the same page. Effective for low-cardinality columns. No engine change — just fewer pages to read.
+        </div>
+        <div style="font-size:.63rem;color:#5a6070">Space used</div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar-page" style="background:#38bdf8;width:0%"></div></div>
+        <div id="kb-page" style="font-size:.68rem;color:#38bdf8">— KB</div>
+        <div id="time-page" style="font-size:.63rem;color:#8892a4;margin-top:.3rem"></div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="storage-card cci">
+        <span class="storage-tag" style="background:rgba(167,139,250,.15);color:#a78bfa">Clustered Columnstore</span>
+        <div class="fw-bold mb-1" style="font-size:.82rem;color:#a78bfa">FactInternetSales_CCI</div>
+        <div style="font-size:.68rem;color:#8892a4;margin-bottom:.6rem">
+          Columns stored as compressed segments (~1M row groups). SIMD batch mode processes 900 rows per CPU instruction. Aggregation queries skip entire row groups via segment metadata. 10–100× faster for analytics.
+        </div>
+        <div style="font-size:.63rem;color:#5a6070">Space used</div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar-cci" style="background:#a78bfa;width:0%"></div></div>
+        <div id="kb-cci" style="font-size:.68rem;color:#a78bfa">— KB</div>
+        <div id="time-cci" style="font-size:.63rem;color:#8892a4;margin-top:.3rem"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benchmark results -->
+  <div id="bench-panel" class="mb-3" style="display:none">
+    <div style="font-size:.72rem;color:#5a6070;font-weight:600;margin-bottom:.5rem">
+      BENCHMARK — same aggregate query on all three tables (ms elapsed)
+    </div>
+    <div id="bench-bars"></div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#a78bfa;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-code-slash me-1"></i>Benchmark Query
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-0"><span class="cm">-- Same query executed against BTREE / Page / CCI</span>
+<span class="kw">SELECT</span> t.SalesTerritoryRegion, dt.CalendarYear,
+       <span class="fn">COUNT</span>(s.SalesOrderNumber)      <span class="kw">AS</span> NumSales,
+       <span class="fn">SUM</span>(s.SalesAmount)             <span class="kw">AS</span> TotalSalesAmt,
+       <span class="fn">AVG</span>(s.SalesAmount)             <span class="kw">AS</span> AvgSalesAmt,
+       <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> s.SalesOrderNumber) <span class="kw">AS</span> NumOrders,
+       <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> s.CustomerKey)  <span class="kw">AS</span> NumCustomers
+<span class="kw">FROM</span> dbo.{<span class="op">table</span>} s
+<span class="kw">INNER JOIN</span> dbo.DimSalesTerritory t  <span class="kw">ON</span> t.SalesTerritoryKey = s.SalesTerritoryKey
+<span class="kw">INNER JOIN</span> dbo.DimDate dt           <span class="kw">ON</span> dt.DateKey = s.OrderDateKey
+<span class="kw">GROUP BY</span> t.SalesTerritoryRegion, dt.CalendarYear</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card h-100" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#f59e0b;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-info-circle me-1"></i>Course Reference — 11.6M row benchmark
+        </div>
+        <div class="card-body p-2" style="font-size:.68rem;color:#8892a4">
+          <table class="cmp-table">
+            <thead><tr><th>Format</th><th>Data Size</th><th>CPU Time</th><th>Elapsed</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge-method" style="background:rgba(245,158,11,.15);color:#f59e0b">B-Tree</span></td>
+                  <td style="color:#e2e8f0">2,523 MB</td><td>3,949 ms</td><td style="color:#ef4444">9,568 ms</td></tr>
+              <tr><td><span class="badge-method" style="background:rgba(56,189,248,.12);color:#38bdf8">Page</span></td>
+                  <td style="color:#e2e8f0">695 MB</td><td>3,264 ms</td><td style="color:#fbbf24">3,776 ms</td></tr>
+              <tr><td><span class="badge-method" style="background:rgba(167,139,250,.15);color:#a78bfa">CCI</span></td>
+                  <td style="color:#e2e8f0">525 MB</td><td style="color:#06d6a0">360 ms</td><td style="color:#06d6a0">492 ms</td></tr>
+            </tbody>
+          </table>
+          <div class="mt-2" style="font-size:.63rem;color:#5a6070">
+            CCI vs B-Tree: <span style="color:#06d6a0">19× faster</span>,
+            <span style="color:#a78bfa">4.8× smaller</span>.
+            Our table has 60K rows — CCI advantage is smaller at low scale but the pattern is identical.
+          </div>
+          <div class="mt-2">
+            <div style="color:#8892a4;margin-bottom:.2rem">Compression ratio (Data):</div>
+            <div style="display:flex;gap:.3rem;align-items:center;font-size:.63rem">
+              <span style="color:#f59e0b">B-Tree 100%</span>
+              <div style="flex:1;background:#0a0c14;border-radius:2px;height:6px"><div style="width:100%;height:100%;background:#f59e0b;border-radius:2px"></div></div>
+            </div>
+            <div style="display:flex;gap:.3rem;align-items:center;font-size:.63rem;margin-top:.2rem">
+              <span style="color:#38bdf8">Page&nbsp;&nbsp; 27%</span>
+              <div style="flex:1;background:#0a0c14;border-radius:2px;height:6px"><div style="width:27%;height:100%;background:#38bdf8;border-radius:2px"></div></div>
+            </div>
+            <div style="display:flex;gap:.3rem;align-items:center;font-size:.63rem;margin-top:.2rem">
+              <span style="color:#a78bfa">CCI&nbsp;&nbsp;&nbsp; 21%</span>
+              <div style="flex:1;background:#0a0c14;border-radius:2px;height:6px"><div style="width:21%;height:100%;background:#a78bfa;border-radius:2px"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reads explanation -->
+  <div class="card mt-3" style="background:#0d0f16;border:1px solid #1e2028">
+    <div class="card-header py-2 px-3 small fw-semibold" style="color:#5a6070;background:#0a0c14;border-bottom:1px solid #1e2028">
+      <i class="bi bi-journal-text me-1"></i>I/O Statistics — SET STATISTICS IO ON
+    </div>
+    <div class="card-body p-3" style="font-size:.72rem;color:#8892a4">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <div style="color:#38bdf8;font-weight:600;margin-bottom:.2rem">Logical Reads</div>
+          8 KB page reads served from the <em>data buffer</em> (memory). Zero I/O wait. Minimizing logical reads = smaller table = compressed formats win.
+        </div>
+        <div class="col-md-4">
+          <div style="color:#f59e0b;font-weight:600;margin-bottom:.2rem">Physical Reads</div>
+          Pages fetched from <em>storage</em> (SSD/HDD). These block query execution. Flush with <code>DBCC DROPCLEANBUFFERS</code> before benchmarking.
+        </div>
+        <div class="col-md-4">
+          <div style="color:#a78bfa;font-weight:600;margin-bottom:.2rem">Read-Ahead Reads</div>
+          Asynchronous prefetch requests sent to the OS for pages likely needed soon. Do <em>not</em> block query. SQL Server's read-ahead thread issues these speculatively.
+        </div>
+      </div>
+      <div class="mt-2" style="font-size:.63rem;color:#5a6070">
+        Workfile / Worktable = internal temp tables for hash join partitions and hash aggregates (always appear with row-mode hash joins).
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ TAB 2: Partition Switching -->
+<div id="tab-partition" class="tab-panel">
+
+  <div class="row g-3 mb-3">
+    <div class="col-12">
+      <div style="font-size:.72rem;color:#8892a4;margin-bottom:.8rem">
+        Goal: partition <code>InternetSales</code> by year (TINYINT 10/11/12/13 = 2010–2013)
+        using a <strong>partition function</strong> + <strong>partition scheme</strong>.
+        Load existing data, then add 2013 via a metadata-only <code>SWITCH</code> — no data copy.
+      </div>
+      <!-- Stepper -->
+      <div class="stepper" id="stepper">
+        <div class="step-item" id="si-1"><div class="step-dot">1</div><div class="step-label">Partition<br>Func &amp; Scheme</div></div>
+        <div class="step-item" id="si-2"><div class="step-dot">2</div><div class="step-label">Create<br>Table</div></div>
+        <div class="step-item" id="si-3"><div class="step-dot">3</div><div class="step-label">Load<br>2010–12</div></div>
+        <div class="step-item" id="si-4"><div class="step-dot">4</div><div class="step-label">Create<br>CCI</div></div>
+        <div class="step-item" id="si-5"><div class="step-dot">5</div><div class="step-label">Staging<br>Table</div></div>
+        <div class="step-item" id="si-6"><div class="step-dot">6</div><div class="step-label">Load +<br>CCI Staging</div></div>
+        <div class="step-item" id="si-7"><div class="step-dot">7</div><div class="step-label">SWITCH<br>→ Part 4</div></div>
+      </div>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <button class="btn btn-sm" style="background:#38bdf8;color:#0d0f16;border:none" id="btn-step" onclick="runNextStep()">
+          <i class="bi bi-play-fill me-1"></i>Run Step <span id="btn-step-num">1</span>
+        </button>
+        <button class="btn btn-sm" style="background:#2a2d3a;color:#8892a4;border:none" onclick="resetStepper()">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+        </button>
+        <button class="btn btn-sm" style="background:#2a2d3a;color:#8892a4;border:none" onclick="loadPartitionStatus()">
+          <i class="bi bi-arrow-repeat me-1"></i>Refresh Partitions
+        </button>
+        <span id="step-status" style="font-size:.72rem;color:#8892a4"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-5">
+      <!-- Step SQL display -->
+      <div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#38bdf8;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-code-slash me-1"></i>Step SQL — <span id="step-label-head">Step 1</span>
+        </div>
+        <div class="card-body p-2">
+          <pre class="sql-box mb-0" id="step-sql-box" style="min-height:100px"><span class="cm">-- Click "Run Step 1" to begin</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <!-- Partition chart -->
+      <div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#38bdf8;background:#0a0c14;border-bottom:1px solid #1e2028">
+          <i class="bi bi-bar-chart-steps me-1"></i>Live Partition Counts
+        </div>
+        <div class="card-body p-3" id="part-chart">
+          <div style="font-size:.72rem;color:#5a6070">Partition table not yet created — run Step 2 first.</div>
+        </div>
+      </div>
+      <!-- Key concepts -->
+      <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-body p-3" style="font-size:.7rem;color:#8892a4">
+          <div class="row g-2">
+            <div class="col-6">
+              <div style="color:#fbbf24;font-weight:600;margin-bottom:.2rem"><i class="bi bi-funnel me-1"></i>Partition Function</div>
+              Maps each row's key value to a partition number.
+              <code>RANGE LEFT</code>: boundary value belongs to the <em>left</em> partition.
+              Value 10 → rows with PcInternetSalesYear ≤ 10 go to partition 1.
+            </div>
+            <div class="col-6">
+              <div style="color:#38bdf8;font-weight:600;margin-bottom:.2rem"><i class="bi bi-hdd-network me-1"></i>Partition Scheme</div>
+              Maps partition numbers to filegroups. Here all go to <code>[PRIMARY]</code>,
+              but in production each partition can be on a different physical drive for parallel I/O.
+            </div>
+            <div class="col-6 mt-2">
+              <div style="color:#a78bfa;font-weight:600;margin-bottom:.2rem"><i class="bi bi-lightning me-1"></i>Aligned Index</div>
+              CCI uses the <em>same</em> partition scheme as the table.
+              <code>ALTER TABLE … SWITCH</code> requires aligned indexes — no data moves, only metadata pointers change. Instant.
+            </div>
+            <div class="col-6 mt-2">
+              <div style="color:#06d6a0;font-weight:600;margin-bottom:.2rem"><i class="bi bi-arrow-left-right me-1"></i>SWITCH (Step 7)</div>
+              Metadata-only — reassigns the staging table as partition 4 of InternetSales.
+              No rows copied. The staging table becomes empty after the switch.
+              Enabling minimally-logged bulk loads.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reference SQL blocks -->
+  <div class="row g-3 mt-1">
+    <div class="col-md-6">
+      <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#fbbf24;background:#0a0c14;border-bottom:1px solid #1e2028">
+          Partition Function &amp; Scheme
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-0"><span class="cm">-- Part. function: 4 boundaries → 5 partitions</span>
+<span class="kw">CREATE PARTITION FUNCTION</span> PfInternetSalesYear (<span class="op">TINYINT</span>)
+  <span class="kw">AS RANGE LEFT FOR VALUES</span> (<span class="nu">10</span>, <span class="nu">11</span>, <span class="nu">12</span>, <span class="nu">13</span>)
+<span class="cm">-- Value 10 → ≤2010, 11 → 2011, 12 → 2012, 13 → 2013, else → 5</span>
+
+<span class="kw">CREATE PARTITION SCHEME</span> PsInternetSalesYear
+  <span class="kw">AS PARTITION</span> PfInternetSalesYear
+  <span class="kw">ALL TO</span> ([PRIMARY])</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#06d6a0;background:#0a0c14;border-bottom:1px solid #1e2028">
+          Step 7 — SWITCH (no data copy!)
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-0"><span class="cm">-- Load 2013 into staging table (empty → minimally logged)</span>
+<span class="kw">INSERT INTO</span> dbo.InternetSalesNew ...
+<span class="kw">WHERE</span> PcInternetSalesYear = <span class="nu">13</span>
+
+<span class="cm">-- Build aligned CCI on staging</span>
+<span class="kw">CREATE COLUMNSTORE INDEX</span> CSI_ISN <span class="kw">ON</span> dbo.InternetSalesNew ...
+
+<span class="cm">-- Atomic metadata-only partition assignment</span>
+<span class="kw">ALTER TABLE</span> dbo.InternetSalesNew
+  <span class="kw">SWITCH TO</span> dbo.InternetSales <span class="kw">PARTITION</span> <span class="nu">4</span>
+
+<span class="cm">-- After: InternetSalesNew is empty (0 rows)</span>
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> InternetSalesNew <span class="cm">--0</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ TAB 3: PostgreSQL -->
+<div id="tab-pgpart" class="tab-panel">
+  <div style="font-size:.72rem;color:#8892a4;margin-bottom:1rem">
+    PostgreSQL supports two partitioning mechanisms. <strong style="color:#34d399">Declarative</strong> (PG 10+, recommended)
+    uses native syntax. <strong style="color:#a78bfa">Table inheritance</strong> (legacy) requires RULE or TRIGGER to redirect inserts.
+    Both demo against the Northwind <code>products</code> table (77 rows), partitioning by first letter of product name.
+  </div>
+
+  <div class="pg-split">
+
+    <!-- Declarative -->
+    <div>
+      <div class="card h-100" style="background:#0d0f16;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#34d399;background:#0a0c14;border-bottom:1px solid rgba(52,211,153,.2)">
+          <i class="bi bi-check-circle me-1"></i>Declarative Partitioning (PG 10+)
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-2"><span class="cm">-- Parent table is virtual (stores no data)</span>
+<span class="kw">CREATE TABLE</span> products_p
+  (productid <span class="op">int</span>, productname <span class="op">varchar</span>(<span class="nu">40</span>),
+   part_key <span class="op">char</span>(<span class="nu">1</span>), unitprice <span class="op">money</span>)
+<span class="kw">PARTITION BY RANGE</span>(part_key)
+
+<span class="cm">-- Child partitions (ranges are half-open: [from, to))</span>
+<span class="kw">CREATE TABLE</span> products_p_a_m
+  <span class="kw">PARTITION OF</span> products_p
+  <span class="kw">FOR VALUES FROM</span> (<span class="st">'a'</span>) <span class="kw">TO</span> (<span class="st">'m'</span>)
+
+<span class="kw">CREATE TABLE</span> products_p_m_z
+  <span class="kw">PARTITION OF</span> products_p
+  <span class="kw">FOR VALUES FROM</span> (<span class="st">'m'</span>) <span class="kw">TO</span> (<span class="st">'z'</span>)
+
+<span class="cm">-- Insert via parent → auto-routed to correct partition</span>
+<span class="kw">INSERT INTO</span> products_p ...
+  <span class="kw">SELECT</span> ..., <span class="fn">LOWER</span>(<span class="fn">SUBSTRING</span>(productname,<span class="nu">1</span>,<span class="nu">1</span>)) <span class="kw">FROM</span> products
+
+<span class="cm">-- Query partition directly or via parent</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products_p <span class="kw">WHERE</span> productname &lt; <span class="st">'d'</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products_p_a_m  <span class="cm">-- direct</span>
+
+<span class="cm">-- Lifecycle management</span>
+<span class="kw">ALTER TABLE</span> products_p <span class="kw">DETACH PARTITION</span> products_p_a_m
+<span class="kw">ALTER TABLE</span> products_p <span class="kw">ATTACH PARTITION</span> products_p_a_m
+  <span class="kw">FOR VALUES FROM</span> (<span class="st">'a'</span>) <span class="kw">TO</span> (<span class="st">'m'</span>)</pre>
+          <button class="btn btn-sm w-100 mt-1" style="background:#34d399;color:#0d0f16;border:none" onclick="runPgPartition('declarative')">
+            <i class="bi bi-play-fill me-1"></i>Run Declarative Demo
+          </button>
+          <div id="pg-decl-result" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inheritance -->
+    <div>
+      <div class="card h-100" style="background:#0d0f16;border:1px solid rgba(167,139,250,.3)">
+        <div class="card-header py-2 px-3 small fw-semibold" style="color:#a78bfa;background:#0a0c14;border-bottom:1px solid rgba(167,139,250,.2)">
+          <i class="bi bi-diagram-3 me-1"></i>Table Inheritance (Legacy, pre-PG 10)
+        </div>
+        <div class="card-body p-2">
+<pre class="sql-box mb-2"><span class="cm">-- Parent table (virtual)</span>
+<span class="kw">CREATE TABLE</span> products_i
+  (productid <span class="op">int</span>, productname <span class="op">varchar</span>(<span class="nu">40</span>), unitprice <span class="op">money</span>)
+
+<span class="cm">-- Child tables inherit schema from parent</span>
+<span class="kw">CREATE TABLE</span> products_i_a_m () <span class="kw">INHERITS</span> (products_i)
+<span class="kw">ALTER TABLE</span> products_i_a_m <span class="kw">ADD CONSTRAINT</span> df_a_m
+  <span class="kw">CHECK</span> (lower(left(productname,<span class="nu">1</span>)) &gt;= <span class="st">'a'</span>
+     <span class="kw">AND</span> lower(left(productname,<span class="nu">1</span>)) &lt;= <span class="st">'m'</span>)
+
+<span class="kw">CREATE TABLE</span> products_i_n_z () <span class="kw">INHERITS</span> (products_i)
+<span class="cm">-- + check constraint for n..z</span>
+
+<span class="cm">-- RULE redirects inserts to correct child</span>
+<span class="kw">CREATE RULE</span> products_insert_a_m <span class="kw">AS</span>
+  <span class="kw">ON INSERT TO</span> products_i
+  <span class="kw">WHERE</span> lower(left(productname,<span class="nu">1</span>)) &lt;= <span class="st">'m'</span>
+  <span class="kw">DO INSTEAD INSERT INTO</span> products_i_a_m <span class="kw">VALUES</span> (new.*)
+
+<span class="cm">-- SELECT via parent sees ALL children</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products_i          <span class="cm">--77 (all)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM ONLY</span> products_i     <span class="cm">--0  (parent only)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products_i_a_m      <span class="cm">--41</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products_i_n_z      <span class="cm">--36</span></pre>
+          <button class="btn btn-sm w-100 mt-1" style="background:#a78bfa;color:#0d0f16;border:none" onclick="runPgPartition('inheritance')">
+            <i class="bi bi-play-fill me-1"></i>Run Inheritance Demo
+          </button>
+          <div id="pg-inh-result" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison table -->
+  <div class="card mt-3" style="background:#0d0f16;border:1px solid #1e2028">
+    <div class="card-header py-2 px-3 small fw-semibold" style="color:#5a6070;background:#0a0c14;border-bottom:1px solid #1e2028">
+      Declarative vs Inheritance — Feature Comparison
+    </div>
+    <div class="card-body p-2">
+      <table class="cmp-table">
+        <thead><tr>
+          <th>Feature</th>
+          <th style="color:#34d399">Declarative (PG 10+)</th>
+          <th style="color:#a78bfa">Inheritance (Legacy)</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Insert routing</td>
+              <td style="color:#34d399">Automatic (engine-level)</td>
+              <td style="color:#a78bfa">Manual RULE or TRIGGER</td></tr>
+          <tr><td>Partition pruning</td>
+              <td style="color:#34d399">Automatic (optimizer)</td>
+              <td style="color:#a78bfa">Requires constraint_exclusion=on</td></tr>
+          <tr><td>Schema from parent</td>
+              <td style="color:#34d399">Yes (enforced)</td>
+              <td style="color:#a78bfa">Yes (via INHERITS)</td></tr>
+          <tr><td>SELECT ONLY parent</td>
+              <td style="color:#34d399">Always 0 (virtual)</td>
+              <td style="color:#a78bfa">0 with ONLY keyword</td></tr>
+          <tr><td>Attach/Detach</td>
+              <td style="color:#34d399">ATTACH / DETACH PARTITION</td>
+              <td style="color:#a78bfa">ALTER TABLE … INHERIT / NO INHERIT</td></tr>
+          <tr><td>Index propagation</td>
+              <td style="color:#34d399">No (create on each partition)</td>
+              <td style="color:#a78bfa">No (same)</td></tr>
+          <tr><td>Recommended?</td>
+              <td style="color:#34d399">✓ Yes — use declarative</td>
+              <td style="color:#ef4444">Legacy — avoid for new tables</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'partition') loadPartitionStatus();
+}
+
+// ── Storage formats ────────────────────────────────────────────────────
+async function setupTables() {
+  setStatus('cs-status', '⏳ Setting up tables…');
+  const r = await fetch('/demos/columnstore/setup', {method:'POST'});
+  const d = await r.json();
+  if (!d.ok) return setStatus('cs-status', '✗ ' + d.error, 'red');
+  d.results.forEach(row => {
+    const key = row.table.includes('BTREE') ? 'btree' : row.table.includes('Page') ? 'page' : 'cci';
+    setEl('time-' + key, `Setup: ${row.ms} ms`);
+  });
+  setStatus('cs-status', '✓ Tables ready — click Space Used or Run Benchmark');
+  await loadSpace();
+}
+
+async function loadSpace() {
+  const r = await fetch('/demos/columnstore/spaceused');
+  const d = await r.json();
+  if (!d.ok) return;
+  let maxKb = 0;
+  d.rows.forEach(row => { if (row.used_kb > maxKb) maxKb = row.used_kb; });
+  const tblMap = {
+    'FactInternetSales_BTREE': 'btree',
+    'FactInternetSales_PageComp': 'page',
+    'FactInternetSales_CCI': 'cci',
+  };
+  d.rows.forEach(row => {
+    const key = tblMap[row.tbl];
+    if (!key) return;
+    const pct = maxKb ? Math.round(row.used_kb / maxKb * 100) : 0;
+    document.getElementById('bar-' + key).style.width = pct + '%';
+    setEl('kb-' + key, (row.used_kb).toLocaleString() + ' KB used');
+  });
+}
+
+async function runBenchmark() {
+  setStatus('cs-status', '⏳ Running benchmark (flushing caches)…');
+  const r = await fetch('/demos/columnstore/benchmark', {method:'POST'});
+  const d = await r.json();
+  if (!d.ok) return setStatus('cs-status', '✗ ' + d.error, 'red');
+  const maxMs = Math.max(...d.results.map(x => x.elapsed_ms));
+  const colors = {'FactInternetSales_BTREE':'#f59e0b','FactInternetSales_PageComp':'#38bdf8','FactInternetSales_CCI':'#a78bfa'};
+  const labels = {'FactInternetSales_BTREE':'B-Tree','FactInternetSales_PageComp':'Page Compressed','FactInternetSales_CCI':'Columnstore CCI'};
+  const html = d.results.map(row => {
+    const pct = maxMs ? Math.round(row.elapsed_ms / maxMs * 100) : 0;
+    return `<div class="part-bar-row">
+      <div class="label" style="color:${colors[row.table]}">${labels[row.table]}</div>
+      <div class="bar"><div class="fill" style="background:${colors[row.table]};width:${pct}%"></div></div>
+      <div class="count" style="color:${colors[row.table]}">${row.elapsed_ms} ms</div>
+    </div>`;
+  }).join('');
+  document.getElementById('bench-panel').style.display = 'block';
+  document.getElementById('bench-bars').innerHTML = html;
+  setStatus('cs-status', '✓ Benchmark complete');
+}
+
+// ── Partition stepper ──────────────────────────────────────────────────
+let currentStep = 1;
+const stepSqls = {
+  1: `IF EXISTS (SELECT 1 FROM sys.partition_functions WHERE name='PfInternetSalesYear')
+    DROP PARTITION FUNCTION PfInternetSalesYear
+
+CREATE PARTITION FUNCTION PfInternetSalesYear (TINYINT)
+  AS RANGE LEFT FOR VALUES (10, 11, 12, 13)
+-- e.g. value 10 → partition 1 (≤2010); value 13 → partition 4
+
+CREATE PARTITION SCHEME PsInternetSalesYear
+  AS PARTITION PfInternetSalesYear ALL TO ([PRIMARY])`,
+  2: `CREATE TABLE dbo.InternetSales (
+    InternetSalesKey INT NOT NULL IDENTITY(1,1),
+    PcInternetSalesYear TINYINT NOT NULL,  -- partition key
+    ProductKey INT NOT NULL,
+    DateKey INT NOT NULL,
+    SalesAmount MONEY NOT NULL DEFAULT 0,
+    ...
+    CONSTRAINT PK_InternetSales
+        PRIMARY KEY (InternetSalesKey, PcInternetSalesYear)
+) ON PsInternetSalesYear(PcInternetSalesYear)
+ALTER TABLE dbo.InternetSales
+    REBUILD WITH (DATA_COMPRESSION = PAGE)`,
+  3: `INSERT INTO dbo.InternetSales (PcInternetSalesYear, ProductKey, DateKey, ...)
+SELECT CAST(SUBSTRING(CAST(OrderDateKey AS CHAR(8)), 3, 2) AS TINYINT),
+       ProductKey, OrderDateKey, SalesAmount, ...
+FROM dbo.FactInternetSales
+WHERE CAST(SUBSTRING(CAST(OrderDateKey AS CHAR(8)),3,2) AS TINYINT) < 13
+-- Trick: date stored as INT e.g. 20110223 → substring(3,2)='11'=2011`,
+  4: `CREATE COLUMNSTORE INDEX CSI_InternetSales
+    ON dbo.InternetSales
+    (InternetSalesKey, PcInternetSalesYear, ProductKey, DateKey,
+     OrderQuantity, SalesAmount, UnitPrice, DiscountAmount)
+ON PsInternetSalesYear(PcInternetSalesYear)
+-- ↑ Index is ALIGNED to the partition scheme`,
+  5: `CREATE TABLE dbo.InternetSalesNew (
+    InternetSalesKey INT NOT NULL IDENTITY(1,1),
+    PcInternetSalesYear TINYINT NOT NULL
+        CHECK (PcInternetSalesYear = 13), -- ← guard constraint!
+    ...
+    CONSTRAINT PK_InternetSalesNew
+        PRIMARY KEY (InternetSalesKey, PcInternetSalesYear)
+)
+-- Same schema as InternetSales, check constraint = 13 only`,
+  6: `-- Load 2013 into staging (table was empty → minimally logged)
+INSERT INTO dbo.InternetSalesNew (PcInternetSalesYear, ...)
+SELECT CAST(SUBSTRING(CAST(OrderDateKey AS CHAR(8)),3,2) AS TINYINT), ...
+FROM dbo.FactInternetSales
+WHERE CAST(SUBSTRING(...) AS TINYINT) = 13
+
+-- Build aligned CCI on staging
+CREATE COLUMNSTORE INDEX CSI_InternetSalesNew
+    ON dbo.InternetSalesNew (...)`,
+  7: `-- THE KEY STEP: metadata-only, no data copy
+ALTER TABLE dbo.InternetSalesNew
+    SWITCH TO dbo.InternetSales PARTITION 4
+
+-- After: staging is empty, partition 4 has 2013 data
+SELECT COUNT(*) FROM InternetSalesNew  --0!
+
+-- Check partition sizes
+SELECT $PARTITION.PfInternetSalesYear(PcInternetSalesYear) AS PartNum,
+       COUNT(*) AS Rows
+FROM dbo.InternetSales
+GROUP BY $PARTITION.PfInternetSalesYear(PcInternetSalesYear)`
+};
+
+function updateStepSqlBox(step) {
+  const labels = ['','Partition Function & Scheme','Create Partitioned Table','Load 2010–2012','Create Aligned CCI','Create Staging Table','Load 2013 + CCI','SWITCH → Partition 4'];
+  document.getElementById('step-label-head').textContent = `Step ${step} — ${labels[step]}`;
+  document.getElementById('step-sql-box').textContent = stepSqls[step] || '';
+  document.getElementById('btn-step-num').textContent = step;
+}
+
+async function runNextStep() {
+  if (currentStep > 7) return;
+  document.getElementById('si-' + currentStep).classList.remove('done');
+  document.getElementById('si-' + currentStep).classList.add('running');
+  setStatus('step-status', `⏳ Running step ${currentStep}…`);
+  updateStepSqlBox(currentStep);
+  const r = await fetch('/demos/columnstore/partition-build', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({step: currentStep})
+  });
+  const d = await r.json();
+  if (d.ok) {
+    document.getElementById('si-' + currentStep).classList.remove('running');
+    document.getElementById('si-' + currentStep).classList.add('done');
+    setStatus('step-status', `✓ Step ${currentStep} done (${d.elapsed_ms} ms)`);
+    currentStep++;
+    if (currentStep <= 7) updateStepSqlBox(currentStep);
+    else document.getElementById('btn-step').disabled = true;
+    document.getElementById('btn-step-num').textContent = currentStep;
+    if (currentStep > 3) await loadPartitionStatus();
+  } else {
+    document.getElementById('si-' + currentStep).classList.remove('running');
+    setStatus('step-status', `✗ Step ${currentStep} failed: ${d.error}`, 'red');
+  }
+}
+
+function resetStepper() {
+  currentStep = 1;
+  for (let i=1;i<=7;i++) {
+    const el = document.getElementById('si-'+i);
+    el.classList.remove('done','running');
+  }
+  document.getElementById('btn-step').disabled = false;
+  document.getElementById('btn-step-num').textContent = 1;
+  updateStepSqlBox(1);
+  setStatus('step-status', 'Reset — run steps in order');
+  loadPartitionStatus();
+}
+
+async function loadPartitionStatus() {
+  const r = await fetch('/demos/columnstore/partition-status');
+  const d = await r.json();
+  if (!d.ok) return;
+  const el = document.getElementById('part-chart');
+  if (!d.table_exists || !d.partitions.length) {
+    el.innerHTML = '<div style="font-size:.72rem;color:#5a6070">InternetSales table not yet created — run Steps 1–3.</div>';
+    return;
+  }
+  const maxRows = Math.max(...d.partitions.map(p => p.rows));
+  const colors = ['#f59e0b','#38bdf8','#a78bfa','#06d6a0','#fb923c'];
+  let html = d.partitions.map((p,i) => {
+    const pct = maxRows ? Math.round(p.rows / maxRows * 100) : 0;
+    return `<div class="part-bar-row">
+      <div class="label">Partition ${p.partition} (${p.year})</div>
+      <div class="bar"><div class="fill" style="background:${colors[i%5]};width:${pct}%"></div></div>
+      <div class="count">${p.rows.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+  if (d.staging_exists) {
+    html += `<div style="font-size:.63rem;color:#fbbf24;margin-top:.4rem"><i class="bi bi-hourglass me-1"></i>Staging table (InternetSalesNew) exists — run Step 7 to SWITCH</div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── PostgreSQL partitioning ────────────────────────────────────────────
+async function runPgPartition(mode) {
+  const resId = mode === 'declarative' ? 'pg-decl-result' : 'pg-inh-result';
+  setEl(resId, '<span style="color:#8892a4;font-size:.7rem">⏳ Running…</span>');
+  const r = await fetch('/demos/columnstore/pg-partition', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({mode})
+  });
+  const d = await r.json();
+  if (!d.ok) {
+    setEl(resId, `<span style="color:#ef4444;font-size:.7rem">✗ ${d.error}</span>`); return;
+  }
+  const color = mode === 'declarative' ? '#34d399' : '#a78bfa';
+  let html = `<div style="font-size:.68rem;color:#5a6070;margin-bottom:.3rem">Partition row counts:</div>`;
+  html += d.counts.map(c =>
+    `<div class="part-chip" style="background:rgba(52,211,153,.1);color:${color}">${c.part}: <strong>${c.count}</strong></div>`
+  ).join('');
+  if (d.samples) {
+    html += `<div style="font-size:.63rem;color:#5a6070;margin-top:.4rem">Sample rows (via parent table):</div>`;
+    html += d.samples.map(s =>
+      `<span class="part-chip" style="background:#12141a;color:#8892a4">${s.name} <span style="color:${color}">[${s.key}]</span></span>`
+    ).join('');
+  } else if (d.samples) {
+    html += d.samples.map(s =>
+      `<span class="part-chip" style="background:#12141a;color:#8892a4">${s}</span>`
+    ).join('');
+  }
+  html += `<div style="font-size:.63rem;color:#5a6070;margin-top:.3rem">✓ Done</div>`;
+  setEl(resId, html);
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function setStatus(id, msg, color) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; if (color) el.style.color = color; else el.style.color = ''; }
+}
+function setEl(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+// Init
+updateStepSqlBox(1);
+loadSpace();
+</script>
+{% endblock %}

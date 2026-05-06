@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+{% block title %}Isolation Level Demo — Northwind CC{% endblock %}
+{% block content %}
+
+<style>
+.iso-card{background:#0c0f18;border:1px solid #1e2530;border-radius:10px;padding:1.1rem 1.3rem}
+.iso-card-title{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;font-weight:700;margin-bottom:.75rem}
+
+/* Session boxes */
+.sessions-wrap{display:grid;grid-template-columns:1fr 120px 1fr;gap:0;align-items:start}
+.session-box{background:#08080e;border:1px solid #1a2030;border-radius:8px;overflow:hidden}
+.session-header{padding:.55rem .9rem;font-size:.7rem;font-weight:700;border-bottom:1px solid #1a2030}
+.session-body{padding:.5rem .9rem;min-height:320px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:.68rem;line-height:1.9}
+
+.s1 .session-header{background:rgba(99,102,241,.12);color:#818cf8;border-bottom-color:rgba(99,102,241,.2)}
+.s2 .session-header{background:rgba(251,146,60,.1);color:#fb923c;border-bottom-color:rgba(251,146,60,.2)}
+
+/* Timeline column */
+.timeline-col{display:flex;flex-direction:column;align-items:center;padding-top:42px;position:relative}
+.tl-line{width:2px;background:linear-gradient(to bottom,#1e2530 0%,#2a3547 50%,#1e2530 100%);flex:1;min-height:320px;border-radius:1px}
+.tl-dot{width:10px;height:10px;border-radius:50%;border:2px solid;position:absolute;left:50%;transform:translateX(-50%)}
+
+/* Statement lines */
+.stmt{display:flex;align-items:flex-start;gap:.4rem;padding:.05rem 0;opacity:0;transition:opacity .3s}
+.stmt.visible{opacity:1}
+.stmt-t{color:#3d4d63;font-size:.62rem;width:28px;flex-shrink:0;padding-top:.1rem}
+.stmt-code{flex:1}
+.kw{color:#818cf8}
+.fn{color:#34d399}
+.str{color:#fbbf24}
+.cmt{color:#3d4d63;font-style:italic}
+
+.stmt.status-ok    .stmt-code{color:#a8b5cc}
+.stmt.status-commit .stmt-code{color:#34d399;font-weight:600}
+.stmt.status-wait  .stmt-code{color:#fbbf24}
+.stmt.status-block .stmt-code{color:#60a5fa}
+.stmt.status-fail  .stmt-code{color:#f87171;font-weight:600}
+.stmt.status-deadlock .stmt-code{color:#f43f5e;font-weight:700;animation:pulse-r 1s infinite}
+.stmt.status-double-sell .stmt-code{color:#fb923c;font-weight:700;animation:pulse-o 1s infinite}
+
+@keyframes pulse-r{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes pulse-o{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* DB state table */
+.db-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono','Fira Code',monospace;font-size:.7rem}
+.db-table th{color:#5a6a82;font-weight:600;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;padding:.4rem .7rem;border-bottom:1px solid #1e2530;text-align:left}
+.db-table td{padding:.4rem .7rem;border-bottom:1px solid #10131e;color:#a8b5cc;transition:background .4s,color .4s}
+.db-table tr.highlight-row td{background:rgba(99,102,241,.1)}
+.db-table td.val-sold{font-weight:600}
+.db-table td.changed{color:#fb923c;font-weight:700}
+.db-table td.corrupt{color:#f43f5e;font-weight:700;animation:pulse-r 1s infinite}
+.db-table td.clean{color:#34d399}
+
+/* Controls */
+.iso-btn{border:none;border-radius:6px;padding:.38rem .85rem;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .18s}
+.iso-btn:disabled{opacity:.3;cursor:default}
+.btn-play{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.25)}
+.btn-play:hover:not(:disabled){background:rgba(16,185,129,.28)}
+.btn-reset-iso{background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.25)}
+.btn-reset-iso:hover:not(:disabled){background:rgba(99,102,241,.22)}
+.level-btn{background:transparent;border:1px solid #1e2530;border-radius:5px;padding:.3rem .75rem;font-size:.7rem;color:#8892a4;cursor:pointer;transition:all .15s}
+.level-btn.active{border-color:#6366f1;background:rgba(99,102,241,.12);color:#818cf8}
+.level-btn.repeatable.active{border-color:#ef4444;background:rgba(239,68,68,.1);color:#fca5a5}
+
+/* Outcome banner */
+.outcome{border-radius:8px;padding:.8rem 1.1rem;margin-top:.75rem;font-size:.78rem;font-weight:600;display:none}
+.outcome.show{display:block}
+.outcome.bad{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:#fdba74}
+.outcome.good{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);color:#6ee7b7}
+.outcome.deadlock{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+
+/* Lock indicator */
+.lock-badge{display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.6rem;font-weight:700;letter-spacing:.05em}
+.lock-s{background:rgba(99,102,241,.2);color:#818cf8}
+.lock-x{background:rgba(239,68,68,.2);color:#fca5a5}
+.lock-wait{background:rgba(251,191,36,.18);color:#fde68a}
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-start mb-4 gap-3">
+  <div style="width:40px;height:40px;background:linear-gradient(135deg,#ef4444,#f97316);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+    <i class="bi bi-shield-lock-fill" style="color:#fff;font-size:1.1rem"></i>
+  </div>
+  <div>
+    <h5 class="mb-0 fw-bold">Isolation Level Visualizer</h5>
+    <div style="font-size:.78rem;color:#6b7a96">Chapter 1 · The Webshop Race Condition — two sessions, one horse, two isolation levels</div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <div class="d-flex gap-1">
+    <button class="level-btn active" id="btn-rc" onclick="setLevel('rc')">READ COMMITTED</button>
+    <button class="level-btn repeatable" id="btn-rr" onclick="setLevel('rr')">REPEATABLE READ</button>
+  </div>
+  <div style="width:1px;height:20px;background:#1e2530"></div>
+  <button class="iso-btn btn-play" id="btn-play" onclick="play()">
+    <i class="bi bi-play-fill me-1"></i>Play
+  </button>
+  <button class="iso-btn btn-reset-iso" id="btn-reset-iso" onclick="resetDemo()">
+    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+  </button>
+  <div id="speed-note" style="font-size:.67rem;color:#5a6a82;margin-left:.5rem">10-second WAITFOR compressed to ~3 seconds for the demo</div>
+</div>
+
+<!-- Database state -->
+<div class="iso-card mb-3">
+  <div class="iso-card-title">Shared Database State — <code>test_product</code></div>
+  <table class="db-table">
+    <thead>
+      <tr><th>id</th><th>prod_name</th><th>sold</th><th>buyer</th><th>Locks held</th></tr>
+    </thead>
+    <tbody>
+      <tr id="db-row-1">
+        <td>1</td><td>car</td>
+        <td class="val-sold" id="db-sold-1">for sale</td>
+        <td id="db-buyer-1">NULL</td>
+        <td id="db-lock-1" style="color:#3d4d63">—</td>
+      </tr>
+      <tr id="db-row-2">
+        <td>2</td><td>horse</td>
+        <td class="val-sold" id="db-sold-2">for sale</td>
+        <td id="db-buyer-2">NULL</td>
+        <td id="db-lock-2" style="color:#3d4d63">—</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="mt-2 d-flex gap-3" style="font-size:.67rem;color:#5a6a82">
+    <span><span class="lock-badge lock-s">S</span> Shared (read) lock</span>
+    <span><span class="lock-badge lock-x">X</span> Exclusive (write) lock</span>
+    <span><span class="lock-badge lock-wait">WAIT</span> Blocked on lock</span>
+  </div>
+</div>
+
+<!-- Sessions + timeline -->
+<div class="iso-card mb-3">
+  <div class="iso-card-title" id="scenario-title">Scenario: READ COMMITTED — The Double-Sale Bug</div>
+
+  <div class="sessions-wrap">
+
+    <!-- Session 1 -->
+    <div class="session-box s1">
+      <div class="session-header">
+        <i class="bi bi-terminal me-1"></i>Session 1 — buyer = 'My name'
+      </div>
+      <div class="session-body" id="s1-body">
+        <div class="stmt" id="s1-0"><span class="stmt-t">T+0</span><span class="stmt-code"><span class="kw">SET TRAN ISOLATION LEVEL</span> <span id="s1-iso-label">READ COMMITTED</span></span></div>
+        <div class="stmt" id="s1-1"><span class="stmt-t">T+1</span><span class="stmt-code"><span class="kw">BEGIN TRAN</span></span></div>
+        <div class="stmt" id="s1-2"><span class="stmt-t">T+2</span><span class="stmt-code"><span class="kw">SELECT</span> @sold = sold <span class="kw">FROM</span> test_product <span class="kw">WHERE</span> id=2</span></div>
+        <div class="stmt" id="s1-3"><span class="stmt-t">T+3</span><span class="stmt-code cmt">-- @sold = 'for sale' → proceed</span></div>
+        <div class="stmt" id="s1-4"><span class="stmt-t">T+4</span><span class="stmt-code"><span class="fn">WAITFOR DELAY</span> <span class="str">'00:00:10'</span> <span class="cmt">-- bank transfer in progress…</span></span></div>
+        <div class="stmt" id="s1-5"><span class="stmt-t">T+14</span><span class="stmt-code"><span class="kw">UPDATE</span> test_product <span class="kw">SET</span> sold=<span class="str">'sold'</span>, buyer=<span class="str">'My name'</span> <span class="kw">WHERE</span> id=2</span></div>
+        <div class="stmt" id="s1-6"><span class="stmt-t">T+15</span><span class="stmt-code"><span class="kw">COMMIT TRAN</span></span></div>
+        <div class="stmt" id="s1-7"><span class="stmt-t">T+16</span><span class="stmt-code cmt" id="s1-result">-- 'sold successfully' (but horse is gone!)</span></div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-col">
+      <div style="font-size:.6rem;color:#3d4d63;margin-bottom:.4rem">time →</div>
+      <div style="position:relative;flex:1;width:100%;min-height:320px">
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,#1e2530,#2a3547,#1e2530);transform:translateX(-50%)"></div>
+        <!-- Dots placed by JS -->
+        <div id="tl-dots"></div>
+      </div>
+    </div>
+
+    <!-- Session 2 -->
+    <div class="session-box s2">
+      <div class="session-header">
+        <i class="bi bi-terminal me-1"></i>Session 2 — buyer = 'Your name'
+      </div>
+      <div class="session-body" id="s2-body">
+        <div class="stmt" id="s2-0"><span class="stmt-t">T+0</span><span class="stmt-code"><span class="kw">SET TRAN ISOLATION LEVEL</span> <span id="s2-iso-label">READ COMMITTED</span></span></div>
+        <div class="stmt" id="s2-1"><span class="stmt-t">T+5</span><span class="stmt-code"><span class="kw">BEGIN TRAN</span></span></div>
+        <div class="stmt" id="s2-2"><span class="stmt-t">T+6</span><span class="stmt-code"><span class="kw">SELECT</span> @sold = sold <span class="kw">FROM</span> test_product <span class="kw">WHERE</span> id=2</span></div>
+        <div class="stmt" id="s2-3"><span class="stmt-t">T+7</span><span class="stmt-code cmt">-- @sold = 'for sale' → proceed (Session 1 not yet committed)</span></div>
+        <div class="stmt" id="s2-4"><span class="stmt-t">T+8</span><span class="stmt-code"><span class="kw">UPDATE</span> test_product <span class="kw">SET</span> sold=<span class="str">'sold'</span>, buyer=<span class="str">'Your name'</span> <span class="kw">WHERE</span> id=2</span></div>
+        <div class="stmt" id="s2-5"><span class="stmt-t">T+9</span><span class="stmt-code"><span class="kw">COMMIT TRAN</span></span></div>
+        <div class="stmt" id="s2-6"><span class="stmt-t">T+10</span><span class="stmt-code cmt" id="s2-result">-- 'sold successfully' — buyer='Your name' wins</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Outcome -->
+  <div class="outcome" id="outcome-box">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <span id="outcome-text"></span>
+  </div>
+</div>
+
+<!-- Explanation cards -->
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="iso-card">
+      <div class="iso-card-title" style="color:#818cf8">READ COMMITTED (default)</div>
+      <div style="font-size:.75rem;color:#8892a4;line-height:1.7">
+        Shared locks are released immediately after each <code>SELECT</code>. Between the read and the update in Session 1, Session 2 can freely read the same row — it also sees <em>'for sale'</em> and proceeds. Both transactions commit successfully. The horse is sold twice. Only one buyer receives it.
+      </div>
+      <div class="mt-2 p-2" style="background:#060810;border-radius:5px;font-size:.68rem;font-family:monospace;color:#f87171">
+        id=2: sold='sold', buyer='Your name'<br>
+        <span style="color:#5a6a82">Session 1 thinks it bought the horse — it did not.</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="iso-card">
+      <div class="iso-card-title" style="color:#fca5a5">REPEATABLE READ</div>
+      <div style="font-size:.75rem;color:#8892a4;line-height:1.7">
+        Shared locks are held for the entire duration of the transaction. When Session 2 tries to update the row that Session 1 is reading, it blocks. When Session 1 then tries to update the same row, the server detects a <strong style="color:#fca5a5">deadlock cycle</strong> and kills one session as the victim. Only one horse is sold. Logical integrity preserved — but one transaction is aborted.
+      </div>
+      <div class="mt-2 p-2" style="background:#060810;border-radius:5px;font-size:.68rem;font-family:monospace;color:#34d399">
+        id=2: sold='sold', buyer='Your name'<br>
+        <span style="color:#5a6a82">Session 1: "Transaction was deadlocked … chosen as victim."</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="iso-card">
+      <div class="iso-card-title">Correct Fix — Optimistic Locking with <code>UPDLOCK</code></div>
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div style="font-size:.73rem;color:#8892a4;line-height:1.7;margin-bottom:.6rem">
+            The right solution is to take an <strong style="color:#c8d3e0">exclusive update lock</strong> at read time using <code>WITH (UPDLOCK)</code>. This prevents a second session from even reading the row while the first is deciding whether to buy it — eliminating both the race condition and the deadlock.
+          </div>
+          <div style="background:#060810;border:1px solid #1a2030;border-radius:6px;padding:.7rem .9rem;font-family:'JetBrains Mono','Fira Code',monospace;font-size:.69rem;line-height:1.8;color:#a8b5cc">
+<span style="color:#3d4d63">-- The correct pattern (used in sp_new_order)</span>
+<span style="color:#818cf8">BEGIN TRAN</span>
+  <span style="color:#818cf8">SELECT</span> @sold = sold
+  <span style="color:#818cf8">FROM</span> test_product <span style="color:#34d399">WITH (UPDLOCK, ROWLOCK)</span>
+  <span style="color:#818cf8">WHERE</span> id = 2
+  <span style="color:#3d4d63">-- Session 2 BLOCKS here — cannot read until S1 commits</span>
+  <span style="color:#818cf8">IF</span> @sold = <span style="color:#fbbf24">'for sale'</span>
+    <span style="color:#818cf8">UPDATE</span> test_product
+      <span style="color:#818cf8">SET</span> sold=<span style="color:#fbbf24">'sold'</span>, buyer=<span style="color:#fbbf24">'My name'</span>
+      <span style="color:#818cf8">WHERE</span> id=2
+<span style="color:#818cf8">COMMIT TRAN</span>
+<span style="color:#3d4d63">-- Session 2 unblocks → sees sold='sold' → aborts cleanly</span>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="font-size:.7rem;color:#8892a4;line-height:1.7">
+            <div class="mb-2" style="color:#c8d3e0;font-weight:600">Lock escalation</div>
+            <div style="display:flex;flex-direction:column;gap:.3rem">
+              <div style="display:flex;align-items:center;gap:.5rem"><span class="lock-badge lock-s">S</span><span>READ COMMITTED read</span></div>
+              <div style="font-size:.65rem;color:#3d4d63;padding-left:1.5rem">↓ released after SELECT</div>
+              <div style="display:flex;align-items:center;gap:.5rem"><span class="lock-badge lock-x">U→X</span><span>UPDLOCK escalates to X on UPDATE</span></div>
+              <div style="font-size:.65rem;color:#3d4d63;padding-left:1.5rem">↓ held until COMMIT</div>
+              <div style="display:flex;align-items:center;gap:.5rem;color:#34d399"><i class="bi bi-check-circle-fill"></i><span>No race condition · No deadlock</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+let level = 'rc';
+let playing = false;
+let timeouts = [];
+
+const scenarios = {
+  rc: {
+    title: 'Scenario: READ COMMITTED — The Double-Sale Bug',
+    isoLabel: 'READ COMMITTED',
+    steps: [
+      // {time, session, stmtId, status, dbUpdate}
+      {t:0,   s:1, id:'s1-0', status:'ok'},
+      {t:0,   s:2, id:'s2-0', status:'ok'},
+      {t:200, s:1, id:'s1-1', status:'ok', lock:null},
+      {t:600, s:1, id:'s1-2', status:'ok', lock:{row:2,type:'S',note:'S lock acquired'}},
+      {t:1000,s:1, id:'s1-3', status:'ok', lock:{row:2,type:null,note:'S lock released (RC)'}},
+      // S1 starts waiting (WAITFOR 10s)
+      {t:1300,s:1, id:'s1-4', status:'wait'},
+      // S2 begins while S1 is waiting
+      {t:1600,s:2, id:'s2-1', status:'ok'},
+      {t:2000,s:2, id:'s2-2', status:'ok', lock:{row:2,type:'S',note:'S lock acquired'}},
+      {t:2400,s:2, id:'s2-3', status:'ok', lock:{row:2,type:null,note:'S lock released (RC)'}},
+      {t:2700,s:2, id:'s2-4', status:'commit', lock:{row:2,type:'X',note:'X lock acquired'},
+       db:{sold2:'sold',buyer2:"'Your name'",cls2:'changed'}},
+      {t:3100,s:2, id:'s2-5', status:'commit', lock:{row:2,type:null,note:'X lock released'},
+       db:{sold2:'sold',buyer2:"'Your name'",cls2:'clean'}},
+      {t:3400,s:2, id:'s2-6', status:'commit'},
+      // S1 finishes waiting
+      {t:3700,s:1, id:'s1-5', status:'double-sell', lock:{row:2,type:'X',note:'X lock acquired'},
+       db:{sold2:'sold',buyer2:"'Your name' ← already sold!",cls2:'corrupt'}},
+      {t:4100,s:1, id:'s1-6', status:'commit', lock:{row:2,type:null,note:'X lock released'}},
+      {t:4400,s:1, id:'s1-7', status:'double-sell'},
+      {t:4700, outcome:'bad', text:'⚠ The horse was sold to BOTH buyers. Only "Your name" will receive it — "My name" paid but gets nothing. This is a lost update bug.'}
+    ]
+  },
+  rr: {
+    title: 'Scenario: REPEATABLE READ — Deadlock Victim',
+    isoLabel: 'REPEATABLE READ',
+    steps: [
+      {t:0,   s:1, id:'s1-0', status:'ok'},
+      {t:0,   s:2, id:'s2-0', status:'ok'},
+      {t:200, s:1, id:'s1-1', status:'ok'},
+      {t:600, s:1, id:'s1-2', status:'ok', lock:{row:2,type:'S',note:'S lock HELD for duration of TX (RR)'}},
+      {t:1000,s:1, id:'s1-3', status:'ok'},
+      {t:1300,s:1, id:'s1-4', status:'wait'},
+      // S2 begins — can read (shared lock compatible)
+      {t:1600,s:2, id:'s2-1', status:'ok'},
+      {t:2000,s:2, id:'s2-2', status:'ok', lock:{row:2,type:'S+S',note:'Both sessions hold S lock'}},
+      {t:2400,s:2, id:'s2-3', status:'ok'},
+      // S2 tries to update — needs X lock but S1 holds S → BLOCKED
+      {t:2700,s:2, id:'s2-4', status:'block', lock:{row:2,type:'WAIT→X',note:'S2 blocked waiting for X lock (S1 holds S)'}},
+      // S1 finishes WAITFOR and also tries to update → deadlock
+      {t:3200,s:1, id:'s1-5', status:'block', lock:{row:2,type:'WAIT→X',note:'S1 also wants X → DEADLOCK cycle detected'}},
+      // Deadlock: S1 chosen as victim
+      {t:3700,s:1, id:'s1-7', status:'deadlock', lock:{row:2,type:null,note:'S1 killed — all locks released'}},
+      // S2 unblocks and commits
+      {t:4000,s:2, id:'s2-4', status:'commit', lock:{row:2,type:'X',note:'S2 acquires X lock'},
+       db:{sold2:'sold',buyer2:"'Your name'",cls2:'clean'}},
+      {t:4300,s:2, id:'s2-5', status:'commit', lock:{row:2,type:null,note:'X lock released'}},
+      {t:4600,s:2, id:'s2-6', status:'commit'},
+      {t:4900, outcome:'deadlock', text:'Deadlock: Session 1 was chosen as the deadlock victim and rolled back. Only one horse sold. Logical integrity preserved — but Session 1\'s transaction must be retried by the application.'}
+    ]
+  }
+};
+
+function setLevel(l) {
+  if (playing) return;
+  level = l;
+  document.getElementById('btn-rc').classList.toggle('active', l === 'rc');
+  document.getElementById('btn-rr').classList.toggle('active', l === 'rr');
+  resetDemo();
+}
+
+function resetDemo() {
+  playing = false;
+  timeouts.forEach(clearTimeout);
+  timeouts = [];
+  document.getElementById('btn-play').disabled = false;
+
+  const sc = scenarios[level];
+  document.getElementById('scenario-title').textContent = sc.title;
+  document.getElementById('s1-iso-label').textContent = sc.isoLabel;
+  document.getElementById('s2-iso-label').textContent = sc.isoLabel;
+
+  // Reset all stmts
+  document.querySelectorAll('.stmt').forEach(el => {
+    el.classList.remove('visible','status-ok','status-commit','status-wait','status-block','status-fail','status-deadlock','status-double-sell');
+  });
+
+  // Reset DB state
+  setDBCell('db-sold-2','for sale','val-sold');
+  setDBCell('db-buyer-2','NULL','');
+  setDBCell('db-lock-2','—','');
+  document.getElementById('db-row-2').classList.remove('highlight-row');
+
+  document.getElementById('outcome-box').className = 'outcome';
+
+  // Reset s1-result text for RR mode
+  document.getElementById('s1-result').textContent =
+    level === 'rr' ? '-- ERROR: deadlock victim — transaction rolled back'
+                   : "-- 'sold successfully' (but horse is gone!)";
+  document.getElementById('s2-result').textContent =
+    level === 'rr' ? "-- 'sold successfully' — buyer='Your name' wins"
+                   : "-- 'sold successfully' — buyer='Your name' wins";
+}
+
+function setDBCell(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'val-sold ' + cls;
+}
+
+function setLock(row, type, note) {
+  const el = document.getElementById('db-lock-' + row);
+  if (!type) { el.innerHTML = '<span style="color:#3d4d63">—</span>'; return; }
+  const cls = type.includes('WAIT') ? 'lock-wait' : (type === 'S' || type === 'S+S' ? 'lock-s' : 'lock-x');
+  el.innerHTML = `<span class="lock-badge ${cls}">${type}</span>`;
+  if (note) el.title = note;
+}
+
+async function play() {
+  if (playing) return;
+  playing = true;
+  document.getElementById('btn-play').disabled = true;
+  resetDemo();
+  await new Promise(r => setTimeout(r, 80));
+
+  const sc = scenarios[level];
+  const baseDelay = 400; // scale factor: 1 unit = 400ms
+
+  sc.steps.forEach(step => {
+    const tid = setTimeout(() => {
+      if (!playing) return;
+
+      if (step.outcome) {
+        const box = document.getElementById('outcome-box');
+        box.className = 'outcome show ' + step.outcome;
+        document.getElementById('outcome-text').textContent = step.text;
+        playing = false;
+        document.getElementById('btn-play').disabled = false;
+        return;
+      }
+
+      // Show statement
+      const el = document.getElementById(step.id);
+      if (el) {
+        el.classList.add('visible', 'status-' + step.status);
+      }
+
+      // Update DB table
+      if (step.db) {
+        if (step.db.sold2)  setDBCell('db-sold-2',  step.db.sold2,  step.db.cls2 || '');
+        if (step.db.buyer2) setDBCell('db-buyer-2', step.db.buyer2, step.db.cls2 || '');
+        document.getElementById('db-row-2').classList.add('highlight-row');
+        setTimeout(() => document.getElementById('db-row-2').classList.remove('highlight-row'), 800);
+      }
+
+      // Update locks
+      if (step.lock !== undefined) {
+        setLock(2, step.lock ? step.lock.type : null, step.lock ? step.lock.note : '');
+      }
+    }, step.t * baseDelay);
+    timeouts.push(tid);
+  });
+}
+
+// Init
+resetDemo();
+</script>
+{% endblock %}

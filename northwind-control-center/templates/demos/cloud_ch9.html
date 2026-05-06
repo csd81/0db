@@ -1,0 +1,683 @@
+{% extends 'base.html' %}
+{% block title %}Ch. 9 — Cloud Functions / FaaS{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div style="width:4px;height:3rem;background:#a78bfa;border-radius:2px;flex-shrink:0"></div>
+    <div>
+      <h2 class="mb-0 fw-bold" style="color:#a78bfa">Chapter 9 — Cloud Functions</h2>
+      <div class="small mt-1" style="color:#64748b">Serverless / FaaS · HTTP Functions · Background Functions · Triggers · Deploy · Monitor</div>
+    </div>
+  </div>
+
+  <ul class="nav nav-pills mb-4 gap-2 flex-wrap">
+    <li class="nav-item"><button class="nav-link ch9-nav-link active" onclick="showTab('tab-faas',this)">☁️ FaaS Overview</button></li>
+    <li class="nav-item"><button class="nav-link ch9-nav-link" onclick="showTab('tab-http',this)">🌐 HTTP Functions</button></li>
+    <li class="nav-item"><button class="nav-link ch9-nav-link" onclick="showTab('tab-background',this)">⚡ Background Functions</button></li>
+    <li class="nav-item"><button class="nav-link ch9-nav-link" onclick="showTab('tab-execution',this)">🔒 Execution &amp; Guarantees</button></li>
+    <li class="nav-item"><button class="nav-link ch9-nav-link" onclick="showTab('tab-deploy',this)">🚀 Deploy &amp; Monitor</button></li>
+  </ul>
+
+  <!-- ══ TAB 1: FaaS OVERVIEW ══ -->
+  <div id="tab-faas" class="ch9-tab">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Function-as-a-Service — The Serverless Paradigm</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2" style="color:#a78bfa">What is FaaS?</div>
+                <div class="small" style="color:#94a3b8">Submit code directly to the cloud <strong style="color:#f1f5f9">without managing any runtime infrastructure</strong>. The cloud provider handles provisioning, scaling, and maintenance automatically.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2" style="color:#a78bfa">Key Properties</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1">✓ No server management (provision/upgrade/manage)</div>
+                  <div class="mb-1">✓ Automatic scaling with load</div>
+                  <div class="mb-1">✓ Integrated monitoring, logging, debugging</div>
+                  <div class="mb-1">✓ Role-based &amp; per-function security</div>
+                  <div>✓ Networking to access other cloud components</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="fw-bold mb-2" style="color:#a78bfa">The Historical Vision</div>
+                <div class="small mb-2" style="color:#94a3b8">Cloud Functions unify in a practical way the once-utopian visions of past computing systems:</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1"><strong style="color:#f1f5f9">Grid Computing</strong> — seamless execution over geographically distributed resources</div>
+                  <div><strong style="color:#f1f5f9">SOA</strong> — a set of public/private services composable on demand</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IaaS vs PaaS vs FaaS -->
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Cloud Execution Model Comparison</h5>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0" style="color:#94a3b8;font-size:.82rem">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(167,139,250,.3)">
+                  <th style="color:#a78bfa;width:22%">Dimension</th>
+                  <th class="text-center" style="color:#fb923c">IaaS (EC2, Compute Engine)</th>
+                  <th class="text-center" style="color:#22d3ee">PaaS (Beanstalk, App Engine)</th>
+                  <th class="text-center" style="color:#a78bfa">FaaS (Cloud Functions, Lambda)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color:#a78bfa">Unit of Deployment</td>
+                  <td class="text-center">Virtual Machine</td>
+                  <td class="text-center">Application</td>
+                  <td class="text-center" style="color:#f1f5f9">Function</td>
+                </tr>
+                <tr>
+                  <td style="color:#a78bfa">Server Management</td>
+                  <td class="text-center" style="color:#fca5a5">User manages OS &amp; runtime</td>
+                  <td class="text-center">Platform manages runtime</td>
+                  <td class="text-center" style="color:#86efac">None — fully abstracted</td>
+                </tr>
+                <tr>
+                  <td style="color:#a78bfa">Scaling</td>
+                  <td class="text-center">Manual / Autoscaling groups</td>
+                  <td class="text-center">Platform scales app</td>
+                  <td class="text-center" style="color:#86efac">Automatic, per-invocation</td>
+                </tr>
+                <tr>
+                  <td style="color:#a78bfa">Billing</td>
+                  <td class="text-center">Per hour (running VM)</td>
+                  <td class="text-center">Per instance-hour</td>
+                  <td class="text-center" style="color:#86efac">Per invocation + execution time</td>
+                </tr>
+                <tr>
+                  <td style="color:#a78bfa">State</td>
+                  <td class="text-center">Stateful allowed</td>
+                  <td class="text-center">Stateful (session support)</td>
+                  <td class="text-center" style="color:#fcd34d">Must be stateless</td>
+                </tr>
+                <tr>
+                  <td style="color:#a78bfa">Cold Start</td>
+                  <td class="text-center">Always warm</td>
+                  <td class="text-center">Configurable</td>
+                  <td class="text-center" style="color:#fca5a5">Possible on first invocation</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Languages & Lifecycle -->
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Supported Languages</h5>
+          <div class="row g-2">
+            <div class="col-12">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="fw-bold mb-2 small" style="color:#a78bfa">HTTP Functions</div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">Node.js</span>
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">Python</span>
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">Go</span>
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">Java</span>
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">C#</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="fw-bold mb-2 small" style="color:#a78bfa">Background Functions</div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">Node.js</span>
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">Python</span>
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">Go</span>
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa">Java</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="small" style="color:#94a3b8">The Cloud Functions environment <strong style="color:#f1f5f9">automatically selects</strong> the suitable runtime based on the chosen language. GCP (Google Cloud Functions) and AWS (Lambda) both offer FaaS.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Function Lifecycle</h5>
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:32px;height:32px;background:#a78bfa;color:#000;font-size:.85rem">1</div>
+              <div>
+                <div class="fw-bold small" style="color:#a78bfa">Write</div>
+                <div class="small" style="color:#94a3b8">Implement the function in a supported language. HTTP Functions implement <code>HttpFunction</code>; Background Functions implement <code>BackgroundFunction&lt;T&gt;</code>.</div>
+              </div>
+            </div>
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:32px;height:32px;background:#a78bfa;color:#000;font-size:.85rem">2</div>
+              <div>
+                <div class="fw-bold small" style="color:#a78bfa">Deploy</div>
+                <div class="small" style="color:#94a3b8">Upload source archive to a GCS bucket. Deploy via <code>gcloud functions deploy</code>, from source control, or through the GCP Console.</div>
+              </div>
+            </div>
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:32px;height:32px;background:#a78bfa;color:#000;font-size:.85rem">3</div>
+              <div>
+                <div class="fw-bold small" style="color:#a78bfa">Execute / Call</div>
+                <div class="small" style="color:#94a3b8">HTTP triggers (GET/PUT/POST/DELETE/OPTIONS) or event triggers (GCS change, Pub/Sub message, Firestore event, etc.).</div>
+              </div>
+            </div>
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:32px;height:32px;background:#a78bfa;color:#000;font-size:.85rem">4</div>
+              <div>
+                <div class="fw-bold small" style="color:#a78bfa">Monitor</div>
+                <div class="small" style="color:#94a3b8">Integrated logging, monitoring and debugging in the GCP Console. View logs per-function via "View logs" in the Functions Overview page.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 2: HTTP FUNCTIONS ══ -->
+  <div id="tab-http" class="ch9-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">HTTP Functions</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="fw-bold mb-2 small" style="color:#a78bfa">How HTTP Functions Work</div>
+                <div class="small" style="color:#94a3b8">Invoked from standard <strong style="color:#f1f5f9">HTTP requests</strong>. The caller waits synchronously for the function to complete and the response to be received.</div>
+                <div class="d-flex flex-wrap gap-1 mt-2">
+                  <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;font-size:.65rem">GET</span>
+                  <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">POST</span>
+                  <span class="badge" style="background:rgba(251,191,36,.15);color:#fbbf24;font-size:.65rem">PUT</span>
+                  <span class="badge" style="background:rgba(239,68,68,.15);color:#f87171;font-size:.65rem">DELETE</span>
+                  <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem">OPTIONS</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="fw-bold mb-2 small" style="color:#a78bfa">Java Interface</div>
+                <div class="small mb-2" style="color:#94a3b8">Implement <code style="color:#a78bfa">com.google.cloud.functions.HttpFunction</code> — a functional interface with a single <code style="color:#a78bfa">service()</code> method.</div>
+                <div class="small" style="color:#94a3b8">Similar in style to Java Servlets in the Enterprise Platform: same <code>HttpRequest</code> / <code>HttpResponse</code> pattern.</div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#a78bfa">Java — HelloHttp</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">public class HelloHttp implements HttpFunction {
+    private static final Logger logger = Logger.getLogger(HelloHttp.class.getName());
+    private static final Gson gson = new Gson();
+
+    @Override
+    public void service(HttpRequest request, HttpResponse response) throws IOException {
+
+        // 1. Check URL query parameter "name" (default: "world")
+        String name = request.getFirstQueryParameter("name").orElse("world");
+
+        // 2. Parse JSON body and look for "name" field
+        try {
+            JsonElement requestParsed = gson.fromJson(request.getReader(), JsonElement.class);
+            JsonObject requestJson = null;
+            if (requestParsed != null &amp;&amp; requestParsed.isJsonObject()) {
+                requestJson = requestParsed.getAsJsonObject();
+            }
+            if (requestJson != null &amp;&amp; requestJson.has("name")) {
+                name = requestJson.get("name").getAsString();
+            }
+        } catch (JsonParseException e) {
+            logger.severe("Error parsing JSON: " + e.getMessage());
+        }
+
+        // 3. Write response
+        var writer = new PrintWriter(response.getWriter());
+        writer.printf("Hello %s!", name);
+    }
+}</pre>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-6">
+              <h6 class="fw-bold mb-2" style="color:#a78bfa">Node.js — Same Function (1 line!)</h6>
+              <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">const escapeHtml = require('escape-html');
+
+/**
+ * HTTP Cloud Function.
+ * @param {Object} req Cloud Function request context.
+ * @param {Object} res Cloud Function response context.
+ */
+exports.helloHttp = (req, res) =&gt; {
+    res.send(`Hello ${escapeHtml(
+        req.query.name || req.body.name || 'World'
+    )}!`);
+};</pre>
+              <div class="mt-2 p-2 rounded small" style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);color:#c4b5fd">
+                The compactness of Node.js vs Java is striking — same logic in 3 lines vs 30 lines.
+              </div>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold mb-2" style="color:#a78bfa">Request Processing Flow</h6>
+              <div class="d-flex flex-column gap-2">
+                <div class="p-2 rounded d-flex align-items-center gap-2" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                  <div class="px-2 py-1 rounded fw-bold" style="background:#a78bfa;color:#000;font-size:.7rem;white-space:nowrap">1. URL Param</div>
+                  <div class="small" style="color:#94a3b8"><code>?name=Alice</code> → query parameter</div>
+                </div>
+                <div class="p-2 rounded d-flex align-items-center gap-2" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                  <div class="px-2 py-1 rounded fw-bold" style="background:#a78bfa;color:#000;font-size:.7rem;white-space:nowrap">2. JSON Body</div>
+                  <div class="small" style="color:#94a3b8"><code>{"name":"Bob"}</code> → parsed with Gson</div>
+                </div>
+                <div class="p-2 rounded d-flex align-items-center gap-2" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                  <div class="px-2 py-1 rounded fw-bold" style="background:#a78bfa;color:#000;font-size:.7rem;white-space:nowrap">3. Default</div>
+                  <div class="small" style="color:#94a3b8">Neither provided → <code>"world"</code></div>
+                </div>
+                <div class="p-2 rounded d-flex align-items-center gap-2" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                  <div class="px-2 py-1 rounded fw-bold" style="background:#34d399;color:#000;font-size:.7rem;white-space:nowrap">4. Response</div>
+                  <div class="small" style="color:#94a3b8"><code>printf("Hello %s!", name)</code> → HTTP 200</div>
+                </div>
+              </div>
+              <div class="mt-3 p-2 rounded small" style="background:#0e1014;border:1px solid #1e293b;color:#64748b">
+                Docs: cloud.google.com/functions/docs/writing/http
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 3: BACKGROUND FUNCTIONS ══ -->
+  <div id="tab-background" class="ch9-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Background Functions — Event-Driven Execution</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="fw-bold mb-2 small" style="color:#a78bfa">How Background Functions Work</div>
+                <div class="small mb-2" style="color:#94a3b8">Designed to handle <strong style="color:#f1f5f9">events originating from the cloud infrastructure</strong> — e.g. a change in a Cloud Storage bucket or a message arriving to a Cloud Pub/Sub topic.</div>
+                <div class="small" style="color:#94a3b8">The function is not called directly by a user — it is <strong style="color:#f1f5f9">triggered automatically</strong> by a cloud event.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="fw-bold mb-2 small" style="color:#a78bfa">Java Interface</div>
+                <div class="small mb-2" style="color:#94a3b8">Implement <code style="color:#a78bfa">com.google.cloud.functions.BackgroundFunction&lt;T&gt;</code>. The generic parameter <code>&lt;T&gt;</code> determines <strong style="color:#f1f5f9">which event type</strong> the function responds to.</div>
+                <div class="small" style="color:#94a3b8">Key method: <code style="color:#a78bfa">accept(T event, Context context)</code> — invoked upon the event of interest.</div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#a78bfa">Java — HelloGcs (Cloud Storage Trigger)</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">import com.google.cloud.functions.BackgroundFunction;
+import com.google.cloud.functions.Context;
+import functions.eventpojos.GcsEvent;
+import java.util.logging.Logger;
+
+// Generic type &lt;GcsEvent&gt; tells GCP: invoke this when a GCS event occurs
+public class HelloGcs implements BackgroundFunction&lt;GcsEvent&gt; {
+    private static final Logger logger = Logger.getLogger(HelloGcs.class.getName());
+
+    @Override
+    public void accept(GcsEvent event, Context context) {
+        logger.info("Event: "          + context.eventId());
+        logger.info("Event Type: "     + context.eventType());
+        logger.info("Bucket: "         + event.getBucket());
+        logger.info("File: "           + event.getName());
+        logger.info("Metageneration: " + event.getMetageneration());
+        logger.info("Created: "        + event.getTimeCreated());
+        logger.info("Updated: "        + event.getUpdated());
+    }
+}</pre>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#a78bfa">GcsEvent Fields Extracted</div>
+                <table class="table table-sm mb-0" style="color:#94a3b8;font-size:.78rem">
+                  <thead><tr><th style="color:#a78bfa">Method</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>event.getBucket()</code></td><td>Storage bucket name</td></tr>
+                    <tr><td><code>event.getName()</code></td><td>Object (file) name</td></tr>
+                    <tr><td><code>event.getMetageneration()</code></td><td>Metadata version number</td></tr>
+                    <tr><td><code>event.getTimeCreated()</code></td><td>Object creation timestamp</td></tr>
+                    <tr><td><code>event.getUpdated()</code></td><td>Last update timestamp</td></tr>
+                    <tr><td><code>context.eventId()</code></td><td>Unique event ID</td></tr>
+                    <tr><td><code>context.eventType()</code></td><td>Type of GCS event</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#a78bfa">All Available Trigger Types</div>
+                <div class="d-flex flex-column gap-1">
+                  <div class="d-flex gap-2 align-items-center">
+                    <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem;white-space:nowrap">HTTP</span>
+                    <div class="small" style="color:#94a3b8">Direct HTTP request (GET/POST/PUT/DELETE/OPTIONS)</div>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Pub/Sub</span>
+                    <div class="small" style="color:#94a3b8">Message arriving to a Cloud Pub/Sub topic</div>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Cloud Storage</span>
+                    <div class="small" style="color:#94a3b8">Change in a Cloud Storage bucket (upload/delete/update)</div>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Direct</span>
+                    <div class="small" style="color:#94a3b8">Direct invocation (testing/internal calls)</div>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Firestore</span>
+                    <div class="small" style="color:#94a3b8">Cloud Firestore document events</div>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Firebase DB</span>
+                    <div class="small" style="color:#94a3b8">Firebase Realtime Database events</div>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Firebase Auth</span>
+                    <div class="small" style="color:#94a3b8">Firebase Authentication events (user create/delete)</div>
+                  </div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Analytics</span>
+                    <div class="small" style="color:#94a3b8">Analytics for Firebase conversion events</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 p-2 rounded small" style="background:#0e1014;border:1px solid #1e293b;color:#64748b">
+            Docs: cloud.google.com/functions/docs/writing/background — complete step-by-step example for Storage-triggered Background Functions at cloud.google.com/functions/docs/tutorials/storage
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 4: EXECUTION & GUARANTEES ══ -->
+  <div id="tab-execution" class="ch9-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Function Execution Model</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:2px solid #a78bfa">
+                <div style="font-size:1.5rem">🔒</div>
+                <div class="fw-bold mb-2" style="color:#a78bfa">Isolated &amp; Secure</div>
+                <div class="small" style="color:#94a3b8">Every Function executes in an <strong style="color:#f1f5f9">isolated, secure runtime context</strong>. No shared state between instances.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div style="font-size:1.5rem">📊</div>
+                <div class="fw-bold mb-2" style="color:#a78bfa">One Request per Instance</div>
+                <div class="small" style="color:#94a3b8">Each Function instance services <strong style="color:#f1f5f9">one client/request</strong> at a time. Multiple instances are launched automatically when needed.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(239,68,68,.3)">
+                <div style="font-size:1.5rem">⚠️</div>
+                <div class="fw-bold mb-2" style="color:#fca5a5">Must Be Stateless</div>
+                <div class="small" style="color:#94a3b8">Functions <strong style="color:#f1f5f9">must be stateless</strong>. If state is required, persist it to <strong style="color:#f1f5f9">Cloud Storage</strong> or <strong style="color:#f1f5f9">Datastore</strong> between invocations.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Delivery Guarantees</h5>
+          <div class="d-flex flex-column gap-3">
+            <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(96,165,250,.3)">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge" style="background:rgba(96,165,250,.2);color:#60a5fa">HTTP Functions</span>
+                <span class="fw-bold small" style="color:#60a5fa">At-Most-Once</span>
+              </div>
+              <div class="small" style="color:#94a3b8">Each HTTP request triggers the function <strong style="color:#f1f5f9">at most one time</strong>. If the invocation fails, there is no automatic retry. The caller is responsible for retrying.</div>
+            </div>
+            <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge" style="background:rgba(167,139,250,.2);color:#a78bfa">Background Functions</span>
+                <span class="fw-bold small" style="color:#a78bfa">At-Least-Once</span>
+              </div>
+              <div class="small" style="color:#94a3b8">Background functions may be invoked <strong style="color:#f1f5f9">more than once</strong> for the same event (retries on failure). Functions should be designed to be <strong style="color:#f1f5f9">idempotent</strong> when possible.</div>
+            </div>
+          </div>
+          <div class="mt-3 p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+            <div class="fw-bold mb-1 small" style="color:#94a3b8">Comparison with Stream Frameworks</div>
+            <div class="small" style="color:#64748b">Same delivery semantics as Ch. 8 stream systems: HTTP = At-Most-Once (Storm-like), Background = At-Least-Once (Kafka-like). "Exactly-Once" is not natively provided — must be implemented at application level.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Trigger Types Summary</h5>
+          <div class="d-flex flex-column gap-2">
+            <div class="p-2 rounded d-flex gap-3 align-items-start" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+              <span class="badge mt-1 flex-shrink-0" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">HTTP</span>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">HTTP Triggers</strong> — synchronous request-response. Supports all HTTP verbs.</div>
+            </div>
+            <div class="p-2 rounded d-flex gap-3 align-items-start" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+              <span class="badge mt-1 flex-shrink-0" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Pub/Sub</span>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Cloud Pub/Sub Triggers</strong> — event-driven; invoked when a message arrives on a subscribed topic.</div>
+            </div>
+            <div class="p-2 rounded d-flex gap-3 align-items-start" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+              <span class="badge mt-1 flex-shrink-0" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">GCS</span>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Cloud Storage Triggers</strong> — fired on object finalize, delete, archive or metadata updates in a bucket.</div>
+            </div>
+            <div class="p-2 rounded d-flex gap-3 align-items-start" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+              <span class="badge mt-1 flex-shrink-0" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Firestore</span>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Cloud Firestore Triggers</strong> — fired on document create, update, delete, or write events.</div>
+            </div>
+            <div class="p-2 rounded d-flex gap-3 align-items-start" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+              <span class="badge mt-1 flex-shrink-0" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Firebase</span>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Firebase Triggers</strong> — Realtime Database events, Firebase Auth events (user create/delete), Analytics conversion events.</div>
+            </div>
+            <div class="p-2 rounded d-flex gap-3 align-items-start" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+              <span class="badge mt-1 flex-shrink-0" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:.65rem;white-space:nowrap">Direct</span>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Direct Triggers</strong> — direct invocation for testing and internal calls without an HTTP endpoint.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 5: DEPLOY & MONITOR ══ -->
+  <div id="tab-deploy" class="ch9-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Deploying Functions</h5>
+          <p class="small mb-4" style="color:#94a3b8">Deployment uploads an archive of the function's source code to a Google Cloud Storage bucket. Three deployment paths are available.</p>
+
+          <div class="row g-4">
+            <!-- Option 1 -->
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#a78bfa;color:#000;font-size:.8rem">1</div>
+                  <div class="fw-bold" style="color:#a78bfa">Deploy from Local Machine</div>
+                </div>
+                <pre class="rounded p-2 small" style="background:#0a0b0f;color:#34d399;border:1px solid #1e293b;overflow-x:auto">gcloud functions deploy NAME \
+    --runtime RUNTIME \
+    TRIGGER \
+    [FLAGS...]</pre>
+                <div class="small mt-2" style="color:#94a3b8">Substitute <code>NAME</code> (function name), <code>RUNTIME</code> (e.g. <code>java11</code>), and <code>TRIGGER</code> (e.g. <code>--trigger-http</code>).</div>
+              </div>
+            </div>
+
+            <!-- Option 2 -->
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#a78bfa;color:#000;font-size:.8rem">2</div>
+                  <div class="fw-bold" style="color:#a78bfa">Deploy from Source Control</div>
+                </div>
+                <pre class="rounded p-2 small" style="background:#0a0b0f;color:#34d399;border:1px solid #1e293b;overflow-x:auto">gcloud functions deploy NAME \
+    --source https://source.developers.google.com/ \
+      projects/PROJECT_ID/ \
+      repos/REPOSITORY_ID/ \
+      moveable-aliases/master/ \
+      paths/SOURCE \
+    --runtime RUNTIME \
+    TRIGGER... [FLAGS...]</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GCP Console walkthrough -->
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#a78bfa;color:#000;font-size:.8rem">3</div>
+            <h5 class="mb-0 fw-bold" style="color:#a78bfa">Deploy from GCP Console — Step-by-Step</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="d-flex flex-column gap-2">
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">1</span>
+                  <div class="small" style="color:#94a3b8">Open the <strong style="color:#f1f5f9">Functions Overview page</strong> in the Cloud Console.</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">2</span>
+                  <div class="small" style="color:#94a3b8">Confirm the correct <strong style="color:#f1f5f9">project</strong> (with Cloud Functions enabled) is selected.</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">3</span>
+                  <div class="small" style="color:#94a3b8">Click <strong style="color:#f1f5f9">Create function</strong>.</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">4</span>
+                  <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Name</strong> your function.</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">5</span>
+                  <div class="small" style="color:#94a3b8">In the <strong style="color:#f1f5f9">Trigger</strong> field, select <code>HTTP</code>.</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">6</span>
+                  <div class="small" style="color:#94a3b8">In <strong style="color:#f1f5f9">Authentication</strong>, select <code>Allow unauthenticated invocations</code>.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex flex-column gap-2">
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">7</span>
+                  <div class="small" style="color:#94a3b8">Click <strong style="color:#f1f5f9">Save</strong> to save changes, then click <strong style="color:#f1f5f9">Next</strong>.</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">8</span>
+                  <div class="small" style="color:#94a3b8">In <strong style="color:#f1f5f9">Source code</strong>, select <code>Inline editor</code> (or upload a ZIP).</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">9</span>
+                  <div class="small" style="color:#94a3b8">Use the <strong style="color:#f1f5f9">Runtime</strong> dropdown to select the desired Java runtime (e.g. <code>java11</code>).</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">10</span>
+                  <div class="small" style="color:#94a3b8">Click <strong style="color:#f1f5f9">Deploy</strong> at the bottom of the page.</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(167,139,250,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#a78bfa;color:#000;font-size:.7rem">11</span>
+                  <div class="small" style="color:#94a3b8">Console redirects to the <strong style="color:#f1f5f9">Functions Overview</strong> page while deploying.</div>
+                </div>
+                <div class="d-flex gap-2 align-items-start p-2 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.2)">
+                  <span class="badge flex-shrink-0 mt-1" style="background:#34d399;color:#000;font-size:.7rem">12</span>
+                  <div class="small" style="color:#94a3b8">Once deployed → display function menu → click <strong style="color:#f1f5f9">Test function</strong>.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monitoring -->
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(167,139,250,.25)">
+          <h5 class="fw-bold mb-3" style="color:#a78bfa">Monitoring &amp; Logs</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div style="font-size:1.4rem">📋</div>
+                <div class="fw-bold mb-1" style="color:#a78bfa">Automatic Log Entries</div>
+                <div class="small" style="color:#94a3b8">Each function invocation generates log entries automatically. View them on the Functions Overview page → display function menu → <strong style="color:#f1f5f9">View logs</strong>.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div style="font-size:1.4rem">🔍</div>
+                <div class="fw-bold mb-1" style="color:#a78bfa">Integrated Monitoring</div>
+                <div class="small" style="color:#94a3b8">Built-in GCP monitoring (Cloud Monitoring) tracks invocations, execution times, errors, and memory use. No setup required.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(167,139,250,.3)">
+                <div style="font-size:1.4rem">🐛</div>
+                <div class="fw-bold mb-1" style="color:#a78bfa">Debugging</div>
+                <div class="small" style="color:#94a3b8">Cloud Debugger lets you inspect application state in live functions without stopping or slowing them. Set snapshots and logpoints without redeployment.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<style>
+.ch9-nav-link { background:#13141a; color:#94a3b8; border:1px solid rgba(167,139,250,.25); transition:all .2s; }
+.ch9-nav-link:hover { background:rgba(167,139,250,.15); color:#f1f5f9; }
+.ch9-nav-link.active { background:#a78bfa !important; color:#000 !important; font-weight:600; }
+</style>
+
+<script>
+function showTab(id, el) {
+    document.querySelectorAll('.ch9-tab').forEach(function(t){ t.classList.add('d-none'); });
+    document.querySelectorAll('.ch9-nav-link').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById(id).classList.remove('d-none');
+    el.classList.add('active');
+}
+(function(){
+    var h = location.hash.slice(1);
+    if (h) {
+        var btn = document.querySelector('.ch9-nav-link[onclick*="' + h + '"]');
+        if (btn) btn.click();
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,856 @@
+{% extends 'base.html' %}
+{% block title %}Cloud Ch. 4 — Amazon AWS{% endblock %}
+{% block content %}
+
+<style>
+  .ch4-nav-link {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: #8892a4 !important;
+    border-radius: 0 !important;
+    padding: .5rem 1rem;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .ch4-nav-link:hover { color: #fb923c !important; }
+  .ch4-nav-link.active { color: #fb923c !important; border-bottom-color: #fb923c !important; }
+  .info-box {
+    background: #13141a;
+    border-radius: 8px;
+    border: 1px solid rgba(251,146,60,.18);
+    padding: 1rem 1.25rem;
+  }
+  .code-box {
+    background: #0a0b0f;
+    border: 1px solid rgba(251,146,60,.15);
+    border-radius: 6px;
+    padding: .85rem 1rem;
+    font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+    font-size: .72rem;
+    color: #fcd9a0;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .code-lang {
+    display: inline-block;
+    font-size: .58rem;
+    font-weight: 700;
+    padding: .15rem .45rem;
+    border-radius: 3px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: .35rem;
+  }
+  .inst-row {
+    display: grid;
+    grid-template-columns: 110px 50px 65px 110px 1fr;
+    gap: .4rem;
+    align-items: center;
+    padding: .4rem .5rem;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    font-size: .72rem;
+  }
+  .inst-row.header {
+    border-bottom: 1px solid rgba(251,146,60,.25);
+    padding-bottom: .35rem;
+    color: #8892a4;
+    font-weight: 700;
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .vcpu-bar-wrap { background: rgba(251,146,60,.1); border-radius: 2px; overflow: hidden; height: 8px; }
+  .vcpu-bar { height: 100%; border-radius: 2px; background: linear-gradient(90deg,#c2410c,#fb923c); }
+  .service-badge {
+    display: inline-block;
+    padding: .2rem .55rem;
+    border-radius: 4px;
+    font-size: .66rem;
+    font-weight: 600;
+    margin: .15rem;
+  }
+  .storage-tier {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .5rem .75rem;
+    border-radius: 6px;
+    margin-bottom: .3rem;
+    border-left: 3px solid;
+  }
+  .storage-tier .tier-name { font-size: .76rem; font-weight: 700; min-width: 200px; }
+  .storage-tier .tier-desc { font-size: .72rem; color: #8892a4; }
+  .net-group-header {
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: .3rem .5rem;
+    border-radius: 4px;
+    margin-bottom: .4rem;
+    margin-top: .75rem;
+  }
+  .net-row { display: flex; gap: .6rem; padding: .45rem 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .net-row:last-child { border-bottom: none; }
+  .net-svc { min-width: 150px; font-size: .76rem; font-weight: 600; color: #e2e8f0; }
+  .net-desc { font-size: .75rem; color: #8892a4; line-height: 1.45; }
+  .saas-card {
+    background: #13141a;
+    border-radius: 8px;
+    padding: .85rem;
+    border: 1px solid rgba(251,146,60,.15);
+    height: 100%;
+  }
+  .saas-card .svc-name { font-size: .76rem; font-weight: 700; color: #fb923c; margin-bottom: .2rem; }
+  .saas-card .svc-desc { font-size: .73rem; color: #8892a4; line-height: 1.45; }
+  .itype-card {
+    background: #13141a;
+    border-radius: 8px;
+    padding: .85rem;
+    border-top: 3px solid;
+    height: 100%;
+  }
+  .itype-card .itype-name { font-size: .76rem; font-weight: 700; margin-bottom: .25rem; }
+  .itype-card .itype-use { font-size: .72rem; color: #8892a4; line-height: 1.45; margin-bottom: .5rem; }
+  .itype-card .itype-eg { font-size: .67rem; color: #8892a4; font-style: italic; }
+</style>
+
+<!-- Page Header -->
+<div class="mb-4">
+  <div class="text-uppercase fw-bold mb-1" style="font-size:.63rem;letter-spacing:.12em;color:#fb923c">Cloud Book — Chapter 4</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.45rem">Amazon Web Services (AWS)</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.83rem">
+    Largest cloud platform — 245 countries, 24 regions, multiple Availability Zones per region.
+    EC2 · S3 · EFS · EBS · VPC · ELB · Shield · Elastic Beanstalk · AI SaaS · Java SDK.
+  </p>
+</div>
+
+<!-- Tab Nav -->
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(251,146,60,.2)">
+  <li class="nav-item"><button class="ch4-nav-link active" onclick="showTab('tab-compute',this)"><i class="bi bi-cpu me-1"></i>EC2 &amp; Compute</button></li>
+  <li class="nav-item"><button class="ch4-nav-link" onclick="showTab('tab-storage',this)"><i class="bi bi-hdd-stack me-1"></i>Storage</button></li>
+  <li class="nav-item"><button class="ch4-nav-link" onclick="showTab('tab-network',this)"><i class="bi bi-diagram-3 me-1"></i>Networking</button></li>
+  <li class="nav-item"><button class="ch4-nav-link" onclick="showTab('tab-paas',this)"><i class="bi bi-boxes me-1"></i>PaaS &amp; SaaS</button></li>
+  <li class="nav-item"><button class="ch4-nav-link" onclick="showTab('tab-sdk',this)"><i class="bi bi-code-slash me-1"></i>CLI &amp; SDK</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ═══════════════════════ TAB 1: EC2 & COMPUTE ═══════════════════════ -->
+<div id="tab-compute">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">EC2 Instance Type Groups</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Amazon EC2 provides virtual machines grouped by workload profile.
+        The right group is selected based on the bottleneck: CPU, memory, storage I/O, or GPU throughput.
+      </p>
+
+      <div class="row g-2 mb-3">
+        <div class="col-12">
+          <div class="itype-card" style="border-top-color:#60a5fa">
+            <div class="itype-name" style="color:#60a5fa"><i class="bi bi-grid me-1"></i>General Purpose</div>
+            <div class="itype-use">Balanced CPU/memory. Business-critical apps, small/mid DBs, web tier. Instance classes: A1 (ARM Graviton), M4/M5 (Intel Xeon), M5a (AMD EPYC), T2–T4g (burstable).</div>
+            <div class="itype-eg">T-class burstable: runs at baseline, accumulates credits when idle → spends credits during burst. 0 credits = throttled to baseline.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="itype-card" style="border-top-color:#fb923c">
+            <div class="itype-name" style="color:#fb923c"><i class="bi bi-lightning-charge me-1"></i>Compute Optimised</div>
+            <div class="itype-use">High-performance computing, batch processing, video encoding. High vCPU-to-memory ratio.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="itype-card" style="border-top-color:#a78bfa">
+            <div class="itype-name" style="color:#a78bfa"><i class="bi bi-memory me-1"></i>Memory Optimised</div>
+            <div class="itype-use">High-performance DBs, distributed in-memory caches, real-time big data analytics.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="itype-card" style="border-top-color:#34d399">
+            <div class="itype-name" style="color:#34d399"><i class="bi bi-hdd me-1"></i>Storage Optimised</div>
+            <div class="itype-use">NoSQL databases, data warehousing, distributed file systems. High sequential I/O.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="itype-card" style="border-top-color:#f87171">
+            <div class="itype-name" style="color:#f87171"><i class="bi bi-gpu-card me-1"></i>Accelerated (GPU/FPGA)</div>
+            <div class="itype-use">ML inference/training, graphic rendering, HPC algorithms, gaming servers.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">EC2 Variants</div>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <span style="font-size:.65rem;background:rgba(251,146,60,.15);color:#fb923c;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:80px;text-align:center">Autoscaling</span>
+            <span style="font-size:.75rem;color:#8892a4">Automatically add/remove capacity to meet demand changes — no manual intervention.</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <span style="font-size:.65rem;background:rgba(52,211,153,.15);color:#34d399;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:80px;text-align:center">Spot</span>
+            <span style="font-size:.75rem;color:#8892a4">Auction pricing on spare capacity — up to <strong style="color:#34d399">90% savings</strong> for fault-tolerant workloads. May be preempted.</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <span style="font-size:.65rem;background:rgba(96,165,250,.15);color:#60a5fa;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:80px;text-align:center">Batch</span>
+            <span style="font-size:.75rem;color:#8892a4">Managed job scheduler — no fixed cluster to provision. Dynamic scaling. Ideal for molecular dynamics, genomics, media rendering.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">General Purpose M4 — Instance Configurations</h5>
+      <p style="color:#8892a4;font-size:.76rem;margin-bottom:.75rem">All M4 instances use Intel Xeon E5-2676 v3 · EBS-only storage. Range: 1–96 vCPUs · 8 GB–24 TB · 1–100 Gbps network.</p>
+
+      <div class="inst-row header">
+        <div>Instance</div>
+        <div>vCPU</div>
+        <div>Mem (GiB)</div>
+        <div>EBS BW (Mbps)</div>
+        <div>Network</div>
+      </div>
+      <div class="inst-row">
+        <div style="color:#e2e8f0;font-family:monospace">m4.large</div>
+        <div style="color:#fb923c;font-weight:700">2</div>
+        <div style="color:#c4cdd8">8</div>
+        <div>
+          <div class="vcpu-bar-wrap"><div class="vcpu-bar" style="width:4.5%"></div></div>
+          <div style="font-size:.62rem;color:#8892a4;margin-top:.2rem">450</div>
+        </div>
+        <div style="font-size:.7rem;color:#8892a4">Moderate</div>
+      </div>
+      <div class="inst-row">
+        <div style="color:#e2e8f0;font-family:monospace">m4.xlarge</div>
+        <div style="color:#fb923c;font-weight:700">4</div>
+        <div style="color:#c4cdd8">16</div>
+        <div>
+          <div class="vcpu-bar-wrap"><div class="vcpu-bar" style="width:7.5%"></div></div>
+          <div style="font-size:.62rem;color:#8892a4;margin-top:.2rem">750</div>
+        </div>
+        <div style="font-size:.7rem;color:#8892a4">High</div>
+      </div>
+      <div class="inst-row">
+        <div style="color:#e2e8f0;font-family:monospace">m4.2xlarge</div>
+        <div style="color:#fb923c;font-weight:700">8</div>
+        <div style="color:#c4cdd8">32</div>
+        <div>
+          <div class="vcpu-bar-wrap"><div class="vcpu-bar" style="width:10%"></div></div>
+          <div style="font-size:.62rem;color:#8892a4;margin-top:.2rem">1,000</div>
+        </div>
+        <div style="font-size:.7rem;color:#8892a4">High</div>
+      </div>
+      <div class="inst-row">
+        <div style="color:#e2e8f0;font-family:monospace">m4.4xlarge</div>
+        <div style="color:#fb923c;font-weight:700">16</div>
+        <div style="color:#c4cdd8">64</div>
+        <div>
+          <div class="vcpu-bar-wrap"><div class="vcpu-bar" style="width:20%"></div></div>
+          <div style="font-size:.62rem;color:#8892a4;margin-top:.2rem">2,000</div>
+        </div>
+        <div style="font-size:.7rem;color:#8892a4">High</div>
+      </div>
+      <div class="inst-row">
+        <div style="color:#e2e8f0;font-family:monospace">m4.10xlarge</div>
+        <div style="color:#fb923c;font-weight:700">40</div>
+        <div style="color:#c4cdd8">160</div>
+        <div>
+          <div class="vcpu-bar-wrap"><div class="vcpu-bar" style="width:40%"></div></div>
+          <div style="font-size:.62rem;color:#8892a4;margin-top:.2rem">4,000</div>
+        </div>
+        <div style="font-size:.7rem;color:#60a5fa;font-weight:600">10 Gigabit</div>
+      </div>
+      <div class="inst-row" style="border-bottom:none">
+        <div style="color:#e2e8f0;font-family:monospace;font-weight:600">m4.16xlarge</div>
+        <div style="color:#fb923c;font-weight:700">64</div>
+        <div style="color:#c4cdd8;font-weight:600">256</div>
+        <div>
+          <div class="vcpu-bar-wrap"><div class="vcpu-bar" style="width:100%"></div></div>
+          <div style="font-size:.62rem;color:#fb923c;margin-top:.2rem;font-weight:700">10,000</div>
+        </div>
+        <div style="font-size:.7rem;color:#34d399;font-weight:700">25 Gigabit</div>
+      </div>
+
+      <div class="info-box mt-3">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">T-Class Burstable Credit Model</div>
+        <div style="font-family:monospace;font-size:.73rem;color:#8892a4;line-height:1.75">
+          CPU usage &lt; baseline → <span style="color:#34d399">earn credits</span> (stored, up to cap)<br>
+          CPU usage &gt; baseline → <span style="color:#fb923c">spend credits</span> (burst performance)<br>
+          Credits = 0, usage &gt; baseline → <span style="color:#f87171">throttled back to baseline</span><br>
+          <span style="color:#e2e8f0">Ideal for: workloads with occasional spikes on a low baseline.</span>
+        </div>
+      </div>
+
+      <div class="info-box mt-2">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">AWS Industry Solutions</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem">
+          <span class="service-badge" style="background:rgba(251,146,60,.12);color:#fb923c">Automotive</span>
+          <span class="service-badge" style="background:rgba(96,165,250,.12);color:#60a5fa">Healthcare &amp; Genomics</span>
+          <span class="service-badge" style="background:rgba(52,211,153,.12);color:#34d399">Financial Services</span>
+          <span class="service-badge" style="background:rgba(167,139,250,.12);color:#a78bfa">Media &amp; Entertainment</span>
+          <span class="service-badge" style="background:rgba(251,191,36,.12);color:#fbbf24">Government (TS/SCI)</span>
+          <span class="service-badge" style="background:rgba(248,113,113,.12);color:#f87171">Gaming</span>
+          <span class="service-badge" style="background:rgba(45,212,191,.12);color:#2dd4bf">Manufacturing / IoT</span>
+          <span class="service-badge" style="background:rgba(251,146,60,.08);color:#fb923c">Education</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 2: STORAGE ═══════════════════════ -->
+<div id="tab-storage" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Three Storage Paradigms</h5>
+      <div class="row g-2 mb-3">
+        <div class="col-12">
+          <div style="background:#13141a;border-radius:8px;border:1px solid rgba(251,146,60,.25);padding:.85rem">
+            <div style="font-size:.76rem;color:#fb923c;font-weight:700;margin-bottom:.3rem"><i class="bi bi-box me-1"></i>Amazon S3 — Object Storage</div>
+            <div style="font-size:.75rem;color:#8892a4;line-height:1.5;margin-bottom:.4rem">Data stored as <em>objects</em> inside <em>buckets</em>. Max object: <strong style="color:#e2e8f0">5 TB</strong>. Scales automatically. Accessed via S3 Access Points or bucket hostname (HTTP/S).</div>
+            <div style="display:flex;gap:1rem">
+              <div style="text-align:center"><div style="font-size:.85rem;color:#fb923c;font-weight:700">11 × 9s</div><div style="font-size:.62rem;color:#8892a4">durability (99.999999999%)</div></div>
+              <div style="text-align:center"><div style="font-size:.85rem;color:#fb923c;font-weight:700">∞</div><div style="font-size:.62rem;color:#8892a4">auto-scaling</div></div>
+              <div style="text-align:center"><div style="font-size:.85rem;color:#fb923c;font-weight:700">≥3</div><div style="font-size:.62rem;color:#8892a4">replicas per object</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div style="background:#13141a;border-radius:8px;border:1px solid rgba(96,165,250,.2);padding:.85rem;height:100%">
+            <div style="font-size:.76rem;color:#60a5fa;font-weight:700;margin-bottom:.3rem"><i class="bi bi-folder2 me-1"></i>Amazon EFS — File Storage</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.5">Managed elastic NFS filesystem. Scales to petabytes on demand without disruption. Two classes: Standard and Infrequent Access (IA). Lifecycle Management moves cold files to EFS IA automatically.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div style="background:#13141a;border-radius:8px;border:1px solid rgba(52,211,153,.2);padding:.85rem;height:100%">
+            <div style="font-size:.76rem;color:#34d399;font-weight:700;margin-bottom:.3rem"><i class="bi bi-hdd me-1"></i>Amazon EBS — Block Storage</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.5">High-performance block volumes for EC2. 5 volume types: single-digit-ms latency (DBs) to GB/s throughput (Hadoop). Replicated within AZ. Resize without disruption.</div>
+          </div>
+        </div>
+      </div>
+
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Data Security</h5>
+      <div class="info-box">
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <i class="bi bi-shield-lock" style="color:#fb923c;flex-shrink:0;margin-top:.1rem"></i>
+            <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">Encryption everywhere</span><br><span style="font-size:.73rem;color:#8892a4">Data encrypted in transit (TLS) and at rest. S3 supports server-side (3 key management options) and client-side encryption. Encrypted leaks are practically unusable.</span></div>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <i class="bi bi-person-badge" style="color:#fb923c;flex-shrink:0;margin-top:.1rem"></i>
+            <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">IAM (Identity &amp; Access Management)</span><br><span style="font-size:.73rem;color:#8892a4">All data is private-by-default. Sharing requires explicit IAM permission grants. S3 Access Points enable granular, per-application access policies.</span></div>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <i class="bi bi-building-lock" style="color:#fb923c;flex-shrink:0;margin-top:.1rem"></i>
+            <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">VPC Isolation</span><br><span style="font-size:.73rem;color:#8892a4">Virtual Private Cloud provides further network-level isolation. Resources inside a VPC are not reachable from the internet unless explicitly configured.</span></div>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <i class="bi bi-exclamation-triangle" style="color:#fbbf24;flex-shrink:0;margin-top:.1rem"></i>
+            <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">Reality of cloud data leaks</span><br><span style="font-size:.73rem;color:#8892a4">Most known cloud data leaks result from <em>human configuration errors</em>, not provider breaches. Cloud vendors employ top security experts operating stricter controls than most on-premises IT.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">S3 Storage Classes — Hot to Cold</h5>
+      <p style="color:#8892a4;font-size:.76rem;margin-bottom:.75rem">S3 Intelligent-Tiering automatically moves objects across classes based on access pattern — zero user intervention, significant cost savings.</p>
+
+      <div style="margin-bottom:1rem">
+        <div class="storage-tier" style="background:rgba(251,146,60,.08);border-left-color:#fb923c">
+          <div class="tier-name" style="color:#fb923c"><i class="bi bi-fire me-1"></i>S3 Standard</div>
+          <div class="tier-desc">General-purpose; frequently accessed data. Highest availability and throughput.</div>
+        </div>
+        <div class="storage-tier" style="background:rgba(251,191,36,.07);border-left-color:#fbbf24">
+          <div class="tier-name" style="color:#fbbf24"><i class="bi bi-stars me-1"></i>S3 Intelligent-Tiering</div>
+          <div class="tier-desc">AI-driven automatic tier movement based on access patterns. No retrieval fee.</div>
+        </div>
+        <div class="storage-tier" style="background:rgba(96,165,250,.07);border-left-color:#60a5fa">
+          <div class="tier-name" style="color:#60a5fa"><i class="bi bi-thermometer-half me-1"></i>S3 Standard-IA</div>
+          <div class="tier-desc">Infrequent Access — lower storage cost, retrieval fee applies. Milliseconds access.</div>
+        </div>
+        <div class="storage-tier" style="background:rgba(96,165,250,.05);border-left-color:#3b82f6">
+          <div class="tier-name" style="color:#3b82f6"><i class="bi bi-thermometer-low me-1"></i>S3 One Zone-IA</div>
+          <div class="tier-desc">Same as Standard-IA but stored in a single AZ. 20% cheaper; no multi-AZ resilience.</div>
+        </div>
+        <div class="storage-tier" style="background:rgba(167,139,250,.07);border-left-color:#a78bfa">
+          <div class="tier-name" style="color:#a78bfa"><i class="bi bi-snow me-1"></i>S3 Glacier</div>
+          <div class="tier-desc">Long-term archival. Low cost; retrieval: minutes to hours. Durable (11 nines).</div>
+        </div>
+        <div class="storage-tier" style="background:rgba(167,139,250,.05);border-left-color:#7c3aed">
+          <div class="tier-name" style="color:#7c3aed"><i class="bi bi-snow2 me-1"></i>S3 Glacier Deep Archive</div>
+          <div class="tier-desc">Lowest cost; retrieval: 12 hours. For data retained 7–10 years. Regulatory compliance.</div>
+        </div>
+        <div class="storage-tier" style="background:rgba(52,211,153,.07);border-left-color:#34d399">
+          <div class="tier-name" style="color:#34d399"><i class="bi bi-building me-1"></i>S3 Outposts</div>
+          <div class="tier-desc">On-premises S3 running on AWS Outpost hardware. Same S3 APIs, local data residency.</div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">EBS Volume Types — Performance vs Cost</div>
+        <table style="width:100%;font-size:.74rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(251,146,60,.2)">
+            <th style="color:#8892a4;padding:.3rem .5rem;text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">Volume Type</th>
+            <th style="color:#8892a4;padding:.3rem .5rem;text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">Latency</th>
+            <th style="color:#8892a4;padding:.3rem .5rem;text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">Best for</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+            <td style="padding:.3rem .5rem;color:#fb923c;font-weight:600">io1/io2 (Provisioned IOPS)</td>
+            <td style="padding:.3rem .5rem;color:#34d399">&lt;1 ms</td>
+            <td style="padding:.3rem .5rem;color:#8892a4">OLTP databases, high-throughput workloads</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+            <td style="padding:.3rem .5rem;color:#e2e8f0">gp2/gp3 (General Purpose SSD)</td>
+            <td style="padding:.3rem .5rem;color:#60a5fa">single-digit ms</td>
+            <td style="padding:.3rem .5rem;color:#8892a4">Boot volumes, low-latency interactive apps</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+            <td style="padding:.3rem .5rem;color:#e2e8f0">st1 (Throughput HDD)</td>
+            <td style="padding:.3rem .5rem;color:#a78bfa">~single-digit ms</td>
+            <td style="padding:.3rem .5rem;color:#8892a4">Hadoop, log processing, large sequential reads</td>
+          </tr>
+          <tr>
+            <td style="padding:.3rem .5rem;color:#e2e8f0">sc1 (Cold HDD)</td>
+            <td style="padding:.3rem .5rem;color:#8892a4">higher</td>
+            <td style="padding:.3rem .5rem;color:#8892a4">Infrequently accessed, lowest cost</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 3: NETWORKING ═══════════════════════ -->
+<div id="tab-network" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-6">
+      <h5 class="fw-bold mb-1" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">AWS Network Services</h5>
+      <p style="color:#8892a4;font-size:.79rem;line-height:1.55;margin-bottom:.5rem">
+        Network requirements range from a personal backup device to a multi-national running its entire operation on AWS.
+        Services are grouped by role: <strong style="color:#e2e8f0">build</strong>, <strong style="color:#e2e8f0">scale</strong>, and <strong style="color:#e2e8f0">secure</strong>.
+      </p>
+
+      <div class="net-group-header" style="background:rgba(96,165,250,.1);color:#60a5fa">
+        <i class="bi bi-diagram-3 me-1"></i>Build — Define &amp; Connect Your Network
+      </div>
+      <div style="background:#13141a;border-radius:6px;padding:.75rem;border:1px solid rgba(96,165,250,.15)">
+        <div class="net-row">
+          <div class="net-svc" style="color:#60a5fa">Amazon VPC</div>
+          <div class="net-desc">Logically isolated virtual network. Define IP ranges, subnets (public/private), route tables, internet gateways. Foundation of all AWS networking.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">AWS Transit Gateway</div>
+          <div class="net-desc">Central hub connecting multiple VPCs and on-premises networks. Replaces complex VPC peering mesh.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">AWS PrivateLink</div>
+          <div class="net-desc">Private, dedicated (non-shared) connection between your VPC and AWS services or partner services. Traffic never traverses the public internet.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">Amazon Route 53</div>
+          <div class="net-desc">Managed authoritative DNS service. Routes users to internet applications by translating domain names to IPs. Supports health checks and failover routing.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">AWS VPN</div>
+          <div class="net-desc">Encrypted tunnel between on-premises networks and AWS VPC. Remote workers access cloud resources as if on-premises.</div>
+        </div>
+      </div>
+
+      <div class="net-group-header" style="background:rgba(52,211,153,.1);color:#34d399">
+        <i class="bi bi-arrows-expand me-1"></i>Scale — Handle Traffic Growth
+      </div>
+      <div style="background:#13141a;border-radius:6px;padding:.75rem;border:1px solid rgba(52,211,153,.15)">
+        <div class="net-row">
+          <div class="net-svc" style="color:#34d399">Elastic Load Balancing</div>
+          <div class="net-desc">Automatically distributes incoming traffic across EC2 instances, containers, IP addresses, and Lambda functions. Application, Network, and Gateway load balancer types.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">AWS Global Accelerator</div>
+          <div class="net-desc">Routes users over the AWS global backbone (not public internet) to the nearest healthy endpoint. Improves latency and availability for global applications.</div>
+        </div>
+      </div>
+
+      <div class="net-group-header" style="background:rgba(239,68,68,.1);color:#f87171">
+        <i class="bi bi-shield-check me-1"></i>Secure — Protect Network Traffic
+      </div>
+      <div style="background:#13141a;border-radius:6px;padding:.75rem;border:1px solid rgba(239,68,68,.15)">
+        <div class="net-row">
+          <div class="net-svc" style="color:#f87171">AWS Shield</div>
+          <div class="net-desc">Managed DDoS protection. Standard (free, automatic) protects EC2, ELB, CloudFront. Advanced adds 24/7 DRT support and attack forensics.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">AWS WAF</div>
+          <div class="net-desc">Web Application Firewall protecting against common exploits (SQL injection, XSS, OWASP Top 10). Deployed in front of CloudFront, ALB, API Gateway.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">AWS Firewall Manager</div>
+          <div class="net-desc">Centrally configure and manage WAF rules, Shield Advanced, and VPC security groups across accounts and applications in an AWS Organisation.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Typical Cloud App Network Architecture</h5>
+      <div style="background:#13141a;border-radius:8px;border:1px solid rgba(251,146,60,.2);padding:1.25rem;font-family:monospace;font-size:.73rem;line-height:1.85;margin-bottom:1rem">
+        <div style="color:#8892a4;margin-bottom:.4rem">Internet traffic flow:</div>
+        <div>
+          <span style="color:#e2e8f0">Users</span>
+          <span style="color:#8892a4"> → </span>
+          <span style="color:#f87171">AWS Shield (DDoS)</span>
+          <span style="color:#8892a4"> → </span>
+          <span style="color:#f87171">AWS WAF</span>
+        </div>
+        <div style="margin-left:1.5rem">
+          <span style="color:#8892a4">↓</span>
+        </div>
+        <div>
+          <span style="color:#8892a4">&nbsp;&nbsp;&nbsp;</span>
+          <span style="color:#34d399">Elastic Load Balancer (ELB)</span>
+        </div>
+        <div style="margin-left:1.5rem">
+          <span style="color:#8892a4">↓</span>
+        </div>
+        <div>
+          <span style="color:#8892a4">&nbsp;&nbsp;&nbsp;</span>
+          <span style="color:#60a5fa">Public Subnet</span>
+          <span style="color:#8892a4"> — EC2 web tier (auto-scaling)</span>
+        </div>
+        <div style="margin-left:1.5rem">
+          <span style="color:#8892a4">↓</span>
+        </div>
+        <div>
+          <span style="color:#8892a4">&nbsp;&nbsp;&nbsp;</span>
+          <span style="color:#a78bfa">Private Subnet</span>
+          <span style="color:#8892a4"> — RDS / ElastiCache (no public IP)</span>
+        </div>
+        <div style="margin-left:1.5rem">
+          <span style="color:#8892a4">↓ (via PrivateLink)</span>
+        </div>
+        <div>
+          <span style="color:#8892a4">&nbsp;&nbsp;&nbsp;</span>
+          <span style="color:#fb923c">S3 / DynamoDB</span>
+          <span style="color:#8892a4"> — VPC endpoints (no internet)</span>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">AWS Global Infrastructure</div>
+        <div class="row g-2">
+          <div class="col-4"><div style="background:rgba(251,146,60,.08);border-radius:6px;padding:.6rem;text-align:center"><div style="font-size:1.1rem;color:#fb923c;font-weight:700">245</div><div style="font-size:.63rem;color:#8892a4">countries &amp; territories</div></div></div>
+          <div class="col-4"><div style="background:rgba(251,146,60,.08);border-radius:6px;padding:.6rem;text-align:center"><div style="font-size:1.1rem;color:#fb923c;font-weight:700">24</div><div style="font-size:.63rem;color:#8892a4">geographic regions</div></div></div>
+          <div class="col-4"><div style="background:rgba(251,146,60,.08);border-radius:6px;padding:.6rem;text-align:center"><div style="font-size:1.1rem;color:#fb923c;font-weight:700">2–6</div><div style="font-size:.63rem;color:#8892a4">AZs per region</div></div></div>
+        </div>
+        <div style="font-size:.74rem;color:#8892a4;margin-top:.7rem;line-height:1.5">
+          <strong style="color:#e2e8f0">Availability Zone (AZ)</strong> = single failure unit. AZs are physically separated data centres within a region, connected by low-latency, high-throughput redundant links.
+          A multi-AZ deployment survives the failure of any one data centre.
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Subnet Visibility Rules</div>
+        <table style="width:100%;font-size:.74rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.65rem;text-transform:uppercase">Subnet</th>
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.65rem;text-transform:uppercase">Internet Gateway</th>
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.65rem;text-transform:uppercase">Typical Resources</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+            <td style="padding:.3rem .5rem;color:#60a5fa;font-weight:600">Public</td>
+            <td style="padding:.3rem .5rem;color:#34d399">Yes — inbound allowed</td>
+            <td style="padding:.3rem .5rem;color:#8892a4">ELB, NAT Gateway, Bastion hosts</td>
+          </tr>
+          <tr>
+            <td style="padding:.3rem .5rem;color:#a78bfa;font-weight:600">Private</td>
+            <td style="padding:.3rem .5rem;color:#f87171">No — outbound via NAT only</td>
+            <td style="padding:.3rem .5rem;color:#8892a4">EC2 app tier, RDS, ElastiCache</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 4: PAAS & SAAS ═══════════════════════ -->
+<div id="tab-paas" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">PaaS — AWS Elastic Beanstalk</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        IaaS gives maximum flexibility but forces developers to manage EC2, scaling, load balancing, and health monitoring manually.
+        PaaS eliminates these operational concerns — the developer sees only the application layer.
+      </p>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Elastic Beanstalk Supported Runtimes</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem">
+          <span class="service-badge" style="background:rgba(251,146,60,.12);color:#fb923c">Go</span>
+          <span class="service-badge" style="background:rgba(96,165,250,.12);color:#60a5fa">Java (Tomcat)</span>
+          <span class="service-badge" style="background:rgba(167,139,250,.12);color:#a78bfa">.NET</span>
+          <span class="service-badge" style="background:rgba(52,211,153,.12);color:#34d399">Node.js</span>
+          <span class="service-badge" style="background:rgba(251,191,36,.12);color:#fbbf24">PHP</span>
+          <span class="service-badge" style="background:rgba(45,212,191,.12);color:#2dd4bf">Python</span>
+          <span class="service-badge" style="background:rgba(248,113,113,.12);color:#f87171">Ruby</span>
+        </div>
+        <div style="font-size:.74rem;color:#8892a4;line-height:1.5">
+          Java: deploy a <code style="color:#fcd9a0">.war</code> file → EB provisions Apache Tomcat, EC2 instances, ELB, and Auto Scaling automatically. Java Servlets + JSF supported.
+        </div>
+      </div>
+
+      <div style="background:#13141a;border-radius:8px;border:1px solid rgba(251,146,60,.15);padding:1rem;font-family:monospace;font-size:.73rem;line-height:1.85;margin-bottom:1rem">
+        <div style="color:#8892a4;font-size:.65rem;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.08em">Deployment workflow:</div>
+        <div><span style="color:#fb923c">1.</span> Developer uploads app (e.g. <span style="color:#fcd9a0">myapp.war</span>)</div>
+        <div><span style="color:#fb923c">2.</span> EB selects platform version → provisions EC2</div>
+        <div><span style="color:#fb923c">3.</span> Auto configures: ELB + Auto Scaling + Health Monitoring</div>
+        <div><span style="color:#fb923c">4.</span> App goes live — developer manages via EB console</div>
+        <div style="color:#34d399;margin-top:.3rem">Developer writes code; AWS handles infrastructure.</div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">IaaS vs PaaS Responsibility</div>
+        <table style="width:100%;font-size:.74rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase">Layer</th>
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase">IaaS (EC2)</th>
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase">PaaS (Beanstalk)</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">OS / Runtime</td><td style="padding:.3rem .5rem;color:#f87171">You</td><td style="padding:.3rem .5rem;color:#34d399">AWS</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Scaling</td><td style="padding:.3rem .5rem;color:#f87171">You</td><td style="padding:.3rem .5rem;color:#34d399">AWS</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Load Balancing</td><td style="padding:.3rem .5rem;color:#f87171">You (configure ELB)</td><td style="padding:.3rem .5rem;color:#34d399">AWS</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Health Monitoring</td><td style="padding:.3rem .5rem;color:#f87171">You</td><td style="padding:.3rem .5rem;color:#34d399">AWS</td></tr>
+          <tr><td style="padding:.3rem .5rem;color:#c4cdd8">Application code</td><td style="padding:.3rem .5rem;color:#34d399">You</td><td style="padding:.3rem .5rem;color:#34d399">You</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">SaaS — AWS Managed Services</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Highest abstraction level — user interacts with the application feature, not the infrastructure or platform.
+        Amazon offers productivity SaaS, analytics SaaS, and a rich portfolio of AI/ML API services.
+      </p>
+
+      <div style="font-size:.68rem;color:#8892a4;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Productivity &amp; Analytics SaaS</div>
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div class="saas-card">
+            <div class="svc-name"><i class="bi bi-file-earmark-text me-1"></i>Amazon WorkDocs</div>
+            <div class="svc-desc">Fully managed enterprise document storage and collaboration. Replaces SharePoint for cloud-native teams.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="saas-card">
+            <div class="svc-name"><i class="bi bi-envelope me-1"></i>Amazon WorkMail</div>
+            <div class="svc-desc">Managed business email and calendar. Compatible with existing email clients (IMAP). Encrypted at rest.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="saas-card">
+            <div class="svc-name"><i class="bi bi-camera-video me-1"></i>Amazon Chime</div>
+            <div class="svc-desc">Online meetings, video conferencing, and team chat. SDK available for embedding meetings into apps.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="saas-card">
+            <div class="svc-name"><i class="bi bi-bar-chart me-1"></i>Amazon QuickSight</div>
+            <div class="svc-desc">Cloud-native BI and analytics. Connect to S3, RDS, Redshift; build interactive dashboards. ML-powered insights.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:.68rem;color:#8892a4;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">AI/ML SaaS API Services</div>
+      <div class="row g-2">
+        <div class="col-4">
+          <div class="saas-card" style="border-color:rgba(52,211,153,.2)">
+            <div class="svc-name" style="color:#34d399"><i class="bi bi-translate me-1"></i>Comprehend</div>
+            <div class="svc-desc">NLP: entity recognition, sentiment analysis, key-phrase extraction from text.</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="saas-card" style="border-color:rgba(52,211,153,.2)">
+            <div class="svc-name" style="color:#34d399"><i class="bi bi-globe2 me-1"></i>Translate</div>
+            <div class="svc-desc">Neural machine translation between 75+ language pairs. Batch or real-time.</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="saas-card" style="border-color:rgba(52,211,153,.2)">
+            <div class="svc-name" style="color:#34d399"><i class="bi bi-camera me-1"></i>Rekognition</div>
+            <div class="svc-desc">Image and video analysis: object detection, facial analysis, content moderation.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="saas-card" style="border-color:rgba(96,165,250,.2)">
+            <div class="svc-name" style="color:#60a5fa"><i class="bi bi-volume-up me-1"></i>Polly</div>
+            <div class="svc-desc">Text-to-speech API. 60+ voices, 29 languages. Neural TTS for lifelike output.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="saas-card" style="border-color:rgba(96,165,250,.2)">
+            <div class="svc-name" style="color:#60a5fa"><i class="bi bi-mic me-1"></i>Transcribe</div>
+            <div class="svc-desc">Automatic speech recognition (ASR). Streaming and batch. Speaker diarisation, custom vocabulary.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 5: CLI & SDK ═══════════════════════ -->
+<div id="tab-sdk" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">AWS CLI — Command-Line Access</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        The AWS CLI provides access to all services from the shell. Supports fuzzy auto-completion, dynamic inline documentation,
+        AWS SSO, and OS shell command execution. Write scripts to automate common operational tasks.
+      </p>
+
+      <div class="code-lang" style="background:rgba(251,146,60,.15);color:#fb923c">bash — AWS CLI examples</div>
+      <pre class="code-box"># List running EC2 instances
+$ aws ec2 describe-instances
+
+# Start a specific instance
+$ aws ec2 start-instances \
+    --instance-ids i-1348636c
+
+# Publish an SNS alert message
+$ aws sns publish \
+    --topic-arn arn:aws:sns:us-east-1:546419318123:OpsError \
+    --message "Script Failure"
+
+# Receive messages from SQS queue
+$ aws sqs receive-message \
+    --queue-url https://queue.amazonaws.com/546419318123/Test
+
+# Display help for any service
+$ aws ec2 help
+$ aws s3 help</pre>
+
+      <div class="info-box mt-3">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">SDK Languages Supported</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem">
+          <span class="service-badge" style="background:rgba(251,191,36,.12);color:#fbbf24">JavaScript</span>
+          <span class="service-badge" style="background:rgba(45,212,191,.12);color:#2dd4bf">Python (boto3)</span>
+          <span class="service-badge" style="background:rgba(167,139,250,.12);color:#a78bfa">PHP</span>
+          <span class="service-badge" style="background:rgba(96,165,250,.12);color:#60a5fa">.NET</span>
+          <span class="service-badge" style="background:rgba(248,113,113,.12);color:#f87171">Ruby</span>
+          <span class="service-badge" style="background:rgba(251,146,60,.12);color:#fb923c">Java</span>
+          <span class="service-badge" style="background:rgba(52,211,153,.12);color:#34d399">Go</span>
+          <span class="service-badge" style="background:rgba(251,191,36,.12);color:#fbbf24">Node.js</span>
+          <span class="service-badge" style="background:rgba(45,212,191,.12);color:#2dd4bf">C++</span>
+        </div>
+      </div>
+
+      <div class="info-box mt-2" style="border-color:rgba(251,146,60,.3)">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">AWS Java SDK — Scale</div>
+        <div class="row g-2 text-center">
+          <div class="col-6"><div style="background:rgba(251,146,60,.08);border-radius:6px;padding:.5rem"><div style="font-size:1.15rem;color:#fb923c;font-weight:700">73,000+</div><div style="font-size:.62rem;color:#8892a4">Java classes &amp; interfaces</div></div></div>
+          <div class="col-6"><div style="background:rgba(251,146,60,.08);border-radius:6px;padding:.5rem"><div style="font-size:1.15rem;color:#fb923c;font-weight:700">10×</div><div style="font-size:.62rem;color:#8892a4">the Java SE platform class count</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Java SDK — Create &amp; Monitor EC2 Instances</h5>
+      <p style="color:#8892a4;font-size:.78rem;line-height:1.55;margin-bottom:.75rem">
+        The Java SDK uses a fluent builder pattern throughout. Every AWS service has a corresponding client class (e.g. <code style="color:#fcd9a0">Ec2Client</code>).
+        Requests are immutable builder objects; responses are typed.
+      </p>
+
+      <div class="code-lang" style="background:rgba(251,146,60,.15);color:#fb923c">Java — Create an EC2 instance</div>
+      <pre class="code-box">String name  = args[0];   // instance name tag
+String amiId = args[1];   // OS image ID (e.g. ami-0abcdef1)
+
+// 1. Build the EC2 client for us-west-2
+Ec2Client ec2 = Ec2Client.builder()
+    .region(Region.US_WEST_2)
+    .build();
+
+// 2. Describe the launch configuration
+RunInstancesRequest runRequest = RunInstancesRequest.builder()
+    .imageId(amiId)
+    .instanceType(InstanceType.T1_MICRO)
+    .maxCount(1)
+    .minCount(1)
+    .build();
+
+// 3. Launch the instance
+RunInstancesResponse response = ec2.runInstances(runRequest);
+String instanceId = response.instances().get(0).instanceId();
+
+// 4. Tag it with a human-readable name
+Tag tag = Tag.builder().key("Name").value(name).build();
+CreateTagsRequest tagRequest = CreateTagsRequest.builder()
+    .resources(instanceId)
+    .tags(tag)
+    .build();
+try {
+    ec2.createTags(tagRequest);
+    System.out.printf("Started EC2 %s based on AMI %s",
+                      instanceId, amiId);
+} catch (Ec2Exception e) {
+    System.err.println(e.awsErrorDetails().errorMessage());
+    System.exit(1);
+}
+ec2.close();</pre>
+
+      <div class="code-lang mt-3" style="background:rgba(52,211,153,.15);color:#34d399">Java — Enable CloudWatch monitoring on an existing instance</div>
+      <pre class="code-box">String instanceId = args[0];   // e.g. "i-1348636c"
+
+Ec2Client ec2 = Ec2Client.builder()
+    .region(Region.US_WEST_2)
+    .build();
+
+// MonitorInstances enables detailed 1-minute CloudWatch metrics
+MonitorInstancesRequest request = MonitorInstancesRequest.builder()
+    .instanceIds(instanceId)
+    .build();
+
+ec2.monitorInstances(request);
+System.out.printf("Enabled monitoring for instance %s", instanceId);
+ec2.close();</pre>
+
+      <div class="info-box mt-3">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">SDK Fluent Builder Pattern</div>
+        <div style="font-size:.78rem;color:#8892a4;line-height:1.55">
+          Every AWS SDK request uses <code style="color:#fcd9a0">.builder() … .build()</code> — immutable, type-safe, IDE-friendly. The client is created once per region and reused. All resource identifiers (instance IDs, ARNs, queue URLs) are returned as strongly-typed strings in the response object. SDK docs: 73,000+ classes — roughly the size of ten Java SE platforms.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /pt-4 wrapper -->
+
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(function(p) { p.classList.add('d-none'); });
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ch4-nav-link').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+}
+(function() {
+  var h = window.location.hash.slice(1);
+  if (h) {
+    var btn = document.querySelector('.ch4-nav-link[onclick*="' + h + '"]');
+    if (btn) { showTab(h, btn); }
+  }
+})();
+</script>
+
+{% endblock %}

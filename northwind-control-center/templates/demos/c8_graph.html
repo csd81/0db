@@ -1,0 +1,926 @@
+{% extends "base.html" %}
+{% block title %}C8 — Graph Tables, Neo4j & BLOB{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <i class="bi bi-diagram-3 fs-2 me-3" style="color:#a78bfa"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Chapter 8 — Special Data Types</h2>
+    <p class="text-muted mb-0">SQL Server Graph Tables · Neo4j / Cypher · BLOB storage</p>
+  </div>
+</div>
+
+<!-- Tab nav -->
+<ul class="nav nav-tabs mb-4" id="c8tabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-graph">
+      <i class="bi bi-diagram-3 me-1"></i>Graph Tables
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-relational">
+      <i class="bi bi-table me-1"></i>Relational Equivalent
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-neo4j">
+      <i class="bi bi-share me-1"></i>Neo4j / Cypher
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-northwind">
+      <i class="bi bi-box me-1"></i>Northwind Views
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-blob">
+      <i class="bi bi-image me-1"></i>BLOB Storage
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- ── TAB 1: Graph Tables ──────────────────────────────────────────────── -->
+  <div class="tab-pane fade show active" id="tab-graph">
+
+    <!-- Concept banner -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+          <div class="card-body">
+            <h6 class="fw-bold mb-2" style="color:#a78bfa"><i class="bi bi-circle me-1"></i>Node Tables</h6>
+            <p class="mb-2" style="font-size:.8rem;color:#8892a4">
+              Created with <code>AS NODE</code>. SQL Server adds a hidden <code>$node_id</code> column
+              (JSON: <code>{"type":"node","schema":"dbo","table":"person","id":0}</code>).
+              Queried like normal tables — INSERT / SELECT work as usual.
+            </p>
+            <code style="font-size:.72rem;color:#c4b5fd">CREATE TABLE person (id INT PK, name VARCHAR(100)) AS NODE</code>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(56,189,248,.3)">
+          <div class="card-body">
+            <h6 class="fw-bold mb-2" style="color:#38bdf8"><i class="bi bi-arrow-right me-1"></i>Edge Tables</h6>
+            <p class="mb-2" style="font-size:.8rem;color:#8892a4">
+              Created with <code>AS EDGE</code>. Hidden <code>$from_id</code> and <code>$to_id</code>
+              columns store node references as JSON. Edges are always <strong>directed</strong> —
+              undirected relationships need two opposite edges.
+              Duplicate edges are allowed (no auto-constraint).
+            </p>
+            <code style="font-size:.72rem;color:#7dd3fc">CREATE TABLE friendof AS EDGE<br>ALTER TABLE friendof ADD CONSTRAINT ec_1 CONNECTION (person TO person)</code>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+          <div class="card-body">
+            <h6 class="fw-bold mb-2" style="color:#34d399"><i class="bi bi-lightning me-1"></i>MATCH Syntax</h6>
+            <p class="mb-2" style="font-size:.8rem;color:#8892a4">
+              Graph queries use <code>MATCH</code> in the WHERE clause.
+              Pattern: <code>(n1-(edge)->n2)</code> for directed traversal.
+              Multiple constraints with <code>AND</code>.
+              <code>SHORTEST_PATH</code> requires <code>FOR PATH</code> aliases and
+              <code>STRING_AGG … WITHIN GROUP (GRAPH PATH)</code>.
+            </p>
+            <code style="font-size:.72rem;color:#6ee7b7">WHERE MATCH(person-(likes)->restaurant<br>AND person-(livesin)->city)</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schema diagram -->
+    <div class="card mb-4" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#a78bfa"><i class="bi bi-diagram-2 me-1"></i>Graph Schema</span>
+        <small class="ms-3 text-muted">Nodes (circles) → Edge tables (arrows)</small>
+      </div>
+      <div class="card-body">
+        <svg viewBox="0 0 720 200" style="width:100%;max-height:200px;font-family:monospace">
+          <!-- nodes -->
+          <circle cx="120" cy="100" r="40" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1.5"/>
+          <text x="120" y="96" text-anchor="middle" fill="#c4b5fd" font-size="13" font-weight="bold">person</text>
+          <text x="120" y="112" text-anchor="middle" fill="#8892a4" font-size="10">id, name</text>
+
+          <circle cx="360" cy="50" r="40" fill="rgba(56,189,248,.12)" stroke="#38bdf8" stroke-width="1.5"/>
+          <text x="360" y="46" text-anchor="middle" fill="#7dd3fc" font-size="13" font-weight="bold">restaurant</text>
+          <text x="360" y="62" text-anchor="middle" fill="#8892a4" font-size="10">id, name</text>
+
+          <circle cx="360" cy="155" r="35" fill="rgba(52,211,153,.12)" stroke="#34d399" stroke-width="1.5"/>
+          <text x="360" y="151" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">city</text>
+          <text x="360" y="167" text-anchor="middle" fill="#8892a4" font-size="10">id, name</text>
+
+          <!-- person → restaurant: likes -->
+          <line x1="158" y1="76" x2="320" y2="55" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="230" y="58" fill="#f59e0b" font-size="10">likes(rating)</text>
+
+          <!-- person → person: friendof -->
+          <path d="M 100 62 C 40 10 40 10 100 62" fill="none" stroke="#e879f9" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+          <text x="28" y="42" fill="#e879f9" font-size="10">friendof</text>
+          <text x="28" y="54" fill="#8892a4" font-size="9">CONNECTION</text>
+          <text x="28" y="66" fill="#8892a4" font-size="9">person→person</text>
+
+          <!-- person → city: livesin -->
+          <line x1="148" y1="126" x2="325" y2="148" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <text x="215" y="150" fill="#34d399" font-size="10">livesin</text>
+
+          <!-- restaurant → city: locatedin -->
+          <line x1="360" y1="90" x2="360" y2="120" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#arr4)"/>
+          <text x="368" y="110" fill="#38bdf8" font-size="10">locatedin</text>
+
+          <!-- edge labels / property note -->
+          <text x="560" y="60" fill="#8892a4" font-size="10">$node_id = hidden JSON</text>
+          <text x="560" y="75" fill="#8892a4" font-size="10">$edge_id = hidden JSON</text>
+          <text x="560" y="90" fill="#8892a4" font-size="10">$from_id / $to_id on edges</text>
+
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
+            </marker>
+            <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#e879f9"/>
+            </marker>
+            <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#34d399"/>
+            </marker>
+            <marker id="arr4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Setup -->
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <button class="btn btn-sm" style="background:#a78bfa;color:#0d0f16;border:none" onclick="graphSetup()">
+        <i class="bi bi-play-fill me-1"></i>Create Tables &amp; Load Data
+      </button>
+      <span id="setupStatus" class="text-muted small"></span>
+    </div>
+
+    <!-- Query buttons -->
+    <div class="mb-3">
+      <div class="fw-bold mb-2" style="font-size:.8rem;color:#8892a4;letter-spacing:.05em">GRAPH QUERIES (MATCH)</div>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-sm" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);color:#c4b5fd" onclick="runGraphQ(1)">Q1 — John's friends</button>
+        <button class="btn btn-sm" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);color:#c4b5fd" onclick="runGraphQ(2)">Q2 — John's restaurants</button>
+        <button class="btn btn-sm" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);color:#c4b5fd" onclick="runGraphQ(3)">Q3 — Friends' restaurants</button>
+        <button class="btn btn-sm" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);color:#c4b5fd" onclick="runGraphQ(4)">Q4 — Same-city diner</button>
+        <button class="btn btn-sm" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);color:#c4b5fd" onclick="runGraphQ(5)">Q5 — Friend-of-friend city</button>
+        <button class="btn btn-sm" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);color:#c4b5fd" onclick="runGraphQ(6)">Q6 — Common friends</button>
+        <button class="btn btn-sm" style="background:rgba(139,92,246,.25);border:1px solid rgba(139,92,246,.5);color:#ddd6fe" onclick="runGraphQ(7)">
+          <i class="bi bi-signpost me-1"></i>SHORTEST_PATH
+        </button>
+      </div>
+    </div>
+
+    <!-- Query result panel -->
+    <div id="graphPanel" class="card" style="background:#0d0f16;border:1px solid #2a2d35;display:none">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background:#13141a;border-bottom:1px solid #2a2d35">
+        <span id="qTitle" class="fw-bold" style="color:#a78bfa"></span>
+        <span id="qMatch" class="badge" style="background:rgba(167,139,250,.15);color:#c4b5fd;font-size:.7rem"></span>
+      </div>
+      <div class="card-body p-0">
+        <pre id="qSql" class="m-0 p-3" style="font-size:.78rem;color:#93c5fd;background:#0a0b0f;border-bottom:1px solid #2a2d35;white-space:pre-wrap"></pre>
+        <div id="qResult" class="p-3"></div>
+      </div>
+    </div>
+
+    <!-- Duplicate edge note -->
+    <div class="card mt-4" style="background:#13141a;border:1px solid rgba(251,191,36,.25)">
+      <div class="card-body">
+        <h6 class="fw-bold mb-2" style="color:#fbbf24"><i class="bi bi-exclamation-triangle me-1"></i>Duplicate Edges &amp; $edge_id</h6>
+        <p style="font-size:.82rem;color:#8892a4;margin-bottom:.5rem">
+          SQL Server graph allows duplicate edges (no uniqueness constraint). To detect or delete duplicates,
+          read the hidden <code>$edge_id</code> JSON column. Internal IDs start at 0, not 1.
+        </p>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <div class="p-2" style="background:#0a0b0f;border-radius:4px">
+              <div style="font-size:.7rem;color:#8892a4;margin-bottom:.25rem">Detect duplicates</div>
+              <pre class="mb-0" style="font-size:.75rem;color:#93c5fd">SELECT * FROM friendof
+WHERE json_value($from_id,'$.id') = 2
+  AND json_value($to_id,'$.id') = 5;</pre>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-2" style="background:#0a0b0f;border-radius:4px">
+              <div style="font-size:.7rem;color:#8892a4;margin-bottom:.25rem">Delete by $edge_id</div>
+              <pre class="mb-0" style="font-size:.75rem;color:#fca5a5">DELETE friendof
+WHERE json_value($edge_id,'$.id') = 8;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── TAB 2: Relational Equivalent ────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-relational">
+
+    <div class="alert" style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);color:#fcd34d">
+      <i class="bi bi-info-circle me-2"></i>
+      The same social graph (persons, restaurants, cities) modelled as classical relational tables with FK constraints —
+      demonstrating the verbosity of JOIN-based graph traversal vs <code>MATCH</code>.
+    </div>
+
+    <!-- Schema comparison -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#a78bfa"><i class="bi bi-diagram-3 me-1"></i>Graph Model (5 tables)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.72rem;color:#c4b5fd;margin:0">person       AS NODE
+restaurant   AS NODE
+city         AS NODE
+likes        AS EDGE  (rating)
+friendof     AS EDGE  CONNECTION(person→person)</pre>
+            <hr style="border-color:#2a2d35;margin:.5rem 0">
+            <div style="font-size:.75rem;color:#34d399">
+              <i class="bi bi-check-circle me-1"></i>MATCH reads like English<br>
+              <i class="bi bi-check-circle me-1"></i>Multi-hop paths in one clause<br>
+              <i class="bi bi-check-circle me-1"></i>SHORTEST_PATH built-in
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(56,189,248,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#38bdf8"><i class="bi bi-table me-1"></i>Relational Model (5 tables)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.72rem;color:#7dd3fc;margin:0">r_city       (id PK, name, statename)
+r_person     (id PK, name, city_id FK→r_city)
+r_restaurant (id PK, name, city_id FK→r_city)
+r_likes      (person_id, restaurant_id, rating)
+r_friendof   (person1_id, person2_id)</pre>
+            <hr style="border-color:#2a2d35;margin:.5rem 0">
+            <div style="font-size:.75rem;color:#fca5a5">
+              <i class="bi bi-x-circle me-1"></i>Multi-hop = many explicit JOINs<br>
+              <i class="bi bi-x-circle me-1"></i>Shortest-path = recursive CTEs<br>
+              <i class="bi bi-x-circle me-1"></i>Schema changes require ALTER TABLE
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relational setup -->
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <button class="btn btn-sm" style="background:#38bdf8;color:#0d0f16;border:none" onclick="relSetup()">
+        <i class="bi bi-play-fill me-1"></i>Create Relational Tables
+      </button>
+      <span id="relSetupStatus" class="text-muted small"></span>
+    </div>
+
+    <!-- Relational query buttons -->
+    <div class="mb-3">
+      <div class="fw-bold mb-2" style="font-size:.8rem;color:#8892a4;letter-spacing:.05em">RELATIONAL QUERIES (JOIN-BASED)</div>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-sm" style="background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.4);color:#7dd3fc" onclick="runRelQ(1)">Q1 — John's friends</button>
+        <button class="btn btn-sm" style="background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.4);color:#7dd3fc" onclick="runRelQ(2)">Q2 — John's restaurants</button>
+        <button class="btn btn-sm" style="background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.4);color:#7dd3fc" onclick="runRelQ(3)">Q3 — Friends' restaurants</button>
+        <button class="btn btn-sm" style="background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.4);color:#7dd3fc" onclick="runRelQ(4)">Q4 — Same-city diner</button>
+        <button class="btn btn-sm" style="background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.4);color:#7dd3fc" onclick="runRelQ(5)">Q5 — Friend-of-friend city</button>
+      </div>
+    </div>
+
+    <div id="relPanel" class="card" style="background:#0d0f16;border:1px solid #2a2d35;display:none">
+      <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+        <span id="relTitle" class="fw-bold" style="color:#38bdf8"></span>
+      </div>
+      <div class="card-body p-0">
+        <pre id="relSql" class="m-0 p-3" style="font-size:.78rem;color:#93c5fd;background:#0a0b0f;border-bottom:1px solid #2a2d35;white-space:pre-wrap"></pre>
+        <div id="relResult" class="p-3"></div>
+      </div>
+    </div>
+
+    <!-- Side-by-side Q3 comparison -->
+    <div class="card mt-4" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#fbbf24">Query Complexity: "Restaurants liked by John's friends" (Q3)</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="mb-1" style="font-size:.72rem;color:#a78bfa;font-weight:bold">GRAPH — 1 MATCH clause</div>
+            <pre style="font-size:.75rem;color:#c4b5fd;background:#0a0b0f;padding:.75rem;border-radius:4px">SELECT restaurant.name
+FROM person person1, person person2,
+     likes, friendof, restaurant
+WHERE MATCH(
+  person1-(friendof)->person2
+           -(likes)->restaurant)
+AND person1.name = 'john'</pre>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-1" style="font-size:.72rem;color:#38bdf8;font-weight:bold">RELATIONAL — 4 JOINs</div>
+            <pre style="font-size:.75rem;color:#7dd3fc;background:#0a0b0f;padding:.75rem;border-radius:4px">SELECT r.name
+FROM r_person p1
+  JOIN r_friendof f  ON p1.id = f.person1_id
+  JOIN r_person p2   ON p2.id = f.person2_id
+  JOIN r_likes l     ON l.person_id = p2.id
+  JOIN r_restaurant r ON r.id = l.restaurant_id
+WHERE p1.name = 'john'</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance note -->
+    <div class="card mt-3" style="background:#13141a;border:1px solid rgba(239,68,68,.25)">
+      <div class="card-body">
+        <h6 class="fw-bold mb-2" style="color:#fca5a5"><i class="bi bi-speedometer2 me-1"></i>SHORTEST_PATH Performance</h6>
+        <p style="font-size:.82rem;color:#8892a4;margin:0">
+          SQL Server's SHORTEST_PATH implementation uses <strong>temp tables + nested loops</strong> — it does not use
+          native graph algorithms. Performance degrades rapidly on dense graphs (millions of nodes). For production
+          social-graph workloads, Neo4j's native pointer-based storage traverses relationships at
+          <strong>O(1) per hop</strong>, regardless of graph size.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── TAB 3: Neo4j / Cypher ────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-neo4j">
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399"><i class="bi bi-share me-1"></i>Neo4j vs SQL Server Graph</span>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm table-dark mb-0" style="font-size:.78rem">
+              <thead>
+                <tr><th style="color:#8892a4">Feature</th><th style="color:#a78bfa">SQL Server Graph</th><th style="color:#34d399">Neo4j</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Storage</td><td>Row store + hidden cols</td><td>Native pointer store</td></tr>
+                <tr><td>Query language</td><td>T-SQL + MATCH</td><td>Cypher</td></tr>
+                <tr><td>Hop traversal</td><td>Nested loops (temp table)</td><td>O(1) pointer follow</td></tr>
+                <tr><td>Shortest path</td><td>SHORTEST_PATH (limited)</td><td>apoc.algo.dijkstra</td></tr>
+                <tr><td>Import</td><td>INSERT / BULK</td><td>LOAD CSV WITH HEADERS</td></tr>
+                <tr><td>Dedup</td><td>Manual $edge_id delete</td><td>MERGE (CREATE or match)</td></tr>
+                <tr><td>ACID</td><td>Full SQL Server ACID</td><td>ACID per transaction</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#a78bfa"><i class="bi bi-code-slash me-1"></i>Cypher Syntax Cheatsheet</span>
+          </div>
+          <div class="card-body p-2">
+            <div class="mb-2">
+              <div style="font-size:.68rem;color:#8892a4;margin-bottom:.2rem">Node pattern</div>
+              <code style="font-size:.74rem;color:#c4b5fd">(n:Label {prop: value})</code>
+            </div>
+            <div class="mb-2">
+              <div style="font-size:.68rem;color:#8892a4;margin-bottom:.2rem">Relationship</div>
+              <code style="font-size:.74rem;color:#7dd3fc">(a)-[:LIKES]-&gt;(b)</code>
+            </div>
+            <div class="mb-2">
+              <div style="font-size:.68rem;color:#8892a4;margin-bottom:.2rem">Variable-length path</div>
+              <code style="font-size:.74rem;color:#6ee7b7">(a)-[:FRIENDS*1..3]-&gt;(b)</code>
+            </div>
+            <div class="mb-2">
+              <div style="font-size:.68rem;color:#8892a4;margin-bottom:.2rem">MERGE (upsert)</div>
+              <code style="font-size:.74rem;color:#fcd34d">MERGE (n:Person {name:'Alice'})<br>ON CREATE SET n.created = datetime()</code>
+            </div>
+            <div>
+              <div style="font-size:.68rem;color:#8892a4;margin-bottom:.2rem">Shortest path</div>
+              <code style="font-size:.74rem;color:#f9a8d4">shortestPath((a)-[:FRIENDS*]-&gt;(b))</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cypher examples -->
+    <h6 class="fw-bold mb-3" style="color:#8892a4">CYPHER EQUIVALENT QUERIES</h6>
+    <div class="row g-3">
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#34d399;font-size:.8rem">Schema Setup (MERGE)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.73rem;color:#86efac;margin:0">// Create persons (MERGE = CREATE if not exists)
+MERGE (john:Person {name:'John'})
+MERGE (mary:Person {name:'Mary'})
+MERGE (alice:Person {name:'Alice'})
+
+// Create relationship
+MERGE (john)-[:FRIENDS_WITH]->(mary)
+MERGE (mary)-[:FRIENDS_WITH]->(alice)
+
+// Create restaurants
+MERGE (t:Restaurant {name:'Taco Dell'})
+MERGE (john)-[:LIKES {rating:9}]->(t)
+
+// Import from CSV
+LOAD CSV WITH HEADERS
+FROM 'file:///persons.csv' AS line
+MERGE (:Person {name: line.name})</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#38bdf8;font-size:.8rem">Query Examples (MATCH)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.73rem;color:#93c5fd;margin:0">// John's friends
+MATCH (john:Person {name:'John'})
+      -[:FRIENDS_WITH]->(friend)
+RETURN friend.name
+
+// Friends-of-friends liked restaurants
+MATCH (john:Person {name:'John'})
+      -[:FRIENDS_WITH]->(friend)
+      -[:LIKES]->(r:Restaurant)
+RETURN r.name
+
+// Shortest path
+MATCH (a:Person {name:'John'}),
+      (b:Person {name:'Jacob'}),
+      p = shortestPath((a)-[:FRIENDS_WITH*]->(b))
+RETURN [n IN nodes(p) | n.name] AS path,
+       length(p) AS hops
+
+// Graph diameter (longest shortest path)
+MATCH (a:Person), (b:Person) WHERE a <> b
+WITH shortestPath((a)-[:FRIENDS_WITH*]->(b)) AS p
+RETURN max(length(p)) AS diameter</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#fcd34d;font-size:.8rem">DML: RETURN / DELETE / SET / REMOVE</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.73rem;color:#fde68a;margin:0">// RETURN selected properties
+MATCH (n:Person)
+RETURN n.name, n.age ORDER BY n.name
+
+// DELETE node and all its relationships
+MATCH (n:Person {name:'Tom'})
+DETACH DELETE n
+
+// SET property
+MATCH (n:Person {name:'Alice'})
+SET n.age = 30
+RETURN n
+
+// REMOVE property
+MATCH (n:Person {name:'Alice'})
+REMOVE n.age
+
+// UPDATE via SET
+MATCH (n:Person {name:'John'})
+SET n.city = 'Bellevue'</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#e879f9;font-size:.8rem">Aggregation (no GROUP BY — implicit)</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.73rem;color:#f0abfc;margin:0">// Count friends per person
+MATCH (p:Person)-[:FRIENDS_WITH]->(friend)
+RETURN p.name, count(friend) AS friend_count
+ORDER BY friend_count DESC
+
+// Average rating per restaurant
+MATCH (p:Person)-[l:LIKES]->(r:Restaurant)
+RETURN r.name, avg(l.rating) AS avg_rating
+
+// Note: no GROUP BY — Cypher aggregates
+// automatically on non-aggregated cols
+
+// Collect into list
+MATCH (p:Person)-[:LIKES]->(r:Restaurant)
+RETURN p.name, collect(r.name) AS restaurants</pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- GraphQL note -->
+    <div class="card mt-4" style="background:#13141a;border:1px solid rgba(251,191,36,.25)">
+      <div class="card-body">
+        <h6 class="fw-bold mb-2" style="color:#fbbf24"><i class="bi bi-braces me-1"></i>GraphQL — Not the Same as Graph DB</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <p style="font-size:.82rem;color:#8892a4;margin:0">
+              <strong style="color:#fbbf24">GraphQL</strong> is a query <em>interface specification</em> (Facebook, 2015)
+              for APIs — it defines how clients request exactly the fields they need. It runs on top of
+              any backend (SQL, REST, NoSQL). It is not a database, not a graph, and not related to Neo4j.
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p style="font-size:.82rem;color:#8892a4;margin:0">
+              <strong style="color:#34d399">Graph DB (Neo4j, Cypher)</strong> is a storage model where
+              data is fundamentally nodes + relationships. Traversal follows pointers, not table scans.
+              Best for "5 degrees of separation" style queries that would require dozens of JOINs in SQL.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── TAB 4: Northwind Graph Views ────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-northwind">
+
+    <div class="alert" style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3);color:#7dd3fc">
+      <i class="bi bi-info-circle me-2"></i>
+      Three thin views over the live Northwind database — <code>vi_products</code>, <code>vi_orders</code>,
+      <code>vi_orders_products</code> — create a lightweight graph-ready projection (nodes + edge-like join table).
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#38bdf8;font-size:.8rem">vi_products</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#93c5fd;margin:0">CREATE VIEW vi_products AS
+SELECT productid,
+       productname
+FROM Products;</pre>
+            <div class="mt-2" style="font-size:.72rem;color:#8892a4">Product "nodes" — minimal projection, productid as node key.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#34d399;font-size:.8rem">vi_orders</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#86efac;margin:0">CREATE VIEW vi_orders AS
+SELECT orderid,
+       CAST(orderdate AS DATE) odate
+FROM Orders;</pre>
+            <div class="mt-2" style="font-size:.72rem;color:#8892a4">Order "nodes" — strips time from datetime, exposes date only.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100" style="background:#0d0f16;border:1px solid #2a2d35">
+          <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+            <span style="color:#a78bfa;font-size:.8rem">vi_orders_products</span>
+          </div>
+          <div class="card-body p-2">
+            <pre style="font-size:.74rem;color:#c4b5fd;margin:0">CREATE VIEW vi_orders_products AS
+SELECT o.orderid, p.productid,
+    od.Quantity quantity,
+    od.Quantity * od.UnitPrice
+    * (1 - od.Discount) price
+FROM Orders o
+JOIN [Order Details] od ...
+JOIN Products p ...</pre>
+            <div class="mt-2" style="font-size:.72rem;color:#8892a4">Edge table — connects order nodes to product nodes with quantity + price.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create views + query -->
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <button class="btn btn-sm" style="background:#38bdf8;color:#0d0f16;border:none" onclick="createViews()">
+        <i class="bi bi-play-fill me-1"></i>Create Views
+      </button>
+      <button class="btn btn-sm" style="background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.4);color:#c4b5fd" onclick="queryOrders()">
+        <i class="bi bi-table me-1"></i>Query Top-20 Orders
+      </button>
+      <span id="viewsStatus" class="text-muted small"></span>
+    </div>
+
+    <div id="ordersPanel" style="display:none">
+      <div class="fw-bold mb-2" style="font-size:.8rem;color:#8892a4">TOP 20 ROWS — vi_orders_products JOIN vi_orders JOIN vi_products</div>
+      <div id="ordersTable"></div>
+    </div>
+
+  </div>
+
+  <!-- ── TAB 5: BLOB Storage ──────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-blob">
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(251,146,60,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#fb923c"><i class="bi bi-image me-1"></i>VARBINARY(MAX) — In-Row BLOB</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.82rem;color:#8892a4">
+              Store binary data (images, PDFs, small files) directly in a SQL Server column.
+              Loaded from disk using <code>OPENROWSET(BULK …, SINGLE_BLOB)</code>.
+              Suitable for files up to a few MB — larger files should use FileTables or Azure Blob Storage.
+            </p>
+            <pre style="font-size:.75rem;color:#fcd34d;background:#0a0b0f;padding:.75rem;border-radius:4px">-- DDL
+CREATE TABLE my_table (
+    id   INT IDENTITY PRIMARY KEY,
+    name VARCHAR(200),
+    data VARBINARY(MAX)
+);
+
+-- Insert image from filesystem
+INSERT my_table (name, data)
+SELECT 'photo.png', BulkColumn
+FROM OPENROWSET(
+    BULK 'C:\path\my_photo.png',
+    SINGLE_BLOB
+) AS blob_data;
+
+-- Read back (size check)
+SELECT id, name,
+    DATALENGTH(data) / 1024.0 AS size_kb
+FROM my_table;</pre>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+          <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+            <span class="fw-bold" style="color:#34d399"><i class="bi bi-hdd me-1"></i>FileTables — Large BLOB / File System</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.82rem;color:#8892a4">
+              FileTables extend FILESTREAM to expose a full Windows file-system share backed by SQL Server.
+              Files appear as directories. Applications can read/write via UNC paths <em>and</em> via T-SQL simultaneously.
+              Best for large video, audio, medical imaging — anything impractical to store in rows.
+            </p>
+            <pre style="font-size:.75rem;color:#6ee7b7;background:#0a0b0f;padding:.75rem;border-radius:4px">-- Enable FILESTREAM at instance level (SQL Server Configuration Manager)
+-- then:
+
+CREATE DATABASE docs
+ON PRIMARY (...),
+FILEGROUP fg_fs CONTAINS FILESTREAM
+    (NAME='docs_fs', FILENAME='C:\data\docs_fs')
+...
+WITH FILESTREAM (NON_TRANSACTED_ACCESS = FULL,
+                 DIRECTORY_NAME = 'docs');
+
+-- Create FileTable
+CREATE TABLE docs_ft AS FileTable
+WITH (FileTable_Directory = 'documents',
+      FileTable_Collate_Filename = database_default);
+
+-- Files accessible via:
+-- \\server\instance\docs\documents\</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision matrix -->
+    <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+      <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+        <span class="fw-bold" style="color:#fbbf24"><i class="bi bi-grid-3x3 me-1"></i>BLOB Storage Decision Matrix</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-dark table-bordered mb-0" style="font-size:.78rem">
+          <thead>
+            <tr style="background:#1a1d24">
+              <th style="color:#8892a4">Approach</th>
+              <th style="color:#8892a4">Max Size</th>
+              <th style="color:#8892a4">ACID</th>
+              <th style="color:#8892a4">Backup</th>
+              <th style="color:#8892a4">File-system access</th>
+              <th style="color:#8892a4">Use case</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:#fb923c">VARBINARY(MAX)</td>
+              <td>2 GB / row</td>
+              <td><span class="badge bg-success">✓</span></td>
+              <td><span class="badge bg-success">SQL backup</span></td>
+              <td>T-SQL only</td>
+              <td>Thumbnails, PDFs, small attachments</td>
+            </tr>
+            <tr>
+              <td style="color:#38bdf8">FILESTREAM</td>
+              <td>OS limit</td>
+              <td><span class="badge bg-success">✓</span></td>
+              <td><span class="badge bg-success">SQL backup</span></td>
+              <td>UNC path + T-SQL</td>
+              <td>Large images, documents (&gt;1 MB)</td>
+            </tr>
+            <tr>
+              <td style="color:#34d399">FileTable</td>
+              <td>OS limit</td>
+              <td><span class="badge bg-success">✓</span></td>
+              <td><span class="badge bg-success">SQL backup</span></td>
+              <td>Full Windows share</td>
+              <td>Video, CAD, medical imaging</td>
+            </tr>
+            <tr>
+              <td style="color:#a78bfa">Azure Blob Storage</td>
+              <td>190.7 TB / blob</td>
+              <td><span class="badge bg-warning text-dark">Eventual</span></td>
+              <td><span class="badge bg-info">GRS/ZRS</span></td>
+              <td>REST / SDK</td>
+              <td>Internet-scale media, backups, CDN</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Key concept note -->
+    <div class="row g-3 mt-2">
+      <div class="col-md-6">
+        <div class="card" style="background:#13141a;border:1px solid rgba(239,68,68,.25)">
+          <div class="card-body">
+            <h6 class="fw-bold mb-2" style="color:#fca5a5"><i class="bi bi-exclamation-triangle me-1"></i>OPENROWSET Requires SQL Agent Perms</h6>
+            <p style="font-size:.82rem;color:#8892a4;margin:0">
+              <code>OPENROWSET(BULK …)</code> requires the service account to have read access to the
+              file path. On Linux SQL Server, map the path into the container or use a bind mount.
+              The file must be accessible to the SQL Server process, not the client.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card" style="background:#13141a;border:1px solid rgba(56,189,248,.25)">
+          <div class="card-body">
+            <h6 class="fw-bold mb-2" style="color:#7dd3fc"><i class="bi bi-cloud-upload me-1"></i>Modern Pattern: Pointer + Object Store</h6>
+            <p style="font-size:.82rem;color:#8892a4;margin:0">
+              Modern apps rarely store BLOBs in SQL. Instead: store the URL in SQL, upload the actual bytes
+              to S3 / Azure Blob / GCS. SQL handles metadata + ACID; the object store handles throughput + CDN.
+              <code>SELECT photo_url FROM products WHERE id = 5</code> → CDN delivers the image.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- end tab-content -->
+
+<script>
+function renderTable(cols, rows) {
+  if (!rows || rows.length === 0) return '<p class="text-muted small">No rows returned.</p>';
+  let h = '<table class="table table-dark table-sm table-bordered mb-0" style="font-size:.78rem"><thead><tr>';
+  cols.forEach(c => h += `<th style="color:#8892a4">${c}</th>`);
+  h += '</tr></thead><tbody>';
+  rows.forEach(r => {
+    h += '<tr>';
+    r.forEach(v => {
+      const cls = v === null ? 'color:#6b7280' : 'color:#e2e8f0';
+      h += `<td style="${cls}">${v === null ? '<em>NULL</em>' : v}</td>`;
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  return h;
+}
+
+function renderError(msg, sql) {
+  let h = `<div class="alert alert-danger mb-0" style="font-size:.8rem">
+    <strong>Error:</strong> ${msg}`;
+  if (sql) h += `<pre class="mt-2 mb-0" style="font-size:.72rem;color:#fca5a5;white-space:pre-wrap">${sql}</pre>`;
+  h += '</div>';
+  return h;
+}
+
+async function graphSetup() {
+  const el = document.getElementById('setupStatus');
+  el.textContent = 'Running…';
+  el.style.color = '#fbbf24';
+  try {
+    const r = await fetch('/demos/c8-graph/setup', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      el.textContent = `✓ ${d.steps} steps OK` + (d.errors.length ? ` · ${d.errors.length} skipped` : '');
+      el.style.color = '#34d399';
+    } else {
+      el.textContent = '✗ ' + d.error;
+      el.style.color = '#fca5a5';
+    }
+  } catch(e) { el.textContent = '✗ ' + e; el.style.color = '#fca5a5'; }
+}
+
+async function runGraphQ(n) {
+  const panel = document.getElementById('graphPanel');
+  panel.style.display = 'block';
+  document.getElementById('qTitle').textContent = 'Loading…';
+  document.getElementById('qMatch').textContent = '';
+  document.getElementById('qSql').textContent = '';
+  document.getElementById('qResult').innerHTML = '<div class="text-muted small">Running…</div>';
+  try {
+    const r = await fetch(`/demos/c8-graph/query/${n}`);
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('qTitle').textContent = d.title;
+      document.getElementById('qMatch').textContent = d.match || '';
+      document.getElementById('qSql').textContent = d.sql;
+      document.getElementById('qResult').innerHTML = renderTable(d.cols, d.rows);
+    } else {
+      document.getElementById('qTitle').textContent = 'Error';
+      document.getElementById('qResult').innerHTML = renderError(d.error, d.sql);
+    }
+  } catch(e) {
+    document.getElementById('qResult').innerHTML = renderError(e.toString());
+  }
+}
+
+async function relSetup() {
+  const el = document.getElementById('relSetupStatus');
+  el.textContent = 'Running…';
+  el.style.color = '#fbbf24';
+  try {
+    const r = await fetch('/demos/c8-graph/relational-setup', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      el.textContent = `✓ ${d.steps} steps OK` + (d.errors.length ? ` · ${d.errors.length} skipped` : '');
+      el.style.color = '#34d399';
+    } else {
+      el.textContent = '✗ ' + d.error;
+      el.style.color = '#fca5a5';
+    }
+  } catch(e) { el.textContent = '✗ ' + e; el.style.color = '#fca5a5'; }
+}
+
+async function runRelQ(n) {
+  const panel = document.getElementById('relPanel');
+  panel.style.display = 'block';
+  document.getElementById('relTitle').textContent = 'Loading…';
+  document.getElementById('relSql').textContent = '';
+  document.getElementById('relResult').innerHTML = '<div class="text-muted small">Running…</div>';
+  try {
+    const r = await fetch(`/demos/c8-graph/relational-query/${n}`);
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('relTitle').textContent = d.title;
+      document.getElementById('relSql').textContent = d.sql;
+      document.getElementById('relResult').innerHTML = renderTable(d.cols, d.rows);
+    } else {
+      document.getElementById('relTitle').textContent = 'Error';
+      document.getElementById('relResult').innerHTML = renderError(d.error, d.sql);
+    }
+  } catch(e) {
+    document.getElementById('relResult').innerHTML = renderError(e.toString());
+  }
+}
+
+async function createViews() {
+  const el = document.getElementById('viewsStatus');
+  el.textContent = 'Creating views…';
+  el.style.color = '#fbbf24';
+  try {
+    const r = await fetch('/demos/c8-graph/northwind-views', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      el.textContent = `✓ ${d.steps} views created` + (d.errors.length ? ` · ${d.errors.length} warnings` : '');
+      el.style.color = '#34d399';
+    } else {
+      el.textContent = '✗ ' + d.error;
+      el.style.color = '#fca5a5';
+    }
+  } catch(e) { el.textContent = '✗ ' + e; el.style.color = '#fca5a5'; }
+}
+
+async function queryOrders() {
+  const panel = document.getElementById('ordersPanel');
+  const tbl   = document.getElementById('ordersTable');
+  panel.style.display = 'block';
+  tbl.innerHTML = '<div class="text-muted small">Loading…</div>';
+  try {
+    const r = await fetch('/demos/c8-graph/northwind-orders');
+    const d = await r.json();
+    if (d.ok) {
+      tbl.innerHTML = renderTable(d.cols, d.rows);
+    } else {
+      tbl.innerHTML = renderError(d.error);
+    }
+  } catch(e) { tbl.innerHTML = renderError(e.toString()); }
+}
+</script>
+{% endblock %}

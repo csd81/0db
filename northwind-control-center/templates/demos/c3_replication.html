@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% block title %}Chapter 3 — Replication, Log Shipping & Failover{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+<div class="d-flex align-items-center mb-3 gap-3">
+  <div>
+    <h4 class="mb-0 fw-bold" style="color:#f59e0b">Chapter 3 — Replication, Log Shipping &amp; Failover</h4>
+    <div style="font-size:.75rem;color:#6b7280">Publisher · Distributor · Subscriber · Warm Standby · Always On</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="c3tabs" style="border-color:rgba(245,158,11,.3)">
+  <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('concepts',this)">Concepts</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('snapshot',this)">Snapshot</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('transactional',this)">Transactional</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('merge',this)">Merge</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('logship',this)">Log Shipping &amp; Failover</a></li>
+</ul>
+
+<!-- Tab: Concepts -->
+<div id="tab-concepts">
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(245,158,11,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f59e0b"><i class="bi bi-diagram-3 me-2"></i>Replication Architecture</div>
+      <p style="font-size:.8rem;color:#9ca3af">Replica means a copy of the original. Replication automates copying and merging of data across multiple sources. Three server roles:</p>
+      <div class="row g-2 mt-1">
+        {% for role,color,desc in [
+          ('Publisher','#f59e0b','Has data to be shared; organises data into Publications → Articles (tables, procs, etc.)'),
+          ('Distributor','#60a5fa','Stores changed data in distribution DB; forwards data to subscribers. Can be same server as publisher.'),
+          ('Subscriber','#34d399','Subscribes to publications. Push = distributor initiates; Pull = subscriber schedules.'),
+        ] %}
+        <div class="col-12">
+          <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid {{color}};border-radius:4px">
+            <span class="fw-bold" style="color:{{color}};font-size:.8rem">{{role}}</span>
+            <div style="font-size:.75rem;color:#9ca3af">{{desc}}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(245,158,11,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f59e0b"><i class="bi bi-list-check me-2"></i>Replication Types</div>
+      <table class="table table-sm mb-0" style="font-size:.75rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db">
+          <th>Type</th><th>Mechanism</th><th>Use Case</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="color:#f59e0b">Snapshot</td><td>Drop/re-create articles on schedule</td><td>Nightly ETL to data warehouse</td></tr>
+          <tr><td style="color:#60a5fa">Transactional</td><td>Log reader copies changed rows</td><td>Near real-time branch sync</td></tr>
+          <tr><td style="color:#a78bfa">Merge</td><td>MSmerge_* triggers, conflict resolution</td><td>Mobile / offline workers</td></tr>
+          <tr><td style="color:#34d399">Peer-to-Peer</td><td>Transactional, any node can write</td><td>Read scale-out, no conflicts</td></tr>
+        </tbody>
+      </table>
+      <div class="mt-2 p-2" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:4px">
+        <span style="color:#f87171;font-size:.75rem"><i class="bi bi-exclamation-triangle me-1"></i><strong>WARNING:</strong> Replication ≠ backup. Use log shipping or Always On for HA/DR goals.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3 mb-3" style="background:#13141a;border:1px solid rgba(245,158,11,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#f59e0b"><i class="bi bi-robot me-2"></i>Replication Agents</div>
+  <div class="row g-2">
+    {% for agent,color,desc in [
+      ('Snapshot Agent','#f59e0b','Generates initial snapshot using <code>bcp</code> (bulk copy). Places schema + data files in snapshot folder at distributor.'),
+      ('Log Reader Agent','#60a5fa','Reads publisher transaction log; copies relevant transactions to distribution database. Transactional replication only.'),
+      ('Distribution Agent','#a78bfa','Applies snapshot or runs distribution-DB transactions on subscriber. Runs at distributor (push) or subscriber (pull).'),
+      ('Merge Agent','#34d399','Applies and syncs changes bi-directionally for merge replication. Separate agent per subscription.'),
+      ('Queue Reader Agent','#f97316','Copies subscriber changes back to publisher. Used only in updatable/bi-directional transactional replication.'),
+    ] %}
+    <div class="col-md-4">
+      <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid {{color}};border-radius:4px">
+        <div class="fw-bold" style="color:{{color}};font-size:.78rem">{{agent}}</div>
+        <div style="font-size:.73rem;color:#9ca3af">{{desc|safe}}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+</div><!-- /tab-concepts -->
+
+<!-- Tab: Snapshot -->
+<div id="tab-snapshot" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-7">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(96,165,250,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#60a5fa"><i class="bi bi-camera me-2"></i>Snapshot Replication — How It Works</div>
+      <ol style="font-size:.8rem;color:#9ca3af;padding-left:1.2rem">
+        <li>Configure PRIM as its own distributor (or separate server)</li>
+        <li>Create publication on Northwind DB, choose <strong>Snapshot</strong> type</li>
+        <li>Add filter: <code>WHERE ShipCountry = 'USA'</code> on Orders article</li>
+        <li>Set snapshot agent schedule (e.g. every 2 min for demo)</li>
+        <li>Create push subscription → <code>nw_repl</code> destination DB</li>
+        <li>Snapshot agent runs <code>bcp</code> → places <code>.bcp/.sch/.pre/.idx</code> files in snapshot folder</li>
+        <li>Distribution agent applies snapshot to subscriber</li>
+      </ol>
+      <div class="mt-2 p-2" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:4px">
+        <span style="color:#fbbf24;font-size:.75rem"><i class="bi bi-clock me-1"></i><strong>Note:</strong> <code>bcp</code> locks the whole table during copy. Schedule snapshot agent in off-peak hours in production.</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(96,165,250,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#60a5fa"><i class="bi bi-folder2-open me-2"></i>Snapshot Folder Contents</div>
+      <pre class="m-0" style="font-size:.72rem;color:#93c5fd;background:#080a0e;padding:10px;border-radius:6px;white-space:pre-wrap">C:\...\MSSQL14.PRIM\MSSQL\ReplData\
+  unc\WIN-..._NORTHWIND_ORDERS\
+    Orders_2.bcp   ← bulk copy data
+    Orders_2.idx   ← index script
+    Orders_2.pre   ← pre-snapshot script
+    Orders_2.sch   ← schema DDL script</pre>
+      <div class="mt-2">
+        <div class="fw-bold mb-1" style="color:#7dd3fc;font-size:.75rem">Push vs Pull Subscription</div>
+        <table class="table table-sm mb-0" style="font-size:.73rem;color:#9ca3af">
+          <tr><th style="color:#d1d5db">Push</th><td>Distributor initiates, runs agent at distributor side</td></tr>
+          <tr><th style="color:#d1d5db">Pull</th><td>Subscriber schedules sync; agent runs at subscriber</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(96,165,250,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#60a5fa">Scenario: Northwind → Reporting Warehouse</div>
+  <pre class="m-0" style="font-size:.72rem;color:#93c5fd;background:#080a0e;padding:10px;border-radius:6px;white-space:pre-wrap">-- Publication filter (WHO gets replicated):
+SELECT &lt;published_columns&gt; FROM [dbo].[Orders]
+WHERE ShipCountry = 'USA'
+
+-- After snapshot, check USA orders in nw_repl:
+SELECT COUNT(*) FROM nw_repl.dbo.Orders  -- should match USA count on publisher
+
+-- Trigger a refresh by updating publisher:
+UPDATE northwind.dbo.Orders SET ShipVia = 2 WHERE ShipCountry = 'USA' AND OrderID = 10248
+-- Change appears in nw_repl within ~30 s (next snapshot cycle)</pre>
+</div>
+
+</div><!-- /tab-snapshot -->
+
+<!-- Tab: Transactional -->
+<div id="tab-transactional" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#a78bfa"><i class="bi bi-lightning-charge me-2"></i>Transactional Replication</div>
+      <p style="font-size:.8rem;color:#9ca3af">Copies only <strong>changed data</strong> — near real-time. The Log Reader Agent reads the publisher's WAL and copies matching transactions to the distribution database. The Distribution Agent runs those transactions on the subscriber.</p>
+      <div class="mt-2">
+        <div class="fw-bold mb-1" style="color:#c4b5fd;font-size:.75rem">Flow</div>
+        <div style="font-size:.78rem;color:#9ca3af">
+          Publisher WAL → <span style="color:#a78bfa">Log Reader Agent</span> → Distribution DB → <span style="color:#60a5fa">Distribution Agent</span> → Subscriber
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="fw-bold mb-1" style="color:#c4b5fd;font-size:.75rem">Scenario: Beverages-Only Branch Sync</div>
+        <pre class="m-0" style="font-size:.71rem;color:#c4b5fd;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">-- Filter for Order Details:
+SELECT * FROM [Order Details]
+WHERE ProductID IN (
+  SELECT productid FROM Products WHERE CategoryID=1
+)
+
+-- Filter for Orders:
+SELECT * FROM orders
+WHERE orderid IN (
+  SELECT orderid FROM [Order Details]
+  WHERE ProductID IN (
+    SELECT productid FROM Products WHERE CategoryID=1
+  )
+)</pre>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(167,139,250,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#a78bfa"><i class="bi bi-hdd-network me-2"></i>3-Server Setup (Realistic)</div>
+      <div class="p-2 mb-2" style="background:#0a0c12;border-radius:6px;font-family:monospace;font-size:.75rem;color:#c4b5fd">
+        <div style="color:#f59e0b">PRIM</div>
+        <div style="padding-left:1rem">→ Publisher (Northwind DB)</div>
+        <div style="color:#60a5fa;margin-top:4px">SECOND</div>
+        <div style="padding-left:1rem">→ Distributor (holds distribution DB)</div>
+        <div style="color:#34d399;margin-top:4px">THIRD</div>
+        <div style="padding-left:1rem">→ Subscriber (nw_repl DB)</div>
+      </div>
+      <div class="fw-bold mb-1" style="color:#c4b5fd;font-size:.75rem">Key Commands</div>
+      <pre class="m-0" style="font-size:.7rem;color:#c4b5fd;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">-- Fix distributor password bug (SQL Server 2019):
+USE master
+EXEC sp_adddistributor
+  @distributor = 'DESKTOP-...\SECOND',
+  @password = 'your_password'
+
+-- Test replication lag:
+-- Update on PRIM; check THIRD within 10 s</pre>
+      <div class="mt-2 p-2" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:4px">
+        <span style="color:#34d399;font-size:.73rem"><i class="bi bi-info-circle me-1"></i>Requires primary key on replicated tables.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(167,139,250,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#a78bfa">Peer-to-Peer Transactional Replication</div>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <p style="font-size:.8rem;color:#9ca3af">Allows <strong>writes to any node</strong> — all changes propagate to all nodes automatically, exactly once. Designed for <strong>read scale-out load balancing</strong>.</p>
+      <div class="p-2" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:4px">
+        <span style="color:#f87171;font-size:.75rem"><i class="bi bi-exclamation-triangle me-1"></i><strong>Concurrent writes to the same record on different nodes = write conflict → critical error → manual resolution required.</strong></span>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <table class="table table-sm mb-0" style="font-size:.75rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>Property</th><th>P2P Transactional</th></tr></thead>
+        <tbody>
+          <tr><td>Write nodes</td><td>Any peer</td></tr>
+          <tr><td>Write conflicts</td><td style="color:#f87171">Not supported — manual fix</td></tr>
+          <tr><td>Read scaling</td><td style="color:#34d399">Yes — direct any read to any peer</td></tr>
+          <tr><td>Use case</td><td>High-read, low-write, global read perf</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-transactional -->
+
+<!-- Tab: Merge -->
+<div id="tab-merge" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#34d399"><i class="bi bi-shuffle me-2"></i>Merge Replication</div>
+      <p style="font-size:.8rem;color:#9ca3af">Scenario: traveling sales employees make new orders offline. When they reconnect, changes merge with the central DB — even if two people modified the same record.</p>
+      <div class="fw-bold mt-2 mb-1" style="color:#6ee7b7;font-size:.75rem">How It Works</div>
+      <ul style="font-size:.78rem;color:#9ca3af;padding-left:1.2rem">
+        <li>Triggers detect changes: <code>MSmerge_ins_*</code>, <code>MSmerge_upd_*</code>, <code>MSmerge_del_*</code></li>
+        <li>Changes logged in <code>MSmerge_*</code> system tables at both publisher and subscriber</li>
+        <li>Merge Agent syncs changes <strong>bi-directionally</strong></li>
+        <li>Each article needs a <code>UNIQUEIDENTIFIER ROWGUIDCOL</code> column for global record identity</li>
+        <li>Distribution DB stores only history and error info</li>
+      </ul>
+      <div class="mt-2 p-2" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:4px">
+        <span style="color:#fbbf24;font-size:.73rem"><i class="bi bi-exclamation-triangle me-1"></i>Adding GUID column can crash legacy apps already using the table — check before enabling.</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#34d399"><i class="bi bi-trophy me-2"></i>Conflict Resolution</div>
+      <p style="font-size:.8rem;color:#9ca3af">When two nodes modify the same record, the Merge Agent applies a resolver. Default strategy: <strong>"first to Publisher wins"</strong>.</p>
+      <table class="table table-sm" style="font-size:.75rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>Conflict Type</th><th>Winner</th></tr></thead>
+        <tbody>
+          <tr><td>Publisher vs Subscriber</td><td style="color:#34d399">Publisher change wins</td></tr>
+          <tr><td>Two pull Subscribers</td><td style="color:#60a5fa">First to sync with Publisher wins</td></tr>
+          <tr><td>Server subscription</td><td>Explicit numeric priority wins</td></tr>
+        </tbody>
+      </table>
+      <div class="fw-bold mb-1 mt-1" style="color:#6ee7b7;font-size:.75rem">Custom Resolvers</div>
+      <pre class="m-0" style="font-size:.7rem;color:#6ee7b7;background:#080a0e;padding:8px;border-radius:4px;white-space:pre-wrap">-- List registered resolvers:
+EXEC sp_enumcustomresolvers
+
+-- Custom resolver = stored proc on Publisher
+-- or a COM DLL registered at distributor
+-- Called by Merge Agent with row GUID</pre>
+      <div class="mt-2 p-2" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:4px">
+        <span style="color:#6ee7b7;font-size:.73rem">Conflict Viewer in SSMS: pop-up menu of publication → View conflicts → Submit Winner / Submit Loser</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-3" style="background:#13141a;border:1px solid rgba(52,211,153,.2);border-radius:8px">
+  <div class="fw-bold mb-2" style="color:#34d399">CAP Theorem &amp; Eventual Consistency</div>
+  <div class="row g-3">
+    <div class="col-md-7">
+      <p style="font-size:.8rem;color:#9ca3af">Merge replication demonstrates <strong>eventual consistency</strong>: the system may be inconsistent at any moment, but if no further updates occur, all nodes will converge to the same state after some time.</p>
+      <p style="font-size:.8rem;color:#9ca3af">According to the <strong>CAP theorem</strong>, a distributed system cannot simultaneously guarantee all three of:</p>
+      <div class="row g-2">
+        {% for letter,name,color,desc in [
+          ('C','Consistency','#f59e0b','All reads return the most recent write or an error'),
+          ('A','Availability','#60a5fa','All reads contain data (may not be most recent)'),
+          ('P','Partition Tolerance','#34d399','System tolerates network failures'),
+        ] %}
+        <div class="col-12">
+          <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid {{color}};border-radius:4px;display:flex;gap:8px">
+            <span class="fw-bold" style="color:{{color}};font-size:1.1rem;line-height:1">{{letter}}</span>
+            <div>
+              <span class="fw-bold" style="color:{{color}};font-size:.78rem">{{name}}</span>
+              <div style="font-size:.72rem;color:#9ca3af">{{desc}}</div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="col-md-5">
+      <div class="p-2" style="background:#0a0c12;border-radius:6px;font-size:.75rem;color:#9ca3af">
+        <div class="fw-bold mb-1" style="color:#d1d5db">Merge replication trades off:</div>
+        <div style="color:#f59e0b"><i class="bi bi-x-circle me-1"></i>Strong Consistency (may be stale)</div>
+        <div style="color:#34d399"><i class="bi bi-check-circle me-1"></i>Availability (always readable)</div>
+        <div style="color:#34d399"><i class="bi bi-check-circle me-1"></i>Partition Tolerance (offline ok)</div>
+        <div class="mt-2" style="color:#9ca3af;font-size:.72rem">Since network partitions always happen, C ↔ A is the real trade-off in practice.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-merge -->
+
+<!-- Tab: Log Shipping & Failover -->
+<div id="tab-logship" style="display:none">
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(248,113,113,.25);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f87171"><i class="bi bi-ship me-2"></i>Log Shipping — Warm Standby</div>
+      <p style="font-size:.8rem;color:#9ca3af">Log shipping creates an <strong>exact copy</strong> of a database on a secondary server for disaster recovery. Unlike replication, it operates on the whole database, not articles. It involves three jobs:</p>
+      <div class="row g-2 mt-1">
+        {% for step,job,color,desc in [
+          ('1','Backup Job','#f59e0b','Runs on PRIMARY. Backs up new portion of transaction log to local folder.'),
+          ('2','Copy Job','#60a5fa','Runs on SECONDARY. Copies log backup from primary to destination folder (e.g. network share).'),
+          ('3','Restore Job','#34d399','Runs on SECONDARY. Restores backed-up log to standby DB.'),
+        ] %}
+        <div class="col-12">
+          <div class="p-2" style="background:rgba(0,0,0,.3);border-left:3px solid {{color}};border-radius:4px">
+            <span class="fw-bold" style="color:{{color}};font-size:.8rem">Step {{step}}: {{job}}</span>
+            <div style="font-size:.73rem;color:#9ca3af">{{desc}}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mt-2 p-2" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:4px">
+        <span style="color:#34d399;font-size:.73rem"><i class="bi bi-lightbulb me-1"></i><strong>Latency window = time between jobs.</strong> You can recover from mistaken bulk deletes by delaying the restore job!</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(248,113,113,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f87171"><i class="bi bi-code-slash me-2"></i>Setup &amp; Recovery Commands</div>
+      <pre class="m-0" style="font-size:.71rem;color:#fca5a5;background:#080a0e;padding:10px;border-radius:6px;white-space:pre-wrap">-- PRIMARY: must be in FULL recovery model
+ALTER DATABASE Northwind
+  SET RECOVERY FULL;
+
+-- Monitor: 2-minute alert threshold (demo)
+-- SSMS: Properties → Transaction Log Shipping
+
+-- Verify standby is alive:
+SELECT * FROM nw_ship.dbo.Orders WHERE ...
+
+-- If you need to bring standby online:
+USE master
+ALTER DATABASE nw_ship
+  SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+RESTORE DATABASE nw_ship WITH RECOVERY
+ALTER DATABASE nw_ship SET MULTI_USER
+
+-- Check log shipping status:
+-- SSMS: Monitor → Reports → Std Reports →
+-- Transaction Log Shipping Status</pre>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(248,113,113,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f87171"><i class="bi bi-hdd-network me-2"></i>Failover Clusters (Always On)</div>
+      <p style="font-size:.8rem;color:#9ca3af"><strong>Failover Clustering (FC)</strong> requires Windows Server + multiple physical machines. Cannot be demonstrated in a single-machine lab.</p>
+      <div class="fw-bold mb-1 mt-2" style="color:#fca5a5;font-size:.75rem">Always On Availability Groups (SQL Server 2012+)</div>
+      <ul style="font-size:.78rem;color:#9ca3af;padding-left:1.2rem">
+        <li>Define <strong>availability databases</strong> that fail over as a group</li>
+        <li>Supports <strong>automatic read load balancing</strong> for secondaries</li>
+        <li>Sub-second RTO (Recovery Time Objective) vs minutes for log shipping</li>
+        <li>Synchronous or asynchronous commit modes</li>
+        <li>Primary for writes, secondaries for reads (off-loads reporting)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="p-3 h-100" style="background:#13141a;border:1px solid rgba(248,113,113,.2);border-radius:8px">
+      <div class="fw-bold mb-2" style="color:#f87171"><i class="bi bi-table me-2"></i>Comparison: Replication vs Log Shipping vs Always On</div>
+      <table class="table table-sm mb-0" style="font-size:.73rem;color:#9ca3af">
+        <thead><tr style="color:#d1d5db"><th>Feature</th><th>Replication</th><th>Log Ship</th><th>Always On</th></tr></thead>
+        <tbody>
+          <tr><td>Granularity</td><td>Articles</td><td>Whole DB</td><td>Whole DB</td></tr>
+          <tr><td>Latency</td><td>Seconds</td><td>Minutes</td><td>&lt;1 s</td></tr>
+          <tr><td>Subscriber writes</td><td>Optional</td><td style="color:#f87171">No</td><td style="color:#f87171">No</td></tr>
+          <tr><td>DR goal</td><td style="color:#fbbf24">Partial</td><td style="color:#34d399">Yes</td><td style="color:#34d399">Yes</td></tr>
+          <tr><td>Read scaling</td><td style="color:#34d399">Yes</td><td>Standby only</td><td style="color:#34d399">Yes</td></tr>
+          <tr><td>Complexity</td><td>High</td><td>Medium</td><td>High</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-logship -->
+
+</div><!-- container -->
+
+<style>
+.nav-tabs .nav-link { color: #9ca3af; border-color: transparent; }
+.nav-tabs .nav-link:hover { color: #f59e0b; border-color: transparent; }
+.nav-tabs .nav-link.active { background: rgba(245,158,11,.15); color: #f59e0b; border-color: rgba(245,158,11,.4) rgba(245,158,11,.4) transparent; }
+</style>
+
+<script>
+function showTab(id, el) {
+  ['concepts','snapshot','transactional','merge','logship'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === id ? '' : 'none';
+  });
+  document.querySelectorAll('#c3tabs .nav-link').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+  return false;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+{% block title %}C11 — SQL DML Lab{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-terminal fs-2 me-3" style="color:#22d3ee"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Appendix A — SQL DML Self-Learning Lab</h2>
+    <p class="text-muted mb-0">12 progressive exercises on Northwind · Run every query live against SQL Server</p>
+  </div>
+  <div class="ms-auto">
+    <span class="badge" style="background:rgba(34,211,238,.15);color:#22d3ee;font-size:.8rem">
+      <span id="doneCount">0</span> / <span id="totalCount">0</span> queries run
+    </span>
+  </div>
+</div>
+
+<!-- Tab nav -->
+<ul class="nav nav-tabs mb-4 mt-3" id="c11tabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basics">
+      <i class="bi bi-1-circle me-1"></i>SELECT Basics
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-groupby">
+      <i class="bi bi-2-circle me-1"></i>JOINs &amp; GROUP BY
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-self">
+      <i class="bi bi-3-circle me-1"></i>Self-Join &amp; Expressions
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-advanced">
+      <i class="bi bi-4-circle me-1"></i>HAVING · TOP · Dates
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-hw">
+      <i class="bi bi-5-circle me-1"></i>CASE · Temp · Homework
+    </button>
+  </li>
+</ul>
+
+{% macro lesson(num, title, concepts, color) %}
+<div class="mb-4">
+  <div class="d-flex align-items-center mb-3">
+    <div class="rounded-circle d-flex align-items-center justify-content-center me-2"
+         style="width:28px;height:28px;background:{{ color }};color:#0d0f16;font-weight:700;font-size:.8rem;flex-shrink:0">
+      {{ num }}
+    </div>
+    <h6 class="fw-bold mb-0" style="color:{{ color }}">{{ title | safe }}</h6>
+    <span class="ms-2 badge" style="background:rgba(255,255,255,.06);color:#8892a4;font-size:.65rem;font-weight:400">
+      {{ concepts | safe }}
+    </span>
+  </div>
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{% macro qcard(qid, title, color, sql_preview) %}
+<div class="card mb-3 qcard" data-qid="{{ qid }}" style="background:#0d0f16;border:1px solid #2a2d35">
+  <div class="card-header d-flex align-items-center justify-content-between"
+       style="background:#13141a;border-bottom:1px solid #2a2d35;padding:.5rem .75rem">
+    <span style="color:#e2e8f0;font-size:.8rem;font-weight:600">{{ title | safe }}</span>
+    <div class="d-flex align-items-center gap-2">
+      <span class="row-badge" style="font-size:.72rem;color:#6b7280;display:none"></span>
+      <button class="btn btn-sm run-btn"
+              style="background:{{ color }};color:#0d0f16;border:none;font-size:.72rem;padding:.2rem .6rem"
+              onclick="runQ('{{ qid }}', this)">
+        <i class="bi bi-play-fill me-1"></i>Run
+      </button>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <pre class="m-0 p-3 sql-code"
+         style="font-size:.74rem;color:#93c5fd;background:#080a0e;border-bottom:1px solid #1e2228;white-space:pre-wrap;overflow-x:auto">{{ sql_preview | safe }}</pre>
+    {% if caller is defined %}
+    <div class="px-3 py-2" style="font-size:.78rem;color:#8892a4;border-bottom:1px solid #1e2228">
+      {{ caller() }}
+    </div>
+    {% endif %}
+    <div class="result-area" style="display:none;padding:.5rem .75rem"></div>
+  </div>
+</div>
+{% endmacro %}
+
+<div class="tab-content">
+
+  <!-- ── TAB 1: SELECT BASICS ─────────────────────────────────────────────── -->
+  <div class="tab-pane fade show active" id="tab-basics">
+
+    {% call lesson(1,"Basic SELECT","WHERE · IN · LIKE","#22d3ee") %}
+      {% call qcard("s1q1","SELECT * from employees (basic projection)","#22d3ee",
+          "SELECT lastname, firstname, birthdate, city FROM employees") %}
+        Returns all employees — the simplest possible query. Always start from the <code>FROM</code> clause when designing a query.
+      {% endcall %}
+      {% call qcard("s1q2","City = 'London' (equality filter)","#22d3ee",
+          "SELECT companyname, city FROM customers WHERE city = 'London'") %}
+        Exact match. String literals in SQL Server use single quotes.
+      {% endcall %}
+      {% call qcard("s1q3","IN ('London','Lander') — multiple values","#22d3ee",
+          "SELECT companyname, city FROM customers WHERE city IN ('London', 'Lander')") %}
+        <code>IN (…)</code> is equivalent to <code>= v1 OR = v2 OR …</code> — cleaner for multiple alternatives.
+      {% endcall %}
+      {% call qcard("s1q4","LIKE partial match — 'L%' and contains 'b' or 'n'","#22d3ee",
+          "SELECT companyname, city FROM customers WHERE city LIKE 'L%' AND (city LIKE '%b%' OR city LIKE '%n%')") %}
+        <code>%</code> matches any sequence of characters. Pattern: starts with L AND contains b or n.
+      {% endcall %}
+    {% endcall %}
+
+    {% call lesson(2,"Aggregate Functions &amp; Nested Queries","MAX · MIN · Correlated subqueries","#06b6d4") %}
+      {% call qcard("s2q1","MIN / MAX birthdate","#06b6d4",
+          "SELECT MAX(birthdate) as max_year, MIN(birthdate) as min_year FROM employees") %}
+        Aggregate functions collapse all rows into one. Cannot SELECT <code>lastname</code> alongside without GROUP BY.
+      {% endcall %}
+      {% call qcard("s2q2","Youngest employee (MAX subquery)","#06b6d4",
+          "SELECT lastname, birthdate FROM employees\nWHERE birthdate = (\n    SELECT MAX(birthdate) FROM employees\n)") %}
+        The inner query returns a single value (scalar subquery). The outer query uses it as a filter.
+        Split the problem: <em>step 1</em> find the date, <em>step 2</em> find the person.
+      {% endcall %}
+      {% call qcard("s2q3","First order's ShipAddress (MIN subquery)","#06b6d4",
+          "SELECT orderdate, shipaddress FROM orders\nWHERE orderdate = (SELECT MIN(orderdate) FROM orders)") %}
+        Same pattern applied to orders. Note: returns all orders on that date (could be multiple).
+      {% endcall %}
+      {% call qcard("s2q4","Youngest employee's ship addresses (3-level nesting)","#06b6d4",
+          "SELECT DISTINCT lastname, shipaddress\nFROM orders o INNER JOIN employees e ON o.employeeid=e.employeeid\nWHERE e.employeeid = (\n    SELECT employeeid FROM employees\n    WHERE birthdate = (SELECT MAX(birthdate) FROM employees)\n)\nORDER BY shipaddress") %}
+        Three levels: innermost → MAX date; middle → employeeid; outer → ship addresses.
+        Always design from the inside out. The subquery here returns exactly one row.
+      {% endcall %}
+    {% endcall %}
+
+  </div>
+
+  <!-- ── TAB 2: JOINs & GROUP BY ──────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-groupby">
+
+    {% call lesson(3,"JOINs","INNER JOIN across 4 tables","#0891b2") %}
+      {% call qcard("s3q1","Products ordered from youngest employee (4-table INNER JOIN)","#0891b2",
+          "SELECT DISTINCT p.productname, e.lastname\nFROM orders o\nINNER JOIN employees e ON o.employeeid=e.employeeid\nINNER JOIN [order details] od ON od.orderid=o.orderid\nINNER JOIN products p ON p.productid=od.productid\nWHERE e.employeeid = (\n    SELECT TOP 1 employeeid FROM employees ORDER BY birthdate DESC\n)\nORDER BY productname") %}
+        Always design the <code>FROM</code> first, then <code>WHERE</code>, then <code>SELECT</code>.
+        The four-way join: orders → employees → order details → products.
+      {% endcall %}
+      {% call qcard("s3q2","Ship cities for category-1 products","#0891b2",
+          "SELECT DISTINCT o.shipcity\nFROM orders o\nINNER JOIN [order details] od ON od.orderid=o.orderid\nINNER JOIN products p ON p.productid=od.productid\nWHERE p.categoryid = 1\nORDER BY shipcity") %}
+        <code>DISTINCT</code> removes duplicate cities — many orders shipped to the same city.
+      {% endcall %}
+    {% endcall %}
+
+    {% call lesson(4,"GROUP BY — 5-Step Progression","Pitfalls with LEFT JOIN and COUNT(*)","#0e7490") %}
+
+      <div class="alert mb-3" style="background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.25);color:#67e8f9;font-size:.8rem">
+        <i class="bi bi-info-circle me-1"></i>
+        This section walks through <strong>5 versions</strong> of the same query, each fixing a bug from the previous.
+        Run them in order to see the difference.
+      </div>
+
+      {% call qcard("s4q1","Step 1 ✓ — Simple GROUP BY employeeid","#0e7490",
+          "SELECT employeeid, COUNT(*) as order_count\nFROM orders GROUP BY employeeid\nORDER BY order_count DESC") %}
+        Correct but shows only IDs. <code>COUNT(*)</code> counts all rows in the group.
+      {% endcall %}
+      {% call qcard("s4q2","Step 2 ⚠ — GROUP BY lastname only (logical bug)","#f59e0b",
+          "SELECT e.lastname, COUNT(*) as order_count\nFROM orders o INNER JOIN employees e ON o.employeeid=e.employeeid\nGROUP BY e.lastname\nORDER BY order_count DESC") %}
+        <strong style="color:#fca5a5">Bug:</strong> If two employees share a surname, their orders merge into one group.
+        Always GROUP BY the primary key, not a name column.
+      {% endcall %}
+      {% call qcard("s4q3","Step 3 ⚠ — INNER JOIN misses idle employee","#f59e0b",
+          "SELECT e.lastname, e.firstname, COUNT(*) as order_count\nFROM orders o INNER JOIN employees e ON o.employeeid=e.employeeid\nGROUP BY e.employeeid, e.lastname, e.firstname\nORDER BY order_count DESC") %}
+        <strong style="color:#fca5a5">Bug:</strong> INNER JOIN excludes employees with zero orders. They simply disappear from results.
+      {% endcall %}
+      {% call qcard("s4q4","Step 4 ⚠ — LEFT JOIN but COUNT(*) fakes count=1","#f59e0b",
+          "SELECT e.employeeid, e.lastname, e.firstname, COUNT(*) as fake_count\nFROM employees e LEFT OUTER JOIN orders o ON o.employeeid=e.employeeid\nGROUP BY e.employeeid, e.lastname, e.firstname\nORDER BY fake_count DESC") %}
+        <strong style="color:#fca5a5">Bug:</strong> For the idle employee, the LEFT JOIN produces one NULL row.
+        <code>COUNT(*)</code> counts that NULL row as 1 order — wrong!
+      {% endcall %}
+      {% call qcard("s4q5","Step 5 ✓ — LEFT JOIN + COUNT(o.orderid) — all problems solved","#22d3ee",
+          "SELECT e.employeeid, e.lastname, e.firstname, COUNT(o.orderid) as no_ord\nFROM employees e LEFT OUTER JOIN orders o ON o.employeeid=e.employeeid\nGROUP BY e.employeeid, e.lastname, e.firstname\nORDER BY no_ord DESC") %}
+        <strong style="color:#34d399">Fix:</strong> <code>COUNT(o.orderid)</code> — counting a specific column ignores NULLs.
+        The idle employee correctly gets 0. Rule: always <code>COUNT(column)</code>, never <code>COUNT(*)</code> after a LEFT JOIN.
+      {% endcall %}
+      {% call qcard("s4q6","Products per category (JOIN + GROUP BY)","#22d3ee",
+          "SELECT c.categoryid, c.categoryname, COUNT(*) as no_prod\nFROM products p INNER JOIN categories c ON p.categoryid=c.categoryid\nGROUP BY c.categoryid, c.categoryname\nORDER BY no_prod DESC") %}
+        Writing order: <code>FROM</code> (step 1) → <code>GROUP BY</code> (step 2) → <code>SELECT</code> (step 3) → <code>ORDER BY</code> (step 4).
+      {% endcall %}
+
+    {% endcall %}
+
+  </div>
+
+  <!-- ── TAB 3: Self-Join & Expressions ───────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-self">
+
+    {% call lesson(5,"Self-Join — Querying a Hierarchy","Employees reporting structure · Finding gaps","#7c3aed") %}
+      {% call qcard("s5q1","Who reports to whom (2-level self-join)","#7c3aed",
+          "SELECT e.lastname, boss.lastname as boss, bboss.lastname as boss_of_boss\nFROM employees e\nLEFT OUTER JOIN employees boss ON e.reportsto=boss.employeeid\nLEFT OUTER JOIN employees bboss ON boss.reportsto=bboss.employeeid") %}
+        A self-join joins a table to itself using aliases. The <code>reportsto</code> column acts as an FK to the same table.
+        LEFT JOIN keeps employees at the top of the hierarchy (no boss → NULL).
+      {% endcall %}
+      {% call qcard("s5q2","Orders per employee (self-join + GROUP BY + correct COUNT)","#7c3aed",
+          "SELECT e.lastname, COUNT(o.orderid) as order_count\nFROM employees e LEFT OUTER JOIN orders o ON e.employeeid=o.employeeid\nGROUP BY e.employeeid, e.lastname\nORDER BY order_count DESC") %}
+        <code>COUNT(o.orderid)</code> correctly returns 0 for the idle employee.
+      {% endcall %}
+      {% call qcard("s5q3","Who has NO orders? (LEFT JOIN + IS NULL)","#7c3aed",
+          "SELECT e.employeeid, e.lastname, e.firstname, e.title\nFROM employees e LEFT OUTER JOIN orders o ON e.employeeid=o.employeeid\nWHERE o.orderid IS NULL") %}
+        Classic anti-join pattern: LEFT JOIN then filter for rows where the right side is NULL.
+        These are employees who appear in <code>employees</code> but never in <code>orders</code>.
+      {% endcall %}
+    {% endcall %}
+
+    {% call lesson(6,"Arithmetic &amp; STR() Formatting","Revenue calculation · Number formatting","#6d28d9") %}
+      {% call qcard("s6q1","Top-10 biggest orders by revenue","#6d28d9",
+          "SELECT TOP 10 o.orderid,\n    CAST(o.orderdate AS VARCHAR(50)) as order_date,\n    STR(SUM((1-discount)*unitprice*quantity), 15, 2) as order_total,\n    SUM(quantity) as no_of_units,\n    COUNT(d.orderid) as no_of_items\nFROM orders o INNER JOIN [order details] d ON o.orderid=d.orderid\nGROUP BY o.orderid, o.orderdate\nORDER BY SUM((1-discount)*unitprice*quantity) DESC") %}
+        Revenue formula: <code>(1 - discount) × unitprice × quantity</code> per line.
+        <code>STR(value, total_width, decimals)</code> formats numbers with fixed-width strings.
+        <code>CAST(date AS VARCHAR)</code> for readable date output.
+      {% endcall %}
+    {% endcall %}
+
+  </div>
+
+  <!-- ── TAB 4: HAVING · TOP · Dates ──────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-advanced">
+
+    {% call lesson(7,"HAVING &amp; ISNULL — The Top Salesperson","HAVING · LEFT JOIN on a JOIN · ISNULL","#db2777") %}
+      {% call qcard("s7q1","Top salesperson — INNER JOIN (only 9 rows)","#db2777",
+          "SELECT u.titleofcourtesy+' '+u.lastname+' '+u.firstname+' ('+u.title+')' as name,\n    STR(SUM((1-discount)*unitprice*quantity), 15, 2) as cash_income,\n    COUNT(DISTINCT o.orderid) as no_of_orders,\n    COUNT(productid) as no_of_items\nFROM orders o\nINNER JOIN [order details] d ON o.orderid=d.orderid\nINNER JOIN employees u ON u.employeeid=o.employeeid\nGROUP BY u.employeeid, u.titleofcourtesy, u.title, u.lastname, u.firstname\nORDER BY SUM((1-discount)*unitprice*quantity) DESC") %}
+        <strong style="color:#fca5a5">Problem:</strong> There are 10 employees but only 9 appear — the idle one is missing.
+        <code>COUNT(DISTINCT o.orderid)</code> avoids double-counting when multiple product lines exist per order.
+      {% endcall %}
+      {% call qcard("s7q2","All 10 employees — LEFT JOIN + ISNULL","#db2777",
+          "SELECT ISNULL(u.titleofcourtesy,'')+' '+ISNULL(u.lastname,'')+' '+\n        ISNULL(u.firstname,'')+' ('+ISNULL(u.title,'')+')' as name,\n    ISNULL(STR(SUM((1-discount)*unitprice*quantity), 15, 2), 'N/A') as cash_income,\n    COUNT(DISTINCT o.orderid) as no_of_orders,\n    COUNT(d.productid) as no_of_items\nFROM employees u\nLEFT OUTER JOIN (orders o INNER JOIN [order details] d ON o.orderid=d.orderid)\n    ON u.employeeid=o.employeeid\nGROUP BY u.employeeid, u.titleofcourtesy, u.title, u.lastname, u.firstname\nORDER BY SUM((1-discount)*unitprice*quantity) DESC") %}
+        Key trick: <code>LEFT JOIN (INNER JOIN)</code> — the inner join stays intact as a "virtual" table;
+        the LEFT JOIN adds all employees. <code>ISNULL(expr, 'N/A')</code> replaces NULL with a display value.
+      {% endcall %}
+      {% call qcard("s7q3","HAVING — filter after aggregation (>200 orders)","#db2777",
+          "SELECT u.lastname, COUNT(DISTINCT o.orderid) as no_of_orders\nFROM orders o\nINNER JOIN [order details] d ON o.orderid=d.orderid\nINNER JOIN employees u ON u.employeeid=o.employeeid\nGROUP BY u.employeeid, u.lastname\nHAVING COUNT(o.orderid) > 200\nORDER BY no_of_orders DESC") %}
+        <code>HAVING</code> filters <em>after</em> aggregation (unlike <code>WHERE</code> which filters before).
+        Cannot use alias in HAVING — must repeat the aggregate expression.
+      {% endcall %}
+    {% endcall %}
+
+    {% call lesson(8,"TOP — Most Popular Product","TOP N · Nested aggregation","#be123c") %}
+      {% call qcard("s8q1","Most popular product (TOP 1 by appearance count)","#be123c",
+          "SELECT TOP 1 p.productid, p.productname,\n    COUNT(*) as no_appearances,\n    SUM(quantity) as total_pieces\nFROM products p LEFT OUTER JOIN [order details] d ON p.productid=d.productid\nGROUP BY p.productid, p.productname\nORDER BY no_appearances DESC") %}
+        <code>TOP 1</code> returns only the first row of the result set after sorting.
+        LEFT JOIN keeps products with zero orders in the result.
+      {% endcall %}
+      {% call qcard("s8q2","Who sold the most of the most popular product? (nested TOP 1)","#be123c",
+          "SELECT TOP 1\n    u.titleofcourtesy+' '+u.lastname+' '+u.firstname+' ('+u.title+')' as name,\n    SUM(quantity) as no_pieces_sold\nFROM orders o\nINNER JOIN [order details] d ON o.orderid=d.orderid\nINNER JOIN employees u ON u.employeeid=o.employeeid\nWHERE d.productid = (\n    SELECT TOP 1 p.productid\n    FROM products p LEFT OUTER JOIN [order details] d2 ON p.productid=d2.productid\n    GROUP BY p.productid, p.productname\n    ORDER BY COUNT(*) DESC\n)\nGROUP BY u.employeeid, u.titleofcourtesy, u.title, u.lastname, u.firstname\nORDER BY SUM(quantity) DESC") %}
+        The <code>WHERE productid = (TOP 1 subquery)</code> pattern avoids hardcoding the product ID.
+        Full solution to the exercise posed in the course.
+      {% endcall %}
+    {% endcall %}
+
+    {% call lesson(9,"Date Functions","GETDATE · DATEDIFF · DATEADD · YEAR · MONTH","#c2410c") %}
+      {% call qcard("s9q1","Date function demos","#c2410c",
+          "SELECT\n    GETDATE() as now,\n    DATEDIFF(second,'2013-10-10 12:13:50','2013-10-10 14:16:50') as diff_seconds,\n    DATEADD(second, 1000, '2013-10-10 14:16:50') as plus_1000s,\n    YEAR(GETDATE()) as cur_year,\n    MONTH(GETDATE()) as cur_month") %}
+        <code>GETDATE()</code> returns the current datetime.
+        <code>DATEDIFF(unit, start, end)</code> — units: <em>second, minute, hour, day, month, year</em>.
+        <code>DATEADD(unit, n, date)</code> — add <em>n</em> units to a date.
+      {% endcall %}
+      {% call qcard("s9q2","Orders by employee × year × month (multi-level grouping)","#c2410c",
+          "SELECT e.employeeid, e.lastname,\n    YEAR(o.orderdate) as [year],\n    MONTH(o.orderdate) as [month],\n    COUNT(o.orderid) as no_of_orders\nFROM employees e LEFT OUTER JOIN orders o ON e.employeeid=o.employeeid\nGROUP BY e.employeeid, e.lastname, YEAR(o.orderdate), MONTH(o.orderdate)\nORDER BY e.lastname, [year], [month]") %}
+        Multi-level grouping: employee → year → month.
+        Date functions can appear directly in <code>GROUP BY</code> — SQL Server evaluates them per-row before grouping.
+      {% endcall %}
+    {% endcall %}
+
+  </div>
+
+  <!-- ── TAB 5: CASE · Temp · Homework ────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-hw">
+
+    {% call lesson(10,"CASE Expression","Conditional column values · Zero-padded month strings","#065f46") %}
+      {% call qcard("s10q1","Zero-padded month label: YYYY_MM (CASE in GROUP BY)","#065f46",
+          "SELECT e.employeeid, e.lastname,\n    CASE\n        WHEN MONTH(o.orderdate) < 10\n            THEN CAST(YEAR(o.orderdate) AS VARCHAR(4))+'_0'+CAST(MONTH(o.orderdate) AS CHAR(2))\n        WHEN MONTH(o.orderdate) >= 10\n            THEN CAST(YEAR(o.orderdate) AS VARCHAR(4))+'_'+CAST(MONTH(o.orderdate) AS CHAR(2))\n        ELSE 'N.A'\n    END as month_label,\n    COUNT(o.orderid) as no_of_orders\nFROM employees e LEFT OUTER JOIN orders o ON e.employeeid=o.employeeid\nGROUP BY e.employeeid, e.lastname,\n    CASE\n        WHEN MONTH(o.orderdate) < 10\n            THEN CAST(YEAR(o.orderdate) AS VARCHAR(4))+'_0'+CAST(MONTH(o.orderdate) AS CHAR(2))\n        WHEN MONTH(o.orderdate) >= 10\n            THEN CAST(YEAR(o.orderdate) AS VARCHAR(4))+'_'+CAST(MONTH(o.orderdate) AS CHAR(2))\n        ELSE 'N.A'\n    END\nORDER BY e.lastname, month_label") %}
+        The entire <code>CASE</code> expression must be repeated in <code>GROUP BY</code> — you cannot reference the alias.
+        A user-defined function would be cleaner for reuse. Sort by <code>month_label</code> sorts lexicographically (YYYY_MM is sortable).
+      {% endcall %}
+    {% endcall %}
+
+    {% call lesson(11,"Temporary Tables — Derived Table Equivalent","SELECT INTO #temp · Derived table (subquery in FROM)","#047857") %}
+
+      <div class="alert mb-3" style="background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.25);color:#67e8f9;font-size:.8rem">
+        <i class="bi bi-info-circle me-1"></i>
+        Actual <code>#temp</code> tables are session-scoped and drop when the connection closes — they cannot be demonstrated
+        via separate HTTP requests. The equivalent derived-table (subquery in FROM) solution produces identical results.
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-md-6">
+          <div class="card" style="background:#0a0b0f;border:1px solid #2a2d35">
+            <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+              <span style="color:#f59e0b;font-size:.78rem;font-weight:700">Temp table pattern (reference only — not runnable)</span>
+            </div>
+            <div class="card-body p-2">
+              <pre style="font-size:.73rem;color:#fde68a;margin:0">-- Create temp table from a query
+SELECT e.employeeid, lastname,
+    year(orderdate) as ev,
+    month(orderdate) as mo,
+    count(orderid) as no_of_orders
+INTO #tt
+FROM employees e LEFT OUTER JOIN orders o
+    ON e.employeeid=o.employeeid
+GROUP BY e.employeeid, lastname,
+    year(orderdate), month(orderdate)
+
+-- Then query the temp table
+SELECT lastname,
+    STR(avg(cast(no_of_orders as float)),15,2)
+    as avg_monthly
+FROM #tt
+GROUP BY employeeid, lastname
+ORDER BY avg_monthly DESC
+
+DROP TABLE #tt  -- cleanup</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card" style="background:#0a0b0f;border:1px solid rgba(34,211,238,.3)">
+            <div class="card-header" style="background:#13141a;border-bottom:1px solid #2a2d35">
+              <span style="color:#22d3ee;font-size:.78rem;font-weight:700">Derived table equivalent (runnable ↓)</span>
+            </div>
+            <div class="card-body p-2">
+              <pre style="font-size:.73rem;color:#67e8f9;margin:0">-- Inline subquery replaces #tt
+SELECT src.lastname,
+    STR(AVG(CAST(src.no_of_orders AS FLOAT)),
+        15, 2) as avg_monthly_orders
+FROM (
+    SELECT e.employeeid, e.lastname,
+        YEAR(o.orderdate) as ev,
+        MONTH(o.orderdate) as mo,
+        COUNT(o.orderid) as no_of_orders
+    FROM employees e
+    LEFT OUTER JOIN orders o
+        ON e.employeeid=o.employeeid
+    GROUP BY e.employeeid, e.lastname,
+        YEAR(o.orderdate), MONTH(o.orderdate)
+) AS src  -- alias is REQUIRED
+GROUP BY src.employeeid, src.lastname
+ORDER BY avg_monthly_orders DESC</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% call qcard("s11q1","Avg monthly orders per employee (derived table)","#047857",
+          "SELECT src.lastname,\n    STR(AVG(CAST(src.no_of_orders AS FLOAT)), 15, 2) as avg_monthly_orders\nFROM (\n    SELECT e.employeeid, e.lastname,\n        YEAR(o.orderdate) as ev,\n        MONTH(o.orderdate) as mo,\n        COUNT(o.orderid) as no_of_orders\n    FROM employees e LEFT OUTER JOIN orders o ON e.employeeid=o.employeeid\n    GROUP BY e.employeeid, e.lastname, YEAR(o.orderdate), MONTH(o.orderdate)\n) AS src\nGROUP BY src.employeeid, src.lastname\nORDER BY avg_monthly_orders DESC") %}
+        The derived table alias (<code>AS src</code>) is mandatory in SQL Server.
+        <code>AVG(CAST(… AS FLOAT))</code> — required because <code>AVG</code> on INTEGER rounds to integer.
+        NULL rows (employee with no orders, ev=NULL) are excluded from AVG automatically.
+      {% endcall %}
+    {% endcall %}
+
+    {% call lesson(12,"Homework Solutions","Two open-ended problems with CTE solutions","#1d4ed8") %}
+      <div class="alert mb-3" style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.3);color:#fcd34d;font-size:.82rem">
+        <i class="bi bi-lightbulb me-1"></i>
+        <strong>Homework problems from the course:</strong><br>
+        1. What is the average monthly number of orders for all products?<br>
+        2. Which employee had more than double the total order revenue of their boss?
+      </div>
+      {% call qcard("s12q1","HW1 — Avg monthly order count per product","#1d4ed8",
+          "SELECT p.productname,\n    STR(AVG(CAST(mo.cnt AS FLOAT)), 15, 2) as avg_monthly_orders\nFROM products p\nJOIN (\n    SELECT od.productid,\n        YEAR(o.orderdate) as yr,\n        MONTH(o.orderdate) as mo,\n        COUNT(DISTINCT o.orderid) as cnt\n    FROM orders o JOIN [order details] od ON o.orderid=od.orderid\n    GROUP BY od.productid, YEAR(o.orderdate), MONTH(o.orderdate)\n) mo ON p.productid = mo.productid\nGROUP BY p.productid, p.productname\nORDER BY avg_monthly_orders DESC") %}
+        Strategy: first count orders per product per month (inner subquery), then average over all months (outer query).
+        <code>COUNT(DISTINCT o.orderid)</code> counts distinct orders per month, not order lines.
+      {% endcall %}
+      {% call qcard("s12q2","HW2 — Who sold more than 2× their boss's total revenue?","#1d4ed8",
+          "WITH emp_totals AS (\n    SELECT o.employeeid,\n        SUM(od.unitprice * od.quantity * (1 - od.discount)) as total\n    FROM orders o JOIN [order details] od ON o.orderid=od.orderid\n    GROUP BY o.employeeid\n)\nSELECT e.lastname as employee,\n    STR(et.total, 15, 2) as emp_revenue,\n    b.lastname as boss,\n    STR(bt.total, 15, 2) as boss_revenue,\n    STR(et.total / bt.total, 6, 2) as ratio\nFROM employees e\nJOIN emp_totals et ON e.employeeid = et.employeeid\nJOIN employees b ON e.reportsto = b.employeeid\nJOIN emp_totals bt ON b.employeeid = bt.employeeid\nWHERE et.total > 2 * bt.total\nORDER BY ratio DESC") %}
+        CTE (<code>WITH emp_totals AS (…)</code>) calculates each employee's total once and reuses it twice
+        (for the employee and for the boss). Then a self-join on <code>employees</code> connects each employee to their boss.
+        The <code>WHERE</code> clause compares the two totals.
+      {% endcall %}
+    {% endcall %}
+
+  </div>
+
+</div><!-- end tab-content -->
+
+<script>
+let doneSet = new Set();
+
+function updateCounter() {
+  document.getElementById('doneCount').textContent = doneSet.size;
+}
+
+// Count total queries on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const n = document.querySelectorAll('.qcard').length;
+  document.getElementById('totalCount').textContent = n;
+});
+
+function renderTable(cols, rows) {
+  if (!rows || rows.length === 0) {
+    return '<p class="text-muted small mb-0 py-2">No rows returned.</p>';
+  }
+  let h = '<div style="overflow-x:auto"><table class="table table-dark table-sm table-bordered mb-0" style="font-size:.75rem">';
+  h += '<thead><tr>' + cols.map(c => `<th style="color:#8892a4;white-space:nowrap">${c}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(r => {
+    h += '<tr>' + r.map(v => {
+      if (v === null) return '<td style="color:#6b7280"><em>NULL</em></td>';
+      const s = String(v);
+      const color = s.startsWith('⚠') ? '#fbbf24' : '#e2e8f0';
+      return `<td style="color:${color};white-space:nowrap">${s}</td>`;
+    }).join('') + '</tr>';
+  });
+  h += '</tbody></table></div>';
+  return h;
+}
+
+async function runQ(qid, btn) {
+  const card   = btn.closest('.qcard');
+  const area   = card.querySelector('.result-area');
+  const badge  = card.querySelector('.row-badge');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+  area.style.display = 'block';
+  area.innerHTML = '<span class="text-muted" style="font-size:.75rem">Running…</span>';
+
+  try {
+    const r = await fetch(`/demos/c11-sql-lab/run?qid=${qid}`);
+    const d = await r.json();
+    if (d.ok) {
+      area.innerHTML = renderTable(d.cols, d.rows);
+      badge.style.display = 'inline';
+      badge.textContent   = `${d.n} row${d.n !== 1 ? 's' : ''}`;
+      doneSet.add(qid);
+      updateCounter();
+      // pulse green border
+      card.style.border = '1px solid rgba(52,211,153,.5)';
+      setTimeout(() => card.style.border = '1px solid #2a2d35', 2000);
+    } else {
+      area.innerHTML = `<div class="alert alert-danger mb-0 py-2" style="font-size:.75rem">
+        <strong>Error:</strong> ${d.error}
+        ${d.sql ? `<pre class="mt-1 mb-0" style="font-size:.7rem;color:#fca5a5;white-space:pre-wrap">${d.sql}</pre>` : ''}
+      </div>`;
+    }
+  } catch (e) {
+    area.innerHTML = `<div class="alert alert-danger mb-0 py-2" style="font-size:.75rem">Fetch error: ${e}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-play-fill me-1"></i>Run';
+  }
+}
+</script>
+{% endblock %}

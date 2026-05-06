@@ -282,6 +282,76 @@
   </div>
 </div>
 
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#8338ec;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-book me-1"></i>Northwind Lab Scenario — Transactional: Beverages Division
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-5">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">
+        <strong style="color:#e9c46a">Scenario</strong><br>
+        Replicate only orders that contain Beverages products (CategoryID = 1) from the central
+        <code>northwind</code> database on <strong style="color:#06d6a0">PRIM</strong> to an off-site Beverages division
+        database <code>nw_repl</code> on <strong style="color:#457b9d">THIRD</strong>, with
+        <strong style="color:#8338ec">SECOND</strong> acting as the Distributor.
+        Changes propagate in <strong>~10 seconds</strong> after the publisher commits.
+      </div>
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">
+        <strong style="color:#06d6a0">Server topology</strong>
+      </div>
+      <table class="table table-sm mb-2" style="font-size:.64rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Instance</th><th>Role</th><th>Hosts</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td><strong style="color:#06d6a0">PRIM</strong></td><td>Publisher</td><td><code>northwind</code></td></tr>
+          <tr><td><strong style="color:#8338ec">SECOND</strong></td><td>Distributor</td><td>distribution DB + ReplData folder</td></tr>
+          <tr><td><strong style="color:#457b9d">THIRD</strong></td><td>Subscriber</td><td><code>nw_repl</code></td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.63rem;color:#e74c3c;margin-top:.3rem">
+        <i class="bi bi-exclamation-triangle me-1"></i><strong>SQL Server 2019 bug — sp_adddistributor empty password:</strong>
+        The wizard passes an empty password to <code>sp_adddistributor</code> when a remote Distributor is specified,
+        causing error 21768. Workaround — run manually on PRIM before the wizard:
+      </div>
+      <pre style="font-size:.6rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto;margin-top:.3rem"><span style="color:#457b9d">USE</span> master;
+<span style="color:#457b9d">EXEC</span> sp_adddistributor
+    @distributor = <span style="color:#06d6a0">N'DESKTOP-....\SECOND'</span>,
+    @password    = <span style="color:#06d6a0">N'your_password_here'</span>;</pre>
+    </div>
+    <div class="col-md-7">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem"><strong style="color:#8338ec">Article filter SQL — Orders containing Beverages (CategoryID = 1)</strong></div>
+      <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- Preview: which Order Details and Orders match the Beverages filter?</span>
+<span style="color:#457b9d">SELECT</span> * <span style="color:#457b9d">FROM</span> [Order Details]
+<span style="color:#457b9d">WHERE</span> ProductID <span style="color:#457b9d">IN</span> (
+    <span style="color:#457b9d">SELECT</span> ProductID <span style="color:#457b9d">FROM</span> Products
+    <span style="color:#457b9d">WHERE</span> CategoryID = <span style="color:#e9c46a">1</span>
+);
+
+<span style="color:#457b9d">SELECT</span> * <span style="color:#457b9d">FROM</span> Orders
+<span style="color:#457b9d">WHERE</span> OrderID <span style="color:#457b9d">IN</span> (
+    <span style="color:#457b9d">SELECT</span> OrderID <span style="color:#457b9d">FROM</span> [Order Details]
+    <span style="color:#457b9d">WHERE</span> ProductID <span style="color:#457b9d">IN</span> (
+        <span style="color:#457b9d">SELECT</span> ProductID <span style="color:#457b9d">FROM</span> Products
+        <span style="color:#457b9d">WHERE</span> CategoryID = <span style="color:#e9c46a">1</span>  <span style="color:#5a6070">-- Beverages</span>
+    )
+);
+
+<span style="color:#5a6070">-- Entered in the "Filter table rows" wizard for the Orders article:</span>
+<span style="color:#457b9d">SELECT</span> &lt;published_columns&gt; <span style="color:#457b9d">FROM</span> [dbo].[Orders]
+<span style="color:#457b9d">WHERE</span> orderid <span style="color:#457b9d">IN</span> (
+    <span style="color:#457b9d">SELECT</span> orderid <span style="color:#457b9d">FROM</span> [Order Details]
+    <span style="color:#457b9d">WHERE</span> ProductID <span style="color:#457b9d">IN</span> (
+        <span style="color:#457b9d">SELECT</span> productid <span style="color:#457b9d">FROM</span> Products <span style="color:#457b9d">WHERE</span> CategoryID = <span style="color:#e9c46a">1</span>
+    )
+)</pre>
+      <div style="font-size:.63rem;color:#5a6070;margin-top:.25rem">
+        The same 3-table subquery filter is applied to the <strong>Order Details</strong> article as well.
+        The publication is named <code>nw_trans</code>. Latency target: subscriber reflects publisher commits within ~10 s.
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

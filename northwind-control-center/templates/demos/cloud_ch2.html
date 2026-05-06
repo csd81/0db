@@ -1,0 +1,790 @@
+{% extends 'base.html' %}
+{% block title %}Cloud Ch. 2 — Road to Cloud Computing{% endblock %}
+{% block content %}
+
+<style>
+  .ch2-nav-link {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: #8892a4 !important;
+    border-radius: 0 !important;
+    padding: .5rem 1rem;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .ch2-nav-link:hover { color: #2dd4bf !important; }
+  .ch2-nav-link.active { color: #2dd4bf !important; border-bottom-color: #2dd4bf !important; }
+  .era-step {
+    background: #13141a;
+    border-left: 3px solid #2dd4bf;
+    border-radius: 0 6px 6px 0;
+    padding: .85rem 1rem;
+    margin-bottom: .6rem;
+  }
+  .era-step.blue  { border-left-color: #60a5fa; }
+  .era-step.violet{ border-left-color: #a78bfa; }
+  .era-step.amber { border-left-color: #f59e0b; }
+  .era-year { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #2dd4bf; }
+  .era-step.blue  .era-year { color: #60a5fa; }
+  .era-step.violet .era-year { color: #a78bfa; }
+  .era-step.amber .era-year { color: #f59e0b; }
+  .era-step h6 { color: #e2e8f0; font-weight: 700; margin: .15rem 0 .25rem; font-size: .85rem; }
+  .era-step p  { color: #8892a4; font-size: .78rem; margin: 0; line-height: 1.5; }
+  .code-box {
+    background: #0a0b0f;
+    border: 1px solid rgba(45,212,191,.15);
+    border-radius: 6px;
+    padding: .85rem 1rem;
+    font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+    font-size: .72rem;
+    color: #a3e6c8;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .code-lang {
+    display: inline-block;
+    font-size: .58rem;
+    font-weight: 700;
+    padding: .15rem .45rem;
+    border-radius: 3px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: .35rem;
+  }
+  .perf-bar-wrap { background: rgba(45,212,191,.08); border-radius: 3px; overflow: hidden; height: 12px; }
+  .perf-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg,#0d9488,#2dd4bf); }
+  .sc-row {
+    display: grid;
+    grid-template-columns: 150px 1fr 100px;
+    gap: .6rem;
+    align-items: center;
+    padding: .45rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .sc-row.header { border-bottom: 1px solid rgba(45,212,191,.2); padding-bottom: .35rem; }
+  .info-box {
+    background: #13141a;
+    border-radius: 8px;
+    border: 1px solid rgba(45,212,191,.15);
+    padding: 1rem 1.25rem;
+  }
+  .principle-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .6rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .principle-item:last-child { border-bottom: none; }
+  .p-num {
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(45,212,191,.15);
+    color: #2dd4bf;
+    font-size: .65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: .05rem;
+  }
+  .vm-card {
+    background: #13141a;
+    border-radius: 8px;
+    padding: 1rem;
+    border-top: 3px solid;
+    height: 100%;
+  }
+  .cmp-table th { font-size: .68rem; color: #8892a4; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; }
+  .cmp-table td { font-size: .78rem; padding: .5rem .75rem; border-color: rgba(255,255,255,.06) !important; color: #c4cdd8; vertical-align: middle; }
+  .cmp-table tr:hover td { background: rgba(45,212,191,.04); }
+  .ws-badge {
+    display: inline-block;
+    padding: .2rem .5rem;
+    border-radius: 4px;
+    font-size: .62rem;
+    font-weight: 600;
+    margin: .15rem;
+    background: rgba(45,212,191,.1);
+    color: #2dd4bf;
+    border: 1px solid rgba(45,212,191,.2);
+  }
+  .rest-verb {
+    display: inline-block;
+    padding: .25rem .6rem;
+    border-radius: 4px;
+    font-size: .68rem;
+    font-weight: 700;
+    font-family: monospace;
+  }
+  .adv-row { display: flex; gap: .75rem; padding: .55rem 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .adv-row:last-child { border-bottom: none; }
+</style>
+
+<!-- Page Header -->
+<div class="mb-4">
+  <div class="text-uppercase fw-bold mb-1" style="font-size:.63rem;letter-spacing:.12em;color:#2dd4bf">Cloud Book — Chapter 2</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.45rem">Technological Developments: The Road to Cloud Computing</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.83rem">
+    Tracing the conceptual path from 1960s mainframe batch scheduling to virtualised utility computing —
+    Cloud is the result of decades of systematic evolution, not a sudden invention.
+  </p>
+</div>
+
+<!-- Tab Nav -->
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(45,212,191,.2)">
+  <li class="nav-item"><button class="ch2-nav-link active" onclick="showTab('tab-eras',this)"><i class="bi bi-clock-history me-1"></i>Computing Eras</button></li>
+  <li class="nav-item"><button class="ch2-nav-link" onclick="showTab('tab-rpc',this)"><i class="bi bi-arrow-left-right me-1"></i>RPC &amp; RMI</button></li>
+  <li class="nav-item"><button class="ch2-nav-link" onclick="showTab('tab-soa',this)"><i class="bi bi-globe me-1"></i>SOA &amp; REST</button></li>
+  <li class="nav-item"><button class="ch2-nav-link" onclick="showTab('tab-grid',this)"><i class="bi bi-grid-3x3-gap me-1"></i>Grid &amp; Volunteer</button></li>
+  <li class="nav-item"><button class="ch2-nav-link" onclick="showTab('tab-virt',this)"><i class="bi bi-layers me-1"></i>Hosting &amp; Virtualisation</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ═══════════════════════ TAB 1: COMPUTING ERAS ═══════════════════════ -->
+<div id="tab-eras">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-3" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">The Core Tension</h5>
+      <p style="color:#8892a4;font-size:.81rem;line-height:1.6;margin-bottom:1rem">
+        Every era of computing faces the same triangle: <strong style="color:#e2e8f0">minimise cost</strong> (high utilisation),
+        <strong style="color:#e2e8f0">maximise performance</strong> (exclusive access), and
+        <strong style="color:#e2e8f0">maximise autonomy</strong> (no restrictions). These conflict.
+        The history of computing is a sequence of partial resolutions to this tension.
+      </p>
+
+      <div class="info-box mb-3" style="font-family:monospace;font-size:.76rem">
+        <div style="color:#8892a4;font-size:.65rem;margin-bottom:.4rem">Cost penalty of idle hardware:</div>
+        <div>System: <span style="color:#e2e8f0">$10,000</span> &nbsp;·&nbsp; Lifetime: <span style="color:#e2e8f0">100,000 h</span></div>
+        <div style="color:#2dd4bf">100% utilisation → <strong>$0.10 / CPU-hour</strong></div>
+        <div style="color:#f87171"> 10% utilisation → <strong>$1.00 / CPU-hour</strong></div>
+        <div style="color:#8892a4;font-size:.68rem;margin-top:.3rem">10× cost increase from 90% idle time.</div>
+      </div>
+
+      <div class="era-step">
+        <div class="era-year">1960s</div>
+        <h6><i class="bi bi-server me-1"></i>Mainframes — Centralised Batch</h6>
+        <p>Large, expensive machines at computing centres. Administrators scheduled jobs to keep utilisation high. Users reserved time slots. Time-sharing via terminals reduced per-user performance proportionally to connected users.</p>
+      </div>
+
+      <div class="era-step blue">
+        <div class="era-year">1980s</div>
+        <h6><i class="bi bi-pc-display me-1"></i>Personal Computers — Decentralised, Isolated</h6>
+        <p>Miniaturisation made computers affordable. No sharing needed — but printers/storage duplicated expensively per desk. Data on local HDDs, shared via floppy disks. Peripheral utilisation very low.</p>
+      </div>
+
+      <div class="era-step violet">
+        <div class="era-year">1980s–90s</div>
+        <h6><i class="bi bi-hdd-network me-1"></i>Client-Server &amp; LANs — Shared Services</h6>
+        <p>Ethernet + TCP/IP + Novell NetWare → print servers, shared directories. Specialised servers (FTP, email, DB, web). Global Internet by late 1990s. Still tightly coupled — one server failure blocks all callers.</p>
+      </div>
+
+      <div class="era-step amber">
+        <div class="era-year">Always</div>
+        <h6><i class="bi bi-cpu me-1"></i>Supercomputers — Elite Centralised HPC</h6>
+        <p>Continuation of mainframe model for extreme computation. Batch queuing, approved users, centralised centres. Performance: sequential → vector/pipeline → massively parallel (100,000+ cores). Languages: Fortran/C/C++ + OpenMP · MPI · CUDA.</p>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Supercomputer Performance — 9 Orders of Magnitude</h5>
+      <p style="color:#8892a4;font-size:.75rem;margin-bottom:.85rem">Bar width = log₁₀(performance) normalised to Fugaku. Actual scale spans from MIPS to PFlop/s.</p>
+
+      <div class="sc-row header">
+        <div style="font-size:.65rem;color:#8892a4;font-weight:700">System (Year)</div>
+        <div style="font-size:.65rem;color:#8892a4;font-weight:700">Performance (logarithmic)</div>
+        <div style="font-size:.65rem;color:#8892a4;font-weight:700;text-align:right">Peak</div>
+      </div>
+      <div class="sc-row">
+        <div style="font-size:.72rem;color:#c4cdd8">CDC 6600 <span style="color:#8892a4">'64</span></div>
+        <div class="perf-bar-wrap"><div class="perf-bar" style="width:2.6%"></div></div>
+        <div style="font-size:.68rem;color:#2dd4bf;text-align:right">2 MIPS</div>
+      </div>
+      <div class="sc-row">
+        <div style="font-size:.72rem;color:#c4cdd8">Cray-1 <span style="color:#8892a4">'76</span></div>
+        <div class="perf-bar-wrap"><div class="perf-bar" style="width:18.9%"></div></div>
+        <div style="font-size:.68rem;color:#2dd4bf;text-align:right">160 MFlop/s</div>
+      </div>
+      <div class="sc-row">
+        <div style="font-size:.72rem;color:#c4cdd8">Cray Y-MP <span style="color:#8892a4">'88</span></div>
+        <div class="perf-bar-wrap"><div class="perf-bar" style="width:28.7%"></div></div>
+        <div style="font-size:.68rem;color:#2dd4bf;text-align:right">2.1 GFlop/s</div>
+      </div>
+      <div class="sc-row">
+        <div style="font-size:.72rem;color:#c4cdd8">ASCI Red <span style="color:#8892a4">'97</span></div>
+        <div class="perf-bar-wrap"><div class="perf-bar" style="width:52.6%"></div></div>
+        <div style="font-size:.68rem;color:#2dd4bf;text-align:right">1.3 TFlop/s</div>
+      </div>
+      <div class="sc-row">
+        <div style="font-size:.72rem;color:#c4cdd8">IBM Roadrunner <span style="color:#8892a4">'08</span></div>
+        <div class="perf-bar-wrap"><div class="perf-bar" style="width:77.6%"></div></div>
+        <div style="font-size:.68rem;color:#2dd4bf;text-align:right">1.0 PFlop/s</div>
+      </div>
+      <div class="sc-row">
+        <div style="font-size:.72rem;color:#c4cdd8">Tianhe-2 <span style="color:#8892a4">'13</span></div>
+        <div class="perf-bar-wrap"><div class="perf-bar" style="width:90.6%"></div></div>
+        <div style="font-size:.68rem;color:#2dd4bf;text-align:right">33.9 PFlop/s</div>
+      </div>
+      <div class="sc-row">
+        <div style="font-size:.72rem;color:#c4cdd8">Summit <span style="color:#8892a4">'18</span></div>
+        <div class="perf-bar-wrap"><div class="perf-bar" style="width:97.2%"></div></div>
+        <div style="font-size:.68rem;color:#2dd4bf;text-align:right">200 PFlop/s</div>
+      </div>
+      <div class="sc-row" style="border-bottom:none">
+        <div style="font-size:.72rem;color:#e2e8f0;font-weight:600">Fugaku <span style="color:#8892a4">'20</span></div>
+        <div class="perf-bar-wrap"><div class="perf-bar" style="width:100%"></div></div>
+        <div style="font-size:.68rem;color:#2dd4bf;text-align:right;font-weight:700">415 PFlop/s</div>
+      </div>
+
+      <div class="info-box mt-3">
+        <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">How Cloud Resolves the Tension</div>
+        <div class="row g-2">
+          <div class="col-4">
+            <div style="background:rgba(45,212,191,.08);border-radius:6px;padding:.65rem;text-align:center">
+              <div style="font-size:1rem;color:#2dd4bf;margin-bottom:.2rem"><i class="bi bi-graph-up"></i></div>
+              <div style="font-size:.68rem;color:#e2e8f0;font-weight:700">Utilisation</div>
+              <div style="font-size:.63rem;color:#8892a4">Shared physical infra → near 100%</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div style="background:rgba(45,212,191,.08);border-radius:6px;padding:.65rem;text-align:center">
+              <div style="font-size:1rem;color:#2dd4bf;margin-bottom:.2rem"><i class="bi bi-person-check"></i></div>
+              <div style="font-size:.68rem;color:#e2e8f0;font-weight:700">Autonomy</div>
+              <div style="font-size:.63rem;color:#8892a4">Logical isolation — each tenant sees private machine</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div style="background:rgba(45,212,191,.08);border-radius:6px;padding:.65rem;text-align:center">
+              <div style="font-size:1rem;color:#2dd4bf;margin-bottom:.2rem"><i class="bi bi-currency-dollar"></i></div>
+              <div style="font-size:.68rem;color:#e2e8f0;font-weight:700">Cost</div>
+              <div style="font-size:.63rem;color:#8892a4">Pay per second — no idle hardware cost</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 2: RPC & RMI ═══════════════════════ -->
+<div id="tab-rpc" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-6">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">The Problem — Raw Sockets</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        Without abstraction, every distributed call requires: create socket → configure address → connect → send message bytes → receive bytes → handle errors.
+        This boilerplate repeats throughout the codebase; each team invents its own conventions.
+      </p>
+      <div class="code-lang" style="background:rgba(96,165,250,.15);color:#60a5fa">C — Raw Socket Client</div>
+      <pre class="code-box">clientSocket = socket(PF_INET, SOCK_STREAM, 0);
+serverAddr.sin_family      = AF_INET;
+serverAddr.sin_port        = htons(7891);
+serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+connect(clientSocket, (struct sockaddr*)&amp;serverAddr,
+        sizeof serverAddr);
+recv(clientSocket, buffer, 1024, 0);  /* raw bytes */</pre>
+
+      <h5 class="fw-bold mb-2 mt-4" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">RPC — Remote Procedure Call (Sun, 1984)</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        Key philosophy: use an abstraction programmers already know — the <strong style="color:#e2e8f0">function call</strong>.
+        An RPC compiler generates <em>stub</em> functions that hide connection/marshalling.
+        Middleware handles transport. Programmer sees only the call.
+      </p>
+      <div class="info-box mb-3" style="font-family:monospace;font-size:.72rem">
+        <div style="color:#e2e8f0;margin-bottom:.4rem">RPC mechanism (hidden from programmer):</div>
+        <div style="color:#8892a4">
+          Client calls <span style="color:#2dd4bf">print_list_1(l, cl)</span><br>
+          &nbsp;→ client stub marshals args into message bytes<br>
+          &nbsp;&nbsp;→ network transport to server<br>
+          &nbsp;&nbsp;&nbsp;→ server stub unmarshals, calls real function<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;→ result marshalled back to client<br>
+          <span style="color:#2dd4bf">Programmer sees only: result = print_list_1(l, cl);</span>
+        </div>
+      </div>
+      <div class="code-lang" style="background:rgba(96,165,250,.15);color:#60a5fa">C — RPC Client (Sun RPC)</div>
+      <pre class="code-box">CLIENT *cl;
+cl = clnt_create(argv[1], PRINTER, PRINTER_V1, "tcp");
+if (cl == NULL) {
+    printf("error: could not connect.\n");
+    return 1;
+}
+/* Looks identical to a local function call: */
+result = print_list_1(l, cl);
+if (result == NULL) {
+    printf("error: RPC failed!\n");
+}</pre>
+    </div>
+
+    <div class="col-lg-6">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">RMI — Java Remote Method Invocation</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        Java's platform independence + object serialisation → ship classes between JVMs. RMI uses
+        <strong style="color:#e2e8f0">interfaces</strong> (not IP:port) to describe remote services;
+        clients look up by name via RMIRegistry. The stub object looks like a local Java object.
+      </p>
+      <div class="code-lang" style="background:rgba(52,211,153,.15);color:#34d399">Java — BankInterface (remote contract)</div>
+      <pre class="code-box">public interface BankInterface extends Remote {
+    int deposit(int amount)  throws RemoteException;
+    int withdraw(int amount) throws RemoteException;
+    int getBalance()         throws RemoteException;
+    // every method MUST declare RemoteException
+}</pre>
+      <div class="code-lang mt-2" style="background:rgba(52,211,153,.15);color:#34d399">Java — BankServer (registers in RMIRegistry)</div>
+      <pre class="code-box">public class BankServer extends UnicastRemoteObject
+        implements BankInterface {
+    static int balance = 0;
+    public int getBalance() throws RemoteException {
+        return balance;
+    }
+    public static void main(String[] args) {
+        BankServer server = new BankServer();
+        Naming.rebind("BankServer", server); // publish
+    }
+}</pre>
+      <div class="code-lang mt-2" style="background:rgba(52,211,153,.15);color:#34d399">Java — ATMClient (stub looks like local object)</div>
+      <pre class="code-box">String name = "//" + args[0] + "/BankServer";
+BankInterface server =
+    (BankInterface) Naming.lookup(name);
+// Remote call — indistinguishable from local:
+balance = server.getBalance();</pre>
+
+      <div class="info-box mt-3" style="border-color:rgba(248,113,113,.3)">
+        <div style="font-size:.68rem;color:#f87171;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">The Loose Coupling Problem — Why RPC/RMI is Fragile</div>
+        <div style="font-family:monospace;font-size:.72rem;color:#8892a4;margin-bottom:.5rem;line-height:1.6">
+          Client C → Server A → Server B → Server D<br>
+          <span style="color:#f87171">↑ Error in D propagates as RemoteException chain: D→B→A→C</span>
+        </div>
+        <div style="font-size:.79rem;color:#8892a4;line-height:1.55">
+          <strong style="color:#e2e8f0">Strong coupling</strong>: a deadlock in D blocks the entire call chain indefinitely.
+          The abstraction "pretends" remote calls are local — but they fail in entirely non-local ways
+          (network partition, server crash, timeout).
+          Industry response: <strong style="color:#2dd4bf">loose coupling via message queues and async execution</strong>.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 3: SOA & REST ═══════════════════════ -->
+<div id="tab-soa" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Service-Oriented Architecture (SOA)</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Goal: decouple <em>what</em> a server does from <em>where</em> it runs.
+        A <strong style="color:#e2e8f0">service</strong> has a published contract; clients find services by capability, not by IP:port.
+      </p>
+      <div style="margin-bottom:1rem">
+        <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Four SOA Principles</div>
+        <div class="principle-item">
+          <div class="p-num">1</div>
+          <div><span style="color:#e2e8f0;font-size:.8rem;font-weight:600">Interface description</span><br><span style="color:#8892a4;font-size:.75rem">Service described by a contract (interface), not implementation details</span></div>
+        </div>
+        <div class="principle-item">
+          <div class="p-num">2</div>
+          <div><span style="color:#e2e8f0;font-size:.8rem;font-weight:600">Directory mediation</span><br><span style="color:#8892a4;font-size:.75rem">Services register themselves; clients look up by capability</span></div>
+        </div>
+        <div class="principle-item">
+          <div class="p-num">3</div>
+          <div><span style="color:#e2e8f0;font-size:.8rem;font-weight:600">Transient interaction</span><br><span style="color:#8892a4;font-size:.75rem">Clients and services interact only for the duration of service execution</span></div>
+        </div>
+        <div class="principle-item">
+          <div class="p-num">4</div>
+          <div><span style="color:#e2e8f0;font-size:.8rem;font-weight:600">Open standards</span><br><span style="color:#8892a4;font-size:.75rem">Platform-neutral technologies — any language, any OS can participate</span></div>
+        </div>
+      </div>
+
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">XML Web Services (WSDL + UDDI + SOAP)</h5>
+      <div style="background:#13141a;border-radius:8px;padding:.85rem;border:1px solid rgba(45,212,191,.15);margin-bottom:.85rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;text-align:center;margin-bottom:.6rem">
+          <div style="background:rgba(245,158,11,.1);border-radius:6px;padding:.5rem">
+            <div style="color:#f59e0b;font-weight:700;font-size:.75rem">WSDL</div>
+            <div style="color:#8892a4;font-size:.63rem">Web Service Description Language — XML contract: location, operations, parameters</div>
+          </div>
+          <div style="background:rgba(96,165,250,.1);border-radius:6px;padding:.5rem">
+            <div style="color:#60a5fa;font-weight:700;font-size:.75rem">UDDI</div>
+            <div style="color:#8892a4;font-size:.63rem">Universal Description Discovery &amp; Integration — the public XML directory</div>
+          </div>
+          <div style="background:rgba(167,139,250,.1);border-radius:6px;padding:.5rem">
+            <div style="color:#a78bfa;font-weight:700;font-size:.75rem">SOAP</div>
+            <div style="color:#8892a4;font-size:.63rem">Simple Object Access Protocol — XML message envelope over HTTP</div>
+          </div>
+        </div>
+        <div style="color:#8892a4;font-size:.73rem;border-top:1px solid rgba(255,255,255,.06);padding-top:.5rem;line-height:1.5">
+          Flow: query UDDI → retrieve WSDL → generate stub → send SOAP over HTTP → receive SOAP response.
+        </div>
+      </div>
+
+      <div class="info-box" style="border-color:rgba(239,68,68,.25)">
+        <div style="font-size:.68rem;color:#f87171;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">The WS-* Disaster — 70+ Specifications</div>
+        <div style="font-size:.76rem;color:#8892a4;line-height:1.55;margin-bottom:.6rem">
+          Each additional need (state, security, transactions, orchestration) spawned a new spec. Each spec depends on others. The result: essentially impossible to understand completely.
+        </div>
+        <div>
+          <span class="ws-badge">WS-Security</span><span class="ws-badge">WS-Transaction</span><span class="ws-badge">WS-Coordination</span>
+          <span class="ws-badge">WS-BPEL</span><span class="ws-badge">WS-Policy</span><span class="ws-badge">WS-Addressing</span>
+          <span class="ws-badge">WS-Context</span><span class="ws-badge">WS-Reliability</span><span class="ws-badge">WS-Discovery</span>
+          <span class="ws-badge" style="background:rgba(239,68,68,.1);color:#f87171;border-color:rgba(239,68,68,.3)">+ 60 more…</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">REST — Representational State Transfer (Fielding, 2000)</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Roy Fielding's PhD reaction to WS-* complexity. Instead of computation-centric ("execute this procedure"), REST is
+        <strong style="color:#e2e8f0">resource-centric</strong>: everything has a URL; use HTTP verbs to query and modify state.
+        No stubs, no WSDL, no code generation required.
+      </p>
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <div style="background:#13141a;border-radius:8px;padding:.85rem;border:1px solid rgba(239,68,68,.2);height:100%">
+            <div style="font-size:.68rem;color:#f87171;font-weight:700;margin-bottom:.5rem">SOAP Request (verbose XML)</div>
+            <pre class="code-box" style="font-size:.66rem;padding:.6rem">&lt;?xml version="1.0"?&gt;
+&lt;soap:Envelope
+  xmlns:soap="http://schemas.xmlsoap.org/
+              soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;m:GetBalance
+      xmlns:m="http://bank.example/ws"&gt;
+      &lt;m:AccountId&gt;12345&lt;/m:AccountId&gt;
+    &lt;/m:GetBalance&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</pre>
+          </div>
+        </div>
+        <div class="col-6">
+          <div style="background:#13141a;border-radius:8px;padding:.85rem;border:1px solid rgba(45,212,191,.2);height:100%">
+            <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;margin-bottom:.5rem">REST Request (simple HTTP)</div>
+            <pre class="code-box" style="font-size:.66rem;padding:.6rem">GET /accounts/12345/balance HTTP/1.1
+Host: api.bank.example
+Accept: application/json
+
+# Response:
+{
+  "account": "12345",
+  "balance": 4250.00,
+  "currency": "USD"
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">HTTP Verb Semantics in REST</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;text-align:center">
+          <div><span class="rest-verb" style="background:rgba(52,211,153,.15);color:#34d399">GET</span><div style="font-size:.64rem;color:#8892a4;margin-top:.3rem">Read (safe, idempotent)</div></div>
+          <div><span class="rest-verb" style="background:rgba(251,191,36,.15);color:#fbbf24">POST</span><div style="font-size:.64rem;color:#8892a4;margin-top:.3rem">Create new resource</div></div>
+          <div><span class="rest-verb" style="background:rgba(96,165,250,.15);color:#60a5fa">PUT</span><div style="font-size:.64rem;color:#8892a4;margin-top:.3rem">Replace (idempotent)</div></div>
+          <div><span class="rest-verb" style="background:rgba(239,68,68,.15);color:#f87171">DELETE</span><div style="font-size:.64rem;color:#8892a4;margin-top:.3rem">Remove (idempotent)</div></div>
+        </div>
+      </div>
+
+      <table class="table table-dark table-sm cmp-table" style="border-color:rgba(255,255,255,.06)">
+        <thead>
+          <tr>
+            <th>Aspect</th>
+            <th>SOAP / WS-*</th>
+            <th>REST</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Interface</td><td style="color:#8892a4">WSDL (complex XML)</td><td style="color:#2dd4bf">URL patterns + OpenAPI</td></tr>
+          <tr><td>Discovery</td><td style="color:#8892a4">UDDI directory</td><td style="color:#2dd4bf">Documentation</td></tr>
+          <tr><td>Protocol</td><td style="color:#8892a4">SOAP over HTTP/SMTP/TCP</td><td style="color:#2dd4bf">HTTP (native verbs)</td></tr>
+          <tr><td>Data format</td><td style="color:#8892a4">XML only</td><td style="color:#2dd4bf">JSON / XML / any</td></tr>
+          <tr><td>State</td><td style="color:#8892a4">Stateful extensions (WS-Context)</td><td style="color:#2dd4bf">Stateless (client holds state)</td></tr>
+          <tr><td>Complexity</td><td style="color:#f87171">70+ interdependent specs</td><td style="color:#34d399">One dissertation</td></tr>
+          <tr><td>Status</td><td style="color:#f87171">Legacy B2B only</td><td style="color:#34d399">De-facto standard</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 4: GRID & VOLUNTEER ═══════════════════════ -->
+<div id="tab-grid" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Grid Computing — Distributed Supercomputing</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Two simultaneous 1990s movements: (1) US supercomputer centres had uneven loads — one overbooked while another sat idle.
+        (2) Ethernet clusters of commodity PCs could be linked via WAN.
+        Both sought to increase utilisation via distributed resource management.
+      </p>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">The Grid = "Computing Power Grid"</div>
+        <div style="font-size:.78rem;color:#8892a4;line-height:1.55">
+          Analogy: US electrical power grid — plug in anywhere, get power. Goal: plug a computer into "the Grid" and access compute/storage resources regardless of geography.
+          Automatic load balancing across supercomputer centres.
+        </div>
+      </div>
+
+      <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Globus Toolkit — Key Components</div>
+      <div class="info-box mb-3">
+        <div class="adv-row">
+          <div style="min-width:130px;color:#e2e8f0;font-weight:600;font-size:.76rem">GRAM</div>
+          <div style="color:#8892a4;font-size:.76rem">Globus Resource Allocation Manager — collects resource info per site, accepts/denies RSL job requests, monitors execution</div>
+        </div>
+        <div class="adv-row">
+          <div style="min-width:130px;color:#e2e8f0;font-weight:600;font-size:.76rem">Information Service</div>
+          <div style="color:#8892a4;font-size:.76rem">Real-time resource status aggregation across all grid nodes — used by brokers for scheduling decisions</div>
+        </div>
+        <div class="adv-row">
+          <div style="min-width:130px;color:#e2e8f0;font-weight:600;font-size:.76rem">RSL</div>
+          <div style="color:#8892a4;font-size:.76rem">Resource Specification Language — express compute, memory, storage, scheduling requirements declaratively</div>
+        </div>
+        <div class="adv-row">
+          <div style="min-width:130px;color:#e2e8f0;font-weight:600;font-size:.76rem">Resource Broker</div>
+          <div style="color:#8892a4;font-size:.76rem">Translates user requests into site-specific allocations; co-allocates across multiple sites</div>
+        </div>
+        <div class="adv-row">
+          <div style="min-width:130px;color:#e2e8f0;font-weight:600;font-size:.76rem">OGSA</div>
+          <div style="color:#8892a4;font-size:.76rem">Open Grid Service Architecture — Globus evolved into Web Services; governed by academic/industry consortium</div>
+        </div>
+      </div>
+
+      <div style="background:rgba(52,211,153,.07);border-radius:8px;padding:.85rem;border:1px solid rgba(52,211,153,.2);font-size:.76rem">
+        <div style="color:#34d399;font-weight:700;margin-bottom:.3rem"><i class="bi bi-atom me-1"></i>DataGrid / CERN (2005)</div>
+        <div style="color:#8892a4;line-height:1.55">European DataGrid proved international multi-site grid works at scale — purpose-built for processing Large Hadron Collider data. By 2005, most developed countries had national grid systems.</div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Voluntary Computing — SETI@home &amp; BOINC</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Alternative to push-style Grid: computer owners <strong style="color:#e2e8f0">donate idle CPU time</strong>.
+        Programs are deployed <em>pull-style</em> — the client downloads work units from a central task database and returns results.
+      </p>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="info-box" style="height:100%">
+            <div style="font-size:.75rem;color:#2dd4bf;font-weight:700;margin-bottom:.5rem"><i class="bi bi-broadcast-pin me-1"></i>SETI@home (1999, Berkeley)</div>
+            <div style="font-size:.76rem;color:#8892a4;line-height:1.55;margin-bottom:.6rem">
+              Screensaver that downloads radio telescope data segments and analyses them for signs of extraterrestrial life. Millions of users donated idle CPU cycles.
+            </div>
+            <div style="font-family:monospace;font-size:.7rem;color:#8892a4;background:rgba(0,0,0,.3);border-radius:4px;padding:.5rem;line-height:1.55">
+              <span style="color:#2dd4bf">Inversion:</span> "server" = the researcher;<br>"clients" = users donating compute.<br><br>
+              <span style="color:#2dd4bf">Fault tolerance:</span> disconnected client → task reissued automatically.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="info-box" style="height:100%;border-color:rgba(52,211,153,.25)">
+            <div style="font-size:.75rem;color:#34d399;font-weight:700;margin-bottom:.5rem"><i class="bi bi-boxes me-1"></i>BOINC Infrastructure</div>
+            <div style="font-size:.76rem;color:#8892a4;line-height:1.55;margin-bottom:.5rem">Berkeley Open Infrastructure for Network Computing — generalised runtime for volunteer computing.</div>
+            <div class="row g-1 mb-1">
+              <div class="col-6"><div style="background:rgba(52,211,153,.08);border-radius:5px;padding:.4rem;text-align:center"><div style="font-size:1.05rem;color:#34d399;font-weight:700">30+</div><div style="font-size:.62rem;color:#8892a4">science projects</div></div></div>
+              <div class="col-6"><div style="background:rgba(52,211,153,.08);border-radius:5px;padding:.4rem;text-align:center"><div style="font-size:1.05rem;color:#34d399;font-weight:700">800K</div><div style="font-size:.62rem;color:#8892a4">active computers</div></div></div>
+              <div class="col-12 mt-1"><div style="background:rgba(52,211,153,.08);border-radius:5px;padding:.4rem;text-align:center"><div style="font-size:1.05rem;color:#34d399;font-weight:700">40+ PFlop/s</div><div style="font-size:.62rem;color:#8892a4">aggregate performance</div></div></div>
+            </div>
+            <div style="font-size:.7rem;color:#8892a4">Folding@home (COVID-19 drug research) exceeded TOP500 at peak volunteer surge.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">SETI@home Pull-Model Architecture</div>
+        <div style="font-family:monospace;font-size:.73rem;color:#8892a4;line-height:1.75">
+          <span style="color:#e2e8f0">Central server</span> (telescope data archive + task queue)<br>
+          &nbsp;&nbsp;← screensaver client <span style="color:#2dd4bf">pulls</span> a work unit (megabytes)<br>
+          &nbsp;&nbsp;→ client analyses segment over hours of idle CPU<br>
+          &nbsp;&nbsp;← returns result to server<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;→ server validates with redundant assignment, stores result<br>
+          <span style="color:#34d399">Millions of clients → supercomputer-scale aggregate performance</span>
+        </div>
+      </div>
+
+      <div class="info-box" style="border-color:rgba(167,139,250,.25)">
+        <div style="font-size:.68rem;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Grid → Cloud: The Key Differences</div>
+        <table style="width:100%;font-size:.76rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.35rem .5rem;text-align:left;font-weight:600">Aspect</th>
+            <th style="color:#8892a4;padding:.35rem .5rem;text-align:left;font-weight:600">Grid Computing</th>
+            <th style="color:#8892a4;padding:.35rem .5rem;text-align:left;font-weight:600">Cloud Computing</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.35rem .5rem;color:#c4cdd8">Users</td><td style="padding:.35rem .5rem;color:#8892a4">Approved HPC researchers</td><td style="padding:.35rem .5rem;color:#2dd4bf">Anyone with credit card</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.35rem .5rem;color:#c4cdd8">Resources</td><td style="padding:.35rem .5rem;color:#8892a4">Heterogeneous, donated</td><td style="padding:.35rem .5rem;color:#2dd4bf">Homogeneous, provider-owned</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.35rem .5rem;color:#c4cdd8">Provisioning</td><td style="padding:.35rem .5rem;color:#8892a4">Hours/days (queue wait)</td><td style="padding:.35rem .5rem;color:#2dd4bf">Seconds (self-service API)</td></tr>
+          <tr><td style="padding:.35rem .5rem;color:#c4cdd8">Billing</td><td style="padding:.35rem .5rem;color:#8892a4">Grant-based / free</td><td style="padding:.35rem .5rem;color:#2dd4bf">Pay-per-second</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 5: HOSTING & VIRTUALISATION ═══════════════════════ -->
+<div id="tab-virt" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Hosting &amp; Utility Computing</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        By early 2000s, businesses needed professional IT but couldn't afford full-time staff.
+        Outsourced web hosting → shared server farms → general managed hosting → "utility computing": pay a flat fee for compute, just like electricity.
+      </p>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem"><i class="bi bi-sun me-1"></i>SUN Grid — First Utility Computing (2005)</div>
+        <div style="font-size:.78rem;color:#8892a4;line-height:1.55;margin-bottom:.5rem">
+          SUN Microsystems ("The Network Is The Computer") deployed portable containerised server systems.
+          In 2005 opened them to the public at flat pay-per-use rates — a direct precursor to EC2.
+        </div>
+        <div style="display:flex;gap:1.5rem;margin-top:.3rem">
+          <div style="text-align:center"><div style="font-size:1.15rem;color:#f59e0b;font-weight:700">$1</div><div style="font-size:.63rem;color:#8892a4">per CPU-hour<br>(compute)</div></div>
+          <div style="text-align:center"><div style="font-size:1.15rem;color:#f59e0b;font-weight:700">$1</div><div style="font-size:.63rem;color:#8892a4">per GB-month<br>(storage)</div></div>
+          <div style="text-align:center"><div style="font-size:1.15rem;color:#f87171;font-weight:700">2008</div><div style="font-size:.63rem;color:#8892a4">financial crisis<br>→ SUN bankrupt</div></div>
+        </div>
+      </div>
+
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Why Virtualisation Enables Cloud</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.6rem">
+        <strong style="color:#e2e8f0">Legacy problem:</strong> software compiled for one hardware/OS couldn't run anywhere else. Vendor lock-in. Obsolete hardware meant losing the software.
+      </p>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        <strong style="color:#e2e8f0">Solution:</strong> A <strong>Virtual Machine Monitor (VMM)</strong> interposes between guest OS and physical hardware, emulating the expected instruction set. Multiple VMs share one machine. Each VM is isolated, snapshotable, migratable.
+      </p>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.55rem">Advantages &amp; Disadvantages</div>
+        <div class="adv-row">
+          <div style="color:#34d399;font-size:.85rem;flex-shrink:0;margin-top:.05rem"><i class="bi bi-check-circle-fill"></i></div>
+          <div><span style="color:#e2e8f0;font-size:.79rem;font-weight:600">Resource efficiency</span><br><span style="color:#8892a4;font-size:.74rem">Multiple VMs on one machine; maximise CPU vs one-app-per-server idle waste</span></div>
+        </div>
+        <div class="adv-row">
+          <div style="color:#34d399;font-size:.85rem;flex-shrink:0;margin-top:.05rem"><i class="bi bi-check-circle-fill"></i></div>
+          <div><span style="color:#e2e8f0;font-size:.79rem;font-weight:600">Portability &amp; live migration</span><br><span style="color:#8892a4;font-size:.74rem">VM image moved to new hardware transparently; snapshot before risky operations</span></div>
+        </div>
+        <div class="adv-row">
+          <div style="color:#34d399;font-size:.85rem;flex-shrink:0;margin-top:.05rem"><i class="bi bi-check-circle-fill"></i></div>
+          <div><span style="color:#e2e8f0;font-size:.79rem;font-weight:600">Backup &amp; DR</span><br><span style="color:#8892a4;font-size:.74rem">VM state snapshots are trivial to archive and restore</span></div>
+        </div>
+        <div class="adv-row">
+          <div style="color:#f87171;font-size:.85rem;flex-shrink:0;margin-top:.05rem"><i class="bi bi-exclamation-circle-fill"></i></div>
+          <div><span style="color:#e2e8f0;font-size:.79rem;font-weight:600">Performance overhead</span><br><span style="color:#8892a4;font-size:.74rem">Extra translation layers → slightly slower; mitigated by hardware-assisted virtualisation</span></div>
+        </div>
+        <div class="adv-row">
+          <div style="color:#f87171;font-size:.85rem;flex-shrink:0;margin-top:.05rem"><i class="bi bi-exclamation-circle-fill"></i></div>
+          <div><span style="color:#e2e8f0;font-size:.79rem;font-weight:600">Licensing &amp; training</span><br><span style="color:#8892a4;font-size:.74rem">Some software prohibits virtualised execution; IT staff must learn new tooling</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#2dd4bf;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Three Types of Hardware Virtualisation</h5>
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <div class="vm-card" style="border-top-color:#f59e0b">
+            <div style="font-size:.75rem;color:#f59e0b;font-weight:700;margin-bottom:.4rem">Full Virtualisation</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.55;margin-bottom:.6rem">
+              Complete hardware simulation. Guest OS runs <strong style="color:#e2e8f0">unmodified</strong>. VMM translates every instruction in software.
+            </div>
+            <div style="font-family:monospace;font-size:.67rem;color:#8892a4;background:rgba(0,0,0,.3);border-radius:4px;padding:.4rem;line-height:1.5">
+              Guest OS (unmodified)<br>
+              ──────────────────<br>
+              <span style="color:#f59e0b">VMM (full SW emulation)</span><br>
+              ──────────────────<br>
+              Host Hardware
+            </div>
+            <div style="margin-top:.5rem"><span style="font-size:.63rem;background:rgba(239,68,68,.12);color:#f87171;padding:.15rem .4rem;border-radius:3px">Slow — all SW emulation</span></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="vm-card" style="border-top-color:#a78bfa">
+            <div style="font-size:.75rem;color:#a78bfa;font-weight:700;margin-bottom:.4rem">Paravirtualisation</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.55;margin-bottom:.6rem">
+              VMM exposes a <strong style="color:#e2e8f0">special API</strong>. Modified guest OS calls this API → some operations hit real hardware. Faster, but OS must be patched.
+            </div>
+            <div style="font-family:monospace;font-size:.67rem;color:#8892a4;background:rgba(0,0,0,.3);border-radius:4px;padding:.4rem;line-height:1.5">
+              <span style="color:#a78bfa">Modified Guest OS</span><br>
+              ──────────────────<br>
+              <span style="color:#a78bfa">VMM (partial HW access)</span><br>
+              ──────────────────<br>
+              Host HW ←→ some direct
+            </div>
+            <div style="margin-top:.5rem"><span style="font-size:.63rem;background:rgba(167,139,250,.12);color:#a78bfa;padding:.15rem .4rem;border-radius:3px">Faster · OS patching needed</span></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="vm-card" style="border-top-color:#34d399">
+            <div style="font-size:.75rem;color:#34d399;font-weight:700;margin-bottom:.4rem">Hardware-Assisted</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.55;margin-bottom:.6rem">
+              CPU provides dedicated virtualisation extensions (Intel VT-x, AMD-V). Guest runs <strong style="color:#e2e8f0">near-native</strong>, unmodified, using physical CPU directly.
+            </div>
+            <div style="font-family:monospace;font-size:.67rem;color:#8892a4;background:rgba(0,0,0,.3);border-radius:4px;padding:.4rem;line-height:1.5">
+              Guest OS (unmodified)<br>
+              ──────────────────<br>
+              <span style="color:#34d399">Thin VMM (hw rings)</span><br>
+              ──────────────────<br>
+              <span style="color:#34d399">CPU VT-x / AMD-V</span>
+            </div>
+            <div style="margin-top:.5rem"><span style="font-size:.63rem;background:rgba(52,211,153,.12);color:#34d399;padding:.15rem .4rem;border-radius:3px">Near-native · Modern standard</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">Virtualisation Areas Beyond CPU</div>
+        <div class="row g-2">
+          <div class="col-4"><div style="background:rgba(45,212,191,.07);border-radius:5px;padding:.45rem;text-align:center"><div style="font-size:.7rem;color:#2dd4bf;font-weight:700">Network</div><div style="font-size:.62rem;color:#8892a4">vLAN, overlay networks, SDN</div></div></div>
+          <div class="col-4"><div style="background:rgba(45,212,191,.07);border-radius:5px;padding:.45rem;text-align:center"><div style="font-size:.7rem;color:#2dd4bf;font-weight:700">Storage</div><div style="font-size:.62rem;color:#8892a4">SAN, NAS, virtual volumes</div></div></div>
+          <div class="col-4"><div style="background:rgba(45,212,191,.07);border-radius:5px;padding:.45rem;text-align:center"><div style="font-size:.7rem;color:#2dd4bf;font-weight:700">Memory</div><div style="font-size:.62rem;color:#8892a4">Page tables, balloon drivers</div></div></div>
+        </div>
+      </div>
+
+      <div class="info-box" style="border-color:rgba(45,212,191,.25)">
+        <div style="font-size:.68rem;color:#2dd4bf;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Virtualisation → IaaS — The Direct Line</div>
+        <div style="font-family:monospace;font-size:.73rem;color:#8892a4;line-height:1.85">
+          1. Intel VT-x introduced (2005)<br>
+          <span style="color:#2dd4bf">↓</span> VM startup fast enough for self-service provisioning<br>
+          2. Mature hypervisors: Xen (2003), KVM (2007), VMware ESX<br>
+          <span style="color:#2dd4bf">↓</span> Production-grade multi-tenant VM management<br>
+          3. Amazon EC2 launches (November 2006) — Xen-based<br>
+          <span style="color:#2dd4bf">↓</span> Self-service API · pay-per-hour · any VM in seconds<br>
+          <span style="color:#34d399">= Infrastructure-as-a-Service (IaaS) is born</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /pt-4 wrapper -->
+
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(function(p) { p.classList.add('d-none'); });
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ch2-nav-link').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+}
+// Activate tab from URL hash on load
+(function() {
+  var h = window.location.hash.slice(1);
+  if (h) {
+    var btn = document.querySelector('.ch2-nav-link[onclick*="' + h + '"]');
+    if (btn) { showTab(h, btn); }
+  }
+})();
+</script>
+
+{% endblock %}

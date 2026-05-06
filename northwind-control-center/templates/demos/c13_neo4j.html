@@ -1,0 +1,907 @@
+{% extends "base.html" %}
+{% block title %}C13 — Neo4j{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-diagram-3 fs-2 me-3" style="color:#34d399"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Chapter 13 — Neo4j: Native Graph Database</h2>
+    <p class="text-muted mb-0">Property Graph model · Cypher language · 7 basic + 10 advanced queries · SQL Server vs Neo4j comparison</p>
+  </div>
+  {% if not conn_id %}
+  <div class="ms-auto">
+    <span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c;border:1px solid rgba(251,146,60,.3);font-size:.75rem">
+      <i class="bi bi-exclamation-triangle me-1"></i>No Neo4j connection — add one in Connections
+    </span>
+  </div>
+  {% else %}
+  <div class="ms-auto">
+    <span class="badge" style="background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.3);font-size:.75rem">
+      <i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Neo4j connected (id={{ conn_id }})
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+<ul class="nav nav-tabs mb-4 mt-3" id="c13tabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-model">
+      <i class="bi bi-1-circle me-1"></i>Property Graph Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-setup">
+      <i class="bi bi-2-circle me-1"></i>Setup &amp; Load
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-basic">
+      <i class="bi bi-3-circle me-1"></i>Basic Queries (7)
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-advanced">
+      <i class="bi bi-4-circle me-1"></i>Advanced Patterns (10)
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-compare">
+      <i class="bi bi-5-circle me-1"></i>SQL vs Cypher
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- ── TAB 1: PROPERTY GRAPH MODEL ──────────────────────────────────────── -->
+<div class="tab-pane fade show active" id="tab-model">
+  <div class="row g-4">
+
+    <!-- Left: concepts -->
+    <div class="col-lg-5">
+
+      <!-- 3 primitive types -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-boxes me-2"></i>Property Graph Primitives</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="row g-2 mb-3">
+            <div class="col-md-4">
+              <div class="p-2 rounded h-100 text-center" style="background:#0d0f16;border:2px solid rgba(52,211,153,.5)">
+                <div style="font-size:1.6rem">⬤</div>
+                <div class="fw-bold" style="color:#34d399;font-size:.82rem">Node</div>
+                <div style="font-size:.7rem;color:#8b949e;margin-top:.3rem">Zero or more <strong style="color:#c9d1d9">labels</strong><br>Key-value <strong style="color:#c9d1d9">properties</strong></div>
+                <code style="font-size:.68rem;color:#93c5fd">(:Person {name:'john'})</code>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-2 rounded h-100 text-center" style="background:#0d0f16;border:2px solid rgba(96,165,250,.5)">
+                <div style="font-size:1.3rem">→</div>
+                <div class="fw-bold" style="color:#60a5fa;font-size:.82rem">Relationship</div>
+                <div style="font-size:.7rem;color:#8b949e;margin-top:.3rem">Exactly <strong style="color:#c9d1d9">one type</strong><br>Optional <strong style="color:#c9d1d9">properties</strong></div>
+                <code style="font-size:.68rem;color:#93c5fd">-[:LIKES {rating:9}]-></code>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-2 rounded h-100 text-center" style="background:#0d0f16;border:2px solid rgba(167,139,250,.5)">
+                <div style="font-size:1.3rem">⬤→⬤</div>
+                <div class="fw-bold" style="color:#a78bfa;font-size:.82rem">Path</div>
+                <div style="font-size:.7rem;color:#8b949e;margin-top:.3rem">Alternating nodes and relationships</div>
+                <code style="font-size:.68rem;color:#93c5fd">MATCH path = ...</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cypher anatomy -->
+          <div class="p-2 rounded" style="background:#080a0e;border:1px solid #2a2d35">
+            <div style="font-size:.7rem;color:#8b949e;margin-bottom:.4rem">Cypher pattern anatomy:</div>
+            <div class="d-flex align-items-center flex-wrap gap-1" style="font-size:.78rem;font-family:monospace">
+              <span style="color:#4ade80">(</span>
+              <span style="color:#fbbf24">a</span>
+              <span style="color:#f87171">:Person</span>
+              <span style="color:#c9d1d9"> {name:'john'}</span>
+              <span style="color:#4ade80">)</span>
+              <span style="color:#60a5fa">-[</span>
+              <span style="color:#fbbf24">l</span>
+              <span style="color:#f87171">:LIKES</span>
+              <span style="color:#c9d1d9"> {rating:9}</span>
+              <span style="color:#60a5fa">]-></span>
+              <span style="color:#4ade80">(</span>
+              <span style="color:#fbbf24">r</span>
+              <span style="color:#f87171">:Restaurant</span>
+              <span style="color:#4ade80">)</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-2" style="font-size:.68rem">
+              <span style="color:#4ade80">( ) = node</span>
+              <span style="color:#fbbf24">letter = variable</span>
+              <span style="color:#f87171">:Label = type</span>
+              <span style="color:#60a5fa">[ ] = relationship</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- vs SQL Server graph tables -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-arrow-left-right me-2"></i>vs SQL Server Graph Tables</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.75rem">
+            <thead><tr style="color:#8b949e"><th>Concept</th><th style="color:#a78bfa">SQL Server</th><th style="color:#34d399">Neo4j</th></tr></thead>
+            <tbody>
+              <tr><td>Node type</td><td>Table name (<code>AS NODE</code>)</td><td>Label(s) on the node</td></tr>
+              <tr><td>Edge type</td><td>Table name (<code>AS EDGE</code>)</td><td>Relationship type string</td></tr>
+              <tr><td>Multi-label</td><td style="color:#f87171">✗ Not supported</td><td style="color:#34d399">✓ e.g. <code>:Person:Employee</code></td></tr>
+              <tr><td>Schema</td><td>Table definitions required</td><td>Schema-optional (flexible)</td></tr>
+              <tr><td>Algorithms</td><td>SHORTEST_PATH only</td><td style="color:#34d399">Full GDS library</td></tr>
+              <tr><td>Storage engine</td><td>Relational + graph columns</td><td style="color:#34d399">Native property graph</td></tr>
+              <tr><td>Traversal cost</td><td>O(table size)</td><td style="color:#34d399">O(relationship count)</td></tr>
+              <tr><td>Full ACID</td><td style="color:#34d399">✓</td><td style="color:#34d399">✓ (MVCC)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- When to choose -->
+      <div class="card" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-signpost-split me-2"></i>When to Choose</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.75rem">
+            <thead><tr style="color:#8b949e"><th>Scenario</th><th style="color:#a78bfa">SQL Server</th><th style="color:#34d399">Neo4j</th></tr></thead>
+            <tbody>
+              <tr><td>Graph in existing relational DB</td><td style="color:#34d399">✓ Ideal</td><td style="color:#6b7280">Overkill</td></tr>
+              <tr><td>Deeply connected (6+ hops)</td><td style="color:#f87171">Slow</td><td style="color:#34d399">✓ Fast</td></tr>
+              <tr><td>Multiple graph algorithms</td><td style="color:#f87171">Limited</td><td style="color:#34d399">✓ Full GDS</td></tr>
+              <tr><td>Standalone graph workload</td><td style="color:#6b7280">Works</td><td style="color:#34d399">✓ Ideal</td></tr>
+              <tr><td>Visualization built-in</td><td style="color:#f87171">External tools</td><td style="color:#34d399">✓ Browser</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /col-lg-5 -->
+
+    <!-- Right: graph diagram + live schema -->
+    <div class="col-lg-7">
+
+      <!-- Social network SVG diagram -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-people me-2"></i>Demo Graph — Social Network (c8 data, Cypher)</span>
+        </div>
+        <div class="card-body p-2">
+          <svg viewBox="0 0 620 300" style="width:100%;height:auto;background:#080a0e;border-radius:6px">
+            <!-- FRIEND_OF edges -->
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#34d399" opacity=".6"/>
+              </marker>
+              <marker id="arrow-city" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#60a5fa" opacity=".5"/>
+              </marker>
+              <marker id="arrow-likes" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#f87171" opacity=".6"/>
+              </marker>
+            </defs>
+
+            <!-- FRIEND_OF arrows (green) john(80,150)→mary(230,80), john→julie(230,230) -->
+            <line x1="95" y1="148" x2="212" y2="90" stroke="#34d399" stroke-width="1.2" stroke-opacity=".6" marker-end="url(#arrow)"/>
+            <line x1="95" y1="155" x2="212" y2="222" stroke="#34d399" stroke-width="1.2" stroke-opacity=".6" marker-end="url(#arrow)"/>
+            <!-- mary→alice -->
+            <line x1="248" y1="80" x2="378" y2="80" stroke="#34d399" stroke-width="1.2" stroke-opacity=".6" marker-end="url(#arrow)"/>
+            <!-- alice→mary, alice→julie, alice→tom -->
+            <line x1="378" y1="92" x2="248" y2="92" stroke="#34d399" stroke-width="1.2" stroke-opacity=".6" marker-end="url(#arrow)"/>
+            <line x1="390" y1="98" x2="248" y2="218" stroke="#34d399" stroke-width="1.2" stroke-opacity=".6" marker-end="url(#arrow)"/>
+            <line x1="408" y1="88" x2="510" y2="88" stroke="#34d399" stroke-width="1.2" stroke-opacity=".6" marker-end="url(#arrow)"/>
+            <!-- jacob→mary -->
+            <line x1="390" y1="228" x2="248" y2="100" stroke="#34d399" stroke-width="1.2" stroke-opacity=".6" marker-end="url(#arrow)"/>
+            <!-- julie→jacob -->
+            <line x1="248" y1="228" x2="368" y2="228" stroke="#34d399" stroke-width="1.2" stroke-opacity=".6" marker-end="url(#arrow)"/>
+
+            <!-- Person nodes (green circles) -->
+            <!-- john 80,150 -->
+            <circle cx="80" cy="150" r="22" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+            <text x="80" y="154" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">john</text>
+            <!-- mary 230,85 -->
+            <circle cx="230" cy="85" r="22" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+            <text x="230" y="89" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">mary</text>
+            <!-- alice 395,85 -->
+            <circle cx="395" cy="85" r="22" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+            <text x="395" y="89" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">alice</text>
+            <!-- tom 525,85 -->
+            <circle cx="525" cy="85" r="22" fill="#1a1d24" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4"/>
+            <text x="525" y="89" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">tom</text>
+            <!-- julie 230,230 -->
+            <circle cx="230" cy="230" r="22" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+            <text x="230" y="234" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">julie</text>
+            <!-- jacob 385,230 -->
+            <circle cx="385" cy="230" r="22" fill="#064e3b" stroke="#34d399" stroke-width="2"/>
+            <text x="385" y="234" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">jacob</text>
+
+            <!-- LIKES edges (red dashed) — show only john→taco -->
+            <line x1="80" y1="128" x2="120" y2="268" stroke="#f87171" stroke-width="1" stroke-opacity=".5" stroke-dasharray="4" marker-end="url(#arrow-likes)"/>
+
+            <!-- Restaurant node taco dell 120,275 -->
+            <rect x="75" y="268" width="90" height="20" rx="4" fill="#1a0505" stroke="#f87171" stroke-width="1.2"/>
+            <text x="120" y="281" text-anchor="middle" fill="#f87171" font-size="9.5">🍽 taco dell</text>
+
+            <!-- Labels -->
+            <text x="310" y="16" text-anchor="middle" fill="#6b7280" font-size="10">green = FRIEND_OF · dashed node = no outgoing FRIEND_OF</text>
+            <text x="310" y="284" text-anchor="middle" fill="#6b7280" font-size="9">red dashed = LIKES · 2 more restaurants + 3 cities not shown</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Live schema inspector -->
+      <div class="card" style="background:#13141a;border:1px solid rgba(52,211,153,.35)">
+        <div class="card-header d-flex align-items-center justify-content-between"
+             style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-search me-2"></i>Live Schema Inspector</span>
+          <button class="btn btn-sm" style="background:#34d399;color:#0d0f16;border:none;font-size:.75rem"
+                  onclick="loadSchema(this)">
+            <i class="bi bi-play-fill me-1"></i>CALL db.labels() + db.relationshipTypes()
+          </button>
+        </div>
+        <div class="card-body p-3" id="schemaPanel">
+          <div style="color:#6b7280;font-size:.8rem">Click to inspect the connected database…</div>
+        </div>
+      </div>
+
+    </div><!-- /col-lg-7 -->
+  </div>
+</div><!-- /tab-model -->
+
+
+<!-- ── TAB 2: SETUP & LOAD ────────────────────────────────────────────────── -->
+<div class="tab-pane fade" id="tab-setup">
+  <div class="row g-4">
+    <div class="col-lg-5">
+
+      <!-- Setup options -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-cloud me-2"></i>Setup Options</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-3 p-2 rounded" style="background:#0d0f16;border:1px solid rgba(52,211,153,.25)">
+            <div class="fw-bold mb-1" style="color:#34d399;font-size:.82rem">Option A — AuraDB (Cloud Free Tier)</div>
+            <ol class="mb-0 ps-3" style="font-size:.77rem;color:#c9d1d9;line-height:1.8">
+              <li>Sign up at <code>console.neo4j.io</code></li>
+              <li>Create a free instance</li>
+              <li>Copy the bolt URI (<code>neo4j+s://…</code>) + password</li>
+              <li>Add connection in Control Plane → Connections</li>
+            </ol>
+          </div>
+          <div class="p-2 rounded" style="background:#0d0f16;border:1px solid rgba(96,165,250,.2)">
+            <div class="fw-bold mb-1" style="color:#60a5fa;font-size:.82rem">Option B — Neo4j Desktop (Local)</div>
+            <ol class="mb-0 ps-3" style="font-size:.77rem;color:#c9d1d9;line-height:1.8">
+              <li>Download from <code>neo4j.com/download</code></li>
+              <li>Create new project → New Database</li>
+              <li>Default URI: <code>bolt://localhost:7687</code>, user: <code>neo4j</code></li>
+              <li>Add connection in Control Plane → Connections</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Demo graph structure -->
+      <div class="card" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-diagram-2 me-2"></i>Demo Graph Contents</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.78rem">
+            <thead><tr style="color:#8b949e"><th>Label</th><th>Count</th><th>Key properties</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge" style="background:#064e3b;color:#34d399">:Person</span></td><td>6</td><td>id, name (john, mary, alice, jacob, julie, tom)</td></tr>
+              <tr><td><span class="badge" style="background:#1a0505;color:#f87171">:Restaurant</span></td><td>3</td><td>id, name (taco dell, ginger and spice, noodle land)</td></tr>
+              <tr><td><span class="badge" style="background:#1e3a5f;color:#60a5fa">:City</span></td><td>3</td><td>id, name, state (bellevue, seattle, redmond)</td></tr>
+              <tr><td><span class="badge" style="background:#3b0764;color:#c4b5fd">:Product</span></td><td>4</td><td>id, name, price, category (Northwind sample)</td></tr>
+              <tr><td><span class="badge" style="background:#2d1900;color:#fbbf24">:Order</span></td><td>2</td><td>id, date (10248, 10249)</td></tr>
+            </tbody>
+          </table>
+          <div class="mt-2" style="font-size:.75rem;color:#8b949e">
+            Relationships: FRIEND_OF (8), LIKES (5), LIVES_IN (5), LOCATED_IN (3), CONTAINS (4)
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-7">
+
+      <!-- Load graph button -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(52,211,153,.35)">
+        <div class="card-header d-flex align-items-center justify-content-between"
+             style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-cloud-upload me-2"></i>Load Demo Graph into Neo4j</span>
+          <button class="btn btn-sm" style="background:#34d399;color:#0d0f16;border:none;font-size:.75rem"
+                  onclick="loadGraph(this)">
+            <i class="bi bi-play-fill me-1"></i>Run 01_create_graph.cypher
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.73rem;color:#93c5fd;background:#080a0e;border-bottom:1px solid #1e2228;white-space:pre-wrap">// Runs 44 Cypher statements:
+MATCH (n) DETACH DELETE n                      -- clear all data
+CREATE (:Person {id: 1, name: 'john'})         -- 6 persons
+CREATE (:Restaurant {id: 1, name: 'taco dell'})-- 3 restaurants
+CREATE (:City {id: 1, name: 'bellevue', state: 'wa'}) -- 3 cities
+MATCH (p:Person {id:1}), (r:Restaurant {id:1}) CREATE (p)-[:LIKES {rating:9}]->(r)
+-- ... 8 FRIEND_OF + 5 LIKES + 5 LIVES_IN + 3 LOCATED_IN
+CREATE (:Product ...) / CREATE (:Order ...)    -- Northwind sample
+MATCH (o:Order {id:10248}), (p:Product {id:11}) CREATE (o)-[:CONTAINS ...]->(p)</pre>
+          <div id="loadGraphLog" style="display:none;max-height:220px;overflow-y:auto;padding:.75rem;background:#0a0c10"></div>
+        </div>
+      </div>
+
+      <!-- Migration script reference -->
+      <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-code-slash me-1"></i>02_migrate_from_sql.py — ETL reference</span>
+          <span class="ms-2 badge" style="background:#1a1d24;color:#34d399;border:1px solid rgba(52,211,153,.3);font-size:.65rem">reads SQL Server graph tables → writes to Neo4j</span>
+        </div>
+        <div class="card-body p-0">
+{% raw %}          <pre class="m-0 p-3" style="font-size:.72rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">from neo4j import GraphDatabase
+import pyodbc
+
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+sql = pyodbc.connect(SQL_CONN_STR)
+
+with driver.session() as neo:
+    neo.run("MATCH (n) DETACH DELETE n")          # clear
+
+    # Load nodes from SQL Server graph tables
+    for table, label in [('person','Person'),('restaurant','Restaurant'),('city','City')]:
+        rows = sql.execute(f"SELECT id, name FROM {table}").fetchall()
+        for row in rows:
+            neo.run(f"CREATE (:{label} {{id:$id, name:$name}})", id=row[0], name=row[1])
+
+    # Load FRIEND_OF edges using $node_id / $from_id / $to_id
+    edges = sql.execute("""
+        SELECT p1.id, p2.id FROM friendof f
+        JOIN person p1 ON p1.$node_id = f.$from_id
+        JOIN person p2 ON p2.$node_id = f.$to_id
+    """).fetchall()
+    for e in edges:
+        neo.run("MATCH (p1:Person {id:$id1}),(p2:Person {id:$id2}) CREATE (p1)-[:FRIEND_OF]->(p2)",
+                id1=e[0], id2=e[1])</pre>{% endraw %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /tab-setup -->
+
+
+<!-- ── TAB 3: BASIC QUERIES ──────────────────────────────────────────────── -->
+<div class="tab-pane fade" id="tab-basic">
+
+  <div class="mb-3 p-2 rounded d-flex align-items-start gap-2" style="background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.25)">
+    <i class="bi bi-info-circle" style="color:#34d399;flex-shrink:0;margin-top:.15rem"></i>
+    <span style="font-size:.78rem;color:#c9d1d9">
+      These 7 queries are the direct Cypher translations of the SQL Server MATCH queries from Chapter 8.
+      Left panel shows T-SQL MATCH; right panel shows the Cypher equivalent.
+    </span>
+  </div>
+
+  {% set basic_qs = [
+    ('q1', "John's direct friends",        'One-hop traversal — pattern replaces 3-table FROM clause'),
+    ('q2', 'Restaurants john likes',        'Edge properties (rating) accessed on the relationship variable [l:LIKES]'),
+    ('q3', "Restaurants liked by john's friends", 'Two-hop chain — Cypher reads left-to-right like a path'),
+    ('q4', 'People who like a local restaurant', 'AND pattern: two paths converge on the same city node'),
+    ('q5', 'Friends with local taste',      'Three paths share p2 and c — compound AND convergence'),
+    ('q6', 'Pairs sharing a mutual friend', 'Both p1 and p2 point INTO p0 — arrow reversed on right side'),
+    ('q7', 'Shortest paths from john',      'shortestPath() built-in; list comprehension replaces STRING_AGG WITHIN GROUP')
+  ] %}
+
+  {% for key, title, note in basic_qs %}
+  <div class="card mb-3" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+    <div class="card-header d-flex align-items-center justify-content-between"
+         style="background:rgba(52,211,153,.08);border-bottom:1px solid rgba(52,211,153,.2);padding:.5rem .75rem">
+      <div>
+        <span class="badge me-2" style="background:rgba(52,211,153,.2);color:#34d399;font-size:.7rem">{{ loop.index }}</span>
+        <span class="fw-bold" style="color:#34d399;font-size:.85rem">{{ title }}</span>
+      </div>
+      <button class="btn btn-sm" style="background:#34d399;color:#0d0f16;border:none;font-size:.72rem"
+              onclick="runQ('{{ key }}', this)">
+        <i class="bi bi-play-fill me-1"></i>Run Cypher
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <div class="row g-0">
+        <div class="col-md-6">
+          <div style="font-size:.65rem;color:#a78bfa;padding:.4rem .75rem;background:#0f0810;border-bottom:1px solid #2a2d35;border-right:1px solid #2a2d35">
+            <i class="bi bi-database me-1"></i>SQL Server T-SQL MATCH
+          </div>
+          <pre id="{{ key }}-sql" class="m-0 p-3" style="font-size:.72rem;color:#c4b5fd;background:#0f0810;min-height:80px;white-space:pre-wrap;border-right:1px solid #2a2d35"></pre>
+        </div>
+        <div class="col-md-6">
+          <div style="font-size:.65rem;color:#34d399;padding:.4rem .75rem;background:#020f08;border-bottom:1px solid #2a2d35">
+            <i class="bi bi-diagram-3 me-1"></i>Cypher (Neo4j)
+          </div>
+          <pre id="{{ key }}-cypher" class="m-0 p-3" style="font-size:.72rem;color:#6ee7b7;background:#020f08;min-height:80px;white-space:pre-wrap"></pre>
+        </div>
+      </div>
+      <div class="px-3 py-2" style="border-top:1px solid #2a2d35;font-size:.74rem;color:#8b949e">
+        <i class="bi bi-lightbulb me-1" style="color:#fbbf24"></i>{{ note }}
+      </div>
+      <div id="{{ key }}-result" style="display:none;border-top:1px solid #2a2d35;padding:.75rem"></div>
+    </div>
+  </div>
+  {% endfor %}
+
+</div><!-- /tab-basic -->
+
+
+<!-- ── TAB 4: ADVANCED PATTERNS ──────────────────────────────────────────── -->
+<div class="tab-pane fade" id="tab-advanced">
+
+  <!-- Aggregation group -->
+  <div class="mb-2 mt-1" style="font-size:.7rem;color:#34d399;text-transform:uppercase;letter-spacing:.1em;font-weight:700">
+    <i class="bi bi-bar-chart me-1"></i>Aggregation (implicit GROUP BY)
+  </div>
+  {% for key, note in [('a1','No GROUP BY needed — non-aggregated RETURN columns form the implicit group'),('a2','avg() on relationship property — mix of node and relationship aggregation'),('a3','OPTIONAL MATCH = LEFT JOIN — restaurants with 0 fans still appear')] %}
+  <div class="card mb-3" style="background:#13141a;border:1px solid rgba(52,211,153,.22)">
+    <div class="card-header d-flex align-items-center justify-content-between"
+         style="background:rgba(52,211,153,.06);border-bottom:1px solid rgba(52,211,153,.18);padding:.45rem .75rem">
+      <span class="fw-bold" style="color:#34d399;font-size:.82rem" id="{{ key }}-title">{{ key }}</span>
+      <button class="btn btn-sm" style="background:rgba(52,211,153,.2);border:1px solid rgba(52,211,153,.4);color:#34d399;font-size:.72rem"
+              onclick="runQ('{{ key }}', this)">
+        <i class="bi bi-play-fill me-1"></i>Run
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <pre id="{{ key }}-cypher" class="m-0 p-3" style="font-size:.73rem;color:#6ee7b7;background:#020f08;white-space:pre-wrap"></pre>
+      <div class="px-3 py-1" style="border-top:1px solid #1a2a1a;font-size:.72rem;color:#6b7280">
+        <i class="bi bi-lightbulb me-1" style="color:#fbbf24"></i>{{ note }}
+      </div>
+      <div id="{{ key }}-result" style="display:none;border-top:1px solid #2a2d35;padding:.75rem"></div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Variable-length group -->
+  <div class="mb-2 mt-3" style="font-size:.7rem;color:#60a5fa;text-transform:uppercase;letter-spacing:.1em;font-weight:700">
+    <i class="bi bi-signpost me-1"></i>Variable-Length Traversals
+  </div>
+  {% for key, note in [('a4','[:TYPE*min..max] = variable-length — SQL Server equivalent: SHORTEST_PATH range'),('a5','ALL paths not just shortest — list comprehension builds route array'),('a6','Undirected traversal (no >) — finds longest-shortest-path pairs (diameter)')] %}
+  <div class="card mb-3" style="background:#13141a;border:1px solid rgba(96,165,250,.22)">
+    <div class="card-header d-flex align-items-center justify-content-between"
+         style="background:rgba(96,165,250,.06);border-bottom:1px solid rgba(96,165,250,.18);padding:.45rem .75rem">
+      <span class="fw-bold" style="color:#60a5fa;font-size:.82rem" id="{{ key }}-title">{{ key }}</span>
+      <button class="btn btn-sm" style="background:rgba(96,165,250,.2);border:1px solid rgba(96,165,250,.4);color:#60a5fa;font-size:.72rem"
+              onclick="runQ('{{ key }}', this)">
+        <i class="bi bi-play-fill me-1"></i>Run
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <pre id="{{ key }}-cypher" class="m-0 p-3" style="font-size:.73rem;color:#93c5fd;background:#020814;white-space:pre-wrap"></pre>
+      <div class="px-3 py-1" style="border-top:1px solid #1a1e2a;font-size:.72rem;color:#6b7280">
+        <i class="bi bi-lightbulb me-1" style="color:#fbbf24"></i>{{ note }}
+      </div>
+      <div id="{{ key }}-result" style="display:none;border-top:1px solid #2a2d35;padding:.75rem"></div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Northwind product graph -->
+  <div class="mb-2 mt-3" style="font-size:.7rem;color:#fbbf24;text-transform:uppercase;letter-spacing:.1em;font-weight:700">
+    <i class="bi bi-cart me-1"></i>Northwind Product Graph
+  </div>
+  {% for key, note in [('a7','Relationship properties (quantity, discount) combined with node property (price) — no JOIN'),('a8','Self-join on Order — same co-purchase logic as relational SQL but no JOIN keyword'),('a9','Same SUM(UnitPrice*Quantity*(1-Discount)) formula as Northwind SQL — no intermediate joins')] %}
+  <div class="card mb-3" style="background:#13141a;border:1px solid rgba(251,191,36,.22)">
+    <div class="card-header d-flex align-items-center justify-content-between"
+         style="background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.18);padding:.45rem .75rem">
+      <span class="fw-bold" style="color:#fbbf24;font-size:.82rem" id="{{ key }}-title">{{ key }}</span>
+      <button class="btn btn-sm" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:#fbbf24;font-size:.72rem"
+              onclick="runQ('{{ key }}', this)">
+        <i class="bi bi-play-fill me-1"></i>Run
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <pre id="{{ key }}-cypher" class="m-0 p-3" style="font-size:.73rem;color:#fde68a;background:#0f0a02;white-space:pre-wrap"></pre>
+      <div class="px-3 py-1" style="border-top:1px solid #2a1e02;font-size:.72rem;color:#6b7280">
+        <i class="bi bi-lightbulb me-1" style="color:#fbbf24"></i>{{ note }}
+      </div>
+      <div id="{{ key }}-result" style="display:none;border-top:1px solid #2a2d35;padding:.75rem"></div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Centrality -->
+  <div class="mb-2 mt-3" style="font-size:.7rem;color:#f87171;text-transform:uppercase;letter-spacing:.1em;font-weight:700">
+    <i class="bi bi-graph-up me-1"></i>Centrality
+  </div>
+  <div class="card mb-3" style="background:#13141a;border:1px solid rgba(248,113,113,.22)">
+    <div class="card-header d-flex align-items-center justify-content-between"
+         style="background:rgba(248,113,113,.06);border-bottom:1px solid rgba(248,113,113,.18);padding:.45rem .75rem">
+      <span class="fw-bold" style="color:#f87171;font-size:.82rem" id="a10-title">a10</span>
+      <button class="btn btn-sm" style="background:rgba(248,113,113,.2);border:1px solid rgba(248,113,113,.4);color:#f87171;font-size:.72rem"
+              onclick="runQ('a10', this)">
+        <i class="bi bi-play-fill me-1"></i>Run
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <pre id="a10-cypher" class="m-0 p-3" style="font-size:.73rem;color:#fca5a5;background:#0f0505;white-space:pre-wrap"></pre>
+      <div class="px-3 py-1" style="border-top:1px solid #2a1010;font-size:.72rem;color:#6b7280">
+        <i class="bi bi-lightbulb me-1" style="color:#fbbf24"></i>Counts incoming FRIEND_OF edges — approximates importance. Full PageRank needs the GDS (Graph Data Science) plugin.
+      </div>
+      <div id="a10-result" style="display:none;border-top:1px solid #2a2d35;padding:.75rem"></div>
+    </div>
+  </div>
+
+  <!-- Custom Cypher console -->
+  <div class="card mt-4" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+    <div class="card-header d-flex align-items-center justify-content-between"
+         style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+      <span class="fw-bold" style="color:#34d399"><i class="bi bi-terminal me-2"></i>Custom Cypher Console</span>
+      <button class="btn btn-sm" style="background:#34d399;color:#0d0f16;border:none;font-size:.75rem"
+              onclick="runCustom(this)">
+        <i class="bi bi-play-fill me-1"></i>Run
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <textarea id="customCypher" rows="4" class="form-control"
+                style="background:#080a0e;border:none;color:#6ee7b7;font-family:monospace;font-size:.8rem;border-radius:0;resize:vertical"
+                placeholder="MATCH (n) RETURN labels(n), count(n) ORDER BY count(n) DESC"></textarea>
+      <div id="customResult" style="display:none;border-top:1px solid #2a2d35;padding:.75rem"></div>
+    </div>
+  </div>
+
+</div><!-- /tab-advanced -->
+
+
+<!-- ── TAB 5: SQL vs CYPHER COMPARISON ──────────────────────────────────── -->
+<div class="tab-pane fade" id="tab-compare">
+
+  <div class="row g-4">
+    <div class="col-12">
+
+      <!-- Data model -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-table me-2"></i>Data Model</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.77rem">
+            <thead><tr style="color:#8b949e"><th>Concept</th><th style="color:#a78bfa">SQL Server Graph</th><th style="color:#34d399">Neo4j / Cypher</th></tr></thead>
+            <tbody>
+              <tr><td>Node table</td><td><code>CREATE TABLE person (...) AS NODE</code></td><td>Implicit — just <code>CREATE</code> nodes with labels</td></tr>
+              <tr><td>Edge table</td><td><code>CREATE TABLE likes (...) AS EDGE</code></td><td>Implicit — relationships created inline</td></tr>
+              <tr><td>Node identity</td><td><code>$node_id</code> (internal JSON)</td><td><code>id(n)</code> function</td></tr>
+              <tr><td>Edge identity</td><td><code>$edge_id</code> (internal JSON)</td><td><code>id(r)</code> function</td></tr>
+              <tr><td>Labels / types</td><td>Table name is the node type</td><td><code>:Person</code>, <code>:Restaurant</code> — multiple per node allowed</td></tr>
+              <tr><td>Relationship types</td><td>Edge table name</td><td><code>:LIKES</code>, <code>:FRIEND_OF</code> — exactly one per relationship</td></tr>
+              <tr><td>Properties</td><td>Regular columns</td><td>Key-value map on node or relationship</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DDL -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-code-square me-2"></i>DDL</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.76rem">
+            <thead><tr style="color:#8b949e"><th>Operation</th><th style="color:#a78bfa">SQL Server</th><th style="color:#34d399">Cypher</th></tr></thead>
+            <tbody>
+              <tr><td>Create node type</td>
+                  <td><code>CREATE TABLE person (id INT PRIMARY KEY, name VARCHAR(100)) AS NODE</code></td>
+                  <td><em style="color:#6b7280">No DDL needed — just CREATE</em></td></tr>
+              <tr><td>Create edge type</td>
+                  <td><code>CREATE TABLE likes (rating INT) AS EDGE</code></td>
+                  <td><em style="color:#6b7280">No DDL needed</em></td></tr>
+              <tr><td>Add edge constraint</td>
+                  <td><code>ALTER TABLE friendof ADD CONSTRAINT ec_1 CONNECTION (person TO person)</code></td>
+                  <td><em style="color:#6b7280">No direct equivalent (APOC or application logic)</em></td></tr>
+              <tr><td>Create index</td>
+                  <td><code>CREATE INDEX ON person(name)</code></td>
+                  <td><code>CREATE INDEX FOR (p:Person) ON (p.name)</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DML -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-pencil-square me-2"></i>DML</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.76rem">
+            <thead><tr style="color:#8b949e"><th>Operation</th><th style="color:#a78bfa">SQL Server</th><th style="color:#34d399">Cypher</th></tr></thead>
+            <tbody>
+              <tr><td>Insert node</td>
+                  <td><code>INSERT INTO person VALUES (1, 'john')</code></td>
+                  <td><code>CREATE (:Person {id:1, name:'john'})</code></td></tr>
+              <tr><td>Insert edge</td>
+                  <td><code>INSERT INTO likes VALUES ((SELECT $node_id FROM person WHERE id=1), (SELECT $node_id FROM restaurant WHERE id=1), 9)</code></td>
+                  <td><code>MATCH (p:Person {id:1}), (r:Restaurant {id:1}) CREATE (p)-[:LIKES {rating:9}]->(r)</code></td></tr>
+              <tr><td>Update node</td>
+                  <td><code>UPDATE person SET name='johnny' WHERE id=1</code></td>
+                  <td><code>MATCH (p:Person {id:1}) SET p.name='johnny'</code></td></tr>
+              <tr><td>Delete node+edges</td>
+                  <td><code>DELETE FROM person WHERE id=1</code> (must delete edges first)</td>
+                  <td><code>MATCH (p:Person {id:1}) DETACH DELETE p</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pattern matching -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-diagram-2 me-2"></i>Pattern Matching</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.75rem">
+            <thead><tr style="color:#8b949e"><th>Query</th><th style="color:#a78bfa">SQL Server (T-SQL MATCH)</th><th style="color:#34d399">Cypher</th></tr></thead>
+            <tbody>
+              <tr><td>Direct friends</td>
+                  <td><code>... WHERE MATCH(p1-(friendof)->p2) AND p1.name='john'</code></td>
+                  <td><code>MATCH (:Person {name:'john'})-[:FRIEND_OF]->(p2:Person) RETURN p2.name</code></td></tr>
+              <tr><td>Two-hop path</td>
+                  <td><code>MATCH(p1-(friendof)->p2-(likes)->restaurant)</code></td>
+                  <td><code>MATCH (:Person {name:'john'})-[:FRIEND_OF]->()-[:LIKES]->(r:Restaurant)</code></td></tr>
+              <tr><td>AND pattern</td>
+                  <td><code>MATCH(p-(likes)->r-(locatedin)->c AND p-(livesin)->c)</code></td>
+                  <td><code>MATCH (p)-[:LIKES]->(r)-[:LOCATED_IN]->(c), (p)-[:LIVES_IN]->(c)</code></td></tr>
+              <tr><td>Shortest path</td>
+                  <td><code>MATCH(SHORTEST_PATH(p1(-(f)->p2)+)) WHERE p1.name='john'</code></td>
+                  <td><code>MATCH path=shortestPath((:Person {name:'john'})-[:FRIEND_OF*]->(dest))</code></td></tr>
+              <tr><td>Variable length</td>
+                  <td><code>SHORTEST_PATH(p1(-(f)->p2){1,2})</code></td>
+                  <td><code>MATCH (p1)-[:FRIEND_OF*1..2]->(p2)</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Key differences -->
+      <div class="card" style="background:#13141a;border:1px solid rgba(52,211,153,.3)">
+        <div class="card-header" style="background:rgba(52,211,153,.1);border-bottom:1px solid rgba(52,211,153,.25)">
+          <span class="fw-bold" style="color:#34d399"><i class="bi bi-list-check me-2"></i>Key Differences</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.77rem">
+            <thead><tr style="color:#8b949e"><th>Aspect</th><th style="color:#a78bfa">SQL Server Graph</th><th style="color:#34d399">Neo4j</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Storage</strong></td>
+                  <td>Relational tables + hidden graph columns</td>
+                  <td style="color:#34d399">Native property graph store (pointer chains)</td></tr>
+              <tr><td><strong>Query language</strong></td>
+                  <td>T-SQL + MATCH extension</td>
+                  <td style="color:#34d399">Cypher — declarative, pattern-first</td></tr>
+              <tr><td><strong>Multi-label nodes</strong></td>
+                  <td style="color:#f87171">Not supported (one table = one type)</td>
+                  <td style="color:#34d399">Supported (<code>:Person:Employee</code>)</td></tr>
+              <tr><td><strong>Schema enforcement</strong></td>
+                  <td>Via table definitions + FK constraints</td>
+                  <td>Optional (constraints via <code>CREATE CONSTRAINT</code>)</td></tr>
+              <tr><td><strong>Graph algorithms</strong></td>
+                  <td style="color:#f87171">Limited (SHORTEST_PATH only)</td>
+                  <td style="color:#34d399">Rich GDS plugin: PageRank, Louvain, BFS, betweenness…</td></tr>
+              <tr><td><strong>Visualization</strong></td>
+                  <td>Requires external tools</td>
+                  <td style="color:#34d399">Built-in Neo4j Browser (graph visual + table)</td></tr>
+              <tr><td><strong>Horizontal scale</strong></td>
+                  <td>SQL Server clustering</td>
+                  <td style="color:#34d399">Neo4j Fabric / Aura clusters</td></tr>
+              <tr><td><strong>Transactions</strong></td>
+                  <td style="color:#34d399">Full ACID</td>
+                  <td style="color:#34d399">Full ACID (MVCC)</td></tr>
+              <tr><td><strong>Best for</strong></td>
+                  <td>Graphs embedded in existing relational schema</td>
+                  <td style="color:#34d399">Large, deeply connected graphs — complex traversals</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /tab-compare -->
+
+</div><!-- end tab-content -->
+
+<script>
+const BASE = '/demos/c13-neo4j';
+const GREEN = '#34d399';
+
+// ── Query data (injected from backend) ───────────────────────────────────────
+const QUERIES = {
+  q1: {
+    sql: `SELECT p2.name\nFROM person p1, person p2, friendof\nWHERE MATCH(p1-(friendof)->p2)\n  AND p1.name = 'john'`,
+    cypher: `MATCH (:Person {name: 'john'})-[:FRIEND_OF]->(friend:Person)\nRETURN friend.name AS friend`,
+    title: "John's direct friends"
+  },
+  q2: {
+    sql: `SELECT restaurant.name\nFROM person, likes, restaurant\nWHERE MATCH(person-(likes)->restaurant)\n  AND person.name = 'john'`,
+    cypher: `MATCH (:Person {name: 'john'})-[l:LIKES]->(r:Restaurant)\nRETURN r.name AS restaurant, l.rating AS rating`,
+    title: "Restaurants john likes"
+  },
+  q3: {
+    sql: `SELECT restaurant.name\nFROM person p1, person p2,\n     friendof, likes, restaurant\nWHERE MATCH(p1-(friendof)->p2-(likes)->restaurant)\n  AND p1.name = 'john'`,
+    cypher: `MATCH (:Person {name: 'john'})-[:FRIEND_OF]->(p2:Person)-[:LIKES]->(r:Restaurant)\nRETURN p2.name AS friend, r.name AS restaurant`,
+    title: "Restaurants liked by john's friends"
+  },
+  q4: {
+    sql: `SELECT person.name\nFROM person, likes, restaurant,\n     livesin, city, locatedin\nWHERE MATCH(\n  person-(likes)->restaurant-(locatedin)->city\n  AND person-(livesin)->city)`,
+    cypher: `MATCH (p:Person)-[:LIKES]->(r:Restaurant)-[:LOCATED_IN]->(c:City),\n      (p)-[:LIVES_IN]->(c)\nRETURN p.name AS person, r.name AS restaurant, c.name AS city`,
+    title: "People who like a local restaurant"
+  },
+  q5: {
+    sql: `SELECT DISTINCT p1.name\nFROM person p1, person p2, friendof, likes,\n     restaurant, livesin, city, locatedin\nWHERE MATCH(\n  p1-(friendof)->p2\n  AND p2-(likes)->restaurant-(locatedin)->city\n  AND p2-(livesin)->city)`,
+    cypher: `MATCH (p1:Person)-[:FRIEND_OF]->(p2:Person)-[:LIKES]\n      ->(r:Restaurant)-[:LOCATED_IN]->(c:City),\n      (p2)-[:LIVES_IN]->(c)\nRETURN DISTINCT p1.name AS person,\n       p2.name AS friend, r.name AS restaurant`,
+    title: "Friends with local taste"
+  },
+  q6: {
+    sql: `SELECT p0.name, p1.name, p2.name\nFROM person p1, friendof f1, person p2,\n     friendof f2, person p0\nWHERE MATCH(p1-(f1)->p0 AND p2-(f2)->p0)\n  AND p1.id <> p2.id`,
+    cypher: `MATCH (p1:Person)-[:FRIEND_OF]->(p0:Person)<-[:FRIEND_OF]-(p2:Person)\nWHERE p1.id <> p2.id AND p1.name < p2.name\nRETURN p0.name AS mutual_friend,\n       p1.name AS person1, p2.name AS person2`,
+    title: "Pairs sharing a mutual friend"
+  },
+  q7: {
+    sql: `SELECT p1.name+'->'+STRING_AGG(p2.name,'->')\n       WITHIN GROUP (GRAPH PATH) AS paths,\n       COUNT(p2.name) WITHIN GROUP (GRAPH PATH) AS depth\nFROM person p1,\n     person FOR PATH AS p2,\n     friendof FOR PATH AS friend\nWHERE MATCH(SHORTEST_PATH(p1(-(friend)->p2)+))\n  AND p1.name = 'john'`,
+    cypher: `MATCH path = shortestPath(\n  (:Person {name:'john'})-[:FRIEND_OF*]->(dest:Person))\nWHERE dest.name <> 'john'\nRETURN dest.name AS reaches,\n       length(path) AS hops,\n       [n IN nodes(path) | n.name] AS route\nORDER BY hops`,
+    title: "Shortest paths from john"
+  },
+  a1: { cypher: `MATCH (p:Person)-[:FRIEND_OF]->(friend:Person)\nRETURN p.name AS person, count(friend) AS friend_count\nORDER BY friend_count DESC`, title: "Friend count per person" },
+  a2: { cypher: `MATCH (p:Person)-[l:LIKES]->(r:Restaurant)\nRETURN r.name AS restaurant,\n       avg(l.rating) AS avg_rating, count(p) AS fans\nORDER BY fans DESC`, title: "Average rating per restaurant" },
+  a3: { cypher: `MATCH (r:Restaurant)-[:LOCATED_IN]->(c:City)\nOPTIONAL MATCH (p:Person)-[:LIKES]->(r)\nRETURN c.name AS city, r.name AS restaurant, count(p) AS fans\nORDER BY city, fans DESC`, title: "Restaurants per city with fan count" },
+  a4: { cypher: `MATCH (:Person {name: 'john'})-[:FRIEND_OF*1..2]->(p:Person)\nRETURN DISTINCT p.name AS reachable`, title: "All persons reachable from john (≤2 hops)" },
+  a5: { cypher: `MATCH path = (:Person {name: 'john'})-[:FRIEND_OF*1..4]->(:Person {name: 'alice'})\nRETURN [n IN nodes(path) | n.name] AS route, length(path) AS hops\nORDER BY hops`, title: "All paths: john → alice (up to 4 hops)" },
+  a6: { cypher: `MATCH (a:Person), (b:Person)\nWHERE a.id < b.id\nMATCH path = shortestPath((a)-[:FRIEND_OF*]-(b))\nRETURN a.name, b.name, length(path) AS distance\nORDER BY distance DESC\nLIMIT 5`, title: "Network diameter (5 most-distant pairs)" },
+  a7: { cypher: `MATCH (o:Order)-[c:CONTAINS]->(p:Product)\nRETURN o.id AS order_id, p.name AS product,\n       c.quantity AS qty, p.price AS unit_price,\n       round(c.quantity * p.price * (1 - coalesce(c.discount,0.0)), 2) AS line_total\nORDER BY order_id`, title: "Order contents with line totals" },
+  a8: { cypher: `MATCH (o:Order)-[:CONTAINS]->(p1:Product),\n      (o)-[:CONTAINS]->(p2:Product)\nWHERE p1.id < p2.id\nRETURN p1.name AS product_a, p2.name AS product_b,\n       count(o) AS shared_orders\nORDER BY shared_orders DESC`, title: "Product co-occurrence in orders" },
+  a9: { cypher: `MATCH (o:Order)-[c:CONTAINS]->(p:Product)\nRETURN p.category AS category,\n       round(sum(c.quantity * p.price * (1 - coalesce(c.discount,0.0))), 2) AS revenue\nORDER BY revenue DESC`, title: "Revenue by category" },
+  a10:{ cypher: `MATCH (p:Person)\nOPTIONAL MATCH (other:Person)-[:FRIEND_OF]->(p)\nRETURN p.name AS person, count(other) AS in_degree\nORDER BY in_degree DESC`, title: "In-degree centrality (proxy PageRank)" },
+};
+
+// Populate code panels
+document.addEventListener('DOMContentLoaded', () => {
+  for (const [k, q] of Object.entries(QUERIES)) {
+    const sqlEl    = document.getElementById(k + '-sql');
+    const cypherEl = document.getElementById(k + '-cypher');
+    const titleEl  = document.getElementById(k + '-title');
+    if (sqlEl)    sqlEl.textContent    = q.sql || '';
+    if (cypherEl) cypherEl.textContent = q.cypher || '';
+    if (titleEl)  titleEl.textContent  = q.title || k;
+  }
+});
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function setBtnLoading(btn, loading) {
+  if (loading) {
+    btn.disabled = true;
+    btn.dataset.orig = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.orig;
+  }
+}
+
+function renderTable(data, el) {
+  if (!data.ok) {
+    el.innerHTML = `<div class="alert alert-danger py-2 px-3 mb-0" style="font-size:.78rem">${data.error}</div>`;
+    return;
+  }
+  const { cols, rows } = data;
+  if (!rows || rows.length === 0) {
+    el.innerHTML = `<div style="color:#6b7280;font-size:.78rem;padding:.3rem">0 rows returned</div>`;
+    return;
+  }
+  let html = `<div class="table-responsive"><table class="table table-sm mb-0" style="font-size:.74rem;color:#c9d1d9"><thead><tr>`;
+  cols.forEach(c => { html += `<th style="color:#34d399;white-space:nowrap">${c}</th>`; });
+  html += `</tr></thead><tbody>`;
+  rows.forEach(r => {
+    html += '<tr>';
+    r.forEach(v => { html += `<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v ?? ''}">${v ?? ''}</td>`; });
+    html += '</tr>';
+  });
+  html += `</tbody></table></div><div style="font-size:.68rem;color:#6b7280;margin-top:.3rem">${rows.length} row(s)</div>`;
+  el.innerHTML = html;
+}
+
+// ── Schema ───────────────────────────────────────────────────────────────────
+function loadSchema(btn) {
+  const el = document.getElementById('schemaPanel');
+  setBtnLoading(btn, true);
+  fetch(`${BASE}/schema`)
+    .then(r => r.json())
+    .then(data => {
+      setBtnLoading(btn, false);
+      if (!data.ok) {
+        el.innerHTML = `<div class="alert alert-warning py-2 px-3 mb-0" style="font-size:.78rem">${data.error}</div>`;
+        return;
+      }
+      let html = '<div class="row g-3">';
+      html += '<div class="col-md-6">';
+      html += '<div class="fw-bold mb-2" style="color:#34d399;font-size:.78rem"><i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Node Labels (' + data.labels.length + ')</div>';
+      html += '<div class="d-flex flex-wrap gap-1">';
+      data.labels.forEach(l => { html += `<span class="badge" style="background:rgba(52,211,153,.2);color:#34d399;font-size:.75rem">:${l}</span>`; });
+      if (!data.labels.length) html += '<span style="color:#6b7280;font-size:.78rem">none — load the demo graph first</span>';
+      html += '</div></div>';
+      html += '<div class="col-md-6">';
+      html += '<div class="fw-bold mb-2" style="color:#60a5fa;font-size:.78rem"><i class="bi bi-arrow-right me-1"></i>Relationship Types (' + data.rel_types.length + ')</div>';
+      html += '<div class="d-flex flex-wrap gap-1">';
+      data.rel_types.forEach(t => { html += `<span class="badge" style="background:rgba(96,165,250,.2);color:#60a5fa;font-size:.75rem">:${t}</span>`; });
+      if (!data.rel_types.length) html += '<span style="color:#6b7280;font-size:.78rem">none — load the demo graph first</span>';
+      html += '</div></div></div>';
+      el.innerHTML = html;
+    })
+    .catch(e => { setBtnLoading(btn, false); el.innerHTML = `<div class="text-danger" style="font-size:.78rem">${e}</div>`; });
+}
+
+// ── Load graph ───────────────────────────────────────────────────────────────
+function loadGraph(btn) {
+  const el = document.getElementById('loadGraphLog');
+  setBtnLoading(btn, true);
+  el.style.display = 'block';
+  el.innerHTML = '<div style="color:#8b949e;font-size:.72rem">Loading graph…</div>';
+  fetch(`${BASE}/load-graph`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      setBtnLoading(btn, false);
+      if (!data.ok) {
+        el.innerHTML = `<div style="color:#f87171;font-size:.74rem">${data.error}</div>`;
+        if (data.log) {
+          data.log.forEach(l => {
+            const d = document.createElement('div');
+            d.style = 'font-size:.7rem;color:#6b7280;line-height:1.5';
+            d.textContent = l;
+            el.appendChild(d);
+          });
+        }
+        return;
+      }
+      el.innerHTML = '';
+      data.log.forEach((l, i) => {
+        const d = document.createElement('div');
+        const isLast = i === data.log.length - 1;
+        d.style = `font-size:${isLast ? '.78rem' : '.7rem'};color:${isLast ? '#34d399' : '#4b7c64'};line-height:1.5;font-weight:${isLast ? '600' : '400'}`;
+        d.textContent = l;
+        el.appendChild(d);
+      });
+      el.scrollTop = el.scrollHeight;
+    })
+    .catch(e => { setBtnLoading(btn, false); el.innerHTML = `<div style="color:#f87171;font-size:.74rem">${e}</div>`; });
+}
+
+// ── Run named query ──────────────────────────────────────────────────────────
+function runQ(key, btn) {
+  const el = document.getElementById(key + '-result');
+  setBtnLoading(btn, true);
+  el.style.display = 'block';
+  el.innerHTML = '<div style="color:#8b949e;font-size:.75rem;padding:.3rem">Running Cypher…</div>';
+  fetch(`${BASE}/query?key=${key}`)
+    .then(r => r.json())
+    .then(data => { setBtnLoading(btn, false); renderTable(data, el); })
+    .catch(e => { setBtnLoading(btn, false); el.innerHTML = `<div class="text-danger" style="font-size:.78rem">${e}</div>`; });
+}
+
+// ── Custom Cypher ────────────────────────────────────────────────────────────
+function runCustom(btn) {
+  const cypher = document.getElementById('customCypher').value.trim();
+  const el = document.getElementById('customResult');
+  if (!cypher) return;
+  setBtnLoading(btn, true);
+  el.style.display = 'block';
+  el.innerHTML = '<div style="color:#8b949e;font-size:.75rem;padding:.3rem">Running…</div>';
+  fetch(`${BASE}/cypher`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({cypher})
+  })
+    .then(r => r.json())
+    .then(data => { setBtnLoading(btn, false); renderTable(data, el); })
+    .catch(e => { setBtnLoading(btn, false); el.innerHTML = `<div class="text-danger" style="font-size:.78rem">${e}</div>`; });
+}
+</script>
+{% endblock %}

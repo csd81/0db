@@ -203,6 +203,70 @@ Resolver = <span style="color:#e9c46a">Publisher Wins</span>
   </div>
 </div>
 
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#457b9d;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-book me-1"></i>Northwind Lab Scenario — Merge: Traveling Sales Employees
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">
+        <strong style="color:#e9c46a">Scenario</strong><br>
+        Sales employees travel and place/modify orders while offline.
+        The <code>Orders</code> table in <code>northwind</code> on <strong style="color:#06d6a0">PRIM</strong> is published as
+        <code>nw_merge</code>. Two subscribers (<strong style="color:#8338ec">nw_merge_1</strong> on THIRD and
+        <strong style="color:#457b9d">nw_merge_2</strong> on PRIM) hold pull subscriptions so each employee schedules
+        their own sync when connectivity allows.
+      </div>
+      <div style="font-size:.64rem;color:#e74c3c;margin-bottom:.4rem">
+        <i class="bi bi-exclamation-triangle me-1"></i><strong>ROWGUIDCOL auto-added — legacy app risk:</strong>
+        If the <code>Orders</code> table has no <code>UNIQUEIDENTIFIER ROWGUIDCOL</code> column, merge replication
+        <strong>adds one automatically</strong> (e.g. <code>rowguid</code>). This changes the table's column list
+        and can crash legacy application code that uses <code>SELECT *</code> or positional column access.
+        The column is removed when the publication is deleted.
+      </div>
+      <div style="font-size:.64rem;color:#8892a4;margin-bottom:.3rem">
+        <strong style="color:#06d6a0">List registered conflict resolvers</strong>
+      </div>
+      <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- Lists all built-in and custom COM resolvers available on this server.</span>
+<span style="color:#5a6070">-- Run on SECOND (Distributor) to see the full list:</span>
+<span style="color:#457b9d">EXEC</span> sp_enumcustomresolvers;</pre>
+      <div style="font-size:.63rem;color:#5a6070;margin-top:.3rem">
+        To set the resolver per article: Article Properties → Resolver tab → select from the list.
+        Custom resolvers can also be supplied as stored procedures or COM DLLs.
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">
+        <strong style="color:#8338ec">"First to Publisher wins" — the real rule</strong>
+      </div>
+      <div style="font-size:.63rem;color:#8892a4;margin-bottom:.4rem">
+        The default resolver is often called <em>Publisher wins</em>, but the precise rule is:
+      </div>
+      <table class="table table-sm mb-2" style="font-size:.63rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Conflict type</th><th>Winner</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td>Publisher vs. Subscriber</td><td>Publisher change wins</td></tr>
+          <tr><td>Subscriber A vs. Subscriber B (pull)</td><td><strong>First to sync with Publisher</strong> wins</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.63rem;color:#8892a4;margin-bottom:.4rem">
+        The Replication Conflict Viewer (pop-up menu on the publication) shows all conflicts and lets you
+        override the resolution by clicking <em>Submit Winner</em> or <em>Submit Loser</em>.
+        Conflicts are stored in <code>MSmerge_conflicts_info</code>.
+      </div>
+      <div style="font-size:.63rem;color:#5a6070;border-top:1px solid #1e2028;padding-top:.4rem;margin-top:.2rem">
+        <strong style="color:#cdd3de">CAP Theorem &amp; Eventual Consistency</strong><br>
+        Merge replication sacrifices <em>strong consistency</em> (C) in favour of <em>availability</em> (A)
+        and <em>partition tolerance</em> (P). While disconnected, each node is available but may hold stale data.
+        After sync, all nodes converge — this is <strong>eventual consistency</strong>.
+        According to CAP, no distributed system can fully satisfy all three properties simultaneously;
+        merge replication makes A+P the priority, accepting temporary C violations.
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

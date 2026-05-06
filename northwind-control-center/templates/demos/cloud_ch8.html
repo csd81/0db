@@ -1,0 +1,880 @@
+{% extends 'base.html' %}
+{% block title %}Ch. 8 — Stream Data Processing{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div style="width:4px;height:3rem;background:#f472b6;border-radius:2px;flex-shrink:0"></div>
+    <div>
+      <h2 class="mb-0 fw-bold" style="color:#f472b6">Chapter 8 — Stream Data Processing</h2>
+      <div class="small mt-1" style="color:#64748b">Stream Algorithms · Spark Streaming · Flink · Storm · Kafka · Apache Beam / GCP Dataflow</div>
+    </div>
+  </div>
+
+  <ul class="nav nav-pills mb-4 gap-2 flex-wrap">
+    <li class="nav-item"><button class="nav-link ch8-nav-link active" onclick="showTab('tab-stream',this)">📊 Stream Algorithms</button></li>
+    <li class="nav-item"><button class="nav-link ch8-nav-link" onclick="showTab('tab-spark',this)">⚡ Spark Streaming</button></li>
+    <li class="nav-item"><button class="nav-link ch8-nav-link" onclick="showTab('tab-flink',this)">🌊 Apache Flink</button></li>
+    <li class="nav-item"><button class="nav-link ch8-nav-link" onclick="showTab('tab-storm',this)">🌪️ Storm &amp; Kafka</button></li>
+    <li class="nav-item"><button class="nav-link ch8-nav-link" onclick="showTab('tab-beam',this)">☁️ Beam &amp; Dataflow</button></li>
+  </ul>
+
+  <!-- ══ TAB 1: STREAM ALGORITHMS ══ -->
+  <div id="tab-stream" class="ch8-tab">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Why Streams Require Different Algorithms</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2" style="color:#f472b6">Batch Processing</div>
+                <div class="small" style="color:#94a3b8">Entire dataset in memory or file. Multi-pass algorithms are possible. Processing ends when input is exhausted.</div>
+                <div class="mt-2 small font-monospace" style="color:#64748b">Input → Process → Output</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2" style="color:#f472b6">Stream Processing</div>
+                <div class="small" style="color:#94a3b8">Continuous, <strong style="color:#f1f5f9">unbound</strong> incoming data. Algorithms process elements <em>as they arrive</em> — no access to the full dataset.</div>
+                <div class="mt-2 small font-monospace" style="color:#64748b">∞ Stream → Process continuously</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2" style="color:#f472b6">Benefits</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1">✓ Decreased latency — real-time results</div>
+                  <div class="mb-1">✓ Reduced memory — only current window in RAM</div>
+                  <div>✓ 24/7 cloud-native operation</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-2" style="color:#f472b6">Two-Pass Variance — Correct</h5>
+          <p class="small mb-3" style="color:#94a3b8">Pass 1: compute mean. Pass 2: compute variance. Requires entire array. Numerically stable.</p>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">double varianceTwoPass(double[] data) {
+    // Pass 1: mean
+    double mean = 0;
+    for (int i = 0; i &lt; data.length; i++)
+        mean += data[i];
+    mean /= data.length;
+    // Pass 2: variance
+    double variance = 0.0;
+    for (int i = 0; i &lt; data.length; i++)
+        variance += (data[i]-mean)*(data[i]-mean);
+    return variance / data.length;
+}</pre>
+          <div class="mt-2 p-2 rounded small" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#86efac">
+            ✓ Numerically correct — safe for production
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-2" style="color:#f472b6">Single-Pass Naïve — NEVER USE</h5>
+          <p class="small mb-3" style="color:#94a3b8">Uses Var(X) = E[X²] − E[X]². One loop, but suffers <strong style="color:#fca5a5">catastrophic cancellation</strong> — results are wrong when sumOfSquares ≈ (sum²/n).</p>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">double varianceSinglePass(double[] data) {
+    double sum = 0, sumOfSquares = 0;
+    for (int i = 0; i &lt; data.length; i++) {
+        sum += data[i];
+        sumOfSquares += data[i] * data[i];
+    }
+    // catastrophic cancellation here ↓
+    return (sumOfSquares - (sum*sum)/data.length)
+           / data.length;
+}</pre>
+          <div class="mt-2 p-2 rounded small" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#fca5a5">
+            ✗ Catastrophic cancellation — incorrect results, never use
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Welford's Online Algorithm</h5>
+          <p class="small mb-3" style="color:#94a3b8">Numerically stable one-pass algorithm. Works on streams of unknown length. Only current value + running state needed — no stored data elements.</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded text-center" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold mb-2 small" style="color:#c084fc">Running Mean</div>
+                <div style="color:#e2e8f0;font-size:1rem">m<sub>k</sub> = m<sub>k-1</sub> + (x<sub>n</sub> − m<sub>k-1</sub>) / n</div>
+                <div class="small mt-2" style="color:#64748b">Old mean corrected by scaled deviation of the new sample</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded text-center" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold mb-2 small" style="color:#c084fc">Running Variance</div>
+                <div style="color:#e2e8f0;font-size:.95rem">S<sub>n</sub> = S<sub>n-1</sub> + (x<sub>n</sub> − m<sub>n</sub>)(x<sub>n</sub> − m<sub>n-1</sub>)</div>
+                <div style="color:#e2e8f0;font-size:.9rem">Var(X) = S<sub>n</sub> / n</div>
+                <div class="small mt-2" style="color:#64748b">Uses both new and previous mean — no cancellation</div>
+              </div>
+            </div>
+          </div>
+          <h6 class="fw-bold mb-2" style="color:#f472b6">Java Consumer via ArrayBlockingQueue</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">private class Consumer extends Thread {
+    private ArrayBlockingQueue data;
+    private long n;
+    private double mean, sn, variance;
+
+    public Consumer(ArrayBlockingQueue data) { this.data = data; }
+
+    public void run() {
+        while (true) {
+            try {
+                int x = data.take();              // blocks until producer sends
+                n++;
+                double oldMean = mean;
+                mean = mean + (x - mean) / n;          // Welford mean update
+                sn   = sn   + (x - mean) * (x - oldMean); // Welford S update
+                variance = sn / n;
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+}</pre>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Data Windows &amp; Pipeline Architecture</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2" style="color:#f472b6">Data Segments (non-overlapping)</div>
+                <div class="d-flex gap-1 my-2">
+                  <div class="rounded text-center fw-bold flex-fill py-1" style="background:#f472b6;color:#000;font-size:.75rem">W1</div>
+                  <div class="rounded text-center fw-bold flex-fill py-1" style="background:#f472b6;color:#000;font-size:.75rem">W2</div>
+                  <div class="rounded text-center fw-bold flex-fill py-1" style="background:#f472b6;color:#000;font-size:.75rem">W3</div>
+                </div>
+                <div class="small" style="color:#94a3b8">Each element belongs to exactly one window. Used for daily/weekly/monthly aggregates.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2" style="color:#f472b6">Sliding Windows (overlapping)</div>
+                <div style="position:relative;height:52px;margin:8px 0">
+                  <div class="rounded d-flex align-items-center justify-content-center fw-bold" style="background:rgba(244,114,182,.3);border:1px solid #f472b6;position:absolute;left:0;top:0;width:65%;height:22px;font-size:.7rem;color:#f1f5f9">W1</div>
+                  <div class="rounded d-flex align-items-center justify-content-center fw-bold" style="background:rgba(244,114,182,.3);border:1px solid #f472b6;position:absolute;left:25%;top:26px;width:65%;height:22px;font-size:.7rem;color:#f1f5f9">W2</div>
+                </div>
+                <div class="small" style="color:#94a3b8">Elements appear in multiple windows. Used for time-series moving averages and trend detection.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2" style="color:#f472b6">Stream Pipeline (P1→P2→P3→P4)</div>
+                <div class="d-flex align-items-center gap-1 my-2 flex-wrap">
+                  <div class="px-2 py-1 rounded fw-bold" style="background:#f472b6;color:#000;font-size:.75rem">P1</div>
+                  <div style="color:#64748b">→</div>
+                  <div class="px-2 py-1 rounded fw-bold" style="background:#c084fc;color:#000;font-size:.75rem">P2</div>
+                  <div style="color:#64748b">→</div>
+                  <div class="px-2 py-1 rounded fw-bold" style="background:#818cf8;color:#000;font-size:.75rem">P3</div>
+                  <div style="color:#64748b">→</div>
+                  <div class="px-2 py-1 rounded fw-bold" style="background:#60a5fa;color:#000;font-size:.75rem">P4</div>
+                </div>
+                <div class="small" style="color:#94a3b8">Processes are background threads connected by bounded message queues. Each stage consumes, transforms, and publishes continuously.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 2: SPARK STREAMING ══ -->
+  <div id="tab-spark" class="ch8-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Spark Streaming — Microbatch Architecture</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">DStream — Discretised Stream</div>
+                <div class="small mb-3" style="color:#94a3b8">Spark Streaming segments live input into small batches (<strong style="color:#f1f5f9">microbatches</strong>), sending each to the regular Spark engine as a batch job. A DStream is a sequence of RDDs.</div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <div class="px-2 py-1 rounded small" style="background:rgba(244,114,182,.15);color:#f472b6;border:1px solid rgba(244,114,182,.3);font-size:.7rem">Live Stream</div>
+                  <div style="color:#64748b;font-size:.8rem">→ segment →</div>
+                  <div class="px-2 py-1 rounded small" style="background:rgba(192,132,252,.15);color:#c084fc;border:1px solid rgba(192,132,252,.3);font-size:.7rem">Microbatch RDDs</div>
+                  <div style="color:#64748b;font-size:.8rem">→</div>
+                  <div class="px-2 py-1 rounded small" style="background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.3);font-size:.7rem">Spark Batch Jobs</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Sources &amp; Sinks</div>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Kafka</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Flume</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">HDFS</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Kinesis</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">TCP Socket</span>
+                </div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">→ Databases</span>
+                  <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">→ HDFS/S3</span>
+                  <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa;font-size:.65rem">→ Dashboards</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#f472b6">Java Stream WordCount — Socket Input</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">// 1-second microbatch window
+SparkConf sparkConf = new SparkConf().setAppName("JavaNetworkWordCount");
+JavaStreamingContext ssc = new JavaStreamingContext(sparkConf, Durations.seconds(1));
+
+// Receive lines from TCP socket
+JavaReceiverInputDStream&lt;String&gt; lines = ssc.socketTextStream(
+    args[0], Integer.parseInt(args[1]), StorageLevels.MEMORY_AND_DISK_SER);
+
+// Split lines → words → (word,1) → reduce
+JavaDStream&lt;String&gt; words = lines.flatMap(
+    x -&gt; Arrays.asList(SPACE.split(x)).iterator());
+
+JavaPairDStream&lt;String, Integer&gt; wordCounts =
+    words.mapToPair(s -&gt; new Tuple2&lt;&gt;(s, 1))
+         .reduceByKey((i1, i2) -&gt; i1 + i2);
+
+wordCounts.print();
+ssc.start();              // actual processing begins here
+ssc.awaitTermination();</pre>
+
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">DStream Types</div>
+                <table class="table table-sm mb-0" style="color:#94a3b8;font-size:.78rem">
+                  <tbody>
+                    <tr><td style="color:#f1f5f9">JavaReceiverInputDStream</td><td>Raw socket/Kafka input</td></tr>
+                    <tr><td style="color:#f1f5f9">JavaDStream</td><td>Transformed word stream</td></tr>
+                    <tr><td style="color:#f1f5f9">JavaPairDStream</td><td>KV pairs (word, count)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Microbatch Trade-offs</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1"><span style="color:#86efac">✓</span> Reuses all Spark batch optimisations</div>
+                  <div class="mb-1"><span style="color:#86efac">✓</span> Fault-tolerant via RDD lineage</div>
+                  <div class="mb-1"><span style="color:#fca5a5">✗</span> Higher latency than native streaming</div>
+                  <div><span style="color:#fca5a5">✗</span> Not true event-by-event processing</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 3: APACHE FLINK ══ -->
+  <div id="tab-flink" class="ch8-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Apache Flink — Unified Bounded &amp; Unbounded Streams</h5>
+          <p class="small mb-3" style="color:#94a3b8">Flink's key insight: <strong style="color:#f1f5f9">batch data is a bounded stream</strong>. One codebase handles both — no duplicate batch and stream implementations. Developers write one algorithm; Flink runs it on either.</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Unbounded Stream (Live Data)</div>
+                <div class="d-flex align-items-center gap-2 my-2">
+                  <div style="width:16px;height:16px;border-radius:50%;background:#f472b6;flex-shrink:0"></div>
+                  <div style="flex:1;height:2px;background:linear-gradient(to right,#f472b6,#c084fc,#818cf8)"></div>
+                  <div class="small" style="color:#64748b">… ∞</div>
+                </div>
+                <div class="small" style="color:#94a3b8">Has a start but no end. Represents live streaming data. Requires continuous processing without a final output.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(96,165,250,.3)">
+                <div class="fw-bold mb-2 small" style="color:#60a5fa">Bounded Stream (= Batch)</div>
+                <div class="d-flex align-items-center gap-2 my-2">
+                  <div style="width:16px;height:16px;border-radius:50%;background:#f472b6;flex-shrink:0"></div>
+                  <div style="flex:1;height:2px;background:linear-gradient(to right,#f472b6,#60a5fa)"></div>
+                  <div style="width:16px;height:16px;border-radius:50%;background:#60a5fa;flex-shrink:0"></div>
+                </div>
+                <div class="small" style="color:#94a3b8">Well-defined start and end. Treated as a bounded stream — same code runs on both. No separate batch implementation needed.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Stateful Processing</h5>
+          <p class="small mb-3" style="color:#94a3b8">Most distributed systems prefer stateless design. Flink makes <strong style="color:#f1f5f9">state a first-class citizen</strong>: managed in-memory, checkpointed to pluggable backends. Supports terabyte-scale state.</p>
+          <div class="d-flex flex-column gap-2 mb-3">
+            <div class="d-flex gap-2 align-items-start">
+              <span class="badge mt-1" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.7rem;white-space:nowrap">ValueState</span>
+              <div class="small" style="color:#94a3b8">Single atomic value per key</div>
+            </div>
+            <div class="d-flex gap-2 align-items-start">
+              <span class="badge mt-1" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.7rem;white-space:nowrap">ListState</span>
+              <div class="small" style="color:#94a3b8">List of values per key — append operations</div>
+            </div>
+            <div class="d-flex gap-2 align-items-start">
+              <span class="badge mt-1" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.7rem;white-space:nowrap">MapState</span>
+              <div class="small" style="color:#94a3b8">Map of KV pairs per key — random access</div>
+            </div>
+          </div>
+          <div class="p-3 rounded small" style="background:#0e1014;border:1px solid #1e293b;color:#94a3b8">
+            State checkpointing provides <strong style="color:#f1f5f9">exactly-once</strong> fault tolerance even across node failures. Flink supports in-memory and on-disk (RocksDB) state backends.
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Time Semantics</h5>
+          <div class="d-flex flex-column gap-3">
+            <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+              <div class="fw-bold mb-1 small" style="color:#f472b6">Event Time</div>
+              <div class="small" style="color:#94a3b8">Events processed based on their embedded <strong style="color:#f1f5f9">timestamp</strong>. Results are consistent regardless of processing duration or late arrivals. Supports <strong style="color:#f1f5f9">watermarks</strong> and late event handling.</div>
+            </div>
+            <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(192,132,252,.3)">
+              <div class="fw-bold mb-1 small" style="color:#c084fc">Processing Time</div>
+              <div class="small" style="color:#94a3b8">Events processed based on <strong style="color:#f1f5f9">wall-clock time</strong> of processing. Lowest latency but may miss late events. Suitable for real-time applications with defined latency requirements.</div>
+            </div>
+            <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+              <div class="fw-bold mb-1 small" style="color:#94a3b8">Common Time-Based Operations</div>
+              <div class="d-flex flex-wrap gap-1 mt-1">
+                <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Window Aggregations</span>
+                <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Sessionisation</span>
+                <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Pattern Detection</span>
+                <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Time-Based Joins</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Rich Integration Ecosystem</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Sources</div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge" style="background:rgba(244,114,182,.12);color:#f472b6;font-size:.65rem">Kafka</span>
+                  <span class="badge" style="background:rgba(244,114,182,.12);color:#f472b6;font-size:.65rem">Kinesis</span>
+                  <span class="badge" style="background:rgba(244,114,182,.12);color:#f472b6;font-size:.65rem">HDFS/S3</span>
+                  <span class="badge" style="background:rgba(244,114,182,.12);color:#f472b6;font-size:.65rem">Sockets</span>
+                  <span class="badge" style="background:rgba(244,114,182,.12);color:#f472b6;font-size:.65rem">Collections</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#c084fc">Execution &amp; State</div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge" style="background:rgba(192,132,252,.12);color:#c084fc;font-size:.65rem">YARN</span>
+                  <span class="badge" style="background:rgba(192,132,252,.12);color:#c084fc;font-size:.65rem">Kubernetes</span>
+                  <span class="badge" style="background:rgba(192,132,252,.12);color:#c084fc;font-size:.65rem">Standalone</span>
+                  <span class="badge" style="background:rgba(192,132,252,.12);color:#c084fc;font-size:.65rem">RocksDB State</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#60a5fa">Sinks</div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge" style="background:rgba(96,165,250,.12);color:#60a5fa;font-size:.65rem">Kafka</span>
+                  <span class="badge" style="background:rgba(96,165,250,.12);color:#60a5fa;font-size:.65rem">Cassandra</span>
+                  <span class="badge" style="background:rgba(96,165,250,.12);color:#60a5fa;font-size:.65rem">Elasticsearch</span>
+                  <span class="badge" style="background:rgba(96,165,250,.12);color:#60a5fa;font-size:.65rem">JDBC</span>
+                  <span class="badge" style="background:rgba(96,165,250,.12);color:#60a5fa;font-size:.65rem">Files</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 4: STORM & KAFKA ══ -->
+  <div id="tab-storm" class="ch8-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Apache Storm — Topology Model</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="p-3 rounded text-center h-100" style="background:#0e1014;border:2px solid #f472b6">
+                <div style="font-size:1.4rem">🌀</div>
+                <div class="fw-bold mb-1" style="color:#f472b6">Topology</div>
+                <div class="small" style="color:#94a3b8">The computation graph. Runs continuously — unbounded. Represents the full dataflow from source to result.</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 rounded text-center h-100" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div style="font-size:1.4rem">💧</div>
+                <div class="fw-bold mb-1" style="color:#c084fc">Spout</div>
+                <div class="small" style="color:#94a3b8">Data source at topology edge. Reads from APIs, queues, etc. Emits tuples via <code>nextTuple()</code>.</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 rounded text-center h-100" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div style="font-size:1.4rem">⚡</div>
+                <div class="fw-bold mb-1" style="color:#60a5fa">Bolt</div>
+                <div class="small" style="color:#94a3b8">Processing node. Consumes streams, applies operations, emits results. Bolts chain together. Key method: <code>execute()</code>.</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 rounded text-center h-100" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div style="font-size:1.4rem">📦</div>
+                <div class="fw-bold mb-1" style="color:#34d399">Tuple</div>
+                <div class="small" style="color:#94a3b8">Data element on connecting edges. Named fields. E.g. <code>Values("word")</code> or <code>Values("word", count)</code>.</div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-3" style="color:#f472b6">Storm Word Count — Spout + 2 Bolts + Builder</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <div class="fw-bold mb-1 small" style="color:#c084fc">1. RandomSentenceSpout</div>
+              <pre class="rounded p-2" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto;font-size:.7rem">public void nextTuple() {
+    Utils.sleep(100);
+    String[] sents = {
+      "the cow jumped over the moon",
+      "an apple a day...",
+      "four score and seven years ago"
+    };
+    String s = sents[_rand.nextInt(sents.length)];
+    _collector.emit(new Values(s));
+}
+// declareOutputFields → "word"</pre>
+            </div>
+            <div class="col-md-4">
+              <div class="fw-bold mb-1 small" style="color:#60a5fa">2. SplitSentence Bolt</div>
+              <pre class="rounded p-2" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto;font-size:.7rem">public void execute(Tuple t,
+    BasicOutputCollector out) {
+    String sentence =
+        t.getStringByField("sentence");
+    String[] words = sentence.split(" ");
+    for (String w : words)
+        out.emit(new Values(w));
+}
+// declareOutputFields → "word"</pre>
+            </div>
+            <div class="col-md-4">
+              <div class="fw-bold mb-1 small" style="color:#34d399">3. WordCount Bolt</div>
+              <pre class="rounded p-2" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto;font-size:.7rem">Map&lt;String,Integer&gt; counts = new HashMap&lt;&gt;();
+public void execute(Tuple t,
+    BasicOutputCollector out) {
+    String word = t.getString(0);
+    Integer count = counts.get(word);
+    if (count == null) count = 0;
+    counts.put(word, ++count);
+    // emits running count per word:
+    out.emit(new Values(word, count));
+}
+// declareOutputFields → "word","count"</pre>
+            </div>
+          </div>
+
+          <div class="fw-bold mb-1 small" style="color:#f472b6">4. TopologyBuilder — Wire Everything Together</div>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">TopologyBuilder builder = new TopologyBuilder();
+builder.setSpout("spout", new RandomSentenceSpout(), 5);
+builder.setBolt("split", new SplitSentence(), 8).shuffleGrouping("spout");
+builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
+
+Config conf = new Config();
+if (args != null &amp;&amp; args.length &gt; 0) {
+    conf.setNumWorkers(3);
+    StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
+} else {
+    LocalCluster cluster = new LocalCluster();
+    cluster.submitTopology("word-count", conf, builder.createTopology());
+    Thread.sleep(10000);
+    cluster.shutdown();
+}</pre>
+
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Storm Cluster Architecture</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1"><strong style="color:#f1f5f9">Nimbus</strong> — cluster entry point (analogous to Hadoop JobTracker)</div>
+                  <div class="mb-1"><strong style="color:#f1f5f9">Zookeeper</strong> — cluster manager: schedules and monitors Workers</div>
+                  <div><strong style="color:#f1f5f9">Workers + Supervisors</strong> — execute topology tasks with local resource management</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Batch vs Stream Key Distinction</div>
+                <div class="small" style="color:#94a3b8">In batch: WordCount produces one <strong style="color:#f1f5f9">final</strong> count per word. In Storm: the bolt emits a <strong style="color:#f1f5f9">running count</strong> — every incoming tuple triggers output, reflecting the partial state of processing at that moment.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Apache Kafka — High-Performance Pub-Sub Message Broker</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Core Concepts</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1"><strong style="color:#f1f5f9">Record</strong>: key + value + timestamp</div>
+                  <div class="mb-1"><strong style="color:#f1f5f9">Topic</strong>: named category of records</div>
+                  <div class="mb-1"><strong style="color:#f1f5f9">Partition</strong>: ordered queue within a topic</div>
+                  <div class="mb-1"><strong style="color:#f1f5f9">Broker</strong>: cluster node managing partitions</div>
+                  <div><strong style="color:#f1f5f9">Offset</strong>: position marker in a partition</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Leader / Follower Replication</div>
+                <div class="small mb-2" style="color:#94a3b8">Each partition has one <strong style="color:#f1f5f9">leader</strong> and N <strong style="color:#f1f5f9">followers</strong> replicating the leader. On leader failure, a follower is automatically promoted — zero message loss.</div>
+                <div class="p-2 rounded small text-center font-monospace" style="background:#0a0b0f;border:1px solid #1e293b;color:#64748b;font-size:.7rem">
+                  Broker 1: leader A/0, replica A/1<br>
+                  Broker 2: leader A/1, replica A/0
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Why Pub-Sub Matters</div>
+                <div class="small mb-2" style="color:#94a3b8">Unlike point-to-point queues, Kafka guarantees <strong style="color:#f1f5f9">all subscribers</strong> receive the events they subscribed to. Multiple producers and consumers operate independently.</div>
+                <div class="d-flex flex-wrap gap-1 mt-2">
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Fault-tolerant</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Auto-partition</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">High-throughput</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#f472b6">Kafka Streams API</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="fw-bold mb-1 small" style="color:#c084fc">Configuration &amp; Simple String-Length Transform</div>
+              <pre class="rounded p-2" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto;font-size:.72rem">Properties props = new Properties();
+props.put(StreamsConfig.APPLICATION_ID_CONFIG,
+    "my-stream-processing-application");
+props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
+    "localhost:9092");
+props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG,
+    Serdes.String().getClass());
+props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG,
+    Serdes.String().getClass());
+
+StreamsBuilder builder = new StreamsBuilder();
+builder.&lt;String, String&gt;stream("my-input-topic")
+    .mapValues(value -&gt; String.valueOf(value.length()))
+    .to("my-output-topic");
+
+KafkaStreams streams = new KafkaStreams(builder.build(), props);
+streams.start();</pre>
+            </div>
+            <div class="col-md-6">
+              <div class="fw-bold mb-1 small" style="color:#60a5fa">WordCount with Stop-Word Filter</div>
+              <pre class="rounded p-2" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto;font-size:.72rem">KStreamBuilder builder = new KStreamBuilder();
+KStream&lt;String, String&gt; source =
+    builder.stream("wordcount-input");
+final Pattern pattern = Pattern.compile("\\W+");
+
+KStream counts = source
+    .flatMapValues(value -&gt;
+        Arrays.asList(pattern.split(value.toLowerCase())))
+    .map((k, v) -&gt; new KeyValue&lt;Object, Object&gt;(v, v))
+    .filter((k, v) -&gt; (!v.equals("the")))
+    .groupByKey()
+    .count("CountStore")
+    .mapValues(v -&gt; Long.toString(v))
+    .toStream();
+counts.to("wordcount-output");
+
+KafkaStreams streams = new KafkaStreams(builder, props);
+streams.start();
+Thread.sleep(5000L); // stop after finite input demo
+streams.close();</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 5: BEAM & DATAFLOW ══ -->
+  <div id="tab-beam" class="ch8-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Apache Beam — Unified Batch &amp; Streaming SDK</h5>
+          <p class="small mb-3" style="color:#94a3b8">Beam is the programming model used by <strong style="color:#f1f5f9">Google Dataflow</strong>, the GCP stream processing engine. Write once, run on any backend runner (Dataflow, Spark, Flink).</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:2px solid #f472b6">
+                <div style="font-size:1.4rem">🔗</div>
+                <div class="fw-bold mb-1" style="color:#f472b6">Pipeline</div>
+                <div class="small" style="color:#94a3b8">Entire program: input → transforms → output. Executed by a backend <strong style="color:#f1f5f9">Runner</strong> (Dataflow, Spark, Flink).</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div style="font-size:1.4rem">📂</div>
+                <div class="fw-bold mb-1" style="color:#c084fc">PCollection</div>
+                <div class="small" style="color:#94a3b8">Distributed dataset. Bounded (batch) or unbounded (stream). <strong style="color:#f1f5f9">Immutable</strong> — transforms always create new PCollections.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(244,114,182,.3)">
+                <div style="font-size:1.4rem">⚙️</div>
+                <div class="fw-bold mb-1" style="color:#60a5fa">PTransform</div>
+                <div class="small" style="color:#94a3b8">One processing step. Takes PCollection(s) as input, returns PCollection(s) as output. Applied via <code style="color:#f472b6">.apply()</code>.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Pipeline Composition Pattern</div>
+                <pre class="rounded p-2 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">[Output PCollection] =
+  [Input PCollection]
+    .apply([First Transform])
+    .apply([Second Transform])
+    .apply([Third Transform]);</pre>
+                <div class="small mt-2" style="color:#64748b">Each .apply() returns a new PCollection — chaining builds the execution DAG.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#f472b6">Core Built-in Transforms</div>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">ParDo</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">GroupByKey</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">CoGroupByKey</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Combine</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Flatten</span>
+                  <span class="badge" style="background:rgba(244,114,182,.15);color:#f472b6;font-size:.65rem">Partition</span>
+                  <span class="badge" style="background:rgba(192,132,252,.15);color:#c084fc;font-size:.65rem">TextIO.Read</span>
+                  <span class="badge" style="background:rgba(192,132,252,.15);color:#c084fc;font-size:.65rem">TextIO.Write</span>
+                </div>
+                <div class="small" style="color:#64748b"><strong style="color:#f1f5f9">ParDo</strong> — parallel per-element transform. Analogous to Map. Most commonly used.</div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-3" style="color:#f472b6">Beam WordCount — 4-Step Pipeline</h6>
+          <div class="row g-2 mb-3">
+            <div class="col-md-3">
+              <div class="p-2 rounded text-center" style="background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.3)">
+                <div class="fw-bold small" style="color:#f472b6">Step 1</div>
+                <div class="small" style="color:#94a3b8">TextIO.Read from GCS</div>
+                <div style="color:#64748b;font-size:.7rem">→ PCollection&lt;String&gt; (lines)</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-2 rounded text-center" style="background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3)">
+                <div class="fw-bold small" style="color:#c084fc">Step 2</div>
+                <div class="small" style="color:#94a3b8">FlatMapElements → words</div>
+                <div style="color:#64748b;font-size:.7rem">→ PCollection&lt;String&gt; (words)</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-2 rounded text-center" style="background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.3)">
+                <div class="fw-bold small" style="color:#60a5fa">Step 3</div>
+                <div class="small" style="color:#94a3b8">Count.perElement()</div>
+                <div style="color:#64748b;font-size:.7rem">→ PCollection&lt;KV&lt;String,Long&gt;&gt;</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-2 rounded text-center" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold small" style="color:#34d399">Step 4</div>
+                <div class="small" style="color:#94a3b8">TextIO.Write to GCS</div>
+                <div style="color:#64748b;font-size:.7rem">"word: count" strings</div>
+              </div>
+            </div>
+          </div>
+
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">public class MinimalWordCount {
+    public static void main(String[] args) {
+        PipelineOptions options = PipelineOptionsFactory.create();
+        Pipeline p = Pipeline.create(options);
+
+        p.apply(TextIO.read().from("gs://apache-beam-samples/shakespeare/*"))
+         .apply(FlatMapElements.into(TypeDescriptors.strings())
+                .via((String line) -&gt; Arrays.asList(line.split("[^\\p{L}]+"))))
+         .apply(Filter.by((String word) -&gt; !word.isEmpty()))
+         .apply(Count.perElement())
+         .apply(MapElements.into(TypeDescriptors.strings())
+                .via((KV&lt;String, Long&gt; wordCount) -&gt;
+                    wordCount.getKey() + ": " + wordCount.getValue()))
+         .apply(TextIO.write().to("wordcounts"));
+
+        p.run().waitUntilFinish();
+    }
+}</pre>
+
+          <div class="mt-3">
+            <div class="fw-bold mb-1 small" style="color:#f472b6">Run on GCP Dataflow — DataflowRunner</div>
+            <pre class="rounded p-3 small" style="background:#0a0b0f;color:#34d399;border:1px solid #1e293b;overflow-x:auto">$ mvn compile exec:java \
+    -Dexec.mainClass=org.apache.beam.examples.WordCount \
+    -Dexec.args="--runner=DataflowRunner \
+                 --gcpTempLocation=gs://YOUR_GCS_BUCKET/tmp \
+                 --project=YOUR_PROJECT \
+                 --region=GCE_REGION \
+                 --inputFile=gs://apache-beam-samples/shakespeare/* \
+                 --output=gs://YOUR_GCS_BUCKET/counts" \
+    -Pdataflow-runner</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(244,114,182,.25)">
+          <h5 class="fw-bold mb-3" style="color:#f472b6">Framework Comparison Matrix</h5>
+          <p class="small mb-3" style="color:#94a3b8">Key technical properties of major stream processing frameworks. Beam is compared separately at <code>beam.apache.org/documentation/runners/capability-matrix</code>.</p>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0" style="color:#94a3b8;font-size:.8rem">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(244,114,182,.3)">
+                  <th style="color:#f472b6;width:22%">Feature</th>
+                  <th class="text-center" style="color:#f1f5f9">Storm</th>
+                  <th class="text-center" style="color:#f1f5f9">Storm Trident</th>
+                  <th class="text-center" style="color:#f1f5f9">Spark Streaming</th>
+                  <th class="text-center" style="color:#f1f5f9">Samza</th>
+                  <th class="text-center" style="color:#f1f5f9">Flink</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color:#f472b6">Stream Type</td>
+                  <td class="text-center"><span class="badge" style="background:rgba(52,211,153,.15);color:#34d399">Native</span></td>
+                  <td class="text-center"><span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c">Microbatch</span></td>
+                  <td class="text-center"><span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c">Microbatch</span></td>
+                  <td class="text-center"><span class="badge" style="background:rgba(52,211,153,.15);color:#34d399">Native</span></td>
+                  <td class="text-center"><span class="badge" style="background:rgba(52,211,153,.15);color:#34d399">Native</span></td>
+                </tr>
+                <tr>
+                  <td style="color:#f472b6">Delivery Guarantee</td>
+                  <td class="text-center">At-Least-Once</td>
+                  <td class="text-center" style="color:#34d399">Exactly-Once</td>
+                  <td class="text-center" style="color:#34d399">Exactly-Once</td>
+                  <td class="text-center">At-Least-Once</td>
+                  <td class="text-center" style="color:#34d399">Exactly-Once</td>
+                </tr>
+                <tr>
+                  <td style="color:#f472b6">Latency</td>
+                  <td class="text-center" style="color:#34d399">Sub-second</td>
+                  <td class="text-center">Low (seconds)</td>
+                  <td class="text-center" style="color:#fb923c">High (seconds)</td>
+                  <td class="text-center" style="color:#34d399">Sub-second</td>
+                  <td class="text-center" style="color:#34d399">Sub-second</td>
+                </tr>
+                <tr>
+                  <td style="color:#f472b6">State Management</td>
+                  <td class="text-center" style="color:#fb923c">Basic</td>
+                  <td class="text-center" style="color:#34d399">Yes</td>
+                  <td class="text-center" style="color:#34d399">Yes</td>
+                  <td class="text-center" style="color:#34d399">Yes</td>
+                  <td class="text-center" style="color:#34d399">Yes (TB-scale)</td>
+                </tr>
+                <tr>
+                  <td style="color:#f472b6">Event-Time Support</td>
+                  <td class="text-center" style="color:#fb923c">No</td>
+                  <td class="text-center" style="color:#fb923c">No</td>
+                  <td class="text-center" style="color:#fb923c">Limited</td>
+                  <td class="text-center" style="color:#fb923c">No</td>
+                  <td class="text-center" style="color:#34d399">Yes + watermarks</td>
+                </tr>
+                <tr>
+                  <td style="color:#f472b6">Programming Model</td>
+                  <td class="text-center">Compositional</td>
+                  <td class="text-center">Compositional</td>
+                  <td class="text-center">Declarative</td>
+                  <td class="text-center">Compositional</td>
+                  <td class="text-center">Declarative</td>
+                </tr>
+                <tr>
+                  <td style="color:#f472b6">Fault Tolerance</td>
+                  <td class="text-center" style="color:#34d399">Yes</td>
+                  <td class="text-center" style="color:#34d399">Yes</td>
+                  <td class="text-center" style="color:#34d399">Yes</td>
+                  <td class="text-center" style="color:#34d399">Yes</td>
+                  <td class="text-center" style="color:#34d399">Yes</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="row g-3 mt-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-1 small" style="color:#f472b6">Framework Complexity</div>
+                <div class="small" style="color:#94a3b8">Setup difficulty, dependency complexity, backward compatibility, monitoring support, version constraints.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-1 small" style="color:#f472b6">Framework Friendliness</div>
+                <div class="small" style="color:#94a3b8">Ease of understanding the programming model, tuning parameters, API richness, multi-language support.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-1 small" style="color:#f472b6">Framework Maturity</div>
+                <div class="small" style="color:#94a3b8">Community size, commit activity, bug-fix frequency, release cadence, number of companies adopting the framework.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<style>
+.ch8-nav-link { background:#13141a; color:#94a3b8; border:1px solid rgba(244,114,182,.25); transition:all .2s; }
+.ch8-nav-link:hover { background:rgba(244,114,182,.15); color:#f1f5f9; }
+.ch8-nav-link.active { background:#f472b6 !important; color:#000 !important; font-weight:600; }
+</style>
+
+<script>
+function showTab(id, el) {
+    document.querySelectorAll('.ch8-tab').forEach(function(t){ t.classList.add('d-none'); });
+    document.querySelectorAll('.ch8-nav-link').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById(id).classList.remove('d-none');
+    el.classList.add('active');
+}
+(function(){
+    var h = location.hash.slice(1);
+    if (h) {
+        var btn = document.querySelector('.ch8-nav-link[onclick*="' + h + '"]');
+        if (btn) btn.click();
+    }
+})();
+</script>
+{% endblock %}

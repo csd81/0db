@@ -1,0 +1,1121 @@
+{% extends "base.html" %}
+{% block title %}C12 — DBA & Security{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-shield-lock fs-2 me-3" style="color:#f87171"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Appendix B — Database Administration &amp; Security</h2>
+    <p class="text-muted mb-0">Files · Backup strategies · Principals · Dynamic Data Masking · Encryption</p>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-4 mt-3" id="c12tabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-integrity">
+      <i class="bi bi-1-circle me-1"></i>Files &amp; Integrity
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-backup">
+      <i class="bi bi-2-circle me-1"></i>Backup Strategies
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-principals">
+      <i class="bi bi-3-circle me-1"></i>Principals &amp; Roles
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-masking">
+      <i class="bi bi-4-circle me-1"></i>Dynamic Data Masking
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-encryption">
+      <i class="bi bi-5-circle me-1"></i>Encryption &amp; SSL
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- ── TAB 1: FILES & INTEGRITY ─────────────────────────────────────────── -->
+<div class="tab-pane fade show active" id="tab-integrity">
+
+  <div class="row g-4">
+
+    <!-- Left: concepts -->
+    <div class="col-lg-5">
+
+      <!-- DB file types -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-hdd me-2"></i>Database File Types</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.8rem">
+            <thead><tr style="color:#8b949e">
+              <th>Extension</th><th>Contains</th><th>Notes</th>
+            </tr></thead>
+            <tbody>
+              <tr><td><code style="color:#f87171">.mdf</code></td><td>Primary data file</td><td>Tables, indexes, objects</td></tr>
+              <tr><td><code style="color:#fb923c">.ndf</code></td><td>Secondary data file</td><td>Optional; filegroups</td></tr>
+              <tr><td><code style="color:#fbbf24">.ldf</code></td><td>Transaction log</td><td><strong style="color:#f87171">Critical for recovery</strong> — store on RAID</td></tr>
+            </tbody>
+          </table>
+          <div class="mt-2 p-2 rounded" style="background:#0d0f16;font-size:.75rem;color:#8b949e">
+            <i class="bi bi-info-circle me-1" style="color:#f87171"></i>
+            Place DB files on volumes <strong style="color:#c9d1d9">no other programs use</strong> to avoid fragmentation.
+            Set initial size based on planned application — too-small auto-grow increments fragment the file.
+          </div>
+        </div>
+      </div>
+
+      <!-- Recovery modes -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-arrow-repeat me-2"></i>Recovery Modes</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.78rem">
+            <thead><tr style="color:#8b949e"><th>Mode</th><th>Log truncation</th><th>Point-in-time restore</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="badge" style="background:#16a34a;color:#fff">SIMPLE</span></td>
+                <td>Automatic (inactive log)</td>
+                <td>No — backup boundaries only</td>
+              </tr>
+              <tr>
+                <td><span class="badge" style="background:#d97706;color:#fff">FULL</span></td>
+                <td>Only after log backup</td>
+                <td><strong style="color:#4ade80">Yes</strong> — any point in time</td>
+              </tr>
+              <tr>
+                <td><span class="badge" style="background:#7c3aed;color:#fff">BULK_LOGGED</span></td>
+                <td>After log backup</td>
+                <td>Mostly — minimally-logged ops excluded</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recommended settings -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-gear me-2"></i>Recommended DB Settings</span>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.78rem">
+            <thead><tr style="color:#8b949e"><th>Option</th><th>Value</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td>Auto update statistics</td><td><span class="badge bg-success">TRUE</span></td><td>Keeps query plans optimal</td></tr>
+              <tr><td>Auto create statistics</td><td><span class="badge bg-success">TRUE</span></td><td>Detects new column patterns</td></tr>
+              <tr><td>Auto shrink</td><td><span class="badge bg-danger">FALSE</span></td><td>Causes fragmentation cycles</td></tr>
+              <tr><td>Page verify</td><td><span class="badge" style="background:#0891b2">CHECKSUM</span></td><td>Detects torn pages on read</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SHRINK reference -->
+      <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35;padding:.4rem .75rem">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-code-slash me-1"></i>SHRINK reference (use sparingly)</span>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.74rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">-- Reclaim unused space, keeping 10% free
+USE master
+DBCC SHRINKDATABASE(northwind, 10)
+
+-- ⚠ Avoid in production — causes index fragmentation.
+-- Prefer: set initial file sizes correctly from the start.</pre>
+        </div>
+      </div>
+
+    </div><!-- /col-lg-5 -->
+
+    <!-- Right: live demos -->
+    <div class="col-lg-7">
+
+      <!-- DBCC CHECKDB -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(248,113,113,.35)">
+        <div class="card-header d-flex align-items-center justify-content-between"
+             style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-shield-check me-2"></i>DBCC CHECKDB — Live Integrity Check</span>
+          <button class="btn btn-sm" style="background:#f87171;color:#0d0f16;border:none;font-size:.75rem"
+                  onclick="runCheckdb(this)">
+            <i class="bi bi-play-fill me-1"></i>Run DBCC CHECKDB
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.74rem;color:#93c5fd;background:#080a0e;border-bottom:1px solid #1e2228">DBCC CHECKDB('northwind')
+  WITH TABLERESULTS, NO_INFOMSGS, ALL_ERRORMSGS
+-- Returns rows only if errors found; empty = ✓ clean</pre>
+          <div id="checkdbResult" style="display:none;padding:.75rem"></div>
+        </div>
+      </div>
+
+      <!-- Page Allocation -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(248,113,113,.35)">
+        <div class="card-header d-flex align-items-center justify-content-between"
+             style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-layers me-2"></i>Page Allocation per Table</span>
+          <button class="btn btn-sm" style="background:rgba(248,113,113,.2);border:1px solid rgba(248,113,113,.4);color:#f87171;font-size:.75rem"
+                  onclick="runPageAlloc(this)">
+            <i class="bi bi-play-fill me-1"></i>Query sys.allocation_units
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.74rem;color:#93c5fd;background:#080a0e;border-bottom:1px solid #1e2228">SELECT tablename, totalpages, unusedPages, usedPages
+FROM sys.indexes i
+JOIN sys.partitions p ON ...
+JOIN sys.allocation_units a ON ...
+WHERE OBJECTPROPERTY(object_id, 'IsUserTable')=1
+ORDER BY totalpages DESC</pre>
+          <div id="pageAllocResult" style="display:none;padding:.75rem"></div>
+        </div>
+      </div>
+
+      <!-- 3 error types -->
+      <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-exclamation-triangle me-1"></i>3 Error Types &amp; Recovery</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <div class="p-2 rounded h-100" style="background:#0d0f16;border:1px solid rgba(248,113,113,.2)">
+                <div class="fw-bold mb-1" style="color:#f87171;font-size:.78rem">1. Connection lost</div>
+                <div style="font-size:.72rem;color:#8b949e">Log rolls back all uncommitted transactions automatically</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-2 rounded h-100" style="background:#0d0f16;border:1px solid rgba(251,146,60,.2)">
+                <div class="fw-bold mb-1" style="color:#fb923c;font-size:.78rem">2. Server crash</div>
+                <div style="font-size:.72rem;color:#8b949e">On restart: roll forward log → roll back uncommitted</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-2 rounded h-100" style="background:#0d0f16;border:1px solid rgba(239,68,68,.2)">
+                <div class="fw-bold mb-1" style="color:#ef4444;font-size:.78rem">3. Data file lost</div>
+                <div style="font-size:.72rem;color:#8b949e">Backup log → restore full + diff + log → rollback uncommitted</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col-lg-7 -->
+  </div>
+
+</div><!-- /tab-integrity -->
+
+
+<!-- ── TAB 2: BACKUP STRATEGIES ─────────────────────────────────────────── -->
+<div class="tab-pane fade" id="tab-backup">
+
+  <!-- Strategy timeline -->
+  <div class="card mb-4" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+    <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+      <span class="fw-bold" style="color:#f87171"><i class="bi bi-calendar-week me-2"></i>3 Backup Strategies Compared</span>
+    </div>
+    <div class="card-body p-3">
+      <div class="row g-3">
+
+        <!-- Strategy 1 -->
+        <div class="col-lg-4">
+          <div class="p-3 rounded h-100" style="background:#0d0f16;border:2px solid #16a34a">
+            <div class="d-flex align-items-center mb-2">
+              <span class="badge me-2" style="background:#16a34a;color:#fff;font-size:.85rem">#1</span>
+              <span class="fw-bold" style="color:#4ade80">Minimum</span>
+            </div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Recovery mode</div>
+            <div class="mb-2"><span class="badge" style="background:#064e3b;color:#4ade80">SIMPLE</span></div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Schedule</div>
+            <div class="mb-2" style="font-size:.8rem;color:#c9d1d9">Daily <strong>full backup</strong> in off-peak hours</div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Retention</div>
+            <div class="mb-2" style="font-size:.8rem;color:#c9d1d9">Round-robin weekly cycle</div>
+            <div class="mt-3 p-2 rounded" style="background:#022c22;border:1px solid #16a34a">
+              <div style="font-size:.75rem;color:#4ade80;font-weight:600">Max data loss</div>
+              <div style="font-size:1.1rem;color:#4ade80;font-weight:700">~1 day</div>
+            </div>
+            <div class="mt-2" style="font-size:.72rem;color:#6b7280">Also back up: master + model + msdb</div>
+          </div>
+        </div>
+
+        <!-- Strategy 2 -->
+        <div class="col-lg-4">
+          <div class="p-3 rounded h-100" style="background:#0d0f16;border:2px solid #d97706">
+            <div class="d-flex align-items-center mb-2">
+              <span class="badge me-2" style="background:#d97706;color:#fff;font-size:.85rem">#2</span>
+              <span class="fw-bold" style="color:#fbbf24">Standard</span>
+            </div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Recovery mode</div>
+            <div class="mb-2"><span class="badge" style="background:#064e3b;color:#4ade80">SIMPLE</span></div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Schedule</div>
+            <div class="mb-2" style="font-size:.8rem;color:#c9d1d9">Daily <strong>full</strong> + differential every <strong>2 hours</strong></div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Retention</div>
+            <div class="mb-2" style="font-size:.8rem;color:#c9d1d9">Round-robin</div>
+            <div class="mt-3 p-2 rounded" style="background:#2d1900;border:1px solid #d97706">
+              <div style="font-size:.75rem;color:#fbbf24;font-weight:600">Max data loss</div>
+              <div style="font-size:1.1rem;color:#fbbf24;font-weight:700">~2 hours</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategy 3 -->
+        <div class="col-lg-4">
+          <div class="p-3 rounded h-100" style="background:#0d0f16;border:2px solid #dc2626">
+            <div class="d-flex align-items-center mb-2">
+              <span class="badge me-2" style="background:#dc2626;color:#fff;font-size:.85rem">#3</span>
+              <span class="fw-bold" style="color:#f87171">Enterprise</span>
+            </div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Recovery mode</div>
+            <div class="mb-2"><span class="badge" style="background:#7f1d1d;color:#fca5a5">FULL</span></div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Schedule</div>
+            <div class="mb-2" style="font-size:.8rem;color:#c9d1d9">Daily <strong>full</strong> + diff every <strong>2h</strong> + <strong>log every 20min</strong></div>
+            <div class="mb-2" style="font-size:.78rem;color:#8b949e">Warning</div>
+            <div class="mb-2" style="font-size:.78rem;color:#f87171">Without log backups, log file grows unboundedly in FULL mode</div>
+            <div class="mt-3 p-2 rounded" style="background:#1a0505;border:1px solid #dc2626">
+              <div style="font-size:.75rem;color:#f87171;font-weight:600">Max data loss</div>
+              <div style="font-size:1.1rem;color:#f87171;font-weight:700">~20 minutes</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /row -->
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+
+      <!-- RESTORE reference -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-cloud-download me-1"></i>RESTORE DATABASE syntax</span>
+          <span class="ms-2 badge" style="background:#1a1d24;color:#f87171;border:1px solid rgba(248,113,113,.3);font-size:.65rem">reference — destructive, never run live</span>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.74rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">USE [master]
+RESTORE DATABASE [northwind]
+FROM DISK = N'C:\...\Backup\nw'
+WITH FILE = 1,
+     NOUNLOAD,
+     REPLACE,   -- overwrite existing DB
+     STATS = 5  -- progress every 5%</pre>
+        </div>
+      </div>
+
+      <!-- BACKUP full -->
+      <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-cloud-upload me-1"></i>BACKUP DATABASE syntax</span>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.74rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">-- Full backup
+BACKUP DATABASE northwind
+TO DISK = N'C:\Backup\nw_full.bak'
+WITH STATS = 10
+
+-- Differential backup
+BACKUP DATABASE northwind
+TO DISK = N'C:\Backup\nw_diff.bak'
+WITH DIFFERENTIAL, STATS = 10
+
+-- Transaction log backup (FULL mode only)
+BACKUP LOG northwind
+TO DISK = N'C:\Backup\nw_log.bak'
+WITH STATS = 10</pre>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-6">
+
+      <!-- Agent XPs -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-calendar-check me-1"></i>Enable Agent XPs for Maintenance Plans</span>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.74rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">USE master
+EXEC sp_configure 'show advanced options', 1
+GO
+RECONFIGURE
+GO
+EXEC sp_configure 'Agent XPs', 1
+GO
+RECONFIGURE
+GO
+-- Now: Management → Maintenance Plans is available in SSMS
+-- Do NOT use the wizard — build the plan manually</pre>
+        </div>
+      </div>
+
+      <!-- Maintenance plan tasks -->
+      <div class="card" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171;font-size:.85rem"><i class="bi bi-list-check me-2"></i>Maintenance Plan Tasks</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.78rem">
+            <thead><tr style="color:#8b949e"><th>Task</th><th>Typical schedule</th></tr></thead>
+            <tbody>
+              <tr><td>Full backup</td><td>Daily (off-peak)</td></tr>
+              <tr><td>Differential backup</td><td>Every 2 hours</td></tr>
+              <tr><td>Log backup</td><td>Every 20 minutes (FULL mode)</td></tr>
+              <tr><td>Integrity check (DBCC CHECKDB)</td><td>Daily</td></tr>
+              <tr><td>Index rebuild / reorganize</td><td>Daily / weekly</td></tr>
+              <tr><td>Update statistics</td><td>Daily</td></tr>
+              <tr><td>Backup cleanup</td><td>Weekly (min age: 1 day)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /tab-backup -->
+
+
+<!-- ── TAB 3: PRINCIPALS & ROLES ─────────────────────────────────────────── -->
+<div class="tab-pane fade" id="tab-principals">
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+
+      <!-- Principal hierarchy -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-diagram-3 me-2"></i>Principal Hierarchy</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-column align-items-center gap-0" style="font-size:.8rem">
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;width:220px">
+              <i class="bi bi-server me-1"></i><strong>SQL Server Instance</strong>
+            </div>
+            <div style="width:2px;height:18px;background:rgba(248,113,113,.4)"></div>
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.4);color:#fb923c;width:220px">
+              <i class="bi bi-person-badge me-1"></i><strong>Server Login</strong>
+              <div style="font-size:.7rem;color:#8b949e">Windows account / SQL auth</div>
+            </div>
+            <div style="width:2px;height:18px;background:rgba(251,146,60,.4)"></div>
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.3);color:#fbbf24;width:220px">
+              <i class="bi bi-person me-1"></i><strong>Database User</strong>
+              <div style="font-size:.7rem;color:#8b949e">mapped to login, has default DB</div>
+            </div>
+            <div style="width:2px;height:18px;background:rgba(250,204,21,.3)"></div>
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:#4ade80;width:220px">
+              <i class="bi bi-people me-1"></i><strong>Database Role</strong>
+              <div style="font-size:.7rem;color:#8b949e">group of privileges</div>
+            </div>
+          </div>
+
+          <pre class="mt-3 p-2 rounded" style="font-size:.72rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">USE master
+CREATE LOGIN nw_user
+  WITH PASSWORD='...', DEFAULT_DATABASE=northwind
+USE northwind
+CREATE USER nw_user FOR LOGIN nw_user
+ALTER ROLE db_datareader ADD MEMBER nw_user</pre>
+        </div>
+      </div>
+
+      <!-- Built-in roles -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-shield me-2"></i>Built-in Roles</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em">Server Level</div>
+          <div class="d-flex flex-wrap gap-1 mb-3">
+            <span class="badge" style="background:#7f1d1d;color:#fca5a5">sysadmin</span>
+            <span class="badge" style="background:#1e3a5f;color:#93c5fd">serveradmin</span>
+            <span class="badge" style="background:#14532d;color:#86efac">dbcreator</span>
+            <span class="badge" style="background:#3b0764;color:#c4b5fd">public</span>
+          </div>
+          <div class="mb-2" style="font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em">Database Level — Positive</div>
+          <div class="d-flex flex-wrap gap-1 mb-3">
+            <span class="badge" style="background:#7f1d1d;color:#fca5a5">db_owner</span>
+            <span class="badge" style="background:#1e3a5f;color:#93c5fd">db_datareader</span>
+            <span class="badge" style="background:#14532d;color:#86efac">db_datawriter</span>
+          </div>
+          <div class="mb-2" style="font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em">Database Level — Negative (DENY)</div>
+          <div class="d-flex flex-wrap gap-1">
+            <span class="badge" style="background:#3b0764;color:#c4b5fd">db_denydatareader</span>
+            <span class="badge" style="background:#3b0764;color:#c4b5fd">db_denydatawriter</span>
+          </div>
+          <div class="mt-2 p-2 rounded" style="background:#0d0f16;font-size:.72rem;color:#8b949e">
+            <i class="bi bi-lightbulb me-1" style="color:#fbbf24"></i>
+            <strong>db_owner + db_denydatawriter</strong>: can SELECT &amp; execute procs but INSERT/UPDATE fails — useful for read-heavy analytical roles.
+          </div>
+        </div>
+      </div>
+
+      <!-- GRANT/REVOKE/DENY reference -->
+      <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-key me-1"></i>Privilege Verbs</span>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.74rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">-- Grant execute on one procedure
+GRANT EXECUTE ON sp_list_employees TO nw_user
+
+-- Grant execute on ALL objects in DB
+GRANT EXECUTE TO nw_user
+
+-- Schema-level grant (preferred — survives new objects)
+GRANT SELECT, UPDATE ON SCHEMA::Sales TO my_role
+
+-- Remove explicit grant (inherited may still apply)
+REVOKE EXECUTE ON sp_list_employees FROM nw_user
+
+-- Hard block — overrides any GRANT
+DENY INSERT ON Orders TO nw_user</pre>
+        </div>
+      </div>
+
+    </div><!-- /col-lg-5 -->
+
+    <div class="col-lg-7">
+
+      <!-- sp_c12_list_employees demo -->
+      <div class="card mb-4" style="background:#13141a;border:1px solid rgba(248,113,113,.35)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-braces me-2"></i>Live Demo — Stored Procedure with GRANT</span>
+        </div>
+        <div class="card-body p-3">
+          <pre class="mb-3 p-2 rounded" style="font-size:.74rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">CREATE PROCEDURE sp_c12_list_employees
+    @city varchar(50) = 'London'
+AS
+    SELECT EmployeeID, LastName, FirstName, Title, City, Country
+    FROM Employees WHERE City = @city
+-- Then: GRANT EXECUTE ON sp_c12_list_employees TO nw_user</pre>
+
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <button class="btn btn-sm" style="background:#f87171;color:#0d0f16;border:none;font-size:.75rem"
+                    onclick="createSP(this)">
+              <i class="bi bi-hammer me-1"></i>Create Procedure
+            </button>
+            <span id="spCreateMsg" style="font-size:.75rem;color:#4ade80"></span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <label style="font-size:.8rem;color:#8b949e;white-space:nowrap">City parameter:</label>
+            <input id="spCityInput" type="text" value="London" class="form-control form-control-sm"
+                   style="background:#0d0f16;border:1px solid #3a3d45;color:#e2e8f0;width:140px;font-size:.8rem">
+            <button class="btn btn-sm" style="background:rgba(248,113,113,.2);border:1px solid rgba(248,113,113,.4);color:#f87171;font-size:.75rem"
+                    onclick="execSP(this)">
+              <i class="bi bi-play-fill me-1"></i>EXEC sp_c12_list_employees ?
+            </button>
+          </div>
+          <div id="spResult" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- Role members live query -->
+      <div class="card" style="background:#13141a;border:1px solid rgba(248,113,113,.35)">
+        <div class="card-header d-flex align-items-center justify-content-between"
+             style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-people me-2"></i>Role Membership — Live Query</span>
+          <button class="btn btn-sm" style="background:rgba(248,113,113,.2);border:1px solid rgba(248,113,113,.4);color:#f87171;font-size:.75rem"
+                  onclick="runRoleMembers(this)">
+            <i class="bi bi-play-fill me-1"></i>Query sys.database_role_members
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.74rem;color:#93c5fd;background:#080a0e;border-bottom:1px solid #1e2228;white-space:pre-wrap">SELECT DP1.name AS DatabaseRoleName,
+       ISNULL(DP2.name,'No members') AS DatabaseUserName
+FROM sys.database_role_members DRM
+    RIGHT JOIN sys.database_principals DP1 ON ...
+    LEFT  JOIN sys.database_principals DP2 ON ...
+WHERE DP1.type = 'R' -- R = database role
+ORDER BY DP1.name</pre>
+          <div id="roleMembersResult" style="display:none;padding:.75rem"></div>
+        </div>
+      </div>
+
+    </div><!-- /col-lg-7 -->
+  </div>
+
+</div><!-- /tab-principals -->
+
+
+<!-- ── TAB 4: DYNAMIC DATA MASKING ──────────────────────────────────────── -->
+<div class="tab-pane fade" id="tab-masking">
+
+  <!-- Mask functions reference -->
+  <div class="card mb-4" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+    <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+      <span class="fw-bold" style="color:#f87171"><i class="bi bi-eye-slash me-2"></i>Masking Functions Reference</span>
+    </div>
+    <div class="card-body p-3">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #2a2d35;height:100%">
+            <code style="color:#f87171;font-size:.78rem">partial(p,"pad",s)</code>
+            <div style="font-size:.72rem;color:#8b949e;margin-top:.3rem">Expose p chars prefix, pad in middle, s chars suffix</div>
+            <div style="font-size:.72rem;color:#4ade80;margin-top:.3rem">partial(1,".....",4)<br/>→ <code style="color:#fbbf24">1.....7890</code></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #2a2d35;height:100%">
+            <code style="color:#f87171;font-size:.78rem">email()</code>
+            <div style="font-size:.72rem;color:#8b949e;margin-top:.3rem">Shows first letter + XXX@XXXX.com format</div>
+            <div style="font-size:.72rem;color:#4ade80;margin-top:.3rem">→ <code style="color:#fbbf24">sXXX@XXXX.com</code></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #2a2d35;height:100%">
+            <code style="color:#f87171;font-size:.78rem">default()</code>
+            <div style="font-size:.72rem;color:#8b949e;margin-top:.3rem">0 for numeric, '' for strings, 1900-01-01 for dates</div>
+            <div style="font-size:.72rem;color:#4ade80;margin-top:.3rem">→ <code style="color:#fbbf24">0</code> or <code style="color:#fbbf24">xxxx</code></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #2a2d35;height:100%">
+            <code style="color:#f87171;font-size:.78rem">random(lo,hi)</code>
+            <div style="font-size:.72rem;color:#8b949e;margin-top:.3rem">Random number in range (numeric only)</div>
+            <div style="font-size:.72rem;color:#4ade80;margin-top:.3rem">random(1,100)<br/>→ <code style="color:#fbbf24">42</code></div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-2 p-2 rounded d-flex align-items-start gap-2" style="background:#2d1900;border:1px solid rgba(251,146,60,.3)">
+        <i class="bi bi-exclamation-triangle" style="color:#fb923c;margin-top:.1rem;flex-shrink:0"></i>
+        <span style="font-size:.75rem;color:#c9d1d9">
+          <strong style="color:#fb923c">Warning:</strong> UNMASK privilege allows the user to also <strong>modify</strong> masked columns.
+          Dynamic Data Masking hides data from SELECT — it does NOT prevent writes.
+          Use <code>DENY INSERT, UPDATE</code> separately if write-protection is needed.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step-through demo -->
+  <div class="card" style="background:#13141a;border:1px solid rgba(248,113,113,.35)">
+    <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+      <span class="fw-bold" style="color:#f87171"><i class="bi bi-play-circle me-2"></i>Interactive Demo — 6 Steps</span>
+      <span class="ms-2 badge" style="background:#7f1d1d;color:#fca5a5;font-size:.65rem">Modifies Employees schema — Cleanup restores it</span>
+    </div>
+    <div class="card-body p-3">
+
+      <!-- Step indicators -->
+      <div class="d-flex align-items-center gap-0 mb-4 flex-wrap" id="stepIndicators">
+        {% for s in [('1','Setup cols'),('2','Admin view'),('3','Create user'),('4','Masked view'),('5','UNMASK'),('6','Cleanup')] %}
+        <div class="d-flex align-items-center">
+          <div class="step-dot d-flex align-items-center justify-content-center rounded-circle"
+               id="dot{{ s[0] }}"
+               style="width:32px;height:32px;background:#1a1d24;border:2px solid #3a3d45;color:#8b949e;font-size:.75rem;font-weight:700;transition:all .3s;flex-shrink:0">
+            {{ s[0] }}
+          </div>
+          <span class="ms-1 me-2" style="font-size:.7rem;color:#6b7280;white-space:nowrap">{{ s[1] }}</span>
+          {% if not loop.last %}<div style="width:20px;height:2px;background:#3a3d45;flex-shrink:0;margin-right:.5rem"></div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Step 1: Setup -->
+      <div class="mask-step mb-3 p-3 rounded" style="background:#0d0f16;border:1px solid #2a2d35">
+        <div class="d-flex align-items-start gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:26px;height:26px;background:#f87171;color:#0d0f16;font-weight:700;font-size:.78rem;flex-shrink:0">1</div>
+          <div class="flex-grow-1">
+            <div class="fw-bold mb-1" style="color:#f87171;font-size:.85rem">Add masked columns to Employees</div>
+            <pre class="mb-2 p-2 rounded" style="font-size:.72rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">ALTER TABLE Employees ADD ssn char(10) NULL
+ALTER TABLE Employees ALTER COLUMN ssn char(10)
+  MASKED WITH (FUNCTION = 'partial(1,".....",4)')
+ALTER TABLE Employees ADD email varchar(200) NULL
+ALTER TABLE Employees ALTER COLUMN email varchar(200)
+  MASKED WITH (FUNCTION = 'email()')
+UPDATE Employees SET ssn='1234567890'
+UPDATE Employees SET email='sohase_mondd@citromail.hu'</pre>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm" style="background:#f87171;color:#0d0f16;border:none;font-size:.75rem"
+                      onclick="maskStep(1, this)">
+                <i class="bi bi-play-fill me-1"></i>Run Setup
+              </button>
+              <span class="step-result" id="stepResult1" style="font-size:.75rem;color:#8b949e"></span>
+            </div>
+            <div id="stepLog1" style="display:none;margin-top:.5rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Admin view -->
+      <div class="mask-step mb-3 p-3 rounded" style="background:#0d0f16;border:1px solid #2a2d35">
+        <div class="d-flex align-items-start gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:26px;height:26px;background:#f87171;color:#0d0f16;font-weight:700;font-size:.78rem;flex-shrink:0">2</div>
+          <div class="flex-grow-1">
+            <div class="fw-bold mb-1" style="color:#f87171;font-size:.85rem">Query as sysadmin → sees real data</div>
+            <pre class="mb-2 p-2 rounded" style="font-size:.72rem;color:#93c5fd;background:#080a0e">SELECT lastname, firstname, ssn, email FROM Employees
+-- sysadmin always bypasses masking</pre>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm" style="background:rgba(248,113,113,.2);border:1px solid rgba(248,113,113,.4);color:#f87171;font-size:.75rem"
+                      onclick="maskStep(2, this)">
+                <i class="bi bi-eye me-1"></i>Query as sysadmin
+              </button>
+              <span class="step-result" id="stepResult2" style="font-size:.75rem;color:#8b949e"></span>
+            </div>
+            <div id="stepData2" style="display:none;margin-top:.5rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Create test user -->
+      <div class="mask-step mb-3 p-3 rounded" style="background:#0d0f16;border:1px solid #2a2d35">
+        <div class="d-flex align-items-start gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:26px;height:26px;background:#f87171;color:#0d0f16;font-weight:700;font-size:.78rem;flex-shrink:0">3</div>
+          <div class="flex-grow-1">
+            <div class="fw-bold mb-1" style="color:#f87171;font-size:.85rem">Create test user (datareader + datawriter, no UNMASK)</div>
+            <pre class="mb-2 p-2 rounded" style="font-size:.72rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">CREATE LOGIN c12_test_user WITH PASSWORD='h6twqPNO!A'
+CREATE USER c12_test_user FOR LOGIN c12_test_user
+ALTER ROLE db_datareader ADD MEMBER c12_test_user
+ALTER ROLE db_datawriter ADD MEMBER c12_test_user
+-- Note: no GRANT UNMASK yet</pre>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm" style="background:#f87171;color:#0d0f16;border:none;font-size:.75rem"
+                      onclick="maskStep(3, this)">
+                <i class="bi bi-person-add me-1"></i>Create User
+              </button>
+              <span class="step-result" id="stepResult3" style="font-size:.75rem;color:#8b949e"></span>
+            </div>
+            <div id="stepLog3" style="display:none;margin-top:.5rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Query as test user (masked) -->
+      <div class="mask-step mb-3 p-3 rounded" style="background:#0d0f16;border:1px solid #2a2d35">
+        <div class="d-flex align-items-start gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:26px;height:26px;background:#f87171;color:#0d0f16;font-weight:700;font-size:.78rem;flex-shrink:0">4</div>
+          <div class="flex-grow-1">
+            <div class="fw-bold mb-1" style="color:#f87171;font-size:.85rem">Query EXECUTE AS c12_test_user → masked values</div>
+            <pre class="mb-2 p-2 rounded" style="font-size:.72rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">EXECUTE AS USER = 'c12_test_user'
+SELECT lastname, firstname, ssn, email FROM Employees
+REVERT
+-- ssn shows: 1.....7890
+-- email shows: sXXX@XXXX.com</pre>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm" style="background:rgba(248,113,113,.2);border:1px solid rgba(248,113,113,.4);color:#f87171;font-size:.75rem"
+                      onclick="maskStep(4, this)">
+                <i class="bi bi-eye-slash me-1"></i>Query as test user
+              </button>
+              <span class="step-result" id="stepResult4" style="font-size:.75rem;color:#8b949e"></span>
+            </div>
+            <div id="stepData4" style="display:none;margin-top:.5rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Grant UNMASK + query -->
+      <div class="mask-step mb-3 p-3 rounded" style="background:#0d0f16;border:1px solid #2a2d35">
+        <div class="d-flex align-items-start gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:26px;height:26px;background:#f87171;color:#0d0f16;font-weight:700;font-size:.78rem;flex-shrink:0">5</div>
+          <div class="flex-grow-1">
+            <div class="fw-bold mb-1" style="color:#f87171;font-size:.85rem">GRANT UNMASK → same user now sees real data</div>
+            <pre class="mb-2 p-2 rounded" style="font-size:.72rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">GRANT UNMASK TO c12_test_user
+-- then re-run:
+EXECUTE AS USER = 'c12_test_user'
+SELECT lastname, firstname, ssn, email FROM Employees
+REVERT
+-- ssn shows: 1234567890
+-- email shows: sohase_mondd@citromail.hu</pre>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm" style="background:#f87171;color:#0d0f16;border:none;font-size:.75rem"
+                      onclick="maskStep(5, this)">
+                <i class="bi bi-unlock me-1"></i>Grant UNMASK &amp; Query
+              </button>
+              <span class="step-result" id="stepResult5" style="font-size:.75rem;color:#8b949e"></span>
+            </div>
+            <div id="stepData5" style="display:none;margin-top:.5rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Cleanup -->
+      <div class="mask-step p-3 rounded" style="background:#0d0f16;border:1px solid #2a2d35">
+        <div class="d-flex align-items-start gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:26px;height:26px;background:#f87171;color:#0d0f16;font-weight:700;font-size:.78rem;flex-shrink:0">6</div>
+          <div class="flex-grow-1">
+            <div class="fw-bold mb-1" style="color:#f87171;font-size:.85rem">Cleanup — restore Employees to original schema</div>
+            <pre class="mb-2 p-2 rounded" style="font-size:.72rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">REVOKE UNMASK FROM c12_test_user
+DROP USER c12_test_user
+DROP LOGIN c12_test_user
+ALTER TABLE Employees DROP COLUMN ssn
+ALTER TABLE Employees DROP COLUMN email</pre>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;font-size:.75rem"
+                      onclick="maskStep(6, this)">
+                <i class="bi bi-trash me-1"></i>Run Cleanup
+              </button>
+              <span class="step-result" id="stepResult6" style="font-size:.75rem;color:#8b949e"></span>
+            </div>
+            <div id="stepLog6" style="display:none;margin-top:.5rem"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /tab-masking -->
+
+
+<!-- ── TAB 5: ENCRYPTION & SSL ───────────────────────────────────────────── -->
+<div class="tab-pane fade" id="tab-encryption">
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+
+      <!-- Encryption key hierarchy -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-diagram-3 me-2"></i>Encryption Key Hierarchy</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-column align-items-center gap-0" style="font-size:.78rem">
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:#f87171;width:240px">
+              <i class="bi bi-microsoft me-1"></i><strong>Windows DPAPI / TPM</strong>
+              <div style="font-size:.68rem;color:#8b949e">OS-managed entropy</div>
+            </div>
+            <div style="width:2px;height:14px;background:rgba(248,113,113,.3)"></div>
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.35);color:#fb923c;width:240px">
+              <i class="bi bi-key me-1"></i><strong>Service Master Key (SMK)</strong>
+              <div style="font-size:.68rem;color:#8b949e">Auto-created on install; per-instance</div>
+            </div>
+            <div style="width:2px;height:14px;background:rgba(251,146,60,.3)"></div>
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.3);color:#fbbf24;width:240px">
+              <i class="bi bi-lock me-1"></i><strong>Database Master Key (DMK)</strong>
+              <div style="font-size:.68rem;color:#8b949e">CREATE MASTER KEY ENCRYPTION BY PASSWORD</div>
+            </div>
+            <div style="width:2px;height:14px;background:rgba(250,204,21,.3)"></div>
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);color:#4ade80;width:240px">
+              <i class="bi bi-patch-check me-1"></i><strong>Certificate</strong>
+              <div style="font-size:.68rem;color:#8b949e">Self-signed; encrypted by DMK</div>
+            </div>
+            <div style="width:2px;height:14px;background:rgba(74,222,128,.3)"></div>
+            <div class="px-3 py-2 rounded text-center" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.35);color:#a78bfa;width:240px">
+              <i class="bi bi-file-earmark-lock me-1"></i><strong>Encrypted Backup (AES_256)</strong>
+              <div style="font-size:.68rem;color:#8b949e">BACKUP DATABASE ... ENCRYPTION (...)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Backup encryption code -->
+      <div class="card" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-code-slash me-1"></i>Backup Encryption (reference)</span>
+        </div>
+        <div class="card-body p-0">
+          <pre class="m-0 p-3" style="font-size:.73rem;color:#93c5fd;background:#080a0e;white-space:pre-wrap">USE master
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'h6twqPNO'
+GO
+OPEN MASTER KEY DECRYPTION BY PASSWORD = 'h6twqPNO'
+BACKUP MASTER KEY TO FILE = 'C:\install\exportedmasterkey'
+    ENCRYPTION BY PASSWORD = 'h6twqPNOh6twqPNO'
+GO
+CREATE CERTIFICATE backup_cert_master
+    WITH SUBJECT = 'NW DB backup', EXPIRY_DATE = '20301031'
+BACKUP CERTIFICATE backup_cert_master TO FILE = 'C:\install\exportedcert'
+GO
+BACKUP DATABASE northwind TO DISK = 'C:\install\nw_enc.bak'
+WITH COMPRESSION,
+     ENCRYPTION (
+         ALGORITHM = AES_256,
+         SERVER CERTIFICATE = backup_cert_master
+     ),
+     STATS = 10
+GO
+-- ⚠ The backup is unreadable on another instance
+-- unless backup_cert_master is also restored there.</pre>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-6">
+
+      <!-- Encryption comparison table -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(248,113,113,.3)">
+        <div class="card-header" style="background:rgba(248,113,113,.12);border-bottom:1px solid rgba(248,113,113,.25)">
+          <span class="fw-bold" style="color:#f87171"><i class="bi bi-table me-2"></i>Data Security Mechanisms</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="color:#c9d1d9;font-size:.75rem">
+            <thead><tr style="color:#8b949e"><th>Mechanism</th><th>Data at rest</th><th>Data in motion</th><th>Admin can see?</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong style="color:#f87171">Backup Encryption</strong></td>
+                <td><span class="badge bg-success">✓ backups</span></td>
+                <td>—</td>
+                <td>Yes (via server)</td>
+              </tr>
+              <tr>
+                <td><strong style="color:#fb923c">TDE</strong><br><small style="color:#6b7280">Transparent Data Encryption</small></td>
+                <td><span class="badge bg-success">✓ data files</span></td>
+                <td>—</td>
+                <td>Yes (transparent)</td>
+              </tr>
+              <tr>
+                <td><strong style="color:#fbbf24">Dynamic Data Masking</strong></td>
+                <td>—</td>
+                <td><span class="badge bg-warning text-dark">Partial</span></td>
+                <td>Yes (sysadmin)</td>
+              </tr>
+              <tr>
+                <td><strong style="color:#4ade80">Always Encrypted</strong></td>
+                <td><span class="badge bg-success">✓ columns</span></td>
+                <td><span class="badge bg-success">✓ columns</span></td>
+                <td><strong style="color:#4ade80">No</strong> — keys in client</td>
+              </tr>
+              <tr>
+                <td><strong style="color:#a78bfa">SSL/TLS</strong></td>
+                <td>—</td>
+                <td><span class="badge" style="background:#7c3aed;color:#fff">✓ network</span></td>
+                <td>N/A</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SSL config steps -->
+      <div class="card mb-3" style="background:#13141a;border:1px solid #2a2d35">
+        <div class="card-header" style="background:#1a1d24;border-bottom:1px solid #2a2d35">
+          <span class="fw-bold" style="color:#8b949e;font-size:.8rem"><i class="bi bi-shield-check me-1"></i>SSL Configuration (reference)</span>
+        </div>
+        <div class="card-body p-3">
+          <ol class="mb-0 ps-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+            <li>Create self-signed cert: <code style="color:#f87171">certreq -new -f certparam.inf local.cer</code></li>
+            <li>Grant <code>MSSQL$INSTANCE</code> user full control of the cert private key via mmc</li>
+            <li>SQL Server Configuration Manager → Protocols → <strong>Force Encryption = Yes</strong> → restart</li>
+            <li>Verify: <code style="color:#93c5fd">SELECT encrypt_option, auth_scheme FROM sys.dm_exec_connections</code></li>
+          </ol>
+          <pre class="mt-2 p-2 rounded mb-0" style="font-size:.72rem;color:#93c5fd;background:#080a0e">-- Confirm encryption:
+-- encrypt_option = TRUE  → SSL active
+-- auth_scheme    = SQL   → SQL Server authentication</pre>
+        </div>
+      </div>
+
+      <!-- Always Encrypted concept -->
+      <div class="card" style="background:#13141a;border:1px solid rgba(74,222,128,.25)">
+        <div class="card-header" style="background:rgba(74,222,128,.08);border-bottom:1px solid rgba(74,222,128,.2)">
+          <span class="fw-bold" style="color:#4ade80;font-size:.85rem"><i class="bi bi-lock-fill me-2"></i>Always Encrypted</span>
+        </div>
+        <div class="card-body p-3">
+          <div style="font-size:.78rem;color:#c9d1d9;line-height:1.7">
+            Encryption/decryption happens <strong>in the client</strong>. Keys are stored in the Windows certificate store or Azure Key Vault — <strong>outside SQL Server</strong>.
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-6">
+              <div class="p-2 rounded" style="background:#0d0f16;border:1px solid rgba(74,222,128,.2)">
+                <div style="font-size:.72rem;color:#4ade80;font-weight:600">Randomized</div>
+                <div style="font-size:.7rem;color:#8b949e">Different ciphertext each time. No GROUP BY / JOIN / filter on encrypted column</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded" style="background:#0d0f16;border:1px solid rgba(74,222,128,.2)">
+                <div style="font-size:.72rem;color:#4ade80;font-weight:600">Deterministic</div>
+                <div style="font-size:.7rem;color:#8b949e">Same plaintext → same ciphertext. Allows equality filters. ECB-attack risk</div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 p-2 rounded" style="background:#022c22;border:1px solid rgba(74,222,128,.25);font-size:.72rem;color:#4ade80">
+            <i class="bi bi-shield-fill-check me-1"></i>
+            Even a <code>sysadmin</code> sees only ciphertext in SELECT results. Decryption requires the column master key from the client store.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /tab-encryption -->
+
+</div><!-- end tab-content -->
+
+<script>
+const RED  = '#f87171';
+const BASE = '/demos/c12-dba';
+
+function renderTable(data, container) {
+  if (!data.ok) {
+    container.innerHTML = `<div class="alert alert-danger py-2 px-3 mb-0" style="font-size:.78rem">${data.error}</div>`;
+    return;
+  }
+  const { cols, rows } = data;
+  if (!rows || rows.length === 0) {
+    container.innerHTML = `<div class="p-2 rounded" style="background:#022c22;border:1px solid rgba(74,222,128,.3);color:#4ade80;font-size:.8rem"><i class="bi bi-check-circle me-1"></i>${(data.clean !== undefined && data.clean) ? rows[0][0] : 'No rows returned'}</div>`;
+    return;
+  }
+  let html = `<div class="table-responsive"><table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9"><thead><tr>`;
+  cols.forEach(c => { html += `<th style="color:#8b949e;white-space:nowrap">${c}</th>`; });
+  html += `</tr></thead><tbody>`;
+  rows.forEach(r => {
+    html += '<tr>';
+    r.forEach(v => { html += `<td>${v ?? ''}</td>`; });
+    html += '</tr>';
+  });
+  html += `</tbody></table></div><div style="font-size:.7rem;color:#6b7280;margin-top:.3rem">${rows.length} row(s)</div>`;
+  if (data.label) {
+    html = `<div class="mb-2" style="font-size:.72rem;color:#8b949e"><i class="bi bi-info-circle me-1"></i>${data.label}</div>` + html;
+  }
+  container.innerHTML = html;
+}
+
+function setBtnLoading(btn, loading) {
+  if (loading) {
+    btn.disabled = true;
+    btn.dataset.orig = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Running…';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.orig;
+  }
+}
+
+function runCheckdb(btn) {
+  const el = document.getElementById('checkdbResult');
+  setBtnLoading(btn, true);
+  el.style.display = 'block';
+  el.innerHTML = '<div style="color:#8b949e;font-size:.78rem;padding:.5rem">Running DBCC CHECKDB…</div>';
+  fetch(`${BASE}/checkdb`)
+    .then(r => r.json())
+    .then(data => {
+      setBtnLoading(btn, false);
+      if (data.ok && data.clean) {
+        el.innerHTML = `<div class="p-2 rounded" style="background:#022c22;border:1px solid rgba(74,222,128,.3);color:#4ade80;font-size:.82rem"><i class="bi bi-shield-check me-1"></i>${data.rows[0][0]}</div>`;
+      } else {
+        renderTable(data, el);
+      }
+    })
+    .catch(e => { setBtnLoading(btn, false); el.innerHTML = `<div class="text-danger" style="font-size:.78rem">${e}</div>`; });
+}
+
+function runPageAlloc(btn) {
+  const el = document.getElementById('pageAllocResult');
+  setBtnLoading(btn, true);
+  el.style.display = 'block';
+  el.innerHTML = '<div style="color:#8b949e;font-size:.78rem;padding:.5rem">Querying…</div>';
+  fetch(`${BASE}/page-alloc`)
+    .then(r => r.json())
+    .then(data => { setBtnLoading(btn, false); renderTable(data, el); })
+    .catch(e => { setBtnLoading(btn, false); el.innerHTML = `<div class="text-danger" style="font-size:.78rem">${e}</div>`; });
+}
+
+function runRoleMembers(btn) {
+  const el = document.getElementById('roleMembersResult');
+  setBtnLoading(btn, true);
+  el.style.display = 'block';
+  el.innerHTML = '<div style="color:#8b949e;font-size:.78rem;padding:.5rem">Querying role membership…</div>';
+  fetch(`${BASE}/role-members`)
+    .then(r => r.json())
+    .then(data => { setBtnLoading(btn, false); renderTable(data, el); })
+    .catch(e => { setBtnLoading(btn, false); el.innerHTML = `<div class="text-danger" style="font-size:.78rem">${e}</div>`; });
+}
+
+function createSP(btn) {
+  const msg = document.getElementById('spCreateMsg');
+  setBtnLoading(btn, true);
+  msg.textContent = 'Creating…';
+  fetch(`${BASE}/sp/create`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      setBtnLoading(btn, false);
+      msg.textContent = data.ok ? '✓ ' + data.message : '✗ ' + data.error;
+      msg.style.color = data.ok ? '#4ade80' : '#f87171';
+    })
+    .catch(e => { setBtnLoading(btn, false); msg.textContent = String(e); msg.style.color = '#f87171'; });
+}
+
+function execSP(btn) {
+  const city = document.getElementById('spCityInput').value.trim() || 'London';
+  const el = document.getElementById('spResult');
+  setBtnLoading(btn, true);
+  el.style.display = 'block';
+  el.innerHTML = '<div style="color:#8b949e;font-size:.78rem">Executing…</div>';
+  fetch(`${BASE}/sp/exec?city=${encodeURIComponent(city)}`)
+    .then(r => r.json())
+    .then(data => { setBtnLoading(btn, false); renderTable(data, el); })
+    .catch(e => { setBtnLoading(btn, false); el.innerHTML = `<div class="text-danger" style="font-size:.78rem">${e}</div>`; });
+}
+
+// ── Masking demo ──
+
+const MASK_STEPS = {
+  1: { url: `${BASE}/mask/setup`,          method: 'POST', type: 'log',  resultKey: 'log' },
+  2: { url: `${BASE}/mask/query-admin`,    method: 'GET',  type: 'table' },
+  3: { url: `${BASE}/mask/create-user`,    method: 'POST', type: 'log',  resultKey: 'log' },
+  4: { url: `${BASE}/mask/query-masked`,   method: 'GET',  type: 'table' },
+  5: { url: null,                          method: null,   type: 'combo' },
+  6: { url: `${BASE}/mask/cleanup`,        method: 'POST', type: 'log',  resultKey: 'log' },
+};
+
+function activateDot(n) {
+  const dot = document.getElementById('dot' + n);
+  if (dot) {
+    dot.style.background = RED;
+    dot.style.borderColor = RED;
+    dot.style.color = '#0d0f16';
+  }
+}
+
+function renderLog(log, container) {
+  if (!log || !log.length) return;
+  let html = '<div class="mt-1" style="font-size:.72rem">';
+  log.forEach(l => {
+    const isOk = l.startsWith('✓');
+    html += `<div style="color:${isOk ? '#4ade80' : '#c9d1d9'};line-height:1.6">${l}</div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+  container.style.display = 'block';
+}
+
+async function maskStep(n, btn) {
+  setBtnLoading(btn, true);
+  const resultEl = document.getElementById('stepResult' + n);
+  const dataEl   = document.getElementById('stepData' + n) || document.getElementById('stepLog' + n);
+
+  try {
+    if (n === 5) {
+      // Combo: POST grant-unmask then GET query-unmasked
+      resultEl.textContent = 'Granting UNMASK…';
+      const r1 = await fetch(`${BASE}/mask/grant-unmask`, { method: 'POST' });
+      const d1 = await r1.json();
+      if (!d1.ok) throw new Error(d1.error);
+      resultEl.textContent = 'Querying…';
+      const r2 = await fetch(`${BASE}/mask/query-unmasked`);
+      const d2 = await r2.json();
+      setBtnLoading(btn, false);
+      resultEl.textContent = d2.ok ? '✓ ' + (d2.label || '') : '✗ ' + d2.error;
+      resultEl.style.color = d2.ok ? '#4ade80' : '#f87171';
+      if (dataEl) { renderTable(d2, dataEl); dataEl.style.display = 'block'; }
+    } else {
+      const cfg = MASK_STEPS[n];
+      const resp = await fetch(cfg.url, { method: cfg.method });
+      const data = await resp.json();
+      setBtnLoading(btn, false);
+      if (!data.ok) {
+        resultEl.textContent = '✗ ' + data.error;
+        resultEl.style.color = '#f87171';
+      } else {
+        resultEl.textContent = '✓ Done';
+        resultEl.style.color = '#4ade80';
+        if (cfg.type === 'log' && dataEl) renderLog(data[cfg.resultKey], dataEl);
+        else if (cfg.type === 'table' && dataEl) { renderTable(data, dataEl); dataEl.style.display = 'block'; }
+      }
+    }
+    activateDot(n);
+  } catch (e) {
+    setBtnLoading(btn, false);
+    resultEl.textContent = '✗ ' + e.message;
+    resultEl.style.color = '#f87171';
+  }
+}
+</script>
+{% endblock %}

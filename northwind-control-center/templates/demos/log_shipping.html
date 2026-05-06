@@ -170,6 +170,68 @@
   </div>
 </div>
 
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#06d6a0;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-book me-1"></i>Northwind Lab Scenario — Log Shipping: Warm Standby
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">
+        <strong style="color:#e9c46a">Scenario — three server instances on one machine</strong><br>
+        <strong style="color:#06d6a0">PRIM</strong> — primary; hosts the live <code>northwind</code> database.<br>
+        <strong style="color:#8338ec">SECOND</strong> — secondary; receives shipped logs into <code>nw_ship</code> (STANDBY mode).<br>
+        <strong style="color:#457b9d">THIRD</strong> — Monitor; runs the alert job and watches both servers.
+      </div>
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">
+        <strong style="color:#06d6a0">Shared folders (Everyone — Read/Write)</strong>
+      </div>
+      <table class="table table-sm mb-2" style="font-size:.64rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Path</th><th>Used by</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td><code>C:\ship\logs</code></td><td>Backup job writes <code>.bak</code> files here (local + UNC path)</td></tr>
+          <tr><td><code>C:\ship\dest</code></td><td>Copy job places files here; Restore job reads from here</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.64rem;color:#8892a4;margin-bottom:.3rem">
+        Network path configured as <code>\\WIN-MTFQ8CJAV81\logs</code>.
+        All three jobs are scheduled to run every 1 minute in the lab (production: every 15 min).
+      </div>
+      <div style="font-size:.64rem;color:#8892a4;margin-bottom:.2rem">
+        <strong style="color:#457b9d">Monitor (THIRD) alert threshold</strong> — set to 2 minutes for testing
+        (default is 45 min). Sends an error if backup, copy, or restore has not run within the threshold.
+        Two alerts are configured automatically but have <em>empty responses</em> — the administrator must wire up email notifications.
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem"><strong style="color:#e9c46a">Failover / teardown — bring STANDBY database fully online</strong></div>
+      <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- Run on SECOND after disabling log shipping on PRIM.</span>
+<span style="color:#5a6070">-- nw_ship is in STANDBY; cannot be dropped until recovered.</span>
+<span style="color:#457b9d">USE</span> master;
+
+<span style="color:#457b9d">ALTER DATABASE</span> nw_ship
+    <span style="color:#457b9d">SET</span> SINGLE_USER
+    <span style="color:#457b9d">WITH</span> ROLLBACK IMMEDIATE;
+
+<span style="color:#457b9d">RESTORE DATABASE</span> nw_ship <span style="color:#457b9d">WITH</span> RECOVERY;
+
+<span style="color:#457b9d">ALTER DATABASE</span> nw_ship <span style="color:#457b9d">SET</span> MULTI_USER;</pre>
+      <div style="font-size:.63rem;color:#5a6070;margin-top:.3rem">
+        <strong style="color:#e9c46a">Why SINGLE_USER first?</strong>
+        A database in STANDBY/NORECOVERY mode still accepts read connections (warm standby feature).
+        <code>SET SINGLE_USER WITH ROLLBACK IMMEDIATE</code> kicks all existing connections before
+        <code>RESTORE … WITH RECOVERY</code> brings the database fully online.
+        After recovery the database is a normal read-write database — no longer tracking log chain.
+      </div>
+      <div style="font-size:.63rem;color:#8892a4;margin-top:.4rem">
+        <strong style="color:#06d6a0">RPO reminder:</strong> RPO = backup interval.
+        With 15-minute backup jobs, up to 15 minutes of committed transactions may be lost on failover.
+        Reduce the interval (at the cost of I/O) to shrink the RPO.
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

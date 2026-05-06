@@ -1,0 +1,806 @@
+{% extends 'base.html' %}
+{% block title %}Cloud Ch. 5–6 — Google Cloud Platform{% endblock %}
+{% block content %}
+
+<style>
+  .ch5-nav-link {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: #8892a4 !important;
+    border-radius: 0 !important;
+    padding: .5rem 1rem;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .ch5-nav-link:hover { color: #22d3ee !important; }
+  .ch5-nav-link.active { color: #22d3ee !important; border-bottom-color: #22d3ee !important; }
+  .info-box {
+    background: #13141a;
+    border-radius: 8px;
+    border: 1px solid rgba(34,211,238,.18);
+    padding: 1rem 1.25rem;
+  }
+  .code-box {
+    background: #0a0b0f;
+    border: 1px solid rgba(34,211,238,.15);
+    border-radius: 6px;
+    padding: .85rem 1rem;
+    font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+    font-size: .72rem;
+    color: #a5f3fc;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .code-lang {
+    display: inline-block;
+    font-size: .58rem;
+    font-weight: 700;
+    padding: .15rem .45rem;
+    border-radius: 3px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: .35rem;
+  }
+  .itype-card {
+    background: #13141a;
+    border-radius: 8px;
+    padding: .85rem;
+    border-top: 3px solid;
+    height: 100%;
+  }
+  .itype-name { font-size: .76rem; font-weight: 700; margin-bottom: .25rem; }
+  .itype-use  { font-size: .72rem; color: #8892a4; line-height: 1.45; margin-bottom: .4rem; }
+  .itype-eg   { font-size: .67rem; color: #8892a4; font-style: italic; }
+  .discount-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .55rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .discount-row:last-child { border-bottom: none; }
+  .discount-pct { min-width: 56px; font-size: 1rem; font-weight: 700; text-align: center; }
+  .storage-tier {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .55rem .75rem;
+    border-radius: 6px;
+    margin-bottom: .3rem;
+    border-left: 3px solid;
+  }
+  .storage-tier .tier-name { font-size: .76rem; font-weight: 700; min-width: 130px; }
+  .storage-tier .tier-min  { font-size: .65rem; font-weight: 700; padding: .1rem .4rem; border-radius: 10px; margin-left: .3rem; }
+  .storage-tier .tier-desc { font-size: .72rem; color: #8892a4; line-height: 1.45; }
+  .net-row { display: flex; gap: .6rem; padding: .45rem 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .net-row:last-child { border-bottom: none; }
+  .net-svc { min-width: 165px; font-size: .76rem; font-weight: 600; color: #e2e8f0; }
+  .net-desc { font-size: .74rem; color: #8892a4; line-height: 1.45; }
+  .access-card {
+    background: #13141a;
+    border-radius: 8px;
+    padding: .85rem;
+    border: 1px solid rgba(34,211,238,.15);
+    height: 100%;
+  }
+  .feat-row { display: flex; gap: .6rem; padding: .5rem 0; border-bottom: 1px solid rgba(255,255,255,.04); align-items: flex-start; }
+  .feat-row:last-child { border-bottom: none; }
+  .zone-pill {
+    display: inline-block;
+    padding: .2rem .55rem;
+    border-radius: 4px;
+    font-size: .66rem;
+    font-weight: 700;
+    margin: .15rem;
+  }
+</style>
+
+<!-- Page Header -->
+<div class="mb-4">
+  <div class="text-uppercase fw-bold mb-1" style="font-size:.63rem;letter-spacing:.12em;color:#22d3ee">Cloud Book — Chapters 5 &amp; 6</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.45rem">Google Cloud Platform (GCP)</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.83rem">
+    Compute Engine · Cloud Storage · App Engine · Cloud Shell · gcloud CLI · Java Client Library.
+    200+ countries · 24 regions · 73 zones · 100+ products.
+  </p>
+</div>
+
+<!-- Tab Nav -->
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(34,211,238,.2)">
+  <li class="nav-item"><button class="ch5-nav-link active" onclick="showTab('tab-compute',this)"><i class="bi bi-cpu me-1"></i>Compute Engine</button></li>
+  <li class="nav-item"><button class="ch5-nav-link" onclick="showTab('tab-storage',this)"><i class="bi bi-hdd-stack me-1"></i>Storage &amp; Network</button></li>
+  <li class="nav-item"><button class="ch5-nav-link" onclick="showTab('tab-paas',this)"><i class="bi bi-boxes me-1"></i>PaaS, SaaS &amp; Project</button></li>
+  <li class="nav-item"><button class="ch5-nav-link" onclick="showTab('tab-cli',this)"><i class="bi bi-terminal me-1"></i>gcloud CLI</button></li>
+  <li class="nav-item"><button class="ch5-nav-link" onclick="showTab('tab-sdk',this)"><i class="bi bi-code-slash me-1"></i>Java Client Library</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ═══════════════════════ TAB 1: COMPUTE ENGINE ═══════════════════════ -->
+<div id="tab-compute">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">GCP VM Instance Groups</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Compute Engine VMs are grouped by intended workload. vCPUs: 1–96. RAM: up to 1.4 TB per VM.
+        Charged per-second at a flat rate determined by core count and RAM size.
+      </p>
+
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div class="itype-card" style="border-top-color:#22d3ee">
+            <div class="itype-name" style="color:#22d3ee">E2 / N1 / N2 / N2D — General Purpose</div>
+            <div class="itype-use">Good price-to-performance balance. Web servers, database applications.</div>
+            <div class="itype-eg">N1 = Intel, N2 = 2nd-gen Intel, N2D = AMD EPYC, E2 = shared-core budget</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="itype-card" style="border-top-color:#fb923c">
+            <div class="itype-name" style="color:#fb923c">C2 — Compute Optimised</div>
+            <div class="itype-use">High-performance computing, gaming applications, engineering design (CAD/CAE), HPC.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="itype-card" style="border-top-color:#a78bfa">
+            <div class="itype-name" style="color:#a78bfa">M2 — Memory Optimised</div>
+            <div class="itype-use">Large memory footprints. In-memory databases, real-time data analytics, SAP HANA.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="itype-card" style="border-top-color:#f87171">
+            <div class="itype-name" style="color:#f87171">A2 — Accelerator (NVIDIA GPU)</div>
+            <div class="itype-use">AI training/inference, massively parallel HPC. Multiple NVIDIA A100 GPUs per VM.</div>
+          </div>
+        </div>
+      </div>
+
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Pricing Discounts</h5>
+      <div class="info-box">
+        <div class="discount-row">
+          <div class="discount-pct" style="color:#22d3ee">Auto</div>
+          <div>
+            <div style="font-size:.79rem;color:#e2e8f0;font-weight:600">Sustained Use Discount</div>
+            <div style="font-size:.74rem;color:#8892a4">GCP automatically detects long-running workloads and applies a discount. No configuration or commitment required — discount scales with uptime fraction of the month.</div>
+          </div>
+        </div>
+        <div class="discount-row">
+          <div class="discount-pct" style="color:#34d399">50%</div>
+          <div>
+            <div style="font-size:.79rem;color:#e2e8f0;font-weight:600">Committed Use Discount</div>
+            <div style="font-size:.74rem;color:#8892a4">Steady, predictable workloads. Commit to 1 or 3 years for up to <strong style="color:#34d399">50% savings</strong>. Good for production databases, backend services.</div>
+          </div>
+        </div>
+        <div class="discount-row">
+          <div class="discount-pct" style="color:#f59e0b">80%</div>
+          <div>
+            <div style="font-size:.79rem;color:#e2e8f0;font-weight:600">Preemptible VMs</div>
+            <div style="font-size:.74rem;color:#8892a4">Interruptible, spot-priced VMs — up to <strong style="color:#f59e0b">80% savings</strong>. GCP may terminate with 30 s notice when capacity is needed. Fault-tolerant batch jobs, ML training.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Advanced Compute Engine Features</h5>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">Security &amp; Isolation</div>
+        <div class="feat-row">
+          <i class="bi bi-building-fill-lock" style="color:#22d3ee;margin-top:.1rem;flex-shrink:0"></i>
+          <div>
+            <div style="font-size:.79rem;color:#e2e8f0;font-weight:600">Sole-Tenant Nodes</div>
+            <div style="font-size:.74rem;color:#8892a4;line-height:1.5">A physical server node runs <em>only your</em> Compute Engine instances — no other tenants. Equivalent to having a dedicated server in the cloud. Required for strict compliance scenarios (HIPAA, FedRAMP).</div>
+          </div>
+        </div>
+        <div class="feat-row">
+          <i class="bi bi-cpu-fill" style="color:#a78bfa;margin-top:.1rem;flex-shrink:0"></i>
+          <div>
+            <div style="font-size:.79rem;color:#e2e8f0;font-weight:600">Confidential VMs</div>
+            <div style="font-size:.74rem;color:#8892a4;line-height:1.5">
+              Traditional cloud: encrypted at rest + in transit, but <em>decrypted in memory during execution</em>.
+              <strong style="color:#a78bfa">Confidential Computing</strong> performs calculations inside the CPU without ever decrypting data — memory stays encrypted even while the CPU operates on it (AMD SEV technology).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">Availability &amp; Reliability</div>
+        <div class="feat-row">
+          <i class="bi bi-arrow-repeat" style="color:#34d399;margin-top:.1rem;flex-shrink:0"></i>
+          <div>
+            <div style="font-size:.79rem;color:#e2e8f0;font-weight:600">Live Migration</div>
+            <div style="font-size:.74rem;color:#8892a4;line-height:1.5">
+              Servers must occasionally stop for maintenance (software updates, hardware replacement). GCP's Live Migration transparently moves your running VM to another physical host <em>in the same zone</em> without rebooting or user intervention — true 24/7 operation guarantee.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">GCP Resource Hierarchy — Global · Regional · Zonal</div>
+        <p style="color:#8892a4;font-size:.77rem;line-height:1.55;margin-bottom:.6rem">24 regions · 73 zones. Zone = single failure domain. &lt;1 ms intra-zone round-trip latency.</p>
+        <div class="row g-2">
+          <div class="col-4">
+            <div style="background:rgba(34,211,238,.08);border-radius:6px;padding:.55rem;text-align:center">
+              <div style="font-size:.7rem;color:#22d3ee;font-weight:700">Global</div>
+              <div style="font-size:.65rem;color:#8892a4;line-height:1.4;margin-top:.2rem">Disk images, snapshots, networks — available everywhere</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div style="background:rgba(96,165,250,.08);border-radius:6px;padding:.55rem;text-align:center">
+              <div style="font-size:.7rem;color:#60a5fa;font-weight:700">Regional</div>
+              <div style="font-size:.65rem;color:#8892a4;line-height:1.4;margin-top:.2rem">Static external IPs — scoped to us-central1, europe-west1, asia-east1…</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div style="background:rgba(167,139,250,.08);border-radius:6px;padding:.55rem;text-align:center">
+              <div style="font-size:.7rem;color:#a78bfa;font-weight:700">Zonal</div>
+              <div style="font-size:.65rem;color:#8892a4;line-height:1.4;margin-top:.2rem">VM instances, persistent disks — most resources live here</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:.74rem;color:#8892a4;margin-top:.65rem;line-height:1.5">
+          Replicating applications across zones in the same region provides redundancy without inter-region latency. Multi-region deployment improves global performance and disaster recovery.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 2: STORAGE & NETWORK ═══════════════════════ -->
+<div id="tab-storage" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Cloud Storage — Storage Classes</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        Object storage (like S3). Unlimited capacity. 11-nines durability (99.999999999%).
+        Geo-redundancy available: multi-region or dual-region. Accessed globally at low latency.
+      </p>
+
+      <div style="margin-bottom:1rem">
+        <div class="storage-tier" style="background:rgba(34,211,238,.08);border-left-color:#22d3ee">
+          <div>
+            <div style="display:flex;align-items:center;margin-bottom:.2rem">
+              <span class="tier-name" style="color:#22d3ee"><i class="bi bi-fire me-1"></i>Standard Storage</span>
+              <span class="tier-min" style="background:rgba(34,211,238,.15);color:#22d3ee">No minimum</span>
+            </div>
+            <div class="tier-desc">Frequently accessed data — websites, streaming video, mobile apps. Best performance and availability.</div>
+          </div>
+        </div>
+        <div class="storage-tier" style="background:rgba(96,165,250,.08);border-left-color:#60a5fa">
+          <div>
+            <div style="display:flex;align-items:center;margin-bottom:.2rem">
+              <span class="tier-name" style="color:#60a5fa"><i class="bi bi-thermometer-half me-1"></i>Nearline Storage</span>
+              <span class="tier-min" style="background:rgba(96,165,250,.15);color:#60a5fa">≥ 30 days</span>
+            </div>
+            <div class="tier-desc">Low-cost for infrequent access — backup, long-tail multimedia content. Retrieval fee applies.</div>
+          </div>
+        </div>
+        <div class="storage-tier" style="background:rgba(167,139,250,.08);border-left-color:#a78bfa">
+          <div>
+            <div style="display:flex;align-items:center;margin-bottom:.2rem">
+              <span class="tier-name" style="color:#a78bfa"><i class="bi bi-snow me-1"></i>Coldline Storage</span>
+              <span class="tier-min" style="background:rgba(167,139,250,.15);color:#a78bfa">≥ 90 days</span>
+            </div>
+            <div class="tier-desc">Very low cost for disaster recovery data. 90-day minimum storage commitment.</div>
+          </div>
+        </div>
+        <div class="storage-tier" style="background:rgba(99,102,241,.08);border-left-color:#6366f1">
+          <div>
+            <div style="display:flex;align-items:center;margin-bottom:.2rem">
+              <span class="tier-name" style="color:#6366f1"><i class="bi bi-snow2 me-1"></i>Archive Storage</span>
+              <span class="tier-min" style="background:rgba(99,102,241,.15);color:#6366f1">≥ 365 days</span>
+            </div>
+            <div class="tier-desc">Lowest cost. Designed for regulatory data archival — 365-day minimum between read operations.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">GCS vs AWS S3 — Key Differences</div>
+        <table style="width:100%;font-size:.74rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase">Feature</th>
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase">GCS</th>
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase">AWS S3</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Durability</td><td style="padding:.3rem .5rem;color:#22d3ee">11 nines</td><td style="padding:.3rem .5rem;color:#fb923c">11 nines</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Cold tiers</td><td style="padding:.3rem .5rem;color:#22d3ee">Nearline / Coldline / Archive</td><td style="padding:.3rem .5rem;color:#fb923c">Standard-IA / Glacier / Deep Archive</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Auto-tiering</td><td style="padding:.3rem .5rem;color:#22d3ee">Autoclass (similar)</td><td style="padding:.3rem .5rem;color:#fb923c">Intelligent-Tiering</td></tr>
+          <tr><td style="padding:.3rem .5rem;color:#c4cdd8">Min duration</td><td style="padding:.3rem .5rem;color:#22d3ee">30 / 90 / 365 days</td><td style="padding:.3rem .5rem;color:#fb923c">30 / 90 / 180 days</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">GCP Network Services</h5>
+      <p style="color:#8892a4;font-size:.79rem;line-height:1.55;margin-bottom:.75rem">
+        GCP's private global fibre backbone connects all data centres — traffic between regions travels
+        over Google's own network, not the public internet, providing better throughput and lower latency.
+      </p>
+
+      <div class="info-box mb-3">
+        <div class="net-row">
+          <div class="net-svc" style="color:#22d3ee">Cloud Interconnect</div>
+          <div class="net-desc">Connect any external infrastructure to GCP. Dedicated (10/100 Gbps) or Partner Interconnect. Lower latency than internet VPN, more predictable throughput.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">Cloud VPN</div>
+          <div class="net-desc">Encrypted IPsec tunnel between on-premises networks and GCP VPC. HA VPN provides 99.99% SLA with two tunnels in active/active configuration.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc">Virtual Private Cloud</div>
+          <div class="net-desc">Logically isolated network within GCP. Can be regional or global (GCP VPCs span regions natively, unlike AWS where VPCs are region-scoped). Subnets are regional.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc" style="color:#34d399">Cloud Load Balancing</div>
+          <div class="net-desc">Global, software-defined load balancing with no warm-up time. Automatically distributes traffic across Compute Engine, GKE, App Engine. HTTP(S), TCP, SSL proxy, UDP types.</div>
+        </div>
+        <div class="net-row">
+          <div class="net-svc" style="color:#f87171">Cloud Armor</div>
+          <div class="net-desc">DDoS protection and web application firewall (WAF). OWASP Top 10 protection, IP-based allow/deny, adaptive protection (ML-based DDoS mitigation). Integrated with Cloud Load Balancing.</div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">GCP Global Infrastructure</div>
+        <div class="row g-2 text-center mb-2">
+          <div class="col-3"><div style="background:rgba(34,211,238,.08);border-radius:6px;padding:.5rem"><div style="font-size:1.05rem;color:#22d3ee;font-weight:700">200+</div><div style="font-size:.62rem;color:#8892a4">countries</div></div></div>
+          <div class="col-3"><div style="background:rgba(34,211,238,.08);border-radius:6px;padding:.5rem"><div style="font-size:1.05rem;color:#22d3ee;font-weight:700">24</div><div style="font-size:.62rem;color:#8892a4">regions</div></div></div>
+          <div class="col-3"><div style="background:rgba(34,211,238,.08);border-radius:6px;padding:.5rem"><div style="font-size:1.05rem;color:#22d3ee;font-weight:700">73</div><div style="font-size:.62rem;color:#8892a4">zones</div></div></div>
+          <div class="col-3"><div style="background:rgba(34,211,238,.08);border-radius:6px;padding:.5rem"><div style="font-size:1.05rem;color:#22d3ee;font-weight:700">100+</div><div style="font-size:.62rem;color:#8892a4">products</div></div></div>
+        </div>
+        <div style="font-size:.74rem;color:#8892a4;line-height:1.5">
+          GCP VPC is unique: a single VPC can span all GCP regions globally (no VPC peering required). Subnets are regional; routing between them uses Google's private backbone.
+          Intra-zone network latency: &lt;1 ms round-trip.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 3: PAAS, SAAS & PROJECT ═══════════════════════ -->
+<div id="tab-paas" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">PaaS — GCP App Engine</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        App Engine abstracts away infrastructure configuration and management. Developers deploy code; GCP handles auto-scaling, security updates, resource monitoring, and deployment.
+      </p>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Supported Runtimes</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem">
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">Go</span>
+          <span class="zone-pill" style="background:rgba(96,165,250,.12);color:#60a5fa">Java</span>
+          <span class="zone-pill" style="background:rgba(167,139,250,.12);color:#a78bfa">.NET</span>
+          <span class="zone-pill" style="background:rgba(52,211,153,.12);color:#34d399">Node.js</span>
+          <span class="zone-pill" style="background:rgba(251,191,36,.12);color:#fbbf24">PHP</span>
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">Python</span>
+          <span class="zone-pill" style="background:rgba(248,113,113,.12);color:#f87171">Ruby</span>
+          <span class="zone-pill" style="background:rgba(255,255,255,.08);color:#8892a4">Custom runtime</span>
+        </div>
+        <div style="font-size:.74rem;color:#8892a4;line-height:1.5">
+          Auto-connects to storage products: Cloud Storage, Cloud SQL, Firestore, MongoDB, or third-party on-premises databases.
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Standard vs Flexible Environment</div>
+        <table style="width:100%;font-size:.73rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Feature</th>
+            <th style="color:#22d3ee;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Standard</th>
+            <th style="color:#60a5fa;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Flexible</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Scale to zero</td><td style="padding:.3rem .5rem;color:#34d399">Yes</td><td style="padding:.3rem .5rem;color:#f87171">No (min 1)</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Runtime</td><td style="padding:.3rem .5rem;color:#8892a4">Sandbox (fast start)</td><td style="padding:.3rem .5rem;color:#8892a4">Docker (any)</td></tr>
+          <tr><td style="padding:.3rem .5rem;color:#c4cdd8">Cold start</td><td style="padding:.3rem .5rem;color:#8892a4">~250 ms</td><td style="padding:.3rem .5rem;color:#8892a4">~30 s</td></tr>
+        </table>
+      </div>
+
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">GCP Project — The Billing Unit</h5>
+      <div class="info-box">
+        <div style="font-size:.74rem;color:#8892a4;line-height:1.6;margin-bottom:.6rem">
+          All GCP usage is grouped under a <strong style="color:#e2e8f0">project</strong>. A project:
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <span style="font-size:.65rem;background:rgba(34,211,238,.15);color:#22d3ee;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:60px;text-align:center">Name</span>
+            <span style="font-size:.74rem;color:#8892a4">Human-readable label (can be changed)</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <span style="font-size:.65rem;background:rgba(96,165,250,.15);color:#60a5fa;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:60px;text-align:center">ID</span>
+            <span style="font-size:.74rem;color:#8892a4">Globally unique string — used in all API calls (immutable)</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <span style="font-size:.65rem;background:rgba(167,139,250,.15);color:#a78bfa;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:60px;text-align:center">Number</span>
+            <span style="font-size:.74rem;color:#8892a4">Auto-assigned numeric identifier for internal GCP use</span>
+          </div>
+        </div>
+        <div style="font-size:.73rem;color:#8892a4;margin-top:.6rem;line-height:1.5">
+          Created via Cloud Console (<code style="color:#a5f3fc">console.cloud.google.com</code>). All resources, billing, IAM policies, and quotas are scoped per project. Deleting a project releases all associated resources.
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">SaaS — Google Cloud Software Services</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Google's consumer SaaS products are cloud-native applications in their own right — Gmail, Calendar, Docs and Maps each run on GCP infrastructure. For developers, GCP exposes AI/ML capabilities as SaaS APIs — callable building blocks.
+      </p>
+
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div style="background:#13141a;border-radius:8px;padding:.85rem;border:1px solid rgba(34,211,238,.2);height:100%">
+            <div style="font-size:.73rem;color:#22d3ee;font-weight:700;margin-bottom:.4rem"><i class="bi bi-google me-1"></i>Core Google SaaS</div>
+            <div style="display:flex;flex-direction:column;gap:.25rem">
+              <div style="font-size:.73rem;color:#8892a4"><i class="bi bi-envelope me-1" style="color:#f87171"></i>Gmail — email (billions of users)</div>
+              <div style="font-size:.73rem;color:#8892a4"><i class="bi bi-calendar3 me-1" style="color:#60a5fa"></i>Google Calendar</div>
+              <div style="font-size:.73rem;color:#8892a4"><i class="bi bi-file-earmark-text me-1" style="color:#34d399"></i>Google Docs / Sheets / Slides</div>
+              <div style="font-size:.73rem;color:#8892a4"><i class="bi bi-map me-1" style="color:#fbbf24"></i>Google Maps Platform (APIs)</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div style="background:#13141a;border-radius:8px;padding:.85rem;border:1px solid rgba(52,211,153,.2);height:100%">
+            <div style="font-size:.73rem;color:#34d399;font-weight:700;margin-bottom:.4rem"><i class="bi bi-robot me-1"></i>AI/ML Building Block APIs</div>
+            <div style="display:flex;flex-direction:column;gap:.25rem">
+              <div style="font-size:.73rem;color:#8892a4"><i class="bi bi-eye me-1" style="color:#22d3ee"></i>Vision AI — image label, OCR, face</div>
+              <div style="font-size:.73rem;color:#8892a4"><i class="bi bi-camera-video me-1" style="color:#22d3ee"></i>Video Intelligence API</div>
+              <div style="font-size:.73rem;color:#8892a4"><i class="bi bi-translate me-1" style="color:#a78bfa"></i>Cloud Translation API</div>
+              <div style="font-size:.73rem;color:#8892a4"><i class="bi bi-bar-chart me-1" style="color:#fbbf24"></i>BigQuery / Data Analytics</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">GCP Console — The Web Interface</div>
+        <div style="font-size:.78rem;color:#8892a4;line-height:1.55;margin-bottom:.5rem">
+          <code style="color:#a5f3fc">console.cloud.google.com</code> — project &amp; resource management, monitoring, configuration, direct service access, and integrated documentation. Key panels:
+        </div>
+        <div class="row g-2">
+          <div class="col-4"><div style="background:rgba(34,211,238,.07);border-radius:5px;padding:.45rem;text-align:center"><div style="font-size:.68rem;color:#22d3ee;font-weight:700">Dashboard</div><div style="font-size:.62rem;color:#8892a4">Project overview, billing, alerts</div></div></div>
+          <div class="col-4"><div style="background:rgba(34,211,238,.07);border-radius:5px;padding:.45rem;text-align:center"><div style="font-size:.68rem;color:#22d3ee;font-weight:700">IAM &amp; Admin</div><div style="font-size:.62rem;color:#8892a4">Roles, service accounts, policies</div></div></div>
+          <div class="col-4"><div style="background:rgba(34,211,238,.07);border-radius:5px;padding:.45rem;text-align:center"><div style="font-size:.68rem;color:#22d3ee;font-weight:700">Cloud Shell</div><div style="font-size:.62rem;color:#8892a4">gcloud CLI in-browser (&gt;_ icon)</div></div></div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Three Ways to Access GCP Resources</div>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <span style="font-size:.65rem;background:rgba(34,211,238,.15);color:#22d3ee;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:90px;text-align:center;flex-shrink:0">Console</span>
+            <span style="font-size:.74rem;color:#8892a4">Web UI at console.cloud.google.com — point-and-click project management. Best for exploration.</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <span style="font-size:.65rem;background:rgba(96,165,250,.15);color:#60a5fa;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:90px;text-align:center;flex-shrink:0">gcloud CLI</span>
+            <span style="font-size:.74rem;color:#8892a4">Command-line interface (Cloud SDK). Hierarchical command structure. Best for scripting and automation.</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <span style="font-size:.65rem;background:rgba(52,211,153,.15);color:#34d399;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:90px;text-align:center;flex-shrink:0">Client Libs</span>
+            <span style="font-size:.74rem;color:#8892a4">Cloud Client Libraries — SDK for C#, C++, Java, Node.js, Go, Python, Ruby, PHP. Best for application integration.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 4: gcloud CLI ═══════════════════════ -->
+<div id="tab-cli" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">gcloud CLI — Command Hierarchy</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        The <code style="color:#a5f3fc">gcloud</code> CLI is part of the Google Cloud SDK, installed locally or available in Cloud Shell.
+        Commands follow a hierarchical structure: <code style="color:#a5f3fc">gcloud &lt;service&gt; &lt;resource&gt; &lt;verb&gt; [--flags]</code>
+      </p>
+
+      <div class="info-box mb-3" style="font-family:monospace;font-size:.73rem">
+        <div style="color:#8892a4;font-size:.65rem;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.08em">Command structure:</div>
+        <div><span style="color:#22d3ee">gcloud</span> <span style="color:#fbbf24">&lt;group&gt;</span> <span style="color:#a5f3fc">&lt;sub-group&gt;</span> <span style="color:#34d399">&lt;command&gt;</span> <span style="color:#8892a4">[--flags]</span></div>
+        <div style="color:#8892a4;margin-top:.4rem">
+          <span style="color:#22d3ee">gcloud</span> <span style="color:#fbbf24">compute</span> <span style="color:#a5f3fc">instances</span> <span style="color:#34d399">list</span> --filter=...<br>
+          <span style="color:#22d3ee">gcloud</span> <span style="color:#fbbf24">projects</span> <span style="color:#34d399">list</span> --format=...<br>
+          <span style="color:#22d3ee">gcloud</span> <span style="color:#fbbf24">storage</span> <span style="color:#a5f3fc">buckets</span> <span style="color:#34d399">create</span> gs://...<br>
+          <span style="color:#22d3ee">gcloud</span> <span style="color:#fbbf24">run</span> <span style="color:#34d399">deploy</span> --image=...
+        </div>
+      </div>
+
+      <div class="code-lang" style="background:rgba(34,211,238,.15);color:#22d3ee">bash — List Compute Engine instances by zone</div>
+      <pre class="code-box">gcloud compute instances list \
+    --filter="zone:us-central1-a"
+
+# Output: NAME  ZONE           MACHINE_TYPE  STATUS
+# web-1  us-central1-a  e2-medium     RUNNING
+# db-1   us-central1-a  n2-standard-4 RUNNING</pre>
+
+      <div class="code-lang mt-3" style="background:rgba(34,211,238,.15);color:#22d3ee">bash — List projects with formatted table output</div>
+      <pre class="code-box">gcloud projects list \
+    --format="table(name, project_id, \
+               createTime.date(tz=LOCAL))"
+
+# NAME           PROJECT_ID        CREATE_TIME
+# My App         my-app-123456     2024-01-15 09:30:00
+# Dev Sandbox    dev-sandbox-789   2023-11-02 14:20:00</pre>
+
+      <div class="code-lang mt-3" style="background:rgba(34,211,238,.15);color:#22d3ee">bash — Other useful gcloud patterns</div>
+      <pre class="code-box"># Start / stop a VM
+gcloud compute instances start INSTANCE_NAME \
+    --zone=us-central1-a
+gcloud compute instances stop INSTANCE_NAME \
+    --zone=us-central1-a
+
+# SSH into a VM (handles key management automatically)
+gcloud compute ssh INSTANCE_NAME --zone=us-central1-a
+
+# List available disk images
+gcloud compute images list --filter="family:debian"
+
+# Set default region/zone (avoids repeating --zone)
+gcloud config set compute/zone us-central1-a</pre>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Cloud Shell — Browser-Based Dev Environment</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        Activated from the <code style="color:#a5f3fc">&gt;_</code> icon in the GCP Console. Launches a temporary Compute Engine VM in the background — pre-configured and immediately ready.
+      </p>
+
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div class="access-card">
+            <div style="font-size:.7rem;color:#22d3ee;font-weight:700;margin-bottom:.4rem"><i class="bi bi-hdd me-1"></i>Persistent Storage</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.45">5 GB persistent <code style="color:#a5f3fc">$HOME</code> disk — survives shell restarts. Store scripts, keys, and project files here.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="access-card">
+            <div style="font-size:.7rem;color:#22d3ee;font-weight:700;margin-bottom:.4rem"><i class="bi bi-tools me-1"></i>Pre-installed Tools</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.45">gcloud SDK, kubectl, git, docker, terraform, helm. Language support: Java, Go, Python, Node.js, PHP, Ruby, .NET.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="access-card">
+            <div style="font-size:.7rem;color:#22d3ee;font-weight:700;margin-bottom:.4rem"><i class="bi bi-pencil-square me-1"></i>Built-in Code Editor</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.45">Monaco-based editor (same as VS Code). Edit files directly in the browser alongside the terminal.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="access-card">
+            <div style="font-size:.7rem;color:#22d3ee;font-weight:700;margin-bottom:.4rem"><i class="bi bi-key me-1"></i>Auto-Authorisation</div>
+            <div style="font-size:.73rem;color:#8892a4;line-height:1.45">Automatically authenticated to the current GCP project — no <code style="color:#a5f3fc">gcloud auth login</code> required. Direct access to all project resources.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Cloud Client Libraries — Languages</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem">
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">Java</span>
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">Python</span>
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">Go</span>
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">Node.js</span>
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">C#</span>
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">C++</span>
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">Ruby</span>
+          <span class="zone-pill" style="background:rgba(34,211,238,.12);color:#22d3ee">PHP</span>
+        </div>
+        <div style="font-size:.74rem;color:#8892a4;line-height:1.5">
+          Client libraries provide idiomatic APIs — they follow the conventions of each language instead of exposing raw REST. Handles authentication (Application Default Credentials), retries, and pagination automatically.
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">gcloud vs AWS CLI — Pattern Comparison</div>
+        <table style="width:100%;font-size:.73rem;border-collapse:collapse;font-family:monospace">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase;font-family:sans-serif">Action</th>
+            <th style="color:#22d3ee;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase;font-family:sans-serif">gcloud</th>
+            <th style="color:#fb923c;padding:.3rem .5rem;font-size:.64rem;text-transform:uppercase;font-family:sans-serif">aws cli</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#8892a4;font-family:sans-serif">List VMs</td><td style="padding:.3rem .5rem;color:#a5f3fc">compute instances list</td><td style="padding:.3rem .5rem;color:#fcd9a0">ec2 describe-instances</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#8892a4;font-family:sans-serif">Start VM</td><td style="padding:.3rem .5rem;color:#a5f3fc">compute instances start NAME</td><td style="padding:.3rem .5rem;color:#fcd9a0">ec2 start-instances --ids ID</td></tr>
+          <tr><td style="padding:.3rem .5rem;color:#8892a4;font-family:sans-serif">List buckets</td><td style="padding:.3rem .5rem;color:#a5f3fc">storage buckets list</td><td style="padding:.3rem .5rem;color:#fcd9a0">s3 ls</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 5: JAVA CLIENT LIBRARY ═══════════════════════ -->
+<div id="tab-sdk" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-6">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Compute Engine — Java Client Library</h5>
+      <p style="color:#8892a4;font-size:.78rem;line-height:1.55;margin-bottom:.75rem">
+        GCP Java Client Library pattern: instantiate a service client via <code style="color:#a5f3fc">XxxOptions.getDefaultInstance().getService()</code>, then call methods on it.
+        Long-running operations return an <code style="color:#a5f3fc">Operation</code> object — call <code style="color:#a5f3fc">.waitFor()</code> to block until complete.
+      </p>
+
+      <div class="code-lang" style="background:rgba(34,211,238,.15);color:#22d3ee">Java — List all Compute Engine instances</div>
+      <pre class="code-box">// 1. Instantiate the Compute client
+Compute compute =
+    ComputeOptions.getDefaultInstance().getService();
+
+// 2. List instances (paginated)
+Page&lt;Instance&gt; instancePage = compute.listInstances();
+Iterator&lt;Instance&gt; it = instancePage.iterateAll();
+while (it.hasNext()) {
+    Instance i = it.next();
+    System.out.printf("Instance: %s%n",
+        i.getInstanceId().getInstance());
+    System.out.printf("Details: %s%n%n", i);
+}</pre>
+
+      <div class="code-lang mt-3" style="background:rgba(52,211,153,.15);color:#34d399">Java — Start a Compute Engine instance</div>
+      <pre class="code-box">Compute compute =
+    ComputeOptions.getDefaultInstance().getService();
+
+// Returns immediately — async operation
+Operation operation = compute.start(instanceId);
+if (operation == null) {
+    System.out.printf("Error: Instance %s not found%n",
+                      instanceId);
+    return;
+}
+// Block until the start operation completes
+try {
+    operation = operation.waitFor();
+} catch (InterruptedException | TimeoutException e) {
+    e.printStackTrace();
+}</pre>
+
+      <div class="code-lang mt-3" style="background:rgba(248,113,113,.15);color:#f87171">Java — Stop a Compute Engine instance</div>
+      <pre class="code-box">Compute compute =
+    ComputeOptions.getDefaultInstance().getService();
+
+Operation operation = compute.stop(instanceId);
+if (operation == null) {
+    System.out.printf("Error: Instance %s not found%n",
+                      instanceId);
+    return;
+}
+try {
+    operation = operation.waitFor();
+} catch (InterruptedException | TimeoutException e) {
+    e.printStackTrace();
+}</pre>
+
+      <div class="info-box mt-3">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">GCP vs AWS Java SDK Pattern</div>
+        <table style="width:100%;font-size:.72rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Aspect</th>
+            <th style="color:#22d3ee;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">GCP</th>
+            <th style="color:#fb923c;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">AWS</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Client creation</td><td style="padding:.3rem .5rem;color:#a5f3fc;font-family:monospace;font-size:.7rem">XxxOptions.getDefault<br>.getService()</td><td style="padding:.3rem .5rem;color:#fcd9a0;font-family:monospace;font-size:.7rem">Ec2Client.builder()<br>.region(...).build()</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Async ops</td><td style="padding:.3rem .5rem;color:#8892a4">Returns Operation, call .waitFor()</td><td style="padding:.3rem .5rem;color:#8892a4">Synchronous by default (waiter pattern)</td></tr>
+          <tr><td style="padding:.3rem .5rem;color:#c4cdd8">Auth</td><td style="padding:.3rem .5rem;color:#8892a4">Application Default Credentials (ADC)</td><td style="padding:.3rem .5rem;color:#8892a4">~/.aws/credentials or env vars</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <h5 class="fw-bold mb-2" style="color:#22d3ee;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Cloud Storage — Java Client Library</h5>
+      <p style="color:#8892a4;font-size:.78rem;line-height:1.55;margin-bottom:.75rem">
+        Cloud Storage client uses <code style="color:#a5f3fc">StorageOptions.newBuilder().setProjectId(projectId).build().getService()</code>.
+        Buckets are created with a <code style="color:#a5f3fc">BucketInfo</code> builder specifying storage class and location.
+      </p>
+
+      <div class="code-lang" style="background:rgba(34,211,238,.15);color:#22d3ee">Java — Create a Cloud Storage bucket</div>
+      <pre class="code-box">import com.google.cloud.storage.*;
+
+public class CreateBucket {
+  public static void create(
+      String projectId, String bucketName) {
+
+    // 1. Build the Storage client
+    Storage storage = StorageOptions.newBuilder()
+        .setProjectId(projectId)
+        .build()
+        .getService();
+
+    // 2. Choose storage class and location
+    StorageClass storageClass = StorageClass.COLDLINE;
+    String location = "ASIA";   // multi-region
+
+    // 3. Create the bucket
+    Bucket bucket = storage.create(
+        BucketInfo.newBuilder(bucketName)
+            .setStorageClass(storageClass)
+            .setLocation(location)
+            .build());
+
+    System.out.printf("Created bucket %s in %s (%s)%n",
+        bucket.getName(),
+        bucket.getLocation(),
+        bucket.getStorageClass());
+  }
+}</pre>
+
+      <div class="code-lang mt-3" style="background:rgba(52,211,153,.15);color:#34d399">Java — List all Cloud Storage buckets</div>
+      <pre class="code-box">import com.google.api.gax.paging.Page;
+import com.google.cloud.storage.*;
+
+public class ListBuckets {
+  public static void list(String projectId) {
+    Storage storage = StorageOptions.newBuilder()
+        .setProjectId(projectId)
+        .build()
+        .getService();
+
+    // Page&lt;Bucket&gt; handles pagination automatically
+    Page&lt;Bucket&gt; buckets = storage.list();
+    for (Bucket bucket : buckets.iterateAll()) {
+        System.out.println(bucket.getName());
+    }
+  }
+}</pre>
+
+      <div class="info-box mt-3">
+        <div style="font-size:.68rem;color:#22d3ee;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">StorageClass Options</div>
+        <div style="display:flex;flex-direction:column;gap:.3rem">
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <code style="color:#22d3ee;font-size:.7rem;min-width:140px">StorageClass.STANDARD</code>
+            <span style="font-size:.72rem;color:#8892a4">Frequently accessed data</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <code style="color:#60a5fa;font-size:.7rem;min-width:140px">StorageClass.NEARLINE</code>
+            <span style="font-size:.72rem;color:#8892a4">Accessed &lt; once per 30 days</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <code style="color:#a78bfa;font-size:.7rem;min-width:140px">StorageClass.COLDLINE</code>
+            <span style="font-size:.72rem;color:#8892a4">Accessed &lt; once per 90 days</span>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <code style="color:#6366f1;font-size:.7rem;min-width:140px">StorageClass.ARCHIVE</code>
+            <span style="font-size:.72rem;color:#8892a4">Accessed &lt; once per 365 days</span>
+          </div>
+        </div>
+        <div style="font-size:.7rem;color:#8892a4;margin-top:.6rem;line-height:1.45">
+          Location strings: <code style="color:#a5f3fc">"US"</code> (multi-region), <code style="color:#a5f3fc">"EUROPE"</code>, <code style="color:#a5f3fc">"ASIA"</code>, or a specific region like <code style="color:#a5f3fc">"us-central1"</code>.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /pt-4 wrapper -->
+
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(function(p) { p.classList.add('d-none'); });
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ch5-nav-link').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+}
+(function() {
+  var h = window.location.hash.slice(1);
+  if (h) {
+    var btn = document.querySelector('.ch5-nav-link[onclick*="' + h + '"]');
+    if (btn) { showTab(h, btn); }
+  }
+})();
+</script>
+
+{% endblock %}

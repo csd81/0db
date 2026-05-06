@@ -1,0 +1,759 @@
+{% extends 'base.html' %}
+{% block title %}Cloud Ch. 7 — MapReduce, Spark &amp; GCP Dataproc{% endblock %}
+{% block content %}
+
+<style>
+  .ch7-nav-link {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: #8892a4 !important;
+    border-radius: 0 !important;
+    padding: .5rem 1rem;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .ch7-nav-link:hover { color: #facc15 !important; }
+  .ch7-nav-link.active { color: #facc15 !important; border-bottom-color: #facc15 !important; }
+  .info-box {
+    background: #13141a;
+    border-radius: 8px;
+    border: 1px solid rgba(250,204,21,.18);
+    padding: 1rem 1.25rem;
+  }
+  .code-box {
+    background: #0a0b0f;
+    border: 1px solid rgba(250,204,21,.15);
+    border-radius: 6px;
+    padding: .85rem 1rem;
+    font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+    font-size: .71rem;
+    color: #fef08a;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .code-lang {
+    display: inline-block;
+    font-size: .58rem;
+    font-weight: 700;
+    padding: .15rem .45rem;
+    border-radius: 3px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: .35rem;
+  }
+  .v-card {
+    background: #13141a;
+    border-radius: 8px;
+    padding: 1rem;
+    border-top: 3px solid;
+    height: 100%;
+    text-align: center;
+  }
+  .phase-row {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .55rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .phase-row:last-child { border-bottom: none; }
+  .phase-num {
+    min-width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(250,204,21,.15);
+    color: #facc15;
+    font-size: .66rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: .05rem;
+  }
+  .component-card {
+    background: #13141a;
+    border-radius: 8px;
+    padding: .75rem;
+    border: 1px solid rgba(250,204,21,.15);
+    height: 100%;
+  }
+  .exec-mode {
+    display: flex;
+    gap: .6rem;
+    padding: .45rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    align-items: flex-start;
+  }
+  .exec-mode:last-child { border-bottom: none; }
+  .step-row {
+    display: flex;
+    gap: .75rem;
+    padding: .55rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    align-items: flex-start;
+  }
+  .step-row:last-child { border-bottom: none; }
+  .step-num {
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(250,204,21,.15);
+    color: #facc15;
+    font-size: .65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+</style>
+
+<!-- Page Header -->
+<div class="mb-4">
+  <div class="text-uppercase fw-bold mb-1" style="font-size:.63rem;letter-spacing:.12em;color:#facc15">Cloud Book — Chapter 7</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.45rem">Large-Scale Job Execution — MapReduce, Spark &amp; GCP Dataproc</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.83rem">
+    Big Data 3Vs · Batch vs Stream · Apache Hadoop/MapReduce · Apache Spark RDDs · GCP Dataproc WordCount end-to-end.
+  </p>
+</div>
+
+<!-- Tab Nav -->
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(250,204,21,.2)">
+  <li class="nav-item"><button class="ch7-nav-link active" onclick="showTab('tab-bigdata',this)"><i class="bi bi-database me-1"></i>Big Data</button></li>
+  <li class="nav-item"><button class="ch7-nav-link" onclick="showTab('tab-stream',this)"><i class="bi bi-arrow-right-circle me-1"></i>Batch vs Stream</button></li>
+  <li class="nav-item"><button class="ch7-nav-link" onclick="showTab('tab-hadoop',this)"><i class="bi bi-diagram-3 me-1"></i>Hadoop/MapReduce</button></li>
+  <li class="nav-item"><button class="ch7-nav-link" onclick="showTab('tab-spark',this)"><i class="bi bi-lightning-charge me-1"></i>Apache Spark</button></li>
+  <li class="nav-item"><button class="ch7-nav-link" onclick="showTab('tab-dataproc',this)"><i class="bi bi-cloud-arrow-up me-1"></i>GCP Dataproc</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ═══════════════════════ TAB 1: BIG DATA ═══════════════════════ -->
+<div id="tab-bigdata">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">The Big Data Definition</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.85rem">
+        The age of analogue data storage (paper, magnetic tape, vinyl) is over. Digital data generation is now mainstream and continuous — manufacturing, public administration, social networks, IoT — all generating raw data that must be processed to extract information.
+      </p>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">A system is "Big Data" if:</div>
+        <div style="display:flex;gap:.6rem;margin-bottom:.5rem;align-items:flex-start">
+          <i class="bi bi-1-circle-fill" style="color:#facc15;font-size:.9rem;flex-shrink:0;margin-top:.1rem"></i>
+          <div style="font-size:.78rem;color:#8892a4;line-height:1.5">It consists of datasets <strong style="color:#e2e8f0">large enough</strong> that typical systems are incapable of handling</div>
+        </div>
+        <div style="display:flex;gap:.6rem;align-items:flex-start">
+          <i class="bi bi-2-circle-fill" style="color:#facc15;font-size:.9rem;flex-shrink:0;margin-top:.1rem"></i>
+          <div style="font-size:.78rem;color:#8892a4;line-height:1.5">It requires <strong style="color:#e2e8f0">new processing methods</strong> to cope with the data volume in a timely manner</div>
+        </div>
+      </div>
+
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">The Three Vs</h5>
+      <div class="row g-2 mb-3">
+        <div class="col-4">
+          <div class="v-card" style="border-top-color:#facc15">
+            <div style="font-size:1.3rem;color:#facc15;margin-bottom:.3rem"><i class="bi bi-database-fill-up"></i></div>
+            <div style="font-size:.78rem;color:#facc15;font-weight:700">Volume</div>
+            <div style="font-size:.69rem;color:#8892a4;line-height:1.4;margin-top:.25rem">Orders of magnitude larger than conventional systems</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="v-card" style="border-top-color:#fb923c">
+            <div style="font-size:1.3rem;color:#fb923c;margin-bottom:.3rem"><i class="bi bi-speedometer2"></i></div>
+            <div style="font-size:.78rem;color:#fb923c;font-weight:700">Velocity</div>
+            <div style="font-size:.69rem;color:#8892a4;line-height:1.4;margin-top:.25rem">Speed of data movement significantly higher than traditional systems</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="v-card" style="border-top-color:#a78bfa">
+            <div style="font-size:1.3rem;color:#a78bfa;margin-bottom:.3rem"><i class="bi bi-shuffle"></i></div>
+            <div style="font-size:.78rem;color:#a78bfa;font-weight:700">Variety</div>
+            <div style="font-size:.69rem;color:#8892a4;line-height:1.4;margin-top:.25rem">Wide range of sources; varying quality and types of data</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Big Data vs HPC</div>
+        <table style="width:100%;font-size:.74rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Aspect</th>
+            <th style="color:#60a5fa;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">HPC</th>
+            <th style="color:#facc15;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Big Data</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Purpose</td><td style="padding:.3rem .5rem;color:#8892a4">Scientific/engineering simulation</td><td style="padding:.3rem .5rem;color:#8892a4">Data processing &amp; analysis</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Algorithms</td><td style="padding:.3rem .5rem;color:#8892a4">Unique, optimised per problem</td><td style="padding:.3rem .5rem;color:#8892a4">Standard pipeline steps</td></tr>
+          <tr><td style="padding:.3rem .5rem;color:#c4cdd8">Users</td><td style="padding:.3rem .5rem;color:#8892a4">Scientists (exclusive toy)</td><td style="padding:.3rem .5rem;color:#facc15">All industries (mainstream)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Big Data Life Cycle — 4 Stages</h5>
+      <p style="color:#8892a4;font-size:.79rem;line-height:1.55;margin-bottom:.85rem">
+        Data processing is different from running a SQL query — it follows a structured lifecycle before raw data becomes actionable insight.
+      </p>
+
+      <div style="background:#13141a;border-radius:8px;padding:1rem 1.25rem;border:1px solid rgba(250,204,21,.18);margin-bottom:1rem">
+        <div class="phase-row">
+          <div class="phase-num">1</div>
+          <div>
+            <div style="font-size:.8rem;color:#facc15;font-weight:700">Ingest / Collect</div>
+            <div style="font-size:.75rem;color:#8892a4;line-height:1.5;margin-top:.2rem">Extract, sort, label, and transform data from diverse sources. Raw sensor readings, log files, transaction records, API streams. This stage defines data quality for everything downstream.</div>
+          </div>
+        </div>
+        <div class="phase-row">
+          <div class="phase-num">2</div>
+          <div>
+            <div style="font-size:.8rem;color:#fb923c;font-weight:700">Persist — Long-Term Storage</div>
+            <div style="font-size:.75rem;color:#8892a4;line-height:1.5;margin-top:.2rem">Store in a distributed filesystem (HDFS, GCS) or distributed database. Must survive node failures — replication across multiple nodes. Storage is the foundation for repeated analysis runs.</div>
+          </div>
+        </div>
+        <div class="phase-row">
+          <div class="phase-num">3</div>
+          <div>
+            <div style="font-size:.8rem;color:#34d399;font-weight:700">Process and Analyse</div>
+            <div style="font-size:.75rem;color:#8892a4;line-height:1.5;margin-top:.2rem">Batch vs real-time processing (discussed next tab). Query processing, statistical algorithms, ML, feature extraction. The compute-intensive stage — MapReduce, Spark, Flink, Beam run here.</div>
+          </div>
+        </div>
+        <div class="phase-row">
+          <div class="phase-num">4</div>
+          <div>
+            <div style="font-size:.8rem;color:#a78bfa;font-weight:700">Visualise Results</div>
+            <div style="font-size:.75rem;color:#8892a4;line-height:1.5;margin-top:.2rem">Detect trends, surface changes, deliver insights to decision-makers. Dashboards, reports, alerts, recommendation feeds. Information extracted from raw data becomes business value here.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Data Processing Frameworks Covered (ch. 7)</div>
+        <div class="row g-2">
+          <div class="col-4"><div style="background:rgba(250,204,21,.08);border-radius:5px;padding:.5rem;text-align:center"><div style="font-size:.72rem;color:#facc15;font-weight:700">Apache Hadoop</div><div style="font-size:.63rem;color:#8892a4">MapReduce + HDFS + YARN. Disk-based batch.</div></div></div>
+          <div class="col-4"><div style="background:rgba(251,146,60,.08);border-radius:5px;padding:.5rem;text-align:center"><div style="font-size:.72rem;color:#fb923c;font-weight:700">Apache Spark</div><div style="font-size:.63rem;color:#8892a4">In-memory RDDs. 100× faster than Hadoop.</div></div></div>
+          <div class="col-4"><div style="background:rgba(167,139,250,.08);border-radius:5px;padding:.5rem;text-align:center"><div style="font-size:.72rem;color:#a78bfa;font-weight:700">Storm/Kafka/Flink/Beam</div><div style="font-size:.63rem;color:#8892a4">Stream-oriented frameworks (mentioned in chapter).</div></div></div>
+        </div>
+        <div style="font-size:.73rem;color:#8892a4;margin-top:.6rem;line-height:1.5">
+          Open-source is preferred: <strong style="color:#e2e8f0">vendor lock-in is especially dangerous in the cloud</strong>. A framework only available on one cloud provider makes future migration practically impossible.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 2: BATCH vs STREAM ═══════════════════════ -->
+<div id="tab-stream" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-6">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Batch Processing — Bounded Input</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        The traditional model: read all input data into memory, process it, write results. The entire dataset must be available before execution begins.
+      </p>
+      <div style="background:#13141a;border-radius:8px;padding:1rem;border:1px solid rgba(250,204,21,.2);font-family:monospace;font-size:.73rem;color:#8892a4;line-height:1.75;margin-bottom:.75rem">
+        <div style="color:#facc15;margin-bottom:.3rem">Batch model:</div>
+        <div><span style="color:#e2e8f0">Input data</span> (finite, static, persistent on disk)</div>
+        <div>&nbsp;&nbsp;→ <span style="color:#facc15">Read ALL data</span> into memory</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;→ <span style="color:#facc15">Process</span> entire dataset</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span style="color:#34d399">Write results</span> to output files/DB</div>
+        <div style="color:#8892a4;margin-top:.4rem">Execution is staged: input → processing → output</div>
+      </div>
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Batch Characteristics</div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;font-size:.76rem;color:#8892a4">
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i>Input is <strong style="color:#e2e8f0">bounded</strong> (has a start and end)</div>
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i>Data is <strong style="color:#e2e8f0">static and persistent</strong> before processing begins</div>
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i>Program has access to the <strong style="color:#e2e8f0">complete dataset</strong></div>
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i>Staging: read → process → write (sequential phases)</div>
+          <div><i class="bi bi-x me-1" style="color:#f87171"></i>Latency: results only available after entire run finishes</div>
+          <div><i class="bi bi-x me-1" style="color:#f87171"></i>Cannot process infinite / continuously arriving data</div>
+        </div>
+      </div>
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Batch Use Cases</div>
+        <div style="font-size:.76rem;color:#8892a4;line-height:1.6">
+          End-of-day financial reporting · Monthly billing runs · Nightly ETL pipelines · Scientific simulations on fixed datasets · Training ML models on historical data · WordCount on a log archive
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <h5 class="fw-bold mb-2" style="color:#fb923c;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Stream Processing — Unbounded Input</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        In many modern applications, data is generated continuously in real time. A continuous stream will never finish — you cannot wait for all input to arrive before processing.
+      </p>
+      <div style="background:#13141a;border-radius:8px;padding:1rem;border:1px solid rgba(251,146,60,.2);font-family:monospace;font-size:.73rem;color:#8892a4;line-height:1.75;margin-bottom:.75rem">
+        <div style="color:#fb923c;margin-bottom:.3rem">Stream model:</div>
+        <div><span style="color:#e2e8f0">Data stream</span> (infinite, arrives continuously)</div>
+        <div>&nbsp;&nbsp;→ <span style="color:#fb923c">Record arrives</span> (single event/chunk)</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;→ <span style="color:#fb923c">Process immediately</span> (no buffering)</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span style="color:#34d399">Emit result</span> for this record</div>
+        <div>&nbsp;&nbsp;→ <span style="color:#fb923c">Next record arrives</span> → repeat indefinitely</div>
+      </div>
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Stream Advantages</div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;font-size:.76rem;color:#8892a4">
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i>Processes data as it arrives — <strong style="color:#e2e8f0">no waiting for complete dataset</strong></div>
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i><strong style="color:#e2e8f0">Lower memory</strong>: only a small portion of data in memory at once</div>
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i><strong style="color:#e2e8f0">Lower latency</strong>: results available immediately per record</div>
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i>Can be used even when the whole dataset <em>is</em> available (still more efficient)</div>
+          <div><i class="bi bi-check2 me-1" style="color:#34d399"></i>Better system utilisation — resources shared across time</div>
+        </div>
+      </div>
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Stream Use Cases</div>
+        <div style="display:flex;flex-direction:column;gap:.25rem;font-size:.76rem;color:#8892a4">
+          <div><i class="bi bi-camera-video me-1" style="color:#fb923c"></i>Live media (video, audio, text, messaging)</div>
+          <div><i class="bi bi-car-front me-1" style="color:#fb923c"></i>IoT — traffic data (autonomous driving, jams)</div>
+          <div><i class="bi bi-gear me-1" style="color:#fb923c"></i>Manufacturing — process &amp; assembly logs</div>
+          <div><i class="bi bi-people me-1" style="color:#fb923c"></i>Social networks — live feed, security event detection</div>
+          <div><i class="bi bi-graph-up-arrow me-1" style="color:#fb923c"></i>Financial — fraud detection, real-time trading signals</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 3: HADOOP/MAPREDUCE ═══════════════════════ -->
+<div id="tab-hadoop" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Hadoop/MapReduce — Components</h5>
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div class="component-card">
+            <div style="font-size:.72rem;color:#facc15;font-weight:700;margin-bottom:.25rem"><i class="bi bi-hdd-stack me-1"></i>HDFS</div>
+            <div style="font-size:.7rem;color:#8892a4;line-height:1.45">Hadoop Distributed File System. Fault-tolerant, replicated across commodity nodes. Input data lives here; job output written here.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="component-card">
+            <div style="font-size:.72rem;color:#fb923c;font-weight:700;margin-bottom:.25rem"><i class="bi bi-diagram-2 me-1"></i>YARN</div>
+            <div style="font-size:.7rem;color:#8892a4;line-height:1.45">Cluster coordinator and scheduler. Manages resource allocation; routes jobs to available nodes.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="component-card">
+            <div style="font-size:.72rem;color:#34d399;font-weight:700;margin-bottom:.25rem"><i class="bi bi-cpu me-1"></i>MapReduce</div>
+            <div style="font-size:.7rem;color:#8892a4;line-height:1.45">The batch processing engine. Divides data into key-value pairs, distributes Map tasks, collects Reduce results.</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="component-card">
+            <div style="font-size:.72rem;color:#a78bfa;font-weight:700;margin-bottom:.25rem"><i class="bi bi-tools me-1"></i>Hadoop Common</div>
+            <div style="font-size:.7rem;color:#8892a4;line-height:1.45">Shared utilities and libraries used by HDFS, YARN, and MapReduce subsystems.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">YARN Architecture</div>
+        <div style="font-family:monospace;font-size:.73rem;color:#8892a4;line-height:1.8">
+          <span style="color:#facc15">ResourceManager</span> (1 per cluster — master)<br>
+          &nbsp;&nbsp;→ Receives JAR files from clients<br>
+          &nbsp;&nbsp;→ Schedules subtasks across nodes<br>
+          &nbsp;&nbsp;→ Provides monitoring &amp; feedback<br>
+          <br>
+          <span style="color:#fb923c">NodeManager</span> (1 per cluster node)<br>
+          &nbsp;&nbsp;→ Reports resource usage to ResourceManager<br>
+          &nbsp;&nbsp;→ Launches/monitors task containers<br>
+          <br>
+          <span style="color:#34d399">MRAppMaster</span> (1 per application)<br>
+          &nbsp;&nbsp;→ Coordinates execution of one specific job
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Fault Tolerance Philosophy</div>
+        <div style="font-size:.77rem;color:#8892a4;line-height:1.55">
+          "In a distributed system, <strong style="color:#e2e8f0">failure is not the exception but the norm</strong>." With thousands of servers, there will always be at least one failing at any moment. Hadoop provides application-level fault tolerance — failed tasks are automatically rescheduled on healthy nodes. Compute and storage nodes are typically co-located to minimise data movement.
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Key-Value Pipeline &amp; Execution Phases</h5>
+
+      <div style="background:#13141a;border-radius:8px;padding:.85rem 1rem;border:1px solid rgba(250,204,21,.2);font-family:monospace;font-size:.75rem;margin-bottom:.85rem;line-height:1.6">
+        <div style="color:#8892a4;font-size:.63rem;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.08em">Key-Value transformation chain:</div>
+        <div>
+          <span style="color:#facc15">(input)</span>
+          <span style="color:#e2e8f0"> &lt;k1,v1&gt;</span>
+          <span style="color:#8892a4"> → map → </span>
+          <span style="color:#fb923c">&lt;k2,v2&gt;</span>
+          <span style="color:#8892a4"> → combine → </span>
+          <span style="color:#fb923c">&lt;k2,v2&gt;</span>
+          <span style="color:#8892a4"> → reduce → </span>
+          <span style="color:#34d399">&lt;k3,v3&gt;</span>
+          <span style="color:#facc15"> (output)</span>
+        </div>
+        <div style="color:#8892a4;margin-top:.3rem;font-size:.68rem">All keys and values must be serializable.</div>
+      </div>
+
+      <div style="background:#13141a;border-radius:8px;padding:1rem 1.25rem;border:1px solid rgba(250,204,21,.15);margin-bottom:.85rem">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">6 Execution Phases</div>
+        <div class="phase-row">
+          <div class="phase-num">1</div>
+          <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">Input</span> — <span style="font-size:.75rem;color:#8892a4">Reads and parses input data from HDFS; forwards key-value pairs to Mapper</span></div>
+        </div>
+        <div class="phase-row">
+          <div class="phase-num" style="background:rgba(251,146,60,.15);color:#fb923c">2</div>
+          <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">Map</span> — <span style="font-size:.75rem;color:#8892a4">User-defined function processes incoming KV pairs, emits intermediate KV pairs. Runs in parallel across all nodes.</span></div>
+        </div>
+        <div class="phase-row">
+          <div class="phase-num" style="background:rgba(251,191,36,.15);color:#fbbf24">3</div>
+          <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">Combiner</span> — <span style="font-size:.75rem;color:#8892a4">Optional local reduce within a single Mapper node. Reduces data transferred during Shuffle, improving performance.</span></div>
+        </div>
+        <div class="phase-row">
+          <div class="phase-num" style="background:rgba(96,165,250,.15);color:#60a5fa">4</div>
+          <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">Shuffle &amp; Sort</span> — <span style="font-size:.75rem;color:#8892a4">Redistributes intermediate KV pairs by key across Reducers; sorts by key for efficient aggregation.</span></div>
+        </div>
+        <div class="phase-row">
+          <div class="phase-num" style="background:rgba(52,211,153,.15);color:#34d399">5</div>
+          <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">Reducer</span> — <span style="font-size:.75rem;color:#8892a4">User-defined aggregation, filtering, or combining on all values for a given key. Outputs zero or more KV pairs.</span></div>
+        </div>
+        <div class="phase-row">
+          <div class="phase-num" style="background:rgba(167,139,250,.15);color:#a78bfa">6</div>
+          <div><span style="font-size:.79rem;color:#e2e8f0;font-weight:600">Output</span> — <span style="font-size:.75rem;color:#8892a4">Final KV results saved to HDFS in the required format.</span></div>
+        </div>
+      </div>
+
+      <div class="code-lang" style="background:rgba(250,204,21,.15);color:#facc15">Java — Hadoop WordCount (Mapper + Reducer + Driver)</div>
+      <pre class="code-box">public class WordCount {
+
+  // Mapper: splits each line into words, emits (word, 1)
+  public static class TokenizerMapper
+      extends Mapper&lt;Object, Text, Text, IntWritable&gt; {
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
+    public void map(Object key, Text value, Context ctx)
+        throws IOException, InterruptedException {
+      StringTokenizer itr = new StringTokenizer(value.toString());
+      while (itr.hasMoreTokens()) {
+        word.set(itr.nextToken());
+        ctx.write(word, one);    // emit ("apple", 1)
+      }
+    }
+  }
+
+  // Reducer: sums counts for each word
+  public static class IntSumReducer
+      extends Reducer&lt;Text, IntWritable, Text, IntWritable&gt; {
+    private IntWritable result = new IntWritable();
+    public void reduce(Text key, Iterable&lt;IntWritable&gt; values,
+        Context ctx) throws IOException, InterruptedException {
+      int sum = 0;
+      for (IntWritable val : values) { sum += val.get(); }
+      result.set(sum);
+      ctx.write(key, result);    // emit ("apple", 2)
+    }
+  }
+
+  public static void main(String[] args) throws Exception {
+    Configuration conf = new Configuration();
+    Job job = Job.getInstance(conf, "word count");
+    job.setJarByClass(WordCount.class);
+    job.setMapperClass(TokenizerMapper.class);
+    job.setCombinerClass(IntSumReducer.class);  // local reduce
+    job.setReducerClass(IntSumReducer.class);
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+    FileInputFormat.addInputPath(job, new Path(args[0]));
+    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    System.exit(job.waitForCompletion(true) ? 0 : 1);
+  }
+}</pre>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 4: APACHE SPARK ═══════════════════════ -->
+<div id="tab-spark" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Why Spark — The Hadoop Bottleneck</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        Hadoop uses the <strong style="color:#e2e8f0">file system for intermediate data</strong> between Map and Reduce phases. Disk I/O bandwidth is orders of magnitude lower than memory bandwidth — this becomes a prohibitive bottleneck at scale.
+      </p>
+
+      <div style="background:#13141a;border-radius:8px;padding:1rem;border:1px solid rgba(248,113,113,.25);margin-bottom:.85rem;font-family:monospace;font-size:.73rem">
+        <div style="color:#f87171;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Hadoop intermediate data flow (slow):</div>
+        <div style="color:#8892a4;line-height:1.75">
+          Map → <span style="color:#f87171">write to disk</span> → Shuffle → <span style="color:#f87171">read from disk</span> → Reduce<br>
+          Reduce → <span style="color:#f87171">write to disk</span> → next Map → <span style="color:#f87171">read from disk</span>…
+        </div>
+      </div>
+
+      <div style="background:#13141a;border-radius:8px;padding:1rem;border:1px solid rgba(52,211,153,.25);margin-bottom:.85rem;font-family:monospace;font-size:.73rem">
+        <div style="color:#34d399;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Spark RDD flow (fast):</div>
+        <div style="color:#8892a4;line-height:1.75">
+          Map → <span style="color:#34d399">RDD in memory</span> → transform → <span style="color:#34d399">RDD in memory</span> → Reduce<br>
+          Disk only at: <span style="color:#facc15">input read</span> and <span style="color:#facc15">final output write</span>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Spark Performance</div>
+        <div class="row g-2 text-center">
+          <div class="col-6"><div style="background:rgba(52,211,153,.08);border-radius:6px;padding:.6rem"><div style="font-size:1.3rem;color:#34d399;font-weight:700">100×</div><div style="font-size:.63rem;color:#8892a4">faster (in-memory operations)</div></div></div>
+          <div class="col-6"><div style="background:rgba(250,204,21,.08);border-radius:6px;padding:.6rem"><div style="font-size:1.3rem;color:#facc15;font-weight:700">10×</div><div style="font-size:.63rem;color:#8892a4">faster (disk operations — fewer I/O passes)</div></div></div>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Spark Execution Modes</div>
+        <div class="exec-mode">
+          <span style="font-size:.65rem;background:rgba(250,204,21,.15);color:#facc15;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:95px;text-align:center;flex-shrink:0">Standalone</span>
+          <span style="font-size:.74rem;color:#8892a4">Spark runs as its own independent cluster environment — no external cluster manager needed.</span>
+        </div>
+        <div class="exec-mode">
+          <span style="font-size:.65rem;background:rgba(251,146,60,.15);color:#fb923c;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:95px;text-align:center;flex-shrink:0">Hadoop YARN</span>
+          <span style="font-size:.74rem;color:#8892a4">Spark runs on top of YARN — shares the Hadoop cluster with other YARN applications.</span>
+        </div>
+        <div class="exec-mode">
+          <span style="font-size:.65rem;background:rgba(96,165,250,.15);color:#60a5fa;padding:.15rem .45rem;border-radius:3px;font-weight:700;min-width:95px;text-align:center;flex-shrink:0">MR Mode</span>
+          <span style="font-size:.74rem;color:#8892a4">Spark jobs executed as Hadoop/MapReduce jobs. Integrates legacy MR programs with Spark.</span>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Spark Capabilities (beyond Map/Reduce)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem">
+          <span style="font-size:.66rem;background:rgba(250,204,21,.12);color:#facc15;padding:.2rem .5rem;border-radius:4px;font-weight:600">SQL queries</span>
+          <span style="font-size:.66rem;background:rgba(52,211,153,.12);color:#34d399;padding:.2rem .5rem;border-radius:4px;font-weight:600">Machine Learning (MLlib)</span>
+          <span style="font-size:.66rem;background:rgba(96,165,250,.12);color:#60a5fa;padding:.2rem .5rem;border-radius:4px;font-weight:600">Graph Analytics (GraphX)</span>
+          <span style="font-size:.66rem;background:rgba(167,139,250,.12);color:#a78bfa;padding:.2rem .5rem;border-radius:4px;font-weight:600">Stream Processing</span>
+          <span style="font-size:.66rem;background:rgba(251,146,60,.12);color:#fb923c;padding:.2rem .5rem;border-radius:4px;font-weight:600">Python / Scala / R / Java APIs</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Spark WordCount — RDD Pipeline</h5>
+      <p style="color:#8892a4;font-size:.78rem;line-height:1.55;margin-bottom:.75rem">
+        Spark's core abstraction is the <strong style="color:#e2e8f0">Resilient Distributed Dataset (RDD)</strong> — a distributed, immutable, fault-tolerant in-memory collection that Spark operates on in parallel across all nodes. Transformations (<code style="color:#fef08a">flatMap</code>, <code style="color:#fef08a">mapToPair</code>) are lazy; only <code style="color:#fef08a">collect()</code> triggers actual execution.
+      </p>
+
+      <div class="code-lang" style="background:rgba(250,204,21,.15);color:#facc15">Java — Spark WordCount (RDD API)</div>
+      <pre class="code-box">package org.apache.spark.examples;
+import scala.Tuple2;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.SparkSession;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
+
+public final class JavaWordCount {
+  private static final Pattern SPACE = Pattern.compile(" ");
+
+  public static void main(String[] args) throws Exception {
+    // 1. Create Spark session (entry point to all Spark functionality)
+    SparkSession spark = SparkSession.builder()
+        .appName("JavaWordCount")
+        .getOrCreate();
+
+    // 2. Read input file → RDD of lines (lazy)
+    JavaRDD&lt;String&gt; lines =
+        spark.read().textFile(args[0]).javaRDD();
+
+    // 3. Split lines into words (flatMap — 1 line → many words)
+    JavaRDD&lt;String&gt; words = lines.flatMap(
+        s -&gt; Arrays.asList(SPACE.split(s)).iterator());
+
+    // 4. Map each word to (word, 1) pair
+    JavaPairRDD&lt;String, Integer&gt; ones =
+        words.mapToPair(s -&gt; new Tuple2&lt;&gt;(s, 1));
+
+    // 5. Reduce by key (sum all 1s for each word)
+    JavaPairRDD&lt;String, Integer&gt; counts =
+        ones.reduceByKey((i1, i2) -&gt; i1 + i2);
+
+    // 6. collect() triggers execution; print results
+    List&lt;Tuple2&lt;String, Integer&gt;&gt; output = counts.collect();
+    for (Tuple2&lt;?,?&gt; tuple : output) {
+      System.out.println(tuple._1() + ": " + tuple._2());
+    }
+    spark.stop();
+  }
+}</pre>
+
+      <div class="info-box mt-3">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Hadoop vs Spark — WordCount Pipeline Comparison</div>
+        <table style="width:100%;font-size:.74rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <th style="color:#8892a4;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Step</th>
+            <th style="color:#f87171;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Hadoop MR (disk)</th>
+            <th style="color:#34d399;padding:.3rem .5rem;font-size:.63rem;text-transform:uppercase">Spark (RDD)</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Input read</td><td style="padding:.3rem .5rem;color:#8892a4">HDFS → memory</td><td style="padding:.3rem .5rem;color:#8892a4">HDFS → RDD (lazy)</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">After Map</td><td style="padding:.3rem .5rem;color:#f87171">Written to local disk</td><td style="padding:.3rem .5rem;color:#34d399">Stays in memory (RDD)</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">Shuffle</td><td style="padding:.3rem .5rem;color:#f87171">Disk read + network</td><td style="padding:.3rem .5rem;color:#34d399">Network only (in-memory)</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:.3rem .5rem;color:#c4cdd8">After Reduce</td><td style="padding:.3rem .5rem;color:#f87171">Written to HDFS</td><td style="padding:.3rem .5rem;color:#34d399">In-memory until collect()</td></tr>
+          <tr><td style="padding:.3rem .5rem;color:#c4cdd8">Final output</td><td style="padding:.3rem .5rem;color:#8892a4">HDFS write</td><td style="padding:.3rem .5rem;color:#8892a4">HDFS write (or collect to driver)</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB 5: GCP DATAPROC ═══════════════════════ -->
+<div id="tab-dataproc" class="d-none">
+  <div class="row g-4">
+
+    <div class="col-lg-5">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">GCP Dataproc — Managed Hadoop &amp; Spark</h5>
+      <p style="color:#8892a4;font-size:.8rem;line-height:1.6;margin-bottom:.75rem">
+        Creating a Hadoop/Spark cluster from scratch requires provisioning VMs, installing software, configuring networking, and setting up a job scheduler. Dataproc automates all of this — cluster creation takes seconds instead of hours.
+      </p>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Dataproc Integrations</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem">
+          <span style="font-size:.66rem;background:rgba(250,204,21,.12);color:#facc15;padding:.2rem .5rem;border-radius:4px;font-weight:600">BigQuery</span>
+          <span style="font-size:.66rem;background:rgba(34,211,238,.12);color:#22d3ee;padding:.2rem .5rem;border-radius:4px;font-weight:600">Cloud Storage</span>
+          <span style="font-size:.66rem;background:rgba(52,211,153,.12);color:#34d399;padding:.2rem .5rem;border-radius:4px;font-weight:600">Cloud Bigtable</span>
+          <span style="font-size:.66rem;background:rgba(96,165,250,.12);color:#60a5fa;padding:.2rem .5rem;border-radius:4px;font-weight:600">Cloud Logging</span>
+          <span style="font-size:.66rem;background:rgba(167,139,250,.12);color:#a78bfa;padding:.2rem .5rem;border-radius:4px;font-weight:600">Cloud Monitoring</span>
+        </div>
+      </div>
+
+      <div class="info-box mb-3">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">4 Ways to Access Dataproc</div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;font-size:.75rem;color:#8892a4">
+          <div><span style="color:#facc15;font-weight:700">①</span> REST API — programmatic access from any language</div>
+          <div><span style="color:#facc15;font-weight:700">②</span> Cloud SDK — <code style="color:#fef08a">gcloud dataproc</code> commands</div>
+          <div><span style="color:#facc15;font-weight:700">③</span> Cloud Dataproc UI — web console</div>
+          <div><span style="color:#facc15;font-weight:700">④</span> Cloud Client Libraries — Java, Python, Go, etc.</div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Logging &amp; Monitoring Flags</div>
+        <div class="code-lang" style="background:rgba(250,204,21,.12);color:#facc15">bash — Enable Stackdriver logging</div>
+        <pre class="code-box" style="font-size:.68rem;padding:.6rem"># Enable Stackdriver logging on cluster create:
+--properties \
+  dataproc:dataproc.logging.stackdriver.enable=true
+
+# Enable YARN container log collection:
+--properties \
+  dataproc:dataproc.logging.stackdriver.\
+  job.yarn.container.enable=true</pre>
+        <div style="font-size:.72rem;color:#8892a4;margin-top:.5rem;line-height:1.45">Execution logs and cluster metrics visible in Cloud Console under the Dataproc service → Jobs section.</div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">End-to-End WordCount — MapReduce on GCP</h5>
+
+      <div style="background:#13141a;border-radius:8px;padding:1rem 1.25rem;border:1px solid rgba(250,204,21,.18);margin-bottom:.85rem">
+        <div style="font-size:.68rem;color:#facc15;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">5-Step Execution</div>
+        <div class="step-row">
+          <div class="step-num">1</div>
+          <div><span style="font-size:.78rem;color:#e2e8f0;font-weight:600">Compile Java program</span> <span style="font-size:.72rem;color:#8892a4">→ produces <code style="color:#fef08a">WordCountMapReduce.jar</code></span></div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">2</div>
+          <div>
+            <div style="font-size:.78rem;color:#e2e8f0;font-weight:600;margin-bottom:.2rem">Create bucket &amp; upload input file</div>
+            <pre class="code-box" style="font-size:.67rem;padding:.4rem .6rem">gs://test-bucket22/*
+# words.txt content:
+apple pear apple microsoft pear door window table chair chair</pre>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">3</div>
+          <div>
+            <div style="font-size:.78rem;color:#e2e8f0;font-weight:600;margin-bottom:.2rem">Create Dataproc cluster</div>
+            <pre class="code-box" style="font-size:.67rem;padding:.4rem .6rem">gcloud dataproc clusters create hadoop-cluster \
+    --region europe-west4</pre>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">4</div>
+          <div>
+            <div style="font-size:.78rem;color:#e2e8f0;font-weight:600;margin-bottom:.2rem">Submit MapReduce job</div>
+            <pre class="code-box" style="font-size:.67rem;padding:.4rem .6rem">gcloud dataproc jobs submit hadoop \
+    --cluster hadoop-cluster \
+    --jar gs://test-bucket22/WordCountMapReduce.jar \
+    -- wordcount.WordCount \
+    gs://test-bucket22/words.txt \
+    gs://test-bucket22/results</pre>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">5</div>
+          <div>
+            <div style="font-size:.78rem;color:#e2e8f0;font-weight:600;margin-bottom:.2rem">Inspect results</div>
+            <pre class="code-box" style="font-size:.67rem;padding:.4rem .6rem">gsutil cat gs://test-bucket22/results/*
+
+microsoft  1
+window     1
+pear       2
+chair      2
+apple      2
+door       1
+table      1</pre>
+          </div>
+        </div>
+      </div>
+
+      <h5 class="fw-bold mb-2" style="color:#facc15;font-size:.88rem;text-transform:uppercase;letter-spacing:.06em">Spark Job on GCP — Same Pattern</h5>
+      <div style="background:#13141a;border-radius:8px;padding:.85rem 1rem;border:1px solid rgba(34,211,238,.2)">
+        <div class="code-lang" style="background:rgba(34,211,238,.15);color:#22d3ee">bash — Create Spark cluster &amp; submit job</div>
+        <pre class="code-box"># Create a Spark-ready Dataproc cluster
+gcloud dataproc clusters create spark-cluster \
+    --region europe-west4
+
+# Submit Spark WordCount job
+gcloud dataproc jobs submit spark \
+    --cluster spark-cluster \
+    --jar gs://test-bucket22/WordCountSpark.jar \
+    -- wordcount.WordCount \
+    gs://test-bucket22/words.txt \
+    gs://test-bucket22/results
+
+# Results identical to MapReduce version
+# gsutil cat gs://test-bucket22/results/*</pre>
+        <div style="font-size:.73rem;color:#8892a4;margin-top:.5rem;line-height:1.45">
+          The only difference: <code style="color:#22d3ee">submit hadoop</code> → <code style="color:#22d3ee">submit spark</code>.
+          Input/output paths and JAR submission are identical. Spark will execute significantly faster for large datasets due to in-memory RDD operations.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /pt-4 wrapper -->
+
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(function(p) { p.classList.add('d-none'); });
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ch7-nav-link').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+}
+(function() {
+  var h = window.location.hash.slice(1);
+  if (h) {
+    var btn = document.querySelector('.ch7-nav-link[onclick*="' + h + '"]');
+    if (btn) { showTab(h, btn); }
+  }
+})();
+</script>
+
+{% endblock %}

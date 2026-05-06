@@ -1,0 +1,579 @@
+{% extends 'base.html' %}
+{% block title %}Ch. 10 — Cloud Pub/Sub{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div style="width:4px;height:3rem;background:#34d399;border-radius:2px;flex-shrink:0"></div>
+    <div>
+      <h2 class="mb-0 fw-bold" style="color:#34d399">Chapter 10 — Service Communication: Pub/Sub</h2>
+      <div class="small mt-1" style="color:#64748b">Google Pub/Sub · Topics &amp; Subscriptions · Message Flow · Pull/Push Delivery · Java Publish &amp; Subscribe</div>
+    </div>
+  </div>
+
+  <ul class="nav nav-pills mb-4 gap-2 flex-wrap">
+    <li class="nav-item"><button class="nav-link ch10-nav-link active" onclick="showTab('tab-overview',this)">📡 Pub/Sub Overview</button></li>
+    <li class="nav-item"><button class="nav-link ch10-nav-link" onclick="showTab('tab-flow',this)">🔄 Message Format &amp; Flow</button></li>
+    <li class="nav-item"><button class="nav-link ch10-nav-link" onclick="showTab('tab-function',this)">⚡ Function &amp; gcloud</button></li>
+    <li class="nav-item"><button class="nav-link ch10-nav-link" onclick="showTab('tab-publish',this)">📤 Publishing in Java</button></li>
+    <li class="nav-item"><button class="nav-link ch10-nav-link" onclick="showTab('tab-subscribe',this)">📥 Subscribing in Java</button></li>
+  </ul>
+
+  <!-- ══ TAB 1: OVERVIEW ══ -->
+  <div id="tab-overview" class="ch10-tab">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">Why Pub/Sub? Loose Coupling at Scale</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(239,68,68,.3)">
+                <div class="fw-bold mb-2" style="color:#fca5a5">Synchronous RPC — Unsuitable</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1">✗ Tight coupling between services</div>
+                  <div class="mb-1">✗ Caller blocks waiting for response</div>
+                  <div class="mb-1">✗ Failure of one service cascades</div>
+                  <div>✗ Does not scale to large distributed apps</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2" style="color:#34d399">Pub/Sub Messaging — The Solution</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1">✓ Loose coupling — services don't know each other</div>
+                  <div class="mb-1">✓ Asynchronous — sender does not block</div>
+                  <div class="mb-1">✓ Fault-tolerant — messages are retained</div>
+                  <div>✓ The only viable strategy for large-scale apps</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2" style="color:#34d399">Google Pub/Sub Characteristics</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1">✓ High-availability, real-time, asynchronous</div>
+                  <div class="mb-1">✓ Low-latency, high-throughput</div>
+                  <div class="mb-1">✓ Available in all Google Cloud regions</div>
+                  <div>✓ Universal messaging &amp; event delivery</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Core components -->
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">Core Components</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:2px solid #34d399">
+                <div style="font-size:1.4rem">📢</div>
+                <div class="fw-bold mb-1" style="color:#34d399">Publisher</div>
+                <div class="small" style="color:#94a3b8">Any app that can make HTTPS requests to <code>pubsub.googleapis.com</code>. Creates topics and sends messages to them.</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div style="font-size:1.4rem">📌</div>
+                <div class="fw-bold mb-1" style="color:#34d399">Topic</div>
+                <div class="small" style="color:#94a3b8">A <strong style="color:#f1f5f9">named resource</strong> to which publishers send messages. Acts as a logical channel.</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div style="font-size:1.4rem">🔖</div>
+                <div class="fw-bold mb-1" style="color:#34d399">Subscription</div>
+                <div class="small" style="color:#94a3b8">A <strong style="color:#f1f5f9">named resource</strong> representing the stream of messages from a specific topic to a subscribing app.</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 rounded h-100 text-center" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div style="font-size:1.4rem">📨</div>
+                <div class="fw-bold mb-1" style="color:#34d399">Subscriber</div>
+                <div class="small" style="color:#94a3b8">Any app that can make HTTPS requests to <code>pubsub.googleapis.com</code>. Receives messages via <strong style="color:#f1f5f9">Pull</strong> or <strong style="color:#f1f5f9">Push</strong>.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+            <div class="fw-bold mb-2 small" style="color:#34d399">Message</div>
+            <div class="small" style="color:#94a3b8">A combination of <strong style="color:#f1f5f9">data</strong> and optional <strong style="color:#f1f5f9">attributes</strong> that a publisher sends to a topic and that is eventually delivered to subscribers. Attributes are key-value pairs defined by the publisher.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- N-to-M mapping -->
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">N-to-M Publisher → Subscriber Mapping</h5>
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-3 small" style="color:#34d399">Many-to-One: Subscriber X wants A and B</div>
+                <div class="d-flex align-items-start gap-3">
+                  <div class="d-flex flex-column gap-2">
+                    <div class="px-3 py-2 rounded text-center fw-bold" style="background:rgba(52,211,153,.15);border:1px solid #34d399;color:#34d399;font-size:.8rem">Publisher A</div>
+                    <div class="px-3 py-2 rounded text-center fw-bold" style="background:rgba(52,211,153,.15);border:1px solid #34d399;color:#34d399;font-size:.8rem">Publisher B</div>
+                  </div>
+                  <div class="d-flex flex-column gap-2 justify-content-center" style="padding-top:4px">
+                    <div class="small" style="color:#64748b">→ Topic A → Sub XA →</div>
+                    <div class="small" style="color:#64748b">→ Topic B → Sub XB →</div>
+                  </div>
+                  <div class="px-3 py-2 rounded text-center fw-bold align-self-center" style="background:rgba(96,165,250,.15);border:1px solid #60a5fa;color:#60a5fa;font-size:.8rem">Subscriber X</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-3 small" style="color:#34d399">One-to-Many: Y and Z both want C</div>
+                <div class="d-flex align-items-start gap-3">
+                  <div class="px-3 py-2 rounded text-center fw-bold align-self-center" style="background:rgba(52,211,153,.15);border:1px solid #34d399;color:#34d399;font-size:.8rem">Publisher C</div>
+                  <div class="d-flex flex-column gap-2 justify-content-center" style="padding-top:4px">
+                    <div class="small" style="color:#64748b">→ Topic C → Sub YC →</div>
+                    <div class="small" style="color:#64748b">→ Topic C → Sub ZC →</div>
+                  </div>
+                  <div class="d-flex flex-column gap-2">
+                    <div class="px-3 py-2 rounded text-center fw-bold" style="background:rgba(251,191,36,.15);border:1px solid #fbbf24;color:#fbbf24;font-size:.8rem">Subscriber Y</div>
+                    <div class="px-3 py-2 rounded text-center fw-bold" style="background:rgba(251,191,36,.15);border:1px solid #fbbf24;color:#fbbf24;font-size:.8rem">Subscriber Z</div>
+                  </div>
+                </div>
+                <div class="small mt-2" style="color:#64748b">Same message from C is delivered independently via YC to Y and via ZC to Z.</div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+            <div class="small" style="color:#94a3b8">Pub/Sub supports an <strong style="color:#f1f5f9">N-to-M mapping</strong>. Subscribers can subscribe to any number of topics; the same message is delivered to each subscription independently. The mapping is configured via Topic-Subscription configurations.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 2: MESSAGE FORMAT & FLOW ══ -->
+  <div id="tab-flow" class="ch10-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">Message Format</h5>
+          <p class="small mb-3" style="color:#94a3b8">At least one of the first three fields must be present. The last two are added automatically by the Pub/Sub service.</p>
+          <div class="d-flex flex-column gap-2">
+            <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+              <span class="badge flex-shrink-0 mt-1" style="background:#34d399;color:#000;font-size:.65rem">User</span>
+              <div>
+                <div class="small fw-bold" style="color:#f1f5f9">Message Data</div>
+                <div class="small" style="color:#64748b">The payload — arbitrary byte string (often Base64-encoded)</div>
+              </div>
+            </div>
+            <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+              <span class="badge flex-shrink-0 mt-1" style="background:#34d399;color:#000;font-size:.65rem">User</span>
+              <div>
+                <div class="small fw-bold" style="color:#f1f5f9">Ordering Key</div>
+                <div class="small" style="color:#64748b">Ensures ordered delivery for messages with the same key</div>
+              </div>
+            </div>
+            <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+              <span class="badge flex-shrink-0 mt-1" style="background:#34d399;color:#000;font-size:.65rem">User</span>
+              <div>
+                <div class="small fw-bold" style="color:#f1f5f9">Attributes</div>
+                <div class="small" style="color:#64748b">Key-value pairs of additional metadata defined by the publisher</div>
+              </div>
+            </div>
+            <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(96,165,250,.3)">
+              <span class="badge flex-shrink-0 mt-1" style="background:#60a5fa;color:#000;font-size:.65rem">Service</span>
+              <div>
+                <div class="small fw-bold" style="color:#f1f5f9">Message ID</div>
+                <div class="small" style="color:#64748b">Unique ID within the topic, assigned by Pub/Sub service</div>
+              </div>
+            </div>
+            <div class="p-2 rounded d-flex gap-2 align-items-start" style="background:#0e1014;border:1px solid rgba(96,165,250,.3)">
+              <span class="badge flex-shrink-0 mt-1" style="background:#60a5fa;color:#000;font-size:.65rem">Service</span>
+              <div>
+                <div class="small fw-bold" style="color:#f1f5f9">Timestamp</div>
+                <div class="small" style="color:#64748b">When the Pub/Sub service received the message</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-4 rounded h-100" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">6-Step Message Delivery Flow</h5>
+          <div class="d-flex flex-column gap-2">
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#34d399;color:#000;font-size:.8rem">1</div>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Publisher creates topic</strong> and sends messages with payload + optional attributes.</div>
+            </div>
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#34d399;color:#000;font-size:.8rem">2</div>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Service retains message</strong> on behalf of subscriptions until acknowledged by a subscriber.</div>
+            </div>
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#34d399;color:#000;font-size:.8rem">3</div>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Pub/Sub forwards message</strong> from the topic to all of its subscriptions, individually.</div>
+            </div>
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#34d399;color:#000;font-size:.8rem">4</div>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Subscriber receives message</strong> either by Pub/Sub <strong style="color:#f1f5f9">pushing</strong> to an endpoint, or the subscriber <strong style="color:#f1f5f9">pulling</strong> from the service.</div>
+            </div>
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#34d399;color:#000;font-size:.8rem">5</div>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Subscriber sends Ack</strong> to Pub/Sub service for each received message.</div>
+            </div>
+            <div class="d-flex gap-3 align-items-start">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:28px;height:28px;background:#34d399;color:#000;font-size:.8rem">6</div>
+              <div class="small" style="color:#94a3b8"><strong style="color:#f1f5f9">Service removes acknowledged</strong> message from the subscription's message queue.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">Delivery Semantics &amp; Retention</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2 small" style="color:#34d399">Default: At-Least-Once</div>
+                <div class="small" style="color:#94a3b8">Pub/Sub guarantees that each message is delivered <strong style="color:#f1f5f9">at least once</strong> to each subscription. Duplicate deliveries may occur — subscribers must handle idempotency.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(251,191,36,.3)">
+                <div class="fw-bold mb-2 small" style="color:#fbbf24">7-Day Message Retention</div>
+                <div class="small" style="color:#94a3b8">If a message cannot be delivered within <strong style="color:#f1f5f9">7 days</strong>, it is deleted without delivery. If there is no subscription at the time of publication, the message will <strong style="color:#f1f5f9">not be delivered at all</strong>.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(96,165,250,.3)">
+                <div class="fw-bold mb-2 small" style="color:#60a5fa">Exactly-Once with Beam SDK</div>
+                <div class="small" style="color:#94a3b8">When Pub/Sub is used with the <strong style="color:#f1f5f9">Apache Beam SDK</strong> streaming model, it is possible to achieve Exactly-Once semantics with ordered message delivery.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 3: FUNCTION & GCLOUD ══ -->
+  <div id="tab-function" class="ch10-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">Background Function Triggered by Pub/Sub</h5>
+          <p class="small mb-3" style="color:#94a3b8">A Cloud Function that receives a Pub/Sub message, Base64-decodes the payload, and logs a personalised greeting. The message data is always Base64-encoded in the <code>PubSubMessage.getData()</code> field.</p>
+
+          <h6 class="fw-bold mb-2" style="color:#34d399">Java — HelloPubSub</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">import com.google.cloud.functions.BackgroundFunction;
+import com.google.cloud.functions.Context;
+import functions.eventpojos.PubSubMessage;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class HelloPubSub implements BackgroundFunction&lt;PubSubMessage&gt; {
+    private static final Logger logger = Logger.getLogger(HelloPubSub.class.getName());
+
+    @Override
+    public void accept(PubSubMessage message, Context context) {
+        String name = "world";
+        if (message != null &amp;&amp; message.getData() != null) {
+            // Message data is Base64-encoded; decode to get the original string
+            name = new String(
+                Base64.getDecoder().decode(
+                    message.getData().getBytes(StandardCharsets.UTF_8)),
+                StandardCharsets.UTF_8);
+        }
+        logger.info(String.format("Hello %s!", name));
+        return;
+    }
+}</pre>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2 small" style="color:#34d399">Deploy the Function</div>
+                <pre class="rounded p-2 small" style="background:#0a0b0f;color:#34d399;border:1px solid #1e293b;overflow-x:auto">gcloud functions deploy java-pubsub-function \
+    --entry-point functions.HelloPubSub \
+    --runtime java11 \
+    --memory 512MB \
+    --trigger-topic SAMPLE_TOPIC</pre>
+                <div class="small mt-2" style="color:#64748b"><code>--trigger-topic</code> creates a subscription to <code>SAMPLE_TOPIC</code> automatically and binds it to the function.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex flex-column gap-3">
+                <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                  <div class="fw-bold mb-2 small" style="color:#34d399">Create the Topic</div>
+                  <pre class="rounded p-2 small" style="background:#0a0b0f;color:#34d399;border:1px solid #1e293b;overflow-x:auto">gcloud pubsub topics create SAMPLE_TOPIC</pre>
+                </div>
+                <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                  <div class="fw-bold mb-2 small" style="color:#34d399">Publish a Test Message</div>
+                  <pre class="rounded p-2 small" style="background:#0a0b0f;color:#34d399;border:1px solid #1e293b;overflow-x:auto">gcloud pubsub topics publish SAMPLE_TOPIC \
+    --message Einstein</pre>
+                  <div class="small mt-2" style="color:#64748b">Triggers the function → logs <code>"Hello Einstein!"</code>. The function is invoked with At-Least-Once semantics.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+            <div class="fw-bold mb-2 small" style="color:#34d399">Base64 Encoding Explained</div>
+            <div class="small" style="color:#94a3b8">Pub/Sub encodes all message data as Base64 for safe transport over HTTP. The function must <strong style="color:#f1f5f9">decode</strong> the bytes using <code>Base64.getDecoder().decode()</code> and convert to a String using <code>StandardCharsets.UTF_8</code>.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 4: PUBLISHING IN JAVA ══ -->
+  <div id="tab-publish" class="ch10-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">Publishing Messages — Java API with Error Handling</h5>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2 small" style="color:#34d399">Publishing Steps</div>
+                <div class="d-flex flex-column gap-1 small" style="color:#94a3b8">
+                  <div>1. Retrieve <code>TopicName</code> from project + topic IDs</div>
+                  <div>2. Create <code>Publisher</code> instance bound to topic</div>
+                  <div>3. Build <code>PubsubMessage</code> with <code>ByteString</code> data</div>
+                  <div>4. Call <code>publisher.publish()</code> → returns <code>ApiFuture&lt;String&gt;</code></div>
+                  <div>5. Register async callback: <code>onSuccess</code> / <code>onFailure</code></div>
+                  <div>6. Shutdown publisher to free resources</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2 small" style="color:#34d399">Async Callback Pattern</div>
+                <div class="small mb-2" style="color:#94a3b8"><code>publish()</code> returns immediately with an <code>ApiFuture&lt;String&gt;</code>. The future resolves to the server-assigned <strong style="color:#f1f5f9">message ID</strong> (unique within the topic) when the broker confirms receipt.</div>
+                <div class="small" style="color:#94a3b8">Callbacks allow non-blocking error handling: check <code>ApiException.isRetryable()</code> to decide whether to retry on failure.</div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#34d399">Java — PublishWithErrorHandlerExample</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.ApiException;
+import com.google.cloud.pubsub.v1.Publisher;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.PubsubMessage;
+import com.google.pubsub.v1.TopicName;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+public class PublishWithErrorHandlerExample {
+    public static void publishWithErrorHandlerExample(String projectId, String topicId)
+            throws IOException, InterruptedException {
+
+        TopicName topicName = TopicName.of(projectId, topicId);
+        Publisher publisher = null;
+        try {
+            // Create a publisher bound to the topic
+            publisher = Publisher.newBuilder(topicName).build();
+
+            List&lt;String&gt; messages = Arrays.asList("first message", "second message");
+            for (final String message : messages) {
+                ByteString data = ByteString.copyFromUtf8(message);
+                PubsubMessage pubsubMessage =
+                    PubsubMessage.newBuilder().setData(data).build();
+
+                // publish() returns immediately; message ID arrives asynchronously
+                ApiFuture&lt;String&gt; future = publisher.publish(pubsubMessage);
+
+                // Register success / failure callbacks
+                ApiFutures.addCallback(
+                    future,
+                    new ApiFutureCallback&lt;String&gt;() {
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            if (throwable instanceof ApiException) {
+                                ApiException apiEx = (ApiException) throwable;
+                                System.out.println(apiEx.getStatusCode().getCode());
+                                System.out.println(apiEx.isRetryable()); // retry hint
+                            }
+                            System.out.println("Error publishing: " + message);
+                        }
+                        @Override
+                        public void onSuccess(String messageId) {
+                            // server-assigned ID unique within the topic
+                            System.out.println("Published message ID: " + messageId);
+                        }
+                    },
+                    MoreExecutors.directExecutor());
+            }
+        } finally {
+            if (publisher != null) {
+                publisher.shutdown();
+                publisher.awaitTermination(1, TimeUnit.MINUTES);
+            }
+        }
+    }
+}</pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB 5: SUBSCRIBING IN JAVA ══ -->
+  <div id="tab-subscribe" class="ch10-tab d-none">
+    <div class="row g-4">
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">Pull vs Push Delivery</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2" style="color:#34d399">Pull Delivery</div>
+                <div class="small mb-3" style="color:#94a3b8">The subscriber <strong style="color:#f1f5f9">explicitly requests</strong> messages from Pub/Sub. The subscriber connects to the service behind the scenes and polls for messages. Suitable for high-throughput processing where the subscriber controls the pace.</div>
+                <div class="p-2 rounded small font-monospace" style="background:#0a0b0f;border:1px solid #1e293b;color:#64748b;font-size:.7rem">
+                  Subscriber → request → Pub/Sub<br>
+                  Pub/Sub → message → Subscriber<br>
+                  Subscriber → Ack → Pub/Sub
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded h-100" style="background:#0e1014;border:1px solid rgba(96,165,250,.3)">
+                <div class="fw-bold mb-2" style="color:#60a5fa">Push Delivery</div>
+                <div class="small mb-3" style="color:#94a3b8">Pub/Sub <strong style="color:#f1f5f9">sends the message directly</strong> to the subscriber's HTTPS endpoint without waiting for a request. Suitable for event-driven architectures and Cloud Functions triggers.</div>
+                <div class="p-2 rounded small font-monospace" style="background:#0a0b0f;border:1px solid #1e293b;color:#64748b;font-size:.7rem">
+                  Pub/Sub → POST to endpoint → Subscriber<br>
+                  Subscriber → HTTP 200 → Pub/Sub (= Ack)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-4 rounded" style="background:#13141a;border:1px solid rgba(52,211,153,.25)">
+          <h5 class="fw-bold mb-3" style="color:#34d399">Async Pull Subscriber — Java API</h5>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2 small" style="color:#34d399">Subscribing Steps</div>
+                <div class="d-flex flex-column gap-1 small" style="color:#94a3b8">
+                  <div>1. Build <code>ProjectSubscriptionName</code> from project + subscription IDs</div>
+                  <div>2. Create <code>MessageReceiver</code> lambda: process message + call <code>consumer.ack()</code></div>
+                  <div>3. Build <code>Subscriber</code> with subscription name + receiver</div>
+                  <div>4. <code>subscriber.startAsync().awaitRunning()</code> — starts pull loop</div>
+                  <div>5. Run until timeout or error, then <code>stopAsync()</code></div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid rgba(52,211,153,.3)">
+                <div class="fw-bold mb-2 small" style="color:#34d399">MessageReceiver Lambda</div>
+                <div class="small mb-2" style="color:#94a3b8">Activated for <strong style="color:#f1f5f9">every received message</strong>. Two parameters:</div>
+                <div class="small" style="color:#94a3b8">
+                  <div class="mb-1"><code style="color:#34d399">PubsubMessage message</code> — the received message; use <code>getMessageId()</code> and <code>getData().toStringUtf8()</code></div>
+                  <div><code style="color:#34d399">AckReplyConsumer consumer</code> — call <code>consumer.ack()</code> to acknowledge; un-acked messages are redelivered</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2" style="color:#34d399">Java — SubscribeAsyncExample (Pull)</h6>
+          <pre class="rounded p-3 small" style="background:#0a0b0f;color:#e2e8f0;border:1px solid #1e293b;overflow-x:auto">import com.google.cloud.pubsub.v1.AckReplyConsumer;
+import com.google.cloud.pubsub.v1.MessageReceiver;
+import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.pubsub.v1.ProjectSubscriptionName;
+import com.google.pubsub.v1.PubsubMessage;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+public class SubscribeAsyncExample {
+    public static void subscribeAsyncExample(String projectId, String subscriptionId) {
+        ProjectSubscriptionName subscriptionName =
+            ProjectSubscriptionName.of(projectId, subscriptionId);
+
+        // Lambda-based MessageReceiver: called for each incoming message
+        MessageReceiver receiver =
+            (PubsubMessage message, AckReplyConsumer consumer) -&gt; {
+                System.out.println("Id: "   + message.getMessageId());
+                System.out.println("Data: " + message.getData().toStringUtf8());
+                consumer.ack();  // acknowledge — removes from subscription queue
+            };
+
+        Subscriber subscriber = null;
+        try {
+            subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
+            subscriber.startAsync().awaitRunning();
+            System.out.printf("Listening for messages on %s:\n",
+                subscriptionName.toString());
+            // Run for 30 seconds (unrecoverable errors exit earlier)
+            subscriber.awaitTerminated(30, TimeUnit.SECONDS);
+        } catch (TimeoutException timeoutException) {
+            // Normal shutdown after the 30s window
+            subscriber.stopAsync();
+        }
+    }
+}</pre>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#34d399">Ack Importance</div>
+                <div class="small" style="color:#94a3b8">If <code>consumer.ack()</code> is NOT called, Pub/Sub will <strong style="color:#f1f5f9">redeliver</strong> the message (At-Least-Once semantics). The message persists in the subscription queue until acknowledged or the 7-day TTL expires.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded" style="background:#0e1014;border:1px solid #1e293b">
+                <div class="fw-bold mb-2 small" style="color:#34d399">startAsync Pattern</div>
+                <div class="small" style="color:#94a3b8"><code>startAsync().awaitRunning()</code> starts the subscriber as an asynchronous service (Guava ServiceManager pattern). The subscriber connects to Pub/Sub behind the scenes and continuously polls for messages.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<style>
+.ch10-nav-link { background:#13141a; color:#94a3b8; border:1px solid rgba(52,211,153,.25); transition:all .2s; }
+.ch10-nav-link:hover { background:rgba(52,211,153,.15); color:#f1f5f9; }
+.ch10-nav-link.active { background:#34d399 !important; color:#000 !important; font-weight:600; }
+</style>
+
+<script>
+function showTab(id, el) {
+    document.querySelectorAll('.ch10-tab').forEach(function(t){ t.classList.add('d-none'); });
+    document.querySelectorAll('.ch10-nav-link').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById(id).classList.remove('d-none');
+    el.classList.add('active');
+}
+(function(){
+    var h = location.hash.slice(1);
+    if (h) {
+        var btn = document.querySelector('.ch10-nav-link[onclick*="' + h + '"]');
+        if (btn) btn.click();
+    }
+})();
+</script>
+{% endblock %}

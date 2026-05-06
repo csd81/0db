@@ -1,0 +1,518 @@
+{% extends "base.html" %}
+{% block title %}Data Quality & Functional Dependency{% endblock %}
+
+{% block content %}
+<style>
+  .fd-number { font-size:2.8rem; font-weight:800; letter-spacing:-.04em; line-height:1; }
+  .fd-label  { font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:#5a6070; margin-top:.2rem; }
+  .fd-op     { font-size:2rem; color:#5a6070; align-self:center; }
+  .verdict-banner { border-radius:.4rem; padding:.6rem 1rem; font-size:.8rem; font-weight:600; }
+  .chip { display:inline-block; padding:.2rem .55rem; border-radius:3rem; font-size:.62rem; font-weight:600;
+          cursor:pointer; border:1px solid; transition:all .15s; user-select:none; }
+  .chip:hover { filter:brightness(1.25); }
+  .bar-row  { display:flex; align-items:center; gap:.5rem; margin-bottom:.25rem; font-size:.63rem; }
+  .bar-bg   { flex:1; height:10px; background:#1a1d26; border-radius:3px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+  .sql-box  { font-size:.62rem; background:#060809; border:1px solid #1e2028; border-radius:.3rem;
+              padding:.45rem .7rem; color:#9cdcfe; overflow-x:auto; white-space:pre; }
+  .state-pill { display:inline-flex; align-items:center; gap:.35rem; padding:.2rem .55rem;
+                border-radius:.25rem; font-size:.67rem; font-weight:600; }
+  .tbl-sm  { font-size:.67rem; }
+  .tbl-sm td, .tbl-sm th { padding:.2rem .45rem !important; }
+  .section-label { font-size:.65rem; text-transform:uppercase; letter-spacing:.12em;
+                   color:#5a6070; font-weight:700; margin-bottom:.6rem; }
+  .quick-chip-dep  { color:#06d6a0; border-color:#06d6a0; background:rgba(6,214,160,.07); }
+  .quick-chip-dep:hover  { background:rgba(6,214,160,.18); }
+  .quick-chip-not  { color:#e9c46a; border-color:#e9c46a; background:rgba(233,196,106,.07); }
+  .quick-chip-not:hover  { background:rgba(233,196,106,.18); }
+  .quick-chip-prac { color:#8338ec; border-color:#8338ec; background:rgba(131,56,236,.07); }
+  .quick-chip-prac:hover { background:rgba(131,56,236,.18); }
+</style>
+
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold me-auto">Data Quality &amp; Functional Dependency</h2>
+  <span class="badge" style="background:#1e2028;color:#8338ec;font-size:.7rem;border:1px solid #8338ec">
+    Chapter 4 — AdventureWorksDW2019
+  </span>
+</div>
+
+<div class="row g-3 mb-4">
+
+  <!-- ══════════════════════ LEFT — FD ANALYZER ══════════════════════ -->
+  <div class="col-lg-7">
+
+    <!-- Technique explanation -->
+    <div class="card mb-3" style="background:#080a10;border:1px solid #1e2028">
+      <div class="card-body py-2 px-3">
+        <div class="section-label"><i class="bi bi-search me-1"></i>Technique — GROUP BY double-count</div>
+        <div style="font-size:.71rem;color:#8892a4;line-height:1.55">
+          To test whether column <strong style="color:#e9c46a">B</strong> is functionally dependent on
+          column <strong style="color:#06d6a0">A</strong> (i.e. knowing A always tells you B), run two queries:
+          group by <em>A alone</em> → count groups (<strong style="color:#06d6a0">N</strong>), then group by
+          <em>A + B together</em> → count groups (<strong style="color:#e9c46a">M</strong>).
+          If <strong style="color:#06d6a0">N</strong> = <strong style="color:#e9c46a">M</strong> the pairing never splits —
+          B is likely functionally dependent on A.
+          A hidden FD can indicate an unmodelled business rule and a potential 3NF violation (transitive dependency).
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick examples from c4.md -->
+    <div class="mb-3">
+      <div class="section-label">Quick examples from c4.md</div>
+      <div class="d-flex flex-wrap gap-2">
+        <span class="chip quick-chip-dep"
+              data-t="DimSalesReason" data-a="SalesReasonName" data-b="SalesReasonReasonType"
+              onclick="loadChip(this)">
+          DimSalesReason: Name → Type <span style="opacity:.6">✓ dep</span>
+        </span>
+        <span class="chip quick-chip-dep"
+              data-t="DimGeography" data-a="StateProvinceCode" data-b="CountryRegionCode"
+              onclick="loadChip(this)">
+          StateProvinceCode → CountryRegionCode <span style="opacity:.6">✓ dep</span>
+        </span>
+        <span class="chip quick-chip-dep"
+              data-t="DimGeography" data-a="StateProvinceCode" data-b="StateProvinceName"
+              onclick="loadChip(this)">
+          StateProvinceCode → StateProvinceName <span style="opacity:.6">✓ dep</span>
+        </span>
+        <span class="chip quick-chip-not"
+              data-t="DimProduct" data-a="ProductLine" data-b="Color"
+              onclick="loadChip(this)">
+          ProductLine → Color <span style="opacity:.6">✗ no dep</span>
+        </span>
+        <span class="chip quick-chip-not"
+              data-t="DimProduct" data-a="Color" data-b="ProductLine"
+              onclick="loadChip(this)">
+          Color → ProductLine <span style="opacity:.6">✗ no dep</span>
+        </span>
+        <span class="chip quick-chip-prac"
+              data-t="DimCustomer" data-a="EnglishEducation" data-b="EnglishOccupation"
+              onclick="loadChip(this)">
+          Education → Occupation <span style="opacity:.6">practice</span>
+        </span>
+        <span class="chip quick-chip-prac"
+              data-t="DimEmployee" data-a="SalesTerritoryKey" data-b="Gender"
+              onclick="loadChip(this)">
+          SalesTerritoryKey → Gender <span style="opacity:.6">practice</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Analyzer form -->
+    <div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+      <div class="card-body py-3 px-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small mb-1" style="color:#8892a4">Table</label>
+            <select id="sel-table" class="form-select form-select-sm" style="background:#13141a;color:#e2e8f0;border-color:#2a2d3a" onchange="onTableChange()">
+              {% for t, cols in schema.items() %}
+              <option value="{{ t }}">{{ t }} ({{ row_counts[t] }} rows)</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small mb-1" style="color:#06d6a0">Col A — determining</label>
+            <select id="sel-cola" class="form-select form-select-sm" style="background:#13141a;color:#06d6a0;border-color:#06d6a0"></select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small mb-1" style="color:#e9c46a">Col B — dependent?</label>
+            <select id="sel-colb" class="form-select form-select-sm" style="background:#13141a;color:#e9c46a;border-color:#e9c46a"></select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-sm w-100 fw-semibold" style="background:#8338ec;color:#fff;border:none"
+                    onclick="runFD()">
+              <i class="bi bi-play-fill me-1"></i>Analyze
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results panel (hidden until run) -->
+    <div id="fd-results" class="d-none">
+
+      <!-- N / op / M comparison -->
+      <div class="card mb-3" style="background:#080a10;border:1px solid #1e2028">
+        <div class="card-body py-3 px-3">
+          <div class="d-flex justify-content-center align-items-center gap-4 mb-3">
+            <div class="text-center">
+              <div class="fd-number" id="res-n" style="color:#06d6a0">—</div>
+              <div class="fd-label" id="res-n-label">groups — col A alone</div>
+            </div>
+            <div class="fd-op" id="res-op" style="color:#5a6070">?</div>
+            <div class="text-center">
+              <div class="fd-number" id="res-m" style="color:#e9c46a">—</div>
+              <div class="fd-label" id="res-m-label">groups — col A + B</div>
+            </div>
+          </div>
+          <div id="res-verdict" class="verdict-banner text-center mb-2"></div>
+          <div id="res-meta" style="font-size:.63rem;color:#5a6070;text-align:center"></div>
+        </div>
+      </div>
+
+      <!-- SQL that was run -->
+      <div class="mb-3">
+        <div class="section-label">Queries executed</div>
+        <pre id="res-sql" class="sql-box"></pre>
+      </div>
+
+      <!-- Sample data table -->
+      <div>
+        <div class="section-label">Sample — top 15 group combinations</div>
+        <div style="overflow-x:auto;max-height:220px;overflow-y:auto">
+          <table class="table table-sm table-bordered tbl-sm mb-0" style="background:transparent">
+            <thead class="table-dark" style="position:sticky;top:0">
+              <tr>
+                <th id="th-a" style="color:#06d6a0">Col A</th>
+                <th id="th-b" style="color:#e9c46a">Col B</th>
+                <th style="color:#adb5bd">Row count</th>
+              </tr>
+            </thead>
+            <tbody id="res-sample"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════ RIGHT — COLUMN PROFILER ══════════════════════ -->
+  <div class="col-lg-5">
+
+    <div id="profiler" class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+      <div class="card-header py-2 px-3 small fw-semibold" style="color:#457b9d;background:#0a0c14;border-bottom:1px solid #1e2028">
+        <i class="bi bi-bar-chart-line me-1"></i>Column Profiler — completeness &amp; distribution
+      </div>
+      <div class="card-body py-2 px-3">
+        <div class="row g-2 mb-2 align-items-end">
+          <div class="col-7">
+            <label class="form-label small mb-1" style="color:#8892a4">Column</label>
+            <select id="prof-col" class="form-select form-select-sm" style="background:#13141a;color:#e2e8f0;border-color:#2a2d3a"></select>
+          </div>
+          <div class="col-5">
+            <button class="btn btn-sm w-100" style="background:#457b9d;color:#fff;border:none"
+                    onclick="runProfile()">
+              <i class="bi bi-pie-chart me-1"></i>Profile
+            </button>
+          </div>
+        </div>
+
+        <div id="prof-results" class="d-none">
+          <div class="d-flex gap-2 mb-2">
+            <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .55rem;text-align:center">
+              <div style="font-size:1.3rem;font-weight:700;color:#e2e8f0" id="prof-total">—</div>
+              <div style="font-size:.58rem;color:#5a6070;text-transform:uppercase;letter-spacing:.08em">total rows</div>
+            </div>
+            <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .55rem;text-align:center">
+              <div style="font-size:1.3rem;font-weight:700" id="prof-null-pct">—</div>
+              <div style="font-size:.58rem;color:#5a6070;text-transform:uppercase;letter-spacing:.08em">null %</div>
+            </div>
+            <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .55rem;text-align:center">
+              <div style="font-size:1.3rem;font-weight:700;color:#8338ec" id="prof-distinct">—</div>
+              <div style="font-size:.58rem;color:#5a6070;text-transform:uppercase;letter-spacing:.08em">distinct</div>
+            </div>
+          </div>
+          <div class="section-label">Top values by frequency</div>
+          <div id="prof-bars"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Schema reference -->
+    <div class="card" style="background:#0d0f16;border:1px solid #1e2028">
+      <div class="card-header py-2 px-3 small fw-semibold" style="color:#8892a4;background:#0a0c14;border-bottom:1px solid #1e2028">
+        <i class="bi bi-table me-1"></i>AdventureWorksDW2019 — available columns
+      </div>
+      <div class="card-body py-2 px-3" style="max-height:320px;overflow-y:auto">
+        {% for table, cols in schema.items() %}
+        <div class="mb-2">
+          <div style="font-size:.65rem;font-weight:700;color:#e9c46a;margin-bottom:.25rem">
+            {{ table }}
+            <span style="font-weight:400;color:#5a6070">({{ row_counts[table] }} rows)</span>
+          </div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for col in cols %}
+            <span style="font-size:.6rem;background:#1a1d26;border:1px solid #2a2d3a;border-radius:.2rem;padding:.1rem .35rem;color:#8892a4">{{ col }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════ DQS ARCHITECTURE SECTION ══════════════════════ -->
+<span id="dqs-arch"></span>
+
+<hr style="border-color:#1e2028;margin:1.5rem 0">
+
+<div class="section-label"><i class="bi bi-shield-check me-1"></i>SQL Server Data Quality Services (DQS) — Architecture &amp; Workflow</div>
+
+<div class="d-flex gap-2 mb-3 align-items-stretch flex-wrap">
+  <div style="flex:1;min-width:200px;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Three DQS Databases</strong><br>
+    <strong style="color:#06d6a0">DQS_MAIN</strong> — the engine: stored procedures, Knowledge Bases, reference value sets.
+    Roles: <code>dqs_administrator</code>, <code>dqs_kb_editor</code>, <code>dqs_kb_operator</code>.<br>
+    <strong style="color:#8338ec">DQS_PROJECTS</strong> — state of all active cleansing and matching projects.<br>
+    <strong style="color:#457b9d">DQS_STAGING_DATA</strong> — temporary storage for data being cleaned and its results.
+    Custom views like <code>vi_places</code> are created here to feed Knowledge Discovery.
+  </div>
+  <div style="flex:1;min-width:200px;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Knowledge Base Structure</strong><br>
+    A <strong>KB</strong> contains one or more <strong>Domains</strong>.
+    Each domain is defined by:<br>
+    • Name &amp; data type (e.g. string)<br>
+    • Normalisation rules (uppercase, trim)<br>
+    • <strong>Domain values</strong> — leading value + synonyms (e.g. <em>Mühlheim</em> ← Muehlheim)<br>
+    • <strong>Domain rules</strong> — like CHECK constraints (e.g. BirthDate &gt; 1920-01-01)<br>
+    • <strong>Term-based relations</strong> — substring replacements (e.g. <code>Ltd.</code> → <code>Limited Company</code>)<br>
+    <strong>Composite domains</strong> link semantically related fields (City + State + Country).
+  </div>
+  <div style="flex:1;min-width:200px;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Cleansing Result States</strong><br>
+    After a cleansing project runs, each value lands in one of five states:<br>
+    <span class="state-pill mt-1" style="background:rgba(6,214,160,.12);color:#06d6a0">✓ Correct</span> — found exactly in domain values<br>
+    <span class="state-pill" style="background:rgba(69,123,157,.12);color:#457b9d">↻ Corrected</span> — auto-fixed (similarity &gt; Min Score for Auto Correction)<br>
+    <span class="state-pill" style="background:rgba(233,196,106,.12);color:#e9c46a">? Suggested</span> — similar match found, awaits approval<br>
+    <span class="state-pill" style="background:rgba(131,56,236,.12);color:#8338ec">+ New</span> — conforms to domain rules but not in value set<br>
+    <span class="state-pill" style="background:rgba(239,68,68,.12);color:#ef4444">✗ Invalid</span> — violates a domain rule
+  </div>
+  <div style="flex:1;min-width:200px;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Two Project Types</strong><br>
+    <strong style="color:#06d6a0">Basic cleansing</strong> — corrects individual field values using a KB domain.
+    Min Score for Suggestions must be &lt; Min Score for Auto Correction.<br><br>
+    <strong style="color:#8338ec">Identity mapping / de-duplication</strong> — identifies duplicate records using
+    configurable distance measures. Not covered in this course.<br><br>
+    Pre-installed KBs: <em>Country/Region</em>, <em>US-Counties</em>, <em>US-Last Names</em>.
+    Demo: cleaned 18,484 LastName values in DimCustomer — 100% completeness, 98% accuracy.
+  </div>
+</div>
+
+<!-- vi_places scenario + SQL -->
+<div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 px-3 small fw-semibold" style="color:#06d6a0;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-book me-1"></i>Demo scenario — building a custom <code>places</code> Knowledge Base
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-5">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">
+        <strong style="color:#e9c46a">Goal</strong><br>
+        Build a custom KB from the geographic data already in AdventureWorksDW2019.
+        The view <code>vi_places</code> in <code>DQS_STAGING_DATA</code> exposes City, StateProvince and CountryRegion as a clean source for Knowledge Discovery.
+      </div>
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">
+        <strong style="color:#06d6a0">Steps after view creation</strong>
+      </div>
+      <ol style="font-size:.65rem;color:#8892a4;padding-left:1.1rem;margin:0">
+        <li>Create KB <code>places</code> → Knowledge Discovery from <code>vi_places</code></li>
+        <li>Create domains: <code>cities_domain</code>, <code>countryregion_domain</code></li>
+        <li>Manual correction: set <em>Muehlheim</em> → Error, correct to <strong style="color:#e9c46a">Mühlheim</strong></li>
+        <li>Add domain <code>birth_domain</code> with rule: value &gt; 1920-01-01</li>
+        <li>Publish KB, export as <code>places.dqs</code></li>
+        <li>Create <code>test_customer</code> from DimCustomer ⨝ DimGeography</li>
+        <li>Run cleansing project — verify Muehlheim correction + Piripócs = <em>New</em></li>
+      </ol>
+    </div>
+    <div class="col-md-7">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">View definition (run on <code>DQS_STAGING_DATA</code>):</div>
+      <pre class="sql-box"><span style="color:#457b9d">USE</span> DQS_STAGING_DATA;
+<span style="color:#457b9d">GO</span>
+
+<span style="color:#457b9d">CREATE VIEW</span> vi_places <span style="color:#457b9d">AS</span>
+<span style="color:#457b9d">SELECT DISTINCT</span>
+    City,
+    StateProvinceName  <span style="color:#457b9d">AS</span> StateProvince,
+    EnglishCountryRegionName <span style="color:#457b9d">AS</span> CountryRegion
+<span style="color:#457b9d">FROM</span> AdventureWorksDW2019.dbo.DimGeography;
+<span style="color:#457b9d">GO</span>
+
+<span style="color:#5a6070">-- DQS client: Server = WIN-MTFQ8CJAV81\PRIM
+-- KB: places | Source: vi_places
+-- Domains: cities_domain  ←  City
+--          countryregion_domain  ←  EnglishCountryRegionName
+-- Manual: Muehlheim → set Error, correct to Mühlheim (then press Enter)</span></pre>
+      <div style="font-size:.63rem;color:#e74c3c;margin-top:.4rem;border:1px solid rgba(231,76,60,.3);border-radius:.3rem;padding:.35rem .55rem">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        <strong>Known DQS bug</strong> — if <em>"Parallel processing task failed"</em> appears during pre-processing,
+        set the <strong>ON DELETE</strong> action of FK
+        <code>B_INDEX_LEXICON_EXTENSION_B_INDEX_LEXICON_FK</code>
+        in <code>DQS_PROJECTS</code> to <strong>CASCADE</strong> via SSMS Modify keys.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Data profiling note -->
+<div class="d-flex gap-2 mb-2 align-items-stretch">
+  <div style="flex:2;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Data Profiling (automated)</strong><br>
+    Profiling goes beyond manual GROUP BY queries: it automatically computes null ratios, value distributions,
+    candidate keys, regex patterns, and potential foreign keys across all columns of a table.
+    In SQL Server, the <strong>SSIS Data Profiling Task</strong> saves results as XML (reviewed in the Data Profile Viewer).
+    The interactive Column Profiler above implements a lightweight subset of this for live exploration.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">MDM vs DQ</strong><br>
+    <strong>Data Quality (DQ)</strong> improves existing data (correct, deduplicate, standardise).<br>
+    <strong>Master Data Management (MDM)</strong> establishes a single authoritative source for key business entities
+    (customers, products, employees) across all systems — requiring a <em>Data Governance</em> framework and
+    <em>Data Stewards</em> responsible for specific data domains. MDM solutions are not covered in this course.
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SCHEMA = {{ schema | tojson }};
+
+function populateCols(table) {
+  const cols = SCHEMA[table] || [];
+  ['sel-cola','sel-colb','prof-col'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
+  });
+  // default col B to second option
+  const colb = document.getElementById('sel-colb');
+  if (colb.options.length > 1) colb.selectedIndex = 1;
+}
+
+function onTableChange() {
+  const t = document.getElementById('sel-table').value;
+  populateCols(t);
+}
+
+function loadChip(el) {
+  const t = el.dataset.t, a = el.dataset.a, b = el.dataset.b;
+  document.getElementById('sel-table').value = t;
+  populateCols(t);
+  document.getElementById('sel-cola').value = a;
+  document.getElementById('sel-colb').value = b;
+  document.getElementById('prof-col').value = a;
+  runFD();
+}
+
+async function runFD() {
+  const table = document.getElementById('sel-table').value;
+  const col_a = document.getElementById('sel-cola').value;
+  const col_b = document.getElementById('sel-colb').value;
+  if (!table || !col_a || !col_b) return;
+
+  document.getElementById('fd-results').classList.remove('d-none');
+  document.getElementById('res-n').textContent = '…';
+  document.getElementById('res-m').textContent = '…';
+  document.getElementById('res-op').textContent = '?';
+  document.getElementById('res-verdict').textContent = 'Analyzing…';
+  document.getElementById('res-verdict').style.cssText = 'background:#1a1d26;color:#5a6070';
+  document.getElementById('res-meta').textContent = '';
+  document.getElementById('res-sample').innerHTML = '<tr><td colspan="3" class="text-center text-muted py-2">Loading…</td></tr>';
+
+  const resp = await fetch('{{ url_for("demos.data_quality_check_fd") }}', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({table, col_a, col_b})
+  });
+  const d = await resp.json();
+  if (!d.ok) {
+    document.getElementById('res-verdict').textContent = 'Error: ' + d.error;
+    document.getElementById('res-verdict').style.cssText = 'background:rgba(239,68,68,.15);color:#ef4444';
+    return;
+  }
+
+  document.getElementById('res-n').textContent = d.n_alone;
+  document.getElementById('res-n').style.color = '#06d6a0';
+  document.getElementById('res-n-label').textContent = `distinct ${col_a} values`;
+  document.getElementById('res-m').textContent = d.m_combined;
+  document.getElementById('res-m').style.color = '#e9c46a';
+  document.getElementById('res-m-label').textContent = `distinct (${col_a}, ${col_b}) pairs`;
+
+  const eq = d.n_alone === d.m_combined;
+  document.getElementById('res-op').textContent = eq ? '=' : '≠';
+  document.getElementById('res-op').style.color = eq ? '#06d6a0' : '#e9c46a';
+
+  const vEl = document.getElementById('res-verdict');
+  if (eq) {
+    vEl.textContent = `✓  LIKELY DEPENDENT — knowing ${col_a} uniquely determines ${col_b}`;
+    vEl.style.cssText = 'background:rgba(6,214,160,.12);color:#06d6a0;border:1px solid rgba(6,214,160,.3)';
+  } else {
+    const delta = d.m_combined - d.n_alone;
+    vEl.textContent = `✗  NO FUNCTIONAL DEPENDENCY — ${col_b} has ${delta} extra groups beyond ${col_a}`;
+    vEl.style.cssText = 'background:rgba(233,196,106,.12);color:#e9c46a;border:1px solid rgba(233,196,106,.3)';
+  }
+
+  const nullNote = (d.null_a || d.null_b)
+    ? ` · ${d.null_a} null in A, ${d.null_b} null in B (excluded from analysis)`
+    : ' · no nulls in either column';
+  document.getElementById('res-meta').textContent =
+    `Table: ${table} · ${d.total.toLocaleString()} total rows${nullNote}`;
+
+  // SQL
+  document.getElementById('res-sql').innerHTML =
+`<span style="color:#5a6070">-- N: distinct ${col_a} values (groups by A alone)</span>
+<span style="color:#457b9d">SELECT COUNT</span>(<span style="color:#457b9d">DISTINCT</span> [${col_a}]) <span style="color:#457b9d">FROM</span> [${table}];  <span style="color:#5a6070">-- = ${d.n_alone}</span>
+
+<span style="color:#5a6070">-- M: distinct (${col_a}, ${col_b}) pairs (groups by A + B)</span>
+<span style="color:#457b9d">SELECT COUNT</span>(*) <span style="color:#457b9d">FROM</span> (
+    <span style="color:#457b9d">SELECT DISTINCT</span> [${col_a}], [${col_b}] <span style="color:#457b9d">FROM</span> [${table}]
+) t;  <span style="color:#5a6070">-- = ${d.m_combined}</span>
+
+<span style="color:#5a6070">-- N ${eq ? '=' : '≠'} M  →  ${eq ? 'likely FD' : 'no FD'}</span>`;
+
+  // Headings
+  document.getElementById('th-a').textContent = col_a;
+  document.getElementById('th-b').textContent = col_b;
+
+  // Sample rows
+  const tbody = document.getElementById('res-sample');
+  if (d.samples.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-2">No data</td></tr>';
+  } else {
+    tbody.innerHTML = d.samples.map(r =>
+      `<tr><td style="color:#cdd3de">${r.a ?? '<null>'}</td><td style="color:#cdd3de">${r.b ?? '<null>'}</td><td style="color:#5a6070">${r.cnt}</td></tr>`
+    ).join('');
+  }
+}
+
+async function runProfile() {
+  const table  = document.getElementById('sel-table').value;
+  const column = document.getElementById('prof-col').value;
+  if (!table || !column) return;
+
+  const resp = await fetch('{{ url_for("demos.data_quality_profile") }}', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({table, column})
+  });
+  const d = await resp.json();
+  if (!d.ok) { alert(d.error); return; }
+
+  document.getElementById('prof-results').classList.remove('d-none');
+  document.getElementById('prof-total').textContent = d.total.toLocaleString();
+  const nullEl = document.getElementById('prof-null-pct');
+  nullEl.textContent = d.null_pct + '%';
+  nullEl.style.color = d.null_pct > 10 ? '#ef4444' : d.null_pct > 0 ? '#e9c46a' : '#06d6a0';
+  document.getElementById('prof-distinct').textContent = d.distinct_count.toLocaleString();
+
+  const maxCnt = Math.max(...d.top_values.map(v => v.cnt), 1);
+  document.getElementById('prof-bars').innerHTML = d.top_values.map(v => {
+    const pct = Math.round(100 * v.cnt / maxCnt);
+    const rowPct = (100 * v.cnt / d.total).toFixed(1);
+    return `<div class="bar-row">
+      <div style="width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cdd3de" title="${v.val}">${v.val ?? '(null)'}</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:#8338ec"></div></div>
+      <div style="width:55px;text-align:right;color:#5a6070">${v.cnt.toLocaleString()} <span style="color:#3a3d50">(${rowPct}%)</span></div>
+    </div>`;
+  }).join('');
+}
+
+// Init on load
+populateCols(document.getElementById('sel-table').value);
+</script>
+{% endblock %}

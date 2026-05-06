@@ -236,6 +236,57 @@
   </div>
 </div>
 
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#06d6a0;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-book me-1"></i>Northwind Lab Scenario — Snapshot: USA Orders
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">
+        <strong style="color:#e9c46a">Scenario</strong><br>
+        Replicate only American customer orders from the <code>northwind</code> database on <strong style="color:#06d6a0">PRIM</strong>
+        into a reporting database <code>nw_repl</code> (also on PRIM) — refreshed overnight via snapshot replication.
+        Three named SQL Server instances are used: <strong style="color:#06d6a0">PRIM</strong> (publisher + distributor),
+        <strong style="color:#8338ec">SECOND</strong>, <strong style="color:#457b9d">THIRD</strong>.
+      </div>
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">
+        <strong style="color:#e9c46a">Setup fix — database owner</strong><br>
+        After restoring Northwind you may hit: <em>"Cannot execute as the database principal because the principal 'dbo' does not exist"</em>.
+        Fix it with:
+      </div>
+      <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#457b9d">EXEC</span> sp_changedbowner <span style="color:#06d6a0">'sa'</span>;
+<span style="color:#457b9d">ALTER AUTHORIZATION ON DATABASE</span>::northwind <span style="color:#457b9d">TO</span> sa;</pre>
+      <div style="font-size:.64rem;color:#e74c3c;margin-top:.4rem">
+        <i class="bi bi-exclamation-triangle me-1"></i><strong>Table-lock warning:</strong>
+        The Snapshot Agent runs <code>bcp</code> which places a <strong>shared lock on the entire table</strong> for the duration of the copy.
+        In production, schedule snapshots out of business hours to avoid blocking OLTP transactions.
+        In the lab demo the agent is set to run every 2 minutes — only for test purposes.
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem"><strong style="color:#8338ec">Article filter SQL — Orders WHERE ShipCountry = 'USA'</strong></div>
+      <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- Entered in the "Filter table rows" wizard panel:</span>
+<span style="color:#457b9d">SELECT</span> &lt;published_columns&gt; <span style="color:#457b9d">FROM</span> [dbo].[Orders]
+<span style="color:#457b9d">WHERE</span> ShipCountry = <span style="color:#06d6a0">'USA'</span></pre>
+      <div style="font-size:.68rem;color:#8892a4;margin-top:.5rem;margin-bottom:.3rem"><strong style="color:#e9c46a">BCP snapshot files generated per article</strong></div>
+      <table class="table table-sm mb-0" style="font-size:.64rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>File</th><th>Contents</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td><code>Orders_2.bcp</code></td><td>Bulk-copy data file — actual row data</td></tr>
+          <tr><td><code>Orders_2.idx</code></td><td>Index recreation script</td></tr>
+          <tr><td><code>Orders_2.pre</code></td><td>Pre-snapshot script (drop constraints etc.)</td></tr>
+          <tr><td><code>Orders_2.sch</code></td><td>Schema script — CREATE TABLE DDL</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.63rem;color:#5a6070;margin-top:.3rem">
+        Stored in: <code>C:\Program Files\Microsoft SQL Server\MSSQL14.PRIM\MSSQL\ReplData\</code><br>
+        The Distribution Agent applies these files at the Subscriber via <code>TRUNCATE + BULK INSERT</code>.
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
