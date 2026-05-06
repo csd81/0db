@@ -1201,3 +1201,8 @@ def i40_spacex():
 @login_required
 def i40_xai():
     return render_template('demos/i40_xai.html')
+
+@demos_bp.route('/data/paradigm')
+@login_required
+def data_paradigm():
+    return render_template('demos/data_paradigm.html')
