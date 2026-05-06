@@ -1,51 +1,65 @@
 {% extends "base.html" %}
-{% block title %}Login – Northwind CC{% endblock %}
+{% block title %}Sign In — Northwind CC{% endblock %}
 {% block content %}
-<div class="row justify-content-center mt-5">
-  <div class="col-sm-10 col-md-6 col-lg-4">
-    <div class="card">
-      <div class="card-header text-center">
-        <i class="bi bi-database-lock fs-3 text-primary"></i>
-        <h5 class="mt-2 mb-0">Northwind Control Center</h5>
-        <div class="text-muted small mt-1">
-          Signing in to <code>instance/meta.db</code>
-        </div>
+
+<div class="login-wrap">
+  <div class="login-card">
+
+    <div class="login-card-header">
+      <div class="login-logo">
+        <i class="bi bi-database-fill"></i>
       </div>
-      <div class="card-body">
-        {% if error %}
-        <div class="alert alert-danger py-2">{{ error }}</div>
-        {% endif %}
-        <form method="post">
-          <div class="mb-3">
-            <label class="form-label small">Username</label>
-            <input type="text" name="username" class="form-control" autofocus autocomplete="username">
-          </div>
-          <div class="mb-3">
-            <label class="form-label small">Password</label>
-            <input type="password" name="password" class="form-control" autocomplete="current-password">
-          </div>
-          <div class="mb-3">
-            <label class="form-label small">Connect to</label>
-            <select name="active_conn_id" class="form-select">
-              {% for c in connections %}
-              <option value="{{ c.id }}">
-                {{ c.name }}
-                {% if c.db_type == 'sqlserver' %}[SQL Server]
-                {% elif c.db_type == 'sqlite' %}[SQLite]
-                {% elif c.db_type == 'postgresql' %}[PostgreSQL]
-                {% elif c.db_type == 'mysql' %}[MySQL]
-                {% else %}[{{ c.db_type }}]{% endif %}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">
-            <i class="bi bi-box-arrow-in-right"></i> Sign In
-          </button>
-        </form>
-      </div>
+      <h1 class="login-title">Northwind Control Center</h1>
+      <p class="login-subtitle">Sign in to access the platform</p>
     </div>
-    <p class="text-center text-muted small mt-3">Default: admin / admin</p>
+
+    <div class="login-card-body">
+      {% if error %}
+      <div class="alert alert-danger py-2 mb-4">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-control" autofocus autocomplete="username"
+                 placeholder="Enter username">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" autocomplete="current-password"
+                 placeholder="Enter password">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">Connection</label>
+          <select name="active_conn_id" class="form-select">
+            {% for c in connections %}
+            <option value="{{ c.id }}">
+              {{ c.name }}
+              {% if c.db_type == 'sqlserver' %}[SQL Server]
+              {% elif c.db_type == 'sqlite' %}[SQLite]
+              {% elif c.db_type == 'postgresql' %}[PostgreSQL]
+              {% elif c.db_type == 'mysql' %}[MySQL]
+              {% else %}[{{ c.db_type }}]{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="padding:.55rem;font-size:.83rem">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+        </button>
+      </form>
+
+      <p class="login-hint">
+        <i class="bi bi-key me-1"></i> Default credentials: <code style="color:#818cf8">admin / admin</code>
+      </p>
+    </div>
+
   </div>
 </div>
+
 {% endblock %}
