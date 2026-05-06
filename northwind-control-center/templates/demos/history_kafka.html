@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% block title %}Kafka — The Distributed Commit Log{% endblock %}
+{% block content %}
+<style>
+:root { --a: #e34234; --ok: #00d4aa; }
+.hero-grad { background: linear-gradient(160deg, rgba(227,66,52,.1), rgba(0,100,150,.06), #0e1014); }
+.problem-card { background:#1a0808; border:1px solid rgba(227,66,52,.35); border-radius:8px; }
+.solution-card { background:#081418; border:1px solid rgba(0,212,170,.35); border-radius:8px; }
+.insight-box { background:#111418; border-left:4px solid var(--a); border-radius:0 6px 6px 0; }
+.era-badge { background:rgba(227,66,52,.15); border:1px solid rgba(227,66,52,.3); color:var(--a); font-size:.7rem; font-weight:700; padding:.25rem .65rem; border-radius:20px; letter-spacing:.08em; }
+.verdict { background:rgba(227,66,52,.07); border:2px solid rgba(227,66,52,.3); border-radius:12px; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#ff9988; }
+pre { background:#050810; border:1px solid rgba(227,66,52,.2); border-radius:8px; padding:1rem; font-size:.75rem; color:#ffaaaa; overflow-x:auto; line-height:1.6; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.stat-num { font-size:2rem; font-weight:900; color:var(--a); line-height:1; }
+.stat-lbl { font-size:.7rem; color:#8892a4; margin-top:.2rem; }
+.partition-vis { display:flex; flex-direction:column; gap:2px; }
+.part-row { display:flex; gap:2px; }
+.part-msg { width:28px; height:20px; border-radius:3px; font-size:.6rem; display:flex; align-items:center; justify-content:center; font-weight:700; color:#000; }
+.offset-lbl { font-size:.6rem; color:#8892a4; width:28px; text-align:center; }
+.before-spaghetti { background:#0a0d11; border:1px solid rgba(227,66,52,.2); border-radius:8px; padding:1rem; }
+.after-kafka { background:#0a0d11; border:1px solid rgba(0,212,170,.2); border-radius:8px; padding:1rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1200px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Breaking Points: Kafka</li>
+    </ol>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(227,66,52,.2)">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="era-badge">2010 – 2011</span>
+      <span class="era-badge" style="background:rgba(0,212,170,.12);border-color:rgba(0,212,170,.3);color:#00d4aa">The Spaghetti Pipeline</span>
+    </div>
+    <h1 class="fw-black mb-1" style="color:#cdd3de;font-size:2.2rem;line-height:1.1">Kafka: <span style="color:var(--a)">The Commit Log That Decoupled the Internet</span></h1>
+    <p class="mb-3" style="color:#8892a4;font-size:.95rem;max-width:700px">LinkedIn had 400 databases and services creating a nightmare web of point-to-point connections. One slow service could cascade into a company-wide outage. The solution — a distributed, append-only log — became the nervous system of every modern tech company.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🔵 LinkedIn (origin)</span>
+      <span class="company-badge">🚗 Uber</span>
+      <span class="company-badge">🎵 Spotify</span>
+      <span class="company-badge">🏦 Goldman Sachs</span>
+      <span class="company-badge">☁️ Confluent (managed Kafka)</span>
+    </div>
+  </div>
+
+  <!-- Scale Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">7T</div>
+        <div class="stat-lbl">messages processed per day by LinkedIn (2022)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">80%</div>
+        <div class="stat-lbl">of Fortune 500 companies use Kafka</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">7 days</div>
+        <div class="stat-lbl">default message retention (not deleted on read)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">N×1</div>
+        <div class="stat-lbl">connections needed (N producers + 1 Kafka) vs N×M point-to-point</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Breaking Point -->
+  <div class="problem-card p-4 mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span style="font-size:1.4rem">💥</span>
+      <h4 class="mb-0 fw-bold" style="color:var(--a)">The Spaghetti Pipeline Problem</h4>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="fw-semibold mb-2" style="color:#cdd3de">LinkedIn's 2010 Architecture</div>
+        <div class="before-spaghetti mb-3" style="font-size:.78rem;color:#8892a4">
+          <div style="color:var(--a);font-weight:600;margin-bottom:.5rem">A single "Ride Ended" event at Uber needed to trigger:</div>
+          <ul style="margin:0;padding-left:1.1rem">
+            <li>Billing service → charge the rider</li>
+            <li>Driver earnings service → credit the driver</li>
+            <li>Analytics DB → log the trip for reporting</li>
+            <li>Surge pricing model → update demand heat map</li>
+            <li>Notification service → send receipt email/SMS</li>
+            <li>Rating service → prompt rider for driver rating</li>
+            <li>Safety service → log GPS trace for background check</li>
+            <li>Data warehouse → ETL into Hadoop</li>
+          </ul>
+          <div style="margin-top:.5rem;color:var(--a)">= 8 point-to-point connections from one service to 8 others</div>
+        </div>
+        <div style="font-size:.82rem;color:#8892a4">With 400 services at LinkedIn (or hundreds at Uber), the number of connections grew as O(N²). Each connection needed: authentication, rate limiting, error handling, retry logic, monitoring. Change one service's API → update every service that calls it. This "Big Ball of Mud" made deploys risky and debugging nearly impossible.</div>
+      </div>
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">The Cascading Failure Problem</div>
+        <div style="font-size:.82rem;color:#8892a4;margin-bottom:.75rem">Traditional message queues (RabbitMQ, ActiveMQ): message is deleted from the queue after consumption. Problem: if the Analytics DB was slow, it caused backpressure. If it was down, messages were lost (or the upstream service blocked waiting). One slow downstream service could freeze the entire pipeline — a cascading failure through every connected service.</div>
+        <div class="fw-semibold mb-1" style="color:#cdd3de">The Schema Problem</div>
+        <div style="font-size:.82rem;color:#8892a4">Direct API calls require both sides to agree on the same schema simultaneously. Update a field in the user profile service → immediately update every consumer service. Rolling deploys become impossible — you need coordinated cutovers across dozens of teams. This is why LinkedIn had "flag days" where all teams deployed simultaneously at 2 AM.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Kafka Solution -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">The Radical Inversion: A Log, Not a Queue</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
+        <div class="col-md-5">
+          <div class="fw-semibold mb-2" style="color:#cdd3de">The Core Insight</div>
+          <div style="font-size:.82rem;color:#8892a4;margin-bottom:.75rem">Traditional queues delete messages after consumption — they're designed for work distribution (task queues). Kafka's insight: <strong style="color:#cdd3de">treat events like a database transaction log</strong>. A database WAL (Write-Ahead Log) never deletes entries — it's an immutable record of every change. Make that log distributed, replicated, and subscribable.</div>
+
+          <div class="solution-card p-3 mb-3">
+            <div class="fw-bold mb-2" style="color:#00d4aa">What This Changes</div>
+            <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1rem">
+              <li>Producer sends message once, N consumers read it independently</li>
+              <li>Consumer crashes for 3 hours? Resumes from where it left off</li>
+              <li>New consumer added? Can read ALL historical events from day 0</li>
+              <li>Bug in consumer? Rewind offset, reprocess from clean state</li>
+              <li>Slow consumer? Doesn't block producers or other consumers</li>
+            </ul>
+          </div>
+
+          <div style="font-size:.82rem;color:#8892a4"><strong style="color:#cdd3de">Consumer Groups:</strong> Multiple instances of the same service form a consumer group. Kafka automatically assigns each partition to one instance in the group. Scale horizontally: add more instances → each handles a subset of partitions. Stop an instance → partitions rebalanced to remaining instances. No coordination needed.</div>
+        </div>
+        <div class="col-md-7">
+          <div style="font-size:.72rem;color:#8892a4;margin-bottom:.5rem">Kafka Topic: <strong style="color:var(--a)">ride-events</strong> — 3 partitions, each an immutable append-only log</div>
+
+          <div class="partition-vis mb-3">
+            <div style="font-size:.7rem;color:#8892a4;margin-bottom:.25rem">Partition 0 (driver_id % 3 == 0):</div>
+            <div class="part-row">
+              <div class="part-msg" style="background:#e34234">0</div>
+              <div class="part-msg" style="background:#e34234">1</div>
+              <div class="part-msg" style="background:#ff6655">2</div>
+              <div class="part-msg" style="background:#ff6655">3</div>
+              <div class="part-msg" style="background:#ff9988">4</div>
+              <div class="part-msg" style="background:#ff9988">5</div>
+              <div class="part-msg" style="background:#ffbbaa">6</div>
+              <div class="part-msg" style="background:#ffbbaa;opacity:.5">7↑</div>
+              <div style="font-size:.65rem;color:#8892a4;margin-left:.5rem;align-self:center">← immutable, append-only</div>
+            </div>
+            <div style="font-size:.65rem;color:#4488ff;margin-top:.2rem">Billing consumer: offset 7 (caught up) | Analytics consumer: offset 4 (3 behind, OK)</div>
+
+            <div style="font-size:.7rem;color:#8892a4;margin:.5rem 0 .25rem">Partition 1:</div>
+            <div class="part-row">
+              <div class="part-msg" style="background:#e34234">0</div>
+              <div class="part-msg" style="background:#e34234">1</div>
+              <div class="part-msg" style="background:#ff6655">2</div>
+              <div class="part-msg" style="background:#ff9988">3</div>
+              <div class="part-msg" style="background:#ffbbaa;opacity:.5">4↑</div>
+            </div>
+            <div style="font-size:.65rem;color:#4488ff;margin-top:.2rem">All consumers: offset 4 (caught up)</div>
+
+            <div style="font-size:.7rem;color:#8892a4;margin:.5rem 0 .25rem">Partition 2:</div>
+            <div class="part-row">
+              <div class="part-msg" style="background:#e34234">0</div>
+              <div class="part-msg" style="background:#ff6655">1</div>
+              <div class="part-msg" style="background:#ff9988;opacity:.5">2↑</div>
+            </div>
+            <div style="font-size:.65rem;color:#8892a4;margin-top:.2rem">Each partition independently ordered. Messages with same key always go to same partition (driver_id → same partition = ordered per driver)</div>
+          </div>
+
+<pre>
+# Producer: Uber ride ends
+producer.send(
+    topic   = "ride-events",
+    key     = driver_id,      # ensures same driver → same partition
+    value   = {
+        "event": "ride_ended",
+        "ride_id": "r-abc123",
+        "driver_id": "d-789",
+        "rider_id": "r-456",
+        "fare": 14.50,
+        "distance_km": 5.2,
+        "end_time": "2025-05-06T21:30:00Z"
+    }
+)
+
+# Consumer Group A: Billing Service
+for msg in consumer_A.poll():
+    charge_rider(msg["rider_id"], msg["fare"])
+    credit_driver(msg["driver_id"], msg["fare"] * 0.80)
+    consumer_A.commit_offset(msg.partition, msg.offset + 1)
+    # If crash here: restarts from last committed offset
+    # Idempotency key = ride_id (prevents double charge)
+
+# Consumer Group B: Analytics (can be 3 hours behind)
+for msg in consumer_B.poll():
+    warehouse.insert("trips", msg)
+    # If Analytics DB was down for 3 hours:
+    # Kafka still has all messages. Consumer resumes
+    # exactly where it stopped. Zero data loss.
+
+# Consumer Group C: NEW service added 6 months later
+# Can replay ALL historical ride-events from offset 0
+# to build its initial state from scratch
+consumer_C.seek_to_beginning("ride-events")
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture Transformation -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Before vs After: The Architecture Transformation</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="fw-bold mb-2" style="color:var(--a);font-size:.85rem">❌ Before Kafka: Point-to-Point (Spaghetti)</div>
+          <div class="before-spaghetti" style="font-size:.78rem;color:#8892a4">
+            <div style="color:#ef476f;margin-bottom:.5rem">8 services × 8 consumers = 64 direct connections</div>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              <span style="background:#1a0808;border:1px solid rgba(227,66,52,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Billing→Analytics</span>
+              <span style="background:#1a0808;border:1px solid rgba(227,66,52,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Billing→Warehouse</span>
+              <span style="background:#1a0808;border:1px solid rgba(227,66,52,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Rides→Billing</span>
+              <span style="background:#1a0808;border:1px solid rgba(227,66,52,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Rides→Surge</span>
+              <span style="background:#1a0808;border:1px solid rgba(227,66,52,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Rides→Notify</span>
+              <span style="background:#1a0808;border:1px solid rgba(227,66,52,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">+ 58 more...</span>
+            </div>
+            <ul style="margin:0;padding-left:1rem">
+              <li>Analytics slow → Billing blocks waiting</li>
+              <li>Analytics crashes → Ride service gets error</li>
+              <li>New service → update all 64 call sites</li>
+              <li>Schema change → coordinated deployment across 8 teams</li>
+              <li>Debug a message → grep logs across 8 services</li>
+              <li>Replay events → impossible (no history)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="fw-bold mb-2" style="color:#00d4aa;font-size:.85rem">✅ After Kafka: Hub-and-Spoke</div>
+          <div class="after-kafka" style="font-size:.78rem;color:#8892a4">
+            <div style="color:#00d4aa;margin-bottom:.5rem">8 services × 1 Kafka = 8 connections (down from 64)</div>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              <span style="background:#081418;border:1px solid rgba(0,212,170,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Rides→Kafka</span>
+              <span style="background:#081418;border:1px solid rgba(0,212,170,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Kafka→Billing</span>
+              <span style="background:#081418;border:1px solid rgba(0,212,170,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Kafka→Analytics</span>
+              <span style="background:#081418;border:1px solid rgba(0,212,170,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">Kafka→Surge</span>
+              <span style="background:#081418;border:1px solid rgba(0,212,170,.3);padding:.2rem .5rem;border-radius:4px;font-size:.7rem">+ 4 more</span>
+            </div>
+            <ul style="margin:0;padding-left:1rem">
+              <li style="color:#00d4aa">Analytics slow → reads at its own pace, producers unaffected</li>
+              <li style="color:#00d4aa">Analytics crashes → resumes from last offset when it recovers</li>
+              <li style="color:#00d4aa">New service → add one Kafka consumer, zero changes to producers</li>
+              <li style="color:#00d4aa">Schema change → use Schema Registry, forward/backward compatible</li>
+              <li style="color:#00d4aa">Debug → all events in one place, fully replayable</li>
+              <li style="color:#00d4aa">Replay → seek to offset 0, reprocess entire history</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kafka's Key Innovations -->
+  <div class="insight-box p-4 mb-4">
+    <div class="fw-bold mb-3" style="color:var(--a)">⚡ Why Kafka Is Faster Than You'd Expect for a Disk-Based System</div>
+    <div class="row g-3" style="font-size:.82rem">
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Sequential Disk I/O</div>
+        <div style="color:#8892a4">Kafka writes are sequential appends to a file. Sequential disk write: 100–200 MB/s on spinning disk. Random disk write: 0.1 MB/s. Kafka's append-only log structure converts all writes to sequential I/O. This is why a Kafka broker on commodity HDDs can sustain 100+ MB/s throughput — rivaling RAM-based systems for write performance.</div>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">sendfile() Zero-Copy</div>
+        <div style="color:#8892a4">Normal network send: data → kernel read buffer → user-space app buffer → kernel socket buffer → NIC. Four copies. Kafka uses <code>sendfile()</code> (Linux) / <code>TransferTo()</code> (Java NIO) to copy data directly from page cache to NIC buffer. Two copies → two bytes eliminated. At 1 million messages/second: saves ~40% CPU. This is why Kafka can saturate a 10 Gbps NIC.</div>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Page Cache as Buffer</div>
+        <div style="color:#8892a4">Kafka trusts the OS page cache instead of managing its own memory buffer. Messages written to disk are immediately cached in RAM by the OS. Most consumers read recent messages — which are still in the page cache (effectively in RAM). The "disk-based" log is actually served from RAM for hot data. Cold data (days-old messages) is served from actual disk.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict p-4 mb-4 text-center">
+    <div style="font-size:1.5rem;margin-bottom:.5rem">🏆</div>
+    <h5 class="fw-bold mb-2" style="color:var(--a)">The Lasting Verdict</h5>
+    <p style="color:#8892a4;max-width:700px;margin:0 auto;font-size:.87rem">Apache Kafka, open-sourced by LinkedIn in 2011, is arguably the most consequential piece of infrastructure ever open-sourced. It didn't just solve LinkedIn's pipeline problem — it gave every company in the world a way to build event-driven architectures. 80% of Fortune 500 companies run Kafka. Confluent (founded by Kafka's original authors) reached a $4.5B valuation in 2021. The concept of the "event log as source of truth" became the foundation of: Event Sourcing, CQRS, Change Data Capture, stream processing (Flink, Spark Streaming), and the entire modern data engineering discipline. Jay Kreps's 2013 blog post "The Log: What every software engineer should know about real-time data's unifying abstraction" is considered required reading for backend engineers.</p>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(227,66,52,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🌍 Kafka Use Cases</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li>Real-time fraud detection (Stripe, banks)</li>
+          <li>Recommendation engines (Netflix, Spotify)</li>
+          <li>Database CDC replication (Debezium)</li>
+          <li>Log aggregation (replacing ELK pipelines)</li>
+          <li>IoT telemetry ingestion (Tesla, smart meters)</li>
+          <li>Stock market event processing (Goldman, NASDAQ)</li>
+          <li>Microservice communication bus (Uber, Airbnb)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(227,66,52,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🧬 Kafka's Ecosystem</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li><strong style="color:#cdd3de">Kafka Connect</strong> — 200+ source/sink connectors</li>
+          <li><strong style="color:#cdd3de">Kafka Streams</strong> — stream processing in Java</li>
+          <li><strong style="color:#cdd3de">ksqlDB</strong> — SQL over Kafka streams</li>
+          <li><strong style="color:#cdd3de">Schema Registry</strong> — Avro/Protobuf schema management</li>
+          <li><strong style="color:#cdd3de">Kafka MirrorMaker</strong> — cross-datacenter replication</li>
+          <li><strong style="color:#cdd3de">Redpanda</strong> — Kafka-compatible, C++ rewrite, 10× faster</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(227,66,52,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📐 When NOT to Use Kafka</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li>Simple task queues (use RabbitMQ/SQS — simpler)</li>
+          <li>Request-response patterns (use REST/gRPC)</li>
+          <li>When you need message TTL &lt; minutes (Kafka retains days)</li>
+          <li>Low-throughput (&lt;1000 msg/day — overkill)</li>
+          <li>Teams without Kafka operational expertise</li>
+          <li>When ordering across topics is required (Kafka only orders within a partition)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

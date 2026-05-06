@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block title %}Amazon — Dynamo & Eventual Consistency{% endblock %}
+{% block content %}
+<style>
+:root { --a: #ff9900; --warn: #ef476f; --ok: #06d6a0; }
+.hero-grad { background: linear-gradient(160deg, rgba(255,153,0,.12), rgba(0,100,50,.06), #0e1014); }
+.problem-card { background:#1a0a0a; border:1px solid rgba(239,71,111,.35); border-radius:8px; }
+.solution-card { background:#0a1a0a; border:1px solid rgba(6,214,160,.35); border-radius:8px; }
+.insight-box { background:#111418; border-left:4px solid var(--a); border-radius:0 6px 6px 0; }
+.era-badge { background:rgba(255,153,0,.15); border:1px solid rgba(255,153,0,.3); color:var(--a); font-size:.7rem; font-weight:700; padding:.25rem .65rem; border-radius:20px; letter-spacing:.08em; }
+.verdict { background:rgba(255,153,0,.07); border:2px solid rgba(255,153,0,.3); border-radius:12px; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#ffcc77; }
+pre { background:#050810; border:1px solid rgba(255,153,0,.2); border-radius:8px; padding:1rem; font-size:.75rem; color:#ffd999; overflow-x:auto; line-height:1.6; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.stat-num { font-size:2rem; font-weight:900; color:var(--a); line-height:1; }
+.stat-lbl { font-size:.7rem; color:#8892a4; margin-top:.2rem; }
+.vc-box { background:#0a0d11; border:1px solid rgba(255,153,0,.25); border-radius:6px; padding:.6rem .8rem; font-size:.75rem; font-family:monospace; }
+.conflict-arrow { text-align:center; color:var(--a); font-size:1.2rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1200px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Breaking Points: Amazon</li>
+    </ol>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(255,153,0,.2)">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="era-badge">2004 – 2007</span>
+      <span class="era-badge" style="background:rgba(239,71,111,.12);border-color:rgba(239,71,111,.3);color:#ef476f">Holiday Spike Crisis</span>
+    </div>
+    <h1 class="fw-black mb-1" style="color:#cdd3de;font-size:2.2rem;line-height:1.1">Amazon: When <span style="color:var(--a)">"Add to Cart" Must Never Fail</span></h1>
+    <p class="mb-3" style="color:#8892a4;font-size:.95rem;max-width:700px">Oracle databases refused to write during Black Friday peak load. Every 100ms of latency cost 1% in sales. Amazon's engineers chose availability over consistency — and invented modern NoSQL to do it.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">📦 Amazon.com</span>
+      <span class="company-badge">☁️ AWS DynamoDB</span>
+      <span class="company-badge">🍃 Apache Cassandra (born from Dynamo)</span>
+      <span class="company-badge">🔵 Riak, Voldemort, CouchDB</span>
+    </div>
+  </div>
+
+  <!-- Scale Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">100ms</div>
+        <div class="stat-lbl">latency = 1% sales loss (Amazon internal study)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">∞</div>
+        <div class="stat-lbl">cost of "Add to Cart" returning an error on Black Friday</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">99.9%</div>
+        <div class="stat-lbl">availability SLA — Dynamo was designed to hit this</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">2007</div>
+        <div class="stat-lbl">Dynamo paper published — NoSQL movement begins</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Breaking Point -->
+  <div class="problem-card p-4 mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span style="font-size:1.4rem">💥</span>
+      <h4 class="mb-0 fw-bold" style="color:#ef476f">The Oracle Lock-Up Problem</h4>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">How Relational Databases Kill Availability</div>
+        <div style="font-size:.82rem;color:#8892a4">ACID databases achieve consistency via <strong style="color:#ef476f">locks</strong>. When you click "Add to Cart," the database acquires a write lock on your shopping cart row, performs the update, and releases the lock. Under normal load this takes microseconds. Under Black Friday load with 10,000 concurrent writes to the same tables, locks pile up. Transactions wait for each other. Wait times cascade. The database stops accepting new writes.</div>
+      </div>
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">The Business Calculation</div>
+        <div style="font-size:.82rem;color:#8892a4">Amazon's internal study (later made famous): every 100ms added to a page load resulted in a 1% drop in sales. At Amazon's scale, a 30-second database outage during Black Friday peak could cost millions of dollars. A cart that occasionally shows a slightly incorrect item count (consistency violation) is a minor bug. A cart that <strong style="color:#ef476f">fails to accept items</strong> (availability violation) costs revenue and reputation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAP Choice -->
+  <div class="insight-box p-4 mb-4">
+    <div class="fw-bold mb-3" style="color:var(--a)">🎯 The CAP Theorem Choice: Availability over Consistency</div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="p-3 rounded" style="background:#0a0d11;border:1px solid rgba(239,71,111,.3)">
+          <div class="fw-bold mb-1" style="color:#ef476f">❌ C: Strong Consistency</div>
+          <div style="font-size:.78rem;color:#8892a4">Every node sees the same data at the same time. Requires distributed locking (2PC). If any node is unreachable → transaction fails. Oracle's default behavior. A partitioned network = service outage.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3 rounded" style="background:#0a1408;border:1px solid rgba(6,214,160,.3)">
+          <div class="fw-bold mb-1" style="color:#06d6a0">✅ A: Availability</div>
+          <div style="font-size:.82rem;color:#8892a4">Every request receives a response (not necessarily the most recent data). Dynamo writes to ANY available node. Even if half the cluster is unreachable, the request succeeds. Consistency is repaired asynchronously later ("eventually consistent").</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3 rounded" style="background:#0a0d11;border:1px solid rgba(255,153,0,.3)">
+          <div class="fw-bold mb-1" style="color:var(--a)">⚡ P: Partition Tolerance</div>
+          <div style="font-size:.78rem;color:#8892a4">The network WILL partition (cables cut, switches fail, data centers go down). You cannot avoid P. So the real choice is always: do you prefer C or A during a partition? Amazon chose A. Your cart writes succeed even when network nodes can't communicate.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Dynamo Solution -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">The Dynamo Architecture: Five Radical Ideas</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3" style="font-size:.82rem">
+        <div class="d-flex gap-3">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--a);color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem">1</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Consistent Hashing: Infinite Horizontal Scaling</div>
+            <div style="color:#8892a4">Instead of mapping a key to a specific server (<code>server = key % N</code> — breaks when N changes), Dynamo places both keys and servers on a ring from 0 to 2³². A key is owned by the nearest server clockwise on the ring. Adding a new server? Only the keys between it and the previous server move. Removing a server? Only its keys redistribute to the next server. Adding nodes causes minimal data movement — live resharding with zero downtime.</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--a);color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem">2</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Quorum Reads/Writes: Tunable Consistency</div>
+            <div style="color:#8892a4">Each key is replicated to N=3 nodes. For writes: W=2 nodes must confirm before success (write quorum). For reads: R=2 nodes must agree (read quorum). Rule: if W+R &gt; N → guaranteed to see the latest write. If you need stronger consistency, increase W and R. If you need lower latency, decrease them. Amazon could tune per-table: shopping cart (W=1, high availability), payments (W=3, maximum consistency).</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--a);color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem">3</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Vector Clocks: Tracking Causality Without a Master Clock</div>
+            <div style="color:#8892a4">When the same shopping cart is written to two nodes that can't communicate (network partition), how do you reconcile them later? Vector clocks: each write appends the server's ID and a counter <code>[serverA:3, serverB:2]</code>. When nodes reconnect, conflicting versions are detected by comparing clocks. If one clock is an ancestor of another → simple resolution. If they're concurrent (true conflict) → both versions kept and application code merges them (e.g., merge two cart variants by taking the union of items).</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--a);color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem">4</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Sloppy Quorum + Hinted Handoff: Write Always Succeeds</div>
+            <div style="color:#8892a4">If a node is down during a write, another node volunteers to hold the data temporarily and includes a "hint" of who should eventually receive it. When the downed node recovers, the volunteer sends it the hinted data. This is why "Add to Cart" never fails even if the responsible node is completely dead — a healthy neighbor accepts the write on its behalf.</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--a);color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem">5</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Anti-Entropy with Merkle Trees: Silent Background Repair</div>
+            <div style="color:#8892a4">Two replicas can diverge if one was down during writes. Anti-entropy: each node continuously compares its data against neighbors. Comparing every key is too slow — instead, build a Merkle tree (cryptographic hash tree of all values). Compare just the root hashes — if equal, in sync. If different, binary-search down the tree to find exactly which keys differ, then sync only those. Constant background repair without human intervention.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vector Clock Visual -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Vector Clock Conflict Resolution: The Shopping Cart Scenario</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="vc-box mb-2">
+            <div style="color:#06d6a0;font-weight:600;margin-bottom:.3rem">Session 1 — User adds Laptop</div>
+            <div style="color:#8892a4">Cart: ["Laptop"]</div>
+            <div style="color:var(--a)">Clock: [nodeA:1]</div>
+          </div>
+          <div style="font-size:.72rem;color:#8892a4">User on mobile. Write lands on Node A. Network splits. Now Node A and Node B cannot communicate.</div>
+        </div>
+        <div class="col-md-4">
+          <div class="vc-box mb-2">
+            <div style="color:#ef476f;font-weight:600;margin-bottom:.3rem">Session 2 — User (on PC) adds Headphones</div>
+            <div style="color:#8892a4">Cart: ["Laptop", "Headphones"]</div>
+            <div style="color:var(--a)">Clock: [nodeA:1, nodeB:1]</div>
+          </div>
+          <div class="vc-box mb-2">
+            <div style="color:#ef476f;font-weight:600;margin-bottom:.3rem">Session 3 — User (on mobile) adds Keyboard</div>
+            <div style="color:#8892a4">Cart: ["Laptop", "Keyboard"]</div>
+            <div style="color:var(--a)">Clock: [nodeA:2]</div>
+          </div>
+          <div style="font-size:.72rem;color:#8892a4">Two concurrent writes during partition. Different nodes, different clocks.</div>
+        </div>
+        <div class="col-md-4">
+          <div class="vc-box mb-2" style="border-color:rgba(6,214,160,.3)">
+            <div style="color:#06d6a0;font-weight:600;margin-bottom:.3rem">Network Heals — Conflict Detected</div>
+            <div style="color:#8892a4">Version A: ["Laptop", "Headphones"] [nodeA:1, nodeB:1]</div>
+            <div style="color:#8892a4">Version B: ["Laptop", "Keyboard"] [nodeA:2]</div>
+            <div style="color:var(--a);margin-top:.3rem">→ Neither clock dominates the other</div>
+            <div style="color:var(--a)">→ Conflict: return BOTH to client</div>
+            <div style="color:#06d6a0;margin-top:.3rem">App merges: ["Laptop", "Headphones", "Keyboard"]</div>
+          </div>
+          <div style="font-size:.72rem;color:#8892a4">The cart grew, never lost an item. Acceptable business logic vs a rejected write.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict p-4 mb-4 text-center">
+    <div style="font-size:1.5rem;margin-bottom:.5rem">🏆</div>
+    <h5 class="fw-bold mb-2" style="color:var(--a)">The Lasting Verdict</h5>
+    <p style="color:#8892a4;max-width:700px;margin:0 auto;font-size:.87rem">Amazon published the Dynamo paper in 2007 at SOSP (the premier systems conference). Within a year, Facebook engineers used it to design Cassandra, which became one of the most widely deployed databases in history. DynamoDB launched publicly in 2012 as a fully managed AWS service — now powering hundreds of millions of applications. The principle — that availability is more valuable than consistency for most user-facing operations — became the founding philosophy of the entire NoSQL movement that reshaped backend engineering for a decade.</p>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(255,153,0,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🧬 Children of Dynamo</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li><strong style="color:#cdd3de">Apache Cassandra</strong> — Facebook, then open-sourced. Netflix, Apple, Instagram</li>
+          <li><strong style="color:#cdd3de">Riak</strong> — Identical Dynamo design, open-source</li>
+          <li><strong style="color:#cdd3de">Project Voldemort</strong> — LinkedIn's Dynamo clone</li>
+          <li><strong style="color:#cdd3de">AWS DynamoDB</strong> — Managed service, 2012–present</li>
+          <li><strong style="color:#cdd3de">ScyllaDB</strong> — Cassandra-compatible, C++ rewrite</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(255,153,0,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📐 When NOT to Use Eventual Consistency</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li>Bank account balances (double-spend)</li>
+          <li>Inventory (oversell the last item)</li>
+          <li>Healthcare records (conflicting medication doses)</li>
+          <li>Any domain where conflicts cost more than downtime</li>
+          <li>Amazon itself uses ACID (Aurora) for actual order payment</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(255,153,0,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📏 The 99.9% Math</div>
+        <div style="font-size:.78rem;color:#8892a4">99.9% availability = 8.7 hours downtime/year. 99.99% = 52 minutes. 99.999% = 5 minutes. The Dynamo team's analysis: a shopping cart experiencing "stale data" for &lt;1 second during reconciliation is a far better user experience than an "Error: cannot complete request" that occurs 0.1% of the time. Availability wins.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block title %}Google — GFS, MapReduce & Spanner{% endblock %}
+{% block content %}
+<style>
+:root { --a: #4285f4; --warn: #ea4335; --ok: #34a853; }
+.hero-grad { background: linear-gradient(160deg, rgba(66,133,244,.14), rgba(52,168,83,.07), #0e1014); }
+.problem-card { background:#1a0a0a; border:1px solid rgba(234,67,53,.35); border-radius:8px; }
+.solution-card { background:#0a1a0a; border:1px solid rgba(52,168,83,.35); border-radius:8px; }
+.insight-box { background:#111418; border-left:4px solid var(--a); border-radius:0 6px 6px 0; }
+.era-badge { background:rgba(66,133,244,.15); border:1px solid rgba(66,133,244,.3); color:var(--a); font-size:.7rem; font-weight:700; padding:.25rem .65rem; border-radius:20px; letter-spacing:.08em; }
+.verdict { background:rgba(66,133,244,.08); border:2px solid rgba(66,133,244,.3); border-radius:12px; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#88bbff; }
+pre { background:#050810; border:1px solid rgba(66,133,244,.2); border-radius:8px; padding:1rem; font-size:.75rem; color:#a8d8ff; overflow-x:auto; line-height:1.6; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.stat-num { font-size:2rem; font-weight:900; color:var(--a); line-height:1; }
+.stat-lbl { font-size:.7rem; color:#8892a4; margin-top:.2rem; }
+.timeline-dot { width:12px; height:12px; border-radius:50%; background:var(--a); flex-shrink:0; margin-top:4px; }
+.timeline-line { width:2px; background:rgba(66,133,244,.2); flex-shrink:0; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1200px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Breaking Points: Google</li>
+    </ol>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(66,133,244,.2)">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="era-badge">1998 – 2012</span>
+      <span class="era-badge" style="background:rgba(234,67,53,.12);border-color:rgba(234,67,53,.3);color:#ea4335">Existential Crisis</span>
+    </div>
+    <h1 class="fw-black mb-1" style="color:#cdd3de;font-size:2.2rem;line-height:1.1">Google: The Company That <span style="color:var(--a)">Embraced Failure</span></h1>
+    <p class="mb-3" style="color:#8892a4;font-size:.95rem;max-width:700px">Yahoo and AltaVista had the web. Google needed to download, index, and rank it — on a budget. The solution reinvented computing itself.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🔵 Google Search</span>
+      <span class="company-badge">☁️ Google Cloud (GCP)</span>
+      <span class="company-badge">🗃️ Apache Hadoop (open-source GFS)</span>
+      <span class="company-badge">⚡ Apache Spark (evolved MapReduce)</span>
+    </div>
+  </div>
+
+  <!-- Scale Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">8B+</div>
+        <div class="stat-lbl">web pages indexed by 2005</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">~50%</div>
+        <div class="stat-lbl">disk failure rate per year on cheap drives</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">10K+</div>
+        <div class="stat-lbl">commodity machines in a single MapReduce job</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">≤6ms</div>
+        <div class="stat-lbl">Spanner global clock uncertainty window</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Breaking Point -->
+  <div class="problem-card p-4 mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span style="font-size:1.4rem">💥</span>
+      <h4 class="mb-0 fw-bold" style="color:#ea4335">The Existential Wall</h4>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">The PageRank Problem</div>
+        <div style="font-size:.82rem;color:#8892a4">PageRank is a giant matrix multiplication: a 20-billion-row matrix (every webpage × every webpage) where each cell represents a link. Solving this requires holding petabytes in memory and running iterative matrix math. No single machine in 1999 could do this. Distributed computing existed, but writing code that survived node failures mid-computation was a nightmare of manual error handling.</div>
+      </div>
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">The Enterprise Hardware Trap</div>
+        <div style="font-size:.82rem;color:#8892a4">Sun Microsystems E10K servers — the industry standard — cost $1M+ each. Google needed hundreds of thousands of compute nodes to crawl the entire web continuously. Buying enterprise hardware at that scale would have bankrupt them before they could monetize. A <strong style="color:#ea4335">single component failure</strong> in enterprise systems could also bring down the entire computation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invention 1: GFS + MapReduce -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Invention I: Google File System + MapReduce (2003–2004)</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="solution-card p-3 mb-3">
+            <div class="fw-bold mb-2" style="color:#34a853">The Core Insight</div>
+            <div style="font-size:.82rem;color:#8892a4">Don't prevent hardware failures. <strong style="color:#cdd3de">Assume they are inevitable</strong> and write software that treats them as normal events. A hard drive catching fire mid-computation becomes a routine exception, not a catastrophe.</div>
+          </div>
+          <div style="font-size:.82rem;color:#8892a4">
+            <p><strong style="color:#cdd3de">GFS (Google File System):</strong> Files split into 64 MB chunks, each chunk stored on 3 different machines. If one machine fails, the chunk is still readable from the other two. The GFS Master (metadata server) tracks which chunk is on which machine. No specialized hardware — commodity Linux boxes with IDE drives.</p>
+            <p class="mb-0"><strong style="color:#cdd3de">MapReduce:</strong> Developers write two functions: <code>map(key, value) → list of (k2, v2)</code> and <code>reduce(k2, list of v2) → result</code>. The MapReduce framework handles: splitting input across 10,000 workers, network shuffling, re-running failed tasks on other nodes, and collecting output. Developers write the logic; the framework handles the distribution.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div style="font-size:.72rem;color:#8892a4;margin-bottom:.4rem">MapReduce: Inverted Index for Web Search</div>
+<pre>
+# MAP PHASE — runs on 10,000 machines in parallel
+def map(document_id, document_text):
+    for word in tokenize(document_text):
+        emit(word, document_id)
+    # e.g., ("python", "doc_4521")
+    #        ("python", "doc_9832")
+
+# SHUFFLE PHASE — framework auto-groups by key
+# python → [doc_4521, doc_9832, doc_10034, ...]
+# java   → [doc_11, doc_450, ...]
+
+# REDUCE PHASE — runs per unique key
+def reduce(word, list_of_doc_ids):
+    emit(word, sorted(list_of_doc_ids))
+    # Builds: {"python": [doc_4521, doc_9832...]}
+    # This IS the search index. Query "python"
+    # → instant lookup of all containing pages.
+
+# If machine dies mid-map: framework detects
+# missed heartbeat → reassigns task to another
+# node. Developer writes ZERO failure code.
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline: MapReduce → Hadoop → Spark -->
+  <div class="insight-box p-3 mb-4">
+    <div class="fw-bold mb-3" style="color:var(--a)">📢 Industry Ripple: The Open-Source Revolution</div>
+    <div class="d-flex gap-3">
+      <div class="d-flex flex-column align-items-center">
+        <div class="timeline-dot"></div>
+        <div class="timeline-line" style="height:40px"></div>
+        <div class="timeline-dot"></div>
+        <div class="timeline-line" style="height:40px"></div>
+        <div class="timeline-dot"></div>
+      </div>
+      <div class="d-flex flex-column gap-3" style="font-size:.8rem">
+        <div><span style="color:var(--a);font-weight:600">2004 — Google publishes MapReduce paper.</span> <span style="color:#8892a4">Engineers at Yahoo read it and build an open-source clone: Apache Hadoop. Within 3 years, every large tech company runs Hadoop clusters.</span></div>
+        <div><span style="color:var(--a);font-weight:600">2009 — Spark emerges from UC Berkeley.</span> <span style="color:#8892a4">MapReduce is slow because it writes intermediate results to disk after every step. Spark keeps everything in RAM — 100× faster for iterative algorithms (ML, graph algorithms). Databricks is founded on Spark.</span></div>
+        <div><span style="color:var(--a);font-weight:600">2012 — Every cloud provider offers managed Hadoop/Spark.</span> <span style="color:#8892a4">Amazon EMR, Google Dataproc, Azure HDInsight. Google's commodity-hardware philosophy becomes the entire cloud industry's foundation.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invention 2: Spanner + TrueTime -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Invention II: Google Spanner + TrueTime (2012)</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="problem-card p-3 mb-3">
+            <div class="fw-bold mb-1" style="color:#ea4335">The New Problem: Global Consistency</div>
+            <div style="font-size:.82rem;color:#8892a4">As Google expanded to dozens of data centers worldwide, they needed a database that was consistent globally — if you write to a server in Tokyo, a reader in London should see it immediately. The CAP theorem says you can't have both consistency and availability across a network partition. Every distributed database made this trade-off by relaxing consistency (eventual consistency). Google wanted to bypass it entirely.</div>
+          </div>
+          <div style="font-size:.82rem;color:#8892a4">
+            <p><strong style="color:#cdd3de">The Hardware Bypass:</strong> The root cause of distributed consistency problems is that computers can't agree on <em>what time it is</em>. NTP (Network Time Protocol) clocks can drift ±200ms. If two servers have different clocks, there's no way to determine which write came first.</p>
+            <p class="mb-0"><strong style="color:#cdd3de">TrueTime:</strong> Google installed <strong>GPS receivers</strong> and <strong>atomic clocks</strong> in every data center. Every server gets an API call: <code>TrueTime.now()</code> returns not a timestamp but an interval [earliest, latest] with a guaranteed maximum error of 6 milliseconds. Spanner uses this uncertainty window: before committing a transaction, it waits out the entire uncertainty window (6ms). This ensures global ordering is perfect. The price: a 6ms commit latency floor. The benefit: a globally distributed, strictly consistent SQL database.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div style="font-size:.72rem;color:#8892a4;margin-bottom:.4rem">TrueTime Commit Protocol (simplified)</div>
+<pre>
+# Traditional distributed commit problem:
+# Server A: timestamp 14:00:00.100
+# Server B: timestamp 14:00:00.097 (drifted)
+# Who committed first? UNKNOWABLE with NTP.
+
+# Spanner's TrueTime solution:
+def commit_transaction(txn):
+    t = TrueTime.now()
+    # t.earliest = 14:00:00.094  (guaranteed earliest)
+    # t.latest   = 14:00:00.100  (guaranteed latest)
+
+    # Assign commit timestamp AFTER latest bound
+    commit_ts = t.latest
+
+    # Wait until clock is past commit_ts
+    # ("commit wait" — ensures no future
+    #  transaction can have an earlier timestamp)
+    sleep_until(commit_ts)
+
+    apply(txn, timestamp=commit_ts)
+
+# Result: every committed transaction has a
+# globally unique, totally ordered timestamp.
+# CAP theorem not violated — partition tolerance
+# is maintained, consistency is achieved via
+# physics (speed of light + atomic clocks).
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict p-4 mb-4 text-center">
+    <div style="font-size:1.5rem;margin-bottom:.5rem">🏆</div>
+    <h5 class="fw-bold mb-2" style="color:var(--a)">The Lasting Verdict</h5>
+    <p style="color:#8892a4;max-width:700px;margin:0 auto;font-size:.87rem">Google didn't just solve their scaling problems — they published the papers. GFS became Hadoop, MapReduce became Spark, Bigtable became HBase and Cassandra. The distributed computing paradigm that now runs every cloud provider, every tech company, and every data center on Earth was invented by Google engineers solving the problem of crawling the web cheaply. Spanner (available on GCP as Cloud Spanner since 2017) remains the only database in the world that is simultaneously globally distributed and strictly consistent.</p>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(66,133,244,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📄 Papers That Changed Everything</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li>GFS (2003) — The Google File System</li>
+          <li>MapReduce (2004) — Simplified Data Processing on Large Clusters</li>
+          <li>Bigtable (2006) — A Distributed Storage System for Structured Data</li>
+          <li>Spanner (2012) — Google's Globally Distributed Database</li>
+          <li>Dremel (2010) — Interactive Analysis of Web-Scale Datasets → becomes BigQuery</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(66,133,244,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🔑 Key Engineering Principles</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li>Design for failure, not against it</li>
+          <li>Commodity hardware + resilient software &gt; expensive reliable hardware</li>
+          <li>Data locality: move computation to data, not data to computation</li>
+          <li>Simple programming model hides complex distribution</li>
+          <li>Physics (atomic clocks) can solve software impossibilities</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(66,133,244,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🌍 What It Became</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li>Apache Hadoop → 50,000+ companies</li>
+          <li>Apache Spark → standard ML training framework</li>
+          <li>Apache HBase (Bigtable) → WhatsApp message store</li>
+          <li>Apache Cassandra (Dynamo + Bigtable ideas) → Netflix, Apple</li>
+          <li>Cloud Spanner → available to any GCP customer since 2017</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

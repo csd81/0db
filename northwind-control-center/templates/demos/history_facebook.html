@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% block title %}Facebook — TAO & Memcached at Scale{% endblock %}
+{% block content %}
+<style>
+:root { --a: #1877f2; --warn: #ef476f; --ok: #06d6a0; }
+.hero-grad { background: linear-gradient(160deg, rgba(24,119,242,.12), rgba(20,80,20,.05), #0e1014); }
+.problem-card { background:#1a0a0a; border:1px solid rgba(239,71,111,.35); border-radius:8px; }
+.solution-card { background:#0a120a; border:1px solid rgba(6,214,160,.35); border-radius:8px; }
+.insight-box { background:#111418; border-left:4px solid var(--a); border-radius:0 6px 6px 0; }
+.era-badge { background:rgba(24,119,242,.15); border:1px solid rgba(24,119,242,.3); color:var(--a); font-size:.7rem; font-weight:700; padding:.25rem .65rem; border-radius:20px; letter-spacing:.08em; }
+.verdict { background:rgba(24,119,242,.07); border:2px solid rgba(24,119,242,.3); border-radius:12px; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#88bbff; }
+pre { background:#050810; border:1px solid rgba(24,119,242,.2); border-radius:8px; padding:1rem; font-size:.75rem; color:#aabbff; overflow-x:auto; line-height:1.6; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.stat-num { font-size:2rem; font-weight:900; color:var(--a); line-height:1; }
+.stat-lbl { font-size:.7rem; color:#8892a4; margin-top:.2rem; }
+.tao-box { background:#0a0d11; border:1px solid rgba(24,119,242,.25); border-radius:6px; padding:.6rem .8rem; font-size:.78rem; }
+.before-after { display:grid; grid-template-columns:1fr auto 1fr; gap:1rem; align-items:start; }
+.vs-center { display:flex; align-items:center; justify-content:center; font-size:1.5rem; padding-top:1rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1200px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Breaking Points: Facebook</li>
+    </ol>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(24,119,242,.2)">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="era-badge">2008 – 2013</span>
+      <span class="era-badge" style="background:rgba(239,71,111,.12);border-color:rgba(239,71,111,.3);color:#ef476f">MySQL Implosion</span>
+    </div>
+    <h1 class="fw-black mb-1" style="color:#cdd3de;font-size:2.2rem;line-height:1.1">Facebook: Hiding <span style="color:var(--a)">MySQL Behind a Graph Brain</span></h1>
+    <p class="mb-3" style="color:#8892a4;font-size:.95rem;max-width:700px">The News Feed required answering "friend-of-a-friend" queries for hundreds of millions of users per minute. MySQL's JOIN operations couldn't survive. Facebook built TAO — an in-memory graph that made MySQL irrelevant for 99% of requests.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🔵 Meta (Facebook/Instagram)</span>
+      <span class="company-badge">⚡ Memcached (massively modified)</span>
+      <span class="company-badge">🕸️ TAO (open design)</span>
+      <span class="company-badge">🔴 Apache Cassandra (born at Facebook)</span>
+    </div>
+  </div>
+
+  <!-- Scale Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">99%</div>
+        <div class="stat-lbl">of social media requests are reads, not writes</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">&gt;1B</div>
+        <div class="stat-lbl">requests/sec served by TAO at peak (2013)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">99%+</div>
+        <div class="stat-lbl">DB load reduction after TAO deployed</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">100T+</div>
+        <div class="stat-lbl">edges (relationships) stored in TAO</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Breaking Point -->
+  <div class="problem-card p-4 mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span style="font-size:1.4rem">💥</span>
+      <h4 class="mb-0 fw-bold" style="color:#ef476f">The News Feed Query That Melted MySQL</h4>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="fw-semibold mb-2" style="color:#cdd3de">What loading ONE person's News Feed required:</div>
+        <ol style="font-size:.82rem;color:#8892a4;padding-left:1.2rem">
+          <li>Find User A's friends: <code>SELECT friend_id FROM friendships WHERE user_id = A</code> (could be 500 rows)</li>
+          <li>Find all posts by those 500 friends in last 24h: <code>SELECT * FROM posts WHERE user_id IN (500 IDs) AND created_at &gt; NOW()-1DAY</code> — a massive IN clause</li>
+          <li>Filter by privacy: for each post, check if User A is in the allowed audience list</li>
+          <li>Check engagement: did User A already like each post? Another JOIN on the likes table</li>
+          <li>Rank by relevance: apply EdgeRank scoring algorithm across all candidates</li>
+          <li>Paginate: return top 25</li>
+        </ol>
+        <div style="font-size:.82rem;color:#ef476f;margin-top:.5rem">This could require 5-10 SQL JOINs across tables with billions of rows. Repeated for 300M users simultaneously.</div>
+      </div>
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Why JOINs Destroy at Scale</div>
+        <div style="font-size:.82rem;color:#8892a4;margin-bottom:.75rem">A SQL JOIN is O(N×M) for naive implementations. A JOIN between a 300M-row friends table and a 10B-row posts table, filtered and re-JOINed for privacy — requires the database to touch potentially trillions of row combinations. Database query optimizers help but have hard limits.</div>
+        <div class="fw-semibold mb-1" style="color:#cdd3de">The "Static Profile" vs "Dynamic Feed" Shift</div>
+        <div style="font-size:.82rem;color:#8892a4">MySpace era: you visited a user's profile page (one simple query: <code>SELECT * FROM users WHERE id=?</code>). Facebook's News Feed: one page load = queries about 500 people's activities, each with complex social graph traversal. The read patterns changed fundamentally, but the database didn't.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 1: Memcached Supersized -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Phase 1: Memcached at Absurd Scale (2008)</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div style="font-size:.82rem;color:#8892a4">
+            <p><strong style="color:#cdd3de">Basic Memcached:</strong> A simple in-memory key-value store. <code>set("user:12345", serialized_user_object, ttl=300)</code>. Application checks cache first; on miss, queries database and populates cache. Created in 2003 by Brad Fitzpatrick for LiveJournal to reduce database load.</p>
+            <p><strong style="color:#cdd3de">What Facebook did to it:</strong> They scaled Memcached to <em>thousands of servers</em>, modified the protocol, built a custom client library (McRouter), and developed techniques for handling cache invalidation at unprecedented scale. Facebook became Memcached's de facto steward, contributing more improvements than anyone else.</p>
+            <p><strong style="color:#cdd3de">The "look-aside cache" pattern:</strong> MySQL stores the source of truth. Memcached stores serialized copies of hot data. Application code checks cache → if miss, read from MySQL, write to cache. 99% of requests served from RAM. MySQL only handles 1% of traffic (writes + cache misses).</p>
+            <p class="mb-0"><strong style="color:#cdd3de">The stampede problem:</strong> When a popular cache key expires, thousands of requests simultaneously miss and all try to query MySQL at once — a "thundering herd." Facebook implemented "lease" tokens: on a miss, the first client gets a lease (a token saying "I'm rebuilding this"), other clients get told to wait briefly. Only one MySQL query happens.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+<pre>
+# The Facebook look-aside cache pattern
+def get_news_feed(user_id):
+    cache_key = f"feed:{user_id}"
+
+    # Try Memcached first (RAM, ~0.1ms)
+    feed = memcached.get(cache_key)
+    if feed:
+        return deserialize(feed)  # 99% path
+
+    # Cache miss — request lease token
+    lease_token = memcached.get_lease(cache_key)
+    if not lease_token:
+        # Another request is rebuilding it
+        time.sleep(0.01)
+        return get_news_feed(user_id)  # retry
+
+    # 1% path: query MySQL (10-50ms)
+    friends = mysql.query(
+        "SELECT friend_id FROM friendships WHERE user_id=%s",
+        user_id
+    )
+    posts = mysql.query(
+        "SELECT * FROM posts WHERE user_id IN %s "
+        "AND created_at > NOW()-INTERVAL 1 DAY",
+        friends
+    )
+    feed = rank_and_filter(posts, user_id)
+
+    # Populate cache, release lease
+    memcached.set(cache_key, serialize(feed),
+                  ttl=60, lease=lease_token)
+    return feed
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 2: TAO -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Phase 2: TAO — The Associations and Objects (2013)</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
+        <div class="col-md-5">
+          <div class="fw-semibold mb-2" style="color:#cdd3de">The Core Insight</div>
+          <div style="font-size:.82rem;color:#8892a4;margin-bottom:.75rem">Facebook's entire social graph can be modeled as just two primitive types:</div>
+
+          <div class="tao-box mb-2">
+            <div style="color:var(--a);font-weight:600;margin-bottom:.3rem">OBJECT (node)</div>
+            <div style="color:#8892a4">A typed entity: User, Post, Comment, Photo, Page, Event. Has an ID and a property map.</div>
+            <div style="color:#06d6a0;margin-top:.3rem;font-family:monospace;font-size:.72rem">obj_get(type="User", id=12345) → {name, birthday, ...}</div>
+          </div>
+
+          <div class="tao-box mb-3">
+            <div style="color:var(--a);font-weight:600;margin-bottom:.3rem">ASSOCIATION (edge)</div>
+            <div style="color:#8892a4">A typed relationship between two objects, with an optional timestamp and data payload.</div>
+            <div style="color:#06d6a0;margin-top:.3rem;font-family:monospace;font-size:.72rem">assoc_get(id1=12345, type=LIKES, id2=post_67890)</div>
+            <div style="color:#06d6a0;font-family:monospace;font-size:.72rem">assoc_range(id1=12345, type=FOLLOWS, 0, 100)</div>
+          </div>
+
+          <div style="font-size:.82rem;color:#8892a4"><strong style="color:#cdd3de">Every social action</strong> becomes a simple TAO call. News Feed assembly queries TAO's RAM, not MySQL. TAO handles caching, invalidation, and replication internally. MySQL is TAO's durable backing store — written to asynchronously, queried only by TAO internals.</div>
+        </div>
+        <div class="col-md-7">
+          <div class="before-after" style="display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:start">
+            <div>
+              <div class="fw-bold mb-2" style="color:#ef476f;font-size:.82rem">❌ BEFORE: Raw MySQL</div>
+<pre style="font-size:.68rem">
+-- Load News Feed (simplified)
+-- Multiple round-trips, huge result sets
+
+SELECT friend_id
+FROM friendships
+WHERE user_id = 12345;
+-- Returns: [67, 890, 1234, ...]
+
+SELECT p.*, l.user_id as liked_by_me
+FROM posts p
+LEFT JOIN likes l
+  ON p.id = l.post_id
+  AND l.user_id = 12345
+WHERE p.user_id IN (67, 890, 1234 ...)
+  AND p.created_at > NOW()-INTERVAL 1 DAY
+ORDER BY p.created_at DESC
+LIMIT 200;
+
+-- Then privacy filter in application code
+-- Then EdgeRank scoring in application code
+-- Total: 5-10 queries, 50-200ms, kills DB
+</pre>
+            </div>
+            <div style="display:flex;align-items:center;padding-top:4rem"><span style="color:var(--a);font-size:1.5rem">→</span></div>
+            <div>
+              <div class="fw-bold mb-2" style="color:#06d6a0;font-size:.82rem">✅ AFTER: TAO API</div>
+<pre style="font-size:.68rem">
+# Load News Feed via TAO
+# All results from RAM (~0.5ms total)
+
+# Get friends (from TAO cache)
+friends = tao.assoc_range(
+    id1=12345,
+    atype=FOLLOWS,
+    offset=0, limit=500
+)
+
+# Get recent posts per friend
+posts = []
+for f in friends:
+    posts += tao.assoc_range(
+        id1=f.id2,
+        atype=POSTED,
+        time_range=last_24h
+    )
+
+# Check if user liked each post
+for post in posts:
+    post.liked = tao.assoc_get(
+        id1=12345, atype=LIKES,
+        id2=post.id
+    ) is not None
+
+# Rank in app code, return top 25
+# Total: ~50 TAO calls, all RAM, ~5ms
+</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAO Architecture -->
+  <div class="insight-box p-4 mb-4">
+    <div class="fw-bold mb-3" style="color:var(--a)">🏗️ TAO's Two-Tier Architecture: Leaders and Followers</div>
+    <div class="row g-3" style="font-size:.82rem">
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Leader Tier (one per region)</div>
+        <div style="color:#8892a4">A small cluster of TAO servers that own the authoritative cached state for a shard of the graph. All writes go to the Leader. Leader talks to MySQL for persistence. Leader fan-outs invalidations to all Followers. Each Leader handles ~1M objects in memory.</div>
+      </div>
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Follower Tier (many per region)</div>
+        <div style="color:#8892a4">Dozens of Follower servers per region handle read traffic. On a cache miss, Followers query their regional Leader (not MySQL). Followers serve &gt;95% of all TAO requests. A Follower failure is invisible — request routes to another Follower. Geographic replication: each datacenter has its own Leader+Follower cluster, replicating asynchronously.</div>
+      </div>
+    </div>
+    <div class="mt-3" style="font-size:.82rem;color:#8892a4"><strong style="color:#cdd3de">Invalidation:</strong> When a write occurs (user likes a post), the Leader updates MySQL and invalidates the affected cache keys in all Followers. Followers receive <code>invalidate(key)</code> messages and delete stale entries. Next read misses cache → fetches fresh from Leader. Invalidation is fire-and-forget — it's OK if a Follower briefly serves stale data (a few milliseconds) before the invalidation arrives.</div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict p-4 mb-4 text-center">
+    <div style="font-size:1.5rem;margin-bottom:.5rem">🏆</div>
+    <h5 class="fw-bold mb-2" style="color:var(--a)">The Lasting Verdict</h5>
+    <p style="color:#8892a4;max-width:700px;margin:0 auto;font-size:.87rem">Facebook published the TAO paper at USENIX ATC 2013. The architectural principle — model social data as a graph of objects and associations, cache it entirely in RAM, and use a database only for durable persistence — became the blueprint for social network engineering. LinkedIn built a similar system (Espresso). Twitter's "flock" social graph service used comparable ideas. Memcached's lease pattern, thundering herd prevention, and invalidation-at-scale techniques are now standard knowledge in backend engineering. Facebook also donated Apache Cassandra (a distributed column-store for message storage) from this same era, which became one of the most deployed databases in history.</p>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(24,119,242,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🔢 The 99%/1% Rule</div>
+        <div style="font-size:.78rem;color:#8892a4">Social platforms are 99% reads (loading feeds, profiles, photos) and 1% writes (posts, likes, comments). Architecture must be optimized for the 99% case. Putting every read through a write-optimized relational DB (which prioritizes consistency) is backwards. TAO inverts this: reads always hit RAM, writes are handled asynchronously by the slower but durable MySQL layer.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(24,119,242,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🌐 Why Not a Graph Database?</div>
+        <div style="font-size:.78rem;color:#8892a4">Neo4j and similar graph databases exist specifically for this use case. Facebook evaluated them — at their scale, no off-the-shelf graph DB could handle 1B requests/second. TAO is purpose-built for Facebook's specific access patterns: point lookups by ID, range queries over associations sorted by time. A general-purpose graph DB optimizes for graph traversals (shortest path) that Facebook rarely needs.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(24,119,242,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🧬 Facebook's Open Source Legacy</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li><strong style="color:#cdd3de">Apache Cassandra</strong> (2008)</li>
+          <li><strong style="color:#cdd3de">HipHop/HHVM</strong> — PHP → bytecode compiler</li>
+          <li><strong style="color:#cdd3de">React</strong> (2013) — UI library</li>
+          <li><strong style="color:#cdd3de">RocksDB</strong> (2013) — LSM-tree KV store</li>
+          <li><strong style="color:#cdd3de">PyTorch</strong> (2016) — ML framework</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

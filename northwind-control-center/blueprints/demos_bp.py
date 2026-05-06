@@ -1048,3 +1048,36 @@ def workflow_gaming():
 @login_required
 def workflow_bigdata():
     return render_template('demos/workflow_bigdata.html')
+
+
+# ── Breaking Points: Historical Case Studies ───────────────────────────────────
+
+@demos_bp.route('/history/google')
+@login_required
+def history_google():
+    return render_template('demos/history_google.html')
+
+@demos_bp.route('/history/amazon')
+@login_required
+def history_amazon():
+    return render_template('demos/history_amazon.html')
+
+@demos_bp.route('/history/facebook')
+@login_required
+def history_facebook():
+    return render_template('demos/history_facebook.html')
+
+@demos_bp.route('/history/netflix')
+@login_required
+def history_netflix():
+    return render_template('demos/history_netflix.html')
+
+@demos_bp.route('/history/whatsapp')
+@login_required
+def history_whatsapp():
+    return render_template('demos/history_whatsapp.html')
+
+@demos_bp.route('/history/kafka')
+@login_required
+def history_kafka():
+    return render_template('demos/history_kafka.html')

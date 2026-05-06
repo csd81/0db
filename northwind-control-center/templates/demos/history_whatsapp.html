@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% block title %}WhatsApp — Erlang & the C10M Problem{% endblock %}
+{% block content %}
+<style>
+:root { --a: #25D366; --warn: #ef476f; }
+.hero-grad { background: linear-gradient(160deg, rgba(37,211,102,.1), rgba(0,80,80,.06), #0e1014); }
+.problem-card { background:#1a0a0a; border:1px solid rgba(239,71,111,.35); border-radius:8px; }
+.solution-card { background:#081a08; border:1px solid rgba(37,211,102,.35); border-radius:8px; }
+.insight-box { background:#111418; border-left:4px solid var(--a); border-radius:0 6px 6px 0; }
+.era-badge { background:rgba(37,211,102,.12); border:1px solid rgba(37,211,102,.3); color:var(--a); font-size:.7rem; font-weight:700; padding:.25rem .65rem; border-radius:20px; letter-spacing:.08em; }
+.verdict { background:rgba(37,211,102,.07); border:2px solid rgba(37,211,102,.3); border-radius:12px; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#88ffbb; }
+pre { background:#050810; border:1px solid rgba(37,211,102,.2); border-radius:8px; padding:1rem; font-size:.75rem; color:#aaffcc; overflow-x:auto; line-height:1.6; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.stat-num { font-size:2rem; font-weight:900; color:var(--a); line-height:1; }
+.stat-lbl { font-size:.7rem; color:#8892a4; margin-top:.2rem; }
+.lang-cmp { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.5rem; }
+.lang-cell { background:#0a0d11; border-radius:6px; padding:.6rem; font-size:.75rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1200px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Breaking Points: WhatsApp</li>
+    </ol>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(37,211,102,.2)">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="era-badge">2009 – 2014</span>
+      <span class="era-badge" style="background:rgba(239,71,111,.12);border-color:rgba(239,71,111,.3);color:#ef476f">C10M Problem</span>
+    </div>
+    <h1 class="fw-black mb-1" style="color:#cdd3de;font-size:2.2rem;line-height:1.1">WhatsApp: <span style="color:var(--a)">50 Engineers. 1 Billion Users.</span></h1>
+    <p class="mb-3" style="color:#8892a4;font-size:.95rem;max-width:700px">The C10K problem (10,000 connections per server) had become C10M (10 million). WhatsApp solved it by choosing a 1986 telecom language, running it on an aggressively tuned OS, and keeping the product ruthlessly simple.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">💚 WhatsApp</span>
+      <span class="company-badge">⚡ Erlang/OTP</span>
+      <span class="company-badge">🔵 Discord (Elixir/Erlang VM)</span>
+      <span class="company-badge">🔴 RabbitMQ (also Erlang)</span>
+    </div>
+  </div>
+
+  <!-- Scale Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">2M</div>
+        <div class="stat-lbl">concurrent TCP connections per single server</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">50B</div>
+        <div class="stat-lbl">messages per day at time of $19B acquisition</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">~50</div>
+        <div class="stat-lbl">engineers supporting 450M active users (2014)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">~2KB</div>
+        <div class="stat-lbl">heap per Erlang process (vs ~2MB for OS thread)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Breaking Point -->
+  <div class="problem-card p-4 mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span style="font-size:1.4rem">💥</span>
+      <h4 class="mb-0 fw-bold" style="color:#ef476f">The C10M Problem: Why Traditional Architectures Failed</h4>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">The Thread-per-Connection Model</div>
+        <div style="font-size:.82rem;color:#8892a4;margin-bottom:.5rem">Traditional servers (Apache, Java EE) created one OS thread per connection. An OS thread requires 1-8 MB of stack space plus kernel scheduler overhead. At 10,000 connections: 10-80 GB of memory just for threads, plus context-switching overhead as the kernel cycles through them. At 1 million connections: mathematically impossible on a 64 GB server.</div>
+        <div class="fw-semibold mb-1" style="color:#cdd3de">The Event Loop Alternative (Node.js, nginx)</div>
+        <div style="font-size:.82rem;color:#8892a4">The C10K solution: a single thread with an event loop (epoll/kqueue). Non-blocking I/O: instead of blocking a thread waiting for a socket, register a callback. One thread handles thousands of connections by processing events as they arrive. But: a single long-running callback blocks the entire event loop. All I/O must be asynchronous — complex callback hell. C10K → solved. C10M → still a problem (one CPU core runs out).</div>
+      </div>
+      <div class="col-md-6">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">WhatsApp's Specific Challenge</div>
+        <div style="font-size:.82rem;color:#8892a4;margin-bottom:.5rem">A messaging app requires a <strong>persistent open connection</strong> for each active user — messages must be deliverable at any moment, not just when the user polls. Unlike HTTP (stateless, connection closed after response), messaging needs stateful long-lived TCP connections. Scaling to 1 billion users: 100-500 million simultaneously online at peak.</div>
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Why Not Python / Java / C++?</div>
+        <div style="font-size:.82rem;color:#8892a4">Python's GIL (Global Interpreter Lock) prevents true parallelism across cores. Java's garbage collector introduces unpredictable pauses — catastrophic for real-time messaging. C++ gives maximum performance but requires manual memory management; a single buffer overflow can crash a server holding 2 million connections. WhatsApp needed: massive concurrency, fault isolation, hot-code upgrades without downtime, and high developer productivity.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why Erlang -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Why Erlang: Built for Exactly This Problem in 1986</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
+        <div class="col-md-5">
+          <div style="font-size:.82rem;color:#8892a4">
+            <p><strong style="color:#cdd3de">Origins:</strong> Ericsson engineers Joe Armstrong, Robert Virding, and Mike Williams built Erlang for one purpose: running phone exchange switches that must handle millions of concurrent calls with zero downtime. A phone network that goes down is a national emergency. This drove every design decision.</p>
+            <p><strong style="color:#cdd3de">Lightweight Processes (not OS threads):</strong> Each Erlang "process" is a lightweight construct managed by the BEAM VM — not the OS. Initial heap: 233 words (~2 KB). A 64 GB server can run 30 million Erlang processes. WhatsApp assigns one process per connection. 2 million connections = 2 million processes = ~4 GB RAM.</p>
+            <p><strong style="color:#cdd3de">Fault Isolation:</strong> Erlang processes share no memory. A bug crashing one process cannot corrupt others. Each process is isolated — its state lives in its own heap. Supervisor trees monitor processes and restart them on failure. This is how WhatsApp achieves "9 nines" reliability without manual intervention.</p>
+            <p class="mb-0"><strong style="color:#cdd3de">Hot Code Swapping:</strong> Deploy a new version of the server code without disconnecting a single client. The BEAM VM loads the new module alongside the old; when a process makes its next function call, it switches to the new version atomically. WhatsApp updated millions of active connections without a single disconnection. Ericsson ships phone switches this way — a switch restart during an upgrade would mean dropped calls across a country.</p>
+          </div>
+        </div>
+        <div class="col-md-7">
+<pre>
+%% Erlang: Each connection is one lightweight process
+%% This runs MILLIONS of times simultaneously on one server
+
+-module(whatsapp_session).
+-behaviour(gen_server).
+
+%% Each user gets their own gen_server process
+%% Initial heap: ~2KB. Grows as needed. GC'd independently.
+start_link(UserId, Socket) ->
+    gen_server:start_link(?MODULE, {UserId, Socket}, []).
+
+init({UserId, Socket}) ->
+    %% Register: "user 12345 is on THIS process"
+    gproc:reg({n, l, {user, UserId}}),
+    {ok, #{user_id => UserId, socket => Socket}}.
+
+%% Receive message from network
+handle_info({tcp, Socket, Data}, State) ->
+    Message = decode(Data),
+    handle_message(Message, State);
+
+%% Deliver a message TO this user
+handle_cast({deliver, Msg}, #{socket := Sock} = State) ->
+    gen_tcp:send(Sock, encode(Msg)),
+    {noreply, State};
+
+%% Connection dropped — process cleans up and dies
+handle_info({tcp_closed, _Socket}, State) ->
+    gproc:unreg({n, l, {user, maps:get(user_id, State)}}),
+    {stop, normal, State}.
+
+%% If this process crashes (bug in message handling):
+%% - Only this user's session is affected
+%% - Supervisor restarts the process automatically
+%% - Other 1,999,999 connections are unaffected
+%% - No memory corruption, no cascading crash
+</pre>
+          <div style="font-size:.72rem;color:#8892a4;margin-top:.5rem">The Supervisor tree: a parent process monitors <code>whatsapp_session</code> processes. On crash: <code>{restart, permanent}</code> policy re-spawns the session. If a supervisor crashes, ITS supervisor restarts it. Hierarchical fault tolerance.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Language Comparison -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Concurrency Models: Why WhatsApp Chose Erlang Over Alternatives</span>
+    </div>
+    <div class="card-body">
+      <div class="lang-cmp">
+        <div class="lang-cell" style="border:1px solid rgba(239,71,111,.2)">
+          <div style="color:#ef476f;font-weight:600;margin-bottom:.3rem">Java / Python</div>
+          <div style="color:#cdd3de;font-size:.7rem;margin-bottom:.4rem">Thread-per-connection</div>
+          <ul style="color:#8892a4;font-size:.7rem;padding-left:.8rem;margin:0">
+            <li>OS threads: 2-8 MB stack each</li>
+            <li>10K connections = 80 GB RAM minimum</li>
+            <li>Context switching overhead grows with thread count</li>
+            <li>Java GC pauses: 50-500ms "stop the world"</li>
+            <li>Python GIL: one core regardless of hardware</li>
+            <li>Max practical connections per server: ~10K</li>
+          </ul>
+        </div>
+        <div class="lang-cell" style="border:1px solid rgba(255,153,0,.2)">
+          <div style="color:#ff9900;font-weight:600;margin-bottom:.3rem">Node.js / nginx</div>
+          <div style="color:#cdd3de;font-size:.7rem;margin-bottom:.4rem">Single event loop</div>
+          <ul style="color:#8892a4;font-size:.7rem;padding-left:.8rem;margin:0">
+            <li>One thread handles all connections via callbacks</li>
+            <li>Memory efficient: one stack</li>
+            <li>One slow callback blocks ALL users</li>
+            <li>No fault isolation: crash = server down</li>
+            <li>Complex async code ("callback hell")</li>
+            <li>Can't use multiple CPU cores without clustering</li>
+          </ul>
+        </div>
+        <div class="lang-cell" style="border:1px solid rgba(37,211,102,.3)">
+          <div style="color:var(--a);font-weight:600;margin-bottom:.3rem">Erlang/BEAM</div>
+          <div style="color:#cdd3de;font-size:.7rem;margin-bottom:.4rem">Actor model (chosen)</div>
+          <ul style="color:#8892a4;font-size:.7rem;padding-left:.8rem;margin:0">
+            <li>Lightweight processes: ~2 KB heap each</li>
+            <li>2M connections = 4 GB RAM</li>
+            <li>Preemptive scheduling: BEAM VM schedules, not OS</li>
+            <li>Process crash: only that user affected</li>
+            <li>Supervisor tree: automatic restarts</li>
+            <li>Hot code swapping: deploy without downtime</li>
+            <li>Uses all CPU cores natively</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Radical Minimalism -->
+  <div class="insight-box p-4 mb-4">
+    <div class="fw-bold mb-3" style="color:var(--a)">⚡ The Radical Minimalism: What WhatsApp Deliberately Didn't Build</div>
+    <div class="row g-3" style="font-size:.82rem">
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">No Ads</div>
+        <div style="color:#8892a4">An ad-serving system requires: user profiling databases, A/B testing infrastructure, real-time bidding servers, content delivery networks for ad creatives, analytics pipelines. Enormous engineering cost. Jan Koum (co-founder, ex-Yahoo) explicitly designed WhatsApp to be ad-free — the $0.99/year model (later free) kept the architecture clean.</div>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">No Message Storage</div>
+        <div style="color:#8892a4">Messages are deleted from WhatsApp's servers immediately upon delivery. If the recipient is offline, messages are queued for up to 30 days, then deleted. WhatsApp never built a message history database — no search, no "message backup from server" (backups go to Google Drive/iCloud). This eliminated the largest database scaling problem of any messaging app.</div>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">No Games, No Sticker Stores, No Mini-Apps</div>
+        <div style="color:#8892a4">WeChat (China) built a full platform: games, payments, taxis, food delivery, all inside the chat app. Enormous complexity, 10,000+ engineers. WhatsApp's co-founders explicitly refused to build this. The result: 50 engineers, 450M users, $19B acquisition. The ratio of users-per-engineer was 10× better than any comparable platform.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FreeBSD Tuning -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">OS-Level Tuning: Pushing FreeBSD to 2M Connections</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+<pre>
+# /etc/sysctl.conf — WhatsApp-style FreeBSD tuning
+
+# Max open file descriptors (each connection = 1 fd)
+kern.maxfiles=20000000
+kern.maxfilesperproc=20000000
+
+# Network buffer sizes
+net.inet.tcp.sendspace=262144    # 256 KB send buffer
+net.inet.tcp.recvspace=262144    # 256 KB recv buffer
+
+# Increase socket backlog (connection queue)
+kern.ipc.somaxconn=8192
+
+# Disable Nagle algorithm (send small packets immediately)
+net.inet.tcp.delayed_ack=0
+
+# TCP keepalive for detecting dead connections
+net.inet.tcp.keepidle=60000      # 60 seconds
+net.inet.tcp.keepintvl=3000      # 3 seconds between probes
+net.inet.tcp.keepcnt=5           # 5 probes before disconnect
+
+# Memory for socket buffers: 8 GB
+kern.ipc.maxsockbuf=8388608
+</pre>
+        </div>
+        <div class="col-md-6">
+          <div style="font-size:.82rem;color:#8892a4">
+            <p><strong style="color:#cdd3de">Why FreeBSD?</strong> WhatsApp chose FreeBSD over Linux for its superior network stack performance and more predictable latency under high connection counts. FreeBSD's kqueue (the equivalent of Linux's epoll) was considered more efficient for their workload. Netflix also uses FreeBSD for its Open Connect Appliances for the same reason.</p>
+            <p><strong style="color:#cdd3de">The File Descriptor Problem:</strong> Each open TCP connection consumes one file descriptor. Linux/FreeBSD default limit: 1024 per process. Raising to 2,000,000 requires both kernel parameter changes (above) and Erlang VM flags: <code>erl +K true +A 32 +P 10000000</code> (enable kernel polling, 32 async threads, 10M processes).</p>
+            <p class="mb-0"><strong style="color:#cdd3de">BEAM VM Tuning:</strong> Erlang's scheduler has one thread per CPU core. With 32 cores: 32 independent schedulers run Erlang processes in true parallel. The BEAM VM uses a work-stealing scheduler: if one core is idle, it steals processes from busy cores. This distributes 2M connection processes evenly across all 32 CPU cores automatically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict p-4 mb-4 text-center">
+    <div style="font-size:1.5rem;margin-bottom:.5rem">🏆</div>
+    <h5 class="fw-bold mb-2" style="color:var(--a)">The Lasting Verdict</h5>
+    <p style="color:#8892a4;max-width:700px;margin:0 auto;font-size:.87rem">WhatsApp's acquisition by Facebook for $19 billion in 2014 was the most expensive per-employee acquisition in history: roughly $345 million per engineer. It validated two profound principles. First: choosing the right tool for the job (Erlang) is worth more than scaling the wrong tool. Second: radical minimalism — refusing to build features that aren't core — enables a tiny team to build infrastructure that rivals companies 100× their size. Discord, Slack, and Telegram all built on BEAM (Elixir) for their messaging infrastructure, explicitly citing WhatsApp's example. RabbitMQ (the world's most popular message broker) also runs on Erlang/OTP.</p>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(37,211,102,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📚 Erlang's OTP Behaviours</div>
+        <div style="font-size:.78rem;color:#8892a4"><code>gen_server</code>: generic client-server (most common). <code>gen_statem</code>: state machine (connection lifecycle). <code>supervisor</code>: monitors children, restarts on crash with configurable strategy (one_for_one, one_for_all, rest_for_one). <code>gen_event</code>: event-manager/handler pattern. These pre-built patterns are why Erlang apps are concurrently correct with minimal code.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(37,211,102,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🧬 Erlang's Children</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li><strong style="color:#cdd3de">Elixir</strong> (2012) — Ruby-like syntax on BEAM. Discord's backend, Phoenix framework</li>
+          <li><strong style="color:#cdd3de">RabbitMQ</strong> — Message broker, 60,000+ deployments</li>
+          <li><strong style="color:#cdd3de">CouchDB</strong> — Distributed document DB in Erlang</li>
+          <li><strong style="color:#cdd3de">Ejabberd</strong> — XMPP chat server (WhatsApp forked this initially)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(37,211,102,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🔢 The 9-Nines SLA</div>
+        <div style="font-size:.78rem;color:#8892a4">Ericsson used Erlang in AXD301 telephone switches. A published study measured 99.9999999% reliability (nine nines) — 31ms downtime per year. WhatsApp applied this telecom reliability standard to consumer messaging. The BEAM VM's process isolation means a bug crashes one user's session, not the server — no cascading failures, no deployment windows, no planned downtime.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
