@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Era 1: The Monolith Wall (2000–2006){% endblock %}
+{% block content %}
+<style>
+:root { --a: #3b82f6; }
+.era-num { font-size:5rem; font-weight:900; color:rgba(59,130,246,.12); line-height:1; position:absolute; right:1.5rem; top:0; font-variant-numeric:tabular-nums; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(59,130,246,.15); color:var(--a); border:1px solid rgba(59,130,246,.3); }
+.crisis-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.7rem; font-weight:700; background:rgba(255,100,0,.2); color:#ff6b35; border:1px solid rgba(255,100,0,.3); margin:.15rem; }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(59,130,246,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(59,130,246,.15); color:var(--a); border:1px solid rgba(59,130,246,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.timeline-dot { width:12px; height:12px; border-radius:50%; background:var(--a); display:inline-block; margin-right:.5rem; flex-shrink:0; margin-top:.3rem; }
+.timeline-item { display:flex; gap:.75rem; padding:.6rem 0; border-bottom:1px solid rgba(255,255,255,.05); }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <!-- Header -->
+  <div class="mb-4" style="position:relative;overflow:hidden">
+    <div class="era-num">01</div>
+    <span class="era-badge">2000 – 2006</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">The Monolith Wall &amp; Birth of the Cloud</h1>
+    <p class="lead" style="color:#8892a4">The Web 2.0 read/write explosion exposed the physical limits of "scale up." Two companies — Google and Amazon — independently proved that cheap, distributed software beats expensive, centralized hardware.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">$1M+</span><span class="stat-lbl">Oracle Enterprise license</span></div>
+    <div class="stat-box"><span class="stat-num">$0.10</span><span class="stat-lbl">AWS S3 per GB/month (2006)</span></div>
+    <div class="stat-box"><span class="stat-num">10K+</span><span class="stat-lbl">Commodity servers per GFS cluster</span></div>
+    <div class="stat-box"><span class="stat-num">2002</span><span class="stat-lbl">Bezos API mandate year</span></div>
+  </div>
+
+  <!-- The Problem -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Breaking Point: The Read/Write Wall</h4>
+    <p style="color:#c0c9d6">In 2000, the internet was dominated by static pages. By 2004, it was blogs, forums, photo sharing, and early social media — all requiring massive read <em>and</em> write throughput simultaneously. The solution to every performance problem was the same: <strong style="color:#fff">buy a bigger Oracle server.</strong></p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Scale-Up Dead End</h6>
+        <p style="font-size:.82rem;color:#8892a4">Oracle, IBM DB2, and SQL Server ran on Sun Microsystems UltraSPARC hardware. Adding capacity meant replacing the entire server. A top-tier Sun E15K cost $3M+. There was a hard physical ceiling on how big one machine could get.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">The Provisioning Bottleneck</h6>
+        <p style="font-size:.82rem;color:#8892a4">Inside Amazon, launching a new service required submitting a hardware request to IT, waiting 6–8 weeks for servers to arrive, then manually configuring them. Engineering teams were more bottlenecked by IT than by their own code.</p>
+      </div>
+    </div>
+    <div class="mt-3">
+      <span class="crisis-badge">Single-machine limit</span>
+      <span class="crisis-badge">Hardware provisioning delay</span>
+      <span class="crisis-badge">Vendor lock-in (Oracle)</span>
+      <span class="crisis-badge">Batch-only writes</span>
+    </div>
+  </div>
+
+  <!-- Google Solution -->
+  <div class="solution-card mb-3">
+    <h4 class="fw-bold mb-2" style="color:#00c864">✦ Google: Commodity Distributed Computing</h4>
+    <p style="color:#c0c9d6">Google's infrastructure team (Jeff Dean, Sanjay Ghemawat) made a counter-intuitive bet: instead of buying expensive reliable hardware, they'd assume <strong style="color:#fff">every machine would eventually fail</strong> and write software that treated failure as normal. The result was GFS and MapReduce — proof that 10,000 cheap, failing computers running brilliant software beat one expensive computer.</p>
+  </div>
+
+  <pre class="code-block mb-4"><span class="cm"># MapReduce: Inverted index — how Google indexed the web on cheap commodity hardware</span>
+<span class="cm"># Map phase: each machine processes its slice of crawled pages in parallel</span>
+
+<span class="kw">def</span> <span class="fn">map</span>(document_url, document_content):
+    <span class="kw">for</span> word <span class="kw">in</span> document_content.split():
+        emit(word.lower(), document_url)
+
+<span class="cm"># Framework shuffles: groups all (word → [url1, url2, ...]) by key</span>
+<span class="cm"># Runs on 10,000 machines simultaneously — one task per 64MB GFS chunk</span>
+
+<span class="kw">def</span> <span class="fn">reduce</span>(word, url_list):
+    emit(word, sorted(set(url_list)))  <span class="cm"># final inverted index entry</span>
+
+<span class="cm"># GFS guarantees: if a machine dies mid-job, master re-assigns that chunk</span>
+<span class="cm"># ~3% of machines fail per year — the framework doesn't care</span>
+<span class="cm"># One MapReduce job across 10K nodes = index the entire web in hours</span></pre>
+
+  <!-- Amazon Solution -->
+  <div class="solution-card mb-3">
+    <h4 class="fw-bold mb-2" style="color:#00c864">✦ Amazon: The API Mandate &amp; the Birth of AWS</h4>
+    <p style="color:#c0c9d6">In 2002, Jeff Bezos sent a memo that changed software forever. Every Amazon team had to expose their data and functions through standardized APIs — no exceptions. Violators were fired. This internal Service-Oriented Architecture (SOA) forced Amazon to build a perfectly modular, scalable infrastructure. By 2006, they had excess capacity and world-class distributed systems expertise. They rented it out: <strong style="color:#fff">AWS was born.</strong></p>
+  </div>
+
+  <div class="insight-box">
+    <strong style="color:var(--a)">The Bezos Mandate (2002):</strong>
+    <span style="color:#c0c9d6"> "All teams will henceforth expose their data and functionality through service interfaces. Teams must communicate with each other through these interfaces. There will be no other form of interprocess communication allowed. Anyone who doesn't do this will be fired."</span>
+  </div>
+
+  <!-- Timeline -->
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Era 1 Timeline</h5>
+  <div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2002</strong> — <span style="color:#8892a4">Jeff Bezos API mandate: Amazon forces SOA internally. Engineering velocity triples.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2003</strong> — <span style="color:#8892a4">Google publishes the GFS paper (SOSP). First public proof that distributed commodity storage works at scale.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2004</strong> — <span style="color:#8892a4">Google publishes the MapReduce paper (OSDI). Parallel batch computation on cheap hardware is proven at web scale.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2005</strong> — <span style="color:#8892a4">Yahoo! builds Hadoop: open-source MapReduce + HDFS based on Google's papers. Distributed computing becomes accessible.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2006</strong> — <span style="color:#8892a4">Amazon launches EC2 and S3 publicly. The Cloud is born. Sun Microsystems begins its terminal decline.</span></div></div>
+  </div>
+
+  <!-- Tech Stack -->
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technologies Defined in This Era</h5>
+  <div class="mb-3">
+    <span class="tech-pill">Google File System (GFS)</span>
+    <span class="tech-pill">MapReduce</span>
+    <span class="tech-pill">Amazon EC2</span>
+    <span class="tech-pill">Amazon S3</span>
+    <span class="tech-pill">Apache Hadoop (HDFS)</span>
+    <span class="tech-pill">Apache YARN</span>
+    <span class="tech-pill">SOA / Web Services</span>
+    <span class="tech-pill">REST APIs</span>
+    <span class="tech-pill">Oracle RAC (peak)</span>
+    <span class="tech-pill">Sun SPARC (decline)</span>
+  </div>
+
+  <div class="insight-box">
+    <strong style="color:var(--a)">The Sun Microsystems Lesson:</strong>
+    <span style="color:#c0c9d6"> Sun's slogan was "The Network is the Computer." They were right — but they assumed the computer in the network would be expensive Sun hardware. Google proved it would be thousands of $1,500 commodity x86 servers. Sun was acquired by Oracle for $7.4B in 2010, down from a $200B peak valuation in 2000.</span>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">Era 1 established the foundational insight of modern computing: <em>software reliability beats hardware reliability</em>. You don't need a $3M server that never fails — you need $1,500 servers and software sophisticated enough that failure becomes irrelevant. Google and Amazon didn't just solve their own scaling problems; they built the infrastructure that the entire internet would run on for the next 20 years.</p>
+  </div>
+
+  <div class="mt-3 d-flex gap-2">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(59,130,246,.15);color:var(--a);border:1px solid rgba(59,130,246,.3)">← All Demos</a>
+    <a href="{{ url_for('demos.era_mobile_nosql') }}" class="btn btn-sm" style="background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)">Era 2: Mobile + NoSQL →</a>
+  </div>
+
+</div>
+{% endblock %}

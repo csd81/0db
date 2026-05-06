@@ -1106,3 +1106,28 @@ def history_snowflake():
 @login_required
 def history_cloudflare():
     return render_template('demos/history_cloudflare.html')
+
+@demos_bp.route('/era/web2')
+@login_required
+def era_web2():
+    return render_template('demos/era_web2.html')
+
+@demos_bp.route('/era/mobile-nosql')
+@login_required
+def era_mobile_nosql():
+    return render_template('demos/era_mobile_nosql.html')
+
+@demos_bp.route('/era/streaming')
+@login_required
+def era_streaming():
+    return render_template('demos/era_streaming.html')
+
+@demos_bp.route('/era/edge-iot')
+@login_required
+def era_edge_iot():
+    return render_template('demos/era_edge_iot.html')
+
+@demos_bp.route('/era/genai')
+@login_required
+def era_genai():
+    return render_template('demos/era_genai.html')
