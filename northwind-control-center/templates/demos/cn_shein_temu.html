@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Shein & Temu: Algorithmic Supply Chains{% endblock %}
+{% block content %}
+<style>
+:root { --a: #00c9a7; }
+.cn-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.65rem; font-weight:700; background:rgba(0,201,167,.15); color:var(--a); border:1px solid rgba(0,201,167,.3); margin:.15rem; letter-spacing:.05em; text-transform:uppercase; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(0,201,167,.15); color:var(--a); border:1px solid rgba(0,201,167,.3); }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(0,201,167,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(0,201,167,.1); border:1px solid rgba(0,201,167,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(0,201,167,.15); color:var(--a); border:1px solid rgba(0,201,167,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.pipe-row { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; margin:1.2rem 0; }
+.pipe-box { background:rgba(0,201,167,.12); border:1px solid rgba(0,201,167,.3); border-radius:6px; padding:.5rem .9rem; font-size:.78rem; font-weight:600; color:var(--a); white-space:nowrap; }
+.pipe-arr { color:#556; font-size:1.1rem; }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="mb-4">
+    <span class="era-badge">2012 – Present</span>
+    <span class="ms-2 cn-badge">🇨🇳 Shein</span>
+    <span class="ms-1 cn-badge">Temu · PDD Holdings</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">Algorithmic Supply Chains &amp; C2M Architecture</h1>
+    <p class="lead" style="color:#8892a4">Amazon manages boxes in warehouses. Zara takes 3 weeks to design and manufacture a dress. Shein and Temu turned the factory floor into a cloud node, replacing the supply chain with a demand chain that manufactures on-demand in days.</p>
+  </div>
+
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">3–7</span><span class="stat-lbl">Days from design to factory floor</span></div>
+    <div class="stat-box"><span class="stat-num">100</span><span class="stat-lbl">Unit minimum order (micro-batch)</span></div>
+    <div class="stat-box"><span class="stat-num">600K+</span><span class="stat-lbl">Active Shein SKUs at any time</span></div>
+    <div class="stat-box"><span class="stat-num">~$5</span><span class="stat-lbl">Average Temu item price</span></div>
+  </div>
+
+  <!-- Problem -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Existential Constraint: No Warehouse, No Brand, No Lead Time</h4>
+    <p style="color:#c0c9d6">Amazon's competitive moat is warehouses full of pre-positioned inventory and a Prime delivery network. Building that costs $80B+ in infrastructure. Zara's moat is brand and vertical integration built over 50 years. Shein and Temu had neither. Their constraint forced a fundamentally different answer: <strong style="color:#fff">don't predict and stock inventory — manufacture exactly what is trending, exactly when it trends, in batches of 100.</strong></p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Traditional Retail (Zara)</h6>
+        <p style="font-size:.82rem;color:#8892a4">Design → source fabric → manufacture 10,000 units → ship to regional warehouses → ship to stores → markdown unsold inventory. Lead time: 3–5 weeks. Unsold inventory rate: 15–30%. Inventory write-down cost: billions per year.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Amazon Retail</h6>
+        <p style="font-size:.82rem;color:#8892a4">Predict demand → pre-position inventory in 185 fulfillment centers → 2-day shipping. Competitive moat is logistics, not product velocity. $80B+ capex to build the network. New category entry takes months of forecast modeling.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shein C2M -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Shein: AI-Driven C2M (Consumer-to-Manufacturer)</h4>
+    <p style="color:#c0c9d6">Shein's architecture inverts the supply chain. Instead of predicting demand and manufacturing ahead, their AI continuously monitors social media for emerging micro-trends and triggers micro-manufacturing orders within hours of trend detection.</p>
+  </div>
+
+  <h5 class="fw-bold mb-2" style="color:#fff">Shein's Demand Chain Pipeline</h5>
+  <div class="pipe-row">
+    <div class="pipe-box">AI scrapes TikTok / Instagram / Pinterest</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Vision model detects micro-trend</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Auto-generate design variants</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">ERP pushes 100-unit order to factory</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">App lists product, measures engagement</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Engagement spike → reorder + scale</div>
+  </div>
+
+  <pre class="code-block mb-4"><span class="cm"># Shein's C2M Engine (conceptual)</span>
+
+<span class="kw">class</span> TrendDetector:
+    <span class="kw">def</span> <span class="fn">scan_social_feeds</span>(self):
+        <span class="cm"># Vision model classifies clothing in viral posts: color, cut, pattern, material</span>
+        emerging = self.vision_model.<span class="fn">extract_style_features</span>(viral_posts)
+        <span class="cm"># Compare against current inventory: what's trending but not yet in stock?</span>
+        gaps = [t <span class="kw">for</span> t <span class="kw">in</span> emerging <span class="kw">if</span> t <span class="kw">not in</span> self.current_sku_space]
+        <span class="kw">return</span> gaps  <span class="cm"># e.g. "floral mesh mini dress, sage green, cottagecore"</span>
+
+<span class="kw">class</span> C2MOrchestrator:
+    <span class="kw">def</span> <span class="fn">launch_micro_order</span>(self, trend):
+        <span class="cm"># Auto-generate design brief from trend features</span>
+        design = self.design_ai.<span class="fn">generate</span>(trend)
+
+        <span class="cm"># Route to factory with available capacity in Guangzhou network</span>
+        factory = self.factory_db.<span class="fn">find_available</span>(
+            product_type=trend.category,
+            min_capacity=<span class="num">100</span>,         <span class="cm"># micro-batch: 100 units</span>
+            location=<span class="st">"guangzhou"</span>,
+            lead_days=<span class="num">3</span>
+        )
+        <span class="cm"># Push manufacturing order via ERP API (installed in factory)</span>
+        factory.erp_api.<span class="fn">create_order</span>({
+            <span class="st">'design'</span>: design, <span class="st">'quantity'</span>: <span class="num">100</span>, <span class="st">'deadline'</span>: today + <span class="num">3</span>
+        })
+        <span class="cm"># List product on app immediately — factory is already working</span>
+        self.product_db.<span class="fn">publish</span>(design, status=<span class="st">"pre-order"</span>)
+
+    <span class="kw">def</span> <span class="fn">on_engagement_spike</span>(self, product_id, engagement_rate):
+        <span class="kw">if</span> engagement_rate > REORDER_THRESHOLD:
+            <span class="cm"># Scale order: tell factory to produce 5,000 more units</span>
+            <span class="cm"># Simultaneously order raw materials (fabric, buttons) from suppliers</span>
+            self.<span class="fn">scale_order</span>(product_id, quantity=<span class="num">5000</span>)</pre>
+
+  <!-- Temu's Pricing Engine -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Temu: Factory Auction Platform &amp; Dynamic Pricing</h4>
+    <p style="color:#c0c9d6">Temu (PDD Holdings) operates a different model: instead of managing designs, they manage <strong style="color:#fff">raw manufacturing capacity</strong>. For any product category, multiple factories bid in real-time within Temu's backend system to produce the item at the lowest cost. The winning factory gets the order; the consumer gets the floor price.</p>
+  </div>
+
+  <pre class="code-block mb-4"><span class="cm">-- Temu: Factory reverse auction for a "wireless earbuds" SKU</span>
+<span class="cm">-- Runs continuously as consumer demand fluctuates</span>
+
+<span class="kw">INSERT INTO</span> manufacturing_auctions (sku_id, target_qty, deadline, max_price_usd)
+<span class="kw">VALUES</span> (<span class="st">'sku_earbuds_bt5'</span>, <span class="num">10000</span>, <span class="st">'2024-06-20'</span>, <span class="num">4.50</span>);
+
+<span class="cm">-- Factory bids: capacity, price, lead time</span>
+<span class="kw">INSERT INTO</span> factory_bids (auction_id, factory_id, price_per_unit, lead_days, rating)
+<span class="kw">VALUES</span>
+  (<span class="num">9001</span>, <span class="st">'factory_gz_001'</span>, <span class="num">3.80</span>, <span class="num">12</span>, <span class="num">4.9</span>),
+  (<span class="num">9001</span>, <span class="st">'factory_sz_044'</span>, <span class="num">3.50</span>, <span class="num">15</span>, <span class="num">4.7</span>),
+  (<span class="num">9001</span>, <span class="st">'factory_gz_112'</span>, <span class="num">4.20</span>, <span class="num">8</span>,  <span class="num">4.8</span>);
+
+<span class="cm">-- Scoring algorithm: price (60%) + speed (25%) + quality rating (15%)</span>
+<span class="kw">SELECT</span> factory_id,
+       (price_per_unit * <span class="num">0.60</span>) + (lead_days * <span class="num">0.25</span>) - (rating * <span class="num">0.15</span>) <span class="kw">AS</span> score
+<span class="kw">FROM</span> factory_bids <span class="kw">WHERE</span> auction_id = <span class="num">9001</span>
+<span class="kw">ORDER BY</span> score
+<span class="kw">LIMIT</span> <span class="num">1</span>;
+<span class="cm">-- Winner: factory_sz_044 at $3.50/unit</span>
+<span class="cm">-- Consumer price: $7.99 (with platform margin + shipping subsidy)</span></pre>
+
+  <!-- Compare -->
+  <h5 class="fw-bold mt-2 mb-2" style="color:#fff">Supply Chain vs Demand Chain</h5>
+  <div class="compare-grid">
+    <div class="problem-card">
+      <h6 style="color:#ff6b35">Amazon / Zara — Supply Chain</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.1rem">
+        <li>Predict demand → manufacture ahead → warehouse</li>
+        <li>3–8 week lead time from trend to shelf</li>
+        <li>10,000+ unit minimum for viability</li>
+        <li>15–30% unsold inventory write-down</li>
+        <li>Manages <strong style="color:#aaa">boxes in warehouses</strong></li>
+      </ul>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864">Shein / Temu — Demand Chain</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.1rem">
+        <li>Detect trend → manufacture on-demand → ship direct</li>
+        <li>3–7 day design-to-factory lead time</li>
+        <li>100-unit micro-batches test market fit</li>
+        <li>&lt;3% unsold inventory (only scale what sells)</li>
+        <li>Manages <strong style="color:#aaa">raw manufacturing capacity</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="insight-box mt-4">
+    <strong style="color:var(--a)">The ERP Integration Key:</strong>
+    <span style="color:#c0c9d6"> Shein's proprietary ERP software is installed directly in thousands of independent garment factories in Guangzhou. These factories don't use SAP or Oracle — they use Shein's system. This makes each factory a node in Shein's cloud-integrated manufacturing network, receivable of orders, real-time status updates, and QC requirements directly from the platform. The factory floor becomes a distributed compute node.</span>
+  </div>
+
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">Computer Vision (trend scraping)</span>
+    <span class="tech-pill">Proprietary ERP (factory-embedded)</span>
+    <span class="tech-pill">Real-time SKU database</span>
+    <span class="tech-pill">Reverse auction engine</span>
+    <span class="tech-pill">Engagement analytics (Kafka)</span>
+    <span class="tech-pill">Aliyun / Tencent Cloud</span>
+    <span class="tech-pill">Supply chain graph DB</span>
+    <span class="tech-pill">Dynamic pricing ML</span>
+    <span class="tech-pill">Direct-from-factory logistics</span>
+  </div>
+
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">Shein and Temu did not disrupt fashion retail — they disrupted the concept of inventory itself. By making the factory floor a real-time cloud node and replacing the supply chain with an algorithmic demand chain, they eliminated the largest cost center in retail (unsold inventory) and the largest barrier to entry (warehouse infrastructure). Amazon's moat is 2-day delivery; Shein's moat is that it manufactures only what already has buyers.</p>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(0,201,167,.15);color:var(--a);border:1px solid rgba(0,201,167,.3)">← Back to Demos</a>
+  </div>
+
+</div>
+{% endblock %}

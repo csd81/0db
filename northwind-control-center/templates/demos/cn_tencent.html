@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Tencent: The Super App OS Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #07c160; }
+.cn-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.65rem; font-weight:700; background:rgba(7,193,96,.15); color:var(--a); border:1px solid rgba(7,193,96,.3); margin:.15rem; letter-spacing:.05em; text-transform:uppercase; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(7,193,96,.15); color:var(--a); border:1px solid rgba(7,193,96,.3); }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(7,193,96,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(7,193,96,.1); border:1px solid rgba(7,193,96,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(7,193,96,.15); color:var(--a); border:1px solid rgba(7,193,96,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.mini-prog-layer { border-radius:8px; padding:.8rem 1rem; margin:.4rem 0; }
+.pipe-row { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; margin:1.2rem 0; }
+.pipe-box { background:rgba(7,193,96,.12); border:1px solid rgba(7,193,96,.3); border-radius:6px; padding:.5rem .9rem; font-size:.78rem; font-weight:600; color:var(--a); white-space:nowrap; }
+.pipe-arr { color:#556; font-size:1.1rem; }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="mb-4">
+    <span class="era-badge">2011 – Present</span>
+    <span class="ms-2 cn-badge">🇨🇳 Tencent</span>
+    <span class="ms-1 cn-badge">WeChat · TDSQL · Riot Games</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">The Super App OS Architecture</h1>
+    <p class="lead" style="color:#8892a4">WeChat is not an app — it is a mobile operating system. 1.3 billion people use it to message, pay bills, hail taxis, file government forms, and play games without ever leaving. The technical challenge: do all of this without shipping a 5GB unbootable monster.</p>
+  </div>
+
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">1.3B</span><span class="stat-lbl">WeChat monthly active users</span></div>
+    <div class="stat-box"><span class="stat-num">4B+</span><span class="stat-lbl">Red packets on CNY peak day</span></div>
+    <div class="stat-box"><span class="stat-num">~50MB</span><span class="stat-lbl">WeChat app size</span></div>
+    <div class="stat-box"><span class="stat-num">∞</span><span class="stat-lbl">Mini Programs (streamed on demand)</span></div>
+  </div>
+
+  <!-- The Problem -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Existential Constraint: One App, Every Human Need</h4>
+    <p style="color:#c0c9d6">WeChat's product vision — to become the operating system of daily life in China — was technically impossible using standard app architecture. Shipping every feature in the app binary would create a 5GB download that crashes on low-end Android phones. Using the mobile app stores (Apple/Google) meant paying 30% tax on every transaction and waiting 2–4 weeks for feature approvals. <strong style="color:#fff">WeChat needed to be both tiny and infinitely extensible.</strong></p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Monolithic App (Instagram model)</h6>
+        <p style="font-size:.82rem;color:#8892a4">Every feature ships in the binary. Adding 1,000 third-party integrations → binary size explodes. Every update requires App Store review. Low-end phones (2GB RAM, 16GB storage) can't install the app. Platform gives Apple/Google 30% cut.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">WebView (Hybrid App)</h6>
+        <p style="font-size:.82rem;color:#8892a4">Embed a browser in the app, load third-party pages. Slow: full page reload per navigation. Insecure: third-party JavaScript can access WeChat session. No access to device hardware (camera, NFC, GPS) without dangerous permissions.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini Programs -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Mini Programs: A Sandboxed VM Inside WeChat</h4>
+    <p style="color:#c0c9d6">Tencent engineered a <strong style="color:#fff">custom JavaScript virtual machine</strong> (based on V8 but sandboxed) that runs inside WeChat. Third-party developers write "Mini Programs" using a React-like framework (WXML/WXSS). The code is stored in Tencent's CDN and streamed to the phone on first open — no install, no App Store, no 30% tax. The sandbox controls exactly which WeChat APIs (payment, camera, GPS) the mini program can access.</p>
+  </div>
+
+  <!-- Architecture layers -->
+  <h5 class="fw-bold mb-2" style="color:#fff">Mini Program Architecture</h5>
+  <div class="mb-3">
+    <div class="mini-prog-layer" style="background:rgba(7,193,96,.1);border:1px solid rgba(7,193,96,.25)">
+      <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;color:var(--a)">Layer 3 — Mini Program Logic Thread (sandboxed JS VM)</span>
+      <p style="font-size:.78rem;color:#8892a4;margin:.3rem 0 0">Third-party JavaScript runs here. Cannot access DOM directly. Can call only whitelisted WeChat APIs. Isolated from WeChat's own memory and session tokens.</p>
+    </div>
+    <div class="mini-prog-layer" style="background:rgba(7,193,96,.06);border:1px solid rgba(7,193,96,.15)">
+      <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;color:var(--a)">Layer 2 — Mini Program Render Thread (native components)</span>
+      <p style="font-size:.78rem;color:#8892a4;margin:.3rem 0 0">UI rendered using WeChat's native component library — not a WebView. Camera, map, payment sheet are native components injected into the layout. 60fps performance on low-end hardware.</p>
+    </div>
+    <div class="mini-prog-layer" style="background:rgba(7,193,96,.03);border:1px solid rgba(7,193,96,.1)">
+      <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;color:var(--a)">Layer 1 — WeChat Runtime (controls all API access)</span>
+      <p style="font-size:.78rem;color:#8892a4;margin:.3rem 0 0">WeChat Pay, Location, Contact, Camera, NFC. All API calls go through WeChat's permission broker. User sees "Mini Program wants to access your location" — same UX as native apps, without App Store.</p>
+    </div>
+  </div>
+
+  <pre class="code-block mb-4"><span class="cm">// Mini Program: WeChat Pay integration (third-party e-commerce)</span>
+<span class="cm">// Zero App Store. Zero 30% commission. WeChat takes ~0.6% on transactions.</span>
+
+Page({
+  <span class="fn">onLoad</span>() {
+    <span class="cm">// Streamed from Tencent CDN — not installed on device</span>
+    this.<span class="fn">loadProduct</span>(options.productId);
+  },
+
+  <span class="kw">async</span> <span class="fn">onBuyTap</span>() {
+    <span class="cm">// Calls WeChat's native payment sheet — mini program never sees card data</span>
+    <span class="kw">const</span> result = <span class="kw">await</span> wx.<span class="fn">requestPayment</span>({
+      timeStamp: payParams.timestamp,
+      nonceStr:  payParams.nonce,
+      package:   payParams.package,    <span class="cm">// signed by Tencent Pay server</span>
+      signType:  <span class="st">'RSA'</span>,
+      paySign:   payParams.signature
+    });
+    <span class="cm">// Payment completes in WeChat's trusted execution environment</span>
+    <span class="cm">// Mini program only sees success/fail — never the payment credentials</span>
+    <span class="kw">if</span> (result.errMsg === <span class="st">'requestPayment:ok'</span>) this.<span class="fn">showOrderConfirm</span>();
+  }
+});</pre>
+
+  <!-- TDSQL Red Packets -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ TDSQL: Handling the Chinese New Year Red Packet Storm</h4>
+    <p style="color:#c0c9d6">On Chinese New Year's Eve, billions of "Red Packets" (digital cash gifts) are sent over WeChat Pay in a 5-hour window. This is the most concentrated financial transaction event on Earth — dwarfing Cyber Monday. Standard MySQL would deadlock within minutes. <strong style="color:#fff">TDSQL</strong> shards financial ledgers across thousands of nodes using Tencent's ultra-low-latency consensus protocol.</p>
+  </div>
+
+  <div class="pipe-row">
+    <div class="pipe-box">User sends ¥88 red packet</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">TDSQL router hashes user_id → shard</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Debit sender account (shard A)</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Credit escrow (shard B)</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Recipient opens → credit their shard</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">2-phase commit confirms all 3 shards</div>
+  </div>
+
+  <pre class="code-block mt-3 mb-4"><span class="cm">-- TDSQL: Red Packet financial transaction (simplified)</span>
+<span class="cm">-- Each user's balance is on ONE shard (consistent hash of user_id)</span>
+<span class="cm">-- Distributed 2PC: all shards must confirm before money moves</span>
+
+<span class="cm">-- Shard A: debit sender</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> wallets
+   <span class="kw">SET</span> balance = balance - <span class="num">88.00</span>
+ <span class="kw">WHERE</span> user_id = <span class="num">10001</span>
+   <span class="kw">AND</span> balance >= <span class="num">88.00</span>;   <span class="cm">-- optimistic check prevents overdraft</span>
+<span class="kw">IF</span> ROW_COUNT() = <span class="num">0</span> <span class="kw">THEN ROLLBACK</span>; <span class="kw">END IF</span>;
+
+<span class="cm">-- Shard B: create escrow (packet not yet opened)</span>
+<span class="kw">INSERT INTO</span> red_packets
+    (packet_id, sender_id, amount, total_qty, remaining, expires_at)
+<span class="kw">VALUES</span> (<span class="num">9999</span>, <span class="num">10001</span>, <span class="num">88.00</span>, <span class="num">1</span>, <span class="num">1</span>, NOW() + INTERVAL <span class="num">24</span> HOUR);
+
+<span class="cm">-- 2PC coordinator: only COMMIT if both shards prepared successfully</span>
+<span class="cm">-- Tencent's consensus protocol: consensus round-trip &lt; 1ms within same DC</span>
+<span class="kw">COMMIT</span>;
+
+<span class="cm">-- Billions of these transactions per hour, zero deadlocks:</span>
+<span class="cm">-- Each user's shard is independent — no shared locks between users</span></pre>
+
+  <!-- Gaming Cloud Network -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Gaming Cloud: UDP-First Global Routing</h4>
+    <p style="color:#c0c9d6">Tencent is the world's largest gaming company (owns Riot Games, major stakes in Epic/Activision). As publisher of PUBG Mobile, Valorant, and Honor of Kings — all real-time competitive games — Tencent Cloud built a global backbone specifically optimized for low-latency UDP traffic. Standard internet routing uses TCP and prioritizes bandwidth over latency; Tencent's gaming backbone routes UDP game packets via anycast to the closest server node and uses proprietary congestion control tuned for gaming traffic patterns.</p>
+  </div>
+
+  <div class="compare-grid">
+    <div class="problem-card">
+      <h6 style="color:#ff6b35">Standard TCP/IP Routing</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.1rem">
+        <li>BGP routes optimize for bandwidth, not latency</li>
+        <li>Packet loss → TCP retransmit (adds 50–200ms)</li>
+        <li>Jitter buffering causes 100–300ms added lag</li>
+        <li>Standard cloud: ~80–120ms intercontinental</li>
+      </ul>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864">Tencent Gaming Backbone</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.1rem">
+        <li>Anycast routes to nearest Tencent PoP first</li>
+        <li>UDP with FEC (Forward Error Correction) — no retransmit</li>
+        <li>Proprietary QUIC variant for gaming (KCP protocol)</li>
+        <li>Target: single-digit ping within same region</li>
+      </ul>
+    </div>
+  </div>
+
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">WeChat Mini Programs (WXML/WXSS)</span>
+    <span class="tech-pill">Custom JS VM (V8 fork)</span>
+    <span class="tech-pill">TDSQL (distributed MySQL)</span>
+    <span class="tech-pill">Tencent Pay (TEE)</span>
+    <span class="tech-pill">Tencent Cloud (TCE)</span>
+    <span class="tech-pill">KCP Protocol (gaming UDP)</span>
+    <span class="tech-pill">QUIC (custom variant)</span>
+    <span class="tech-pill">Anycast routing</span>
+    <span class="tech-pill">WeChat Work (enterprise)</span>
+    <span class="tech-pill">Tencent Meeting (Zoom alt)</span>
+    <span class="tech-pill">Tencent CDN</span>
+  </div>
+
+  <div class="insight-box">
+    <strong style="color:var(--a)">The App Store Bypass:</strong>
+    <span style="color:#c0c9d6"> Mini Programs bypass Apple's App Store entirely — no 30% commission on in-app purchases, no 2-week review cycle, no 200MB download limit. A restaurant can publish a full ordering and payment Mini Program in an afternoon. This created an entire alternative app economy in China with 800M+ Mini Program users and millions of published mini apps — all running inside WeChat's 50MB container.</span>
+  </div>
+
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">Tencent's genius was recognizing that WeChat couldn't scale as a monolith — it had to scale as a platform. Mini Programs made WeChat an OS: extensible, sandboxed, financially controlled. TDSQL made WeChat Pay the most scalable financial system on Earth. Together, they created a closed ecosystem so deeply embedded in daily Chinese life that switching costs approach infinity — you don't switch from WeChat, because WeChat <em>is</em> the Chinese internet.</p>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(7,193,96,.15);color:var(--a);border:1px solid rgba(7,193,96,.3)">← Back to Demos</a>
+  </div>
+
+</div>
+{% endblock %}

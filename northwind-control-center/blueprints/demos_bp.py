@@ -1131,3 +1131,28 @@ def era_edge_iot():
 @login_required
 def era_genai():
     return render_template('demos/era_genai.html')
+
+@demos_bp.route('/cn/bytedance')
+@login_required
+def cn_bytedance():
+    return render_template('demos/cn_bytedance.html')
+
+@demos_bp.route('/cn/alibaba')
+@login_required
+def cn_alibaba():
+    return render_template('demos/cn_alibaba.html')
+
+@demos_bp.route('/cn/shein-temu')
+@login_required
+def cn_shein_temu():
+    return render_template('demos/cn_shein_temu.html')
+
+@demos_bp.route('/cn/byd')
+@login_required
+def cn_byd():
+    return render_template('demos/cn_byd.html')
+
+@demos_bp.route('/cn/tencent')
+@login_required
+def cn_tencent():
+    return render_template('demos/cn_tencent.html')

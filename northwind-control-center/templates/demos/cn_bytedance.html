@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}ByteDance: The AI-First Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #fe2c55; }
+.cn-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.65rem; font-weight:700; background:rgba(254,44,85,.15); color:var(--a); border:1px solid rgba(254,44,85,.3); margin:.15rem; letter-spacing:.05em; text-transform:uppercase; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(254,44,85,.15); color:var(--a); border:1px solid rgba(254,44,85,.3); }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(254,44,85,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(254,44,85,.1); border:1px solid rgba(254,44,85,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(254,44,85,.15); color:var(--a); border:1px solid rgba(254,44,85,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.pipe-row { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; margin:1.2rem 0; }
+.pipe-box { background:rgba(254,44,85,.12); border:1px solid rgba(254,44,85,.3); border-radius:6px; padding:.5rem .9rem; font-size:.78rem; font-weight:600; color:var(--a); white-space:nowrap; }
+.pipe-arr { color:#556; font-size:1.1rem; }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="mb-4">
+    <span class="era-badge">2012 – Present</span>
+    <span class="ms-2 cn-badge">🇨🇳 ByteDance</span>
+    <span class="ms-1 cn-badge">TikTok · Douyin</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">The AI-First Architecture</h1>
+    <p class="lead" style="color:#8892a4">ByteDance entered a market dominated by the Social Graph (Meta) and Search Intent (Google) — and won by discarding both. The Interest Graph powered by real-time ML streams made every other recommendation engine look like a batch-processing relic.</p>
+  </div>
+
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">&lt;300ms</span><span class="stat-lbl">First reco latency</span></div>
+    <div class="stat-box"><span class="stat-num">7×</span><span class="stat-lbl">Session vs Instagram (2020)</span></div>
+    <div class="stat-box"><span class="stat-num">seconds</span><span class="stat-lbl">Embedding update cycle</span></div>
+    <div class="stat-box"><span class="stat-num">10</span><span class="stat-lbl">Swipes to calibrate you</span></div>
+  </div>
+
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Existential Constraint: No Social Graph, No Search History</h4>
+    <p style="color:#c0c9d6">Meta's recommendation engine required a social graph (follow/friend links) to seed content suggestions. YouTube required search intent. ByteDance launched in 2012 with neither — no legacy user graph, no query history, no established creator network. They had to build a recommendation system that worked for a <strong style="color:#fff">brand-new user with zero history</strong> from the very first second.</p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Social Graph (Meta/YouTube)</h6>
+        <p style="font-size:.82rem;color:#8892a4">Recommendations derived from who you follow. Cold-start failure: new users with 0 connections get generic trending content. 60–70% first-session churn. Recommendation quality bounded by social circle.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Batch Training (Early YouTube)</h6>
+        <p style="font-size:.82rem;color:#8892a4">ML models retrained overnight on accumulated viewing data. By morning, the model reflects yesterday's preferences — not what the user is interested in right now. Stale embeddings = stale recommendations.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ The Interest Graph: Behavior Over Social Connections</h4>
+    <p style="color:#c0c9d6">ByteDance's fundamental insight: <strong style="color:#fff">you don't need to know who someone follows to know what they like</strong>. Every micro-interaction — a 0.3-second pause, a rewatch, a share, a skip at the 2-second mark — is a higher-fidelity signal than a social follow. The Interest Graph replaces declared social connections with inferred behavioral patterns, updated in real-time.</p>
+  </div>
+
+  <h5 class="fw-bold mb-2" style="color:#fff">Monolith Real-Time ML Pipeline</h5>
+  <div class="pipe-row">
+    <div class="pipe-box">User Swipe / Pause / Share</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Kafka Event Stream</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Apache Flink Job</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Feature Computation</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Parameter Server Update</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">User Embedding Refreshed</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Next Reco (seconds later)</div>
+  </div>
+
+  <pre class="code-block"><span class="cm"># Monolith: Sparse embedding table — the core data structure</span>
+<span class="cm"># "Sparse" means the feature space is enormous (trillions of possible feature IDs)</span>
+<span class="cm"># but any single user/video only activates a small subset of them</span>
+
+<span class="cm">## Traditional approach (YouTube 2014–2018): Dense embeddings, batch retrain</span>
+<span class="cm"># model = load_yesterday_checkpoint()  # stale by ~16 hours</span>
+<span class="cm"># retrain every night on accumulated logs</span>
+
+<span class="cm">## ByteDance Monolith: Online learning on sparse feature hash map</span>
+<span class="kw">class</span> MonolithParameterServer:
+    <span class="cm"># Key: hash(feature_id) → Value: gradient-accumulating embedding vector</span>
+    <span class="cm"># Lives in-memory across thousands of parameter server nodes</span>
+    <span class="cm"># Hot features (1B+ lookups/day) replicated 32× for read throughput</span>
+    table: Dict[int, EmbeddingVector]  <span class="cm"># trillion possible keys, sparse</span>
+
+    <span class="kw">def</span> <span class="fn">online_update</span>(self, user_id, video_id, watch_ratio, action):
+        <span class="cm"># Compute signal weight from behavior</span>
+        signal = (<span class="num">1.0</span> <span class="kw">if</span> watch_ratio > <span class="num">0.8</span>
+                  <span class="kw">else</span> <span class="num">0.4</span> <span class="kw">if</span> watch_ratio > <span class="num">0.3</span>
+                  <span class="kw">else</span> -<span class="num">0.5</span>)            <span class="cm"># skip = negative signal</span>
+        signal += <span class="num">2.0</span> <span class="kw">if</span> action == <span class="st">'share'</span> <span class="kw">else</span> <span class="num">0</span>
+
+        <span class="cm"># Apply gradient directly — no batch accumulation</span>
+        cross_feature = <span class="fn">hash</span>((user_id, video_topic, hour_of_day))
+        self.table[cross_feature].<span class="fn">apply_gradient</span>(signal * LR)
+        <span class="cm"># User embedding is now fresher than any batch-trained competitor</span>
+
+<span class="cm">## Ray cluster: distributes sparse parameter lookups across GPU nodes</span>
+<span class="cm">## Handles "niche interest" features (e.g. left-handed calligraphy ASMR)</span>
+<span class="cm">## without running out of memory via lazy allocation + LRU eviction</span></pre>
+
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Why Ray for Sparse Parameters?</h5>
+  <p style="color:#8892a4">Traditional ML frameworks (TensorFlow, PyTorch) assume <em>dense</em> parameter matrices — every parameter is always used. ByteDance's interest space has trillions of possible feature combinations (user × video topic × device × time-of-day × country). Only a few thousand activate per inference. <strong style="color:#fff">Ray's distributed shared memory</strong> allows the parameter table to span thousands of machines, with each lookup routing to the correct shard with sub-millisecond latency via consistent hashing.</p>
+
+  <div class="insight-box">
+    <strong style="color:var(--a)">The 10-Swipe Cold Start:</strong>
+    <span style="color:#c0c9d6"> A brand-new user with zero history is bootstrapped using cohort similarity: same country, device, time-of-day, and app language map to a historical cohort's first-session preferences. By the 10th swipe, behavioral signals override cohort priors. ByteDance solved the cold-start problem that plagued every previous recommendation system — not by gathering more prior data, but by updating faster.</span>
+  </div>
+
+  <div class="compare-grid mt-4">
+    <div class="problem-card">
+      <h6 style="color:#ff6b35">US Competitors (Batch Training)</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.2rem">
+        <li>Retrain ML model every 24 hours</li>
+        <li>User preference is ~16h stale on average</li>
+        <li>Cold start requires 2–4 weeks of history</li>
+        <li>Social graph bounds discovery space</li>
+        <li>Feature engineering requires schema changes</li>
+      </ul>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864">ByteDance Monolith (Online Training)</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.2rem">
+        <li>Embedding update latency: seconds</li>
+        <li>User preference reflects current session</li>
+        <li>Cold start solved in ~10 interactions</li>
+        <li>Interest space unbounded by social graph</li>
+        <li>New feature IDs auto-allocated on first encounter</li>
+      </ul>
+    </div>
+  </div>
+
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">Monolith (ByteDance)</span>
+    <span class="tech-pill">Apache Kafka</span>
+    <span class="tech-pill">Apache Flink</span>
+    <span class="tech-pill">Ray (distributed AI)</span>
+    <span class="tech-pill">FAISS (ANN)</span>
+    <span class="tech-pill">ByteDance KV Store</span>
+    <span class="tech-pill">Cuckoo Hashing</span>
+    <span class="tech-pill">Sparse Parameter Server</span>
+    <span class="tech-pill">PyTorch (training)</span>
+    <span class="tech-pill">NVIDIA A100</span>
+    <span class="tech-pill">ARM (edge inference)</span>
+    <span class="tech-pill">DPP (diversification)</span>
+  </div>
+
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">ByteDance won not by building a better social network but by making social networks irrelevant to content discovery. The constraint of having no pre-existing social graph forced them to build the superior architecture: real-time Interest Graph inference is simply more accurate than social-graph-bounded recommendation, regardless of data volume. Every major platform (Instagram Reels, YouTube Shorts, LinkedIn feed) has since copied the approach.</p>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(254,44,85,.15);color:var(--a);border:1px solid rgba(254,44,85,.3)">← Back to Demos</a>
+  </div>
+
+</div>
+{% endblock %}

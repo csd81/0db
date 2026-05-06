@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Alibaba: Extreme Transactional Scale{% endblock %}
+{% block content %}
+<style>
+:root { --a: #ff6900; }
+.cn-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.65rem; font-weight:700; background:rgba(255,105,0,.15); color:var(--a); border:1px solid rgba(255,105,0,.3); margin:.15rem; letter-spacing:.05em; text-transform:uppercase; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(255,105,0,.15); color:var(--a); border:1px solid rgba(255,105,0,.3); }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(255,105,0,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(255,105,0,.1); border:1px solid rgba(255,105,0,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(255,105,0,.15); color:var(--a); border:1px solid rgba(255,105,0,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.ioe-box { border-radius:8px; padding:1rem; text-align:center; }
+.timeline-dot { width:12px; height:12px; border-radius:50%; background:var(--a); display:inline-block; margin-right:.5rem; flex-shrink:0; margin-top:.3rem; }
+.timeline-item { display:flex; gap:.75rem; padding:.6rem 0; border-bottom:1px solid rgba(255,255,255,.05); }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="mb-4">
+    <span class="era-badge">2009 – Present</span>
+    <span class="ms-2 cn-badge">🇨🇳 Alibaba Group</span>
+    <span class="ms-1 cn-badge">Aliyun · OceanBase · PolarDB</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">Extreme Transactional Scale &amp; the De-IOE Revolution</h1>
+    <p class="lead" style="color:#8892a4">When 583,000 orders per second materialized on Singles' Day, Oracle disintegrated. Alibaba's engineers didn't call their vendor — they built a new distributed relational database from scratch. OceanBase now holds the TPC-C world record.</p>
+  </div>
+
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">583K</span><span class="stat-lbl">Orders/second peak</span></div>
+    <div class="stat-box"><span class="stat-num">2009</span><span class="stat-lbl">De-IOE campaign start</span></div>
+    <div class="stat-box"><span class="stat-num">#1</span><span class="stat-lbl">TPC-C benchmark (OceanBase)</span></div>
+    <div class="stat-box"><span class="stat-num">0</span><span class="stat-lbl">Data loss (Paxos quorum)</span></div>
+  </div>
+
+  <!-- The Problem -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Breaking Point: 1.4B People + Singles' Day</h4>
+    <p style="color:#c0c9d6">Alibaba's shopping festival "Double 11" (November 11th) generates more transactions in one day than Amazon, eBay, and Walmart combined during their entire holiday season. The 2013 peak — 583,000 orders per second — exposed a catastrophic truth: <strong style="color:#fff">Western enterprise databases were built for Western-scale traffic.</strong></p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Oracle Row Locking</h6>
+        <p style="font-size:.82rem;color:#8892a4">When millions of users simultaneously try to buy the last 1,000 units of an iPhone, every transaction must lock the inventory row to decrement the count. Oracle's lock manager became the serialization bottleneck — the database queue grew faster than it could drain, causing timeouts and cascade failures.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">EMC Storage Latency</h6>
+        <p style="font-size:.82rem;color:#8892a4">EMC SAN (Storage Area Network) arrays, while reliable, introduced network I/O latency between compute and storage. Under Singles' Day write storms, SAN queue depth saturated — a single disk write could take 200–400ms instead of &lt;1ms, cascading across the OLTP layer.</p>
+      </div>
+    </div>
+    <div class="insight-box">
+      <strong style="color:var(--a)">The De-IOE Mandate (2009):</strong>
+      <span style="color:#c0c9d6"> Alibaba CTO Wang Jian initiated a company-wide campaign to eliminate all <strong style="color:#fff">I</strong>BM minicomputers, <strong style="color:#fff">O</strong>racle databases, and <strong style="color:#fff">E</strong>MC storage from their stack. The trigger: Oracle's licensing cost was growing faster than Alibaba's revenue, and no vendor support plan could handle Singles' Day load. The only solution was to build from scratch.</span>
+    </div>
+  </div>
+
+  <!-- OceanBase -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ OceanBase: Distributed Relational Database with Paxos Consensus</h4>
+    <p style="color:#c0c9d6">OceanBase is a <strong style="color:#fff">shared-nothing distributed RDBMS</strong> — no centralized storage, no single point of failure. Transaction coordination uses the <strong style="color:#fff">Paxos consensus algorithm</strong> to ensure that a write is committed only after a majority of replicas acknowledge it. This guarantees ACID semantics even if entire server racks lose power mid-transaction.</p>
+  </div>
+
+  <pre class="code-block mb-4"><span class="cm">-- OceanBase: How "buy last iPhone" works at 583K orders/second</span>
+<span class="cm">-- Row partitioned across N shards by product_id consistent hash</span>
+<span class="cm">-- Each shard has 3 Paxos replicas (1 leader + 2 followers)</span>
+
+<span class="cm">-- Step 1: Client routes to OBProxy → finds leader shard for product_id=1234</span>
+<span class="kw">BEGIN</span>;
+  <span class="cm">-- Step 2: SELECT with LOCK — acquires row lock on THIS shard's leader only</span>
+  <span class="kw">SELECT</span> units_in_stock <span class="kw">INTO</span> @stock
+  <span class="kw">FROM</span> inventory
+  <span class="kw">WHERE</span> product_id = <span class="num">1234</span>
+  <span class="kw">FOR UPDATE</span>;                      <span class="cm">-- Paxos lock, not global Oracle lock</span>
+
+  <span class="kw">IF</span> @stock > <span class="num">0</span> <span class="kw">THEN</span>
+    <span class="kw">UPDATE</span> inventory
+       <span class="kw">SET</span> units_in_stock = units_in_stock - <span class="num">1</span>
+     <span class="kw">WHERE</span> product_id = <span class="num">1234</span>;
+
+    <span class="kw">INSERT INTO</span> orders (user_id, product_id, amount, created_at)
+    <span class="kw">VALUES</span> (@user, <span class="num">1234</span>, @price, NOW());
+
+    <span class="cm">-- Paxos 2-phase commit: leader proposes → majority of 3 replicas ack</span>
+    <span class="cm">-- COMMIT only succeeds when quorum confirms — survives rack failure</span>
+    <span class="kw">COMMIT</span>;
+  <span class="kw">ELSE</span>
+    <span class="kw">ROLLBACK</span>;  <span class="cm">-- stock is 0 → clean rejection, no phantom orders</span>
+  <span class="kw">END IF</span>;
+
+<span class="cm">-- 583,000 such transactions per second, across thousands of shards</span>
+<span class="cm">-- Each shard handles its slice in parallel — no global lock contention</span></pre>
+
+  <!-- PolarDB -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ PolarDB: Cloud-Native Database (Alibaba's Aurora)</h4>
+    <p style="color:#c0c9d6">Alibaba Cloud's PolarDB follows the same compute-storage separation principle as AWS Aurora and Snowflake, but is specifically optimized for extreme OLTP concurrency. A single PolarDB instance supports up to <strong style="color:#fff">128 read replicas</strong> sharing the same underlying storage — all reading the same log stream without data copying. Write scale-out uses a shared NVMe-oF storage pool with 1M+ IOPS.</p>
+
+    <div class="compare-grid">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Traditional MySQL Master-Slave</h6>
+        <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li>Writes go to master only (bottleneck)</li>
+          <li>Replication lag: seconds under write storm</li>
+          <li>Read replicas get stale data</li>
+          <li>Adding a replica = full data copy (hours)</li>
+          <li>Disk I/O couples compute to storage</li>
+        </ul>
+      </div>
+      <div class="solution-card">
+        <h6 style="color:#00c864">PolarDB (Compute-Storage Split)</h6>
+        <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li>Writes to shared log (redo log streaming)</li>
+          <li>Replica lag: &lt;10ms (log replay, not data copy)</li>
+          <li>128 read nodes, all consistent via log</li>
+          <li>New replica = attach to shared storage (seconds)</li>
+          <li>NVMe-oF: 1M IOPS shared across all compute</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- De-IOE Timeline -->
+  <h5 class="fw-bold mb-2" style="color:#fff">The De-IOE Timeline</h5>
+  <div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2009</strong> — <span style="color:#8892a4">De-IOE campaign launched. Oracle removed from all non-financial systems first. MySQL + internal sharding middleware (TDDL) deployed.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2010</strong> — <span style="color:#8892a4">OceanBase 0.1 internal release. First Paxos-based distributed SQL on commodity x86 hardware.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2013</strong> — <span style="color:#8892a4">Singles' Day peak hits 583K orders/second. Oracle fully eliminated from transaction path. OceanBase handles the entire load.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2015</strong> — <span style="color:#8892a4">Alibaba Cloud (Aliyun) launches PolarDB as a commercial service. De-IOE exported as cloud product.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2020</strong> — <span style="color:#8892a4">OceanBase 3.0 sets new TPC-C world record: 707 million tpmC — surpassing Oracle and all Western competitors.</span></div></div>
+    <div class="timeline-item"><div class="timeline-dot mt-1"></div><div><strong style="color:#fff">2021</strong> — <span style="color:#8892a4">OceanBase open-sourced (Apache 2.0). China's distributed database architecture becomes available globally.</span></div></div>
+  </div>
+
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">OceanBase</span>
+    <span class="tech-pill">Paxos Consensus</span>
+    <span class="tech-pill">PolarDB</span>
+    <span class="tech-pill">Aliyun (Alibaba Cloud)</span>
+    <span class="tech-pill">TDDL (sharding middleware)</span>
+    <span class="tech-pill">NVMe-oF</span>
+    <span class="tech-pill">Flink (real-time analytics)</span>
+    <span class="tech-pill">MaxCompute (OLAP)</span>
+    <span class="tech-pill">Hologres (HTAP)</span>
+    <span class="tech-pill">Alink (ML platform)</span>
+    <span class="tech-pill">Function Compute (serverless)</span>
+  </div>
+
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">Alibaba's De-IOE campaign was the most consequential database architectural decision of the 2010s. Forced by scale that Western vendors couldn't address, Alibaba built OceanBase — and then beat Oracle on Oracle's own benchmark. The lesson: existential traffic pressure is the mother of database invention. What started as a survival necessity became a $3B+ cloud database business exported globally.</p>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(255,105,0,.15);color:var(--a);border:1px solid rgba(255,105,0,.3)">← Back to Demos</a>
+  </div>
+
+</div>
+{% endblock %}
