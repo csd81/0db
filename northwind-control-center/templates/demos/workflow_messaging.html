@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block title %}Messaging Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #25D366; }
+.hero-grad { background: linear-gradient(135deg, rgba(37,211,102,.1), rgba(0,180,180,.05), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:90px; text-align:center; cursor:pointer; padding:.5rem .2rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(37,211,102,.1); }
+.pipe-node.active { background:rgba(37,211,102,.18); }
+.pipe-node .p-icon { font-size:1.5rem; }
+.pipe-node .p-label { font-size:.59rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:14px; height:2px; background:rgba(37,211,102,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#000; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#88ffbb; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.delivery-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+.delivery-box { background:#0d1218; border:1px solid rgba(37,211,102,.2); border-radius:6px; padding:.75rem; font-size:.78rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Messaging / Real-time Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(37,211,102,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">💬</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">Messaging / Real-time Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">Persistent bi-directional WebSocket connections, end-to-end encryption, offline delivery queues — the architecture that handles 100 billion messages per day.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">💚 WhatsApp</span>
+      <span class="company-badge">🟣 Discord</span>
+      <span class="company-badge">🟡 Slack</span>
+      <span class="company-badge">✈️ Telegram</span>
+      <span class="company-badge">🔒 Signal</span>
+      <span class="company-badge">🔵 iMessage</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">Message Delivery Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node for detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">🔌</div><div class="p-label">WS<br>Connect</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">📋</div><div class="p-label">Gateway<br>Register</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">🔐</div><div class="p-label">E2E<br>Encrypt</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">🗺️</div><div class="p-label">Route<br>Lookup</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">✅</div><div class="p-label">Online<br>Check</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">📨</div><div class="p-label">Deliver /<br>Queue</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">✔️</div><div class="p-label">Ack<br>Receipts</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de"></div>
+    </div>
+  </div>
+
+  <!-- Online / Offline Delivery -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Delivery Scenarios: Online vs Offline</span>
+    </div>
+    <div class="card-body">
+      <div class="delivery-grid">
+        <div class="delivery-box">
+          <div style="color:var(--a);font-weight:600;margin-bottom:.5rem">✅ Recipient is Online</div>
+          <ol style="color:#8892a4;margin:0;padding-left:1.2rem">
+            <li>Router looks up recipient's gateway server ID from Redis: <code>GET ws:{user_b_id}</code> → <code>"gateway-server-7"</code></li>
+            <li>Internal gRPC call to gateway-server-7: <code>DeliverMessage(user_b, encrypted_payload)</code></li>
+            <li>Gateway pushes to client WebSocket immediately</li>
+            <li>Client sends <code>ACK</code> → Delivery receipt (single tick → double tick)</li>
+            <li>When message is read: <code>READ</code> event → Read receipt (blue ticks)</li>
+          </ol>
+          <div style="color:var(--a);margin-top:.5rem;font-size:.72rem">⚡ End-to-end latency: ~100ms</div>
+        </div>
+        <div class="delivery-box">
+          <div style="color:#ff9900;font-weight:600;margin-bottom:.5rem">📵 Recipient is Offline</div>
+          <ol style="color:#8892a4;margin:0;padding-left:1.2rem">
+            <li>Redis lookup returns null → recipient offline</li>
+            <li>Message stored in ScyllaDB/Cassandra: <code>partition(user_b_id) → sorted(timestamp, msg_id)</code></li>
+            <li>Push notification sent via APNs (iOS) or FCM (Android)</li>
+            <li>Push payload is minimal (no message content for E2E): <code>{"new_message": true}</code></li>
+            <li>When user reconnects, client pulls pending messages from DB since last seen</li>
+          </ol>
+          <div style="color:#ff9900;margin-top:.5rem;font-size:.72rem">📦 Message stored up to 30 days (WhatsApp)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage &amp; Data Layer</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">ScyllaDB (Discord)</dt>
+          <dd style="color:#8892a4">Discord migrated from Cassandra to ScyllaDB in 2022. ScyllaDB is Cassandra-compatible but written in C++ — eliminates JVM garbage collection pauses that caused latency spikes. Discord serves 4 billion messages per day. Wide-row per channel: <code>partition(channel_id, bucket_month) → sorted(message_id DESC)</code>.</dd>
+          <dt style="color:#cdd3de">Apache Cassandra (WhatsApp/Slack)</dt>
+          <dd style="color:#8892a4">Leaderless, multi-master wide-column store. WhatsApp's message store: never deletes messages older than delivery window — moves them to off-server storage after delivery. Slack uses Cassandra for message history with 10-year retention on paid tiers.</dd>
+          <dt style="color:#cdd3de">Redis (Presence / Routing)</dt>
+          <dd style="color:#8892a4"><code>SET ws:{user_id} {gateway_server_id} EX 30</code> — expires if heartbeat stops. Used to route messages to the correct gateway server. 30-second TTL means presence state is eventually consistent (30s max lag for offline detection). Redis Cluster with 6 nodes for HA.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Erlang Mnesia (WhatsApp)</dt>
+          <dd class="mb-0" style="color:#8892a4">WhatsApp runs on Erlang/OTP. Mnesia is Erlang's built-in distributed DB — used for router state and session tables. Erlang was chosen specifically because a single BEAM VM can maintain 2 million concurrent connections with lightweight process-per-connection model.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Concurrency</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Erlang/OTP (WhatsApp)</dt>
+          <dd style="color:#8892a4">Actor model: each user connection is a lightweight Erlang process (~2KB heap). Supervisor tree restarts crashed processes automatically. Message passing between actors — no shared memory, no locks. 2 million concurrent connections per server is a well-documented benchmark. Pattern-matching for protocol handling.</dd>
+          <dt style="color:#cdd3de">Elixir / Phoenix (Slack alternatives)</dt>
+          <dd style="color:#8892a4">Elixir runs on BEAM (same VM as Erlang). Phoenix Channels provide WebSocket abstraction. Phoenix LiveView for real-time UI. Used by platforms that want Erlang's concurrency with Ruby-like syntax. Discord originally used Elixir before migrating hot paths to Rust/Go.</dd>
+          <dt style="color:#cdd3de">Go (Discord routing)</dt>
+          <dd style="color:#8892a4">Discord's message routing and gateway services rewritten in Go for better goroutine memory efficiency vs Elixir at their scale. Go goroutines: ~4KB stack. 10 million concurrent connections → 40 GB for goroutines alone. GC pauses &lt;1ms with Go's tricolor mark-sweep.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Rust (Discord read states)</dt>
+          <dd class="mb-0" style="color:#8892a4">Discord's "read states" service (tracking which messages you've seen) handles 1 billion state updates/day. Rewritten from Go to Rust: eliminated GC pauses entirely. Rust's ownership model prevents data races at compile time. Discord published this case study in 2020.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 Protocols &amp; Encryption</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">WebSocket (RFC 6455)</dt>
+          <dd style="color:#8892a4">Persistent TCP connection. Upgrade from HTTP/1.1 via <code>Upgrade: websocket</code> header. Full-duplex — both sides can send at any time. Heartbeat (PING/PONG frames) every 30 seconds. If pong not received → connection closed → client reconnects. Binary frames for efficiency (not text/JSON).</dd>
+          <dt style="color:#cdd3de">MTProto (Telegram)</dt>
+          <dd style="color:#8892a4">Telegram's custom binary protocol. Designed for mobile networks: works over TCP, UDP (for speed), and HTTP (as fallback). Authorization keys generated via Diffie-Hellman. 256-bit AES-IGE encryption. MTProto 2.0 adds perfect forward secrecy. Controversial: designed in-house, not Signal Protocol.</dd>
+          <dt style="color:#cdd3de">Signal Protocol (WhatsApp/Signal)</dt>
+          <dd style="color:#8892a4">Double Ratchet algorithm: combines Diffie-Hellman key exchange (session keys) with KDF ratchet (per-message keys). Forward secrecy: compromise of today's key doesn't expose past messages. Pre-keys allow offline key exchange. Open-source, widely audited. WhatsApp uses Signal Protocol for E2EE.</dd>
+          <dt style="color:#cdd3de" class="mb-0">WebRTC (Voice/Video)</dt>
+          <dd class="mb-0" style="color:#8892a4">STUN/TURN servers for NAT traversal. SRTP (Secure RTP) for encrypted media. ICE (Interactive Connectivity Establishment) finds best path. WhatsApp calls use Opus codec (variable bitrate, 6–510 kbps). Discord: Opus audio + VP8/VP9 video. DTLS for key exchange.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Workflow Deep Dive</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3">
+          <div class="step-num">1</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">WebSocket Handshake + TLS</div>
+          <div style="font-size:.8rem;color:#8892a4">Client sends HTTP GET with <code>Upgrade: websocket</code> and <code>Sec-WebSocket-Key: [base64 random]</code>. Server responds 101 Switching Protocols. TLS 1.3 handshake: 1 RTT (vs 2 RTT for TLS 1.2) — critical for mobile networks. Connection kept alive with PING/PONG every 30s. On 4G, a round-trip from London to New York: ~80ms RTT. Total handshake: ~200ms.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">2</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Presence Registration in Redis</div>
+          <div style="font-size:.8rem;color:#8892a4">After auth, gateway server writes: <code>SET ws:{user_id} {this_server_id} EX 30</code>. Every 25 seconds: <code>EXPIRE ws:{user_id} 30</code> (heartbeat refresh). If server crashes or client disconnects without clean close, key expires → user marked offline within 30 seconds. Redis Pub/Sub for cross-server presence events (user-joined-channel, user-left).</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">3</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">End-to-End Encryption (Signal Protocol)</div>
+          <div style="font-size:.8rem;color:#8892a4">Session key exchange uses X3DH (Extended Triple Diffie-Hellman): combines identity keys, signed pre-keys, and one-time pre-keys. Result: shared session key, established without server seeing it. Messages encrypted with AES-256-GCM. Server receives and forwards ciphertext — cannot read content. Group chats: per-sender key distributed to each member (Sender Key Protocol — O(1) encryptions vs O(N)).</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">4</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Message Storage in ScyllaDB</div>
+          <div style="font-size:.8rem;color:#8892a4">Discord schema: <code>CREATE TABLE messages (channel_id bigint, message_id bigint, author_id bigint, content text, PRIMARY KEY ((channel_id, bucket), message_id)) WITH CLUSTERING ORDER BY (message_id DESC)</code>. Bucket = floor(message_id / 1M). This prevents unbounded partition growth. Snowflake message IDs (Discord) encode timestamp, worker, sequence — sortable without DB clock. ScyllaDB shards data across nodes, replication factor 3.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(37,211,102,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🐘 Why Not PostgreSQL?</div>
+        <div style="font-size:.78rem;color:#8892a4">PostgreSQL can't maintain 2M concurrent connections — each connection is a process (~5 MB). Even with PgBouncer pooling, the OLTP model doesn't fit messaging. Cassandra/ScyllaDB's wide-row model maps naturally to "messages in a channel" — single partition scan, no JOINs needed. Write throughput: 1M msg/s with Cassandra vs ~50K/s with Postgres.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(37,211,102,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">⚡ Erlang: 2M Connections</div>
+        <div style="font-size:.78rem;color:#8892a4">WhatsApp: 50 engineers, 900 million users. Each Erlang process: ~2 KB heap (vs ~2 MB for OS thread). 2M processes on a 64 GB server = entirely feasible. Message passing between processes is lock-free. If a process crashes, the supervisor restarts it — isolated failure, no cascading crash. This is how 1 server handles 2M simultaneous chat connections.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(37,211,102,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎯 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">AP system for delivery, CP for auth.</strong> Message delivery: if a Cassandra node is partitioned, messages still write (eventual consistency — minor reordering acceptable). Authentication and session keys: must be CP (you can't have two valid sessions for the same user delivering to different keys — that's a security breach).</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'WebSocket Connect', detail: 'Client sends HTTP/1.1 GET with <code>Upgrade: websocket</code> header. TLS 1.3 handshake (1 RTT). Server responds 101 Switching Protocols + <code>Sec-WebSocket-Accept</code> (SHA-1 of client key + magic string). Connection upgraded to full-duplex binary protocol. Client authenticates with JWT/session token in first WebSocket frame. Auth verified against Redis session store.' },
+  { title: 'Gateway Register', detail: 'After auth, gateway writes presence record: <code>SET ws:{user_id} {server_id} EX 30</code>. Server publishes to Redis Pub/Sub channel <code>presence:{user_id}</code> → "online" event. Friends/contacts receive real-time "online" status via their WebSocket connection. Heartbeat: client sends PING every 25s; server PONG; if no PONG → reconnect. Server-side: if no heartbeat in 30s → <code>DEL ws:{user_id}</code> + disconnect.' },
+  { title: 'E2E Encrypt', detail: 'Signal Protocol: X3DH key exchange happens once per session. Sender uses recipient\'s public identity key + one-time pre-key to derive shared secret. Double Ratchet: symmetric key advances with every message → forward secrecy. Message payload: <code>{cipher: AES-256-GCM(plaintext), iv, mac}</code>. Server receives and stores only ciphertext — mathematically cannot decrypt.' },
+  { title: 'Route Lookup', detail: 'Router service looks up <code>GET ws:{recipient_user_id}</code> from Redis. Returns server_id if online, null if offline. For group messages: fan out to all members — lookup each member\'s gateway server. Groups with 1000 members: 1000 Redis lookups, ~50ms total. Routed via internal gRPC to target gateway servers. If recipient on same gateway server: direct local delivery (no network hop).' },
+  { title: 'Online Check', detail: 'Redis key exists → recipient online on known gateway server → proceed to direct delivery. Key missing → recipient offline → store-and-forward path. Edge case: Redis says online but WebSocket dropped without clean close → delivery attempt fails → fallback to push notification. Presence state: ONLINE, IDLE (&gt;5 min inactive), OFFLINE (no connection). "Last seen" timestamp stored in user profile DB.' },
+  { title: 'Deliver / Queue', detail: '<strong>Online path:</strong> gRPC to gateway server → WebSocket push → message delivered in ~100ms. <strong>Offline path:</strong> INSERT into ScyllaDB messages table. APNs/FCM push notification with minimal payload (no content for E2E). Apple push: <code>{"aps": {"alert": "New message", "content-available": 1}}</code>. When user reconnects: client sends last seen message_id → server returns all messages since then (pull model).' },
+  { title: 'Ack Receipts', detail: 'Delivery receipt (✓): client ACKs WebSocket receipt → server updates message status to DELIVERED. Read receipt (✓✓): when message rendered in viewport → client sends READ event → server broadcasts to sender. Discord: reactions, edits, deletes broadcast via same WebSocket channel. Rate limiting: max 10 read receipts/second per client to prevent abuse. Receipt state stored in read-states service (Redis, then persisted to Cassandra).' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

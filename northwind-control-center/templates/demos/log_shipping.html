@@ -99,6 +99,77 @@
   <span><span class="badge bg-danger">DELETE</span></span>
   <span class="ms-3">Replica rows flash green as they arrive during replay.</span>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Log Shipping (Disaster Recovery)
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-4">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">What is Log Shipping?</strong><br>
+    A disaster-recovery technique that keeps a <em>warm standby</em> database by periodically
+    backing up the primary's transaction log, copying the file to a secondary server, and restoring it.
+    No dedicated replication infrastructure — uses standard SQL Server BACKUP/RESTORE.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Three-step pipeline</strong><br>
+    <strong>1. Backup Job</strong> — SQL Agent job on primary: <code>BACKUP LOG … TO DISK</code> every N minutes.<br>
+    <strong>2. Copy Job</strong> — copies the .bak file to the secondary server share.<br>
+    <strong>3. Restore Job</strong> — SQL Agent on secondary: <code>RESTORE LOG … WITH NORECOVERY</code>
+    (keeps DB in RESTORING state so more logs can be applied later).
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">RPO &amp; RTO</strong><br>
+    <strong style="color:#e9c46a">RPO</strong> (Recovery Point Objective) = backup interval — up to N minutes of data can be lost.<br>
+    <strong style="color:#06d6a0">RTO</strong> (Recovery Time Objective) = restore remaining logs +
+    <code>RESTORE … WITH RECOVERY</code> + redirect connections.<br>
+    Typically minutes, not seconds — hence "warm," not "hot."
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Cold / Warm / Hot standby</strong><br>
+    <strong>Cold</strong> — backup archive only; restore from scratch (hours).<br>
+    <strong>Warm</strong> — log shipping; DB in RESTORING state, bring online in minutes.<br>
+    <strong>Hot</strong> — Always On AG; synchronous mirror, automatic failover in seconds.<br>
+    Log shipping sits in the middle: simpler and cheaper than Always On, faster than cold.
+  </div>
+</div>
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#06d6a0;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-hdd-stack me-1"></i>Log Shipping vs Other HA Options
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">HA technology comparison:</div>
+      <table class="table table-sm mb-0" style="font-size:.66rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Technology</th><th>Type</th><th>RPO</th><th>RTO</th><th>Readable?</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td><span style="color:#457b9d">Backup/Restore</span></td><td>Cold</td><td>Hours</td><td>Hours</td><td>No</td></tr>
+          <tr><td><span style="color:#e9c46a">Log Shipping</span></td><td>Warm</td><td>Minutes</td><td>Minutes</td><td>STANDBY mode</td></tr>
+          <tr><td><span style="color:#06d6a0">Transact. Replication</span></td><td>Warm</td><td>Seconds</td><td>Minutes</td><td>Yes (fully online)</td></tr>
+          <tr><td><span style="color:#8338ec">Always On AG</span></td><td>Hot</td><td>~0 (sync)</td><td>Seconds</td><td>Yes (read intent)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">Log Shipping T-SQL steps:</div>
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- Primary: backup every 15 min (SQL Agent job)</span>
+<span style="color:#457b9d">BACKUP LOG</span> Northwind
+    <span style="color:#457b9d">TO</span> DISK = <span style="color:#06d6a0">N'\\share\logs\NW_202601061500.bak'</span>
+    <span style="color:#457b9d">WITH</span> COMPRESSION, STATS = <span style="color:#e9c46a">5</span>;
+
+<span style="color:#5a6070">-- Secondary: apply with NORECOVERY (stay in restoring)</span>
+<span style="color:#457b9d">RESTORE LOG</span> Northwind
+    <span style="color:#457b9d">FROM</span> DISK = <span style="color:#06d6a0">N'\\share\logs\NW_202601061500.bak'</span>
+    <span style="color:#457b9d">WITH</span> NORECOVERY;
+
+<span style="color:#5a6070">-- Failover: bring secondary fully online</span>
+<span style="color:#457b9d">RESTORE DATABASE</span> Northwind <span style="color:#457b9d">WITH RECOVERY</span>;</pre>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

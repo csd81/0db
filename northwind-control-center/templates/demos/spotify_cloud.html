@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+{% block title %}Spotify on GCP — Cloud Workflow{% endblock %}
+
+{% block content %}
+<style>
+#event-log::-webkit-scrollbar { width:3px; }
+#event-log::-webkit-scrollbar-thumb { background:#333; border-radius:2px; }
+.btn-scenario { border:none; font-size:.75rem; padding:.3rem .75rem; border-radius:.35rem; cursor:pointer; transition:opacity .15s; }
+.btn-scenario:hover { opacity:.85; }
+.svc-pill { display:inline-block; padding:.12rem .45rem; border-radius:.25rem; font-size:.63rem; font-weight:600; margin-right:.25rem; }
+</style>
+
+<div class="d-flex align-items-center mb-3">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold">🎵 Spotify on GCP — Cloud Workflow</h2>
+</div>
+
+<p style="font-size:.78rem;color:#8892a4;margin-bottom:.75rem">
+  Spotify migrated from AWS to GCP in 2016. Every play, skip, and like is a streaming event that
+  flows through <strong style="color:#4285F4">Cloud Pub/Sub</strong> →
+  <strong style="color:#34A853">Dataflow</strong> →
+  <strong style="color:#FBBC05">BigQuery</strong> →
+  <strong style="color:#EA4335">Vertex AI</strong>.
+  Audio is served from <strong style="color:#E8710A">Cloud Storage</strong> via
+  <strong style="color:#1A73E8">CDN Edge</strong> nodes near the listener.
+  Click a scenario to see the data flow animated live.
+</p>
+
+<!-- Scenario controls -->
+<div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+  <button id="btn-play" class="btn-scenario" style="background:#06d6a0;color:#000">
+    <i class="bi bi-play-fill"></i> Play Song
+  </button>
+  <button id="btn-dw" class="btn-scenario" style="background:#8338ec;color:#fff">
+    <i class="bi bi-music-note-list"></i> Discover Weekly
+  </button>
+  <button id="btn-drop" class="btn-scenario" style="background:#ef476f;color:#fff">
+    <i class="bi bi-lightning-fill"></i> Album Drop (Thundering Herd)
+  </button>
+  <button id="btn-reset" class="btn-scenario ms-auto" style="background:#1e2028;color:#8892a4;border:1px solid #2a3040">
+    <i class="bi bi-arrow-counterclockwise"></i> Reset
+  </button>
+  <span id="scenario-badge" class="badge bg-secondary" style="font-size:.6rem">idle</span>
+</div>
+
+<!-- Main row: SVG + side panel -->
+<div class="row g-2 mb-3">
+  <!-- Architecture diagram -->
+  <div class="col-md-8">
+    <div style="background:#0d0f16;border:1px solid #1e2028;border-radius:.4rem">
+      <div style="background:#0a0c14;border-bottom:1px solid #1e2028;padding:.35rem .7rem;font-size:.68rem;color:#5a6070;font-weight:600;letter-spacing:.08em;text-transform:uppercase">
+        <i class="bi bi-diagram-3 me-1"></i>GCP Architecture — Live Data Flow
+      </div>
+      <div style="padding:.5rem">
+        <svg id="arch-svg" viewBox="0 0 820 265" style="width:100%;height:auto;display:block">
+          <defs>
+            <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4"
+                    markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#2a3040"/>
+            </marker>
+          </defs>
+
+          <!-- ── Static edges ────────────────────────────────── -->
+          <!-- User → Pub/Sub -->
+          <line x1="73" y1="158" x2="167" y2="97" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Pub/Sub → Dataflow -->
+          <line x1="207" y1="85" x2="298" y2="85" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Dataflow → BigQuery -->
+          <line x1="342" y1="85" x2="433" y2="85" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- BigQuery → Vertex AI -->
+          <line x1="477" y1="85" x2="568" y2="85" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Vertex AI → Cloud Run -->
+          <line x1="612" y1="85" x2="708" y2="85" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Cloud Run → User (arc) -->
+          <path d="M 730,107 C 800,230 450,255 77,175" stroke="#2a3040" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+          <!-- BigQuery → Bigtable -->
+          <line x1="455" y1="107" x2="455" y2="162" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- User → GCS -->
+          <line x1="76" y1="178" x2="168" y2="213" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- GCS → CDN -->
+          <line x1="203" y1="220" x2="302" y2="220" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- CDN → User -->
+          <line x1="302" y1="217" x2="77" y2="175" stroke="#2a3040" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- ── Edge labels ─────────────────────────────────── -->
+          <text x="113" y="120" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif">play events</text>
+          <text x="255" y="79" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif">stream</text>
+          <text x="390" y="79" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif">insert</text>
+          <text x="525" y="79" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif">features</text>
+          <text x="663" y="79" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif">recs</text>
+          <text x="455" y="140" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif">profile</text>
+          <text x="122" y="205" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif">audio req</text>
+          <text x="255" y="232" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif">cache</text>
+          <text x="200" y="210" text-anchor="middle" fill="#3a4050" font-size="8" font-family="sans-serif" transform="rotate(-14,200,210)">stream</text>
+
+          <!-- ── Nodes ───────────────────────────────────────── -->
+          <!-- User/App -->
+          <circle id="nd-user" cx="55" cy="170" r="22" fill="#0d1a14" stroke="#06d6a0" stroke-width="2"/>
+          <text x="55" y="175" text-anchor="middle" fill="#06d6a0" font-size="15">📱</text>
+          <text x="55" y="203" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">User/App</text>
+
+          <!-- Cloud Pub/Sub -->
+          <circle id="nd-pubsub" cx="185" cy="85" r="22" fill="#0d1420" stroke="#4285F4" stroke-width="2"/>
+          <text x="185" y="90" text-anchor="middle" fill="#4285F4" font-size="15">📨</text>
+          <text x="185" y="120" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">Cloud</text>
+          <text x="185" y="130" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">Pub/Sub</text>
+
+          <!-- Cloud Dataflow -->
+          <circle id="nd-dataflow" cx="320" cy="85" r="22" fill="#0a160a" stroke="#34A853" stroke-width="2"/>
+          <text x="320" y="90" text-anchor="middle" fill="#34A853" font-size="15">⚙</text>
+          <text x="320" y="120" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">Cloud</text>
+          <text x="320" y="130" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">Dataflow</text>
+
+          <!-- BigQuery -->
+          <circle id="nd-bq" cx="455" cy="85" r="22" fill="#1a1600" stroke="#FBBC05" stroke-width="2"/>
+          <text x="455" y="90" text-anchor="middle" fill="#FBBC05" font-size="15">📊</text>
+          <text x="455" y="120" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">BigQuery</text>
+
+          <!-- Vertex AI -->
+          <circle id="nd-vertex" cx="590" cy="85" r="22" fill="#1a0d0d" stroke="#EA4335" stroke-width="2"/>
+          <text x="590" y="90" text-anchor="middle" fill="#EA4335" font-size="15">🧠</text>
+          <text x="590" y="120" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">Vertex AI</text>
+
+          <!-- Cloud Run -->
+          <circle id="nd-run" cx="730" cy="85" r="22" fill="#0a1814" stroke="#46BDC6" stroke-width="2"/>
+          <text x="730" y="90" text-anchor="middle" fill="#46BDC6" font-size="15">☁</text>
+          <text x="730" y="120" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">Cloud Run</text>
+          <text x="730" y="130" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">(Recs API)</text>
+
+          <!-- Bigtable -->
+          <circle id="nd-bigtable" cx="455" cy="180" r="18" fill="#1a0e00" stroke="#FF6D00" stroke-width="1.5"/>
+          <text x="455" y="185" text-anchor="middle" fill="#FF6D00" font-size="12">🗂</text>
+          <text x="455" y="210" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">Bigtable</text>
+
+          <!-- Cloud Storage -->
+          <circle id="nd-gcs" cx="185" cy="220" r="18" fill="#1a1000" stroke="#E8710A" stroke-width="1.5"/>
+          <text x="185" y="225" text-anchor="middle" fill="#E8710A" font-size="12">🗄</text>
+          <text x="185" y="250" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">Cloud Storage</text>
+
+          <!-- CDN Edge -->
+          <circle id="nd-cdn" cx="320" cy="220" r="18" fill="#0d1420" stroke="#1A73E8" stroke-width="1.5"/>
+          <text x="320" y="225" text-anchor="middle" fill="#1A73E8" font-size="12">🌍</text>
+          <text x="320" y="250" text-anchor="middle" fill="#8892a4" font-size="9" font-family="sans-serif">CDN Edge</text>
+
+          <!-- Packet animation layer -->
+          <g id="packet-layer"></g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side panel: metrics + log -->
+  <div class="col-md-4 d-flex flex-column gap-2">
+    <!-- Metrics -->
+    <div style="background:#0d0f16;border:1px solid #1e2028;border-radius:.4rem">
+      <div style="background:#0a0c14;border-bottom:1px solid #1e2028;padding:.35rem .7rem;font-size:.68rem;color:#5a6070;font-weight:600;letter-spacing:.08em;text-transform:uppercase">
+        <i class="bi bi-activity me-1"></i>Live Metrics
+      </div>
+      <div style="padding:.5rem">
+        <div class="row g-1 text-center">
+          <div class="col-6">
+            <div style="background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.3rem">
+              <div style="font-size:.57rem;color:#5a6070;text-transform:uppercase;letter-spacing:.06em">Events/s</div>
+              <div id="m-events" style="font-size:1.25rem;font-weight:700;color:#06d6a0;line-height:1.2">0</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div style="background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.3rem">
+              <div style="font-size:.57rem;color:#5a6070;text-transform:uppercase;letter-spacing:.06em">Queue Depth</div>
+              <div id="m-queue" style="font-size:1.25rem;font-weight:700;color:#4285F4;line-height:1.2">0</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div style="background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.3rem">
+              <div style="font-size:.57rem;color:#5a6070;text-transform:uppercase;letter-spacing:.06em">ML Latency</div>
+              <div id="m-mlat" style="font-size:1.25rem;font-weight:700;color:#EA4335;line-height:1.2">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div style="background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.3rem">
+              <div style="font-size:.57rem;color:#5a6070;text-transform:uppercase;letter-spacing:.06em">CDN Hit %</div>
+              <div id="m-cdn" style="font-size:1.25rem;font-weight:700;color:#1A73E8;line-height:1.2">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event log -->
+    <div style="background:#0d0f16;border:1px solid #1e2028;border-radius:.4rem;flex:1">
+      <div style="background:#0a0c14;border-bottom:1px solid #1e2028;padding:.35rem .7rem;font-size:.68rem;color:#5a6070;font-weight:600;letter-spacing:.08em;text-transform:uppercase">
+        <i class="bi bi-terminal me-1"></i>Event Log
+      </div>
+      <div style="padding:.4rem">
+        <div id="event-log" style="height:195px;overflow-y:auto;font-family:monospace;font-size:.64rem;color:#8892a4;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem">
+          <span style="color:#3a4050">// Click a scenario button to start</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Educational panels ════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#4285F4">Cloud Pub/Sub — Event Bus</strong><br>
+    Fully managed, serverless message broker. Publishers push messages to a <em>topic</em>;
+    subscribers pull from a <em>subscription</em>. Decouples producers from consumers —
+    the play-events service doesn't know or care who processes the events downstream.
+    Delivers at-least-once; deduplication via <code>message_id</code> on the consumer.
+    Spotify ingests ~1.4 billion events per day through Pub/Sub topics.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#34A853">Cloud Dataflow (Apache Beam)</strong><br>
+    Unified stream and batch processing engine. A Beam <em>pipeline</em> is a DAG of transforms
+    (ParDo, GroupByKey, Combine). The Dataflow runner auto-scales worker VMs, handles
+    watermarks for late-arriving events, and writes results to BigQuery via streaming inserts.
+    Spotify uses Dataflow for real-time play aggregation and Discover Weekly batch jobs.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#FBBC05">BigQuery — Analytics Warehouse</strong><br>
+    Serverless columnar data warehouse. Streaming inserts land in a buffer; within seconds
+    they are queryable. Spotify stores the full play history (petabyte-scale) in BigQuery.
+    Columnstore + partition pruning (by date) let analysts run aggregate queries over
+    billions of rows in seconds. Powers both real-time dashboards and weekly ML batch jobs.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#EA4335">Vertex AI — ML Platform</strong><br>
+    Manages the full ML lifecycle: data prep, training (on TPUs/GPUs), experiment tracking,
+    model registry, and online prediction endpoints. Spotify trains collaborative-filtering
+    and two-tower retrieval models for Discover Weekly on Vertex AI Training jobs,
+    then deploys prediction endpoints that Cloud Run calls at recommendation time.
+    Inference latency target: &lt;50ms p99.
+  </div>
+</div>
+
+<div class="d-flex gap-2 mb-3 align-items-stretch">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#E8710A">Cloud Storage + <span style="color:#1A73E8">Cloud CDN</span> — Audio Delivery</strong><br>
+    Audio files are stored in GCS buckets in multiple formats (OGG 320kbps, AAC 256kbps, etc.)
+    transcoded by Cloud Functions on upload. Cloud CDN caches popular tracks at
+    <em>Points of Presence (PoPs)</em> near listeners — 96%+ of playback requests are CDN cache hits.
+    On an album drop, Spotify pre-warms CDN edges with the new tracks before release time
+    to avoid a "thundering herd" against GCS origin servers.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#FF6D00">Cloud Bigtable — User Profiles</strong><br>
+    Wide-column NoSQL store designed for sub-10ms reads at any scale.
+    Spotify uses Bigtable to store per-user feature vectors (listening history summaries,
+    genre affinity, recent skips). When Cloud Run needs to score recommendations,
+    it reads the user's feature vector from Bigtable (single row key lookup) in &lt;5ms,
+    then calls the Vertex AI endpoint with that vector to get ranked track IDs.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#46BDC6">Cloud Run — Recommendations API</strong><br>
+    Stateless containerised service that scales to zero between requests.
+    Receives user context → reads Bigtable profile → calls Vertex AI online prediction →
+    filters/ranks results → returns track list in JSON.
+    Cloud Run auto-scales horizontally in &lt;1s. No VMs to manage, billed per 100ms of CPU.
+    The polyglot pattern: one API call orchestrates four different storage/compute systems.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Discover Weekly — Weekly Batch Pipeline</strong><br>
+    Every Monday, a Cloud Composer (Airflow) DAG orchestrates:<br>
+    1. BigQuery export of the week's play history → GCS<br>
+    2. Dataflow batch job: compute user–song interaction matrix<br>
+    3. Vertex AI Training: retrain collaborative-filter model<br>
+    4. Batch prediction: score all (user, track) pairs → 30 tracks per user<br>
+    5. Write playlists to Bigtable → served by Cloud Run next time the user opens the app
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+const svg        = document.getElementById('arch-svg');
+const pktLayer   = document.getElementById('packet-layer');
+const logEl      = document.getElementById('event-log');
+const badge      = document.getElementById('scenario-badge');
+const mEvents    = document.getElementById('m-events');
+const mQueue     = document.getElementById('m-queue');
+const mMlat      = document.getElementById('m-mlat');
+const mCdn       = document.getElementById('m-cdn');
+
+// ── Pre-compute paths ─────────────────────────────────────────────
+function linPts(x1,y1,x2,y2,n=32) {
+  const p=[];
+  for (let i=0;i<=n;i++) p.push([x1+(x2-x1)*i/n, y1+(y2-y1)*i/n]);
+  return p;
+}
+function bezPts(p0,p1,p2,p3,n=40) {
+  const p=[];
+  for (let i=0;i<=n;i++) {
+    const t=i/n, m=1-t;
+    p.push([
+      m**3*p0[0]+3*m**2*t*p1[0]+3*m*t**2*p2[0]+t**3*p3[0],
+      m**3*p0[1]+3*m**2*t*p1[1]+3*m*t**2*p2[1]+t**3*p3[1]
+    ]);
+  }
+  return p;
+}
+
+const P = {
+  userToPubsub:     linPts(73,158,167,97),
+  pubsubToDataflow: linPts(207,85,298,85),
+  dataflowToBQ:     linPts(342,85,433,85),
+  bqToVertex:       linPts(477,85,568,85),
+  vertexToRun:      linPts(612,85,708,85),
+  runToUser:        bezPts([730,107],[800,230],[450,255],[77,175]),
+  bqToBigtable:     linPts(455,107,455,162),
+  userToGCS:        linPts(76,178,168,213),
+  gcsToCDN:         linPts(203,220,302,220),
+  cdnToUser:        linPts(302,213,77,174),
+};
+
+// ── Packet class ──────────────────────────────────────────────────
+let packets = [];
+class Packet {
+  constructor(key, color, glow) {
+    this.pts  = P[key];
+    this.idx  = 0;
+    this.done = false;
+    this.el   = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    this.el.setAttribute('r','5');
+    this.el.setAttribute('fill', color);
+    if (glow) this.el.style.filter = `drop-shadow(0 0 5px ${color})`;
+    pktLayer.appendChild(this.el);
+  }
+  tick() {
+    if (this.idx >= this.pts.length) {
+      this.el.remove(); this.done = true; return;
+    }
+    const [x,y] = this.pts[this.idx++];
+    this.el.setAttribute('cx', x);
+    this.el.setAttribute('cy', y);
+  }
+}
+
+// ── Animation loop ─────────────────────────────────────────────────
+let rafId = null;
+function loop() {
+  packets.forEach(p => p.tick());
+  packets = packets.filter(p => !p.done);
+  rafId = requestAnimationFrame(loop);
+}
+loop();
+
+function pkt(key,color,delay=0,glow=false) {
+  setTimeout(() => packets.push(new Packet(key,color,glow)), delay);
+}
+
+// ── Log helper ──────────────────────────────────────────────────────
+function addLog(msg, color, delay=0) {
+  setTimeout(() => {
+    const ts = new Date().toLocaleTimeString('en',{hour12:false});
+    const ms = String(Math.floor(Math.random()*900)+50).padStart(3,'0');
+    const row = document.createElement('div');
+    row.style.borderBottom = '1px solid #0e1014';
+    row.style.paddingBottom = '1px';
+    row.innerHTML =
+      `<span style="color:#3a4050">[${ts}.${ms}]</span> ` +
+      `<span style="color:${color||'#8892a4'}">${msg}</span>`;
+    logEl.appendChild(row);
+    logEl.scrollTop = logEl.scrollHeight;
+  }, delay);
+}
+
+function clearLog() {
+  logEl.innerHTML = '';
+}
+
+function resetMetrics() {
+  mEvents.textContent = '0';
+  mQueue.textContent  = '0';
+  mMlat.textContent   = '—';
+  mCdn.textContent    = '—';
+  badge.textContent   = 'idle';
+  badge.className     = 'badge bg-secondary';
+}
+
+// ── Scenarios ───────────────────────────────────────────────────────
+const E='#06d6a0', A='#f4a261', ML='#8338ec', BQ='#FBBC05',
+      PB='#4285F4', DF='#34A853', VX='#EA4335', RN='#46BDC6';
+
+function scenarioPlay() {
+  clearLog();
+  badge.textContent = '▶ Play Song'; badge.className = 'badge';
+  badge.style.background = '#06d6a0'; badge.style.color = '#000';
+
+  // Event stream
+  pkt('userToPubsub',     PB,    0, true);
+  pkt('pubsubToDataflow', DF,  700);
+  pkt('dataflowToBQ',     BQ, 1400);
+  pkt('bqToVertex',       VX, 2100);
+  pkt('vertexToRun',      RN, 2800);
+  pkt('runToUser',        ML, 3500, true);
+  pkt('bqToBigtable',     '#FF6D00', 1600);
+
+  // Parallel audio path
+  pkt('userToGCS',  A,    0);
+  pkt('gcsToCDN',   A,  700);
+  pkt('cdnToUser',  A, 1400, true);
+
+  // Metrics
+  setTimeout(() => { mEvents.textContent='45,231'; }, 300);
+  setTimeout(() => { mQueue.textContent='128'; }, 800);
+  setTimeout(() => { mCdn.textContent='96.2%'; mCdn.style.color='#06d6a0'; }, 1500);
+  setTimeout(() => { mMlat.textContent='44ms'; }, 3200);
+
+  addLog('User played: "Anti-Hero" — Taylor Swift', E);
+  addLog('Pub/Sub: play-event enqueued (topic: play-events)', PB, 400);
+  addLog('Audio: CDN cache HIT — edge PoP Frankfurt serving 320kbps', A, 700);
+  addLog('Dataflow: 1-second tumbling window aggregation', DF, 1100);
+  addLog('BigQuery: streaming insert → play_history partition 2026-05', BQ, 1500);
+  addLog('Bigtable: user-profile updated (plays_today +1)', '#FF6D00', 1800);
+  addLog('Vertex AI: feature vector delta computed', VX, 2400);
+  addLog('Cloud Run: recommendation list refreshed (30 tracks)', RN, 3200);
+  addLog('Recs delivered to app in 51ms total', ML, 3800);
+}
+
+function scenarioDiscoverWeekly() {
+  clearLog();
+  badge.textContent = '📅 Discover Weekly'; badge.className = 'badge';
+  badge.style.background = '#8338ec'; badge.style.color = '#fff';
+
+  // BigQuery → Vertex AI → Cloud Run → User (batch recs)
+  for (let i=0; i<5; i++) {
+    pkt('bqToVertex',  ML, i*200);
+    pkt('vertexToRun', ML, i*200+700);
+    pkt('runToUser',   ML, i*200+1400, true);
+  }
+  // Also show Dataflow batch feeding BigQuery
+  pkt('pubsubToDataflow', DF, 0);
+  pkt('dataflowToBQ',     BQ, 700);
+
+  setTimeout(() => { mEvents.textContent='2.1B'; }, 200);
+  setTimeout(() => { mQueue.textContent='batch'; }, 200);
+  setTimeout(() => { mMlat.textContent='850ms'; mMlat.style.color='#e9c46a'; }, 2000);
+  setTimeout(() => { mCdn.textContent='93.8%'; mCdn.style.color='#06d6a0'; }, 2500);
+
+  addLog('Cloud Composer (Airflow): weekly DAG triggered', ML);
+  addLog('BigQuery export: 7-day play_history → GCS staging', BQ, 200);
+  addLog('Dataflow batch: computing user–song interaction matrix…', DF, 600);
+  addLog('Vertex AI Training: retraining two-tower retrieval model (4h)', VX, 1000);
+  addLog('Batch prediction: scoring 456M user×track pairs', VX, 1400);
+  addLog('Writing 30 tracks × 600M users → Bigtable (partitioned)', '#FF6D00', 1800);
+  addLog('Discover Weekly playlists READY — served Monday 07:00 UTC', E, 2400);
+  addLog('Cloud Run: next request reads pre-computed recs from Bigtable (<5ms)', RN, 2800);
+}
+
+function scenarioAlbumDrop() {
+  clearLog();
+  badge.textContent = '💥 Album Drop'; badge.className = 'badge';
+  badge.style.background = '#ef476f'; badge.style.color = '#fff';
+
+  // Thundering herd: many users → Pub/Sub simultaneously
+  const red='#ef476f';
+  for (let i=0; i<18; i++) {
+    pkt('userToPubsub', red, i*80);
+  }
+  // Pub/Sub buffers; Dataflow drains steadily
+  for (let i=0; i<6; i++) {
+    pkt('pubsubToDataflow', DF, 400+i*350);
+    pkt('dataflowToBQ',     BQ, 400+i*350+700);
+  }
+  // CDN handles 99% from cache (pre-warmed)
+  for (let i=0; i<10; i++) {
+    pkt('gcsToCDN',  A, i*150);
+    pkt('cdnToUser', A, i*150+600, true);
+  }
+
+  setTimeout(() => { mEvents.textContent='1.28M'; mEvents.style.color='#ef476f'; }, 300);
+  setTimeout(() => { mQueue.textContent='2.3M'; mQueue.style.color='#ef476f'; }, 400);
+  setTimeout(() => { mCdn.textContent='98.9%'; mCdn.style.color='#06d6a0'; }, 1200);
+  setTimeout(() => { mMlat.textContent='112ms'; mMlat.style.color='#e9c46a'; }, 2000);
+
+  addLog('Taylor Swift "TTPD" drops at midnight UTC', red);
+  addLog('⚡ 1.28M concurrent play requests in first second', red, 100);
+  addLog('Pub/Sub queue depth: 2.3M messages — backpressure applied', PB, 300);
+  addLog('CDN pre-warming: album tracks cached at all 200+ PoPs (T-15min)', A, 600);
+  addLog('CDN: 98.9% of audio requests served from edge cache ✓', '#06d6a0', 900);
+  addLog('Dataflow: auto-scaled to 480 worker VMs (was 12)', DF, 1200);
+  addLog('BigQuery: streaming insert throughput 120k rows/s', BQ, 1600);
+  addLog('Pub/Sub: exponential backoff applied to overflow subscribers', PB, 2000);
+  addLog('Queue draining — depth falling: 2.3M → 1.1M → 340k → 0', PB, 2800);
+  addLog('System stabilised — all metrics nominal', E, 3500);
+  setTimeout(() => { mEvents.textContent='45,231'; mEvents.style.color='#06d6a0'; }, 4000);
+  setTimeout(() => { mQueue.textContent='128'; mQueue.style.color='#4285F4'; }, 4000);
+}
+
+// ── Button wiring ───────────────────────────────────────────────────
+document.getElementById('btn-play').addEventListener('click', scenarioPlay);
+document.getElementById('btn-dw').addEventListener('click', scenarioDiscoverWeekly);
+document.getElementById('btn-drop').addEventListener('click', scenarioAlbumDrop);
+document.getElementById('btn-reset').addEventListener('click', () => {
+  packets.forEach(p => p.el.remove());
+  packets = [];
+  clearLog();
+  resetMetrics();
+  logEl.innerHTML = '<span style="color:#3a4050">// Click a scenario button to start</span>';
+});
+</script>
+{% endblock %}

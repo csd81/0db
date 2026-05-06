@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% block title %}CAP Theorem — Distributed System Trade-offs{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="mb-0 fw-bold">⚖️ CAP Theorem</h2>
+</div>
+
+<!-- Core theorem statement -->
+<div class="alert mb-4 py-2" style="background:#0a0c14;border:1px solid #457b9d;color:#cdd3de;font-size:.82rem">
+  <strong style="color:#e9c46a">Brewer's CAP Theorem (2000):</strong>
+  A distributed data store can guarantee at most <strong>two</strong> of the following three properties simultaneously.
+  Since network partitions cannot be avoided in practice, the real design choice is
+  <strong style="color:#06d6a0">CP</strong> (Consistency + Partition Tolerance) vs
+  <strong style="color:#8338ec">AP</strong> (Availability + Partition Tolerance).
+</div>
+
+<!-- Three-property banner -->
+<div class="d-flex gap-2 mb-3 align-items-stretch">
+  <div style="flex:1;background:#080a10;border:2px solid #06d6a0;border-radius:.4rem;padding:.6rem .8rem;font-size:.72rem;color:#8892a4">
+    <div style="font-size:1.8rem;margin-bottom:.2rem">🔒</div>
+    <strong style="color:#06d6a0;font-size:.82rem">C — Consistency</strong><br>
+    Every read receives the most recent write or an error.
+    All nodes in the distributed system see the <em>same data at the same time</em>.
+    No stale reads are ever served — if a write hasn't propagated yet, the system
+    either waits or rejects the read.<br><br>
+    <span style="color:#5a6070">SQL analogy: SERIALIZABLE isolation applied globally across all nodes.</span>
+  </div>
+  <div style="flex:1;background:#080a10;border:2px solid #8338ec;border-radius:.4rem;padding:.6rem .8rem;font-size:.72rem;color:#8892a4">
+    <div style="font-size:1.8rem;margin-bottom:.2rem">✅</div>
+    <strong style="color:#8338ec;font-size:.82rem">A — Availability</strong><br>
+    Every request receives a response — not an error — even if the data might be stale.
+    The system remains operational and responsive at all times,
+    prioritising uptime over data freshness.<br><br>
+    <span style="color:#5a6070">Example: TikTok feed always loads even if "Like" count is 30 seconds behind.</span>
+  </div>
+  <div style="flex:1;background:#080a10;border:2px solid #e9c46a;border-radius:.4rem;padding:.6rem .8rem;font-size:.72rem;color:#8892a4">
+    <div style="font-size:1.8rem;margin-bottom:.2rem">🌐</div>
+    <strong style="color:#e9c46a;font-size:.82rem">P — Partition Tolerance</strong><br>
+    The system continues to operate even when network messages between nodes are
+    delayed or dropped (a <em>network partition</em>).
+    In any real multi-node deployment partitions <strong>will</strong> happen — hardware fails,
+    cables are cut, datacentres become isolated.<br><br>
+    <span style="color:#5a6070">P is non-negotiable for distributed systems. The choice is really C vs A.</span>
+  </div>
+</div>
+
+<!-- CAP triangle SVG -->
+<div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#e9c46a;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-triangle me-1"></i>The CAP Triangle — Pick Two
+  </div>
+  <div class="card-body py-3">
+    <div class="row g-3 align-items-center">
+      <div class="col-md-5 text-center">
+        <svg viewBox="0 0 320 290" style="max-width:320px;width:100%">
+          <!-- Triangle -->
+          <polygon points="160,20 20,265 300,265"
+                   fill="none" stroke="#2a3040" stroke-width="2"/>
+          <!-- C vertex -->
+          <circle cx="160" cy="20" r="28" fill="#0d1520" stroke="#06d6a0" stroke-width="2"/>
+          <text x="160" y="16" text-anchor="middle" fill="#06d6a0" font-size="13" font-weight="bold" font-family="monospace">C</text>
+          <text x="160" y="28" text-anchor="middle" fill="#8892a4" font-size="8" font-family="sans-serif">Consistency</text>
+          <!-- A vertex -->
+          <circle cx="20" cy="265" r="28" fill="#0d1520" stroke="#8338ec" stroke-width="2"/>
+          <text x="20" y="261" text-anchor="middle" fill="#8338ec" font-size="13" font-weight="bold" font-family="monospace">A</text>
+          <text x="20" y="273" text-anchor="middle" fill="#8892a4" font-size="8" font-family="sans-serif">Availability</text>
+          <!-- P vertex -->
+          <circle cx="300" cy="265" r="28" fill="#0d1520" stroke="#e9c46a" stroke-width="2"/>
+          <text x="300" y="261" text-anchor="middle" fill="#e9c46a" font-size="13" font-weight="bold" font-family="monospace">P</text>
+          <text x="300" y="273" text-anchor="middle" fill="#8892a4" font-size="8" font-family="sans-serif">Partition Tol.</text>
+          <!-- CP label (right edge) -->
+          <text x="240" y="140" text-anchor="middle" fill="#06d6a0" font-size="11" font-weight="bold" font-family="sans-serif">CP</text>
+          <text x="240" y="152" text-anchor="middle" fill="#5a6070" font-size="9" font-family="sans-serif">HBase, ZooKeeper</text>
+          <text x="240" y="162" text-anchor="middle" fill="#5a6070" font-size="9" font-family="sans-serif">Spanner, etcd</text>
+          <!-- AP label (bottom edge) -->
+          <text x="160" y="278" text-anchor="middle" fill="#8338ec" font-size="11" font-weight="bold" font-family="sans-serif">AP</text>
+          <text x="160" y="288" text-anchor="middle" fill="#5a6070" font-size="9" font-family="sans-serif">Cassandra, DynamoDB, CouchDB</text>
+          <!-- CA label (left edge) - grayed out -->
+          <text x="82" y="140" text-anchor="middle" fill="#3a4050" font-size="11" font-weight="bold" font-family="sans-serif">CA</text>
+          <text x="82" y="152" text-anchor="middle" fill="#3a4050" font-size="9" font-family="sans-serif">Single-node RDBMS</text>
+          <text x="82" y="162" text-anchor="middle" fill="#3a4050" font-size="9" font-family="sans-serif">(no partition tolerance)</text>
+          <!-- Center annotation -->
+          <text x="160" y="170" text-anchor="middle" fill="#5a6070" font-size="9" font-family="sans-serif">⚠ Cannot have all three</text>
+          <text x="160" y="183" text-anchor="middle" fill="#5a6070" font-size="9" font-family="sans-serif">in a distributed system</text>
+        </svg>
+      </div>
+      <div class="col-md-7">
+        <div style="font-size:.7rem;color:#8892a4;margin-bottom:.6rem">
+          <strong style="color:#e9c46a">Why CA is not a real option:</strong>
+          CA means sacrificing Partition Tolerance. In a single-server database (no network)
+          this is fine — Postgres or SQL Server on one machine is perfectly CA.
+          But once you have two or more machines communicating over a network, you <em>will</em>
+          eventually have a partition. Therefore, all distributed databases must choose CP or AP.
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <div style="background:#0a1510;border:1px solid #06d6a0;border-radius:.35rem;padding:.5rem .7rem;font-size:.68rem;color:#8892a4">
+              <strong style="color:#06d6a0">CP systems</strong> — when partition occurs:<br>
+              → Refuse writes (return error)<br>
+              → Refuse stale reads<br>
+              → Wait for partition to heal<br>
+              <span style="color:#5a6070;font-size:.62rem">Sacrifices: Availability<br>
+              Examples: HBase, ZooKeeper, etcd, Google Spanner, SQL Server Always On (sync)</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div style="background:#100a18;border:1px solid #8338ec;border-radius:.35rem;padding:.5rem .7rem;font-size:.68rem;color:#8892a4">
+              <strong style="color:#8338ec">AP systems</strong> — when partition occurs:<br>
+              → Serve stale data<br>
+              → Accept writes on both sides<br>
+              → Reconcile later (eventual consistency)<br>
+              <span style="color:#5a6070;font-size:.62rem">Sacrifices: Consistency<br>
+              Examples: Cassandra, DynamoDB, CouchDB, Riak, Facebook TAO</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed CP vs AP comparison -->
+<div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#8338ec;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-table me-1"></i>CP vs AP — Design Consequences
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <table class="table table-sm mb-0" style="font-size:.67rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028">
+          <th>Dimension</th><th style="color:#06d6a0">CP</th><th style="color:#8338ec">AP</th>
+        </tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td>On partition</td><td style="color:#ef476f">Return error / block</td><td style="color:#06d6a0">Serve stale data</td></tr>
+          <tr><td>Write conflict</td><td>Prevented by quorum</td><td style="color:#e9c46a">Detected later; resolved</td></tr>
+          <tr><td>Consistency model</td><td style="color:#06d6a0">Strong / linearizable</td><td>Eventual consistency</td></tr>
+          <tr><td>Read latency</td><td style="color:#e9c46a">Higher (quorum wait)</td><td style="color:#06d6a0">Low (local replica)</td></tr>
+          <tr><td>Suitable for</td><td>Finance, banking, inventory</td><td>Social feeds, caches, DNS</td></tr>
+          <tr><td>SQL analogy</td><td>SERIALIZABLE + 2PL</td><td>READ UNCOMMITTED + async</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">Bank account — why CP is mandatory:</div>
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- AP system: network partition between NY and London</span>
+NY node:  account.balance = $100
+  User A withdraws $100 → NY says OK  <span style="color:#06d6a0">✓</span>
+London:   also reads $100 (stale!)
+  User B withdraws $100 → London says OK  <span style="color:#06d6a0">✓</span>
+<span style="color:#ef476f">→ Bank lost $100 — double spend problem</span>
+
+<span style="color:#5a6070">-- CP system: quorum required before committing</span>
+NY node:  User A withdraws $100
+  → must confirm with London before OK
+London partition: unreachable
+  → NY returns: <span style="color:#e9c46a">"Service temporarily unavailable"</span>
+<span style="color:#06d6a0">→ No data loss — consistency preserved</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- Real-world examples -->
+<div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#e9c46a;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-globe me-1"></i>Real-World Systems — CAP Classification
+  </div>
+  <div class="card-body py-3">
+    <table class="table table-sm mb-0" style="font-size:.67rem;color:#cdd3de;background:transparent">
+      <thead><tr style="color:#e9c46a;border-color:#1e2028">
+        <th>System</th><th>CAP type</th><th>On partition…</th><th>Why?</th><th>Example scenario</th>
+      </tr></thead>
+      <tbody style="border-color:#1e2028">
+        <tr><td><strong>Google Spanner</strong></td>
+            <td><span style="color:#06d6a0">CP</span></td>
+            <td>Blocks or errors</td>
+            <td>TrueTime atomic clocks enable global consistency</td>
+            <td>AdWords billing — every cent must balance</td></tr>
+        <tr><td><strong>Amazon DynamoDB</strong></td>
+            <td><span style="color:#8338ec">AP</span></td>
+            <td>Serves stale reads</td>
+            <td>Eventually consistent by default; strong consistency optional</td>
+            <td>Shopping cart — stale item count acceptable</td></tr>
+        <tr><td><strong>Apache Cassandra</strong></td>
+            <td><span style="color:#8338ec">AP</span></td>
+            <td>Accepts writes on both sides</td>
+            <td>Tunable consistency (ONE / QUORUM / ALL)</td>
+            <td>Netflix watch history, IoT sensor ingestion</td></tr>
+        <tr><td><strong>Apache ZooKeeper / etcd</strong></td>
+            <td><span style="color:#06d6a0">CP</span></td>
+            <td>Minority partitions become read-only</td>
+            <td>Raft/ZAB consensus — majority quorum required</td>
+            <td>Kubernetes leader election, service registry</td></tr>
+        <tr><td><strong>Facebook TAO</strong></td>
+            <td><span style="color:#8338ec">AP</span></td>
+            <td>Regional cache serves stale data</td>
+            <td>Social graph reads (99%) can tolerate seconds of lag</td>
+            <td>Profile picture update takes 30 s to reach London</td></tr>
+        <tr><td><strong>WhatsApp</strong></td>
+            <td><span style="color:#06d6a0">CP</span> (messages)</td>
+            <td>Message delivery retried until confirmed</td>
+            <td>End-to-end delivery guarantee; message order preserved</td>
+            <td>You must not lose a message; stale "last seen" is OK</td></tr>
+        <tr><td><strong>CDN (Cloudflare/Fastly)</strong></td>
+            <td><span style="color:#8338ec">AP</span></td>
+            <td>Edge serves cached (stale) content</td>
+            <td>Availability maximized; cache invalidation is eventual</td>
+            <td>Old profile photo visible in Tokyo for 2–5 minutes</td></tr>
+        <tr><td><strong>SQL Server (single node)</strong></td>
+            <td style="color:#3a4050">CA</td>
+            <td>No partition — single machine</td>
+            <td>No distributed coordination needed</td>
+            <td>Local Northwind DB — ACID without network</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Eventual consistency + PACELC -->
+<div class="d-flex gap-2 mb-3 align-items-stretch">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .8rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Eventual Consistency</strong><br>
+    AP systems guarantee that if no new writes occur, all replicas will <em>eventually</em> converge to the same value.
+    There is no guarantee on <em>how long</em> this takes.
+    Common in social media (feeds, like counts), DNS propagation, and CDN cache invalidation.
+    Strategies: Last-Write-Wins (timestamp), CRDT (conflict-free replicated data types), read-repair, anti-entropy gossip.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .8rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">PACELC Extension (2012)</strong><br>
+    CAP only addresses the partition case. PACELC extends it: even when the system is running normally
+    (no partition, <strong>E</strong>lse), there is a trade-off between <strong>L</strong>atency and <strong>C</strong>onsistency.
+    A strongly consistent system must wait for replication acknowledgment (higher latency).
+    An eventually consistent system can return immediately (lower latency).
+    Formula: <code>PA/EL</code> (e.g. Cassandra) vs <code>PC/EC</code> (e.g. Spanner).
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .8rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Two Generals Problem</strong><br>
+    Formal proof that it is impossible to achieve 100% guaranteed message delivery across an unreliable network.
+    This is why "Exactly-Once" delivery in distributed systems (Kafka, message queues) requires idempotency keys
+    and write-ahead logging — you can get arbitrarily close to exactly-once, but never provably guarantee it
+    without additional assumptions about the network.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .8rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">CAP in SQL Server</strong><br>
+    SQL Server Always On Availability Groups:<br>
+    • <strong>Synchronous commit</strong> = CP (waits for secondary ACK → zero data loss, higher latency)<br>
+    • <strong>Asynchronous commit</strong> = AP-like (returns immediately → possible data loss on failover, lower latency)<br>
+    Merge Replication = AP (bi-directional; conflicts resolved with user-defined rules after the fact).
+  </div>
+</div>
+
+<!-- RTT / Quorum note -->
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#457b9d;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-signpost me-1"></i>RTT &amp; Quorum — The Physics of Consistency
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">Why strong consistency costs latency:</div>
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- CP write requires quorum ACK:</span>
+Client → Primary (London)
+Primary → Replica A (NY)    <span style="color:#e9c46a">RTT ≈ 80ms</span>
+Primary → Replica B (Tokyo) <span style="color:#e9c46a">RTT ≈ 230ms</span>
+Client waits for majority ACK before commit
+<span style="color:#ef476f">→ Write latency ≥ 80ms (fastest quorum member)</span>
+
+<span style="color:#5a6070">-- AP write returns immediately:</span>
+Client → Primary (London)   <span style="color:#06d6a0">RTT ≈ 1ms</span>
+Primary: "OK" immediately
+Async replication to NY, Tokyo later
+<span style="color:#06d6a0">→ Write latency ≈ 1ms (local ack only)</span>
+
+<span style="color:#5a6070">-- Speed of light: London → NY via fibre</span>
+<span style="color:#5a6070">-- ~5,570 km / (200,000 km/s) ≈ 28ms one-way</span>
+<span style="color:#5a6070">-- RTT ≈ 70–80ms (routing overhead included)</span></pre>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">Quorum voting — how CP systems decide:</div>
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">
+        A Raft/Paxos cluster of 5 nodes requires 3 (majority) to agree before committing a write.
+        If a network partition splits the cluster into a group of 3 and a group of 2:
+      </div>
+      <div class="row g-2">
+        <div class="col-6">
+          <div style="background:#0a1510;border:1px solid #06d6a0;border-radius:.3rem;padding:.4rem .5rem;font-size:.64rem;color:#8892a4">
+            <strong style="color:#06d6a0">Majority partition (3 nodes)</strong><br>
+            Can still reach quorum → continues to accept writes → stays Consistent
+          </div>
+        </div>
+        <div class="col-6">
+          <div style="background:#1a0a0a;border:1px solid #ef476f;border-radius:.3rem;padding:.4rem .5rem;font-size:.64rem;color:#8892a4">
+            <strong style="color:#ef476f">Minority partition (2 nodes)</strong><br>
+            Cannot reach quorum → becomes read-only → sacrifices Availability
+          </div>
+        </div>
+      </div>
+      <div style="font-size:.64rem;color:#5a6070;margin-top:.5rem">
+        This is why ZooKeeper, etcd, and Raft-based systems always have an odd number of nodes (3, 5, 7).
+        An even split (2/2, 3/3) would leave no majority — both sides become unavailable.
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

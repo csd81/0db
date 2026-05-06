@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block title %}Social Media Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #1877f2; }
+.hero-grad { background: linear-gradient(135deg, rgba(24,119,242,.12), rgba(100,200,100,.06), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:96px; text-align:center; cursor:pointer; padding:.5rem .25rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(24,119,242,.1); }
+.pipe-node.active { background:rgba(24,119,242,.18); }
+.pipe-node .p-icon { font-size:1.6rem; }
+.pipe-node .p-label { font-size:.6rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:20px; height:2px; background:rgba(24,119,242,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#fff; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#88bbff; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.fanout-box { border:1px solid rgba(24,119,242,.3); border-radius:8px; padding:.75rem; background:#0d1218; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Social Media / Graph Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(24,119,242,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">👥</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">Social Media / Graph Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">Highly interconnected graph data, 99% read workloads, celebrity fan-out at massive scale — the architecture behind 3 billion daily active users.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🔵 Meta (Facebook/Instagram)</span>
+      <span class="company-badge">🔷 LinkedIn</span>
+      <span class="company-badge">🐦 X (Twitter)</span>
+      <span class="company-badge">📌 Pinterest</span>
+      <span class="company-badge">🟠 Reddit</span>
+      <span class="company-badge">👻 Snapchat</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">Post &amp; Feed Delivery Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node for detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">✍️</div><div class="p-label">User<br>Posts</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">🚌</div><div class="p-label">Kafka<br>Event Bus</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">🕸️</div><div class="p-label">Fan-out<br>Service</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">🗺️</div><div class="p-label">TAO<br>Graph</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">⚡</div><div class="p-label">Cache<br>Update</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">🧩</div><div class="p-label">Feed<br>Ranker</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">📲</div><div class="p-label">WebSocket<br>Delivery</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de"></div>
+    </div>
+  </div>
+
+  <!-- Fan-out Explainer -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Fan-out Strategy: Write vs Read (The Celebrity Problem)</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="fanout-box">
+            <div class="fw-bold mb-2" style="color:#06d6a0">✅ Fan-out on WRITE (Normal Users)</div>
+            <div style="font-size:.8rem;color:#8892a4;margin-bottom:.75rem">User with &lt;10K followers. When they post, the fan-out service pushes the post ID into each follower's pre-computed feed cache (Redis list). When a follower opens their app, the feed is instantly available — just read from cache. Very fast reads.</div>
+            <div style="font-size:.75rem;color:#8892a4">
+              <div><span style="color:#06d6a0">Latency:</span> Read O(1) from cache</div>
+              <div><span style="color:#06d6a0">Write cost:</span> O(followers) Redis writes on each post</div>
+              <div><span style="color:#06d6a0">Max followers:</span> ~1M before it becomes too expensive</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="fanout-box">
+            <div class="fw-bold mb-2" style="color:#ff9900">⚡ Fan-out on READ (Celebrities)</div>
+            <div style="font-size:.8rem;color:#8892a4;margin-bottom:.75rem">Beyoncé has 300M followers. Pushing her post to 300M Redis entries would take 30 minutes. Instead: her post is stored in the graph (TAO). When any of her followers opens their feed, the aggregator pulls Beyoncé's latest post at read time and merges it into the ranked feed. Slower reads, but write cost is O(1).</div>
+            <div style="font-size:.75rem;color:#8892a4">
+              <div><span style="color:#ff9900">Latency:</span> Read requires TAO lookup + merge</div>
+              <div><span style="color:#ff9900">Write cost:</span> O(1) — just store the post</div>
+              <div><span style="color:#ff9900">Threshold:</span> Meta uses ~1M follower cutoff</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage &amp; Data Layer</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">TAO (The Associations and Objects) — Meta</dt>
+          <dd style="color:#8892a4">Meta's custom graph DB. Every entity (User, Post, Page) is an Object; every relationship (Like, Follow, FriendOf) is an Association. Read-through cache tier using Memcached. Stores 100+ trillion edges. Globally replicated to 20+ data centers.</dd>
+          <dt style="color:#cdd3de">Apache Cassandra</dt>
+          <dd style="color:#8892a4">Timeline/feed storage. Wide-row per user: <code>partition(user_id) → sorted(post_timestamp, post_id)</code>. AP system — never refuses a write. Used by Instagram, Twitter. ~1M writes/second at Twitter scale.</dd>
+          <dt style="color:#cdd3de">RocksDB (embedded KV)</dt>
+          <dd style="color:#8892a4">LSM-tree key-value store. Optimized for write-heavy workloads. Used inside Cassandra, Kafka, and as a standalone store at Meta/LinkedIn. Handles billions of tiny updates efficiently.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Memcached + Mcrouter</dt>
+          <dd class="mb-0" style="color:#8892a4">Meta's distributed cache. Mcrouter is a Memcached proxy that handles routing, replication, and failure. Facebook serves ~70% of requests entirely from Memcached — never touching MySQL.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Processing</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Apache Kafka</dt>
+          <dd style="color:#8892a4">The nervous system of social platforms. Topics: <code>user-posts</code>, <code>notifications</code>, <code>feed-updates</code>, <code>analytics-events</code>. Partitioned by <code>user_id</code> for ordered per-user processing. LinkedIn originated Kafka; now used by every major social platform.</dd>
+          <dt style="color:#cdd3de">Apache Storm / Heron</dt>
+          <dd style="color:#8892a4">Stream processing. Heron (Twitter's replacement for Storm) processes 10M+ events/second. Counts likes, trending topics (every 30 seconds), and notification coalescing ("X and 47 others liked your post").</dd>
+          <dt style="color:#cdd3de">Feed Ranking ML (PyTorch / TF)</dt>
+          <dd style="color:#8892a4">EdgeRank (Facebook's old algorithm) replaced by deep neural nets. Features: edge weight (engagement history), affinity score (how often you interact), time decay, media type. Re-ranked on every feed open. LinkedIn's PYMK ("People You May Know") uses graph traversal + ML.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Hack / PHP / Erlang</dt>
+          <dd class="mb-0" style="color:#8892a4">Facebook: Hack (PHP superset). WhatsApp: Erlang/OTP (actor model, 2M connections per server). These language choices drive core architectural decisions about concurrency and state management.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 Infrastructure &amp; Protocols</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Custom Private Data Centers (Meta)</dt>
+          <dd style="color:#8892a4">Meta's Prineville OR, Forest City NC, and Luleå Sweden DCs. Open Compute Project (OCP) hardware — custom server designs. Gravity-fed cooling. PUE (Power Usage Effectiveness) of 1.07 — near theoretical minimum. All powered by renewable energy.</dd>
+          <dt style="color:#cdd3de">TPOP (Traffic PoPs)</dt>
+          <dd style="color:#8892a4">Meta's custom edge nodes placed in ISPs. Handle TLS termination, HTTP/2 multiplexing, and static asset caching. Similar to Netflix Open Connect but for social content (images, JS bundles).</dd>
+          <dt style="color:#cdd3de">WebSocket / Long Polling</dt>
+          <dd style="color:#8892a4">Real-time updates (likes, comments appearing live) use WebSocket connections. Server pushes notification events. Mobile apps use FCM/APNs push notifications when WebSocket not maintained. "Instant" reactions: &lt;200ms end-to-end.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Global BGP Anycast</dt>
+          <dd class="mb-0" style="color:#8892a4">Meta and LinkedIn operate their own AS (Autonomous Systems). BGP Anycast routes users to nearest PoP. When Cloudflare had a BGP incident in 2021, Meta used their own backbone — insulation from 3rd-party CDN failures.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Workflow Deep Dive</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3">
+          <div class="step-num">1</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">User Posts: Write to MySQL + Event Published</div>
+          <div style="font-size:.8rem;color:#8892a4">Post written to MySQL (primary source of truth) with ACID transaction. Post ID auto-incremented (Snowflake ID at scale — 64-bit: timestamp + datacenter + sequence). Media (images/video) uploaded separately to CDN. Post metadata published to Kafka topic <code>user-posts</code> with partition key = user_id.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">2</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Kafka Fan-out: One Message, Many Consumers</div>
+          <div style="font-size:.8rem;color:#8892a4">Multiple consumer groups read the same Kafka message independently: Notification service (fans out push notifications), Feed update service (pushes to follower caches), Analytics service (tracks engagement), Search indexer (indexes post content). Kafka retains messages for 7 days — consumers can replay.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">3</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">TAO Graph Update: Associations Written</div>
+          <div style="font-size:.8rem;color:#8892a4">Fan-out service reads follower list from TAO (<code>getAssocRange(user_id, FOLLOWS, 0, 1000)</code> — paginated). For each follower: prepend post_id to their feed timeline in Cassandra. TAO writes new Association: <code>(user_id) → [POSTED] → (post_id)</code>. This powers "posts by people you follow" graph traversal.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">4</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Feed Assembly: ML Ranking</div>
+          <div style="font-size:.8rem;color:#8892a4">When user opens feed: fetch ~500 candidate posts from Cassandra timeline (mix of fan-out-on-write and celebrity TAO lookups). Run deep learning ranker over candidates (PyTorch model, ~2ms inference). Score = f(affinity, engagement_history, recency, diversity). Return top-50. Diversity: no 2 consecutive posts from same author.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(24,119,242,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📊 Read:Write Ratio</div>
+        <div style="font-size:.78rem;color:#8892a4">Social platforms are <strong style="color:#cdd3de">99% reads, 1% writes</strong>. Every write (post, like, comment) triggers 100–1000 cache updates. This is why Memcached is the dominant cost — Facebook's Memcached fleet processes 1 billion requests/second. This ratio drives every architectural decision.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(24,119,242,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🔗 Why Graph DB?</div>
+        <div style="font-size:.78rem;color:#8892a4">"Friend of a friend" queries in SQL: <code>SELECT f2.user_id FROM Friends f1 JOIN Friends f2 ON f1.friend_id=f2.user_id WHERE f1.user_id=?</code> — O(N²) joins at scale. Graph traversal is O(edges traversed). TAO handles 1 billion graph reads/second that would be impossible in MySQL.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(24,119,242,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎯 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">AP system</strong>. Stale like counts, slightly delayed notifications — all acceptable. TAO is eventually consistent: replicas may lag by &lt;1 second. This means your friend might not see your comment immediately in another country. Strict consistency would require cross-datacenter coordination on every request — unacceptable latency.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'User Posts', detail: 'Client sends POST to API gateway. Load balancer routes to nearest application server. Post written to MySQL (primary shard for user_id region). Snowflake ID generated (64-bit: 41 bits timestamp, 10 bits machine, 12 bits sequence → unique, sortable, no DB round-trip). Media upload handled by separate service with pre-signed S3 URL. Kafka message published async — write latency: ~50ms.' },
+  { title: 'Kafka Event Bus', detail: 'Message published to <code>user-posts</code> topic with key=user_id (ensures all posts from same user go to same partition → ordered processing). Multiple consumer groups subscribe independently. Consumer offsets committed after processing — exactly-once semantics via idempotent consumers. Message retained 7 days. Kafka throughput: millions of messages/second across 1000s of partitions.' },
+  { title: 'Fan-out Service', detail: 'Fan-out consumer reads follower list (paginated TAO calls, 1000/page). For regular users: prepend post_id to each follower\'s Redis feed list (<code>LPUSH feed:{follower_id} {post_id}</code>). Trim to 1000 entries (<code>LTRIM</code>). For celebrities (&gt;1M followers): skip fan-out — mark post as "celebrity" in TAO. Estimated time to fan out to 1M followers: ~10 minutes (background job).' },
+  { title: 'TAO Graph', detail: 'TAO stores: Objects (User, Post, Comment, Group) and Associations (FOLLOWS, LIKES, POSTED, MEMBER_OF). Write: <code>assoc_add(user_id, POSTED, post_id, time=now)</code>. Backed by MySQL per shard, with a Memcached read-through cache. ~100ms TAO write propagates to all datacenter replicas via async replication. Read: <code>assoc_get(user_id, FOLLOWS)</code> → list of friends, sorted by association time.' },
+  { title: 'Cache Update', detail: 'Memcached cluster stores serialized feed objects. Fan-out service calls <code>set feed:{user_id} [post_id_list]</code> or invalidates stale cache (cache-aside pattern). Mcrouter handles routing to correct Memcached shard, handles failover. Cache TTL: 24 hours. Cold-start problem: if user hasn\'t logged in for weeks, first feed load hits Cassandra directly.' },
+  { title: 'Feed Ranker', detail: 'At feed-open time: fetch 500 candidate post IDs (from Redis feed list + TAO celebrity pull). Hydrate each post from Memcached (or MySQL on miss). Run deep neural net ranker: input features include (recency, affinity_score, likes_in_first_hour, media_type, comment_count). Output: relevance score. Sort → top 50. Re-rank for diversity (penalize same-author runs). Total: ~100ms.' },
+  { title: 'WebSocket Delivery', detail: 'Client maintains persistent WebSocket connection to a Gateway server. Gateway registered in Redis: <code>SET ws:{user_id} {server_id}</code>. When a follower\'s post gets liked: notification service looks up user\'s gateway server, sends internal message → gateway pushes to client WebSocket. If user is offline: FCM/APNs push notification. Real-time updates ("3 people liked your post") batch-coalesced every 3 seconds.' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

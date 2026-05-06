@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% block title %}Search & AI Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #4285f4; }
+.hero-grad { background: linear-gradient(135deg, rgba(66,133,244,.12), rgba(168,85,247,.08), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:96px; text-align:center; cursor:pointer; padding:.5rem .25rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(66,133,244,.1); }
+.pipe-node.active { background:rgba(66,133,244,.18); }
+.pipe-node .p-icon { font-size:1.6rem; }
+.pipe-node .p-label { font-size:.6rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:20px; height:2px; background:rgba(66,133,244,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}
+.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#000; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.tech-badge { display:inline-block; padding:.2rem .6rem; border-radius:12px; font-size:.7rem; font-weight:600; background:rgba(66,133,244,.15); color:var(--a); border:1px solid rgba(66,133,244,.3); }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#a8d8ff; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Search &amp; AI Workflow</li>
+    </ol>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(66,133,244,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">🔍</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">Search &amp; AI Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">Sub-millisecond retrieval + massive-scale parallel GPU inference. The architecture behind Google, ChatGPT, and Claude.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🔵 Google Search</span>
+      <span class="company-badge">🟢 Anthropic / Claude</span>
+      <span class="company-badge">🟣 OpenAI / ChatGPT</span>
+      <span class="company-badge">🔷 Microsoft Bing</span>
+      <span class="company-badge">⚡ Perplexity AI</span>
+      <span class="company-badge">🔴 Cohere</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">Data Flow Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node to see technical detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">👤</div><div class="p-label">User<br>Query</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">🌐</div><div class="p-label">API<br>Gateway</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">🛡️</div><div class="p-label">Safety<br>Check</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">✂️</div><div class="p-label">Tokenizer<br>&amp; Cache</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">🧮</div><div class="p-label">Embedding<br>Model</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">🗄️</div><div class="p-label">Vector<br>Search</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">🤖</div><div class="p-label">LLM<br>Inference</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(7)"><div class="p-icon">📡</div><div class="p-label">SSE<br>Stream</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de;transition:all .2s"></div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage &amp; Data Layer</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Redis</dt>
+          <dd style="color:#8892a4">Prompt caching + conversation session state. TTL-keyed by session ID. Sub-millisecond GET/SET. Saves GPU cost by avoiding redundant inference on identical prompts.</dd>
+          <dt style="color:#cdd3de">Google Bigtable / Apache HBase</dt>
+          <dd style="color:#8892a4">Stores raw web crawl data (billions of URLs). Column-family structure — each row is a URL, columns are crawl timestamps + content hashes. Scales to petabytes.</dd>
+          <dt style="color:#cdd3de">Google Spanner</dt>
+          <dd style="color:#8892a4">Globally distributed relational DB for user accounts, billing, rate limits. True external consistency via TrueTime API (atomic clock + GPS). 99.999% SLA.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Pinecone / Milvus / FAISS</dt>
+          <dd class="mb-0" style="color:#8892a4">Vector databases — store high-dimensional embeddings (1536-dim for text-embedding-3-large). ANN (Approximate Nearest Neighbor) search with HNSW or IVF index for RAG retrieval in &lt;50ms.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Processing</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Ray (Anyscale)</dt>
+          <dd style="color:#8892a4">Distributed Python framework for both training and serving. <code>ray.serve</code> handles model deployment with autoscaling. Used by OpenAI for large-scale inference orchestration.</dd>
+          <dt style="color:#cdd3de">NVIDIA A100/H100 GPU Clusters</dt>
+          <dd style="color:#8892a4">Tensor-parallel inference splits model weights across 8–16 GPUs. FP8/FP16 mixed precision. NVLink interconnect at 600 GB/s. PagedAttention (vLLM) for KV cache management.</dd>
+          <dt style="color:#cdd3de">Google TPU v4/v5</dt>
+          <dd style="color:#8892a4">Google's custom ASIC — 275 TFLOPS of bfloat16 compute. 4096-chip "pods" for training trillion-parameter models. Used for Gemini training.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Apache Kafka / Google Pub/Sub</dt>
+          <dd class="mb-0" style="color:#8892a4">Event bus for query telemetry, safety signal propagation, and RLHF feedback pipeline. Topics partitioned by user_id for ordered processing.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 Infrastructure &amp; Protocols</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Kubernetes (GKE / EKS)</dt>
+          <dd style="color:#8892a4">Thousands of GPU pods managed by K8s. Custom schedulers pack GPU jobs onto nodes. HPA (Horizontal Pod Autoscaler) scales inference replicas on queue depth.</dd>
+          <dt style="color:#cdd3de">Server-Sent Events (SSE)</dt>
+          <dd style="color:#8892a4">HTTP/1.1 streaming — server pushes token-by-token response. <code>text/event-stream</code> content type. Simpler than WebSocket for unidirectional streaming; works through CDN proxies.</dd>
+          <dt style="color:#cdd3de">Content-Based Routing</dt>
+          <dd style="color:#8892a4">Envoy proxy routes requests based on model ID, user tier, and geographic region. Canary deployments route 1% of traffic to new model versions before full rollout.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Safety Infrastructure</dt>
+          <dd class="mb-0" style="color:#8892a4">Constitutional AI classifiers run in parallel to the main model. Llama Guard / OpenAI Moderation API filter harmful content. Latency budget: &lt;10ms for safety check.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Steps -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Workflow Deep Dive</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3">
+          <div class="step-num">1</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Ingestion: API Gateway + Rate Limiting</div>
+            <div style="font-size:.8rem;color:#8892a4">Request hits Cloudflare or AWS API Gateway. JWT auth validated. Rate limits checked against Redis counter key <code>rate:{user_id}:{minute}</code>. Idempotency key stored to deduplicate retried requests. P99 latency here must be &lt;5ms.</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">2</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Safety Pre-processing &amp; Tokenization</div>
+            <div style="font-size:.8rem;color:#8892a4">Input passed through a lightweight classifier (DistilBERT fine-tuned on CSAM/hate/violence). Prompt hashed with SHA-256 → check Redis prompt cache. If cache hit, skip inference entirely. Tokenizer (BPE or SentencePiece) converts text to integer token IDs.</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">3</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">RAG: Embedding → Vector Search</div>
+            <div style="font-size:.8rem;color:#8892a4">Query is encoded by an embedding model (e.g., <code>text-embedding-3-large</code>, 1536 dims) → nearest-neighbor search in Pinecone/Milvus using HNSW index. Returns top-K document chunks by cosine similarity. These become the "context" injected into the LLM prompt. Retrieval latency: ~20–50ms.</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">4</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">LLM Inference: Tensor Parallelism + KV Cache</div>
+            <div style="font-size:.8rem;color:#8892a4">Prompt (system + context + user query) dispatched to GPU cluster. Tensor parallelism splits attention heads across GPUs via NVLink. vLLM's PagedAttention manages KV cache in non-contiguous memory blocks — avoids fragmentation, enables 2–4× higher throughput. Each forward pass generates one token. A 100-token response = 100 forward passes (autoregressive decoding).</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">5</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Streaming Delivery via SSE</div>
+            <div style="font-size:.8rem;color:#8892a4">Each generated token is immediately flushed to the HTTP response stream as <code>data: {"token": "Hello"}\n\n</code>. Client-side JS appends tokens to the DOM. Final token sends <code>data: [DONE]</code>. Response also cached in Redis for 24h (SHA-256 key) to serve identical queries without re-inference.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Concepts -->
+  <div class="row g-3 mb-2">
+    <div class="col-md-3">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(66,133,244,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">⚡ Why Not RDBMS for Vectors?</div>
+        <div style="font-size:.78rem;color:#8892a4">SQL B-tree indexes are optimized for exact lookups. ANN search over 100M 1536-dim vectors requires HNSW or IVF graph structures — impossible to replicate in PostgreSQL without pgvector extension (and even then it's slower than dedicated vector DBs).</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(66,133,244,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🧠 RAG vs Fine-Tuning</div>
+        <div style="font-size:.78rem;color:#8892a4">RAG injects fresh context at inference time — no retraining needed. Fine-tuning bakes knowledge into weights but goes stale. Production systems use both: fine-tuned models for style/behavior, RAG for up-to-date factual retrieval.</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(66,133,244,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">💸 Token Economy</div>
+        <div style="font-size:.78rem;color:#8892a4">A single A100 can process ~20 tokens/second for a 70B model. At 100 requests/second, you need 5 A100s just for inference. Prompt caching (saving KV cache across sessions) cuts GPU cost by ~70% for repeated contexts. This is why Claude's pricing separates "cache write" vs "cache read" tokens.</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(66,133,244,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🔒 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">AP system</strong> — prefers availability over strict consistency. A slightly stale vector index is acceptable. Redis prompt cache can miss (stale=serve, no cache). The only CP component is Spanner (billing/auth) where consistency is non-negotiable.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'User Query', detail: 'HTTP/2 POST to <code>/v1/chat/completions</code>. Body contains <code>model</code>, <code>messages[]</code>, <code>stream: true</code>, and optionally an <code>idempotency-key</code> header. Request size limited (e.g., 200K tokens context window for Claude 3). TLS 1.3 encryption in transit.' },
+  { title: 'API Gateway', detail: 'Cloudflare or AWS API Gateway validates JWT bearer token, checks rate limit counter in Redis (<code>INCR rate:{user_id}:{unix_minute}</code>), enforces tier quotas (RPM, TPM). P99 &lt;5ms. Routes to regional inference cluster based on model ID and user region.' },
+  { title: 'Safety Check', detail: 'Lightweight DistilBERT classifier (12 layers, 66M params) scores input for policy violations. Runs in &lt;10ms on CPU. If violation score &gt; threshold → 400 response. Separate classifiers for different harm categories (CSAM, violence, PII extraction, prompt injection).' },
+  { title: 'Tokenizer &amp; Cache', detail: 'BPE tokenizer (same vocabulary as training) converts text to integer token IDs. SHA-256 hash of normalized prompt checked against Redis. Cache hit → return stored response immediately, skip GPU. Cache miss → continue. Prompt cache saves ~70% GPU cost at ChatGPT scale.' },
+  { title: 'Embedding Model', detail: 'Lighter model (e.g., text-embedding-3-large: 256M params) converts query to a 1536-dimensional float32 vector. This vector captures semantic meaning — "car" and "automobile" are close in vector space. Takes ~5ms on GPU.' },
+  { title: 'Vector Search', detail: 'ANN search over index of pre-computed document embeddings. HNSW (Hierarchical Navigable Small World) graph traversal finds top-K nearest neighbors by cosine similarity in O(log N) time. Returns relevant chunks injected into the LLM prompt as context. This is Retrieval-Augmented Generation (RAG).' },
+  { title: 'LLM Inference', detail: 'Full prompt (system prompt + retrieved context + user query) dispatched to GPU cluster. Tensor parallelism: attention heads split across 8 GPUs via NVLink. Each autoregressive step generates 1 token. vLLM PagedAttention manages KV cache. 70B model: ~20 tok/s/GPU. 100-token reply takes ~5 seconds.' },
+  { title: 'SSE Stream', detail: 'Each token streamed immediately as <code>data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n</code>. Client JS appends token to DOM on each <code>message</code> event. Final token: <code>data: [DONE]</code>. Full response also persisted to Redis (24h TTL) so identical future queries are served without re-inference.' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

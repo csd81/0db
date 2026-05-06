@@ -307,6 +307,471 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Field vs Record-Oriented Modeling + PIVOT/UNPIVOT
+     Source: Adatbázis-kezelő rendszerek II., Vassányi István 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Concept banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Field-Oriented Model</strong><br>
+    Each attribute → one column. The classical relational approach. Easy to program; all GUI / ORM tools bind columns to widgets automatically. Downside: adding a new attribute requires an <code>ALTER TABLE</code> and updates to every layer of logic built on top.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Record-Oriented Model (EAV)</strong><br>
+    Attributes stored as rows: <code>(emp_id, attrib_id, attrib_value)</code>. Adding a new attribute = INSERT one row into the attribute registry — no schema change. Cost: reconstructing a single entity requires pivoting many rows, needs an adapter layer.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">PIVOT</strong><br>
+    Rotates row values into columns. Syntax: <code>PIVOT (AGG(val) FOR dim IN ([v1],[v2]…))</code>. Even when no aggregation is needed the grammar requires an aggregate function (use <code>SUM</code> or <code>MAX</code> on a single-row group — it's a no-op). Column list must be hard-coded; use dynamic SQL (<code>EXECUTE</code>) when unknown.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">UNPIVOT</strong><br>
+    Reverses a PIVOT: turns column values back into rows. Syntax: <code>UNPIVOT (val FOR dim IN (col1, col2…))</code>. Requires matching data types across all source columns. Aggregation information lost during PIVOT cannot be recovered — UNPIVOT is lossless only when no grouping happened.
+  </div>
+</div>
+
+<!-- Two-column cards -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: Comparison table -->
+  <div class="col-5">
+    <div class="ba-card h-100">
+      <div class="ba-hdr" style="color:#e9c46a">
+        <i class="bi bi-table"></i> Field-Oriented vs Record-Oriented
+      </div>
+      <div class="ba-body">
+        <table class="table table-dark table-sm q-tbl mb-2">
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th style="color:#e9c46a">Field-oriented</th>
+              <th style="color:#06d6a0">Record-oriented</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Flexibility</td>
+              <td style="color:#e63946">Rigid — ALTER TABLE required for new attribute</td>
+              <td style="color:#06d6a0">Flexible — INSERT one row in attribute registry</td>
+            </tr>
+            <tr>
+              <td>Programmability</td>
+              <td style="color:#06d6a0">Easy — ORM / GUI bind columns automatically</td>
+              <td style="color:#e63946">Hard — pivot adapter required per query</td>
+            </tr>
+            <tr>
+              <td>Efficiency</td>
+              <td style="color:#e9c46a">NULL cells waste storage</td>
+              <td style="color:#06d6a0">Sparse — unknown values simply not stored</td>
+            </tr>
+            <tr>
+              <td>Typical use</td>
+              <td>Stable schemas (Orders, Products)</td>
+              <td>Variable attributes (product specs, survey answers)</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:.67rem;color:#5a6070">
+          Northwind example: <code>Employees(LastName, Title, City)</code> as three columns
+          <em>vs</em> <code>employee_record(emp_id, attrib_id, attrib_value)</code> with an
+          <code>attributes</code> registry table — adding a new field (e.g. <em>Phone</em>)
+          only requires inserting <code>(4, 'Phone', 'text')</code> into the registry.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: PIVOT/UNPIVOT walkthrough -->
+  <div class="col-7">
+    <div class="ba-card h-100">
+      <div class="ba-hdr" style="color:#8338ec">
+        <i class="bi bi-arrows-angle-expand"></i> PIVOT / UNPIVOT — Cross-Tabular Queries
+      </div>
+      <div class="ba-body">
+        <div style="font-size:.67rem;color:#5a6070;margin-bottom:.4rem">
+          Fruit-picking example: teams <em>Szorgos</em> / <em>Lusta</em>, fruits <em>alma / szilva</em>, 3 days.
+          Start with a record-oriented <code>eredm</code> fact table; pivot the fruit dimension into columns.
+        </div>
+
+        <!-- Data flow diagram -->
+        <div style="display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.55rem">
+          <!-- Record-oriented side -->
+          <div style="flex:1;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .5rem;font-size:.64rem;font-family:monospace;color:#cdd3de">
+            <div style="color:#5a6070;font-size:.58rem;margin-bottom:.2rem">RECORD-ORIENTED (fact table)</div>
+            <div style="color:#8892a4">csapat_nev │ nap_nev │ gyumolcs_nev │ lada</div>
+            <div>Szorgos   │ hétfő   │ alma         │ 50</div>
+            <div>Szorgos   │ hétfő   │ szilva       │ 100</div>
+            <div>Lusta     │ hétfő   │ alma         │ 5</div>
+            <div>Lusta     │ hétfő   │ szilva       │ 10</div>
+            <div style="color:#5a6070">… (12 rows total)</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;padding-top:.8rem">
+            <span style="color:#8338ec;font-size:.7rem">PIVOT →</span>
+            <span style="color:#8338ec;font-size:.7rem">← UNPIVOT</span>
+          </div>
+          <!-- Pivoted side -->
+          <div style="flex:1;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .5rem;font-size:.64rem;font-family:monospace;color:#cdd3de">
+            <div style="color:#5a6070;font-size:.58rem;margin-bottom:.2rem">PIVOTED (field-oriented view)</div>
+            <div style="color:#8892a4">csapat_nev │ nap_nev │ alma │ szilva</div>
+            <div>Lusta     │ hétfő   │  5   │ 10</div>
+            <div>Lusta     │ kedd    │  6   │ 12</div>
+            <div>Szorgos   │ hétfő   │ 50   │ 100</div>
+            <div>Szorgos   │ kedd    │ 60   │ 120</div>
+            <div style="color:#5a6070">… (6 rows)</div>
+          </div>
+        </div>
+
+        <!-- PIVOT SQL -->
+        <pre style="font-size:.63rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;margin-bottom:.35rem;color:#cdd3de;overflow-x:auto"><span style="color:#457b9d">SELECT</span> csapat_nev, nap_nev, pt.alma, pt.szilva
+<span style="color:#457b9d">FROM</span>   eredm_pivot
+<span style="color:#8338ec">PIVOT</span>  (<span style="color:#e9c46a">SUM</span>(leadott_lada) <span style="color:#457b9d">FOR</span> gyumolcs_nev <span style="color:#457b9d">IN</span> (<span style="color:#06d6a0">[alma]</span>, <span style="color:#06d6a0">[szilva]</span>)) <span style="color:#457b9d">AS</span> pt
+<span style="color:#457b9d">ORDER BY</span> csapat_nev, nap_nev</pre>
+
+        <!-- UNPIVOT SQL -->
+        <pre style="font-size:.63rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;margin-bottom:.35rem;color:#cdd3de;overflow-x:auto"><span style="color:#457b9d">SELECT</span> csapat_nev, gyumolcs_nev, leadott_lada
+<span style="color:#457b9d">FROM</span>   #temp
+<span style="color:#8338ec">UNPIVOT</span> (leadott_lada <span style="color:#457b9d">FOR</span> gyumolcs_nev <span style="color:#457b9d">IN</span> (<span style="color:#06d6a0">alma</span>, <span style="color:#06d6a0">szilva</span>)) <span style="color:#457b9d">AS</span> upt</pre>
+
+        <!-- EAV → Field via PIVOT -->
+        <div style="font-size:.67rem;color:#5a6070">
+          <strong style="color:#e9c46a">EAV → field-oriented via PIVOT:</strong>
+          <code style="color:#cdd3de">SELECT emp_id, pt.[City], pt.[Last name], pt.[Title]
+FROM (SELECT e.emp_id, a.attrib_name, e.attrib_value
+      FROM employee_record e JOIN attributes a ON e.attrib_id=a.attrib_id) AS src
+PIVOT (MAX(attrib_value) FOR attrib_name IN ([City],[Last name],[Title])) AS pt</code><br>
+          Dynamic PIVOT (unknown column set): build the <code>IN (…)</code> list from a subquery and run via <code>EXECUTE</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Analytic / Windowing Functions
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Concept banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">What are window functions?</strong><br>
+    Analytic / windowing functions compute a value for each row using a <em>window</em> of related rows —
+    without collapsing them via <code>GROUP BY</code>.
+    A single query can use several different windows simultaneously, one per column.
+    Syntax: <code>FUNC([arg]) OVER ([PARTITION BY …] [ORDER BY …] [ROWS …])</code>
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">PARTITION BY</strong><br>
+    Splits the result set into independent groups; the function resets for each group.
+    Omitting <code>PARTITION BY</code> treats the entire ordered result set as one window.
+    Example: <code>SUM(value) OVER (PARTITION BY YEAR(OrderDate) ORDER BY OrderDate ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)</code>
+    → cumulative revenue per year, resetting at each year boundary.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">ROWS frame specification</strong><br>
+    Narrows the window to a sliding sub-range of rows relative to the current row:<br>
+    <code>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code> — running total<br>
+    <code>ROWS BETWEEN 3 PRECEDING AND 3 FOLLOWING</code> — centred moving average<br>
+    <code>ROWS BETWEEN 1 PRECEDING AND CURRENT ROW</code> — compare this row with the previous one<br>
+    Keywords: <code>CURRENT ROW</code>, <code>n PRECEDING</code>, <code>n FOLLOWING</code>, <code>UNBOUNDED PRECEDING/FOLLOWING</code>
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Cursor vs window function</strong><br>
+    A cursor iterates row-by-row in procedural code.
+    Many problems that <em>seem</em> to require a cursor (running totals, detecting consecutive patterns,
+    rank within a group) can be solved with a single declarative window-function query.
+    Window functions are far faster on large result sets — the engine optimises the frame scan once,
+    rather than executing per-row procedural logic.
+  </div>
+</div>
+
+<!-- Key functions + example -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: function reference table -->
+  <div class="col-5">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e9c46a">
+        <i class="bi bi-layout-split me-1"></i> Key Window Functions
+      </div>
+      <div style="padding:.5rem .7rem">
+        <table class="table table-dark table-sm mb-2" style="font-size:.67rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Function</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">What it returns</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Typical use</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr>
+              <td><code>ROW_NUMBER()</code></td>
+              <td>Sequential integer within partition (no ties)</td>
+              <td>Page results; rank rows within group</td>
+            </tr>
+            <tr>
+              <td><code>RANK()</code> / <code>DENSE_RANK()</code></td>
+              <td>Rank with / without gaps on ties</td>
+              <td>Leaderboards, top-N per group</td>
+            </tr>
+            <tr>
+              <td><code>LAG(expr, n, default)</code></td>
+              <td>Value from <em>n</em> rows before current</td>
+              <td>Period-over-period delta, pattern detection</td>
+            </tr>
+            <tr>
+              <td><code>LEAD(expr, n, default)</code></td>
+              <td>Value from <em>n</em> rows after current</td>
+              <td>Look-ahead comparisons</td>
+            </tr>
+            <tr>
+              <td><code>FIRST_VALUE(expr)</code></td>
+              <td>Expr from the first row of the window</td>
+              <td>Min/max date per group without subquery</td>
+            </tr>
+            <tr>
+              <td><code>LAST_VALUE(expr)</code></td>
+              <td>Expr from the last row of the window</td>
+              <td>Most recent value per partition</td>
+            </tr>
+            <tr>
+              <td><code>PERCENT_RANK()</code></td>
+              <td>Relative rank 0–1</td>
+              <td>Percentile position</td>
+            </tr>
+            <tr>
+              <td><code>SUM / AVG / MIN / MAX</code></td>
+              <td>Aggregate over the ROWS frame</td>
+              <td>Running total, moving average, YTD</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:.64rem;color:#5a6070">
+          All standard aggregates accept <code>OVER(…)</code> since SQL Server 2012.
+          <code>PERCENT_RANK</code> = (rank − 1) / (rows − 1) in the partition, always 0 for the first row.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: annotated examples -->
+  <div class="col-7">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8338ec">
+        <i class="bi bi-bar-chart-steps me-1"></i> Window Function Examples (Northwind Orders)
+      </div>
+      <div style="padding:.5rem .7rem">
+
+        <!-- Running totals + moving average -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.25rem">Annual cumulative revenue + 7-order centred moving average</div>
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#457b9d">SELECT</span>
+    <span style="color:#e9c46a">YEAR</span>(OrderDate)                                              ev,
+    <span style="color:#e9c46a">ROW_NUMBER</span>() <span style="color:#8338ec">OVER</span> (
+        <span style="color:#457b9d">PARTITION BY</span> <span style="color:#e9c46a">YEAR</span>(OrderDate)
+        <span style="color:#457b9d">ORDER BY</span> OrderDate)                                   sorszam,
+    <span style="color:#e9c46a">CAST</span>(OrderDate <span style="color:#457b9d">AS</span> <span style="color:#e9c46a">date</span>)                                      datum,
+    value                                                        osszeg,
+    <span style="color:#e9c46a">SUM</span>(value) <span style="color:#8338ec">OVER</span> (                                        <span style="color:#5a6070">-- running total</span>
+        <span style="color:#457b9d">PARTITION BY</span> <span style="color:#e9c46a">YEAR</span>(OrderDate)
+        <span style="color:#457b9d">ORDER BY</span> OrderDate
+        <span style="color:#457b9d">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>) eves_kumulalt,
+    <span style="color:#e9c46a">AVG</span>(value) <span style="color:#8338ec">OVER</span> (                                        <span style="color:#5a6070">-- moving avg ±3</span>
+        <span style="color:#457b9d">ORDER BY</span> OrderDate
+        <span style="color:#457b9d">ROWS BETWEEN</span> 3 <span style="color:#457b9d">PRECEDING AND</span> 3 <span style="color:#457b9d">FOLLOWING</span>)      mozgo_atlag,
+    <span style="color:#e9c46a">SUM</span>(value) <span style="color:#8338ec">OVER</span> (<span style="color:#457b9d">PARTITION BY</span> <span style="color:#e9c46a">YEAR</span>(OrderDate))         eves_total
+<span style="color:#457b9d">FROM</span> #tmp</pre>
+
+        <!-- Consecutive small orders detection -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.25rem">Detect two consecutive small orders (value &lt; 200) — replaces a cursor</div>
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#457b9d">SELECT</span> a.OrderDate, a.maxi
+<span style="color:#457b9d">FROM</span> (
+    <span style="color:#457b9d">SELECT</span> OrderDate,
+        <span style="color:#e9c46a">MAX</span>(value) <span style="color:#8338ec">OVER</span> (
+            <span style="color:#457b9d">ORDER BY</span> OrderDate
+            <span style="color:#457b9d">ROWS BETWEEN</span> 1 <span style="color:#457b9d">PRECEDING AND CURRENT ROW</span>) maxi,
+        <span style="color:#e9c46a">ROW_NUMBER</span>() <span style="color:#8338ec">OVER</span> (<span style="color:#457b9d">ORDER BY</span> OrderDate)          sorsz
+    <span style="color:#457b9d">FROM</span> #tmp
+) a
+<span style="color:#457b9d">WHERE</span> a.maxi &lt; 200 <span style="color:#457b9d">AND</span> sorsz &gt; 1  <span style="color:#5a6070">-- exclude first row (no predecessor)</span></pre>
+
+        <!-- FIRST_VALUE for min/max per year -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.25rem">Min/max order per year with date — no correlated subquery needed</div>
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto;margin-bottom:.2rem"><span style="color:#457b9d">SELECT DISTINCT</span> <span style="color:#e9c46a">YEAR</span>(OrderDate),
+    <span style="color:#e9c46a">FIRST_VALUE</span>(OrderDate) <span style="color:#8338ec">OVER</span> (
+        <span style="color:#457b9d">PARTITION BY</span> <span style="color:#e9c46a">YEAR</span>(OrderDate) <span style="color:#457b9d">ORDER BY</span> value <span style="color:#457b9d">ASC</span>)  min_datum,
+    <span style="color:#e9c46a">FIRST_VALUE</span>(value)     <span style="color:#8338ec">OVER</span> (
+        <span style="color:#457b9d">PARTITION BY</span> <span style="color:#e9c46a">YEAR</span>(OrderDate) <span style="color:#457b9d">ORDER BY</span> value <span style="color:#457b9d">ASC</span>)  min_ertek,
+    <span style="color:#e9c46a">FIRST_VALUE</span>(OrderDate) <span style="color:#8338ec">OVER</span> (
+        <span style="color:#457b9d">PARTITION BY</span> <span style="color:#e9c46a">YEAR</span>(OrderDate) <span style="color:#457b9d">ORDER BY</span> value <span style="color:#457b9d">DESC</span>) max_datum,
+    <span style="color:#e9c46a">FIRST_VALUE</span>(value)     <span style="color:#8338ec">OVER</span> (
+        <span style="color:#457b9d">PARTITION BY</span> <span style="color:#e9c46a">YEAR</span>(OrderDate) <span style="color:#457b9d">ORDER BY</span> value <span style="color:#457b9d">DESC</span>) max_ertek
+<span style="color:#457b9d">FROM</span> #tmp2
+<span style="color:#5a6070">-- DISTINCT collapses multiple rows per year down to one after window functions evaluate</span></pre>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Columnstore Indexes
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-4">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Row store vs Column store</strong><br>
+    Traditional rowstore: each page holds all columns of consecutive rows — good for OLTP
+    (single-row lookups, DML). Columnstore: each page holds <em>one column</em> across many rows —
+    analytical queries that touch 2–5 of 100 columns read 95–98% less data.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Compression</strong><br>
+    Columns have low cardinality (e.g. Gender: only 2 distinct values). Run-length encoding compresses
+    sequences of identical values extremely well. Typical columnstore compression: <strong>5–10×</strong>.
+    Less I/O → more rows fit in buffer pool → analytical queries run mostly on cached data.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Batch mode execution</strong><br>
+    SQL Server processes columnstore data in <em>batches</em> of ~900 rows using SIMD CPU instructions,
+    not row-by-row. Batch mode reduces per-row overhead dramatically.
+    Aggregate queries (SUM/COUNT over millions of rows) are typically <strong>10–100× faster</strong>
+    than equivalent rowstore execution.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">When to use</strong><br>
+    • Data warehouse / OLAP fact tables (large, mostly-read)<br>
+    • Reporting tables with heavy aggregation<br>
+    • Historical data that rarely changes<br>
+    ⚠ Not suitable for OLTP point lookups or high-frequency single-row updates
+  </div>
+</div>
+
+<div class="card mb-3" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#06d6a0;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-columns-gap me-1"></i>Columnstore Index — Syntax &amp; Internals
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- Non-clustered: keeps rowstore + adds columnar copy</span>
+<span style="color:#457b9d">CREATE NONCLUSTERED COLUMNSTORE INDEX</span>
+    ncci_OrderDetails
+    <span style="color:#457b9d">ON</span> [Order Details] (OrderID, ProductID, UnitPrice, Quantity, Discount);
+
+<span style="color:#5a6070">-- Clustered: replaces rowstore entirely (best compression)</span>
+<span style="color:#457b9d">CREATE CLUSTERED COLUMNSTORE INDEX</span> cci_SalesFact
+    <span style="color:#457b9d">ON</span> SalesFact;   <span style="color:#5a6070">-- no column list — stores ALL columns</span>
+
+<span style="color:#5a6070">-- Query that benefits from columnstore batch mode:</span>
+<span style="color:#457b9d">SELECT</span> <span style="color:#e9c46a">YEAR</span>(OrderDate), <span style="color:#e9c46a">SUM</span>(Quantity * UnitPrice)
+<span style="color:#457b9d">FROM</span>   [Order Details] od
+<span style="color:#457b9d">JOIN</span>   Orders o <span style="color:#457b9d">ON</span> od.OrderID = o.OrderID
+<span style="color:#457b9d">GROUP BY</span> <span style="color:#e9c46a">YEAR</span>(OrderDate);
+<span style="color:#5a6070">-- SQL Server switches to batch mode automatically</span></pre>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.35rem">Rowstore vs Columnstore — analytical query profile:</div>
+      <table class="table table-sm mb-2" style="font-size:.66rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Metric</th><th>Rowstore</th><th>Columnstore</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td>Pages read (5-col scan)</td><td style="color:#ef476f">All columns</td><td style="color:#06d6a0">5 columns only</td></tr>
+          <tr><td>Compression ratio</td><td>1–3×</td><td style="color:#06d6a0">5–10×</td></tr>
+          <tr><td>Execution mode</td><td>Row mode</td><td style="color:#06d6a0">Batch (SIMD)</td></tr>
+          <tr><td>OLTP DML throughput</td><td style="color:#06d6a0">Excellent</td><td style="color:#e9c46a">Degraded (delta store)</td></tr>
+          <tr><td>Best for</td><td>Point lookups</td><td style="color:#06d6a0">Aggregations</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.64rem;color:#5a6070">
+        <strong style="color:#cdd3de">Delta store</strong>: new inserts go to a small rowstore "delta segment" until ~1M rows fill it,
+        then the Tuple Mover background process compresses it into a columnstore segment.
+        Avoids write amplification on active tables.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Table Partitioning
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-4">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">What is Table Partitioning?</strong><br>
+    Divides a large table into smaller, independently managed chunks called <em>partitions</em>.
+    Each partition is stored in its own filegroup. From the application's perspective it is one table —
+    partitioning is transparent to queries and DML.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Partition Elimination</strong><br>
+    The query optimizer inspects the WHERE clause. If the filter matches the partition key
+    (e.g. <code>WHERE OrderYear = 2024</code>), only the relevant partition(s) are scanned.
+    A query on 1 of 12 monthly partitions reads ~1/12 the data → proportional speed-up.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Partition Switching</strong><br>
+    Bulk data moves between a staging table and a partition are an <em>instantaneous metadata operation</em>
+    — no data copy. Pattern: load new month into staging →
+    <code>ALTER TABLE … SWITCH PARTITION n TO staging</code> → archive → switch new data in.
+    Minimal locking, near-zero logging.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Parallel aggregation</strong><br>
+    With multiple partitions on separate filegroups, SQL Server can scan partitions in parallel
+    using multiple threads. Combined with a columnstore index, large aggregations
+    (SUM over 1 B rows) decompose: sum each partition independently, then combine results.
+  </div>
+</div>
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#e9c46a;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-layout-split me-1"></i>Table Partitioning — Setup &amp; Pattern
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-7">
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- Step 1: Partition Function — defines boundary points</span>
+<span style="color:#457b9d">CREATE PARTITION FUNCTION</span> pf_OrderYear (<span style="color:#457b9d">int</span>)
+    <span style="color:#457b9d">AS RANGE RIGHT FOR VALUES</span> (<span style="color:#e9c46a">2022</span>, <span style="color:#e9c46a">2023</span>, <span style="color:#e9c46a">2024</span>);
+<span style="color:#5a6070">-- Partitions: [<2022] | [2022] | [2023] | [2024] | [≥2025]</span>
+
+<span style="color:#5a6070">-- Step 2: Partition Scheme — maps partitions to filegroups</span>
+<span style="color:#457b9d">CREATE PARTITION SCHEME</span> ps_OrderYear
+    <span style="color:#457b9d">AS PARTITION</span> pf_OrderYear
+    <span style="color:#457b9d">ALL TO</span> ([PRIMARY]);
+
+<span style="color:#5a6070">-- Step 3: Create partitioned table</span>
+<span style="color:#457b9d">CREATE TABLE</span> OrdersFact (
+    OrderID   <span style="color:#457b9d">int</span>,  OrderYear <span style="color:#457b9d">int</span>,
+    Revenue   <span style="color:#457b9d">decimal</span>(<span style="color:#e9c46a">12</span>,<span style="color:#e9c46a">2</span>)
+) <span style="color:#457b9d">ON</span> ps_OrderYear(OrderYear);  <span style="color:#5a6070">-- partition key column</span>
+
+<span style="color:#5a6070">-- Optimizer auto-eliminates partitions:</span>
+<span style="color:#457b9d">SELECT</span> <span style="color:#e9c46a">SUM</span>(Revenue) <span style="color:#457b9d">FROM</span> OrdersFact
+<span style="color:#457b9d">WHERE</span>  OrderYear = <span style="color:#e9c46a">2024</span>;  <span style="color:#5a6070">-- reads only 2024 partition</span></pre>
+    </div>
+    <div class="col-md-5">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.35rem">Partitioning benefits:</div>
+      <table class="table table-sm mb-2" style="font-size:.66rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Benefit</th><th>Mechanism</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td><span style="color:#06d6a0">Faster queries</span></td><td>Partition elimination</td></tr>
+          <tr><td><span style="color:#06d6a0">Fast data loading</span></td><td>Partition switching</td></tr>
+          <tr><td><span style="color:#06d6a0">Parallel scans</span></td><td>Multi-thread per partition</td></tr>
+          <tr><td><span style="color:#e9c46a">Easy archiving</span></td><td>Switch old partition out</td></tr>
+          <tr><td><span style="color:#e9c46a">Index maintenance</span></td><td>Rebuild one partition at a time</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.64rem;color:#5a6070">
+        <strong style="color:#cdd3de">Composite strategy</strong>: partition by year + clustered columnstore index on the fact table.
+        Partition elimination reduces scanned segments; batch mode compresses and processes each segment efficiently.
+        Best combination for large-scale OLAP workloads.
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

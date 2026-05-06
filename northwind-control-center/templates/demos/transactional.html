@@ -205,6 +205,83 @@
         <span class="badge bg-danger">table-danger</span> failed/rolled back</span>
   <span><span class="badge bg-warning text-dark">[TRIGGER]</span> AFTER UPDATE trigger auto-restocks on stock-out rollback</span>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Transactional Replication
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-4">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">What is Transactional Replication?</strong><br>
+    Changes (INSERT/UPDATE/DELETE) are captured from the Publisher's transaction log and streamed
+    to one or more Subscribers in near-real-time. Each committed transaction is replayed at the Subscriber
+    in the same order, preserving transactional consistency.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Log Reader Agent</strong><br>
+    Runs continuously on the Distributor. Reads the Publisher's transaction log,
+    extracts committed DML for replicated articles, and writes them as commands to the
+    <em>distribution database</em> (a persistent queue). Latency from Publisher commit to Distributor:
+    typically &lt;1 second on a healthy network.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Distribution Agent</strong><br>
+    Runs per Subscriber. Reads queued commands from the distribution database and applies them
+    at the Subscriber using stored procedure calls (<code>sp_MSins_*</code>, <code>sp_MSupd_*</code>, <code>sp_MSdel_*</code>).
+    Supports both <em>push</em> (runs at Distributor) and <em>pull</em> (runs at Subscriber) subscriptions.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Use cases</strong><br>
+    • High-availability read replicas (offload reporting queries)<br>
+    • Site autonomy — remote offices need a local copy<br>
+    • One-way sync OLTP → data warehouse staging<br>
+    • Near-real-time warm standby (before Always On was available)
+  </div>
+</div>
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#8338ec;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-lightning me-1"></i>Transactional Replication — Internals
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-5">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">Agent roles:</div>
+      <table class="table table-sm mb-2" style="font-size:.66rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Agent</th><th>Runs on</th><th>Reads from</th><th>Writes to</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td><span style="color:#06d6a0">Log Reader</span></td><td>Distributor</td><td>Publisher T-log</td><td>Distribution DB</td></tr>
+          <tr><td><span style="color:#8338ec">Distribution</span></td><td>Dist / Sub</td><td>Distribution DB</td><td>Subscriber</td></tr>
+          <tr><td><span style="color:#457b9d">Snapshot</span></td><td>Distributor</td><td>Publisher tables</td><td>BCP files (init)</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.64rem;color:#5a6070">
+        The Distributor's distribution database is a <strong style="color:#cdd3de">durable queue</strong>.
+        If a Subscriber goes offline, commands accumulate until it reconnects.
+        Queue retention is configurable (default 72 h).
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">Data flow timeline:</div>
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto">Publisher                  Distributor              Subscriber
+───────────────────────────────────────────────────────────────
+<span style="color:#457b9d">BEGIN TRAN</span>
+  <span style="color:#457b9d">UPDATE</span> Products         <span style="color:#5a6070">← Log Reader reads</span>
+  <span style="color:#457b9d">SET</span> UnitsInStock -= <span style="color:#e9c46a">5</span>     committed entries
+<span style="color:#457b9d">COMMIT</span>                    → queues sp_MSupd_Products(<span style="color:#e9c46a">5</span>,…)
+                           Distribution Agent polls queue
+                           → <span style="color:#457b9d">EXEC</span> sp_MSupd_Products(…) <span style="color:#06d6a0">✓ applied</span>
+                              at Subscriber in same order
+
+<span style="color:#5a6070">-- Check replication latency:</span>
+<span style="color:#457b9d">EXEC</span> sp_table_validation
+    @table              = <span style="color:#06d6a0">N'Products'</span>,
+    @expected_rowcount  = <span style="color:#e9c46a">77</span>,
+    @full_or_fast       = <span style="color:#e9c46a">1</span>;  <span style="color:#5a6070">-- 0 = full checksum</span></pre>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

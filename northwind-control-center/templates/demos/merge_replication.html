@@ -126,6 +126,83 @@
   <span><span class="badge bg-secondary">✔ Done</span> sync complete</span>
   <span>⚡ in row = dirty (pending sync)</span>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Merge Replication & Conflict Resolution
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-4">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">What is Merge Replication?</strong><br>
+    Bi-directional synchronisation: both the Publisher and each Subscriber can independently make changes
+    while disconnected. When they reconnect, the Merge Agent reconciles all changes.
+    A <em>rowguid</em> column tracks each row's identity across all participants.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Conflict Detection</strong><br>
+    A conflict occurs when the same row is modified on both sides between syncs.
+    SQL Server detects conflicts by comparing the <em>generation</em> counter and timestamps.
+    Conflicts are logged in the <code>MSmerge_conflicts_info</code> table for later inspection.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Conflict Resolution Strategies</strong><br>
+    Must be defined <em>before</em> deployment:<br>
+    • <strong>Publisher wins</strong> (default) — central authority<br>
+    • <strong>Subscriber wins</strong> — field override<br>
+    • <strong>Latest timestamp wins</strong> — requires accurate clocks (NTP)<br>
+    • <strong>Custom resolver</strong> — COM object or stored procedure
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Use cases</strong><br>
+    • Mobile users / field workers who go offline<br>
+    • Remote branch offices with unreliable WAN<br>
+    • Disconnected sites that need full local autonomy<br>
+    • Multi-master topologies (requires carefully designed conflict rules)
+  </div>
+</div>
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#457b9d;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-arrow-left-right me-1"></i>Merge Replication — Conflict Resolution Detail
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-5">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">Built-in resolver options:</div>
+      <table class="table table-sm mb-2" style="font-size:.66rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Resolver</th><th>Winner</th><th>Trade-off</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td><span style="color:#06d6a0">Publisher Wins</span></td><td>Publisher</td><td>Simple; single point of truth</td></tr>
+          <tr><td><span style="color:#8338ec">Subscriber Wins</span></td><td>Subscriber</td><td>Field override; Publisher may lose data</td></tr>
+          <tr><td><span style="color:#457b9d">Latest Date Wins</span></td><td>Latest timestamp</td><td>Requires synchronized clocks (NTP)</td></tr>
+          <tr><td><span style="color:#e9c46a">Max Value Wins</span></td><td>Higher numeric value</td><td>Useful for bidding / voting systems</td></tr>
+          <tr><td><span style="color:#06d6a0">Custom Resolver</span></td><td>Stored proc logic</td><td>Most flexible; highest complexity</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.64rem;color:#5a6070">
+        Clock drift breaks timestamp-based resolution — two nodes may disagree on which update was "later."
+        Always synchronize clocks with NTP before using date-based resolvers.
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.3rem">Merge Agent cycle — driver offline then back online:</div>
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto">Driver offline:  <span style="color:#457b9d">UPDATE</span> pkg <span style="color:#457b9d">SET</span> status=<span style="color:#06d6a0">'Delivered'</span> <span style="color:#457b9d">WHERE</span> id=<span style="color:#e9c46a">42</span>  <span style="color:#06d6a0">[local]</span>
+Central online:  <span style="color:#457b9d">UPDATE</span> pkg <span style="color:#457b9d">SET</span> status=<span style="color:#06d6a0">'Failed'</span>    <span style="color:#457b9d">WHERE</span> id=<span style="color:#e9c46a">42</span>  <span style="color:#8338ec">[central]</span>
+                   ↓ driver reconnects — Merge Agent runs
+Conflict detected: same rowguid, both sides changed
+Resolver = <span style="color:#e9c46a">Publisher Wins</span>
+  → Subscriber row overwritten: status = <span style="color:#8338ec">'Failed'</span>
+  → Conflict logged in MSmerge_conflicts_info
+
+<span style="color:#5a6070">-- Inspect conflicts after sync:</span>
+<span style="color:#457b9d">SELECT</span> origin_datasource, conflict_type,
+       reason_code, reason_text
+<span style="color:#457b9d">FROM</span>   MSmerge_conflicts_info
+<span style="color:#457b9d">ORDER BY</span> conflict_date <span style="color:#457b9d">DESC</span>;</pre>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

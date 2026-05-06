@@ -98,6 +98,715 @@
   </div>
 
 </div>
+
+<!-- ═══════════════════════════════════════════════════════
+     Educational: T-SQL Batches — Parse / Compile / Execute
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════ -->
+
+<!-- Concept banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Batch (köteg)</strong><br>
+    A T-SQL script is split into <em>batches</em> by <code>GO</code> on its own line.
+    <code>GO</code> is not an SQL keyword — only client tools (SSMS, sqlcmd) recognise it.
+    Variables declared inside a batch are scoped to that batch and invisible to others.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Parse → Compile → Execute</strong><br>
+    Each batch goes through three phases in order.
+    <em>Parse</em> checks syntax; <em>Compile</em> builds an execution plan;
+    <em>Execute</em> runs it. A syntax error aborts the entire batch — nothing executes.
+    A runtime error aborts only from that statement onward in the current batch;
+    the <strong>next batch</strong> continues normally.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e63946">Syntax error → whole batch skipped</strong><br>
+    <code>selec * from pelda</code> (typo) — parse fails before any statement in the
+    same batch runs. Even an <code>UPDATE</code> before the typo is not executed.
+    Split into separate batches to isolate the failure.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Special runtime errors — continue within batch</strong><br>
+    Division by zero (<code>1/0</code>) and constraint violations
+    (FK / CHECK) are <em>statement-level</em>: the failing statement is skipped,
+    but the <strong>next statement in the same batch</strong> still runs.
+    Most other runtime errors (invalid object name) abort the batch at that point.
+  </div>
+</div>
+
+<!-- Experiment table -->
+<div class="row g-2 mb-2">
+  <div class="col-12">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8338ec">
+        <i class="bi bi-terminal me-1"></i> Batch Error Behaviour — Four Experiments
+      </div>
+      <div style="padding:.5rem .7rem">
+        <table class="table table-dark table-sm mb-2" style="font-size:.7rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Experiment</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Setup</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Error type</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Result of final <code>SELECT</code></th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Why</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr>
+              <td><strong style="color:#e9c46a">1</strong> — separate batches</td>
+              <td><code>UPDATE szam=21</code> in batch 1; <code>selec *</code> typo in batch 2</td>
+              <td style="color:#e63946">Syntax (batch 2)</td>
+              <td style="color:#06d6a0">21</td>
+              <td>Batch 1 completed before the typo was ever parsed</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#e9c46a">2</strong> — same batch</td>
+              <td><code>UPDATE szam=22; selec *</code> typo; <code>UPDATE szam=23</code> — all one batch</td>
+              <td style="color:#e63946">Syntax (whole batch)</td>
+              <td style="color:#06d6a0">21 (unchanged)</td>
+              <td>Parse fails before execution starts — none of the three statements runs</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#e9c46a">3</strong> — invalid object</td>
+              <td><code>UPDATE szam=22; SELECT * FROM plda</code> (wrong name); <code>UPDATE szam=23</code></td>
+              <td style="color:#e9c46a">Runtime — invalid object name</td>
+              <td style="color:#06d6a0">22</td>
+              <td>UPDATE ran, bad SELECT aborted the batch, third statement skipped</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#e9c46a">4</strong> — special errors</td>
+              <td><code>UPDATE szam=23; SELECT 1/0; UPDATE szam=24</code></td>
+              <td style="color:#8338ec">Runtime — divide by zero (special)</td>
+              <td style="color:#06d6a0">24</td>
+              <td>Division by zero is statement-level only; the next UPDATE still executes</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#e9c46a">4b</strong> — FK violation</td>
+              <td><code>UPDATE szam=25; DELETE employees</code> (FK conflict); <code>UPDATE szam=26</code></td>
+              <td style="color:#8338ec">Runtime — REFERENCE constraint (special)</td>
+              <td style="color:#06d6a0">26</td>
+              <td>FK violation is also statement-level; execution resumes at the next statement</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:.64rem;color:#5a6070">
+          <strong style="color:#e9c46a">Dump vs Backup:</strong>
+          A <em>dump</em> is a text script (DDL + DML) that recreates the database — portable across versions but larger.
+          A <em>backup</em> is a binary snapshot — faster to restore but version-locked.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Server-Side Logic + T-SQL Variables + Error Handling
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Server-side logic pros/cons banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1.2;background:#080a10;border:1px solid #1a2a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Why server-side logic?</strong><br>
+    Stored procedures, functions, and triggers let the business logic live inside the database.
+    Benefits: <em>simplicity</em> (thin client connects directly, no extra tier);
+    <em>technology neutrality</em> (any language calls the same stored proc via RPC);
+    <em>security</em> (client needs only EXECUTE right, not read/write on every table);
+    <em>manageability</em> (deploy logic changes without touching clients);
+    <em>efficiency</em> (bulk data processed where it lives — less network traffic);
+    <em>readability</em> (SQL is a data language — complex joins are cleaner in T-SQL than in OOP code).
+  </div>
+  <div style="flex:.8;background:#080a10;border:1px solid #2a1a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e63946">Trade-offs</strong><br>
+    <em>Low-level:</em> general-purpose tasks (string processing, HTTP calls) are awkward in SQL.<br>
+    <em>Tooling:</em> debugging, version control, and team workflows are harder in DB-side code.<br>
+    <em>Scalability:</em> scaling the DB tier is far more expensive than adding app-server nodes.<br>
+    Vendor lock-in and specialised expertise are shared drawbacks of <em>both</em> approaches.<br>
+    Rule of thumb: data-intensive, well-structured operations → DB side; general logic → app server.
+  </div>
+</div>
+
+<!-- Variables + control flow + error handling -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: T-SQL keywords + variable gotchas -->
+  <div class="col-5">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e9c46a">
+        <i class="bi bi-braces me-1"></i> T-SQL Variables &amp; Control Flow
+      </div>
+      <div style="padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+        <table class="table table-dark table-sm mb-2" style="font-size:.68rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Keyword</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Purpose</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr><td><code>DECLARE @x int</code></td><td>Declare a variable (prefix <code>@</code>); scoped to the batch; initial value is NULL</td></tr>
+            <tr><td><code>SET @x = 5</code></td><td>Explicit assignment</td></tr>
+            <tr><td><code>SELECT @x = col FROM …</code></td><td>Assignment from query — last matching row wins; no error on multiple matches; NULL if no rows (except COUNT)</td></tr>
+            <tr><td><code>IF / ELSE</code></td><td>Conditional; use <code>BEGIN…END</code> for multi-statement blocks</td></tr>
+            <tr><td><code>WHILE / BREAK / CONTINUE</code></td><td>Only loop type — pre-test; no FOR or DO-WHILE</td></tr>
+            <tr><td><code>RETURN</code></td><td>Unconditional exit from batch / procedure</td></tr>
+            <tr><td><code>PRINT</code></td><td>Debug output to messages pane (not a result set)</td></tr>
+            <tr><td><code>WAITFOR DELAY / TIME</code></td><td>Sleep for a duration or until a clock time</td></tr>
+            <tr><td><code>GOTO &lt;label&gt;</code></td><td>Unconditional jump (avoid)</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size:.65rem;color:#5a6070;margin-bottom:.4rem">
+          <strong style="color:#e9c46a">SELECT @var = col FROM … gotchas:</strong><br>
+          • No rows → variable keeps its previous value (still NULL if never set). Exception: <code>COUNT(*)</code> always assigns 0.<br>
+          • Multiple rows → variable gets the <em>last</em> row's value; no error raised. Always filter by key or check <code>COUNT</code> first.<br>
+          • Cannot mix variable assignment with data-retrieval in the same SELECT.
+        </div>
+        <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- Aggregate-into-variable pattern (safe single-row extract):</span>
+<span style="color:#457b9d">SELECT</span> @cnt = <span style="color:#e9c46a">COUNT</span>(*),
+       @addr = <span style="color:#e9c46a">MAX</span>(Country+<span style="color:#06d6a0">','</span>+City)
+<span style="color:#457b9d">FROM</span> Employees <span style="color:#457b9d">WHERE</span> LastName <span style="color:#457b9d">LIKE</span> @name
+<span style="color:#457b9d">IF</span> @cnt = 0    <span style="color:#457b9d">PRINT</span> <span style="color:#06d6a0">'No match'</span>
+<span style="color:#457b9d">ELSE IF</span> @cnt &gt; 1 <span style="color:#457b9d">PRINT</span> <span style="color:#06d6a0">'Ambiguous'</span>
+<span style="color:#457b9d">ELSE</span>           <span style="color:#457b9d">PRINT</span> @addr</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: error severity + TRY/CATCH -->
+  <div class="col-7">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e63946">
+        <i class="bi bi-exclamation-triangle me-1"></i> T-SQL Error Handling
+      </div>
+      <div style="padding:.5rem .7rem;font-size:.7rem;color:#8892a4">
+
+        <!-- Severity table -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">Error severity levels (SQL Server)</div>
+        <table class="table table-dark table-sm mb-3" style="font-size:.67rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Severity</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Class</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Connection</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Example</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr><td><span style="color:#06d6a0">0 – 9</span></td><td>Warnings</td><td>Kept</td><td>NULL eliminated by aggregate (<code>SET ANSI_WARNINGS OFF</code> suppresses)</td></tr>
+            <tr><td><span style="color:#e9c46a">10 – 16</span></td><td>User-fixable</td><td>Kept</td><td>CHECK constraint, divide by zero, invalid object — most system msgs are level 16</td></tr>
+            <tr><td><span style="color:#e9c46a">17 – 19</span></td><td>Resource / config</td><td>Kept</td><td>Server parameter limits exceeded; user cannot fix</td></tr>
+            <tr><td><span style="color:#e63946">20 – 23</span></td><td>Critical</td><td>Dropped</td><td>May cause data loss</td></tr>
+            <tr><td><span style="color:#e63946">24</span></td><td>Hardware</td><td>Dropped</td><td>DB file lost</td></tr>
+          </tbody>
+        </table>
+
+        <!-- TRY/CATCH code -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">TRY/CATCH — traps all errors ≥ 11 that don't drop the connection</div>
+        <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#457b9d">BEGIN TRY</span>
+    <span style="color:#457b9d">UPDATE</span> Products <span style="color:#457b9d">SET</span> UnitsInStock = -1 <span style="color:#457b9d">WHERE</span> ProductID = 3
+    <span style="color:#457b9d">SELECT</span> 1/0
+<span style="color:#457b9d">END TRY</span>
+<span style="color:#457b9d">BEGIN CATCH</span>
+    <span style="color:#457b9d">SELECT</span>
+        <span style="color:#e9c46a">ERROR_NUMBER</span>()    <span style="color:#457b9d">AS</span> ErrNum,     <span style="color:#5a6070">-- e.g. 547 = CHECK violation</span>
+        <span style="color:#e9c46a">ERROR_SEVERITY</span>()  <span style="color:#457b9d">AS</span> Severity,
+        <span style="color:#e9c46a">ERROR_STATE</span>()     <span style="color:#457b9d">AS</span> State,
+        <span style="color:#e9c46a">ERROR_LINE</span>()      <span style="color:#457b9d">AS</span> Line,
+        <span style="color:#e9c46a">ERROR_MESSAGE</span>()   <span style="color:#457b9d">AS</span> Msg
+    <span style="color:#457b9d">INSERT</span> #log (time_stamp, err_num)
+        <span style="color:#457b9d">VALUES</span> (<span style="color:#e9c46a">GETDATE</span>(), <span style="color:#e9c46a">ERROR_NUMBER</span>())
+<span style="color:#457b9d">END CATCH</span></pre>
+
+        <!-- Lesson box -->
+        <div style="background:#080a10;border:1px solid #2a1a1a;border-radius:.3rem;padding:.35rem .55rem;font-size:.65rem;color:#8892a4">
+          <strong style="color:#e63946">Key lesson — partial execution without transactions:</strong>
+          Even a clean TRY/CATCH cannot undo work already committed before the error.
+          In the phone-order example the customer's <code>balance</code> is decremented
+          <em>before</em> the <code>INSERT [Order Details]</code> fails on a NOT NULL constraint —
+          leaving the DB inconsistent. The fix: wrap the entire multi-step operation in
+          <code>BEGIN TRAN … COMMIT / ROLLBACK</code> (see ACID demo above).
+          <code>@@ERROR</code> is a simpler alternative for checking the immediately preceding statement only.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     Educational: T-SQL Cursors
+     ═══════════════════════════════════════════════════════ -->
+
+<!-- Concept banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Client-side cursor</strong><br>
+    The server sends the entire result set to the client; the client processes it in its own memory.
+    This is the default for most frameworks. ADO.NET: <code>DataSet</code> filled via <code>DataAdapter</code>.
+    Good for: small result sets, disconnected scenarios. Causes a burst of network traffic at query time.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Server-side cursor</strong><br>
+    The result set stays on the server; rows arrive over the network only as fast as the client fetches them.
+    Like video streaming — continuous but low-bandwidth.
+    ADO.NET: <code>DataReader</code>. T-SQL: <code>DECLARE … CURSOR FOR</code>.
+    Good for: very large result sets where loading everything into RAM would be too costly.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1a2a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">When to use a cursor</strong><br>
+    • The problem is naturally row-by-row and hard to express as set-based SQL<br>
+    • Result set is small (performance not critical)<br>
+    Typical cases: running totals, sequential pattern detection (e.g. consecutive small orders),
+    dynamic SQL generation, conditional per-row branching (one row → insert order, next row → send email).
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #2a1a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e63946">When NOT to use a cursor</strong><br>
+    • The task can be expressed cleanly with set-based DML (<code>UPDATE</code>, <code>GROUP BY</code>, window functions)<br>
+    • Expected row count is in the millions<br>
+    Cursors process one row at a time — orders of magnitude slower than a single set-based statement
+    on large tables. <code>ROW_NUMBER() OVER (…)</code> often replaces what naively needs a cursor.
+  </div>
+</div>
+
+<!-- Syntax + types -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: cursor lifecycle code -->
+  <div class="col-5">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e9c46a">
+        <i class="bi bi-arrow-repeat me-1"></i> Cursor Lifecycle (T-SQL)
+      </div>
+      <div style="padding:.5rem .7rem">
+        <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#5a6070">-- 1. Declare variables to hold each row</span>
+<span style="color:#457b9d">DECLARE</span> @id <span style="color:#e9c46a">int</span>, @name <span style="color:#e9c46a">nvarchar</span>(50), @addr <span style="color:#e9c46a">nvarchar</span>(60)
+
+<span style="color:#5a6070">-- 2. Declare the cursor (FAST_FORWARD = forward-only, read-only)</span>
+<span style="color:#457b9d">DECLARE</span> cursor_emp <span style="color:#8338ec">CURSOR FAST_FORWARD FOR</span>
+    <span style="color:#457b9d">SELECT</span> EmployeeID, LastName, Address
+    <span style="color:#457b9d">FROM</span>   Employees <span style="color:#457b9d">ORDER BY</span> LastName
+
+<span style="color:#5a6070">-- 3. Open (allocates server-side result set)</span>
+<span style="color:#8338ec">OPEN</span> cursor_emp
+
+<span style="color:#5a6070">-- 4. Prime read</span>
+<span style="color:#8338ec">FETCH NEXT FROM</span> cursor_emp <span style="color:#457b9d">INTO</span> @id, @name, @addr
+
+<span style="color:#5a6070">-- 5. Iterate (@@FETCH_STATUS = 0 while rows remain)</span>
+<span style="color:#457b9d">WHILE</span> <span style="color:#e9c46a">@@FETCH_STATUS</span> = 0
+<span style="color:#457b9d">BEGIN</span>
+    <span style="color:#457b9d">PRINT</span> <span style="color:#e9c46a">CONCAT</span>(<span style="color:#06d6a0">'ID:'</span>, @id, <span style="color:#06d6a0">' '</span>, @name, <span style="color:#06d6a0">' — '</span>, @addr)
+    <span style="color:#8338ec">FETCH NEXT FROM</span> cursor_emp <span style="color:#457b9d">INTO</span> @id, @name, @addr
+<span style="color:#457b9d">END</span>
+
+<span style="color:#5a6070">-- 6. Close (releases row locks / position)</span>
+<span style="color:#8338ec">CLOSE</span> cursor_emp
+<span style="color:#5a6070">-- 7. Deallocate (frees the server-side result set memory)</span>
+<span style="color:#8338ec">DEALLOCATE</span> cursor_emp</pre>
+        <div style="font-size:.64rem;color:#5a6070">
+          <code>@@FETCH_STATUS</code> = 0 → success; non-zero → past end or row deleted.
+          Variable order and types must exactly match the cursor's SELECT list.
+          <code>DEALLOCATE</code> (not <code>CLOSE</code>) is what frees server memory.
+          Cursors can be nested — declare a second cursor inside the <code>WHILE</code> body.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: cursor types -->
+  <div class="col-7">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8338ec">
+        <i class="bi bi-sliders me-1"></i> Cursor Types &amp; Options
+      </div>
+      <div style="padding:.5rem .7rem;font-size:.7rem">
+
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">Data freshness — what changes in the source table are visible while iterating</div>
+        <table class="table table-dark table-sm mb-3" style="font-size:.67rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Type</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">New rows inserted after OPEN</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Updates to existing rows</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Notes</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr>
+              <td><code>STATIC</code></td>
+              <td style="color:#e63946">Not visible</td>
+              <td style="color:#e63946">Not visible</td>
+              <td>Snapshot copied to <code>tempdb</code> at <code>OPEN</code>; <code>@@CURSOR_ROWS</code> is exact</td>
+            </tr>
+            <tr>
+              <td><code>KEYSET</code></td>
+              <td style="color:#e63946">Not visible</td>
+              <td style="color:#06d6a0">Visible</td>
+              <td>Key set fixed at <code>OPEN</code>; data re-read per fetch</td>
+            </tr>
+            <tr>
+              <td><code>DYNAMIC</code></td>
+              <td style="color:#06d6a0">Visible</td>
+              <td style="color:#06d6a0">Visible</td>
+              <td><code>@@CURSOR_ROWS</code> = −1 (unknown); most expensive; <code>FETCH ABSOLUTE</code> not allowed</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">Movement &amp; scope options</div>
+        <table class="table table-dark table-sm mb-3" style="font-size:.67rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Option</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Keyword</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Allowed FETCH directions</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr><td>Forward only</td><td><code>FORWARD_ONLY</code></td><td><code>FETCH NEXT</code> only</td></tr>
+            <tr><td>Scrollable</td><td><code>SCROLL</code></td><td><code>FIRST / LAST / PRIOR / NEXT / RELATIVE n / ABSOLUTE n</code></td></tr>
+            <tr><td>Local scope</td><td><code>LOCAL</code></td><td colspan="1">Visible only in current batch / procedure / trigger</td></tr>
+            <tr><td>Global scope</td><td><code>GLOBAL</code></td><td colspan="1">Visible to any batch on the same connection</td></tr>
+          </tbody>
+        </table>
+
+        <div style="background:#080a10;border:1px solid #1a2a1a;border-radius:.3rem;padding:.35rem .6rem;font-size:.65rem;color:#8892a4">
+          <strong style="color:#06d6a0">FAST_FORWARD</strong> = <code>FORWARD_ONLY</code> + <code>READ_ONLY</code> + server-optimised fetch plan.
+          Best choice for simple <em>foreach</em> patterns. Cannot update the current row through the cursor.
+          Omitting the type usually gives <code>GLOBAL DYNAMIC SCROLL</code> — the most expensive option; always specify explicitly.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     Educational: Transaction Management in T-SQL (Chapter 4)
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- ACID banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1a2a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Atomicity</strong><br>
+    All steps of a transaction succeed, or none do. Guaranteed by the <em>transaction log</em> (WAL).
+    Example failure: in the phone-order script the customer's balance was deducted before the
+    <code>INSERT [Order Details]</code> failed — atomicity violated because there was no explicit transaction.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1a2a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Consistency</strong><br>
+    The database must remain in a valid state at all times — foreign keys, CHECK constraints,
+    and other integrity rules must hold after every transaction commits.
+    Consistency is enforced jointly by constraints and ROLLBACK.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1a2a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Isolation</strong><br>
+    Concurrent transactions interfere with each other as little as possible.
+    Implemented via <em>locking</em> (shared, exclusive, update locks on rows / pages / tables).
+    The degree of isolation is configurable — see isolation levels below.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1a2a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Durability</strong><br>
+    Committed transactions survive hardware failure.
+    Guaranteed by the <em>Write-Ahead Log (WAL)</em>: every change is written to the log before it
+    reaches the data pages. On crash recovery the log is replayed (<em>roll forward</em>) or
+    reversed (<em>roll back</em>) as needed.
+  </div>
+</div>
+
+<!-- Explicit transactions + XACT_ABORT + nested -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: lifecycle + XACT_ABORT -->
+  <div class="col-6">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06d6a0">
+        <i class="bi bi-arrow-left-right me-1"></i> Explicit Transactions &amp; XACT_ABORT
+      </div>
+      <div style="padding:.5rem .7rem">
+
+        <!-- Implicit vs explicit -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">Every DML statement is an implicit transaction. Multi-step business logic needs an explicit one.</div>
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#457b9d">BEGIN TRAN</span>
+<span style="color:#457b9d">BEGIN TRY</span>
+    <span style="color:#5a6070">-- business-logic checks (stock, balance…)</span>
+    <span style="color:#457b9d">UPDATE</span> Customers  <span style="color:#457b9d">SET</span> balance = balance - @total <span style="color:#457b9d">WHERE</span> …
+    <span style="color:#457b9d">INSERT INTO</span> Orders …
+    <span style="color:#457b9d">INSERT INTO</span> [Order Details] …
+
+    <span style="color:#457b9d">IF</span> @status = 0  <span style="color:#457b9d">COMMIT TRAN</span>
+    <span style="color:#457b9d">ELSE</span>            <span style="color:#457b9d">ROLLBACK TRAN</span>  <span style="color:#5a6070">-- business rule failed</span>
+<span style="color:#457b9d">END TRY</span>
+<span style="color:#457b9d">BEGIN CATCH</span>
+    <span style="color:#457b9d">ROLLBACK TRAN</span>               <span style="color:#5a6070">-- unexpected error</span>
+    <span style="color:#457b9d">PRINT</span> <span style="color:#06d6a0">'ERROR: '</span> + <span style="color:#e9c46a">ERROR_MESSAGE</span>()
+<span style="color:#457b9d">END CATCH</span></pre>
+
+        <!-- XACT_ABORT table -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">XACT_ABORT controls what happens when a statement inside a transaction errors</div>
+        <table class="table table-dark table-sm mb-2" style="font-size:.67rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Setting</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">On error inside BEGIN TRAN</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Atomicity</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr>
+              <td><code>SET XACT_ABORT OFF</code> <span style="color:#5a6070">(default)</span></td>
+              <td>Failing statement skipped; rest of batch continues; COMMIT commits partial work</td>
+              <td style="color:#e63946">Can be violated</td>
+            </tr>
+            <tr>
+              <td><code>SET XACT_ABORT ON</code></td>
+              <td>Entire transaction auto-rolled back immediately on any error</td>
+              <td style="color:#06d6a0">Enforced automatically</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:.64rem;color:#5a6070">
+          <strong style="color:#e9c46a">Example:</strong> with OFF, inserting 3 rows where row 2 has a bad FK
+          commits rows 1 and 3, skipping row 2 — atomicity violated.
+          With ON the entire transaction is rolled back and <code>t2</code> stays empty.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: WAL + nested transactions -->
+  <div class="col-6">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#457b9d">
+        <i class="bi bi-journal-text me-1"></i> WAL + Nested Transactions
+      </div>
+      <div style="padding:.5rem .7rem">
+
+        <!-- WAL box -->
+        <div style="background:#080a10;border:1px solid #1e2028;border-radius:.3rem;padding:.38rem .6rem;font-size:.67rem;color:#8892a4;margin-bottom:.4rem">
+          <strong style="color:#457b9d">Write-Ahead Log (WAL)</strong><br>
+          Every data-modifying statement appends a sequentially numbered log record <em>before</em>
+          touching the data page. Each record contains enough information to either<br>
+          <span style="color:#06d6a0">▸ roll forward</span> — re-apply the change (used after a crash to recover committed work)<br>
+          <span style="color:#e63946">▸ roll back</span> — undo the change (used by ROLLBACK or on partial failure)<br>
+          WAL is also the foundation of log shipping and replication.
+          Dump (<code>Generate Scripts</code>) contains the schema + data; Backup is the binary data file — WAL applies to both.
+        </div>
+
+        <!-- Nested transactions + @@TRANCOUNT -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.25rem">Nested transactions — @@TRANCOUNT tracks depth</div>
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#457b9d">BEGIN TRAN</span>   <span style="color:#5a6070">-- @@TRANCOUNT = 1</span>
+    <span style="color:#457b9d">BEGIN TRAN</span> <span style="color:#5a6070">-- @@TRANCOUNT = 2</span>
+    <span style="color:#457b9d">COMMIT TRAN</span> <span style="color:#5a6070">-- @@TRANCOUNT = 1  (inner commit just decrements)</span>
+<span style="color:#457b9d">COMMIT TRAN</span>   <span style="color:#5a6070">-- @@TRANCOUNT = 0  (outer commit actually writes)</span>
+
+<span style="color:#5a6070">-- But ROLLBACK always goes all the way to 0:</span>
+<span style="color:#457b9d">BEGIN TRAN</span>   <span style="color:#5a6070">-- @@TRANCOUNT = 1</span>
+    <span style="color:#457b9d">BEGIN TRAN</span> <span style="color:#5a6070">-- @@TRANCOUNT = 2</span>
+    <span style="color:#457b9d">ROLLBACK TRAN</span> <span style="color:#5a6070">-- @@TRANCOUNT = 0 (ALL transactions rolled back)</span></pre>
+
+        <div style="background:#080a10;border:1px solid #2a1a1a;border-radius:.3rem;padding:.35rem .6rem;font-size:.64rem;color:#8892a4">
+          <strong style="color:#e63946">Key rule:</strong> an inner <code>COMMIT</code> only decrements <code>@@TRANCOUNT</code> —
+          data is not actually committed until the outermost <code>COMMIT</code> (count → 0).
+          A <code>ROLLBACK</code> anywhere immediately resets <code>@@TRANCOUNT</code> to 0 and undoes <em>all</em>
+          open transactions, not just the innermost one.
+          Always check <code>@@TRANCOUNT</code> before issuing a ROLLBACK to avoid "no transaction active" errors.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: OLTP Database Structure — Master Tables vs Center
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1a2a1a;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Master tables (törzsállomány)</strong><br>
+    Tables that hold no foreign key to other tables — they are the roots of the FK graph.
+    Typically small, static, and rarely modified.
+    The further a table is from the transactional center in the FK chain, the more master-like it behaves.<br>
+    <span style="color:#5a6070">Northwind examples: <code>Categories</code>, <code>Suppliers</code>, <code>Shippers</code>, <code>Employees</code>, <code>Region</code></span>
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e63946">Transactional center (tranzakcionális középpont)</strong><br>
+    A table no other table references via FK, but which itself references many (or all) others — directly or indirectly.
+    Large, frequently modified, often with a composite key (junction table).
+    This is the table the main business transaction continuously writes to.<br>
+    <span style="color:#5a6070">Northwind examples: <code>[Order Details]</code> (order entry), <code>EmployeeTerritories</code> (territory assignment)</span>
+  </div>
+  <div style="flex:1.1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">How to read the structure</strong><br>
+    A well-designed OLTP schema reveals its most important transactions through its FK graph.
+    Follow the FK arrows from the transactional center outward to the master tables — each hop toward a root
+    is a step toward more static, less critical data.
+    The center is the hottest table: most locks, most log writes, most contention.
+    Index and partition strategy should prioritise it.
+  </div>
+</div>
+
+<!-- Northwind FK diagram -->
+<div class="row g-2 mb-2">
+  <div class="col-12">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e9c46a">
+        <i class="bi bi-diagram-3 me-1"></i> Northwind FK Graph — Master Tables → Transactional Center
+      </div>
+      <div style="padding:.55rem .8rem;font-size:.68rem;font-family:monospace;color:#cdd3de;overflow-x:auto">
+        <div style="display:flex;align-items:center;gap:0;flex-wrap:nowrap;white-space:nowrap">
+
+          <!-- Master tables column -->
+          <div style="display:flex;flex-direction:column;gap:.3rem;min-width:130px">
+            <div style="background:#0a1a0a;border:1px solid #1a4a1a;border-radius:.3rem;padding:.3rem .5rem;color:#06d6a0;text-align:center">Categories</div>
+            <div style="background:#0a1a0a;border:1px solid #1a4a1a;border-radius:.3rem;padding:.3rem .5rem;color:#06d6a0;text-align:center">Suppliers</div>
+            <div style="background:#0a1a0a;border:1px solid #1a4a1a;border-radius:.3rem;padding:.3rem .5rem;color:#06d6a0;text-align:center">Shippers</div>
+            <div style="background:#0a1a0a;border:1px solid #1a4a1a;border-radius:.3rem;padding:.3rem .5rem;color:#06d6a0;text-align:center">Employees</div>
+            <div style="background:#0a1a0a;border:1px solid #1a4a1a;border-radius:.3rem;padding:.3rem .5rem;color:#06d6a0;text-align:center">Customers</div>
+          </div>
+
+          <!-- Arrow 1 -->
+          <div style="display:flex;flex-direction:column;gap:.3rem;padding:0 .6rem;color:#5a6070">
+            <div style="padding:.3rem 0">——FK——▶</div>
+            <div style="padding:.3rem 0">——FK——▶</div>
+            <div style="padding:.3rem 0">——FK——▶</div>
+            <div style="padding:.3rem 0">——FK——▶</div>
+            <div style="padding:.3rem 0">——FK——▶</div>
+          </div>
+
+          <!-- Intermediate tables -->
+          <div style="display:flex;flex-direction:column;gap:.3rem;min-width:100px">
+            <div style="background:#1a1a0a;border:1px solid #3a3a1a;border-radius:.3rem;padding:.3rem .5rem;color:#e9c46a;text-align:center">Products</div>
+            <div style="background:#00000000;padding:.3rem .5rem;color:#00000000;text-align:center">.</div>
+            <div style="background:#1a1a0a;border:1px solid #3a3a1a;border-radius:.3rem;padding:.3rem .5rem;color:#e9c46a;text-align:center">Orders</div>
+            <div style="background:#00000000;padding:.3rem .5rem;color:#00000000;text-align:center">.</div>
+            <div style="background:#00000000;padding:.3rem .5rem;color:#00000000;text-align:center">.</div>
+          </div>
+
+          <!-- Arrow 2 -->
+          <div style="display:flex;flex-direction:column;gap:.3rem;padding:0 .6rem;color:#5a6070;min-width:80px">
+            <div style="padding:.3rem 0">——▶</div>
+            <div style="padding:.3rem 0">&nbsp;</div>
+            <div style="padding:.3rem 0">——▶</div>
+            <div style="padding:.3rem 0">&nbsp;</div>
+            <div style="padding:.3rem 0">&nbsp;</div>
+          </div>
+
+          <!-- Transactional center -->
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:130px">
+            <div style="background:#1a0a0a;border:2px solid #e63946;border-radius:.4rem;padding:.5rem .8rem;color:#e63946;text-align:center;font-weight:700">
+              [Order Details]<br>
+              <span style="font-size:.6rem;color:#8892a4">Transactional center</span><br>
+              <span style="font-size:.6rem;color:#5a6070">OrderID + ProductID (PK)</span>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div style="margin-left:1.5rem;font-family:sans-serif;font-size:.65rem;color:#5a6070;line-height:1.7">
+            <div><span style="color:#06d6a0">■</span> Master table — small, static, root of FK graph</div>
+            <div><span style="color:#e9c46a">■</span> Intermediate — moderate change rate</div>
+            <div><span style="color:#e63946">■</span> Transactional center — large, hot, composite PK</div>
+            <div style="margin-top:.4rem">Each FK arrow = a reference constraint that<br>the center's INSERT must satisfy atomically.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: In-Memory OLTP (Memory-Optimized Tables)
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-4">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Memory-Optimized Tables (MOT)</strong><br>
+    Tables declared <code>WITH (MEMORY_OPTIMIZED=ON)</code> live entirely in RAM.
+    No buffer pool, no page latches, no lock manager — data structures are designed for concurrent
+    in-memory access. A durable copy is written to disk asynchronously for crash recovery.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Natively Compiled SPs</strong><br>
+    Stored procedures declared <code>WITH (NATIVE_COMPILATION)</code> are compiled to machine code
+    at CREATE time — not interpreted at runtime like regular T-SQL.
+    The resulting DLL is loaded into SQL Server's address space and eliminates interpreter
+    overhead for high-frequency short transactions.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Optimistic Concurrency (MVCC)</strong><br>
+    MOTs use multi-version concurrency control instead of locks.
+    Each row version is timestamped; readers never block writers.
+    Conflicts are detected at commit time — transaction aborts and retries if another writer
+    committed a conflicting update first. No deadlocks possible.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Use cases</strong><br>
+    • Extreme-throughput OLTP: session state, shopping carts, order queues<br>
+    • High-frequency tick data or telemetry ingestion<br>
+    • Latency-sensitive operations that saturate disk-based locking<br>
+    ⚠ Not suitable for large tables (must fit in RAM) or ad-hoc analytics
+  </div>
+</div>
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#8338ec;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-lightning-charge me-1"></i>In-Memory OLTP — Syntax &amp; Performance
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- 1. Enable memory-optimized filegroup first</span>
+<span style="color:#457b9d">ALTER DATABASE</span> Northwind
+    <span style="color:#457b9d">ADD FILEGROUP</span> fg_mem
+    <span style="color:#457b9d">CONTAINS MEMORY_OPTIMIZED_DATA</span>;
+
+<span style="color:#5a6070">-- 2. Create memory-optimized table</span>
+<span style="color:#457b9d">CREATE TABLE</span> ShoppingCart (
+    SessionID  <span style="color:#457b9d">nvarchar</span>(<span style="color:#e9c46a">36</span>) <span style="color:#457b9d">NOT NULL</span>,
+    ProductID  <span style="color:#457b9d">int</span>          <span style="color:#457b9d">NOT NULL</span>,
+    Qty        <span style="color:#457b9d">int</span>          <span style="color:#457b9d">NOT NULL</span>,
+    <span style="color:#457b9d">PRIMARY KEY NONCLUSTERED HASH</span> (SessionID, ProductID)
+        <span style="color:#457b9d">WITH</span> (BUCKET_COUNT = <span style="color:#e9c46a">1048576</span>)
+) <span style="color:#457b9d">WITH</span> (MEMORY_OPTIMIZED = <span style="color:#457b9d">ON</span>, DURABILITY = SCHEMA_AND_DATA);
+
+<span style="color:#5a6070">-- 3. Natively compiled stored procedure</span>
+<span style="color:#457b9d">CREATE PROCEDURE</span> usp_AddToCart
+    @sid <span style="color:#457b9d">nvarchar</span>(<span style="color:#e9c46a">36</span>), @pid <span style="color:#457b9d">int</span>, @qty <span style="color:#457b9d">int</span>
+<span style="color:#457b9d">WITH</span> NATIVE_COMPILATION, SCHEMABINDING
+<span style="color:#457b9d">AS BEGIN ATOMIC WITH</span>
+    (TRANSACTION ISOLATION LEVEL = SNAPSHOT, LANGUAGE = <span style="color:#06d6a0">N'English'</span>)
+    <span style="color:#457b9d">IF EXISTS</span> (<span style="color:#457b9d">SELECT</span> <span style="color:#e9c46a">1</span> <span style="color:#457b9d">FROM</span> dbo.ShoppingCart
+               <span style="color:#457b9d">WHERE</span> SessionID=@sid <span style="color:#457b9d">AND</span> ProductID=@pid)
+        <span style="color:#457b9d">UPDATE</span> dbo.ShoppingCart <span style="color:#457b9d">SET</span> Qty += @qty
+        <span style="color:#457b9d">WHERE</span>  SessionID=@sid <span style="color:#457b9d">AND</span> ProductID=@pid;
+    <span style="color:#457b9d">ELSE</span>
+        <span style="color:#457b9d">INSERT</span> dbo.ShoppingCart <span style="color:#457b9d">VALUES</span> (@sid, @pid, @qty);
+<span style="color:#457b9d">END</span>;</pre>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.35rem">Disk-based vs In-Memory OLTP:</div>
+      <table class="table table-sm mb-2" style="font-size:.66rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028"><th>Aspect</th><th>Disk-based</th><th>In-Memory</th></tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td>Concurrency model</td><td>Locking (pessimistic)</td><td style="color:#06d6a0">MVCC (optimistic)</td></tr>
+          <tr><td>T-SQL execution</td><td>Interpreted</td><td style="color:#06d6a0">Natively compiled DLL</td></tr>
+          <tr><td>Buffer pool</td><td>Required</td><td style="color:#06d6a0">Not used (RAM direct)</td></tr>
+          <tr><td>Latch contention</td><td>Yes</td><td style="color:#06d6a0">None</td></tr>
+          <tr><td>Max table size</td><td>Disk-bound</td><td style="color:#ef476f">RAM-bound</td></tr>
+          <tr><td>Typical gain (hot path)</td><td>Baseline</td><td style="color:#06d6a0">5–30×</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.64rem;color:#5a6070">
+        <strong style="color:#cdd3de">BEGIN ATOMIC</strong>: natively compiled SPs must use <code>BEGIN ATOMIC WITH (…)</code>
+        which automatically wraps the body in a transaction — no explicit BEGIN TRAN/COMMIT needed.
+        Isolation level is declared at procedure definition time, not at call time.
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% block title %}Big Data Analytics Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #29b5e8; }
+.hero-grad { background: linear-gradient(135deg, rgba(41,181,232,.1), rgba(0,80,150,.07), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:96px; text-align:center; cursor:pointer; padding:.5rem .25rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(41,181,232,.1); }
+.pipe-node.active { background:rgba(41,181,232,.18); }
+.pipe-node .p-icon { font-size:1.6rem; }
+.pipe-node .p-label { font-size:.6rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:20px; height:2px; background:rgba(41,181,232,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#000; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#88ddff; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.dbt-code { background:#050810; border:1px solid rgba(41,181,232,.2); border-radius:6px; padding:.75rem; font-family:monospace; font-size:.75rem; color:#88ddff; white-space:pre; overflow-x:auto; }
+.format-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+.format-cell { background:#0d1218; border:1px solid rgba(41,181,232,.15); border-radius:6px; padding:.6rem; font-size:.75rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Big Data Analytics &amp; BI Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(41,181,232,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">📊</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">Big Data Analytics &amp; BI Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">Scanning billions of rows in seconds for business intelligence — columnar warehouses, lake house patterns, ELT pipelines, and MPP query execution behind every executive dashboard.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">❄️ Snowflake</span>
+      <span class="company-badge">🔥 Databricks</span>
+      <span class="company-badge">🟡 Airbnb</span>
+      <span class="company-badge">🔵 Uber</span>
+      <span class="company-badge">🟢 Spotify</span>
+      <span class="company-badge">🟠 Netflix</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">ELT Data Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node for detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">🗃️</div><div class="p-label">Source<br>DBs</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">🔌</div><div class="p-label">Fivetran<br>Extract</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">🏞️</div><div class="p-label">Data<br>Lake</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">⚙️</div><div class="p-label">dbt<br>Transform</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">❄️</div><div class="p-label">Data<br>Warehouse</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">🔬</div><div class="p-label">BI<br>Query</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">📈</div><div class="p-label">Dashboard<br>/ Report</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de"></div>
+    </div>
+  </div>
+
+  <!-- dbt Model Example -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">dbt Model: Raw → Staging → Mart (SQL Transformation Layers)</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div style="font-size:.72rem;color:#8892a4;margin-bottom:.3rem">Layer 1: <strong style="color:var(--a)">stg_orders.sql</strong> (Staging)</div>
+          <div class="dbt-code">SELECT
+  id            AS order_id,
+  created_at    AS ordered_at,
+  customer_id,
+  status,
+  amount / 100  AS amount_usd,
+  LOWER(currency) AS currency
+FROM {{ source('postgres', 'raw_orders') }}
+WHERE created_at >= '2020-01-01'</div>
+        </div>
+        <div class="col-md-4">
+          <div style="font-size:.72rem;color:#8892a4;margin-bottom:.3rem">Layer 2: <strong style="color:var(--a)">fct_orders.sql</strong> (Fact Table)</div>
+          <div class="dbt-code">SELECT
+  o.order_id,
+  o.ordered_at,
+  o.customer_id,
+  c.country,
+  o.amount_usd,
+  DATEDIFF(day,o.ordered_at,
+    s.shipped_at) AS days_to_ship
+FROM {{ ref('stg_orders') }} o
+LEFT JOIN {{ ref('stg_customers') }} c
+  ON o.customer_id = c.customer_id
+LEFT JOIN {{ ref('stg_shipments') }} s
+  ON o.order_id = s.order_id</div>
+        </div>
+        <div class="col-md-4">
+          <div style="font-size:.72rem;color:#8892a4;margin-bottom:.3rem">Layer 3: <strong style="color:var(--a)">revenue_by_country.sql</strong> (Mart)</div>
+          <div class="dbt-code">SELECT
+  DATE_TRUNC('month', ordered_at)
+    AS month,
+  country,
+  SUM(amount_usd)  AS revenue,
+  COUNT(*)         AS order_count,
+  AVG(amount_usd)  AS avg_order_value,
+  AVG(days_to_ship) AS avg_ship_days
+FROM {{ ref('fct_orders') }}
+WHERE status = 'completed'
+GROUP BY 1, 2</div>
+        </div>
+      </div>
+      <div class="mt-3" style="font-size:.78rem;color:#8892a4">dbt compiles these SQL files into a DAG (Directed Acyclic Graph). Dependencies resolved via <code>&#123;&#123; ref() &#125;&#125;</code> macro. Runs in topological order. <code>dbt test</code> validates: not-null, unique, referential integrity, custom assertions. <code>dbt docs generate</code> creates a searchable lineage graph of all models, tests, and source systems.</div>
+    </div>
+  </div>
+
+  <!-- Open Table Formats -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Open Table Formats: Delta Lake vs Iceberg vs Hudi</span>
+    </div>
+    <div class="card-body">
+      <div class="format-grid">
+        <div class="format-cell">
+          <div style="color:var(--a);font-weight:600">Apache Iceberg</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Netflix, Apple, LinkedIn</div>
+          <div style="color:#8892a4;font-size:.71rem">Metadata tree: snapshot → manifest list → manifest files → data files. ACID transactions via snapshot isolation. Hidden partitioning: query optimizer uses partition stats without exposing partition columns to SQL users. Schema evolution: add/rename/drop columns without rewriting data. Time travel: <code>SELECT * FROM orders FOR SYSTEM_TIME AS OF '2025-01-01'</code>. Engine-agnostic (Spark, Trino, Flink, Dremio).</div>
+        </div>
+        <div class="format-cell">
+          <div style="color:var(--a);font-weight:600">Delta Lake</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Databricks, Uber, Shopify</div>
+          <div style="color:#8892a4;font-size:.71rem">Transaction log as JSON file sequence (_delta_log). ACID via optimistic concurrency on log files. MERGE INTO for upserts (GDPR right-to-be-forgotten). Z-ordering: co-locate related data (by user_id) to skip entire files during scan. Vacuum: remove old file versions. Auto-optimize: automatically compacts small files. Native Spark integration — the Databricks default format.</div>
+        </div>
+        <div class="format-cell">
+          <div style="color:var(--a);font-weight:600">Apache Hudi</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Uber, Amazon, ByteDance</div>
+          <div style="color:#8892a4;font-size:.71min">Record-level upserts — designed for streaming CDC (Change Data Capture). COW (Copy-on-Write): rewrites Parquet files on update (faster reads). MOR (Merge-on-Read): appends delta logs, merges at read time (faster writes). Incremental queries: <code>readType=incremental, beginInstantTime=...</code> — replicate only changes since last read. Used by Uber for their streaming ELT pipeline (100M+ events/day).</div>
+        </div>
+        <div class="format-cell">
+          <div style="color:var(--a);font-weight:600">Apache Parquet</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Universal columnar storage</div>
+          <div style="color:#8892a4;font-size:.71rem">Columnar: all values for column X stored together → Predicate pushdown: read only columns needed. Row group statistics (min/max) → skip entire row groups (data skipping). Nested types: struct, list, map. Encoding: dictionary, RLE, bit-packing. Compression: Snappy, Gzip, Zstd. Standard format across Spark, Pandas, Arrow, BigQuery, Athena — interoperability without conversion.</div>
+        </div>
+        <div class="format-cell">
+          <div style="color:var(--a);font-weight:600">Snowflake</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Cloud-only data warehouse</div>
+          <div style="color:#8892a4;font-size:.71rem">Compute/storage separation: Virtual Warehouses (clusters) auto-suspend when idle. Micro-partitions: automatic, 50–500 MB compressed. Automatic clustering: Snowflake rewrites partitions to optimize for common filter columns. Zero-copy cloning: instant database/table clone for dev environments (shares underlying storage). Time Travel: 90-day data history. Multi-cluster for concurrency.</div>
+        </div>
+        <div class="format-cell">
+          <div style="color:var(--a);font-weight:600">Google BigQuery</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Serverless columnar warehouse</div>
+          <div style="color:#8892a4;font-size:.71rem">Dremel engine: petabyte queries in seconds. Slot-based compute: each query gets allocated "slots" (virtual CPUs) automatically. Nested repeated fields (STRUCT, ARRAY) without joins. BI Engine: in-memory analysis for sub-second queries on cached results. Storage API for Arrow-based reads. BigQuery ML: train models with SQL. Standard SQL + JSON + ML all in one query language.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage Layers</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Data Warehouses (OLAP)</dt>
+          <dd style="color:#8892a4">Snowflake, BigQuery, Amazon Redshift, ClickHouse. Columnar storage, MPP (Massively Parallel Processing) execution. Optimized for aggregations over billions of rows. NOT for OLTP (too slow for single-row lookups). The serving layer for analytics workloads.</dd>
+          <dt style="color:#cdd3de">Data Lakes (Raw Storage)</dt>
+          <dd style="color:#8892a4">AWS S3, Azure Data Lake Storage, Google Cloud Storage. Object storage — infinite scale, cheap (~$23/TB/month). Stores raw files: CSV, JSON, Parquet, Avro. Accessed by Spark, Athena, Presto, Databricks. "Schema on read" vs warehouse's "schema on write".</dd>
+          <dt style="color:#cdd3de">Lakehouse (Best of Both)</dt>
+          <dd style="color:#8892a4">Delta Lake / Iceberg / Hudi on top of object storage → ACID transactions, time travel, schema enforcement on cheap lake storage. Databricks Delta Lakehouse: eliminates the need for a separate warehouse for many workloads. Airbnb's Data Platform moved entirely to Lakehouse architecture in 2022.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Feature Store (ML)</dt>
+          <dd class="mb-0" style="color:#8892a4">Feast, Tecton: bridges analytics (batch features computed by Spark) and ML serving (real-time feature lookup). Historical features for training + live features for inference via same API. Uber's Michelangelo platform: feature computation, storage, and serving at 1M+ predictions/second.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Processing</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Apache Spark</dt>
+          <dd style="color:#8892a4">Distributed in-memory computation. RDDs → DataFrames → Datasets API. Catalyst optimizer rewrites SQL into efficient physical plans. Adaptive Query Execution (AQE): re-optimizes at runtime based on data statistics. PySpark for data scientists, Scala for performance. Processes petabytes across 1000s of nodes. Uber processes 15 PB/day with Spark.</dd>
+          <dt style="color:#cdd3de">dbt (Data Build Tool)</dt>
+          <dd style="color:#8892a4">SQL-first transformation framework. Models = SELECT statements. <code>ref()</code> and <code>source()</code> macros build a DAG. <code>dbt run</code> executes models in dependency order. <code>dbt test</code> validates data quality. <code>dbt docs generate</code> builds lineage documentation. Adopted by 30,000+ companies. Democratizes data transformation — data analysts can write SQL, not Python jobs.</dd>
+          <dt style="color:#cdd3de">Fivetran / Airbyte</dt>
+          <dd style="color:#8892a4">Managed ELT connectors. 500+ pre-built connectors (Salesforce, MySQL, Stripe, Google Ads). CDC (Change Data Capture) via database replication slots or log-based capture. Incremental syncs: only pull rows changed since last sync. Normalization option: auto-creates staging tables. Fivetran charges per Monthly Active Row (MAR) — rows that changed.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Apache Airflow</dt>
+          <dd class="mb-0" style="color:#8892a4">Pipeline orchestration. DAGs defined in Python: dependency graph of tasks (operators). Scheduled or triggered. Backfilling: re-run historical date ranges. Sensor operators: wait for external conditions (file arrived in S3, upstream DAG completed). Retry with exponential backoff. Airbnb originated Airflow in 2014; now Apache project with 15M+ downloads/month.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 Query Engines &amp; BI</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Presto / Trino</dt>
+          <dd style="color:#8892a4">Distributed SQL query engine — queries data in-place across multiple sources (S3, Cassandra, MySQL, Redis) without ETL. Facebook originated Presto; Trino is the community fork. Workers pull data from connectors in parallel. Used by Meta, Netflix, Airbnb for ad-hoc exploration without moving data to a warehouse.</dd>
+          <dt style="color:#cdd3de">Tableau / Looker / PowerBI</dt>
+          <dd style="color:#8892a4">BI visualization layer. Looker: defines a "LookML" semantic layer — business logic defined once, used everywhere. Connects to warehouse via JDBC. Live queries vs extracts. Looker Studio (free Google version). PowerBI: Microsoft ecosystem, DAX formula language. Tableau: drag-and-drop, strong visualization, VizQL query language generated from UI interactions.</dd>
+          <dt style="color:#cdd3de">Metabase / Superset (OSS)</dt>
+          <dd style="color:#8892a4">Open-source alternatives. Apache Superset: Python-based, connects to any SQL source, Druid for real-time, Snowflake for batch. Used by Airbnb (who donated it to Apache). Metabase: simpler no-code interface, good for non-technical users. Both free, self-hosted. Superset processes billions of rows via pushdown to warehouse.</dd>
+          <dt style="color:#cdd3de" class="mb-0">ClickHouse (OLAP at sub-second)</dt>
+          <dd class="mb-0" style="color:#8892a4">Column-oriented DBMS from Yandex. Vectorized query execution (SIMD). 10B rows/second scan throughput on single node. Used for real-time analytics dashboards (sub-100ms query on 1B rows). Cloudflare uses ClickHouse for their analytics (20T rows). Alternative to full Snowflake for real-time OLAP use cases.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Workflow Deep Dive</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3">
+          <div class="step-num">1</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">ELT: Extract from Source Systems</div>
+          <div style="font-size:.8rem;color:#8892a4">Fivetran connects to production PostgreSQL via logical replication slot (read WAL log). Change Data Capture: only rows with <code>updated_at &gt; last_sync_time</code> extracted (incremental). Full refresh for small lookup tables. Source columns preserved exactly ("load first, transform later" vs ETL's "transform before load"). New columns in source appear automatically in warehouse staging tables without code changes.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">2</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Transform: dbt Runs SQL Models</div>
+          <div style="font-size:.8rem;color:#8892a4">dbt run compiles Jinja-templated SQL into plain SQL, submits to warehouse (Snowflake/BigQuery) which runs it at MPP scale. Three layers: Staging (1:1 source clean-up), Intermediate (business logic joins), Marts (aggregated tables for BI consumption). dbt lineage: every column traced back to its source. <code>dbt test</code>: assert no NULLs in order_id, assert all foreign keys valid, custom: assert revenue non-negative.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">3</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Warehouse Query: MPP Execution</div>
+          <div style="font-size:.8rem;color:#8892a4">Snowflake: query parsed → Catalyst-like optimizer generates physical plan → plan distributed across N worker nodes (each reads different Snowflake micro-partitions in parallel from S3). Partition pruning: if WHERE revenue_month = '2025-01' → only read partitions containing that month. Column projection: SELECT only 3 columns → read only those 3 column files. A 10-node cluster processes 1 TB query in ~30 seconds.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">4</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Spark for Large-Scale Feature Engineering</div>
+          <div style="font-size:.8rem;color:#8892a4">When transformation is too complex for SQL (graph algorithms, iterative ML training, custom Python libraries): Databricks Spark cluster. <code>spark.read.parquet("s3://data-lake/orders/")</code> → distributed DataFrame. Window functions: <code>.withColumn("7day_avg", avg("revenue").over(Window.orderBy("date").rowsBetween(-6,0)))</code>. Wide transformations (shuffle): <code>groupBy().agg()</code> → data redistribution across cluster nodes. AQE: adjusts partition count after seeing actual data distribution.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(41,181,232,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📦 ETL vs ELT</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">ETL (old way):</strong> Extract from source → Transform on intermediate server → Load to warehouse. Problem: transformation code lives outside the warehouse, separate infra, can't use warehouse MPP for transformation. <strong style="color:#cdd3de">ELT (modern):</strong> Extract → Load raw → Transform IN the warehouse using SQL/dbt. Warehouse compute handles transforms. No separate ETL cluster.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(41,181,232,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">⚡ Columnar Advantage</div>
+        <div style="font-size:.78rem;color:#8892a4">Row store: <code>SELECT SUM(revenue) FROM orders</code> reads ALL columns (id, user_id, status, created_at, revenue...) just to sum one. Columnar: only reads the revenue column file. 10 columns: 10× less I/O. Plus: same column = high compression ratio (RLE, dict encoding). Snowflake query on 1B rows, 50 columns, SELECT 2: reads 2/50 = 4% of data. 25× faster than row store.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(41,181,232,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎯 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">Eventual consistency, sacrifices availability for correctness.</strong> Analytical data is inherently historical — a dashboard showing yesterday's revenue doesn't need real-time consistency. Snowflake/BigQuery: CP at write time (ACID transactions on table updates via Iceberg/internal formats), AP for reads (queries may see slightly stale materialized views). Refresh lag &lt;1 minute acceptable for executive BI.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'Source DBs', detail: 'Production databases: PostgreSQL (orders, users), MySQL (product catalog), MongoDB (events), Salesforce (CRM), Stripe API (payment data), Google Analytics (web events). Each has different schemas, update frequencies, and extraction methods. Direct queries to production would add load — use read replicas. Analytical queries (GROUP BY, full table scans) are destructive to OLTP performance — must isolate completely.' },
+  { title: 'Fivetran Extract', detail: 'Fivetran connects to source via read replica + logical replication (WAL log for Postgres). CDC tracks changes: INSERT/UPDATE/DELETE events streamed in real-time. No full table scans after initial sync. 500+ connectors with automatic schema detection. Handles: type conversions, null handling, column renaming normalization. Delivers raw data to warehouse staging schema unchanged — no transformation. Sync frequency: 1 minute to 24 hours depending on table.' },
+  { title: 'Data Lake (Raw Zone)', detail: 'Raw files landed in S3: <code>s3://data-lake/raw/{source}/{table}/year=2025/month=05/day=06/{timestamp}.parquet</code>. Partitioned by date for efficient historical queries. Parquet format: columnar, compressed, schema embedded. Size: ~50 MB compressed per partition per table per day. Catalogued in AWS Glue Catalog (or Hive Metastore) — makes S3 files queryable via SQL in Athena/Presto without loading. Raw zone: never modified, immutable historical record.' },
+  { title: 'dbt Transform', detail: 'dbt models: staging (clean raw), intermediate (join logic), marts (aggregated for BI). Runs as SQL on Snowflake/BigQuery — leverages MPP for free. <code>dbt run --select +revenue_by_country</code> runs that model and all its ancestors. Incremental models: <code>WHERE updated_at &gt; (SELECT MAX(updated_at) FROM {{ this }})</code> — only processes new rows. dbt Cloud schedules runs, sends Slack alerts on failure. Generates docs: every column described, every dependency traced.' },
+  { title: 'Data Warehouse (Snowflake)', detail: 'Snowflake automatically manages micro-partitions (~100 MB each). Query: optimizer determines which partitions contain relevant data (min/max metadata) → pruning. Virtual Warehouse (compute cluster) sizes: XS (1 node, $2/hr) to 4X-Large (128 nodes, $256/hr). Auto-suspend after 2 min idle → zero cost when not querying. Concurrency: separate Virtual Warehouses for ETL vs BI vs data science → no resource contention. Zero-copy clone: <code>CREATE DATABASE dev CLONE production</code> — instant, no storage cost.' },
+  { title: 'BI Query Layer', detail: 'Looker connects to Snowflake via JDBC. LookML defines dimensions (columns), measures (aggregations), and joins — business logic in one place, re-used across all dashboards. Looker generates SQL from UI interactions: user clicks "Revenue by Country" → LookML compiles to SQL → submitted to Snowflake → results rendered. Looker caching (PDTs): pre-computed results for common queries (refreshed hourly). Dashboard queries: 100 users opening a dashboard = 1 Snowflake query (cached) not 100.' },
+  { title: 'Dashboard / Report', detail: 'Tableau: vizQL language converts chart spec to SQL. Extracts: copy warehouse data into Tableau\'s columnar format (hyper) for fast local queries (avoids warehouse cost). Live connection for real-time. Scheduled email delivery of dashboards. Row-level security: filter data based on viewer\'s role (region managers see only their region). Alerting: "If daily revenue drops &gt;20% vs 7-day average → email CFO". Embedded analytics: Tableau/Looker SDKs embed dashboards in internal tools.' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

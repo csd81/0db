@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}Multiplayer Gaming Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #c89b3c; }
+.hero-grad { background: linear-gradient(135deg, rgba(200,155,60,.12), rgba(155,89,182,.07), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:96px; text-align:center; cursor:pointer; padding:.5rem .25rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(200,155,60,.1); }
+.pipe-node.active { background:rgba(200,155,60,.18); }
+.pipe-node .p-icon { font-size:1.6rem; }
+.pipe-node .p-label { font-size:.6rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:20px; height:2px; background:rgba(200,155,60,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#000; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#ffd988; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.tick-table { width:100%; font-size:.78rem; }
+.tick-table th { color:var(--a); font-weight:600; padding:.3rem .5rem; border-bottom:1px solid #1e2530; }
+.tick-table td { color:#8892a4; padding:.3rem .5rem; border-bottom:1px solid #0e1014; }
+.tick-table td:first-child { color:#cdd3de; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Multiplayer Gaming Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(200,155,60,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">🎮</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">Multiplayer Gaming Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">UDP netcode, authoritative game servers, Kubernetes-managed scaling, leaderboards via Redis Sorted Sets — how 150 million concurrent players battle without desync.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">⚔️ Riot Games</span>
+      <span class="company-badge">🎯 Epic Games</span>
+      <span class="company-badge">🟠 Activision</span>
+      <span class="company-badge">🔵 Valve</span>
+      <span class="company-badge">🟡 Bungie</span>
+      <span class="company-badge">🟣 Blizzard</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">Match Lifecycle Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node for detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">🔍</div><div class="p-label">Match<br>making</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">🖥️</div><div class="p-label">Server<br>Alloc</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">🔗</div><div class="p-label">Client<br>Connect</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">🎮</div><div class="p-label">Game<br>Loop</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">📡</div><div class="p-label">State<br>Broadcast</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">🏁</div><div class="p-label">Match<br>End</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">📊</div><div class="p-label">Stats<br>Write</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de"></div>
+    </div>
+  </div>
+
+  <!-- Tick Rate Comparison -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Server Tick Rate Comparison</span>
+      <span class="ms-2" style="font-size:.72rem;color:#8892a4">How often the server processes inputs and broadcasts state</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-7">
+          <table class="tick-table">
+            <thead><tr><th>Game</th><th>Tick Rate</th><th>Update Interval</th><th>Bandwidth/player</th><th>Why?</th></tr></thead>
+            <tbody>
+              <tr><td>CS2 (Valve)</td><td>64 Hz (128 Hz Premier)</td><td>15.6 ms</td><td>~150 Kbps</td><td>High precision tracking, pro scene demands</td></tr>
+              <tr><td>Valorant (Riot)</td><td>128 Hz server, 30 Hz client</td><td>7.8 ms</td><td>~80 Kbps</td><td>Competitive FPS, sub-10ms hit registration</td></tr>
+              <tr><td>Fortnite (Epic)</td><td>30 Hz</td><td>33 ms</td><td>~60 Kbps</td><td>Battle Royale, 100 players, bandwidth budget</td></tr>
+              <tr><td>League of Legends</td><td>30 Hz</td><td>33 ms</td><td>~20 Kbps</td><td>MOBA: turn-based-ish, less positional precision needed</td></tr>
+              <tr><td>World of Warcraft</td><td>10–20 Hz</td><td>50–100 ms</td><td>~30 Kbps</td><td>MMO: hundreds of players, lower precision acceptable</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-md-5">
+          <div style="font-size:.8rem">
+            <div class="fw-semibold mb-2" style="color:var(--a)">The Bandwidth Budget Problem</div>
+            <div style="color:#8892a4;margin-bottom:.75rem">Fortnite: 100 players per match. Each player needs position updates from 99 others. At 30 Hz: 99 × 30 = 2,970 state updates/second per client. Each player position packet: ~20 bytes. Total: ~60 Kbps upstream. Multiply by 250K concurrent matches → 3.75 Tbps total game server uplink bandwidth.</div>
+            <div class="fw-semibold mb-2" style="color:var(--a)">Area of Interest (AoI)</div>
+            <div style="color:#8892a4">MMOs send updates only for entities within a player's visible range. Players in a different continent of the map → no updates. Reduces per-player bandwidth by 90%. Epic Fortnite: circle shrinks → AoI naturally reduces as match progresses.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage &amp; Data Layer</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">DynamoDB (Player Profiles)</dt>
+          <dd style="color:#8892a4">Single-table design: partition key = player_id, sort key = record_type. One table stores profile, friends list, match history, achievements. DynamoDB DAX (in-memory cache): sub-microsecond profile reads during matchmaking. Used by Riot for League of Legends player stats (200M+ player records).</dd>
+          <dt style="color:#cdd3de">MongoDB (Inventory / Items)</dt>
+          <dd style="color:#8892a4">Game items have wildly varying attributes: swords have attack/speed, armor has defense/weight, potions have effect/duration. MongoDB flexible document model — no schema migration needed when new item types added. Aggregation pipeline for inventory queries. Used by multiple AAA studios for loot systems.</dd>
+          <dt style="color:#cdd3de">Redis Sorted Sets (Leaderboards)</dt>
+          <dd style="color:#8892a4"><code>ZADD leaderboard {score} {player_id}</code> — O(log N) insert. <code>ZREVRANK leaderboard {player_id}</code> → global rank in O(log N). <code>ZREVRANGE leaderboard 0 99</code> → top 100 in O(log N + K). Redis Sorted Set is the canonical leaderboard solution — handles 100M players with sub-millisecond rank queries. Used by every major mobile and PC game.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Cassandra (Match History)</dt>
+          <dd class="mb-0" style="color:#8892a4">Write-heavy, append-only match results. Wide-row per player: <code>partition(player_id) → sorted(match_timestamp DESC, match_id)</code>. Riot's League of Legends processes 40M matches/day — Cassandra never rejects a write even under peak load (AP system). Each row: ~2 KB of match stats.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Game Server Infrastructure</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Agones (K8s Game Server Scaling)</dt>
+          <dd style="color:#8892a4">Google-developed Kubernetes extension for managing game servers. Defines <code>GameServer</code> and <code>Fleet</code> CRDs. Lifecycle: Ready → Allocated → Shutdown. Agones auto-scales fleets based on match queue depth. When a match is found, Agones allocates a <code>Ready</code> server and returns its IP:port to matchmaker. Server shuts down after match ends, releasing pod back to pool.</dd>
+          <dt style="color:#cdd3de">Dedicated Game Servers (DGS)</dt>
+          <dd style="color:#8892a4">Authoritative server: the "truth" of the game state. Clients send inputs (button presses, mouse positions), server validates physics, checks anti-cheat, and broadcasts resulting state. No client can hack their position — the server re-simulates everything. Runs at tick rate (e.g., 64 Hz = 64 physics steps/second). C++ for performance; Unreal Engine server mode for many AAA games.</dd>
+          <dt style="color:#cdd3de">Bare Metal at IXPs</dt>
+          <dd style="color:#8892a4">Riot operates dedicated servers at major Internet Exchange Points (AMS-IX, DE-CIX, LINX). Co-location inside IXPs: direct peering with ISPs, bypasses public internet routing. Reduces average latency from 60ms → 30ms for European players. Latin America: servers in São Paulo, Miami, Buenos Aires for regional low-latency coverage.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Anti-Cheat (Vanguard/VAC)</dt>
+          <dd class="mb-0" style="color:#8892a4">Kernel-level driver (Riot Vanguard): runs at ring-0, detects injected DLLs and memory modification. Server-side: statistical anomaly detection (headshot rate, movement speed, reaction time distributions). VAC (Valve Anti-Cheat): retroactive bans — log suspicious data, ban in waves to prevent reverse engineering of detection methods.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 Networking &amp; Protocols</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">UDP Netcode</dt>
+          <dd style="color:#8892a4">TCP is unusable for real-time games: head-of-line blocking (one lost packet stalls all subsequent data). UDP: no ordering, no delivery guarantee → game handles this at application layer. Position packets: if newer update received, discard older. Critical events (damage, death): application-layer ACK + retry. Custom reliability layer over UDP = best of both.</dd>
+          <dt style="color:#cdd3de">Client-Side Prediction</dt>
+          <dd style="color:#8892a4">Client predicts outcome of local input immediately (movement applied instantly without waiting for server). Server processes input, sends authoritative state. Client reconciles: if server disagrees → correct position (snap or smooth). Without prediction: 60ms RTT feels like 120ms (action + response). With prediction: feels instant. Used by every competitive FPS.</dd>
+          <dt style="color:#cdd3de">Lag Compensation (Rollback)</dt>
+          <dd style="color:#8892a4">When player A shoots player B: A's crosshair was on B at 100ms ago (due to A's latency). Server rewinds game state 100ms, checks if the shot was valid at that historical position. If yes → hit registered. Players with 200ms latency still get fair hit registration. GGPO: fighting game library implementing rollback netcode for frame-perfect fighting game inputs.</dd>
+          <dt style="color:#cdd3de" class="mb-0">STUN/TURN (P2P fallback)</dt>
+          <dd class="mb-0" style="color:#8892a4">For peer-to-peer games (fighting games, old-school): STUN discovers public IP/port behind NAT. TURN relays traffic when NAT traversal fails (symmetric NAT). ICE tries direct → STUN → TURN in order. P2P: ~2× lower server cost but susceptible to IP exposure and host-advantage cheating. Riot moved League away from P2P to dedicated servers in 2018 specifically to eliminate host advantage.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Workflow Deep Dive</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3">
+          <div class="step-num">1</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Matchmaking: MMR + Ping</div>
+          <div style="font-size:.8rem;color:#8892a4">Player enters queue. Matchmaker reads MMR (elo-like rating) from DynamoDB. Searches for 9 others (5v5) within ±100 MMR within 30 seconds. If no match in 30s: widen to ±200 MMR. If no match in 60s: ±400 MMR. Ping budget: measure latency to 3 nearest server regions → only match players sharing a server where all have &lt;80ms ping. Riot's matchmaker: 40M matches/day = ~462 matches/second.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">2</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Server Allocation: Agones</div>
+          <div style="font-size:.8rem;color:#8892a4">Matchmaker calls Agones allocation API: <code>POST /v1/gameserverallocations</code> with region preference and label selectors. Agones picks a <code>Ready</code> GameServer pod in the target region, transitions it to <code>Allocated</code>, returns <code>{"address": "34.100.200.50", "ports": [{"port": 7777}]}</code>. Matchmaker distributes server address to all 10 clients. Fleet autoscaling: if queue depth &gt; 100, scale fleet by 20% (warm servers pre-warmed to avoid startup latency).</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">3</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Game Loop: 64 Hz Authority</div>
+          <div style="font-size:.8rem;color:#8892a4">Server runs tight loop: READ (collect input packets from all 10 clients) → SIMULATE (advance physics 15.6ms, apply all inputs, check collisions, resolve abilities) → BROADCAST (send authoritative game state snapshot to all clients). Input buffer: server holds 2-frame input buffer per client — if client's input arrives late, extrapolate previous input rather than stalling simulation. "Dropped input" rather than "stalled server".</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(200,155,60,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🌐 Why Dedicated Servers?</div>
+        <div style="font-size:.78rem;color:#8892a4">P2P: one player hosts → host advantage (no latency for host). Cheating: host controls simulation → easy to hack. Dedicated: authoritative simulation no player can influence. Cost: ~$0.03 per player-hour on AWS. For a 40-minute match with 10 players → $0.02/match → $800K/day for League's 40M daily matches. Cheaper than the customer service cost of host-advantage complaints.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(200,155,60,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">⚡ Redis: The Leaderboard</div>
+        <div style="font-size:.78rem;color:#8892a4"><code>ZADD leaderboard 4521.7 "player123"</code> inserts in O(log N). <code>ZREVRANK leaderboard "player123"</code> returns rank in O(log N). For 100M players: log₂(100M) ≈ 27 operations — rank query in microseconds. No SQL <code>SELECT COUNT(*) WHERE score &gt; ?</code> (full table scan). Redis Sorted Set is a skip list + hash table — impossible to replicate efficiently in relational DB.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(200,155,60,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎯 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">AP for game state, CP for inventory.</strong> Game state (positions, health): eventual consistency — a 1-frame desync is resolved by next tick broadcast. Inventory (item purchases, microtransactions): strictly CP — cannot charge a player twice for the same item or allow duplicate item creation. Two separate subsystems, two different CAP choices.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'Matchmaking', detail: 'Player clicks "Play". Client sends queue request to Matchmaking Service via REST API. Service writes player to Redis queue set with attributes: <code>ZADD queue:{region}:{mode} {mmr} {player_id}</code>. Worker process groups players within MMR tolerance. Ping check: players in same group must all have &lt;80ms to selected server region. Group found → reserve server → send game start notification via WebSocket to all clients.' },
+  { title: 'Server Allocation', detail: 'Matchmaker calls Agones allocation endpoint. Agones selects a Ready GameServer from the fleet pool in the target region. Transitions state: Ready → Allocated. Returns IP:port. Fleet has a buffer of pre-warmed servers (10–20% extra) to avoid cold-start delay. Server process already running, map loaded, waiting for player connections. Startup time: 0ms (already warm) vs 30–60 seconds cold start on K8s pod startup.' },
+  { title: 'Client Connect', detail: 'Clients receive server address from matchmaking service. Each client establishes UDP connection to dedicated server. Authentication handshake: client sends signed session token (JWT) → server validates with auth service. Map and game mode loaded (already in server memory). Players load client-side assets concurrently. "Loading screen" = client loading assets while server waits. Timeout: if any client doesn\'t connect in 60s → server shuts down, match cancelled.' },
+  { title: 'Game Loop (64 Hz)', detail: 'Server timer fires every 15.625ms. Phase 1 — Input Collection: read all pending UDP packets from all clients, timestamp each input with client tick number. Phase 2 — Simulate: advance game world 1 tick (physics, abilities, damage). Apply inputs validated by server (reject illegal moves, too-fast movement). Phase 3 — Emit: snapshot current game state (all player positions, health, ability states). Delta compress vs previous snapshot (only changed fields). 64× per second.' },
+  { title: 'State Broadcast', detail: 'Server broadcasts state delta to each client (UDP, no delivery guarantee). Packet: ~100–500 bytes per client per tick depending on how many entities changed. Area of Interest filtering: don\'t send updates for enemies behind walls or far away. Delta compression: only send fields that changed since last ack\'d snapshot. If client misses 3 consecutive packets → send full state snapshot (fallback). Client interpolates between received snapshots for smooth display.' },
+  { title: 'Match End', detail: 'One team\'s nexus destroyed (LoL) / last player standing (BR). Server emits MatchEnd event. All clients receive game-over packet → transition to results screen. Server compiles match result: player stats, kills, assists, damage dealt, gold earned, vision score. Uploads match JSON (~50 KB) to S3. Publishes MatchCompleted event to Kafka → consumed by: Stats service, MMR service, rewards service. Server process exits → Agones transitions pod back to "Ready" state.' },
+  { title: 'Stats Write', detail: 'Stats service processes Kafka event: updates player MMR (Elo formula), increments career stats, awards XP/battle-pass progress. DynamoDB conditional write for MMR: <code>UpdateItem WHERE version = :expected_version</code> — prevents race condition if match result processed twice. Cassandra insert for match history. Redis update for leaderboard: <code>ZADD leaderboard {new_mmr} {player_id}</code>. Full processing: &lt;5 seconds after match end. Player sees updated rank on next login.' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

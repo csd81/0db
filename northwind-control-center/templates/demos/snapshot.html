@@ -152,6 +152,90 @@
     </svg>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Snapshot Replication
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-4">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">What is Snapshot Replication?</strong><br>
+    The Publisher takes a complete copy (snapshot) of all replicated tables and ships it to Subscribers.
+    The Distributor stores the snapshot files and coordinates delivery.
+    On each scheduled interval the Subscriber's data is <em>completely replaced</em> — no incremental tracking.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Publisher → Distributor → Subscriber</strong><br>
+    Three roles in every SQL Server replication topology:<br>
+    <strong style="color:#e9c46a">Publisher</strong> — owns source data; defines articles (tables/views to replicate).<br>
+    <strong style="color:#06d6a0">Distributor</strong> — staging server; holds the distribution database (queue).<br>
+    <strong style="color:#8338ec">Subscriber</strong> — receives and applies the replicated data.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">When to use</strong><br>
+    • Data that changes infrequently (price lists, lookup tables)<br>
+    • Subscribers that need a fresh full copy on a schedule (daily reports)<br>
+    • Simple setup — no need to track individual changes<br>
+    • Off-site read-only reporting / data warehouse seeding
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Limitations</strong><br>
+    • High network bandwidth — full dataset transferred every interval<br>
+    • Subscriber data is stale between snapshots (not near-real-time)<br>
+    • Large tables cause long apply windows → Subscriber briefly locked<br>
+    • Not suitable for high-change transactional data
+  </div>
+</div>
+
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2 small fw-semibold" style="color:#e9c46a;background:#0a0c14;border-bottom:1px solid #1e2028">
+    <i class="bi bi-camera me-1"></i>Replication Types — Comparison
+  </div>
+  <div class="card-body py-3 row g-3">
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">Three SQL Server replication types side by side:</div>
+      <table class="table table-sm mb-0" style="font-size:.67rem;color:#cdd3de;background:transparent">
+        <thead><tr style="color:#e9c46a;border-color:#1e2028">
+          <th>Type</th><th>How it works</th><th>Latency</th><th>Best for</th>
+        </tr></thead>
+        <tbody style="border-color:#1e2028">
+          <tr><td><span style="color:#06d6a0">Snapshot</span></td>
+              <td>Full copy of all articles at each interval</td><td>Minutes–hours</td><td>Static lookups, reports</td></tr>
+          <tr><td><span style="color:#8338ec">Transactional</span></td>
+              <td>Row-level changes streamed via log in near-real-time</td><td>Sub-second</td><td>OLTP HA, site autonomy</td></tr>
+          <tr><td><span style="color:#457b9d">Merge</span></td>
+              <td>Bi-directional sync; conflict resolution at merge time</td><td>On sync</td><td>Mobile/disconnected</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.64rem;color:#5a6070;margin-top:.35rem">
+        All three use the same Publisher → Distributor → Subscriber topology.
+        Transactional replication also starts with an initial snapshot before switching to log-based streaming.
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div style="font-size:.68rem;color:#8892a4;margin-bottom:.4rem">Snapshot Agent workflow:</div>
+      <pre style="font-size:.62rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto"><span style="color:#5a6070">-- 1. Snapshot Agent locks tables, generates BCP files</span>
+<span style="color:#457b9d">EXEC</span> sp_startpublication_snapshot
+    @publication = <span style="color:#06d6a0">N'NorthwindPub'</span>,
+    @publisher    = <span style="color:#06d6a0">N'SQLSERVER01'</span>;
+
+<span style="color:#5a6070">-- 2. Distribution Agent applies to Subscriber:
+--    TRUNCATE + BULK INSERT per article
+--    Runs on schedule (e.g. every 24 h)</span>
+
+<span style="color:#5a6070">-- 3. Monitor replication status:</span>
+<span style="color:#457b9d">SELECT</span> publisher, publication, subscriber,
+       last_sync_status, last_sync_summary
+<span style="color:#457b9d">FROM</span>   distribution..MSdistribution_status;</pre>
+      <div style="font-size:.64rem;color:#5a6070;margin-top:.25rem">
+        The Distribution Agent truncates the Subscriber's tables and bulk-inserts the new snapshot.
+        During this window the Subscriber data is temporarily stale or unavailable.
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

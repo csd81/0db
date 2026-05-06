@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}FinTech Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #00d4aa; }
+.hero-grad { background: linear-gradient(135deg, rgba(0,212,170,.1), rgba(0,100,200,.06), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:96px; text-align:center; cursor:pointer; padding:.5rem .25rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(0,212,170,.1); }
+.pipe-node.active { background:rgba(0,212,170,.18); }
+.pipe-node .p-icon { font-size:1.6rem; }
+.pipe-node .p-label { font-size:.6rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:20px; height:2px; background:rgba(0,212,170,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#000; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#88ffdd; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.ledger-code { background:#050810; border:1px solid rgba(0,212,170,.2); border-radius:6px; padding:.75rem; font-family:monospace; font-size:.75rem; color:#88ffdd; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">FinTech &amp; Trading Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(0,212,170,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">💳</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">FinTech &amp; Trading Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">Absolute data correctness, idempotent transactions, double-entry ledgers, and microsecond execution — where a bug costs millions and data loss is legally catastrophic.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🟣 Stripe</span>
+      <span class="company-badge">🔵 Plaid</span>
+      <span class="company-badge">🟢 Robinhood</span>
+      <span class="company-badge">⚡ Jane Street</span>
+      <span class="company-badge">🟡 Coinbase</span>
+      <span class="company-badge">🔷 Revolut</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">Payment Processing Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node for detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">📡</div><div class="p-label">Payment<br>API</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">🔑</div><div class="p-label">Idempotency<br>Check</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">🛡️</div><div class="p-label">Fraud<br>ML</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">📒</div><div class="p-label">ACID<br>Ledger</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">🏦</div><div class="p-label">Bank<br>Clearing</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">📩</div><div class="p-label">Webhooks<br>/ Events</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">🗂️</div><div class="p-label">Audit<br>Log</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de"></div>
+    </div>
+  </div>
+
+  <!-- Double Entry Ledger -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Double-Entry Ledger (Strict Accounting Invariant)</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="ledger-code">
+<span style="color:#8892a4">-- Every transaction: debits must equal credits</span>
+BEGIN TRANSACTION;
+  INSERT INTO ledger_entries (account_id, amount, type)
+  VALUES
+    (acct_customer,  -1000.00, 'DEBIT'),   <span style="color:#8892a4">-- customer pays</span>
+    (acct_merchant,  +970.00,  'CREDIT'),  <span style="color:#8892a4">-- merchant receives</span>
+    (acct_stripe_fee, +29.00,  'CREDIT'),  <span style="color:#8892a4">-- Stripe fee</span>
+    (acct_tax,        +1.00,   'CREDIT');  <span style="color:#8892a4">-- tax</span>
+
+  <span style="color:#8892a4">-- Invariant check: SUM(debits) + SUM(credits) = 0</span>
+  IF (SELECT SUM(amount) FROM ledger_entries
+      WHERE txn_id = current_txn_id) != 0
+  THEN ROLLBACK; RAISE EXCEPTION 'Ledger imbalance';
+
+COMMIT;
+          </div>
+          <div style="font-size:.75rem;color:#8892a4;margin-top:.5rem">This double-entry constraint means money cannot appear or disappear. Every debit has a matching credit. SUM of all accounts across the universe = 0. Required by financial regulators.</div>
+        </div>
+        <div class="col-md-6">
+          <dl style="font-size:.8rem">
+            <dt style="color:#cdd3de">FoundationDB (Stripe)</dt>
+            <dd style="color:#8892a4">Strict serializability — stronger than snapshot isolation. Every transaction sees a consistent snapshot AND concurrent transactions are totally ordered. Used by Stripe for all financial records. ACID across distributed nodes via optimistic concurrency + multi-version concurrency control.</dd>
+            <dt style="color:#cdd3de">Google Spanner (Global Fintech)</dt>
+            <dd style="color:#8892a4">Externally consistent distributed SQL. Uses TrueTime (atomic clock + GPS receiver in every datacenter) to assign globally ordered commit timestamps. "External consistency" = any transaction that commits after another is guaranteed to have a later timestamp. Used by banks running global operations.</dd>
+            <dt style="color:#cdd3de">CockroachDB</dt>
+            <dd style="color:#8892a4">Postgres-compatible distributed SQL. Geo-partitioned tables: European transactions stay in EU datacenters (GDPR). Serializable isolation default. Used by Nubank (Latin America's largest digital bank) and Coinbase.</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage &amp; Data Layer</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">FoundationDB</dt>
+          <dd style="color:#8892a4">Apple's acquisition (used in iCloud). Stripe's core financial store. Ordered key-value store with multi-key ACID transactions. Key insight: strict serializability means no anomalies even under concurrent transactions. Linearizable reads. Used for Stripe's internal charge and payout ledger.</dd>
+          <dt style="color:#cdd3de">kdb+ / Q Language (HFT)</dt>
+          <dd style="color:#8892a4">Time-series database purpose-built for finance. Column-store optimized for temporal data. Q language: vectorized operations over billions of rows in milliseconds. Every tick from every exchange stored in kdb+. Jane Street, Goldman Sachs, Two Sigma run kdb+. License costs $50K–$500K/year.</dd>
+          <dt style="color:#cdd3de">InfluxDB / TimescaleDB</dt>
+          <dd style="color:#8892a4">Open-source time-series for trading metrics, exchange rate history, and system monitoring. InfluxDB: purpose-built TSM engine, 10M writes/second. TimescaleDB: PostgreSQL extension — familiar SQL + time-series optimizations. Used by crypto exchanges for OHLCV candle data.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Immutable Audit Log</dt>
+          <dd class="mb-0" style="color:#8892a4">Append-only log (Kafka or custom WAL) where every state change is recorded. Cryptographically chained (each entry includes hash of previous). Required by PCI-DSS, SOX, and banking regulations. Cannot be deleted or modified — only new correcting entries added.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Processing</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Apache Kafka (Strictly Ordered)</dt>
+          <dd style="color:#8892a4">Financial events require strict ordering: payment initiated → payment authorized → payment captured. Kafka topic partitioned by <code>account_id</code> — all events for one account go to one partition → guaranteed ordering. Cannot use random partitioning (that would interleave events from different transactions).</dd>
+          <dt style="color:#cdd3de">Apache Flink (Fraud Detection)</dt>
+          <dd style="color:#8892a4">Real-time stream processing for anomaly detection. Sliding window: "more than 3 transactions from different countries in 10 minutes → flag". Feature engineering: velocity checks, geo-distance calculations, merchant category risk scoring. ML model served inline with &lt;10ms latency. Stripe Radar ML: 99%+ fraud detection accuracy.</dd>
+          <dt style="color:#cdd3de">FIX Protocol Engine (HFT)</dt>
+          <dd style="color:#8892a4">Financial Information eXchange protocol — the universal language of electronic trading. Ultra-low latency implementations in C++: kernel bypass (DPDK), FPGA-based order routing at nanosecond speeds. Co-location: servers physically placed inside NYSE/NASDAQ data centers (1 microsecond advantage).</dd>
+          <dt style="color:#cdd3de" class="mb-0">CQRS + Event Sourcing</dt>
+          <dd class="mb-0" style="color:#8892a4">Command Query Responsibility Segregation: write path (ledger entries) separated from read path (account balances, reports). Event sourcing: account balance is derived by replaying all transactions — never stored directly. Allows time-travel queries: "what was this balance on March 15th?" without separate audit tables.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 Security &amp; Compliance</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">PCI-DSS Compliance</dt>
+          <dd style="color:#8892a4">Payment Card Industry Data Security Standard. Card numbers never stored in plaintext — tokenized (Stripe stores; merchants get a token). Network segmentation: cardholder data environment (CDE) isolated from rest of infrastructure. Quarterly penetration tests. Strict access logging.</dd>
+          <dt style="color:#cdd3de">HSM (Hardware Security Modules)</dt>
+          <dd style="color:#8892a4">Physical tamper-evident hardware that holds private keys and performs cryptographic operations (signing transactions). Keys never leave the HSM in plaintext. Used by every major payment processor for signing payment tokens. Thales/Entrust nShield: standard HSMs used in finance.</dd>
+          <dt style="color:#cdd3de">mTLS (Mutual TLS)</dt>
+          <dd style="color:#8892a4">Both client and server present certificates. Internal microservices authenticate each other — prevents a compromised service from calling payment APIs. Certificate rotation every 24 hours via Vault (HashiCorp). All internal traffic encrypted, even within VPC.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Bare Metal Co-location (HFT)</dt>
+          <dd class="mb-0" style="color:#8892a4">High-frequency trading firms (Jane Street, Two Sigma) rent rack space physically inside exchange data centers. Speed of light: London Equinix LD4 to NYSE Mahwah NJ: ~35ms. Co-location: &lt;1 microsecond to exchange matching engine. Kernel bypass (DPDK) + RDMA eliminates OS overhead entirely.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Workflow Deep Dive</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3">
+          <div class="step-num">1</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">API + Idempotency: Charge Exactly Once</div>
+          <div style="font-size:.8rem;color:#8892a4">Client sends <code>POST /v1/charges</code> with <code>Idempotency-Key: {uuid}</code> header. Stripe stores: <code>SET idempotency:{key} "pending" EX 86400</code> (24h). If same key arrives again: return stored result without re-processing. This means network timeouts are safe to retry — the charge can never happen twice for the same key. Critical: the UUID must be generated before the request, not after.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">2</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Parallel: Fraud Detection + Ledger Write</div>
+          <div style="font-size:.8rem;color:#8892a4">Both run concurrently on receipt of payment event. Fraud ML (Flink): velocity checks, IP reputation, device fingerprint, behavioral biometrics — returns risk score in &lt;10ms. Ledger write: BEGIN transaction in FoundationDB, write debit/credit entries, verify double-entry invariant (SUM=0), COMMIT. If fraud score &gt; threshold → rollback ledger + decline. If ledger fails → fraud result discarded. Both must succeed.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">3</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Bank Clearing via ACH / SWIFT</div>
+          <div style="font-size:.8rem;color:#8892a4">Stripe settles with banks via ACH (Automated Clearing House) for US transfers. SWIFT for international (SWIFT gpi: same-day tracking). ACH is batch — processes in 3 batches per business day. Stripe holds funds in pooled bank accounts and settles merchants daily (T+2). Real-time payments (RTP) in US (The Clearing House): 24/7, under 60 seconds. SEPA Instant Credit Transfer in EU: 10 seconds.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(0,212,170,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🔐 Why Stronger Than ACID?</div>
+        <div style="font-size:.78rem;color:#8892a4">Standard ACID with "snapshot isolation" can still have anomalies (write skew). Finance needs <strong style="color:#cdd3de">strict serializability</strong> — equivalent to a single-threaded execution. FoundationDB and Spanner provide this. Cost: higher latency (10–100ms vs 1–5ms) and lower throughput. Acceptable for payments where correctness matters more than speed.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(0,212,170,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">⚡ HFT: Nanoseconds Matter</div>
+        <div style="font-size:.78rem;color:#8892a4">HFT strategies exploit price differences that exist for microseconds. Speed stack: FPGA order routing (100 ns) → kernel bypass (DPDK, 500 ns) → co-location (1 μs to exchange) → custom network cards (RDMA). A 1-millisecond latency advantage over competitors generates ~$100M/year additional profit for top HFT firms.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(0,212,170,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎯 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">CP system, always.</strong> A payment system that sacrifices consistency for availability would allow double-spending or ledger imbalances. In a network partition, FinTech systems refuse to process transactions rather than risk inconsistency. "Better to reject a payment than to process it twice." Banks are legally obligated to maintain consistent ledgers.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'Payment API', detail: 'HTTPS POST with JSON body: <code>{"amount": 1000, "currency": "usd", "source": "tok_visa"}</code> + <code>Idempotency-Key</code> header + Bearer token auth. TLS 1.3 + certificate pinning (Stripe SDK pins against Stripe\'s CA). API gateway: rate limiting (100 req/min per API key), input validation, PCI scope isolation — raw card data tokenized client-side via Stripe.js, never passes through merchant servers.' },
+  { title: 'Idempotency Check', detail: 'Redis lookup: <code>GET idempotency:{key}</code>. If "completed" → return cached response (same charge_id, same status) without re-processing. If "pending" → another request is in-flight (race condition) → 409 Conflict. If null → SET "pending" EX 86400 (24h expiry) → proceed. On completion: SET to serialized response object. This makes all retries safe. Stripe processes ~5% of charges as retries.' },
+  { title: 'Fraud ML', detail: 'Flink streaming job: receives payment event from Kafka, computes ~200 features in real-time: transaction velocity (3 purchases in 5 min?), IP geolocation vs billing address, device fingerprint (JS-collected), historical fraud rate for this MCC (merchant category code), amount vs user\'s historical average. XGBoost model returns fraud probability. Stripe Radar: 99.3% of transactions approved correctly. &lt;10ms latency.' },
+  { title: 'ACID Ledger', detail: 'FoundationDB transaction: reads source account balance (with read conflict range), checks balance ≥ amount, inserts two ledger entries (debit + credit), updates balance counters. Strict serializable: if concurrent transaction modifies same account → conflict detected → retry. Double-entry invariant: SUM(all entries in transaction) = 0. On success: charge record written with status=SUCCEEDED.' },
+  { title: 'Bank Clearing', detail: 'Async from customer\'s perspective — charge is "captured" immediately in Stripe\'s ledger. Actual bank settlement is batched. ACH NACHA file generated at end of day: fixed-width record format (94 chars/record). Submitted to ACH operator (Federal Reserve FedACH or The Clearing House). Bank credits/debits within T+1 (same-day ACH) or T+2 (standard). International: SWIFT MT103 message format.' },
+  { title: 'Webhooks / Events', detail: 'Stripe emits events: <code>charge.succeeded</code>, <code>payment_intent.succeeded</code>, <code>customer.subscription.deleted</code>. Events delivered to merchant webhook endpoint via HTTPS POST. Retried with exponential backoff (1h, 2h, 4h...) up to 72 hours if endpoint unavailable. Signed with HMAC-SHA256 (webhook signing secret) — merchant can verify authenticity. Event log retained 30 days for replay.' },
+  { title: 'Audit Log', detail: 'Every state transition appended to immutable audit log. Schema: <code>(event_id UUID, timestamp TIMESTAMPTZ, actor_id, action, resource_type, resource_id, before_state JSONB, after_state JSONB, ip_address, user_agent)</code>. Cryptographically chained: each entry includes SHA-256 hash of previous entry — any tampering breaks the chain. Required for PCI-DSS, SOX (Sarbanes-Oxley), and GDPR audit trails. Retained 7 years minimum.' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

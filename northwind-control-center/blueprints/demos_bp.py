@@ -976,3 +976,75 @@ def geo_latency_page():
 @login_required
 def bigquery_pruning_page():
     return render_template('demos/bigquery_pruning.html')
+
+
+# ── CAP Theorem ───────────────────────────────────────────────────────────────
+
+@demos_bp.route('/cap-theorem')
+@login_required
+def cap_theorem_page():
+    return render_template('demos/cap_theorem.html')
+
+
+# ── Spotify on GCP Cloud Workflow ─────────────────────────────────────────────
+
+@demos_bp.route('/spotify-cloud')
+@login_required
+def spotify_cloud_page():
+    return render_template('demos/spotify_cloud.html')
+
+
+# ── Polyglot Persistence ───────────────────────────────────────────────────────
+
+@demos_bp.route('/polyglot')
+@login_required
+def polyglot_page():
+    return render_template('demos/polyglot.html')
+
+
+# ── Workflow Architecture Pages ────────────────────────────────────────────────
+
+@demos_bp.route('/workflow/search-ai')
+@login_required
+def workflow_search_ai():
+    return render_template('demos/workflow_search_ai.html')
+
+@demos_bp.route('/workflow/video')
+@login_required
+def workflow_video():
+    return render_template('demos/workflow_video.html')
+
+@demos_bp.route('/workflow/social')
+@login_required
+def workflow_social():
+    return render_template('demos/workflow_social.html')
+
+@demos_bp.route('/workflow/ecommerce')
+@login_required
+def workflow_ecommerce():
+    return render_template('demos/workflow_ecommerce.html')
+
+@demos_bp.route('/workflow/messaging')
+@login_required
+def workflow_messaging():
+    return render_template('demos/workflow_messaging.html')
+
+@demos_bp.route('/workflow/fintech')
+@login_required
+def workflow_fintech():
+    return render_template('demos/workflow_fintech.html')
+
+@demos_bp.route('/workflow/iot')
+@login_required
+def workflow_iot():
+    return render_template('demos/workflow_iot.html')
+
+@demos_bp.route('/workflow/gaming')
+@login_required
+def workflow_gaming():
+    return render_template('demos/workflow_gaming.html')
+
+@demos_bp.route('/workflow/bigdata')
+@login_required
+def workflow_bigdata():
+    return render_template('demos/workflow_bigdata.html')

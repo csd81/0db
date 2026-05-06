@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}IoT & Telemetry Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #00b4d8; }
+.hero-grad { background: linear-gradient(135deg, rgba(0,180,216,.1), rgba(0,100,100,.06), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:96px; text-align:center; cursor:pointer; padding:.5rem .25rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(0,180,216,.1); }
+.pipe-node.active { background:rgba(0,180,216,.18); }
+.pipe-node .p-icon { font-size:1.6rem; }
+.pipe-node .p-label { font-size:.6rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:20px; height:2px; background:rgba(0,180,216,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#000; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#88ddff; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.protocol-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+.protocol-cell { background:#0d1218; border:1px solid rgba(0,180,216,.2); border-radius:6px; padding:.6rem; font-size:.75rem; }
+.metric-row { display:flex; justify-content:space-between; align-items:center; padding:.3rem 0; border-bottom:1px solid #1e2530; font-size:.78rem; }
+.metric-row:last-child { border-bottom:none; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">IoT &amp; Telemetry Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(0,180,216,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">📡</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">IoT &amp; Telemetry Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">Ingesting millions of tiny data points per second from hardware devices, edge compute filtering, time-series storage, and continuous alerting — from Tesla cars to factory sensors.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🚗 Tesla</span>
+      <span class="company-badge">🏭 Siemens</span>
+      <span class="company-badge">🟠 AWS IoT Core</span>
+      <span class="company-badge">🔷 Azure IoT Hub</span>
+      <span class="company-badge">🏙️ Smart Cities</span>
+      <span class="company-badge">⚙️ Bosch</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">Sensor → Cloud → Alert Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node for detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">🔧</div><div class="p-label">Edge<br>Sensor</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">📲</div><div class="p-label">MQTT<br>Publish</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">☁️</div><div class="p-label">Cloud<br>Broker</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">🔀</div><div class="p-label">Rules<br>Engine</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">🗃️</div><div class="p-label">TimeSeries<br>Write</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">🚨</div><div class="p-label">Alert<br>Engine</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">📊</div><div class="p-label">Dashboard<br>/ BI</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de"></div>
+    </div>
+  </div>
+
+  <!-- Protocols -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">IoT Communication Protocols</span>
+    </div>
+    <div class="card-body">
+      <div class="protocol-grid">
+        <div class="protocol-cell">
+          <div style="color:var(--a);font-weight:600">MQTT</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Pub/Sub over TCP. QoS 0/1/2.</div>
+          <div style="color:#8892a4;font-size:.7rem">Best for: constrained devices, high-latency networks, millions of connections. Broker: EMQX, Mosquitto, AWS IoT Core. Header overhead: 2 bytes. Default port: 1883 (plain), 8883 (TLS).</div>
+        </div>
+        <div class="protocol-cell">
+          <div style="color:var(--a);font-weight:600">CoAP</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">REST over UDP. Request/Response.</div>
+          <div style="color:#8892a4;font-size:.7rem">Best for: very constrained devices (Arduino, sensors with &lt;100KB RAM). Binary encoding. Optional ACK. Maps to HTTP methods. Used in smart meters and embedded systems.</div>
+        </div>
+        <div class="protocol-cell">
+          <div style="color:var(--a);font-weight:600">AMQP</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Message queue protocol over TCP.</div>
+          <div style="color:#8892a4;font-size:.7rem">Best for: industrial IoT with reliable delivery requirements. RabbitMQ implements AMQP. Heavier than MQTT but richer routing (exchange types, binding keys). Used in industrial control systems.</div>
+        </div>
+        <div class="protocol-cell">
+          <div style="color:var(--a);font-weight:600">WebSocket</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Full-duplex over HTTP/1.1.</div>
+          <div style="color:#8892a4;font-size:.7rem">Best for: browser-based dashboards receiving real-time sensor updates. Works through corporate firewalls (port 80/443). Higher overhead than MQTT for constrained devices.</div>
+        </div>
+        <div class="protocol-cell">
+          <div style="color:var(--a);font-weight:600">gRPC + Protobuf</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">Binary RPC over HTTP/2.</div>
+          <div style="color:#8892a4;font-size:.7rem">Best for: edge-to-cloud with structured schemas. Protobuf: 3–10× smaller than JSON. HTTP/2 multiplexing: many streams on one connection. Used by Tesla's Autopilot telemetry pipeline.</div>
+        </div>
+        <div class="protocol-cell">
+          <div style="color:var(--a);font-weight:600">LwM2M</div>
+          <div style="color:#cdd3de;font-size:.72rem;margin:.2rem 0">OMA standard over CoAP/UDP.</div>
+          <div style="color:#8892a4;font-size:.7rem">Device management: firmware OTA updates, object model for device resources. Standard for cellular IoT (LTE-M, NB-IoT). Used by telecom operators for SIM-based IoT devices globally.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage &amp; Data Layer</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">InfluxDB</dt>
+          <dd style="color:#8892a4">Purpose-built time-series DB. TSM (Time-Structured Merge Tree) engine optimized for time-ordered writes. Automatic data downsampling (Flux tasks): raw data at 1s intervals → 1m averages → 1h averages for long-term storage. 10M writes/second on commodity hardware. Used by Tesla, SpaceX for telemetry.</dd>
+          <dt style="color:#cdd3de">TimescaleDB</dt>
+          <dd style="color:#8892a4">PostgreSQL extension — time-series as hypertables. Automatic partitioning by time (chunk intervals). Continuous aggregates: materialized views that update automatically. Familiar SQL + time-series functions (<code>time_bucket()</code>, <code>first()</code>, <code>last()</code>). Compression: 95% space reduction on old chunks.</dd>
+          <dt style="color:#cdd3de">QuestDB</dt>
+          <dd style="color:#8892a4">Fastest open-source time-series: 4M rows/second ingestion, 1B row queries in &lt;1 second. SIMD-accelerated column scans. SQL with time-series extensions. Used by financial data and IoT companies that need extreme write throughput. Grafana-compatible.</dd>
+          <dt style="color:#cdd3de" class="mb-0">AWS S3 / Azure Data Lake (Cold)</dt>
+          <dd class="mb-0" style="color:#8892a4">Raw sensor data tiered to object storage after hot window (30 days). Parquet format: column-oriented, compressed, readable by Spark/Athena for historical analysis. Sensor data from 2017 still queryable for ML training. Cost: ~$23/TB-month on S3 Standard vs $0.004/TB-month on Glacier.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Processing</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">AWS IoT Core / Azure IoT Hub</dt>
+          <dd style="color:#8892a4">Managed MQTT brokers that scale to billions of devices. Device Registry: unique device IDs, X.509 certificates, device twins (desired/reported state JSON). Rules Engine: SQL-like rules route messages to Lambda, Kinesis, DynamoDB based on topic/payload content. TLS mutual auth with device certificates.</dd>
+          <dt style="color:#cdd3de">Apache Kafka (Buffer Layer)</dt>
+          <dd style="color:#8892a4">IoT broker → Kafka → time-series DB. Kafka acts as durable buffer: if InfluxDB is slow, messages queue in Kafka rather than backpressuring devices. Partitioned by device_id for ordered per-device processing. Kafka Connect sink connector writes batches to InfluxDB efficiently (10K messages/batch).</dd>
+          <dt style="color:#cdd3de">Apache Flink / Spark Streaming</dt>
+          <dd style="color:#8892a4">Stateful stream processing. Tumbling windows: "average temperature per device per 5 minutes". Sliding windows: "max vibration in last 60 seconds, updated every 10 seconds". Complex event processing: "3 out-of-range readings within 1 minute → trigger maintenance alert". State stored in RocksDB.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Edge Compute (AWS Greengrass/Azure IoT Edge)</dt>
+          <dd class="mb-0" style="color:#8892a4">Run Lambda/containers on the device itself. Pre-filters noise before cloud upload. Anomaly detection at the edge: if sensor reading is within normal range → discard, don't transmit. Saves 80% of bandwidth costs. Critical for latency-sensitive control loops (sub-10ms reaction time).</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 Connectivity &amp; Device Mgmt</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Cellular IoT: LTE-M / NB-IoT</dt>
+          <dd style="color:#8892a4">LPWAN (Low Power Wide Area Network) technologies for battery-powered devices. NB-IoT: 250 kbps, 10+ year battery life on AA cells, works underground. LTE-M: 1 Mbps, supports voice/mobility (asset tracking). Used in smart meters, parking sensors, agricultural soil monitors.</dd>
+          <dt style="color:#cdd3de">LoRaWAN</dt>
+          <dd style="color:#8892a4">License-free sub-GHz radio. Range: 5 km urban, 15 km rural, 700 km via satellite (space LoRa). Ultra-low bandwidth (250 bps – 50 kbps). Perfect for: smart agriculture (soil moisture once/hour), city infrastructure (waste bin fill levels), flood sensors in remote areas. Battery: 10 years.</dd>
+          <dt style="color:#cdd3de">Device Twins / Shadow State</dt>
+          <dd style="color:#8892a4">Cloud maintains JSON representation of each device's current state ("reported") and desired state ("desired"). Device syncs delta on reconnect. Example: desired={"firmware": "v2.1.0"} → device downloads and installs OTA update. Decouples device availability from configuration updates.</dd>
+          <dt style="color:#cdd3de" class="mb-0">X.509 Certificate Auth</dt>
+          <dd class="mb-0" style="color:#8892a4">Each device has a unique private key and certificate provisioned at manufacture. Mutual TLS: device proves identity to broker + broker proves identity to device. Certificate Revocation: compromised device certificates revoked in device registry → blocked immediately. No shared secrets.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Workflow Deep Dive</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3">
+          <div class="step-num">1</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Edge Filtering: Reduce Upload by 80%</div>
+          <div style="font-size:.8rem;color:#8892a4">Tesla FSD computer: 2,300 frames/second from 8 cameras + radar + ultrasonic. Raw bandwidth: ~40 Gbps. Onboard neural network processes locally — only anomalous events, disengagements, and training-relevant scenarios uploaded. Simple threshold filter: engine temp sampled every 100ms, only uploaded if delta &gt; 2°C or absolute &gt; 150°C. Reduces cellular data 95%.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">2</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">MQTT QoS Levels: Delivery Guarantees</div>
+          <div style="font-size:.8rem;color:#8892a4"><strong style="color:#cdd3de">QoS 0</strong> (At most once): fire-and-forget UDP-like. For non-critical metrics (ambient temperature). <strong style="color:#cdd3de">QoS 1</strong> (At least once): PUBACK confirmation. May duplicate — receiver must deduplicate by message_id. For alerts and threshold events. <strong style="color:#cdd3de">QoS 2</strong> (Exactly once): 4-message handshake (PUBLISH/PUBREC/PUBREL/PUBCOMP). For financial/billing-relevant telemetry (electricity meters).</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">3</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Continuous Queries: Real-time Alerting</div>
+          <div style="font-size:.8rem;color:#8892a4">InfluxDB continuous query: <code>SELECT mean(temp) INTO alert_check FROM sensors WHERE time &gt; now()-5m GROUP BY device_id</code> — runs every 30s. If mean &gt; 180°C: emit alert event to Kafka → PagerDuty webhook → maintenance ticket created in ServiceNow. For time-critical systems: Flink stateful operator evaluates threshold on every incoming message with &lt;10ms latency — vs 30s polling.</div></div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">4</div>
+          <div><div class="fw-semibold mb-1" style="color:#cdd3de">Data Retention &amp; Downsampling</div>
+          <div style="font-size:.8rem;color:#8892a4">InfluxDB retention policy: hot data (raw, 1s resolution) retained 30 days. Continuous aggregate: every night, compute 1-minute averages for the past day → store in "warm" measurement (3 years). Compute 1-hour averages for past month → "cold" measurement (forever). Raw data deleted after 30 days. Storage cost: 1M devices × 10 metrics × 1/s = 864B data points/day. Compressed: ~50 GB/day.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(0,180,216,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📊 Scale Numbers</div>
+        <div style="font-size:.78rem;color:#8892a4">
+          <div class="metric-row"><span>Tesla fleet (2024)</span><span style="color:var(--a)">~5.6M cars</span></div>
+          <div class="metric-row"><span>Metrics per car</span><span style="color:var(--a)">~1000/min</span></div>
+          <div class="metric-row"><span>Total events/sec</span><span style="color:var(--a)">~93M/sec</span></div>
+          <div class="metric-row"><span>AWS IoT Core max</span><span style="color:var(--a)">100B msgs/day</span></div>
+          <div class="metric-row"><span>MQTT connection limit</span><span style="color:var(--a)">1B devices</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(0,180,216,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🔋 Why MQTT, Not HTTP?</div>
+        <div style="font-size:.78rem;color:#8892a4">HTTP: 800+ byte headers per request. MQTT: 2-byte fixed header + topic. For a sensor sending 10 readings/second over cellular (NB-IoT at 10 kbps): HTTP would spend 64% of bandwidth on headers. MQTT: 5%. At 1M devices, MQTT saves $2M/month in cellular data costs. Also: MQTT broker maintains persistent sessions — device reconnects and gets missed messages without re-registering.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(0,180,216,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎯 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">AP system for telemetry</strong> — a few lost sensor readings are acceptable. InfluxDB and TimescaleDB prioritize write availability: if a node fails, writes continue to other nodes (replication factor 3). The alert system, however, needs consistency — you can't miss a critical alert. Critical alerts use Kafka (durable, replicated) + Flink for guaranteed processing.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'Edge Sensor', detail: 'Microcontroller (ESP32, Arduino, STM32) with sensors (temperature, pressure, vibration, GPS). Edge ML model (TensorFlow Lite, ONNX Runtime) pre-processes data locally — filters normal readings, only flags anomalies. Data serialized as Protobuf or MessagePack (binary, compact). Sent via MQTT over TLS. Battery-powered sensors use deep sleep between transmissions: wake every 60 seconds, transmit in 100ms, sleep again → months of battery life.' },
+  { title: 'MQTT Publish', detail: 'MQTT client (Paho, EMQX SDK) connects to broker with client certificate (X.509 mutual TLS). Publishes to topic: <code>devices/{device_id}/telemetry</code>. Payload: <code>{"device_id":"T123","ts":1715000000,"temp":87.3,"vibration":0.02,"battery":94}</code>. QoS 1 (at-least-once) for sensor data. Retained message flag for last known state. Persistent session: broker queues messages while device is offline.' },
+  { title: 'Cloud Broker', detail: 'AWS IoT Core: managed MQTT broker at internet scale. Device authentication via X.509 certificate or custom authorizer (JWT Lambda). Message broker routes to Rules Engine. Device Shadow: JSON document tracking device desired/reported state. Shadow sync: device reports state on connect, cloud can update desired state for OTA config changes. Handles 100B+ messages/day. Auto-scales — no capacity planning.' },
+  { title: 'Rules Engine', detail: 'AWS IoT Rules: SQL-like query over MQTT messages. Example: <code>SELECT device_id, temp, ts FROM "devices/+/telemetry" WHERE temp &gt; 150</code> → trigger Lambda alert function. Route by content: temperature data → InfluxDB (via Kinesis), GPS data → DynamoDB, error events → SNS topic. Multiple actions per rule. Flink running in parallel for complex event patterns (CEP): "3 anomalies in 5 minutes from same device".' },
+  { title: 'Time-Series Write', detail: 'Kafka consumer batch-writes to InfluxDB via line protocol: <code>sensors,device_id=T123,location=factory_a temp=87.3,vibration=0.02 1715000000000000000</code>. Line protocol: <code>measurement,tag_key=tag_val field_key=field_val timestamp</code>. Tags are indexed (for filtering). Fields are not indexed (for storage efficiency). Write batch: 10,000 points every 100ms. InfluxDB compresses time-series data ~90%: sequential timestamps + delta-encoding + Gorilla compression.' },
+  { title: 'Alert Engine', detail: 'Continuous queries (InfluxDB tasks, Flink, or Grafana Alerting): evaluate threshold every N seconds. Simple: <code>SELECT mean(temp) WHERE time &gt; now()-5m GROUP BY device_id HAVING mean &gt; 180</code>. Complex (Flink CEP): "temperature rising &gt;5°C/minute for 3 consecutive minutes → predictive maintenance alert". Alert routed to PagerDuty, Slack, SMS, ServiceNow ticket. Alert deduplication: suppress repeated alerts for same device within 1 hour.' },
+  { title: 'Dashboard / BI', detail: 'Grafana: real-time dashboards with InfluxDB/TimescaleDB datasources. Variables for device_id filtering. Heatmaps for factory floor sensor distribution. Historical analysis: Spark job queries Parquet files in S3 (2+ years of data) via Athena/Glue — joins device metadata from relational DB. Results visualized in Tableau/Superset. Predictive maintenance ML: scikit-learn model trained on historical failure patterns, deployed as SageMaker endpoint.' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

@@ -128,6 +128,173 @@
     <div id="deadlock-result-body" class="small font-monospace"></div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Isolation, Lock Types, Isolation Levels, Deadlock
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Lock types banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Shared lock (S)</strong><br>
+    Acquired by <code>SELECT</code>. Multiple transactions can hold S locks on the same row simultaneously.
+    Prevents X locks from being granted (no dirty reads). Duration depends on isolation level —
+    released immediately after the read at <em>Read Committed</em>, held until end of transaction at <em>Repeatable Read</em>.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e63946">Exclusive lock (X)</strong><br>
+    Acquired by <code>INSERT / UPDATE / DELETE</code>. Only one transaction can hold an X lock; no other
+    S or X locks are allowed on the same object. Always held until the transaction ends (<code>COMMIT</code>
+    or <code>ROLLBACK</code>) — this prevents the <em>lost update</em> anomaly.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Update lock (U)</strong><br>
+    Temporary lock acquired while evaluating the <code>WHERE</code> filter before an update.
+    Compatible with S (reads can proceed during the scan), but not with another U or X.
+    Converted to X if the row matches the filter. Prevents the <em>update starvation</em> problem
+    that would occur if two S+X upgrades raced each other.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Lock compatibility</strong><br>
+    A lock is <em>granted</em> if the requested mode is compatible with all existing locks on the object;
+    otherwise the transaction enters <em>wait</em> (blocked) state until blocking locks are released.<br>
+    S + S → both granted &nbsp;|&nbsp; S + U → both granted<br>
+    S + X → X waits &nbsp;|&nbsp; X + X → second waits<br>
+    U + U → second waits &nbsp;|&nbsp; U + X → X waits
+  </div>
+</div>
+
+<!-- Isolation levels + horse-auction deadlock -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: isolation levels -->
+  <div class="col-5">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e9c46a">
+        <i class="bi bi-layers me-1"></i> Four ISO Isolation Levels
+      </div>
+      <div style="padding:.5rem .7rem">
+        <table class="table table-dark table-sm mb-2" style="font-size:.66rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Level</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">S lock duration</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Dirty read</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Non-repeatable read</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Phantom</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr>
+              <td><code>READ UNCOMMITTED</code><br><span style="color:#5a6070;font-size:.6rem">NOLOCK hint</span></td>
+              <td>No S lock acquired</td>
+              <td style="color:#e63946">Yes</td>
+              <td style="color:#e63946">Yes</td>
+              <td style="color:#e63946">Yes</td>
+            </tr>
+            <tr>
+              <td><code>READ COMMITTED</code><br><span style="color:#06d6a0;font-size:.6rem">default</span></td>
+              <td>Released immediately after read</td>
+              <td style="color:#06d6a0">No</td>
+              <td style="color:#e63946">Yes</td>
+              <td style="color:#e63946">Yes</td>
+            </tr>
+            <tr>
+              <td><code>REPEATABLE READ</code></td>
+              <td>Held until end of transaction</td>
+              <td style="color:#06d6a0">No</td>
+              <td style="color:#06d6a0">No</td>
+              <td style="color:#e63946">Yes</td>
+            </tr>
+            <tr>
+              <td><code>SERIALIZABLE</code></td>
+              <td>Range lock held until end of transaction</td>
+              <td style="color:#06d6a0">No</td>
+              <td style="color:#06d6a0">No</td>
+              <td style="color:#06d6a0">No</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.35rem">
+          <strong style="color:#e9c46a">Set per session:</strong>
+          <code>SET TRANSACTION ISOLATION LEVEL REPEATABLE READ</code><br>
+          Higher isolation → fewer anomalies → more blocking → lower throughput.<br>
+          Even <em>Read Uncommitted</em> is valid when reads happen outside business hours
+          with no concurrent writers (e.g. nightly ETL export from an OLTP DB).
+        </div>
+        <div style="font-size:.64rem;color:#5a6070">
+          SQL Server also provides <code>SNAPSHOT</code> and <code>READ_COMMITTED_SNAPSHOT</code>
+          (row versioning — avoids read/write blocking by keeping old row versions in tempdb).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: horse-auction deadlock walkthrough -->
+  <div class="col-7">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e63946">
+        <i class="bi bi-exclamation-octagon me-1"></i> Isolation in Action — Horse Auction
+      </div>
+      <div style="padding:.5rem .7rem;font-size:.7rem">
+
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">
+          Two concurrent buyers. Both read <em>for sale</em>, wait 10 s to charge their card, then update.
+        </div>
+
+        <!-- Two columns: READ COMMITTED vs REPEATABLE READ -->
+        <div style="display:flex;gap:.5rem;margin-bottom:.4rem">
+
+          <!-- READ COMMITTED timeline -->
+          <div style="flex:1;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;font-size:.64rem">
+            <div style="color:#e63946;font-weight:700;margin-bottom:.25rem">READ COMMITTED — logical error</div>
+            <div style="color:#cdd3de">1. <em>My name</em> reads → S lock acquired then released</div>
+            <div style="color:#cdd3de">2. <em>Your name</em> reads → S lock acquired then released</div>
+            <div style="color:#cdd3de">3. Both wait 10 s (no locks on the row)</div>
+            <div style="color:#cdd3de">4. <em>My name</em> UPDATE → X lock granted → COMMIT</div>
+            <div style="color:#cdd3de">5. <em>Your name</em> UPDATE → X lock granted → COMMIT</div>
+            <div style="color:#e63946;margin-top:.25rem">Result: both cards charged, horse sold twice (last writer wins)</div>
+          </div>
+
+          <!-- REPEATABLE READ timeline -->
+          <div style="flex:1;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;font-size:.64rem">
+            <div style="color:#06d6a0;font-weight:700;margin-bottom:.25rem">REPEATABLE READ — deadlock → correct</div>
+            <div style="color:#cdd3de">1. <em>My name</em> reads → S lock held</div>
+            <div style="color:#cdd3de">2. <em>Your name</em> reads → S lock held (two S locks on row)</div>
+            <div style="color:#cdd3de">3. Both wait 10 s</div>
+            <div style="color:#cdd3de">4. <em>My name</em> tries X → blocked by Your name's S</div>
+            <div style="color:#cdd3de">5. <em>Your name</em> tries X → blocked by My name's S</div>
+            <div style="color:#cdd3de">6. Engine detects cycle → rolls back victim</div>
+            <div style="color:#06d6a0;margin-top:.25rem">Result: one buyer succeeds, one rolled back — only one card charged</div>
+          </div>
+        </div>
+
+        <!-- Deadlock victim message -->
+        <div style="background:#0a0508;border:1px solid #2a1a1a;border-radius:.3rem;padding:.35rem .6rem;font-size:.63rem;color:#e63946;margin-bottom:.4rem;font-family:monospace">
+          Transaction (Process ID …) was deadlocked on lock resources with another process
+          and has been chosen as the deadlock victim. Rerun the transaction.
+        </div>
+
+        <!-- Diagnosis query -->
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.2rem">Inspect live locks for a session:</div>
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;color:#cdd3de;overflow-x:auto;margin-bottom:.35rem"><span style="color:#457b9d">SELECT</span> resource_type, request_mode, request_status,
+       resource_associated_entity_id, request_session_id
+<span style="color:#457b9d">FROM</span>   sys.dm_tran_locks
+<span style="color:#457b9d">WHERE</span>  request_session_id = <span style="color:#e9c46a">@@SPID</span></pre>
+
+        <div style="font-size:.64rem;color:#5a6070">
+          <strong style="color:#e9c46a">Performance trade-off:</strong>
+          Higher isolation → fewer anomalies, more blocking, lower throughput (transactions/sec).
+          The right level depends on the workload — a nightly read-only ETL can safely use
+          <em>Read Uncommitted</em> because no concurrent writers are active.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {% endblock %}
 
 {% block scripts %}

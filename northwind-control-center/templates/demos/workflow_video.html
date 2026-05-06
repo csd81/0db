@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block title %}Video Streaming Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #ff4444; }
+.hero-grad { background: linear-gradient(135deg, rgba(255,68,68,.1), rgba(255,150,0,.06), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:96px; text-align:center; cursor:pointer; padding:.5rem .25rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(255,68,68,.1); }
+.pipe-node.active { background:rgba(255,68,68,.18); }
+.pipe-node .p-icon { font-size:1.6rem; }
+.pipe-node .p-label { font-size:.6rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:20px; height:2px; background:rgba(255,68,68,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#fff; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#ffaaaa; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.codec-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; font-size:.75rem; }
+.codec-cell { background:#0a0d11; border-radius:4px; padding:.4rem .6rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Video Streaming Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(255,68,68,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">🎥</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">Video / High-Bandwidth Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">Massive blob storage, parallel GPU transcoding, edge CDN delivery, and adaptive bitrate streaming — how 500 hours of video are uploaded every minute.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🔴 YouTube</span>
+      <span class="company-badge">🎵 TikTok</span>
+      <span class="company-badge">🍿 Netflix</span>
+      <span class="company-badge">🟣 Twitch</span>
+      <span class="company-badge">🎬 Vimeo</span>
+      <span class="company-badge">📺 Disney+</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">Upload &amp; Delivery Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node for detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">📤</div><div class="p-label">Raw<br>Upload</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">✂️</div><div class="p-label">Chunk<br>Ingestion</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">🏭</div><div class="p-label">Parallel<br>Transcode</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">🗄️</div><div class="p-label">Blob<br>Storage</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">🌍</div><div class="p-label">CDN<br>Push</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">📱</div><div class="p-label">ABR<br>Player</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">📊</div><div class="p-label">Telemetry<br>/ Reco</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de"></div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage &amp; Data Layer</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Amazon S3 / Google Cloud Storage</dt>
+          <dd style="color:#8892a4">Stores every resolution of every segment. Object names follow <code>/{video_id}/{resolution}/{segment_n}.ts</code>. Lifecycle policies move cold segments to Glacier (S3 IA). YouTube stores ~1 exabyte+ of video.</dd>
+          <dt style="color:#cdd3de">Vitess (horizontally scaled MySQL)</dt>
+          <dd style="color:#8892a4">YouTube's metadata store. Shards millions of rows of video metadata, comments, and view counts across 1000s of MySQL shards. A VTGate proxy makes it look like one MySQL instance to application code.</dd>
+          <dt style="color:#cdd3de">Apache Cassandra</dt>
+          <dd style="color:#8892a4">High-availability watch history and recommendation signals. AP system — tolerates node failures. Wide-row design: <code>(user_id, watch_time) → video_id, duration_watched</code>.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Elasticsearch</dt>
+          <dd class="mb-0" style="color:#8892a4">Full-text search over video titles, descriptions, transcripts (auto-generated by Whisper). Powers autocomplete with prefix queries. ~5ms P99 search latency at YouTube scale.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Processing</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">FFmpeg</dt>
+          <dd style="color:#8892a4">The universal video transcoding engine. Takes raw upload → outputs H.264 (MP4), VP9, AV1 segments at 240p/360p/480p/720p/1080p/4K. Single 4K 10-minute video: ~50 GB raw, 20 parallel FFmpeg workers.</dd>
+          <dt style="color:#cdd3de">AWS Elemental MediaConvert</dt>
+          <dd style="color:#8892a4">Managed transcoding service. Submits jobs as JSON, outputs HLS/DASH segments to S3. Automatically scales GPU instances. Used by Netflix and streaming services that don't want to manage FFmpeg farms.</dd>
+          <dt style="color:#cdd3de">Apache Flink (stream processing)</dt>
+          <dd style="color:#8892a4">Real-time view count aggregation. Kafka topic <code>view-events</code> → Flink job aggregates by video_id per 10-second window → updates Redis counter. This is why YouTube shows "approximated" counts then updates.</dd>
+          <dt style="color:#cdd3de" class="mb-0">TensorFlow / PyTorch (Recommendations)</dt>
+          <dd class="mb-0" style="color:#8892a4">Deep learning recommendation models (YouTube DNN, TikTok's "For You" ranker). Two-tower model: user embedding + video embedding → dot product similarity. Retrained daily on watch history signals.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 CDN &amp; Streaming Protocols</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Netflix Open Connect (Custom CDN)</dt>
+          <dd style="color:#8892a4">Netflix's proprietary CDN appliances physically rack-mounted inside ISP data centers. Serves 99%+ of Netflix traffic from local ISP. Eliminates backbone transit costs. Each appliance: 100 TB SSD + 100 Gbps uplink.</dd>
+          <dt style="color:#cdd3de">HLS (HTTP Live Streaming)</dt>
+          <dd style="color:#8892a4">Apple's protocol. Manifest file (<code>.m3u8</code>) lists all available segment URLs at each quality. Player downloads 2–10 second <code>.ts</code> segments. Supported natively by Safari and iOS.</dd>
+          <dt style="color:#cdd3de">MPEG-DASH</dt>
+          <dd style="color:#8892a4">W3C standard. XML <code>MPD</code> manifest. Codec-agnostic (works with H.264, VP9, AV1). Used by YouTube. Adaptive Quality Selection based on bandwidth probe every 3 seconds.</dd>
+          <dt style="color:#cdd3de" class="mb-0">UDP + QUIC (Live Streaming)</dt>
+          <dd class="mb-0" style="color:#8892a4">Twitch/live video uses RTMP upload from OBS, then QUIC (HTTP/3) for low-latency delivery. QUIC avoids TCP head-of-line blocking — dropped packet doesn't stall other streams.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Codecs + Formats Reference -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Codec &amp; Format Reference</span>
+    </div>
+    <div class="card-body">
+      <div class="codec-grid">
+        <div class="codec-cell"><div style="color:var(--a);font-weight:600">H.264/AVC</div><div style="color:#8892a4;font-size:.72rem">Widest device support. ~1 Mbps at 720p30. Patent encumbered. Universal fallback.</div></div>
+        <div class="codec-cell"><div style="color:var(--a);font-weight:600">VP9</div><div style="color:#8892a4;font-size:.72rem">Google's open codec. 50% better compression than H.264. YouTube default on Chrome/Android.</div></div>
+        <div class="codec-cell"><div style="color:var(--a);font-weight:600">AV1</div><div style="color:#8892a4;font-size:.72rem">Royalty-free. 30% better than VP9. 20× slower to encode. Used for catalog (not live). Netflix, YouTube.</div></div>
+        <div class="codec-cell"><div style="color:var(--a);font-weight:600">HEVC/H.265</div><div style="color:#8892a4;font-size:.72rem">2× compression vs H.264. Used for 4K/HDR. Requires hardware decoder. Apple ecosystem.</div></div>
+        <div class="codec-cell"><div style="color:var(--a);font-weight:600">HLS Segments</div><div style="color:#8892a4;font-size:.72rem">2–10 second <code>.ts</code> chunks. <code>.m3u8</code> playlist. Each segment independently decodable.</div></div>
+        <div class="codec-cell"><div style="color:var(--a);font-weight:600">DASH Segments</div><div style="color:#8892a4;font-size:.72rem">fMP4 fragments. <code>MPD</code> XML manifest. Byte-range requests. Supports live &amp; VOD.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Steps -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Workflow Deep Dive</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3">
+          <div class="step-num">1</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Upload: Chunked Multipart Transfer</div>
+            <div style="font-size:.8rem;color:#8892a4">Browser splits large file into 5 MB chunks. Each chunk uploaded independently via HTTPS PUT (resumable upload API). YouTube uses a custom QUIC-based upload protocol. If connection drops, upload resumes from last successful chunk. Raw video stored in regional S3/GCS bucket with no processing yet.</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">2</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Parallel Transcoding: FFmpeg Farm</div>
+            <div style="font-size:.8rem;color:#8892a4">S3 upload triggers Lambda/Pub/Sub event → enqueues transcoding job. Transcoding workers (EC2 c5.4xlarge or custom GPU instances) split video into segments, then fan out across N workers — each transcode one resolution in parallel. A 1-hour 4K video: ~20 parallel jobs, ~10 minutes total. Output: VP9 + H.264 at 6 quality levels.</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">3</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">CDN Distribution: Pre-positioning Popular Content</div>
+            <div style="font-size:.8rem;color:#8892a4">Top 1% of videos (by predicted view count) pre-pushed to all CDN PoPs (Points of Presence) before first request. Long-tail content served on cache miss: CDN origin-fetches from S3, caches locally for subsequent requests. CDN cache hit rate: ~90% for popular content, ~40% for long-tail.</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">4</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Adaptive Bitrate (ABR) Playback</div>
+            <div style="font-size:.8rem;color:#8892a4">Player downloads <code>.m3u8</code> master manifest listing all quality URLs. Probes bandwidth by timing the download of 3 segments. If bandwidth &gt; threshold → step up quality. If buffer &lt; 2 seconds → drop quality. Target: maintain 10-30 second buffer. Switch quality at segment boundary (no glitch). Algorithm: BOLA (Buffer Occupancy based Lyapunov Algorithm).</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div class="step-num">5</div>
+          <div>
+            <div class="fw-semibold mb-1" style="color:#cdd3de">Telemetry → Recommendation Pipeline</div>
+            <div style="font-size:.8rem;color:#8892a4">Player emits quality-change events, buffer stalls, and watch-time heartbeats every 5 seconds to Kafka. Flink aggregates real-time view counts. Daily Spark job computes user engagement features → feeds recommendation model. YouTube Two-Tower: user vector (from watch history) × video vector (from metadata) = relevance score. Top-100 ranked → re-ranked by diversity and freshness.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(255,68,68,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">📦 Storage Math</div>
+        <div style="font-size:.78rem;color:#8892a4">500 hours uploaded/minute → 30,000 hours/hour. A 1-hour video at 6 qualities averages ~8 GB total. That's 240 TB/hour of new storage — before replication (3×). YouTube: ~1 exabyte total storage, growing ~2 PB/day.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(255,68,68,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🌍 Why Custom CDN?</div>
+        <div style="font-size:.78rem;color:#8892a4">At Netflix scale, paying Akamai/Cloudflare is more expensive than building your own. Open Connect costs Netflix ~$200M to build but saves ~$1B/year in CDN fees. Also gives Netflix full control over routing, cache eviction, and traffic shaping for 15% of all US internet traffic.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(255,68,68,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎯 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">AP system</strong> — availability is paramount. Stale view counts are fine; buffering is not. Cassandra (AP) for watch history. Vitess/MySQL (CP) only for critical metadata like video ownership and monetization. CDN cache serves potentially stale thumbnails — acceptable.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'Raw Upload', detail: 'File split into 5 MB chunks on the client. Each chunk PUT to upload API. Resumable: if connection drops, check what chunks were received and resume. Raw file stored in S3/GCS with metadata (creator_id, title, description) written to Vitess. Upload URL signed with AWS SigV4 — direct to S3, bypasses application servers.' },
+  { title: 'Chunk Ingestion', detail: 'S3 triggers a notification event (S3 Event Notification → SQS → Lambda). Lambda validates the upload (file signature, duration, codec detection via <code>ffprobe</code>). Writes a "processing" record to the metadata DB. Enqueues transcoding jobs to SQS — one job per (video_id, target_resolution) pair.' },
+  { title: 'Parallel Transcoding', detail: 'N EC2 workers pull jobs from SQS. Each runs <code>ffmpeg -i input.mp4 -vf scale=1280:720 -c:v libvp9 output_720p.webm</code>. Segments cut every 4 seconds for adaptive streaming. A 1-hour video → 900 segments × 6 resolutions = 5400 FFmpeg operations, parallelized. GPU-accelerated for H.265/AV1. ~10–30 min total per video.' },
+  { title: 'Blob Storage', detail: 'Each segment stored as <code>/videos/{video_id}/{codec}/{resolution}/seg_{n:04d}.ts</code>. HLS manifest (<code>master.m3u8</code> + per-quality <code>720p.m3u8</code>) stored alongside. Objects tagged with video metadata. Lifecycle: &lt;30 days → S3 Standard, 30–365 days → S3-IA, &gt;1 year → Glacier. Thumbnails stored separately in an image optimization pipeline (WebP, multiple sizes).' },
+  { title: 'CDN Push', detail: 'After transcoding, a "published" event triggers CDN pre-positioning for high-demand videos (ML model predicts view velocity). Cloudfront or custom CDN nodes pull from S3 origin and cache locally. CDN has 200+ PoPs globally — viewer connects to nearest by Anycast DNS. Origin shield (intermediate layer) protects S3 from CDN cache storm on viral videos.' },
+  { title: 'ABR Player', detail: 'Player fetches master playlist → selects initial quality by probing a small segment download. Every 3 segments re-evaluates: if download throughput 50% faster than bitrate → upgrade quality; if buffer &lt; 15s → downgrade. Smooth switching via fMP4 random access points. On startup, downloads lowest quality first (fast first frame) then upgrades. 200ms startup target.' },
+  { title: 'Telemetry / Reco', detail: 'Player sends QoS events to Kafka: <code>{"event":"quality_change","from":720,"to":1080,"buffer_s":18.3}</code>. Flink aggregates view counts per video per minute. Nightly: Spark reads full watch history, trains Two-Tower recommendation model, writes user/video embeddings to feature store. Embedding lookup → fast ANN retrieval for homepage ranking.' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

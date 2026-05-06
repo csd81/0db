@@ -80,6 +80,444 @@
   </div>
 
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Stored Procedures — Chapter 5 Server-Side Logic
+     Source: Adatbázis-kezelő rendszerek II., Vassányi 2018-19
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Concept banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">CREATE PROCEDURE</strong><br>
+    The script is compiled into an <em>execution plan</em> and stored as a database object.
+    The code does not run at creation time — only when called via <code>EXECUTE proc_name [args]</code>.
+    Can contain any T-SQL: variables, loops, cursors, TRY/CATCH, transactions, calls to other procedures.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">OUTPUT parameters</strong><br>
+    Declared with the <code>OUTPUT</code> keyword; passed by reference — the caller reads the value after execution.
+    <code>EXEC sp_name @in_param, @out_var OUTPUT</code>.
+    Useful for returning a status code, a generated ID, or a computed result alongside the main operation.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Return value (RETURN n)</strong><br>
+    Every procedure implicitly returns an <code>int</code>. <code>RETURN 0</code> means success by convention;
+    negative values are set automatically on error.
+    Captured with <code>EXEC @result = proc_name</code>.
+    Distinct from OUTPUT params — use for a single success/failure code, not for data.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Result sets from SELECT</strong><br>
+    Any <code>SELECT</code> whose results are not stored into variables is sent as a result set to the caller —
+    like a table returned from the procedure. A single procedure can return multiple result sets.
+    SQL Server specific: other DBMS require a cursor OUTPUT parameter for this.
+  </div>
+</div>
+
+<!-- Syntax card + nested procedure pattern -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: procedure anatomy -->
+  <div class="col-5">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e9c46a">
+        <i class="bi bi-code-slash me-1"></i> Stored Procedure Anatomy
+      </div>
+      <div style="padding:.5rem .7rem">
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#457b9d">CREATE PROCEDURE</span> sp_inc_salary
+    @name    <span style="color:#e9c46a">nvarchar</span>(20),          <span style="color:#5a6070">-- input parameter</span>
+    @result  <span style="color:#e9c46a">varchar</span>(50) <span style="color:#8338ec">OUTPUT</span>    <span style="color:#5a6070">-- output parameter</span>
+<span style="color:#457b9d">AS</span>
+<span style="color:#457b9d">BEGIN TRY</span>
+    <span style="color:#457b9d">SET NOCOUNT ON</span>
+    <span style="color:#457b9d">DECLARE</span> @cnt <span style="color:#e9c46a">int</span>, @emp_id <span style="color:#e9c46a">int</span>
+
+    <span style="color:#457b9d">SELECT</span> @cnt = <span style="color:#e9c46a">COUNT</span>(*) <span style="color:#457b9d">FROM</span> Employees
+    <span style="color:#457b9d">WHERE</span>  LastName <span style="color:#457b9d">LIKE</span> @name
+
+    <span style="color:#457b9d">IF</span> @cnt = 0      <span style="color:#457b9d">SET</span> @result = <span style="color:#06d6a0">'NOT_FOUND'</span>
+    <span style="color:#457b9d">ELSE IF</span> @cnt &gt; 1 <span style="color:#457b9d">SET</span> @result = <span style="color:#06d6a0">'AMBIGUOUS'</span>
+    <span style="color:#457b9d">ELSE BEGIN</span>
+        <span style="color:#457b9d">SELECT</span> @emp_id = EmployeeID <span style="color:#457b9d">FROM</span> Employees
+        <span style="color:#457b9d">WHERE</span>  LastName <span style="color:#457b9d">LIKE</span> @name
+        <span style="color:#457b9d">UPDATE</span> Employees <span style="color:#457b9d">SET</span> salary = 1.1*salary
+        <span style="color:#457b9d">WHERE</span>  EmployeeID = @emp_id
+        <span style="color:#457b9d">SET</span> @result = <span style="color:#06d6a0">'OK'</span>
+    <span style="color:#457b9d">END</span>
+<span style="color:#457b9d">END TRY</span>
+<span style="color:#457b9d">BEGIN CATCH</span>
+    <span style="color:#457b9d">SET</span> @result = <span style="color:#06d6a0">'ERROR:'</span> + <span style="color:#e9c46a">ERROR_MESSAGE</span>()
+<span style="color:#457b9d">END CATCH</span>
+<span style="color:#457b9d">GO</span>
+
+<span style="color:#5a6070">-- Call with OUTPUT parameter:</span>
+<span style="color:#457b9d">DECLARE</span> @r <span style="color:#e9c46a">varchar</span>(50)
+<span style="color:#457b9d">EXEC</span> sp_inc_salary <span style="color:#06d6a0">'Fuller%'</span>, @r <span style="color:#8338ec">OUTPUT</span>
+<span style="color:#457b9d">PRINT</span> @r   <span style="color:#5a6070">-- 'OK' / 'NOT_FOUND' / 'AMBIGUOUS'</span></pre>
+        <div style="font-size:.64rem;color:#5a6070">
+          <code>SET NOCOUNT ON</code> suppresses the "n rows affected" message — important for procedures
+          that return result sets, so the client doesn't confuse the count with a result set.
+          Verify the new procedure under <em>Programmability → Stored Procedures</em> in SSMS.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: nested procedure pattern -->
+  <div class="col-7">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8338ec">
+        <i class="bi bi-diagram-2 me-1"></i> Nested Procedure Pattern — Order Entry
+      </div>
+      <div style="padding:.5rem .7rem;font-size:.7rem">
+
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.35rem">
+          The order-entry transaction is split into two cooperating stored procedures.
+          The outer procedure owns the transaction; the inner handles stock update and signals errors via OUTPUT.
+        </div>
+
+        <!-- Call diagram -->
+        <div style="display:flex;gap:.5rem;align-items:stretch;margin-bottom:.4rem">
+          <div style="flex:1;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;font-size:.63rem;color:#cdd3de">
+            <div style="color:#e9c46a;font-weight:700;margin-bottom:.3rem">uj_rendeles (outer)</div>
+            <div style="color:#5a6070;margin-bottom:.2rem">BEGIN TRAN / BEGIN TRY</div>
+            <div>① check product count → ambiguous?</div>
+            <div>② check customer balance → insufficient?</div>
+            <div>③ UPDATE Customers SET balance -= total</div>
+            <div>④ INSERT Orders → @@IDENTITY → @order_id</div>
+            <div>⑤ INSERT [Order Details]</div>
+            <div style="color:#8338ec;margin:.25rem 0">⑥ EXEC sp_raktárkészlet_aktualizalo</div>
+            <div style="padding-left:.8rem;color:#8338ec">@order_id, @result OUTPUT</div>
+            <div>⑦ IF @result='OK' → COMMIT ELSE ROLLBACK</div>
+            <div style="color:#5a6070;margin-top:.2rem">END TRY / BEGIN CATCH → ROLLBACK</div>
+          </div>
+          <div style="display:flex;align-items:center;color:#5a6070;font-size:1rem">▶</div>
+          <div style="flex:.8;background:#060809;border:1px solid #1a1a2a;border-radius:.3rem;padding:.4rem .6rem;font-size:.63rem;color:#cdd3de">
+            <div style="color:#8338ec;font-weight:700;margin-bottom:.3rem">sp_raktárkészlet_aktualizalo (inner)</div>
+            <div style="color:#5a6070;margin-bottom:.2rem">@orderid IN, @result OUT</div>
+            <div>BEGIN TRY</div>
+            <div style="padding-left:.6rem">UPDATE Products</div>
+            <div style="padding-left:.6rem">SET UnitsInStock -= od.Quantity</div>
+            <div style="padding-left:.6rem">FROM [Order Details] od</div>
+            <div style="padding-left:.6rem">WHERE od.OrderID = @orderid</div>
+            <div style="padding-left:.6rem;color:#06d6a0">SET @result = 'OK'</div>
+            <div>END TRY / BEGIN CATCH</div>
+            <div style="padding-left:.6rem;color:#e63946">SET @result = 'HIBA'</div>
+            <div>END CATCH</div>
+          </div>
+        </div>
+
+        <!-- Why split -->
+        <div style="background:#080a10;border:1px solid #1a1a2a;border-radius:.3rem;padding:.38rem .6rem;font-size:.64rem;color:#8892a4;margin-bottom:.35rem">
+          <strong style="color:#06d6a0">Why split?</strong>
+          The stock-update logic is reusable (e.g. for cancellations, adjustments) without coupling it to the order-entry transaction.
+          The outer procedure owns the transaction boundary — it decides whether to COMMIT or ROLLBACK based on the inner result.
+          If the inner proc raises an error (CHECK constraint on <code>UnitsInStock ≥ 0</code>), the outer CATCH rolls back everything atomically.
+        </div>
+
+        <!-- Return value summary -->
+        <div style="font-size:.64rem;color:#5a6070">
+          <strong style="color:#e9c46a">Return value codes:</strong><br>
+          <code>EXEC @r = proc_name</code> — captures the integer return code.<br>
+          0 = success (default), negative = system error, positive = user-defined error code.<br>
+          Example: <code>EXEC @r = p</code> where p does <code>SELECT 1/0</code> → @r = −6.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Built-in Functions + User-Defined Functions
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Built-in functions banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">String functions</strong><br>
+    <code>LEFT(s,n)</code> &nbsp;<code>LEN(s)</code> &nbsp;<code>CHARINDEX(find,s)</code><br>
+    <code>CONCAT(a,b,…)</code> &nbsp;<code>SUBSTRING(s,start,len)</code><br>
+    <code>LTRIM / RTRIM / TRIM</code> &nbsp;<code>REPLACE(s,old,new)</code><br>
+    <code>UPPER / LOWER</code> &nbsp;<code>STRING_AGG(col,sep)</code>
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">Date functions</strong><br>
+    <code>GETDATE()</code> — current datetime<br>
+    <code>DATEPART(part,d)</code> &nbsp;<code>DAY / MONTH / YEAR(d)</code><br>
+    <code>DATEDIFF(unit,d1,d2)</code> — integer difference<br>
+    <code>DATEADD(unit,n,d)</code> — shift by n units<br>
+    <code>ISDATE(s)</code> — returns 1 if parseable
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Conversion &amp; logic</strong><br>
+    <code>CAST(x AS type)</code> — strict; errors on fail<br>
+    <code>CONVERT(type,x[,style])</code> — with format style<br>
+    <code>TRY_CAST / TRY_CONVERT</code> — returns NULL on fail<br>
+    <code>PARSE(s AS type USING culture)</code><br>
+    <code>IIF(cond,true_val,false_val)</code><br>
+    <code>CHOOSE(n,v1,v2,…)</code> — nth value
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Aggregate + system</strong><br>
+    <code>SUM MIN MAX AVG COUNT STDEV VAR</code> — ignore NULLs (except COUNT(*))<br>
+    Use with <code>OVER(…)</code> for windowing or with <code>GROUP BY</code> for groups.<br>
+    System globals: <code>@@IDENTITY</code> <code>@@TRANCOUNT</code><br>
+    <code>NEWID()</code> — UUID &nbsp;<code>HOST_NAME()</code><br>
+    <code>ERROR_NUMBER / MESSAGE / LINE</code>
+  </div>
+</div>
+
+<!-- UDF card -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: scalar UDF -->
+  <div class="col-5">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8338ec">
+        <i class="bi bi-calculator me-1"></i> Scalar User-Defined Function
+      </div>
+      <div style="padding:.5rem .7rem">
+
+        <!-- Restrictions box -->
+        <div style="background:#080a10;border:1px solid #2a1a1a;border-radius:.3rem;padding:.35rem .6rem;font-size:.64rem;color:#8892a4;margin-bottom:.4rem">
+          <strong style="color:#e63946">Restrictions vs stored procedures:</strong>
+          No <code>UPDATE / INSERT / DELETE</code>;
+          no non-deterministic functions (<code>RAND</code>, <code>GETDATE</code>);
+          no calls to user stored procedures;
+          no <code>TRY/CATCH</code> or <code>RAISERROR</code>.<br>
+          <strong>Must</strong> prefix with schema on call: <code>dbo.fn_name(…)</code>
+        </div>
+
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto;margin-bottom:.35rem"><span style="color:#457b9d">CREATE FUNCTION</span> fn_ev_honap (<span style="color:#8338ec">@datum</span> <span style="color:#e9c46a">datetime</span>)
+<span style="color:#457b9d">RETURNS</span> <span style="color:#e9c46a">varchar</span>(50)
+<span style="color:#457b9d">AS BEGIN</span>
+    <span style="color:#457b9d">DECLARE</span> <span style="color:#8338ec">@r</span> <span style="color:#e9c46a">varchar</span>(50)
+    <span style="color:#457b9d">SET</span> <span style="color:#8338ec">@r</span> = <span style="color:#e9c46a">CAST</span>(<span style="color:#e9c46a">YEAR</span>(<span style="color:#8338ec">@datum</span>) <span style="color:#457b9d">AS</span> <span style="color:#e9c46a">varchar</span>)
+            + <span style="color:#457b9d">CASE WHEN</span> <span style="color:#e9c46a">MONTH</span>(<span style="color:#8338ec">@datum</span>) &lt; 10
+                  <span style="color:#457b9d">THEN</span> <span style="color:#06d6a0">'_0'</span> + <span style="color:#e9c46a">CAST</span>(<span style="color:#e9c46a">MONTH</span>(<span style="color:#8338ec">@datum</span>) <span style="color:#457b9d">AS</span> <span style="color:#e9c46a">varchar</span>)
+                  <span style="color:#457b9d">ELSE</span> <span style="color:#06d6a0">'_'</span>  + <span style="color:#e9c46a">CAST</span>(<span style="color:#e9c46a">MONTH</span>(<span style="color:#8338ec">@datum</span>) <span style="color:#457b9d">AS</span> <span style="color:#e9c46a">varchar</span>)
+             <span style="color:#457b9d">END</span>
+    <span style="color:#457b9d">RETURN</span> <span style="color:#8338ec">@r</span>
+<span style="color:#457b9d">END</span>
+<span style="color:#457b9d">GO</span>
+<span style="color:#5a6070">-- Used directly in GROUP BY / SELECT:</span>
+<span style="color:#457b9d">SELECT</span> lastname,
+       <span style="color:#e9c46a">dbo</span>.fn_ev_honap(OrderDate) <span style="color:#457b9d">AS</span> honap,
+       <span style="color:#e9c46a">COUNT</span>(OrderID) <span style="color:#457b9d">AS</span> rend_szam
+<span style="color:#457b9d">FROM</span> Employees <span style="color:#457b9d">LEFT JOIN</span> Orders <span style="color:#457b9d">USING</span>(EmployeeID)
+<span style="color:#457b9d">GROUP BY</span> lastname, <span style="color:#e9c46a">dbo</span>.fn_ev_honap(OrderDate)
+<span style="color:#457b9d">ORDER BY</span> lastname, honap</pre>
+
+        <div style="font-size:.64rem;color:#5a6070">
+          A scalar UDF can appear anywhere a scalar expression is valid:
+          <code>SELECT</code> list, <code>WHERE</code>, <code>GROUP BY</code>, <code>ORDER BY</code>, default column value.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: table-valued UDF -->
+  <div class="col-7">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#457b9d">
+        <i class="bi bi-table me-1"></i> Table-Valued Function (TVF)
+      </div>
+      <div style="padding:.5rem .7rem;font-size:.7rem">
+
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">
+          Return type is <code>TABLE</code>. In the inline form (single SELECT) the table structure is inferred —
+          no need to declare columns explicitly. Use the TVF in <code>FROM</code> like a table or view.
+        </div>
+
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#5a6070">-- Inline TVF: returns products and order count for a category</span>
+<span style="color:#457b9d">CREATE FUNCTION</span> kateg_termekei (<span style="color:#8338ec">@kat_id</span> <span style="color:#e9c46a">int</span>)
+<span style="color:#457b9d">RETURNS TABLE AS RETURN</span>
+(
+    <span style="color:#457b9d">SELECT</span> p.ProductName  <span style="color:#457b9d">AS</span> termeknev,
+           <span style="color:#e9c46a">COUNT</span>(*)        <span style="color:#457b9d">AS</span> rendelesek_szama
+    <span style="color:#457b9d">FROM</span>   Products p
+    <span style="color:#457b9d">JOIN</span>   [Order Details] od <span style="color:#457b9d">ON</span> p.ProductID = od.ProductID
+    <span style="color:#457b9d">WHERE</span>  p.CategoryID = <span style="color:#8338ec">@kat_id</span>
+    <span style="color:#457b9d">GROUP BY</span> p.ProductID, p.ProductName
+)
+<span style="color:#457b9d">GO</span>
+<span style="color:#5a6070">-- Used in FROM — can filter on returned columns:</span>
+<span style="color:#457b9d">SELECT</span> * <span style="color:#457b9d">FROM</span> <span style="color:#e9c46a">dbo</span>.kateg_termekei(1)
+<span style="color:#457b9d">WHERE</span>  rendelesek_szama &gt; 30</pre>
+
+        <table class="table table-dark table-sm mb-2" style="font-size:.67rem">
+          <thead>
+            <tr>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Feature</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Stored Procedure</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Scalar UDF</th>
+              <th style="color:#5a6070;background:#080a0d;border-color:#1e2028">Table-Valued UDF</th>
+            </tr>
+          </thead>
+          <tbody style="background:#060809;border-color:#141618;color:#cdd3de">
+            <tr><td>Use in SELECT/FROM</td><td style="color:#e63946">No</td><td style="color:#06d6a0">Scalar position</td><td style="color:#06d6a0">FROM clause</td></tr>
+            <tr><td>Can modify data</td><td style="color:#06d6a0">Yes</td><td style="color:#e63946">No</td><td style="color:#e63946">No</td></tr>
+            <tr><td>TRY/CATCH</td><td style="color:#06d6a0">Yes</td><td style="color:#e63946">No</td><td style="color:#e63946">No</td></tr>
+            <tr><td>Transactions</td><td style="color:#06d6a0">Yes</td><td style="color:#e63946">No</td><td style="color:#e63946">No</td></tr>
+            <tr><td>Call stored procs</td><td style="color:#06d6a0">Yes</td><td style="color:#e63946">No</td><td style="color:#e63946">No</td></tr>
+            <tr><td>Non-deterministic funcs</td><td style="color:#06d6a0">Yes</td><td style="color:#e63946">No</td><td style="color:#e63946">No</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size:.64rem;color:#5a6070">
+          Business logic that is data-intensive and read-only → scalar or table-valued UDF (compose into queries).
+          Logic that writes, raises errors, or manages transactions → stored procedure.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Educational: Triggers (Chapter 5)
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Trigger concept banner -->
+<div class="d-flex gap-2 mb-2 align-items-stretch mt-3">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">What is a trigger?</strong><br>
+    A special stored procedure attached to a table, fired automatically by the engine when a
+    specified DML event occurs (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>).
+    No input parameters and no return value. Errors inside the trigger roll back the triggering statement.
+    Makes a passive database <em>active</em> — the DB reacts to changes without client involvement.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">inserted / deleted virtual tables</strong><br>
+    SQL Server exposes two read-only pseudo-tables inside every DML trigger:<br>
+    <code>inserted</code> — new row versions (for <code>INSERT</code> and <code>UPDATE</code>)<br>
+    <code>deleted</code> — old row versions (for <code>DELETE</code> and <code>UPDATE</code>)<br>
+    A single <code>UPDATE</code> touching 1 000 rows puts all 1 000 new rows in <code>inserted</code>
+    and all 1 000 old rows in <code>deleted</code> — always write set-based logic, not row-by-row.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">AFTER vs INSTEAD OF</strong><br>
+    <code>AFTER INSERT|UPDATE|DELETE</code> — trigger fires after the statement succeeds (default).<br>
+    <code>INSTEAD OF</code> — trigger fires <em>in place of</em> the statement; used on views to
+    make non-updatable views writable.<br>
+    Multiple triggers of the same type can exist on one table; execution order is determined by system rules.
+    Triggers can cascade to other triggers or recurse into themselves.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#457b9d">Typical uses</strong><br>
+    • <em>Cross-table integrity</em> — rules that span multiple columns or tables (beyond a single CHECK constraint)<br>
+    • <em>Business automation</em> — e.g. update salary on every new order insert<br>
+    • <em>Audit logging</em> — copy old/new row to a log table on any modification<br>
+    • <em>Derived data</em> — maintain a running total or denormalised cache column
+  </div>
+</div>
+
+<!-- Two trigger code examples -->
+<div class="row g-2 mb-2">
+
+  <!-- Left: salary trigger -->
+  <div class="col-5">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e9c46a">
+        <i class="bi bi-lightning-charge me-1"></i> AFTER INSERT — Salary Increment
+      </div>
+      <div style="padding:.5rem .7rem">
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">
+          Every new order row inserted into <code>Orders</code> raises the employee's salary 2 %.
+          Works correctly even when a single INSERT adds multiple rows at once.
+        </div>
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto;margin-bottom:.35rem"><span style="color:#457b9d">CREATE TRIGGER</span> tr_uj_rend
+<span style="color:#457b9d">ON</span> Orders <span style="color:#457b9d">AFTER INSERT</span>
+<span style="color:#457b9d">AS</span>
+<span style="color:#457b9d">BEGIN</span>
+    <span style="color:#457b9d">DECLARE</span> @i <span style="color:#e9c46a">int</span>
+    <span style="color:#457b9d">SELECT</span> @i = <span style="color:#e9c46a">COUNT</span>(*) <span style="color:#457b9d">FROM</span> <span style="color:#8338ec">inserted</span>
+    <span style="color:#457b9d">PRINT</span> <span style="color:#06d6a0">'Rows inserted: '</span> + <span style="color:#e9c46a">CAST</span>(@i <span style="color:#457b9d">AS</span> <span style="color:#e9c46a">varchar</span>)
+
+    <span style="color:#457b9d">UPDATE</span> Employees
+    <span style="color:#457b9d">SET</span>    Salary = Salary * 1.02
+    <span style="color:#457b9d">WHERE</span>  EmployeeID <span style="color:#457b9d">IN</span> (
+        <span style="color:#457b9d">SELECT</span> EmployeeID <span style="color:#457b9d">FROM</span> <span style="color:#8338ec">inserted</span>
+    )
+<span style="color:#457b9d">END</span>
+<span style="color:#457b9d">GO</span>
+<span style="color:#5a6070">-- Test:
+-- SELECT Salary FROM Employees WHERE EmployeeID=3  → 100
+-- INSERT Orders (EmployeeID) VALUES (3)
+-- SELECT Salary FROM Employees WHERE EmployeeID=3  → 102</span></pre>
+        <div style="font-size:.64rem;color:#5a6070">
+          <code>PRINT</code> inside a trigger is useful for debugging but is invisible to most application clients.
+          Never write row-by-row cursor logic in a trigger — it breaks on multi-row DML statements.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: stock update trigger using both tables -->
+  <div class="col-7">
+    <div style="background:#0e1014;border:1px solid #1e2028;border-radius:.4rem;overflow:hidden;height:100%">
+      <div style="background:#13151b;border-bottom:1px solid #1e2028;padding:.38rem .7rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8338ec">
+        <i class="bi bi-box-seam me-1"></i> AFTER UPDATE — Stock Adjustment (inserted + deleted)
+      </div>
+      <div style="padding:.5rem .7rem;font-size:.7rem">
+
+        <div style="font-size:.64rem;color:#5a6070;margin-bottom:.3rem">
+          When an order detail quantity changes, adjust <code>UnitsInStock</code> by the <em>delta</em>
+          (new qty − old qty). Uses both <code>inserted</code> and <code>deleted</code> in a three-way join.
+        </div>
+        <pre style="font-size:.61rem;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.4rem .6rem;color:#cdd3de;overflow-x:auto;margin-bottom:.4rem"><span style="color:#457b9d">CREATE TRIGGER</span> tr_stock_update
+<span style="color:#457b9d">ON</span> [Order Details] <span style="color:#457b9d">AFTER UPDATE</span>
+<span style="color:#457b9d">AS</span>
+<span style="color:#457b9d">BEGIN TRY</span>
+    <span style="color:#457b9d">PRINT</span> <span style="color:#06d6a0">'Updating '</span> + <span style="color:#e9c46a">CAST</span>(<span style="color:#e9c46a">COUNT</span>(*) <span style="color:#457b9d">FROM</span> <span style="color:#8338ec">inserted</span>) + <span style="color:#06d6a0">' rows'</span>
+
+    <span style="color:#457b9d">UPDATE</span> Products
+    <span style="color:#457b9d">SET</span>    UnitsInStock = UnitsInStock - (i.Quantity - d.Quantity)
+    <span style="color:#457b9d">FROM</span>   Products p
+    <span style="color:#457b9d">JOIN</span>   <span style="color:#8338ec">inserted</span> i <span style="color:#457b9d">ON</span> p.ProductID = i.ProductID
+    <span style="color:#457b9d">JOIN</span>   <span style="color:#8338ec">deleted</span>  d <span style="color:#457b9d">ON</span> i.ProductID = d.ProductID
+<span style="color:#457b9d">END TRY</span>
+<span style="color:#457b9d">BEGIN CATCH</span>
+    <span style="color:#457b9d">PRINT</span> <span style="color:#06d6a0">'Error: quantity too large.'</span>
+    <span style="color:#5a6070">-- triggering UPDATE auto-rolls back</span>
+<span style="color:#457b9d">END CATCH</span>
+<span style="color:#457b9d">GO</span></pre>
+
+        <!-- inserted/deleted diagram -->
+        <div style="display:flex;gap:.5rem;margin-bottom:.4rem">
+          <div style="flex:1;background:#060809;border:1px solid #1a2a1a;border-radius:.3rem;padding:.35rem .55rem;font-size:.63rem;font-family:monospace;color:#cdd3de">
+            <div style="color:#06d6a0;margin-bottom:.2rem">inserted (new values)</div>
+            <div style="color:#8892a4">OrderID │ ProductID │ Quantity</div>
+            <div>10248   │ 11        │ <span style="color:#06d6a0">13000</span></div>
+            <div style="color:#5a6070;font-size:.6rem;margin-top:.2rem">new Quantity = 13000</div>
+          </div>
+          <div style="display:flex;align-items:center;color:#5a6070">⊕</div>
+          <div style="flex:1;background:#060809;border:1px solid #2a1a1a;border-radius:.3rem;padding:.35rem .55rem;font-size:.63rem;font-family:monospace;color:#cdd3de">
+            <div style="color:#e63946;margin-bottom:.2rem">deleted (old values)</div>
+            <div style="color:#8892a4">OrderID │ ProductID │ Quantity</div>
+            <div>10248   │ 11        │ <span style="color:#e63946">12</span></div>
+            <div style="color:#5a6070;font-size:.6rem;margin-top:.2rem">old Quantity = 12</div>
+          </div>
+          <div style="display:flex;align-items:center;color:#5a6070">→</div>
+          <div style="flex:1;background:#060809;border:1px solid #1e2028;border-radius:.3rem;padding:.35rem .55rem;font-size:.63rem;color:#cdd3de">
+            <div style="color:#e9c46a;margin-bottom:.2rem">delta applied</div>
+            <div>UnitsInStock<br>−(13000−12)<br>= −12 988</div>
+            <div style="color:#e63946;font-size:.6rem;margin-top:.2rem">CHECK constraint fires → CATCH → UPDATE rolled back</div>
+          </div>
+        </div>
+
+        <div style="font-size:.64rem;color:#5a6070">
+          When an error occurs inside a trigger, the <em>triggering statement</em> is automatically rolled back —
+          you do not need an explicit <code>ROLLBACK</code> inside the trigger's CATCH block (and issuing one
+          would roll back the entire surrounding transaction).
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {% endblock %}
 
 {% block scripts %}

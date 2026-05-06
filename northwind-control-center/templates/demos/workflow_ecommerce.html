@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}E-Commerce Architecture{% endblock %}
+{% block content %}
+<style>
+:root { --a: #ff9900; }
+.hero-grad { background: linear-gradient(135deg, rgba(255,153,0,.12), rgba(255,80,0,.06), #0e1014); }
+.pipe-wrap { display:flex; align-items:center; overflow-x:auto; padding:1.2rem 0; gap:0; }
+.pipe-node { flex:0 0 auto; width:90px; text-align:center; cursor:pointer; padding:.5rem .2rem; border-radius:8px; transition:background .2s; }
+.pipe-node:hover { background:rgba(255,153,0,.1); }
+.pipe-node.active { background:rgba(255,153,0,.18); }
+.pipe-node .p-icon { font-size:1.5rem; }
+.pipe-node .p-label { font-size:.59rem; color:#8892a4; margin-top:.2rem; line-height:1.3; }
+.pipe-node.active .p-label { color:var(--a); font-weight:600; }
+.pipe-arrow { flex:1; min-width:16px; height:2px; background:rgba(255,153,0,.25); position:relative; overflow:hidden; }
+.pipe-arrow .dot { position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--a); animation:flowDot 2s linear infinite; }
+.pipe-arrow .dot:nth-child(2){animation-delay:.7s}.pipe-arrow .dot:nth-child(3){animation-delay:1.4s}
+@keyframes flowDot { 0%{left:0;opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{left:calc(100% - 10px);opacity:0} }
+.stack-card { background:#111418; border-left:3px solid var(--a); border-radius:6px; }
+.step-num { width:32px; height:32px; border-radius:50%; background:var(--a); color:#000; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#ffcc77; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.saga-step { border:1px solid rgba(255,153,0,.25); border-radius:6px; padding:.6rem .8rem; background:#0d1218; font-size:.78rem; }
+.saga-step .saga-title { color:var(--a); font-weight:600; font-size:.75rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1400px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">E-Commerce &amp; Delivery Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(255,153,0,.25)">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <span style="font-size:2.8rem;line-height:1">🛒</span>
+      <div>
+        <h2 class="mb-0 fw-bold" style="color:var(--a)">E-Commerce &amp; Delivery Architecture</h2>
+        <p class="mb-0 mt-1" style="color:#8892a4;font-size:.875rem">ACID transaction integrity, distributed Saga pattern checkout, polyglot persistence — where money and inventory require strict correctness.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">📦 Amazon</span>
+      <span class="company-badge">🟢 Shopify</span>
+      <span class="company-badge">🚗 Uber</span>
+      <span class="company-badge">🛍️ Etsy</span>
+      <span class="company-badge">🔵 eBay</span>
+      <span class="company-badge">🟠 Alibaba</span>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#0e1014;border-color:#1e2530">
+      <span style="color:var(--a)">⚡</span>
+      <span class="fw-bold" style="color:#cdd3de">Order Processing Pipeline</span>
+      <span class="ms-auto" style="font-size:.72rem;color:#8892a4">Click a node for detail</span>
+    </div>
+    <div class="card-body pb-2">
+      <div class="pipe-wrap">
+        <div class="pipe-node active" onclick="selectStep(0)"><div class="p-icon">🔍</div><div class="p-label">Search<br>(ES)</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(1)"><div class="p-icon">🛒</div><div class="p-label">Cart<br>(Redis)</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(2)"><div class="p-icon">💳</div><div class="p-label">Checkout<br>Saga</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(3)"><div class="p-icon">🔒</div><div class="p-label">Inventory<br>Lock</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(4)"><div class="p-icon">💰</div><div class="p-label">Payment<br>Gateway</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(5)"><div class="p-icon">📬</div><div class="p-label">Order<br>Queue</div></div>
+        <div class="pipe-arrow"><div class="dot"></div><div class="dot"></div></div>
+        <div class="pipe-node" onclick="selectStep(6)"><div class="p-icon">🚚</div><div class="p-label">Fulfillment<br>/ Shipping</div></div>
+      </div>
+      <div id="stepDetail" class="p-3 rounded mt-1" style="background:#0a0d11;border:1px solid #1e2530;min-height:72px;font-size:.82rem;color:#cdd3de"></div>
+    </div>
+  </div>
+
+  <!-- Saga Pattern -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Saga Pattern — Distributed Checkout Transaction</span>
+      <span class="ms-2" style="font-size:.72rem;color:#8892a4">Each step has a compensating rollback action</span>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column gap-2">
+        <div class="saga-step"><span class="saga-title">Step 1 → Reserve Inventory</span><span class="ms-2" style="color:#8892a4">UPDATE stock SET reserved=reserved+qty WHERE product_id=? AND (stock-reserved) &gt;= qty</span><div style="color:#ef476f;font-size:.72rem;margin-top:.2rem">↩ Compensate: UPDATE stock SET reserved=reserved-qty</div></div>
+        <div class="saga-step"><span class="saga-title">Step 2 → Create Order Record</span><span class="ms-2" style="color:#8892a4">INSERT INTO orders (user_id, total, status='PENDING') → returns order_id</span><div style="color:#ef476f;font-size:.72rem;margin-top:.2rem">↩ Compensate: UPDATE orders SET status='CANCELLED'</div></div>
+        <div class="saga-step"><span class="saga-title">Step 3 → Charge Payment</span><span class="ms-2" style="color:#8892a4">Stripe API: create_charge(amount, card_token, idempotency_key=order_id)</span><div style="color:#ef476f;font-size:.72rem;margin-top:.2rem">↩ Compensate: Stripe API: create_refund(charge_id)</div></div>
+        <div class="saga-step"><span class="saga-title">Step 4 → Confirm Order</span><span class="ms-2" style="color:#8892a4">UPDATE orders SET status='CONFIRMED'; UPDATE stock SET stock=stock-qty, reserved=reserved-qty</span><div style="color:#06d6a0;font-size:.72rem;margin-top:.2rem">✓ Success — emit OrderConfirmed event to Kafka</div></div>
+        <div class="saga-step"><span class="saga-title">Step 5 → Notify Fulfillment</span><span class="ms-2" style="color:#8892a4">Kafka message consumed by Warehouse, Shipping, Email services independently</span><div style="color:#06d6a0;font-size:.72rem;margin-top:.2rem">✓ Each service handles its own failure/retry independently</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🗄️ Storage &amp; Data Layer</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Amazon Aurora / CockroachDB</dt>
+          <dd style="color:#8892a4">ACID relational DB for orders, inventory, customers. Aurora: MySQL-compatible, 6-way replication across 3 AZs. CockroachDB: distributed SQL, geo-partitioned tables — Paris orders stay in EU region for GDPR compliance. SELECT FOR UPDATE prevents overselling.</dd>
+          <dt style="color:#cdd3de">Amazon DynamoDB / Redis</dt>
+          <dd style="color:#8892a4">Shopping cart state. DynamoDB: TTL on items (cart expires after 24h). Redis: sub-millisecond SET/GET for cart data with session TTL. Eventual consistency acceptable — the cart is non-critical until checkout.</dd>
+          <dt style="color:#cdd3de">Elasticsearch / Apache Solr</dt>
+          <dd style="color:#8892a4">Product catalog search. 300M+ product listings at Amazon. Full-text search, faceted filtering (brand, price_range, rating). Autocomplete via edge n-gram tokenizer. Fuzzy matching ("running shose" finds "running shoes"). Separate from relational DB — denormalized.</dd>
+          <dt style="color:#cdd3de" class="mb-0">MongoDB (Product Catalog)</dt>
+          <dd class="mb-0" style="color:#8892a4">Flexible schema for product attributes. Electronics: {"voltage": "110V", "wattage": 1200}. Clothing: {"sizes": ["S","M","L"], "material": "cotton"}. No fixed schema means new product categories don't require DB migrations.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Processing</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">AWS SQS / RabbitMQ</dt>
+          <dd style="color:#8892a4">Order fulfillment queue. FIFO queues for strict ordering. Dead letter queue (DLQ) captures failed messages for manual review. Message visibility timeout: 30s (prevents duplicate processing). Decouples checkout from fulfillment — payment service can succeed even if warehouse is down.</dd>
+          <dt style="color:#cdd3de">Apache Airflow</dt>
+          <dd style="color:#8892a4">Batch orchestration. Daily: Recalculate seller rankings, sync inventory counts from warehouses, process refund batches, generate financial reconciliation reports. DAG-based workflow with retry/alerting. Shopify uses Airflow for merchant payout calculations.</dd>
+          <dt style="color:#cdd3de">AWS Lambda (Event-driven)</dt>
+          <dd style="color:#8892a4">Serverless microservices for stateless operations: send order confirmation email, resize product image, calculate estimated delivery date. Pay per invocation — no idle servers. Cold start penalty (~100ms) mitigated by provisioned concurrency for critical paths.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Recommendation Engine (A9/BM25)</dt>
+          <dd class="mb-0" style="color:#8892a4">Amazon's A9 search algorithm combines BM25 relevance with purchase signal (conversion rate, revenue per click). "Also bought" recommendations from collaborative filtering. Personalized ranking re-orders results per user based on purchase history.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stack-card p-3 h-100">
+        <h6 class="fw-bold mb-3" style="color:var(--a)">🌐 Infrastructure &amp; Resilience</h6>
+        <dl class="mb-0" style="font-size:.8rem">
+          <dt style="color:#cdd3de">Microservice Architecture (SOA)</dt>
+          <dd style="color:#8892a4">Amazon: 1000s of microservices. Each team owns their service end-to-end ("you build it, you run it"). Services communicate via REST or gRPC. Service mesh (Envoy/Istio) handles mTLS, circuit breaking, retries. Internal APIs: "Amazon Marketplace" was built to sell Amazon's own infrastructure as AWS.</dd>
+          <dt style="color:#cdd3de">Circuit Breaker Pattern</dt>
+          <dd style="color:#8892a4">Resilience4j / Hystrix. If Product Recommendation service fails: open circuit, return cached recommendations. Prevents cascading failure from one slow microservice bringing down checkout. States: Closed (normal) → Open (fail fast) → Half-Open (probe recovery).</dd>
+          <dt style="color:#cdd3de">Idempotency Keys</dt>
+          <dd style="color:#8892a4">Every payment request includes an idempotency key (UUID). Stripe deduplicates: same key within 24h returns the same result without charging twice. Critical for retry safety — network timeout doesn't mean the charge failed.</dd>
+          <dt style="color:#cdd3de" class="mb-0">Shopify Sagas / 2PC alternatives</dt>
+          <dd class="mb-0" style="color:#8892a4">Shopify uses the Saga pattern (choreography-based) — no distributed 2PC which would require all services to be available simultaneously. Each step publishes events, compensating transactions handle failures. ~99.99% checkout success rate even with partial service degradation.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(255,153,0,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">⚡ Why No 2-Phase Commit?</div>
+        <div style="font-size:.78rem;color:#8892a4">2PC requires all participants to be available simultaneously. In a microservices world with 1000s of services, one unavailable service would block every transaction. The Saga pattern (compensating transactions) sacrifices some atomicity for availability — acceptable for business logic, not for money movement.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(255,153,0,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🛡️ Inventory Overselling</div>
+        <div style="font-size:.78rem;color:#8892a4">Amazon's "1 left in stock!" — maintained by atomic SQL: <code>UPDATE inventory SET stock=stock-1 WHERE id=? AND stock&gt;0</code>. Affected rows = 0 → out of stock. For high-demand items (Black Friday), optimistic locking with version columns prevents race conditions across concurrent checkouts.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded h-100" style="background:#111418;border:1px solid rgba(255,153,0,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎯 CAP Position</div>
+        <div style="font-size:.78rem;color:#8892a4"><strong style="color:#cdd3de">CP for orders, AP for catalog.</strong> Order/payment must be CP — you can't have two concurrent transactions both think they got the last item. Product catalog and recommendations can be AP — a slightly stale stock count is acceptable. Two different databases, two different CAP choices in the same system.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = [
+  { title: 'Search (Elasticsearch)', detail: 'User types query → debounced autocomplete (300ms) hits ES <code>_search</code> API. Hybrid query: BM25 full-text relevance + function score (click-through rate, purchase rate, recency). Facets computed in parallel aggregations. Response: ~20ms at Amazon scale. Spellcheck via "did you mean" using term suggester. A/B tested ranking for conversion optimization.' },
+  { title: 'Cart (Redis / DynamoDB)', detail: 'Add-to-cart: <code>HSET cart:{session_id} {product_id} {qty,price,variant}</code>. TTL of 24h on key. Serialized as JSON. Price locked at add-to-cart time (Amazon validates price at checkout, may show "price changed" notice). For logged-in users: cart persisted to DynamoDB (survives session expiry). Cart merge on login: Redis ephemeral + DynamoDB persistent carts are merged.' },
+  { title: 'Checkout Saga', detail: 'Checkout triggers a Saga coordinator (orchestration pattern). Coordinator maintains state machine: PENDING → INVENTORY_RESERVED → PAYMENT_CHARGED → CONFIRMED. State persisted to DB — if coordinator crashes, it can resume from last state. Each saga step is idempotent — safe to retry. Total saga duration: &lt;2 seconds P95 at Shopify.' },
+  { title: 'Inventory Lock (ACID)', detail: '<code>BEGIN TRANSACTION; SELECT stock FROM inventory WHERE id=? FOR UPDATE; -- acquires row lock\nIF stock &lt; qty THEN ROLLBACK; -- out of stock\nUPDATE inventory SET reserved=reserved+qty; COMMIT;</code> — Row-level lock prevents concurrent oversell. Amazon uses optimistic locking at scale: UPDATE...WHERE version=? — zero affected rows = concurrent modification detected, retry.' },
+  { title: 'Payment Gateway', detail: 'Stripe API call with idempotency key = order_id. Stripe handles retry safely. SCA (Strong Customer Authentication) for EU: triggers 3D Secure redirect. Payment tokenization: raw card numbers never touch Amazon servers — Stripe JS SDK tokenizes client-side. PCI-DSS compliance scope reduced to SAQ A. Payment processing: ~500ms including bank authorization.' },
+  { title: 'Order Queue (SQS)', detail: '<code>OrderConfirmed</code> event published to SQS FIFO queue (ordered delivery guaranteed). Consumer groups: Warehouse (pick-and-pack), Email service (confirmation), Inventory service (finalize stock deduction), Analytics (revenue event). Dead Letter Queue after 3 failures. SQS FIFO: exactly-once delivery within 5-minute deduplication window.' },
+  { title: 'Fulfillment / Shipping', detail: 'Warehouse service picks order from queue. Routing algorithm selects optimal fulfillment center (nearest to ship address with stock). Label printed via Zebra thermal printer. Carrier API (UPS/FedEx/Amazon Logistics) creates shipment, returns tracking ID. ETA calculated by ML model (historical delivery times by route, carrier, weather). Status updates pushed to customer via WebSocket/email/SMS.' }
+];
+function selectStep(i) {
+  document.querySelectorAll('.pipe-node').forEach((n,j)=>n.classList.toggle('active',i===j));
+  document.getElementById('stepDetail').innerHTML=`<strong style="color:var(--a)">${steps[i].title}</strong> — ${steps[i].detail}`;
+}
+selectStep(0);
+</script>
+{% endblock %}

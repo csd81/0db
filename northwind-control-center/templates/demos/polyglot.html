@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+{% block title %}Polyglot Persistence — Database Ecosystem 2026{% endblock %}
+
+{% block content %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+
+:root {
+  --c-rdbms:  #4285F4;
+  --c-doc:    #00C853;
+  --c-kv:     #FF3860;
+  --c-graph:  #A855F7;
+  --c-olap:   #FBBC05;
+  --c-vector: #00BFA5;
+  --c-ts:     #FF6D00;
+  --sf: #0d0f16;
+  --sf2: #111318;
+  --bd: #1e2028;
+  --mut: #5a6070;
+}
+
+.pg-title { font-family:'Syne',sans-serif; font-weight:800; letter-spacing:-.03em; }
+.pg-label { font-family:'Syne',sans-serif; font-weight:700; }
+
+.node-g { cursor:pointer; }
+.node-g circle { transition:filter .2s; }
+.node-g:hover circle { filter:brightness(1.4); }
+
+.detail-panel {
+  background:var(--sf2); border:1px solid var(--bd); border-radius:.5rem;
+  min-height:440px; padding:1.1rem 1.25rem; transition:border-color .3s;
+}
+
+.co-badge {
+  display:inline-block; padding:.12rem .45rem; border-radius:.25rem;
+  font-size:.64rem; font-weight:600; background:rgba(255,255,255,.06);
+  color:#cdd3de; margin:.1rem .08rem; border:1px solid rgba(255,255,255,.08);
+}
+
+.code-blk {
+  font-family:'IBM Plex Mono',monospace; font-size:.66rem;
+  background:#060809; border:1px solid var(--bd); border-radius:.35rem;
+  padding:.6rem .8rem; color:#cdd3de; overflow-x:auto; white-space:pre; line-height:1.6; margin:0;
+}
+
+.kw  { color:#457b9d; }
+.str { color:#06d6a0; }
+.num { color:#e9c46a; }
+.cmt { color:#3a4050; font-style:italic; }
+.op  { color:#8338ec; }
+
+.stack-row {
+  display:flex; align-items:center; gap:.85rem;
+  padding:.55rem .85rem; border-radius:.4rem; margin-bottom:.3rem;
+  border:1px solid var(--bd); background:var(--sf2); font-size:.72rem;
+  transition:background .15s;
+}
+.stack-row:hover { background:#16181f; }
+
+.mat-star { font-size:.62rem; }
+</style>
+
+<!-- Header -->
+<div class="d-flex align-items-center mb-3">
+  <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div>
+    <h2 class="pg-title mb-0" style="color:#cdd3de;font-size:1.55rem">Polyglot Persistence</h2>
+    <div style="font-size:.74rem;color:#5a6070;margin-top:.1rem">
+      Seven database categories · Choose the right engine for the right job · Click a node to explore
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Hub + Detail Panel ══════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+
+  <!-- Radial hub diagram -->
+  <div class="col-md-5">
+    <div style="background:#0d0f16;border:1px solid #1e2028;border-radius:.5rem;padding:.6rem .6rem .3rem">
+      <div style="font-size:.6rem;color:#3a4050;letter-spacing:.1em;text-transform:uppercase;padding:.1rem .3rem .4rem">
+        <i class="bi bi-diagram-3 me-1"></i>Select a database type
+      </div>
+      <svg id="hub-svg" viewBox="0 0 500 500" style="width:100%;height:auto;display:block">
+
+        <!-- Connection spokes -->
+        <line id="conn-rdbms"  x1="250" y1="250" x2="250" y2="90"  stroke="#1e2028" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <line id="conn-doc"    x1="250" y1="250" x2="375" y2="150" stroke="#1e2028" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <line id="conn-kv"     x1="250" y1="250" x2="406" y2="286" stroke="#1e2028" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <line id="conn-graph"  x1="250" y1="250" x2="319" y2="394" stroke="#1e2028" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <line id="conn-olap"   x1="250" y1="250" x2="181" y2="394" stroke="#1e2028" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <line id="conn-vector" x1="250" y1="250" x2="94"  y2="286" stroke="#1e2028" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <line id="conn-ts"     x1="250" y1="250" x2="125" y2="150" stroke="#1e2028" stroke-width="1.5" stroke-dasharray="5,4"/>
+
+        <!-- Center hub -->
+        <circle cx="250" cy="250" r="54" fill="#0d0f16" stroke="#2a3040" stroke-width="2"/>
+        <circle cx="250" cy="250" r="47" fill="#111318" stroke="#1e2028" stroke-width="1"/>
+        <text x="250" y="244" text-anchor="middle" fill="#cdd3de" font-size="11" font-weight="bold" font-family="Syne,sans-serif">YOUR</text>
+        <text x="250" y="258" text-anchor="middle" fill="#cdd3de" font-size="11" font-weight="bold" font-family="Syne,sans-serif">APP</text>
+        <text x="250" y="271" text-anchor="middle" fill="#3a4050" font-size="7.5" font-family="sans-serif">polyglot</text>
+
+        <!-- 1. RDBMS — top (270°) →  (250, 90) -->
+        <g id="node-rdbms" class="node-g" onclick="selectDb('rdbms')">
+          <circle cx="250" cy="90" r="42" fill="#0a1220" stroke="#4285F4" stroke-width="2"/>
+          <text x="250" y="84" text-anchor="middle" fill="#4285F4" font-size="17">⚖️</text>
+          <text x="250" y="98" text-anchor="middle" fill="#4285F4" font-size="9" font-weight="bold" font-family="Syne,sans-serif">RDBMS</text>
+          <text x="250" y="109" text-anchor="middle" fill="#5a6070" font-size="7.5" font-family="sans-serif">OLTP · ACID</text>
+        </g>
+
+        <!-- 2. Document — upper-right (321°) → (375, 150) -->
+        <g id="node-doc" class="node-g" onclick="selectDb('doc')">
+          <circle cx="375" cy="150" r="42" fill="#091a0f" stroke="#00C853" stroke-width="2"/>
+          <text x="375" y="144" text-anchor="middle" fill="#00C853" font-size="17">📄</text>
+          <text x="375" y="158" text-anchor="middle" fill="#00C853" font-size="9" font-weight="bold" font-family="Syne,sans-serif">DOCUMENT</text>
+          <text x="375" y="169" text-anchor="middle" fill="#5a6070" font-size="7.5" font-family="sans-serif">JSON · flexible</text>
+        </g>
+
+        <!-- 3. Key-Value — right (12°) → (406, 286) -->
+        <g id="node-kv" class="node-g" onclick="selectDb('kv')">
+          <circle cx="406" cy="286" r="42" fill="#1a0a10" stroke="#FF3860" stroke-width="2"/>
+          <text x="406" y="280" text-anchor="middle" fill="#FF3860" font-size="17">⚡</text>
+          <text x="406" y="294" text-anchor="middle" fill="#FF3860" font-size="9" font-weight="bold" font-family="Syne,sans-serif">KEY-VALUE</text>
+          <text x="406" y="305" text-anchor="middle" fill="#5a6070" font-size="7.5" font-family="sans-serif">in-memory · RAM</text>
+        </g>
+
+        <!-- 4. Graph — lower-right (64°) → (319, 394) -->
+        <g id="node-graph" class="node-g" onclick="selectDb('graph')">
+          <circle cx="319" cy="394" r="42" fill="#120a1a" stroke="#A855F7" stroke-width="2"/>
+          <text x="319" y="388" text-anchor="middle" fill="#A855F7" font-size="17">🕸️</text>
+          <text x="319" y="402" text-anchor="middle" fill="#A855F7" font-size="9" font-weight="bold" font-family="Syne,sans-serif">GRAPH</text>
+          <text x="319" y="413" text-anchor="middle" fill="#5a6070" font-size="7.5" font-family="sans-serif">nodes · edges</text>
+        </g>
+
+        <!-- 5. Columnstore — lower-left (116°) → (181, 394) -->
+        <g id="node-olap" class="node-g" onclick="selectDb('olap')">
+          <circle cx="181" cy="394" r="42" fill="#1a1400" stroke="#FBBC05" stroke-width="2"/>
+          <text x="181" y="388" text-anchor="middle" fill="#FBBC05" font-size="17">📊</text>
+          <text x="181" y="402" text-anchor="middle" fill="#FBBC05" font-size="9" font-weight="bold" font-family="Syne,sans-serif">COLUMNSTORE</text>
+          <text x="181" y="413" text-anchor="middle" fill="#5a6070" font-size="7.5" font-family="sans-serif">OLAP · analytics</text>
+        </g>
+
+        <!-- 6. Vector — left (167°) → (94, 286) -->
+        <g id="node-vector" class="node-g" onclick="selectDb('vector')">
+          <circle cx="94" cy="286" r="42" fill="#091a18" stroke="#00BFA5" stroke-width="2"/>
+          <text x="94" y="280" text-anchor="middle" fill="#00BFA5" font-size="17">🧬</text>
+          <text x="94" y="294" text-anchor="middle" fill="#00BFA5" font-size="9" font-weight="bold" font-family="Syne,sans-serif">VECTOR</text>
+          <text x="94" y="305" text-anchor="middle" fill="#5a6070" font-size="7.5" font-family="sans-serif">AI · embeddings</text>
+        </g>
+
+        <!-- 7. Time-Series — upper-left (219°) → (125, 150) -->
+        <g id="node-ts" class="node-g" onclick="selectDb('ts')">
+          <circle cx="125" cy="150" r="42" fill="#1a0e00" stroke="#FF6D00" stroke-width="2"/>
+          <text x="125" y="144" text-anchor="middle" fill="#FF6D00" font-size="17">📈</text>
+          <text x="125" y="158" text-anchor="middle" fill="#FF6D00" font-size="9" font-weight="bold" font-family="Syne,sans-serif">TIME-SERIES</text>
+          <text x="125" y="169" text-anchor="middle" fill="#5a6070" font-size="7.5" font-family="sans-serif">IoT · metrics</text>
+        </g>
+
+      </svg>
+    </div>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="col-md-7">
+    <div id="detail-panel" class="detail-panel">
+
+      <div id="panel-default" style="height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.6rem;color:#2a3040;text-align:center">
+        <i class="bi bi-database" style="font-size:2.8rem"></i>
+        <div style="font-size:.78rem">Click any node in the diagram to explore</div>
+        <div style="font-size:.66rem;color:#1e2028">query syntax · use cases · trade-offs · real users</div>
+      </div>
+
+      <div id="panel-content" style="display:none;height:100%">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <div id="p-tagline" style="font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;margin-bottom:.2rem"></div>
+            <h4 id="p-name" class="pg-title mb-1" style="font-size:1.35rem;line-height:1"></h4>
+            <div id="p-engines" style="font-size:.68rem;color:#5a6070"></div>
+          </div>
+          <div id="p-icon" style="font-size:2.2rem;line-height:1;margin-top:-.1rem"></div>
+        </div>
+
+        <!-- Use case / why not -->
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div style="background:#080a0d;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .65rem;height:100%">
+              <div style="font-size:.58rem;color:#5a6070;text-transform:uppercase;letter-spacing:.09em;margin-bottom:.3rem">
+                <i class="bi bi-check2-circle me-1" style="color:#06d6a0"></i>Best When
+              </div>
+              <div id="p-usecase" style="font-size:.71rem;color:#cdd3de;line-height:1.55"></div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div style="background:#080a0d;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .65rem;height:100%">
+              <div style="font-size:.58rem;color:#ef476f;text-transform:uppercase;letter-spacing:.09em;margin-bottom:.3rem">
+                <i class="bi bi-exclamation-triangle me-1"></i>Trade-off
+              </div>
+              <div id="p-whynot" style="font-size:.71rem;color:#cdd3de;line-height:1.55"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Companies -->
+        <div style="margin-bottom:.6rem">
+          <div style="font-size:.58rem;color:#5a6070;text-transform:uppercase;letter-spacing:.09em;margin-bottom:.3rem">Production Users</div>
+          <div id="p-companies"></div>
+        </div>
+
+        <!-- Query snippet -->
+        <div>
+          <div style="font-size:.58rem;color:#5a6070;text-transform:uppercase;letter-spacing:.09em;margin-bottom:.3rem">
+            Native Query — <span id="p-qlang" style="color:#e9c46a;text-transform:none;letter-spacing:0"></span>
+          </div>
+          <pre id="p-query" class="code-blk"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Polyglot Architecture Stack ════════════════════════════════ -->
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2" style="background:#0a0c14;border-bottom:1px solid #1e2028">
+    <span class="pg-label" style="font-size:.82rem;color:#e9c46a">Polyglot Architecture</span>
+    <span style="font-size:.7rem;color:#5a6070;margin-left:.7rem">— One e-commerce platform, seven engines, each doing what it does best</span>
+  </div>
+  <div class="card-body py-2 px-3">
+    <div class="stack-row" style="border-color:#4285F4">
+      <div style="width:110px;flex-shrink:0">
+        <div style="color:#4285F4;font-weight:700;font-size:.72rem">RDBMS</div>
+        <div style="font-size:.6rem;color:#5a6070">PostgreSQL / Aurora</div>
+      </div>
+      <div style="flex:1;color:#8892a4">Orders, payments, inventory — ACID transactions guarantee a purchase either fully completes or fully rolls back, preserving financial integrity</div>
+      <div style="font-size:.62rem;color:#4285F4;width:95px;text-align:right;flex-shrink:0;font-weight:600">Source of Truth</div>
+    </div>
+    <div class="stack-row" style="border-color:#00C853">
+      <div style="width:110px;flex-shrink:0">
+        <div style="color:#00C853;font-weight:700;font-size:.72rem">DOCUMENT</div>
+        <div style="font-size:.6rem;color:#5a6070">DynamoDB / MongoDB</div>
+      </div>
+      <div style="flex:1;color:#8892a4">Product catalog — a book has ISBN, a TV has resolution, a shirt has sizes. Flexible schema handles heterogeneous attributes without ALTER TABLE</div>
+      <div style="font-size:.62rem;color:#00C853;width:95px;text-align:right;flex-shrink:0;font-weight:600">Catalog Layer</div>
+    </div>
+    <div class="stack-row" style="border-color:#FF3860">
+      <div style="width:110px;flex-shrink:0">
+        <div style="color:#FF3860;font-weight:700;font-size:.72rem">KEY-VALUE</div>
+        <div style="font-size:.6rem;color:#5a6070">Redis / ElastiCache</div>
+      </div>
+      <div style="flex:1;color:#8892a4">Session tokens, shopping cart, rate limits, page fragment cache — 96%+ of cart reads never reach the primary DB, cutting latency from 40ms to &lt;1ms</div>
+      <div style="font-size:.62rem;color:#FF3860;width:95px;text-align:right;flex-shrink:0;font-weight:600">Cache Layer</div>
+    </div>
+    <div class="stack-row" style="border-color:#A855F7">
+      <div style="width:110px;flex-shrink:0">
+        <div style="color:#A855F7;font-weight:700;font-size:.72rem">GRAPH</div>
+        <div style="font-size:.6rem;color:#5a6070">Neptune / Neo4j</div>
+      </div>
+      <div style="flex:1;color:#8892a4">"Customers who bought this also bought…" — co-purchase graph traversal finds related products in milliseconds; SQL self-joins over the same data take minutes</div>
+      <div style="font-size:.62rem;color:#A855F7;width:95px;text-align:right;flex-shrink:0;font-weight:600">Recommendations</div>
+    </div>
+    <div class="stack-row" style="border-color:#FBBC05">
+      <div style="width:110px;flex-shrink:0">
+        <div style="color:#FBBC05;font-weight:700;font-size:.72rem">COLUMNSTORE</div>
+        <div style="font-size:.6rem;color:#5a6070">Redshift / BigQuery</div>
+      </div>
+      <div style="flex:1;color:#8892a4">Revenue dashboards, cohort analysis, A/B test results — scans billions of order rows in seconds by reading only the 3–4 columns the query needs instead of every row</div>
+      <div style="font-size:.62rem;color:#FBBC05;width:95px;text-align:right;flex-shrink:0;font-weight:600">Analytics</div>
+    </div>
+    <div class="stack-row" style="border-color:#00BFA5">
+      <div style="width:110px;flex-shrink:0">
+        <div style="color:#00BFA5;font-weight:700;font-size:.72rem">VECTOR</div>
+        <div style="font-size:.6rem;color:#5a6070">Pinecone / pgvector</div>
+      </div>
+      <div style="flex:1;color:#8892a4">AI search — "comfortable winter jacket for hiking" finds semantically relevant products by meaning, not keywords; embeddings map intent to matching items in high-dimensional space</div>
+      <div style="font-size:.62rem;color:#00BFA5;width:95px;text-align:right;flex-shrink:0;font-weight:600">Semantic Search</div>
+    </div>
+    <div class="stack-row" style="border-color:#FF6D00;margin-bottom:0">
+      <div style="width:110px;flex-shrink:0">
+        <div style="color:#FF6D00;font-weight:700;font-size:.72rem">TIME-SERIES</div>
+        <div style="font-size:.6rem;color:#5a6070">InfluxDB / Prometheus</div>
+      </div>
+      <div style="flex:1;color:#8892a4">Server CPU/memory, CDN latency, error rates, checkout funnel KPIs — constant high-frequency appends and time-range aggregations that overwhelm any RDBMS</div>
+      <div style="font-size:.62rem;color:#FF6D00;width:95px;text-align:right;flex-shrink:0;font-weight:600">Observability</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Comparison Matrix ═══════════════════════════════════════════ -->
+<div class="card mb-4" style="background:#0d0f16;border:1px solid #1e2028">
+  <div class="card-header py-2" style="background:#0a0c14;border-bottom:1px solid #1e2028">
+    <span class="pg-label" style="font-size:.82rem;color:#e9c46a">Comparison Matrix</span>
+    <span style="font-size:.7rem;color:#5a6070;margin-left:.7rem">— Five dimensions rated ★ (limited) → ★★★★★ (best-in-class)</span>
+  </div>
+  <div class="card-body py-2 px-3" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:separate;border-spacing:3px;font-size:.72rem;min-width:560px">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:.4rem .6rem;color:#5a6070;font-weight:400;width:148px">DB Type</th>
+          <th style="text-align:center;padding:.35rem;color:#5a6070;font-weight:400">Consistency</th>
+          <th style="text-align:center;padding:.35rem;color:#5a6070;font-weight:400">Scalability</th>
+          <th style="text-align:center;padding:.35rem;color:#5a6070;font-weight:400">Latency</th>
+          <th style="text-align:center;padding:.35rem;color:#5a6070;font-weight:400">Query Power</th>
+          <th style="text-align:center;padding:.35rem;color:#5a6070;font-weight:400">Cost Eff.</th>
+        </tr>
+      </thead>
+      <tbody id="matrix-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ Bottom educational panels ══════════════════════════════════ -->
+<div class="d-flex gap-2 mb-2 align-items-stretch">
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .75rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#e9c46a">Right Tool, Right Job</strong><br>
+    Polyglot persistence is not complexity for its own sake. A billing system needs ACID guarantees;
+    a shopping cart needs microsecond latency; a recommendation engine needs graph traversal.
+    Forcing all three through a single RDBMS incurs painful trade-offs on all fronts.
+    Each engine above excels at one thing precisely because it gave up the others.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .75rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#06d6a0">CAP Per Subsystem</strong><br>
+    Each category makes different CAP trade-offs. RDBMS favour Consistency (CP).
+    Cassandra/DynamoDB favour Availability (AP). Redis is CP but RAM-bound.
+    Polyglot architecture lets you choose the correct CAP posture per subsystem
+    rather than accepting one universal compromise across your entire data layer.
+  </div>
+  <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .75rem;font-size:.7rem;color:#8892a4">
+    <strong style="color:#8338ec">Operational Cost</strong><br>
+    Complexity scales with the number of systems: separate backups, monitoring, expertise,
+    and failure modes for each. The answer is managed cloud services (RDS, DynamoDB,
+    ElastiCache, Neptune, Redshift, Pinecone) — letting engineering teams focus on
+    data modelling rather than cluster management.
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+'use strict';
+
+/* ── DB type data ─────────────────────────────────────────────── */
+const DB = {
+  rdbms: {
+    name:'RDBMS / OLTP', tagline:'The Source of Truth', icon:'⚖️',
+    color:'#4285F4',
+    engines:'PostgreSQL · MySQL · Oracle · Cloud Spanner',
+    useCase:'Financial transactions, user accounts, order management. When data integrity and ACID guarantees matter more than raw throughput.',
+    whyNot:'Rigid schema slows iteration. Vertical scaling hits walls. JOIN-heavy queries over billions of rows need partitioning tricks.',
+    companies:['Instagram','Twitch','Airbnb','Uber','JPMorgan','Pokémon GO'],
+    qlang:'SQL',
+    query:
+`BEGIN TRANSACTION;
+
+  UPDATE accounts
+    SET balance = balance - 500
+    WHERE user_id = 'usr_001';
+
+  INSERT INTO orders (user_id, amount, status)
+    VALUES ('usr_001', 500.00, 'PENDING');
+
+COMMIT;`,
+    metrics:[5,2,3,5,2],
+  },
+  doc: {
+    name:'Document Store', tagline:'Schema-on-Read Freedom', icon:'📄',
+    color:'#00C853',
+    engines:'MongoDB · Amazon DynamoDB · Couchbase',
+    useCase:'Product catalogs, user profiles, content management. Ideal when each record has a different structure that evolves week to week.',
+    whyNot:'No multi-document ACID by default. Ad-hoc analytics require denormalisation. Joins must be handled in application code.',
+    companies:['Forbes','eBay','Amazon','LinkedIn','Tesco'],
+    qlang:'MongoDB Query',
+    query:
+`db.products.find({
+  category: 'electronics',
+  'specs.ram': { $gte: 16 },
+  price: { $lt: 1200 }
+})
+.sort({ rating: -1 })
+.limit(20)`,
+    metrics:[3,4,4,3,4],
+  },
+  kv: {
+    name:'Key-Value / In-Memory', tagline:'Sub-millisecond or Bust', icon:'⚡',
+    color:'#FF3860',
+    engines:'Redis · Memcached',
+    useCase:'Session storage, rate limiting, real-time leaderboards, caching expensive DB queries. 96%+ of cart reads never touch the primary DB.',
+    whyNot:'Data must fit in RAM. No complex queries. Not durable by default — AOF/RDB snapshots add overhead and latency.',
+    companies:['X/Twitter','Snapchat','GitHub','Pinterest','Netflix'],
+    qlang:'Redis CLI',
+    query:
+`# Cart with 1-hour TTL
+SET cart:user:001 '{"items":[...],"total":149.99}' EX 3600
+
+# Rate limiting (atomic)
+INCR  api:rate:usr_001
+EXPIRE api:rate:usr_001 60
+
+# Real-time leaderboard
+ZADD  game:scores 9450 "player:007"
+ZREVRANGE game:scores 0 9 WITHSCORES`,
+    metrics:[2,4,5,1,4],
+  },
+  graph: {
+    name:'Graph Database', tagline:'Relationships First', icon:'🕸️',
+    color:'#A855F7',
+    engines:'Neo4j · Amazon Neptune',
+    useCase:'Social networks, fraud detection, recommendation engines. Traverses millions of relationships in milliseconds — impossible with SQL JOINs at scale.',
+    whyNot:'Poor fit for aggregate analytics. Graph storage overhead is high. Cypher/Gremlin is an additional skill investment for the team.',
+    companies:['Walmart','LinkedIn','NASA','eBay','Airbnb'],
+    qlang:'Cypher (Neo4j)',
+    query:
+`// Friends-of-friends not yet connected
+MATCH (me:User {id: 'usr_001'})
+      -[:FOLLOWS]->(:User)
+      -[:FOLLOWS]->(suggestion:User)
+WHERE NOT (me)-[:FOLLOWS]->(suggestion)
+  AND suggestion <> me
+RETURN suggestion.name,
+       count(*) AS mutual_connections
+ORDER BY mutual_connections DESC
+LIMIT 10`,
+    metrics:[4,3,4,4,2],
+  },
+  olap: {
+    name:'Columnstore / OLAP', tagline:'Scan Billions, Not Rows', icon:'📊',
+    color:'#FBBC05',
+    engines:'Snowflake · Google BigQuery · ClickHouse',
+    useCase:'Business intelligence, trend analysis, historical reporting. Reads only the columns a query needs — 95% less I/O than rowstore for analytical workloads.',
+    whyNot:'High latency for point lookups. Not designed for frequent single-row updates. Overkill and expensive for datasets under ~1M rows.',
+    companies:['Spotify','Adobe','Capital One','Uber','Cloudflare'],
+    qlang:'SQL (columnar)',
+    query:
+`SELECT
+  DATE_TRUNC('month', order_date)   AS month,
+  category,
+  SUM(revenue)                      AS total_revenue,
+  COUNT(DISTINCT user_id)           AS unique_buyers,
+  AVG(revenue) OVER (
+    PARTITION BY category
+    ORDER BY DATE_TRUNC('month', order_date)
+    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+  )                                 AS rolling_3m_avg
+FROM orders_fact
+WHERE order_date >= DATEADD(year, -1, CURRENT_DATE)
+GROUP BY 1, 2`,
+    metrics:[4,5,2,5,3],
+  },
+  vector: {
+    name:'Vector Database', tagline:'The AI-Native DB', icon:'🧬',
+    color:'#00BFA5',
+    engines:'Pinecone · Milvus · Weaviate · pgvector',
+    useCase:'Powering GenAI and RAG pipelines. Semantic search by meaning, not keywords. Image/audio similarity. Finds nearest neighbours in billions of embeddings.',
+    whyNot:'Not a replacement for RDBMS — no transactions, no traditional queries. Results are approximate by design (ANN, not exact match).',
+    companies:['OpenAI','Notion','Canva','Shopify','Salesforce'],
+    qlang:'pgvector / Pinecone',
+    query:
+`-- pgvector: semantic product search
+SELECT name, price,
+       1 - (embedding <=> $1) AS similarity
+FROM   products
+WHERE  category = 'apparel'
+  AND  price < 200
+ORDER  BY embedding <=> $1   -- cosine distance
+LIMIT  20;
+
+-- $1 = 1536-dim vector from
+--      text-embedding-3-small("cozy hiking jacket")`,
+    metrics:[2,5,3,2,3],
+  },
+  ts: {
+    name:'Time-Series Database', tagline:'Every Millisecond Stamped', icon:'📈',
+    color:'#FF6D00',
+    engines:'InfluxDB · TimescaleDB · Prometheus',
+    useCase:'IoT sensor streams, server metrics, stock ticks. Optimised for constant high-frequency appends and time-range aggregations with automatic downsampling.',
+    whyNot:'Purpose-built for time-indexed data only. Poor at arbitrary relationships or document-style queries outside the time dimension.',
+    companies:['Tesla','Cisco','IBM','PayPal','Siemens'],
+    qlang:'InfluxQL / Flux',
+    query:
+`-- Vehicle battery telemetry (InfluxDB)
+SELECT mean("temperature")  AS avg_temp,
+       max("voltage")       AS peak_v,
+       min("soc_percent")   AS min_soc
+FROM   vehicle_metrics
+WHERE  vehicle_id = 'VIN_001'
+  AND  time > now() - 24h
+GROUP BY time(5m)
+  fill(linear)`,
+    metrics:[3,4,5,2,4],
+  },
+};
+
+const ROWS = ['rdbms','doc','kv','graph','olap','vector','ts'];
+
+/* ── Comparison matrix ────────────────────────────────────────── */
+const STARS = ['','★','★★','★★★','★★★★','★★★★★'];
+function starColor(v) {
+  return ['','#ef476f','#f4a261','#e9c46a','#2a9d8f','#06d6a0'][v];
+}
+function starBg(v) {
+  return ['','#1a0000','#1a0a00','#1a1400','#081510','#051510'][v];
+}
+const mb = document.getElementById('matrix-body');
+ROWS.forEach(key => {
+  const d = DB[key];
+  const tr = document.createElement('tr');
+  tr.innerHTML =
+    `<td style="padding:.35rem .55rem">
+       <span style="color:${d.color};font-weight:700;font-size:.71rem">${d.name.split('/')[0].trim()}</span>
+     </td>` +
+    d.metrics.map(v =>
+      `<td style="text-align:center;padding:.2rem">
+         <div style="margin:auto;width:80px;padding:.25rem;border-radius:.3rem;
+                     background:${starBg(v)};border:1px solid ${starBg(v)};
+                     color:${starColor(v)};font-size:.62rem;font-weight:700;
+                     letter-spacing:1px">${STARS[v]}</div>
+       </td>`
+    ).join('');
+  mb.appendChild(tr);
+});
+
+/* ── Hub interaction ──────────────────────────────────────────── */
+function selectDb(key) {
+  const d = DB[key];
+  if (!d) return;
+
+  // Dim non-selected nodes; brighten + connect selected
+  ROWS.forEach(k => {
+    const node = document.getElementById('node-' + k);
+    const conn = document.getElementById('conn-' + k);
+    const active = k === key;
+    if (node) {
+      node.style.opacity   = active ? '1' : '0.38';
+      const circ = node.querySelector('circle');
+      if (circ) circ.style.filter = active ? `drop-shadow(0 0 14px ${DB[k].color})` : '';
+    }
+    if (conn) {
+      conn.setAttribute('stroke',        active ? d.color : '#1e2028');
+      conn.setAttribute('stroke-width',  active ? '2.5'  : '1.5');
+      conn.setAttribute('stroke-dasharray', active ? 'none' : '5,4');
+    }
+  });
+
+  // Update border
+  document.getElementById('detail-panel').style.borderColor = d.color;
+
+  // Switch to content view
+  document.getElementById('panel-default').style.display = 'none';
+  document.getElementById('panel-content').style.display = 'block';
+
+  // Populate fields
+  document.getElementById('p-name').textContent    = d.name;
+  document.getElementById('p-name').style.color    = d.color;
+  document.getElementById('p-tagline').textContent = d.tagline;
+  document.getElementById('p-tagline').style.color = d.color;
+  document.getElementById('p-icon').textContent    = d.icon;
+  document.getElementById('p-engines').textContent = d.engines;
+  document.getElementById('p-usecase').textContent = d.useCase;
+  document.getElementById('p-whynot').textContent  = d.whyNot;
+  document.getElementById('p-qlang').textContent   = d.qlang;
+  document.getElementById('p-query').textContent   = d.query;
+
+  document.getElementById('p-companies').innerHTML =
+    d.companies.map(c => `<span class="co-badge">${c}</span>`).join('');
+}
+
+// Default selection on load
+selectDb('rdbms');
+</script>
+{% endblock %}
