@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Breaking Point: TikTok / ByteDance{% endblock %}
+{% block content %}
+<style>
+:root { --a: #ff0050; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(255,0,80,.15); color:var(--a); border:1px solid rgba(255,0,80,.3); }
+.crisis-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.7rem; font-weight:700; background:rgba(255,60,0,.2); color:#ff6b35; border:1px solid rgba(255,60,0,.3); margin:.15rem; }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(255,0,80,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(255,0,80,.1); border:1px solid rgba(255,0,80,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(255,0,80,.15); color:var(--a); border:1px solid rgba(255,0,80,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.pipe-row { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; margin:1.2rem 0; }
+.pipe-box { background:rgba(255,0,80,.12); border:1px solid rgba(255,0,80,.3); border-radius:6px; padding:.5rem .9rem; font-size:.78rem; font-weight:600; color:var(--a); white-space:nowrap; }
+.pipe-arr { color:#556; font-size:1.1rem; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <!-- Header -->
+  <div class="mb-4">
+    <span class="era-badge">2016 – Present</span>
+    <span class="ms-2 era-badge" style="background:rgba(255,0,80,.08);color:#ff6b8a">ByteDance / TikTok</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">Real-Time Stream ML &amp; The Interest Graph</h1>
+    <p class="lead" style="color:#8892a4">How TikTok solved cold-start recommendation by replacing the Social Graph with a pure Interest Graph — and built the fastest converging ML feedback loop in consumer history.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">&lt;300ms</span><span class="stat-lbl">First reco latency</span></div>
+    <div class="stat-box"><span class="stat-num">1B+</span><span class="stat-lbl">Daily active users</span></div>
+    <div class="stat-box"><span class="stat-num">95%</span><span class="stat-lbl">Watch completion (avg)</span></div>
+    <div class="stat-box"><span class="stat-num">7×</span><span class="stat-lbl">Session length vs Instagram (2020)</span></div>
+  </div>
+
+  <!-- The Problem -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Breaking Point: Cold Start &amp; the Social Graph Trap</h4>
+    <p style="color:#c0c9d6">Every platform before TikTok (YouTube, Instagram, Twitter) relied on a <strong style="color:#fff">Social Graph</strong> — your recommendations were seeded by who you follow. But this created two fatal bottlenecks:</p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Cold Start Problem</h6>
+        <p style="font-size:.82rem;color:#8892a4">A new user with 0 follows gets 0 personalized content. Platforms blasted generic trending videos — 60–70% of new users churned in the first session.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Social Graph Lock-in</h6>
+        <p style="font-size:.82rem;color:#8892a4">Recommendations were bounded by your social circle. If none of your friends liked jazz, you'd never discover it — regardless of your implicit interest signals.</p>
+      </div>
+    </div>
+    <div class="mt-3">
+      <span class="crisis-badge">Cold Start</span>
+      <span class="crisis-badge">Social Graph Lock-in</span>
+      <span class="crisis-badge">Latency at Scale</span>
+      <span class="crisis-badge">Real-time Feature Serving</span>
+    </div>
+  </div>
+
+  <!-- The Solution -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ The Virtuoso Solution: Monolith + Interest Graph</h4>
+    <p style="color:#c0c9d6">ByteDance engineers made a radical architectural choice: <strong style="color:#fff">discard the social graph entirely</strong> for recommendations. Instead, every video and every user is represented as a point in a high-dimensional <em>interest space</em>, updated in real-time from behavioral signals.</p>
+    <div class="insight-box mt-3">
+      <strong style="color:var(--a)">The Core Insight:</strong>
+      <span style="color:#c0c9d6"> You don't need to know who someone follows to know what they like. Watch time, replay rate, share behavior, and skip latency are orders of magnitude more signal-dense than social connections.</span>
+    </div>
+  </div>
+
+  <!-- Architecture Pipeline -->
+  <h5 class="fw-bold mb-2" style="color:#fff">Recommendation Pipeline (300ms budget)</h5>
+  <div class="pipe-row">
+    <div class="pipe-box">User Opens App</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Real-time Feature Fetch</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Candidate Generation</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Coarse Ranking (ANN)</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Fine Ranking (DNN)</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Diversification</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Feed Served</div>
+  </div>
+  <div class="pipe-row">
+    <div class="pipe-box" style="opacity:.7">User Action</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box" style="opacity:.7">Kafka Event</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box" style="opacity:.7">Flink Stream Job</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box" style="opacity:.7">Feature Store Update</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box" style="opacity:.7">Model Weight Refresh</div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box" style="opacity:.7">Next Reco ↩</div>
+  </div>
+
+  <!-- Monolith Recommendation -->
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">The Monolith System</h5>
+  <p style="color:#8892a4">ByteDance's core recommendation engine — codenamed <strong style="color:#fff">Monolith</strong> — uses <em>sparse embedding tables</em> stored in RAM across thousands of parameter servers. Unlike typical ML systems that train offline and serve stale models, Monolith updates embeddings <em>online</em> as users interact.</p>
+
+  <pre class="code-block"><span class="cm"># Monolith: Simplified sparse embedding lookup (PyTorch-like pseudocode)</span>
+
+<span class="kw">class</span> <span class="fn">MonolithEmbeddingTable</span>:
+    <span class="cm"># Distributed hash table: feature_id → embedding vector (dim=128)</span>
+    <span class="cm"># Lives in-memory across 1000s of parameter servers</span>
+    <span class="cm"># Hot features (1B+/day lookups) replicated 32×</span>
+
+    <span class="kw">def</span> <span class="fn">lookup</span>(self, feature_ids: List[int]) -> Tensor:
+        <span class="cm"># Batch RPC to parameter servers (P99 &lt; 5ms)</span>
+        embeddings = self.param_server.batch_get(feature_ids)
+        <span class="kw">return</span> torch.stack(embeddings)  <span class="cm"># shape: [N, 128]</span>
+
+    <span class="kw">def</span> <span class="fn">online_update</span>(self, feature_id: int, gradient: Tensor):
+        <span class="cm"># Applied immediately — no batch training cycle</span>
+        <span class="cm"># Uses collision-free cuckoo hashing for O(1) updates</span>
+        self.param_server.apply_gradient(feature_id, gradient)
+
+<span class="kw">def</span> <span class="fn">rank_candidates</span>(user_id: int, video_ids: List[int]) -> List[float]:
+    <span class="cm"># Feature engineering: user + video + context</span>
+    user_features  = [user_id, user_country, hour_of_day, device_type]
+    video_features = [video_id, creator_id, topic_tag_ids, duration_bucket]
+    cross_features = [user_id * video_topic, creator_follow_rate]
+
+    <span class="cm"># Sparse lookup → dense embedding concat</span>
+    u_emb = embedding_table.lookup(user_features)   <span class="cm"># [F_u, 128]</span>
+    v_emb = embedding_table.lookup(video_features)  <span class="cm"># [F_v, 128]</span>
+    x     = torch.cat([u_emb.mean(0), v_emb.mean(0), cross_emb], dim=-<span class="num">1</span>)
+
+    <span class="cm"># 3-tower DNN: p(like), p(complete), p(share)</span>
+    score = like_tower(x) * <span class="num">0.4</span> + complete_tower(x) * <span class="num">0.4</span> + share_tower(x) * <span class="num">0.2</span>
+    <span class="kw">return</span> score.tolist()</pre>
+
+  <!-- Interest Graph vs Social Graph -->
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Interest Graph vs Social Graph</h5>
+  <div class="compare-grid">
+    <div class="problem-card">
+      <h6 style="color:#ff6b35">Social Graph (Instagram / Twitter)</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.2rem">
+        <li>Recommendations bounded by follow graph</li>
+        <li>New user with 0 follows → cold start failure</li>
+        <li>Content from accounts you follow (not topics)</li>
+        <li>Popularity bias: celebs dominate feeds</li>
+        <li>Network effect required for good reco</li>
+      </ul>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864">Interest Graph (TikTok Monolith)</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.2rem">
+        <li>Recommendations from behavioral signals only</li>
+        <li>First video served using cohort similarity</li>
+        <li>Content from topics, not people</li>
+        <li>Long-tail creators can go viral immediately</li>
+        <li>Cold start solved in ~7 interactions</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Kafka Feedback Loop -->
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">The Real-Time Kafka Feedback Loop</h5>
+  <p style="color:#8892a4">Every user action emits a Kafka event. Apache Flink stream jobs aggregate these into feature deltas that are applied to the parameter servers within seconds — not hours or days like batch training pipelines.</p>
+  <pre class="code-block"><span class="cm"># Flink stream job: real-time feature computation</span>
+
+stream = kafka_consumer.subscribe([<span class="st">"user_watch"</span>, <span class="st">"user_like"</span>, <span class="st">"user_share"</span>, <span class="st">"user_skip"</span>])
+
+<span class="kw">def</span> <span class="fn">compute_watch_signal</span>(event):
+    watch_ratio = event.watch_duration / event.video_duration
+    <span class="kw">if</span> watch_ratio > <span class="num">0.8</span>:
+        signal_weight = <span class="num">1.0</span>   <span class="cm"># strong positive</span>
+    <span class="kw">elif</span> watch_ratio > <span class="num">0.3</span>:
+        signal_weight = <span class="num">0.4</span>   <span class="cm"># weak positive</span>
+    <span class="kw">else</span>:
+        signal_weight = -<span class="num">0.5</span>  <span class="cm"># skip signal (negative)</span>
+
+    <span class="cm"># Emit gradient to parameter server</span>
+    monolith.online_update(
+        feature_id=<span class="fn">hash</span>((event.user_id, event.video_topic)),
+        gradient=signal_weight * learning_rate
+    )
+
+stream.<span class="fn">map</span>(compute_watch_signal).<span class="fn">sink</span>(monolith_updater)</pre>
+
+  <!-- Tech Stack -->
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">Monolith (ByteDance)</span>
+    <span class="tech-pill">Apache Kafka</span>
+    <span class="tech-pill">Apache Flink</span>
+    <span class="tech-pill">FAISS (ANN Search)</span>
+    <span class="tech-pill">PyTorch</span>
+    <span class="tech-pill">Redis (feature cache)</span>
+    <span class="tech-pill">Cuckoo Hashing</span>
+    <span class="tech-pill">Parameter Server</span>
+    <span class="tech-pill">gRPC</span>
+    <span class="tech-pill">Bytedance KV Store</span>
+    <span class="tech-pill">NVIDIA A100 (training)</span>
+    <span class="tech-pill">ARM (inference)</span>
+    <span class="tech-pill">Kubernetes</span>
+  </div>
+
+  <!-- Insight boxes -->
+  <div class="insight-box">
+    <strong style="color:var(--a)">Diversification Pass:</strong>
+    <span style="color:#c0c9d6"> After ranking, a final diversification layer ensures consecutive videos don't share the same creator, topic, or visual style. This prevents "filter bubbles" while maintaining engagement — a classic explore/exploit tradeoff solved with determinantal point processes (DPP).</span>
+  </div>
+  <div class="insight-box">
+    <strong style="color:var(--a)">Cold Start via Cohort:</strong>
+    <span style="color:#c0c9d6"> A new user's first 7 videos are chosen by matching their demographic cohort (country, device, hour) to similar users' early interaction patterns. By video 7, enough behavioral signal exists for personalized ranking — this is why TikTok hooks users so fast.</span>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">TikTok didn't win through superior content — it won by making every person's feed feel like it was hand-curated for them within 3 minutes of install. The Interest Graph + real-time Kafka feedback loop created the most effective recommendation system ever deployed at consumer scale. Every major platform has since pivoted to copycat architectures (YouTube Shorts, Instagram Reels, LinkedIn feed).</p>
+  </div>
+
+  <!-- Legacy -->
+  <h5 class="fw-bold mt-2 mb-3" style="color:#fff">Industry Legacy</h5>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="solution-card h-100">
+        <h6 style="color:#00c864">Interest-First Design</h6>
+        <p style="font-size:.8rem;color:#8892a4">Every major platform now treats behavioral signals as primary and social graph as secondary. The Social Graph is for communication; the Interest Graph is for discovery.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="solution-card h-100">
+        <h6 style="color:#00c864">Online Learning</h6>
+        <p style="font-size:.8rem;color:#8892a4">Monolith's online embedding updates proved that real-time gradient application outperforms daily batch retraining — now the standard for recommendation systems at scale.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="solution-card h-100">
+        <h6 style="color:#00c864">Short-Form Compression</h6>
+        <p style="font-size:.8rem;color:#8892a4">The 15–60s format creates 40× more training signal per hour of usage than long-form video. Dense signal → faster model convergence → better recommendations → more usage. A flywheel.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(255,0,80,.15);color:var(--a);border:1px solid rgba(255,0,80,.3)">← Back to Demos</a>
+  </div>
+
+</div>
+{% endblock %}

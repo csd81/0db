@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Breaking Point: Figma{% endblock %}
+{% block content %}
+<style>
+:root { --a: #a259ff; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(162,89,255,.15); color:var(--a); border:1px solid rgba(162,89,255,.3); }
+.crisis-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.7rem; font-weight:700; background:rgba(255,100,0,.2); color:#ff6b35; border:1px solid rgba(255,100,0,.3); margin:.15rem; }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(162,89,255,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(162,89,255,.1); border:1px solid rgba(162,89,255,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(162,89,255,.15); color:var(--a); border:1px solid rgba(162,89,255,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; } .ty { color:#ffcb6b; }
+.pipe-row { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; margin:1.2rem 0; }
+.pipe-box { background:rgba(162,89,255,.12); border:1px solid rgba(162,89,255,.3); border-radius:6px; padding:.5rem .9rem; font-size:.78rem; font-weight:600; color:var(--a); white-space:nowrap; }
+.pipe-arr { color:#556; font-size:1.1rem; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.crdt-op { display:flex; gap:.5rem; align-items:baseline; margin:.4rem 0; font-size:.8rem; }
+.crdt-badge { padding:.1rem .4rem; border-radius:3px; font-size:.65rem; font-weight:700; }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <!-- Header -->
+  <div class="mb-4">
+    <span class="era-badge">2012 – Present</span>
+    <span class="ms-2 era-badge" style="background:rgba(162,89,255,.08);color:#c084fc">Figma Inc.</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">Bypassing the Browser</h1>
+    <p class="lead" style="color:#8892a4">How Figma delivered Sketch-quality performance in a browser tab using WebGL, compiled C++ via WebAssembly, and invented a multiplayer CRDT engine that made Adobe &amp; Sketch irrelevant overnight.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">60fps</span><span class="stat-lbl">Canvas rendering</span></div>
+    <div class="stat-box"><span class="stat-num">~4MB</span><span class="stat-lbl">WASM rendering engine</span></div>
+    <div class="stat-box"><span class="stat-num">∞</span><span class="stat-lbl">Cursors (no conflicts)</span></div>
+    <div class="stat-box"><span class="stat-num">$20B</span><span class="stat-lbl">Adobe acquisition (2022)</span></div>
+  </div>
+
+  <!-- The Problem -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Breaking Point: The Browser Can't Draw This</h4>
+    <p style="color:#c0c9d6">In 2012, design tools were native apps (Sketch, Illustrator, Photoshop). Browsers rendered HTML/CSS — fine for documents, catastrophically slow for interactive vector graphics with hundreds of layered objects, real-time shadows, and bezier curves.</p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">DOM Rendering Failure</h6>
+        <p style="font-size:.82rem;color:#8892a4">Rendering a design file as DOM elements caused reflow/repaint cascades. Scrolling a 1000-layer Figma doc via HTML would peg a CPU at 100% and drop to ~4fps — unusable for professional design work.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Collaboration Race Conditions</h6>
+        <p style="font-size:.82rem;color:#8892a4">Real-time multiplayer means simultaneous edits. "Last write wins" destroys work. Operational Transform (OT) — used by Google Docs — requires a central sequencer that serializes all edits, creating a bottleneck at scale.</p>
+      </div>
+    </div>
+    <div class="mt-3">
+      <span class="crisis-badge">Browser DOM too slow</span>
+      <span class="crisis-badge">Multiplayer conflicts</span>
+      <span class="crisis-badge">Native-quality bar</span>
+      <span class="crisis-badge">Cross-platform delivery</span>
+    </div>
+  </div>
+
+  <!-- Solution Part 1: WebGL -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Solution Part 1: WebGL Canvas — Bypass the DOM Entirely</h4>
+    <p style="color:#c0c9d6">Figma founder Evan Wallace (who wrote the WebGL spec implementation in Chrome) realized that the browser's <code style="color:#a259ff">&lt;canvas&gt;</code> element with WebGL gave direct GPU access — the same API used by games. By writing a custom scene graph renderer on top of WebGL, Figma could draw 10,000+ vector objects at 60fps by issuing GPU draw calls directly, bypassing every layer of browser layout.</p>
+    <div class="insight-box">
+      <strong style="color:var(--a)">GPU Batching:</strong>
+      <span style="color:#c0c9d6"> Instead of one draw call per object (slow), Figma's renderer batches objects with the same material (fill type, blend mode) into a single GPU buffer upload. A 500-object frame becomes ~8 draw calls. This is identical to how game engines achieve 60fps with complex scenes.</span>
+    </div>
+  </div>
+
+  <pre class="code-block"><span class="cm">// Figma-style WebGL scene renderer (simplified)</span>
+
+<span class="kw">class</span> <span class="ty">SceneRenderer</span> {
+  <span class="fn">constructor</span>(canvas: HTMLCanvasElement) {
+    <span class="kw">this</span>.gl = canvas.<span class="fn">getContext</span>(<span class="st">'webgl2'</span>, { antialias: <span class="kw">true</span>, alpha: <span class="kw">false</span> });
+    <span class="kw">this</span>.batcher = <span class="kw">new</span> <span class="ty">DrawCallBatcher</span>(<span class="kw">this</span>.gl);
+  }
+
+  <span class="fn">renderFrame</span>(nodes: SceneNode[], viewport: Viewport) {
+    <span class="kw">const</span> gl = <span class="kw">this</span>.gl;
+    gl.<span class="fn">clear</span>(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    <span class="cm">// Sort by material to minimize GPU state changes</span>
+    <span class="kw">const</span> batches = <span class="kw">this</span>.batcher.<span class="fn">group</span>(nodes, n => <span class="fn">`${n.fillType}-${n.blendMode}`</span>);
+
+    <span class="kw">for</span> (<span class="kw">const</span> batch <span class="kw">of</span> batches) {
+      <span class="cm">// Upload all vertices for this batch in one VBO</span>
+      gl.<span class="fn">bufferData</span>(gl.ARRAY_BUFFER, batch.<span class="fn">toVertexBuffer</span>(), gl.DYNAMIC_DRAW);
+      <span class="cm">// Single draw call for all objects sharing material</span>
+      gl.<span class="fn">drawElements</span>(gl.TRIANGLES, batch.indexCount, gl.UNSIGNED_INT, <span class="num">0</span>);
+    }
+    <span class="cm">// Result: 10,000 nodes → ~12 draw calls (vs 10,000 DOM repaints)</span>
+  }
+}</pre>
+
+  <!-- Solution Part 2: WASM -->
+  <div class="solution-card mb-4 mt-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Solution Part 2: WebAssembly — Ship C++ to the Browser</h4>
+    <p style="color:#c0c9d6">Vector path operations (bezier intersection, boolean geometry, text layout) are computationally intensive. JavaScript — even V8-compiled — can't match native speed. Figma wrote the entire rendering engine in <strong style="color:#fff">C++ with Skia</strong> (same library as Chrome and Android), then compiled it to WebAssembly using Emscripten. The WASM binary loads in the browser and executes at near-native speed.</p>
+  </div>
+
+  <div class="pipe-row mb-4">
+    <div class="pipe-box">C++ Source<br><small style="opacity:.7">rendering + geometry</small></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Emscripten<br><small style="opacity:.7">clang-based WASM compiler</small></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">.wasm binary<br><small style="opacity:.7">~4MB gzipped</small></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">Browser loads<br><small style="opacity:.7">instantiated in &lt;50ms</small></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">JS ↔ WASM bridge<br><small style="opacity:.7">TypedArray shared memory</small></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-box">60fps rendering<br><small style="opacity:.7">on any OS</small></div>
+  </div>
+
+  <!-- Solution Part 3: CRDTs -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Solution Part 3: CRDTs — Conflict-Free Multiplayer</h4>
+    <p style="color:#c0c9d6">Figma's multiplayer synchronization uses <strong style="color:#fff">Conflict-free Replicated Data Types (CRDTs)</strong> — a class of data structures where concurrent edits from different clients are always mathematically mergeable with no conflicts, requiring no central coordinator.</p>
+    <div class="compare-grid">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Operational Transform (Google Docs)</h6>
+        <p style="font-size:.8rem;color:#8892a4">All operations go through a central sequencer that transforms them relative to concurrent ops. Fast for linear text; fails on tree-structured objects (design layers). Requires always-online server sync.</p>
+      </div>
+      <div class="solution-card">
+        <h6 style="color:#00c864">CRDT (Figma)</h6>
+        <p style="font-size:.8rem;color:#8892a4">Each property of each node is independently versioned. Concurrent edits on different properties always merge cleanly. Works offline — sync on reconnect. Scales to hundreds of collaborators per file.</p>
+      </div>
+    </div>
+  </div>
+
+  <pre class="code-block"><span class="cm"># Figma CRDT: Last-Write-Wins Element Register (LWW-Element)</span>
+<span class="cm"># Each node property is a separate CRDT with a Lamport timestamp</span>
+
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Dict, Any
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="ty">LWWProperty</span>:
+    value: Any
+    timestamp: <span class="fn">int</span>       <span class="cm"># Lamport clock — monotonically increasing</span>
+    client_id: <span class="fn">str</span>       <span class="cm"># tiebreaker: higher client_id wins</span>
+
+    <span class="kw">def</span> <span class="fn">merge</span>(self, other: <span class="st">'LWWProperty'</span>) -> <span class="st">'LWWProperty'</span>:
+        <span class="cm"># Deterministic winner: latest timestamp, then client_id tiebreak</span>
+        <span class="kw">if</span> other.timestamp > self.timestamp:
+            <span class="kw">return</span> other
+        <span class="kw">elif</span> other.timestamp == self.timestamp <span class="kw">and</span> other.client_id > self.client_id:
+            <span class="kw">return</span> other
+        <span class="kw">return</span> self
+
+<span class="kw">class</span> <span class="ty">FigmaNode</span>:
+    <span class="cm"># Each node property is an independent LWW register</span>
+    props: Dict[<span class="fn">str</span>, LWWProperty] = {}
+
+    <span class="kw">def</span> <span class="fn">set_prop</span>(self, key: <span class="fn">str</span>, value: Any, ts: <span class="fn">int</span>, client: <span class="fn">str</span>):
+        incoming = <span class="ty">LWWProperty</span>(value, ts, client)
+        <span class="kw">if</span> key <span class="kw">in</span> self.props:
+            self.props[key] = self.props[key].<span class="fn">merge</span>(incoming)
+        <span class="kw">else</span>:
+            self.props[key] = incoming
+
+<span class="cm"># Client A moves rect to x=100, Client B moves same rect to x=200 — simultaneously</span>
+<span class="cm"># A: timestamp=5, B: timestamp=5, B.client_id > A.client_id → B wins (x=200)</span>
+<span class="cm"># Both clients converge to x=200 with zero server round-trip</span></pre>
+
+  <!-- Tech Stack -->
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">WebGL 2.0</span>
+    <span class="tech-pill">WebAssembly (WASM)</span>
+    <span class="tech-pill">C++ / Skia</span>
+    <span class="tech-pill">Emscripten</span>
+    <span class="tech-pill">CRDTs (LWW Register)</span>
+    <span class="tech-pill">Lamport Clocks</span>
+    <span class="tech-pill">React (UI shell)</span>
+    <span class="tech-pill">TypeScript</span>
+    <span class="tech-pill">WebSocket</span>
+    <span class="tech-pill">Operational Transforms (legacy text)</span>
+    <span class="tech-pill">AWS S3 (file storage)</span>
+    <span class="tech-pill">PostgreSQL</span>
+  </div>
+
+  <div class="insight-box">
+    <strong style="color:var(--a)">The Killer Demo:</strong>
+    <span style="color:#c0c9d6"> When Figma launched multiplayer in 2016, designers could open the same file and see each other's cursors move in real-time. No "save and sync." No merge conflicts. No "who has the latest version?" This single feature made every other design tool look like it was from the 1990s.</span>
+  </div>
+  <div class="insight-box">
+    <strong style="color:var(--a)">WASM Performance Gap:</strong>
+    <span style="color:#c0c9d6"> Figma's boolean path operations (union, subtract, intersect) run 8–15× faster than equivalent JavaScript. For complex path operations on large documents, WASM is the difference between instant and "spinning beach ball."</span>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">Figma proved that "browser apps" and "native apps" is a false dichotomy. With WebGL + WASM + CRDTs, you can build software in a browser that outperforms native apps in latency (collaboration) and matches them in rendering performance — while gaining cross-platform delivery for free. Adobe's $20B acquisition attempt (blocked by EU) was an acknowledgment that Figma had permanently disrupted the category.</p>
+  </div>
+
+  <!-- Legacy -->
+  <h5 class="fw-bold mt-2 mb-3" style="color:#fff">Industry Legacy</h5>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="solution-card h-100">
+        <h6 style="color:#00c864">WASM Everywhere</h6>
+        <p style="font-size:.8rem;color:#8892a4">Figma proved WASM was production-ready for complex apps. Today: AutoCAD Web, Photoshop Web, Google Earth, video editors, and game engines all use WASM for compute-heavy workloads.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="solution-card h-100">
+        <h6 style="color:#00c864">CRDT Adoption</h6>
+        <p style="font-size:.8rem;color:#8892a4">Figma's success triggered a wave of CRDT adoption: Notion, Linear, Liveblocks, Yjs, and Automerge all bring CRDT-powered collaboration to new domains. OT is now considered legacy.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="solution-card h-100">
+        <h6 style="color:#00c864">Design-as-Infrastructure</h6>
+        <p style="font-size:.8rem;color:#8892a4">Figma's API, plugin system, and webhooks turned design files into living infrastructure artifacts — design tokens, component libraries, and handoff specs are now version-controlled data, not static exports.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(162,89,255,.15);color:var(--a);border:1px solid rgba(162,89,255,.3)">← Back to Demos</a>
+  </div>
+
+</div>
+{% endblock %}

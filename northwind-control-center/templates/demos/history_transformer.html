@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}Transformer — Attention Is All You Need{% endblock %}
+{% block content %}
+<style>
+:root { --a: #7c3aed; --ok: #a78bfa; }
+.hero-grad { background: linear-gradient(160deg, rgba(124,58,237,.12), rgba(139,92,246,.06), #0e1014); }
+.problem-card { background:#120a1a; border:1px solid rgba(124,58,237,.35); border-radius:8px; }
+.solution-card { background:#0a0a14; border:1px solid rgba(167,139,250,.35); border-radius:8px; }
+.insight-box { background:#111418; border-left:4px solid var(--a); border-radius:0 6px 6px 0; }
+.era-badge { background:rgba(124,58,237,.15); border:1px solid rgba(124,58,237,.3); color:var(--a); font-size:.7rem; font-weight:700; padding:.25rem .65rem; border-radius:20px; letter-spacing:.08em; }
+.verdict { background:rgba(124,58,237,.07); border:2px solid rgba(124,58,237,.3); border-radius:12px; }
+code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.78rem; color:#c4b5fd; }
+pre { background:#050810; border:1px solid rgba(124,58,237,.25); border-radius:8px; padding:1rem; font-size:.75rem; color:#ddd6fe; overflow-x:auto; line-height:1.6; }
+.company-badge { display:inline-block; padding:.3rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600; background:#1e2530; color:#cdd3de; border:1px solid #2a3545; }
+.stat-num { font-size:2rem; font-weight:900; color:var(--a); line-height:1; }
+.stat-lbl { font-size:.7rem; color:#8892a4; margin-top:.2rem; }
+.attn-grid { display:grid; gap:2px; font-size:.62rem; font-family:monospace; }
+.attn-cell { padding:.25rem .35rem; border-radius:3px; text-align:center; font-weight:600; }
+.model-cmp { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1200px">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.75rem">
+      <li class="breadcrumb-item"><a href="{{ url_for('demos.index') }}" style="color:var(--a)">Demo Lab</a></li>
+      <li class="breadcrumb-item active" style="color:#8892a4">Breaking Points: Transformer</li>
+    </ol>
+  </nav>
+
+  <div class="hero-grad rounded-3 p-4 mb-4 border" style="border-color:rgba(124,58,237,.2)">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="era-badge">2017 – Present</span>
+      <span class="era-badge" style="background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.3);color:#a78bfa">The Memory Wall</span>
+    </div>
+    <h1 class="fw-black mb-1" style="color:#cdd3de;font-size:2.2rem;line-height:1.1">The Transformer: <span style="color:var(--a)">Attention Is All You Need</span></h1>
+    <p class="mb-3" style="color:#8892a4;font-size:.95rem;max-width:700px">RNNs processed words one by one, forgot context, and couldn't be parallelized. Eight Google researchers solved all three problems at once — and accidentally invented the architecture behind every AI model that exists today.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="company-badge">🟣 OpenAI / GPT</span>
+      <span class="company-badge">🔵 Google / Gemini</span>
+      <span class="company-badge">🟢 Anthropic / Claude</span>
+      <span class="company-badge">🎨 Midjourney / Sora (vision)</span>
+      <span class="company-badge">🧬 AlphaFold (biology)</span>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">2017</div>
+        <div class="stat-lbl">"Attention Is All You Need" published at NeurIPS</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">O(n²)</div>
+        <div class="stat-lbl">self-attention cost — every token attends to every other token</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">1T+</div>
+        <div class="stat-lbl">parameters in largest models (GPT-4, Gemini Ultra)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-3 rounded text-center" style="background:#111418;border:1px solid #1e2530">
+        <div class="stat-num">~100%</div>
+        <div class="stat-lbl">of all state-of-the-art AI uses Transformer architecture</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Problem -->
+  <div class="problem-card p-4 mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span style="font-size:1.4rem">💥</span>
+      <h4 class="mb-0 fw-bold" style="color:var(--a)">Three Fatal Flaws of RNNs</h4>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">1. Sequential = Unparallelizable</div>
+        <div style="font-size:.82rem;color:#8892a4">RNNs process tokens one at a time: hidden state h₁ feeds into h₂, which feeds into h₃. To compute h₅, you must have already computed h₄. This creates a strict data dependency chain — you cannot distribute computation across thousands of GPUs because each step depends on the previous step's output. Training a large RNN on the internet takes years, not weeks.</div>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">2. Vanishing Gradients = Forgetting</div>
+        <div style="font-size:.82rem;color:#8892a4">During backpropagation, gradients are multiplied at each step. With sequences of 500+ tokens, gradients shrink exponentially (or explode). The model literally forgets the beginning of a long sentence by the time it processes the end. LSTMs (a fix) helped but didn't solve it — still O(sequence_length) data dependencies.</div>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">3. Fixed Context Window</div>
+        <div style="font-size:.82rem;color:#8892a4">RNN hidden state has fixed dimensions — it must compress the entire history of a paragraph into a single vector of, say, 512 floats. Information is lost. Context windows of more than ~200 tokens became unreliable. This made it impossible to reason over books, codebases, or long documents.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Invention -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">Self-Attention: Seeing Every Word Simultaneously</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
+        <div class="col-md-5">
+          <div class="fw-semibold mb-2" style="color:#cdd3de">The Core Idea</div>
+          <div style="font-size:.82rem;color:#8892a4;margin-bottom:.75rem">For each word in a sentence, compute three vectors: a <strong style="color:#c4b5fd">Query</strong> (what am I looking for?), a <strong style="color:#c4b5fd">Key</strong> (what do I represent?), and a <strong style="color:#c4b5fd">Value</strong> (what information do I carry?). Then: each word's Query is compared (dot product) against every other word's Key to produce an attention score — how relevant is that word to me? Softmax normalizes scores into weights. The output is a weighted sum of all Values.</div>
+
+          <div style="font-size:.78rem;color:#8892a4;margin-bottom:.75rem">
+            <div class="fw-semibold mb-1" style="color:#cdd3de">The Bank Example</div>
+            <div>Sentence: <em>"The bank is on the river bank"</em></div>
+            <div>First "bank": high attention to "river" → financial meaning suppressed</div>
+            <div>Second "bank": high attention to "river" → riverbank confirmed</div>
+            <div style="color:var(--a);margin-top:.3rem">Both resolved in ONE forward pass, not sequentially</div>
+          </div>
+
+          <div class="solution-card p-3">
+            <div class="fw-bold mb-1" style="color:var(--ok)">Why This Enables Parallelism</div>
+            <div style="font-size:.78rem;color:#8892a4">All tokens' Q, K, V matrices are computed simultaneously (matrix multiplication, highly parallelizable on GPU CUDA cores). Attention scores for all word pairs computed in one batched matrix operation. No data dependency between tokens — GPU computes all 512 tokens' representations in parallel. A 10,000-GPU cluster can now train on the entire internet in weeks, not decades.</div>
+          </div>
+        </div>
+        <div class="col-md-7">
+          <div style="font-size:.72rem;color:#8892a4;margin-bottom:.5rem">Self-Attention: The Math (simplified)</div>
+<pre>
+import numpy as np
+
+# For sentence: ["The", "bank", "river", "flows"]
+# Each token gets 3 learned vectors (d_model=4 for demo)
+# In practice: d_model=512 to 8192 depending on model size
+
+Q = np.array([  # Query: what am I looking for?
+    [0.1, 0.8, 0.2, 0.1],  # "The"
+    [0.9, 0.2, 0.1, 0.8],  # "bank" — asking about context
+    [0.1, 0.1, 0.9, 0.3],  # "river" — asking about geography
+    [0.2, 0.1, 0.7, 0.1],  # "flows"
+])
+
+K = np.array([  # Key: what do I represent?
+    [0.1, 0.2, 0.1, 0.1],  # "The"
+    [0.8, 0.3, 0.2, 0.7],  # "bank" — represents ambiguous entity
+    [0.2, 0.1, 0.9, 0.4],  # "river" — represents water/geography
+    [0.1, 0.1, 0.8, 0.2],  # "flows"
+])
+
+V = np.array([  # Value: what information do I carry?
+    [0.1, 0.1, 0.1, 0.1],
+    [0.7, 0.2, 0.1, 0.6],  # "bank" value
+    [0.1, 0.1, 0.9, 0.5],  # "river" value (geography signal)
+    [0.1, 0.1, 0.8, 0.3],
+])
+
+d_k = Q.shape[-1]
+
+# Step 1: Attention scores — every token vs every token
+# Q × K^T: matrix multiply (fully parallelizable on GPU)
+scores = Q @ K.T / np.sqrt(d_k)
+
+# Step 2: Softmax → probability distribution over tokens
+def softmax(x):
+    e = np.exp(x - x.max(axis=-1, keepdims=True))
+    return e / e.sum(axis=-1, keepdims=True)
+
+attn_weights = softmax(scores)
+# "bank" row: high weight on "river" → geography context wins
+
+# Step 3: Weighted sum of Values
+output = attn_weights @ V
+# "bank" output now contains "river"'s value information
+# → model understands this is a riverbank, not financial
+
+# The KEY insight: ALL of this is one matrix operation.
+# 512 tokens → 512×512 attention matrix → computed in parallel
+# vs RNN: 512 sequential hidden state updates (unparallelizable)
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attention is All You Need: Architecture -->
+  <div class="card mb-4" style="background:#111418;border-color:#1e2530">
+    <div class="card-header" style="background:#0e1014;border-color:#1e2530">
+      <span class="fw-bold" style="color:var(--a)">From Architecture to Industry: The Transformer Family Tree</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <dl style="font-size:.82rem">
+            <dt style="color:#cdd3de">Multi-Head Attention</dt>
+            <dd style="color:#8892a4">Run 8–64 attention heads in parallel, each learning different relationship types (syntax, semantics, coreference). Concatenate outputs. One head might learn "subject-verb" relationships; another "adjective-noun." Richer representations than a single attention pass.</dd>
+            <dt style="color:#cdd3de">Positional Encoding</dt>
+            <dd style="color:#8892a4">Self-attention has no inherent notion of word order (it just sees a set of tokens). Inject position information by adding a sinusoidal position vector to each token embedding. The model learns to distinguish "dog bites man" from "man bites dog."</dd>
+            <dt style="color:#cdd3de">Feed-Forward + Residual Connections</dt>
+            <dd style="color:#8892a4">Each attention layer followed by a position-wise feed-forward network (two linear layers + ReLU). Residual connections (x + sublayer(x)) prevent vanishing gradients — gradients have a "highway" to flow through. Layer Normalization stabilizes training.</dd>
+            <dt style="color:#cdd3de" class="mb-0">Encoder vs Decoder</dt>
+            <dd class="mb-0" style="color:#8892a4">Original paper: Encoder (BERT-style) reads full input bidirectionally. Decoder (GPT-style) generates text left-to-right with masked self-attention (can't see future tokens). Encoder-Decoder (T5, original Transformer) for translation. GPT uses decoder-only → simplifies scaling to 1T+ parameters.</dd>
+          </dl>
+        </div>
+        <div class="col-md-6">
+          <div style="font-size:.78rem;color:#8892a4;margin-bottom:.5rem">Transformer evolution: same architecture, more parameters + data</div>
+          <div class="d-flex flex-column gap-2" style="font-size:.78rem">
+            <div class="d-flex gap-2 align-items-center">
+              <div style="width:90px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);padding:.3rem .5rem;border-radius:4px;text-align:center;color:var(--a);font-weight:600;font-size:.72rem">BERT (2018)</div>
+              <div style="color:#8892a4">Google. 340M params. Encoder-only. Bidirectional context. Dominates NLP benchmarks. Still deployed in Google Search.</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <div style="width:90px;background:rgba(124,58,237,.25);border:1px solid rgba(124,58,237,.4);padding:.3rem .5rem;border-radius:4px;text-align:center;color:var(--a);font-weight:600;font-size:.72rem">GPT-2 (2019)</div>
+              <div style="color:#8892a4">OpenAI. 1.5B params. Decoder-only. OpenAI initially refused release "too dangerous." Generated coherent paragraphs — first mass-market AI writing.</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <div style="width:90px;background:rgba(124,58,237,.3);border:1px solid rgba(124,58,237,.4);padding:.3rem .5rem;border-radius:4px;text-align:center;color:var(--a);font-weight:600;font-size:.72rem">GPT-3 (2020)</div>
+              <div style="color:#8892a4">175B params. In-context learning emerges — give examples in the prompt, model generalizes. ChatGPT ancestor. Few-shot learning.</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <div style="width:90px;background:rgba(124,58,237,.4);border:1px solid rgba(124,58,237,.5);padding:.3rem .5rem;border-radius:4px;text-align:center;color:#e2d9f3;font-weight:600;font-size:.72rem">ChatGPT (2022)</div>
+              <div style="color:#8892a4">GPT-3.5 + RLHF (human feedback). 100M users in 60 days. Mass market AI. Instruction-following emerges as trainable behavior.</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <div style="width:90px;background:rgba(124,58,237,.55);border:1px solid var(--a);padding:.3rem .5rem;border-radius:4px;text-align:center;color:#fff;font-weight:600;font-size:.72rem">GPT-4o+ / Claude 4</div>
+              <div style="color:#8892a4">Multimodal: text + image + audio. Long context windows (200K+ tokens). Mixture of Experts (MoE). Same Transformer core, massively scaled.</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <div style="width:90px;background:rgba(124,58,237,.3);border:1px solid rgba(124,58,237,.4);padding:.3rem .5rem;border-radius:4px;text-align:center;color:var(--a);font-weight:600;font-size:.72rem">AlphaFold2</div>
+              <div style="color:#8892a4">DeepMind. Same Transformer on protein sequences instead of text. Solved 50-year-old protein folding problem in 2021. 200M proteins predicted.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash Attention / Scaling -->
+  <div class="insight-box p-4 mb-4">
+    <div class="fw-bold mb-3" style="color:var(--a)">🔬 The Scaling Law: Why Bigger Is Always Better (Within a Law)</div>
+    <div class="row g-3" style="font-size:.82rem">
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Chinchilla Scaling Law (2022)</div>
+        <div style="color:#8892a4">DeepMind paper: optimal performance requires equal scaling of parameters AND training data. Rule: N parameters → train on 20×N tokens. GPT-3 (175B params, 300B tokens) was under-trained. Chinchilla 70B trained on 1.4T tokens outperformed 280B GPT-3 on most benchmarks. Data matters as much as model size.</div>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Flash Attention (2022)</div>
+        <div style="color:#8892a4">The O(n²) cost of attention becomes prohibitive at long contexts (100K tokens → 10B attention pairs). Flash Attention: reorders computation to be IO-aware — avoids materializing the full n×n attention matrix in GPU HBM (slow). Instead computes attention in tiles that fit in fast SRAM. 5-10× faster, enables 1M+ token context windows.</div>
+      </div>
+      <div class="col-md-4">
+        <div class="fw-semibold mb-1" style="color:#cdd3de">Mixture of Experts (MoE)</div>
+        <div style="color:#8892a4">Instead of all parameters active for every token: divide into "experts" (sub-networks). A router selects 2-8 experts per token. GPT-4 rumored to be 8 experts × 220B params = 1.76T total, but only 440B active per token. Same quality as dense model, 5× cheaper inference. Mistral 8×7B, Gemini Ultra use MoE.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="verdict p-4 mb-4 text-center">
+    <div style="font-size:1.5rem;margin-bottom:.5rem">🏆</div>
+    <h5 class="fw-bold mb-2" style="color:var(--a)">The Lasting Verdict</h5>
+    <p style="color:#8892a4;max-width:700px;margin:0 auto;font-size:.87rem">"Attention Is All You Need" (Vaswani et al., 2017) is arguably the most consequential machine learning paper ever published. Eight of the authors have since left Google to found competing AI companies (OpenAI, Cohere, Adept, Character.AI, Inceptive). The Transformer architecture solved the sequential processing bottleneck, enabling training on internet-scale data with thousands of GPUs. Every major AI system that exists today — ChatGPT, Claude, Gemini, Sora, DALL-E, AlphaFold, Whisper, Stable Diffusion — runs on some variant of the Transformer. It didn't just change AI; it changed science, software, and arguably civilization.</p>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(124,58,237,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🎓 RLHF: Turning a Model Into an Assistant</div>
+        <div style="font-size:.78rem;color:#8892a4">A pre-trained Transformer predicts next tokens — it doesn't "follow instructions." RLHF (Reinforcement Learning from Human Feedback): 1) supervised fine-tuning on Q&amp;A pairs, 2) human raters score model outputs, 3) train a "reward model" to predict human preference, 4) use PPO (RL algorithm) to optimize the base model to maximize the reward model's score. This is what makes ChatGPT helpful rather than a text predictor.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(124,58,237,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">💻 The GPU Monopoly</div>
+        <div style="font-size:.78rem;color:#8892a4">Training GPT-4 estimated cost: $50–100M. Primary bottleneck: NVIDIA H100 GPUs ($30K each). NVIDIA's CUDA ecosystem (software toolkit for GPU computing) creates a 10-year moat — competing GPU hardware exists but lacks CUDA's library ecosystem. NVIDIA's market cap went from $300B (2022) to $3T (2024) riding the Transformer wave.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#111418;border:1px solid rgba(124,58,237,.2)">
+        <div class="fw-bold mb-2" style="color:var(--a)">🌍 Beyond Text</div>
+        <ul style="font-size:.78rem;color:#8892a4;margin:0;padding-left:1.1rem">
+          <li><strong style="color:#cdd3de">Vision Transformer (ViT)</strong> — image patches as tokens</li>
+          <li><strong style="color:#cdd3de">Whisper</strong> — audio spectrogram as tokens</li>
+          <li><strong style="color:#cdd3de">AlphaFold2</strong> — amino acid sequences as tokens</li>
+          <li><strong style="color:#cdd3de">Sora/DALL-E</strong> — image/video patches as tokens</li>
+          <li><strong style="color:#cdd3de">Codex/GitHub Copilot</strong> — code tokens</li>
+          <li><strong style="color:#cdd3de">AlphaCode</strong> — competitive programming</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

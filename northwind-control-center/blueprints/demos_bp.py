@@ -1081,3 +1081,28 @@ def history_whatsapp():
 @login_required
 def history_kafka():
     return render_template('demos/history_kafka.html')
+
+@demos_bp.route('/history/transformer')
+@login_required
+def history_transformer():
+    return render_template('demos/history_transformer.html')
+
+@demos_bp.route('/history/tiktok')
+@login_required
+def history_tiktok():
+    return render_template('demos/history_tiktok.html')
+
+@demos_bp.route('/history/figma')
+@login_required
+def history_figma():
+    return render_template('demos/history_figma.html')
+
+@demos_bp.route('/history/snowflake')
+@login_required
+def history_snowflake():
+    return render_template('demos/history_snowflake.html')
+
+@demos_bp.route('/history/cloudflare')
+@login_required
+def history_cloudflare():
+    return render_template('demos/history_cloudflare.html')
