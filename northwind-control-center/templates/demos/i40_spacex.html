@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Industry 4.0: SpaceX — The Orbital Data Center{% endblock %}
+{% block content %}
+<style>
+:root { --a: #0ea5e9; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(14,165,233,.15); color:var(--a); border:1px solid rgba(14,165,233,.3); }
+.crisis-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.7rem; font-weight:700; background:rgba(255,100,0,.2); color:#ff6b35; border:1px solid rgba(255,100,0,.3); margin:.15rem; }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(14,165,233,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(14,165,233,.1); border:1px solid rgba(14,165,233,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(14,165,233,.15); color:var(--a); border:1px solid rgba(14,165,233,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.orbit-row { display:flex; justify-content:space-between; align-items:center; padding:.55rem .75rem; margin:.3rem 0; border-radius:5px; font-size:.82rem; }
+.orbit-bar { height:8px; border-radius:4px; margin-top:.3rem; }
+.use-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:.75rem; margin:1rem 0; }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="mb-4">
+    <span class="era-badge">2019 – 2026</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">SpaceX: The Orbital Data Center</h1>
+    <p class="lead" style="color:#8892a4">The terrestrial internet is a product of geography. SpaceX removed geography from the equation entirely. By routing data through a laser-linked mesh of satellites in low orbit, SpaceX built a global backbone that is simultaneously faster, lower-latency, and more resilient than any cable ever laid.</p>
+  </div>
+
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">6,000+</span><span class="stat-lbl">Active Starlink satellites</span></div>
+    <div class="stat-box"><span class="stat-num">340 mi</span><span class="stat-lbl">LEO orbital altitude</span></div>
+    <div class="stat-box"><span class="stat-num">20ms</span><span class="stat-lbl">LEO round-trip latency</span></div>
+    <div class="stat-box"><span class="stat-num">47%</span><span class="stat-lbl">Faster than fiber (vacuum)</span></div>
+  </div>
+
+  <!-- Problem -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Problem: Geography Defeats Physics</h4>
+    <p style="color:#c0c9d6">Fiber optic cables carry light through glass. But glass slows light down — the refractive index of silica fiber reduces light speed to about 66% of vacuum. Additionally, cables must follow geography: they go around mountains, snake through city conduits, cross oceans in designated corridors, and make dozens of routing hops through physical network equipment. Each hop adds latency.</p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">GEO Satellites (Legacy)</h6>
+        <p style="font-size:.82rem;color:#8892a4">Traditional communication satellites orbit at 22,236 miles (geostationary orbit). Signal must travel 22,236 miles up, then 22,236 miles back down. Round-trip: 600ms minimum. Unusable for real-time applications: VoIP, gaming, financial trading, industrial control loops.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Terrestrial Fiber</h6>
+        <p style="font-size:.82rem;color:#8892a4">London to Tokyo via fiber: ~250ms. The cable physically routes under the ocean, through relay stations, across multiple ISP handoffs. A financial institution sending a trade from London to Tokyo is at the mercy of every submarine cable's geography. You cannot buy a shorter ocean.</p>
+      </div>
+    </div>
+    <div class="mt-3">
+      <span class="crisis-badge">GEO: 600ms latency</span>
+      <span class="crisis-badge">Fiber: geography-constrained</span>
+      <span class="crisis-badge">Communication blackouts</span>
+      <span class="crisis-badge">No internet in 40% of Earth</span>
+    </div>
+  </div>
+
+  <!-- Orbital altitude comparison -->
+  <div class="mb-4">
+    <div class="orbit-row" style="background:rgba(255,60,0,.1)">
+      <div><strong style="color:#fff">GEO (Geostationary)</strong> <span style="color:#8892a4;font-size:.75rem">— Intelsat, SES, DirecTV</span></div>
+      <div style="text-align:right"><span style="color:#ff4444;font-weight:700">22,236 mi / 600ms RTT</span><div class="orbit-bar" style="background:#ff4444;width:220px"></div></div>
+    </div>
+    <div class="orbit-row" style="background:rgba(255,150,0,.07)">
+      <div><strong style="color:#fff">MEO (Medium Earth Orbit)</strong> <span style="color:#8892a4;font-size:.75rem">— O3b mPOWER, GPS</span></div>
+      <div style="text-align:right"><span style="color:#f97316;font-weight:700">5,000–12,000 mi / 130ms RTT</span><div class="orbit-bar" style="background:#f97316;width:110px"></div></div>
+    </div>
+    <div class="orbit-row" style="background:rgba(14,165,233,.08)">
+      <div><strong style="color:#fff">LEO — Starlink Gen1 (Shell 1)</strong> <span style="color:#8892a4;font-size:.75rem">— 550km, no ISL</span></div>
+      <div style="text-align:right"><span style="color:#38bdf8;font-weight:700">340 mi / ~40ms RTT</span><div class="orbit-bar" style="background:#38bdf8;width:40px"></div></div>
+    </div>
+    <div class="orbit-row" style="background:rgba(14,165,233,.12)">
+      <div><strong style="color:#fff">LEO — Starlink Gen2 (with laser ISL)</strong> <span style="color:#8892a4;font-size:.75rem">— 340mi + optical mesh</span></div>
+      <div style="text-align:right"><span style="color:#0ea5e9;font-weight:700">340 mi / ~20ms RTT</span><div class="orbit-bar" style="background:#0ea5e9;width:20px"></div></div>
+    </div>
+  </div>
+
+  <!-- ISL -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Inter-Satellite Laser Links: Routing at the Speed of Light in Vacuum</h4>
+    <p style="color:#c0c9d6">SpaceX Gen2 Starlink satellites carry four precision optical inter-satellite link (ISL) terminals — one pointing in each cardinal direction. These lasers connect adjacent satellites into a <strong style="color:#fff">continuously shifting mesh topology in orbit</strong>. A data packet from an oil rig in the Arctic can travel: Starlink dish → nearest satellite → laser hop → laser hop → laser hop → ground station adjacent to a cloud data center → VPC ingress. It never touches the public internet.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong style="color:var(--a)">The Physics Advantage:</strong>
+    <span style="color:#c0c9d6"> Light travels at 299,792 km/s in vacuum, but only ~204,190 km/s in silica glass fiber (refractive index ≈ 1.467). That means <strong style="color:#fff">light in vacuum is 47% faster than light in fiber</strong>. For a London→Tokyo route (9,560 km great-circle distance), the vacuum path through a LEO satellite mesh takes ~32ms propagation time. The best transpacific fiber route takes ~68ms just in propagation, plus routing overhead. SpaceX sells a physics law — not a cable.</span>
+  </div>
+
+  <pre class="code-block mb-4"><span class="cm"># SpaceX AWS Ground Station — direct cloud ingestion from orbital mesh</span>
+<span class="cm"># Scenario: offshore oil rig telemetry pipeline</span>
+
+<span class="kw">import</span> boto3, json
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta, timezone
+
+gs = boto3.<span class="fn">client</span>(<span class="st">'groundstation'</span>, region_name=<span class="st">'us-east-1'</span>)
+
+<span class="cm"># The Ground Station antenna is co-located with an AWS data center.</span>
+<span class="cm"># Data lands from Starlink → antenna → S3 without traversing the public internet.</span>
+
+contact = gs.<span class="fn">reserve_contact</span>(
+    satelliteArn     = <span class="st">'arn:aws:groundstation::satellite/starlink-1234'</span>,
+    missionProfileArn= <span class="st">'arn:aws:groundstation:us-east-1::mission-profile/rig-telemetry'</span>,
+    groundStationName= <span class="st">'AWS-Ground-Station-us-east-1'</span>,   <span class="cm"># antenna adjacent to DC</span>
+    startTime        = datetime.<span class="fn">now</span>(timezone.utc) + timedelta(minutes=<span class="num">8</span>),
+    endTime          = datetime.<span class="fn">now</span>(timezone.utc) + timedelta(minutes=<span class="num">18</span>),
+    tags             = {<span class="st">'project'</span>: <span class="st">'arctic-rig-monitoring'</span>},
+)
+print(f<span class="st">"Contact scheduled: {contact['contactId']}"</span>)
+
+<span class="cm"># Data pipeline from contact window:</span>
+<span class="cm"># 1. Oil rig → Starlink dish (Ka-band uplink, 150Mbps)</span>
+<span class="cm"># 2. Starlink → ISL laser mesh (vacuum hop, ~20ms from Arctic to us-east-1)</span>
+<span class="cm"># 3. Starlink → Ground Station antenna (adjacent to AWS datacenter)</span>
+<span class="cm"># 4. Ground Station → S3 bucket via VPC endpoint (zero public internet)</span>
+<span class="cm"># 5. S3 → Kinesis → Lambda → real-time anomaly detection</span>
+
+<span class="cm"># The rig's sensor data bypasses ALL public internet routing.</span>
+<span class="cm"># Impossible to intercept. Impossible to man-in-the-middle. Compliant by design.</span></pre>
+
+  <!-- Dynamic BGP -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Dynamic BGP Routing in Orbit</h4>
+    <p style="color:#c0c9d6">The Starlink constellation is not a static network. Satellites move at 7.8 km/s. Every 90 minutes, a satellite completes one full orbit. The ISL topology is constantly changing — links form and break as satellites move into and out of range of each other. SpaceX implements a modified <strong style="color:#fff">BGP routing protocol</strong> at the orbital layer: each satellite continuously advertises its current ISL neighbors and path costs, and the network converges to the lowest-latency path in real-time, route by route.</p>
+  </div>
+
+  <!-- Industry 4.0 Use Cases -->
+  <h4 class="fw-bold mt-4 mb-3" style="color:#fff">Industry 4.0 Use Cases: Where No Cable Can Go</h4>
+  <div class="use-grid mb-4">
+    <div class="solution-card">
+      <h6 style="color:#00c864;font-size:.82rem">Offshore Oil Rigs</h6>
+      <p style="font-size:.77rem;color:#8892a4;margin:0">Terabytes of seismic sensor data, drill telemetry, pressure logs. Previously: daily satellite batch upload via GEO (600ms, expensive, unreliable). Now: real-time streaming via Starlink ISL → AWS VPC. Predictive maintenance models run on live data.</p>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864;font-size:.82rem">Maritime Shipping</h6>
+      <p style="font-size:.77rem;color:#8892a4;margin:0">Container ships carry IoT sensors on every container. Route optimization, fuel consumption modeling, cold-chain monitoring. Previously dark for weeks at sea. Now: continuous 200Mbps uplink via Starlink. AIS + IoT data streams directly to fleet management cloud.</p>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864;font-size:.82rem">Remote Mining & Agriculture</h6>
+      <p style="font-size:.77rem;color:#8892a4;margin:0">Open-pit mines in the Atacama. Precision agriculture sensors across Saskatchewan. Industrial control loops that previously required dedicated VSAT links now use Starlink at consumer hardware cost. The factory floor can now be anywhere on Earth.</p>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864;font-size:.82rem">Financial Trading (Low-Latency)</h6>
+      <p style="font-size:.77rem;color:#8892a4;margin:0">London → Tokyo via fiber: ~200ms. Via Starlink ISL: ~100ms. For HFT strategies, this 100ms reduction is worth millions per day in alpha. SpaceX is actively marketing its ISL constellation to financial institutions as a faster transoceanic backbone.</p>
+    </div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="problem-card">
+      <h6 style="color:#ff6b35">Before Starlink ISL</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.1rem">
+        <li>GEO satellite: 600ms, $5/MB</li>
+        <li>Fiber only where cables exist</li>
+        <li>Remote sites: communication blackouts</li>
+        <li>Data leaves public internet: no control</li>
+        <li>Batch uploads: 12–24hr data lag</li>
+      </ul>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864">After Starlink LEO + ISL</h6>
+      <ul style="font-size:.82rem;color:#8892a4;margin:0;padding-left:1.1rem">
+        <li>LEO: 20ms, decreasing cost</li>
+        <li>Coverage: 99% of Earth's surface</li>
+        <li>Continuous uplink — no blackouts</li>
+        <li>Ground Station → VPC: zero public internet</li>
+        <li>Real-time streaming: millisecond data lag</li>
+      </ul>
+    </div>
+  </div>
+
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">Starlink LEO</span>
+    <span class="tech-pill">Optical ISL Lasers</span>
+    <span class="tech-pill">Dynamic BGP (orbital)</span>
+    <span class="tech-pill">Ka-band Uplink</span>
+    <span class="tech-pill">AWS Ground Station</span>
+    <span class="tech-pill">Azure Space</span>
+    <span class="tech-pill">VPC Direct Ingress</span>
+    <span class="tech-pill">Amazon Kinesis</span>
+    <span class="tech-pill">Space-to-Cloud Pipeline</span>
+    <span class="tech-pill">VSAT Replacement</span>
+    <span class="tech-pill">Refractive Index Physics</span>
+  </div>
+
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">SpaceX is not a satellite company — it is a networking company that happens to launch its own routers into orbit. The inter-satellite laser mesh is the most ambitious piece of networking infrastructure ever built, and it gets faster with every launch. The Industry 4.0 implication is profound: any physical environment on Earth — any factory floor, any mine, any ship, any drill rig — can now be a node in the global cloud. The separation between "remote" and "connected" has been abolished.</p>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.i40_tesla') }}" class="btn btn-sm me-2" style="background:rgba(227,25,55,.15);color:#e31937;border:1px solid rgba(227,25,55,.3)">← Tesla</a>
+    <a href="{{ url_for('demos.i40_xai') }}" class="btn btn-sm me-2" style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)">xAI Colossus →</a>
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(14,165,233,.15);color:var(--a);border:1px solid rgba(14,165,233,.3)">All Demos</a>
+  </div>
+
+</div>
+{% endblock %}

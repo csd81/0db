@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Industry 4.0: Tesla — The FSD Data Engine{% endblock %}
+{% block content %}
+<style>
+:root { --a: #e31937; }
+.era-badge { display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; background:rgba(227,25,55,.15); color:var(--a); border:1px solid rgba(227,25,55,.3); }
+.crisis-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.7rem; font-weight:700; background:rgba(255,100,0,.2); color:#ff6b35; border:1px solid rgba(255,100,0,.3); margin:.15rem; }
+.problem-card { background:rgba(255,60,0,.07); border:1px solid rgba(255,60,0,.25); border-radius:8px; padding:1.25rem; }
+.solution-card { background:rgba(0,200,100,.07); border:1px solid rgba(0,200,100,.25); border-radius:8px; padding:1.25rem; }
+.insight-box { border-left:3px solid var(--a); background:rgba(227,25,55,.06); padding:.9rem 1.1rem; border-radius:0 6px 6px 0; margin:1rem 0; }
+.verdict { text-align:center; background:rgba(227,25,55,.1); border:1px solid rgba(227,25,55,.35); border-radius:10px; padding:1.5rem; margin:2rem 0; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.75rem; margin:1rem 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.85rem; text-align:center; }
+.stat-num { font-size:1.5rem; font-weight:800; color:var(--a); display:block; }
+.stat-lbl { font-size:.68rem; color:#8892a4; text-transform:uppercase; letter-spacing:.06em; }
+.tech-pill { display:inline-block; padding:.2rem .55rem; border-radius:4px; font-size:.68rem; font-weight:600; background:rgba(227,25,55,.15); color:var(--a); border:1px solid rgba(227,25,55,.25); margin:.15rem; }
+pre.code-block { background:#0a0a0f; border:1px solid rgba(255,255,255,.1); border-radius:6px; padding:1rem 1.2rem; font-size:.78rem; line-height:1.6; overflow-x:auto; color:#e2e8f0; }
+.kw { color:#c792ea; } .cm { color:#546e7a; font-style:italic; } .st { color:#c3e88d; } .num { color:#f78c6c; } .fn { color:#82aaff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.pipeline-row { display:flex; align-items:center; gap:.75rem; padding:.6rem 1rem; border-radius:6px; margin:.35rem 0; font-size:.82rem; }
+.pipeline-arrow { color:#6b7280; font-size:1rem; flex-shrink:0; }
+.dojo-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.75rem; margin:1rem 0; }
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="mb-4">
+    <span class="era-badge">2019 – 2026</span>
+    <h1 class="mt-3 fw-black" style="font-size:2rem;color:#fff">Tesla: The FSD Data Engine</h1>
+    <p class="lead" style="color:#8892a4">You cannot write a rulebook for driving — the physical world is too chaotic. Tesla's solution was to turn every sold car into a labeled-data factory, running AI silently in the background of every human trip, flagging the moments that matter most.</p>
+  </div>
+
+  <div class="stat-grid mb-4">
+    <div class="stat-box"><span class="stat-num">7M+</span><span class="stat-lbl">Cars in the fleet (sensors)</span></div>
+    <div class="stat-box"><span class="stat-num">8</span><span class="stat-lbl">Cameras per car (360° video)</span></div>
+    <div class="stat-box"><span class="stat-num">10s</span><span class="stat-lbl">Edge case clip length</span></div>
+    <div class="stat-box"><span class="stat-num">1.1 EF</span><span class="stat-lbl">Dojo peak FLOP/s</span></div>
+  </div>
+
+  <!-- Problem -->
+  <div class="problem-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#ff6b35">⚠ The Existential Problem: You Cannot Label the Physical World by Hand</h4>
+    <p style="color:#c0c9d6">Classical autopilot systems used hand-coded heuristics: "if object within 2 meters, brake." These break on edge cases — blown tires on the road, a child chasing a ball, construction zones with inverted lanes. The shift to end-to-end neural networks requires millions of labeled video examples of exactly these situations.</p>
+    <div class="compare-grid mt-3">
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Human Labeling (2018–2020)</h6>
+        <p style="font-size:.82rem;color:#8892a4">Human annotators watched video clips and drew bounding boxes around pedestrians, lane lines, and obstacles. At Tesla's data volume — petabytes of 360-degree 4K video per week — this was physically impossible. One human can label ~8 hours of video per workday. The fleet generates decades of video every hour.</p>
+      </div>
+      <div class="problem-card">
+        <h6 style="color:#ff6b35">Simulated Data (Waymo approach)</h6>
+        <p style="font-size:.82rem;color:#8892a4">Competitors trained on synthetic data from physics simulators. Problem: sim-to-real gap. A model trained on perfect synthetic rain doesn't generalize to rain on a dirty windshield, or rain with road glare, or rain with broken wipers. Real-world chaos cannot be fully simulated.</p>
+      </div>
+    </div>
+    <div class="mt-3">
+      <span class="crisis-badge">Petabytes unlabeled video</span>
+      <span class="crisis-badge">Sim-to-real gap</span>
+      <span class="crisis-badge">Edge cases too rare to collect manually</span>
+      <span class="crisis-badge">GPU bottleneck on video training</span>
+    </div>
+  </div>
+
+  <!-- Shadow Mode -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Shadow Mode: The Fleet as a Labeled-Data Factory</h4>
+    <p style="color:#c0c9d6">When a human drives a Tesla, the FSD neural network runs silently in parallel. It continuously predicts what the car <em>should</em> do. If the human's action diverges significantly from the AI's prediction — a sudden swerve, an emergency brake — the car flags that exact moment as an <strong style="color:#fff">edge case</strong>: a situation where human judgment differed from the model. These are the most valuable training clips in the world.</p>
+  </div>
+
+  <pre class="code-block mb-4"><span class="cm"># Tesla Shadow Mode — simplified edge case pipeline</span>
+
+EDGE_CASE_THRESHOLD = <span class="num">0.35</span>   <span class="cm"># divergence score above which clip is flagged</span>
+CLIP_RADIUS_SEC     = <span class="num">5</span>       <span class="cm"># 5s before + 5s after = 10s clip</span>
+
+<span class="kw">class</span> <span class="fn">ShadowModeEngine</span>:
+    <span class="st">"""Runs on the FSD chip at 36 FPS — zero cloud dependency."""</span>
+    <span class="kw">def</span> <span class="fn">tick</span>(self, frame: SensorFrame, human_action: Action):
+        ai_action  = self.fsd_model.<span class="fn">predict</span>(frame)
+        divergence = self.<span class="fn">kl_divergence</span>(ai_action, human_action)
+
+        <span class="kw">if</span> divergence > EDGE_CASE_THRESHOLD:
+            self.pending_clips.<span class="fn">append</span>({
+                <span class="st">'clip_id'</span>   : uuid.<span class="fn">uuid4</span>().<span class="fn">hex</span>,
+                <span class="st">'vin_hash'</span>  : self.<span class="fn">vin_hash</span>(),    <span class="cm"># anonymized vehicle ID</span>
+                <span class="st">'timestamp'</span> : frame.timestamp,
+                <span class="st">'gps'</span>       : frame.gps,
+                <span class="st">'divergence'</span>: divergence,
+                <span class="st">'frames'</span>    : self.ring_buffer[-CLIP_RADIUS_SEC * <span class="num">36</span>:
+                                               +CLIP_RADIUS_SEC * <span class="num">36</span>],
+            })
+
+    <span class="kw">def</span> <span class="fn">on_wifi_connected</span>(self):
+        <span class="cm"># Car is parked, plugged in — safe to upload</span>
+        <span class="kw">for</span> clip <span class="kw">in</span> self.pending_clips:
+            compressed = <span class="fn">h265_compress</span>(clip[<span class="st">'frames'</span>])   <span class="cm"># ~90% size reduction</span>
+            self.kafka_producer.<span class="fn">send</span>(
+                topic   = <span class="st">'tesla.shadow_mode.edge_cases'</span>,
+                key     = clip[<span class="st">'clip_id'</span>].<span class="fn">encode</span>(),
+                value   = {<span class="st">'meta'</span>: clip[<span class="st">'clip_id'</span>], <span class="st">'divergence'</span>: clip[<span class="st">'divergence'</span>],
+                           <span class="st">'payload'</span>: compressed},
+            )
+        self.pending_clips.<span class="fn">clear</span>()
+        <span class="cm"># Each upload: ~50MB compressed video clip, packed with edge-case signal</span></pre>
+
+  <!-- 4D Auto-Labeling -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ 4D Auto-Labeling: Cloud AI Labels the Physical World</h4>
+    <p style="color:#c0c9d6">Once the edge case clip arrives in Tesla's data lake, a massive "teacher" model — unconstrained by battery or real-time requirements — processes it. The teacher reconstructs the 8 camera views into a unified <strong style="color:#fff">3D point cloud over time (4D)</strong>: every pixel becomes a labeled 3D coordinate with a known velocity vector. Road lines, pedestrians, cyclists, traffic signs — everything is labeled automatically, with sub-pixel precision.</p>
+  </div>
+
+  <!-- Pipeline flow -->
+  <div class="mb-4">
+    <div class="pipeline-row" style="background:rgba(227,25,55,.08);border:1px solid rgba(227,25,55,.2)">
+      <div style="font-size:.75rem;font-weight:700;color:#e31937;min-width:90px">EDGE CAR</div>
+      <div style="flex:1;color:#c0c9d6">8-camera SensorFrame → FSD chip inference (36 FPS) → divergence detected</div>
+    </div>
+    <div style="text-align:center;color:#374151;font-size:1.2rem">↓</div>
+    <div class="pipeline-row" style="background:rgba(255,150,0,.06);border:1px solid rgba(255,150,0,.15)">
+      <div style="font-size:.75rem;font-weight:700;color:#f97316;min-width:90px">RING BUFFER</div>
+      <div style="flex:1;color:#c0c9d6">10-second H.265 clip (50MB compressed) staged for upload</div>
+    </div>
+    <div style="text-align:center;color:#374151;font-size:1.2rem">↓</div>
+    <div class="pipeline-row" style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15)">
+      <div style="font-size:.75rem;font-weight:700;color:#f59e0b;min-width:90px">KAFKA</div>
+      <div style="flex:1;color:#c0c9d6">topic: tesla.shadow_mode.edge_cases → partitioned by geo-region → S3 data lake</div>
+    </div>
+    <div style="text-align:center;color:#374151;font-size:1.2rem">↓</div>
+    <div class="pipeline-row" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15)">
+      <div style="font-size:.75rem;font-weight:700;color:#10b981;min-width:90px">TEACHER AI</div>
+      <div style="flex:1;color:#c0c9d6">8-view → NeRF reconstruction → 4D labeled occupancy grid (no human in loop)</div>
+    </div>
+    <div style="text-align:center;color:#374151;font-size:1.2rem">↓</div>
+    <div class="pipeline-row" style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15)">
+      <div style="font-size:.75rem;font-weight:700;color:#6366f1;min-width:90px">DOJO</div>
+      <div style="flex:1;color:#c0c9d6">Labeled clips → FSD student model training → weights distilled back to car size</div>
+    </div>
+    <div style="text-align:center;color:#374151;font-size:1.2rem">↓</div>
+    <div class="pipeline-row" style="background:rgba(227,25,55,.08);border:1px solid rgba(227,25,55,.2)">
+      <div style="font-size:.75rem;font-weight:700;color:#e31937;min-width:90px">OTA UPDATE</div>
+      <div style="flex:1;color:#c0c9d6">Updated FSD model pushed over Wi-Fi to 7M cars overnight → fleet is measurably smarter</div>
+    </div>
+  </div>
+
+  <!-- Dojo -->
+  <div class="solution-card mb-4">
+    <h4 class="fw-bold mb-3" style="color:#00c864">✦ Dojo: Custom Silicon for Video AI</h4>
+    <p style="color:#c0c9d6">Training on high-resolution video is fundamentally different from training on text or images. The data-transfer bandwidth between GPUs became the bottleneck — Nvidia's NVLink couldn't keep GPUs fed fast enough when processing 4K multi-camera video streams. Tesla designed <strong style="color:#fff">Dojo</strong> from scratch to eliminate this bottleneck.</p>
+  </div>
+
+  <div class="dojo-grid mb-4">
+    <div class="solution-card">
+      <h6 style="color:#00c864;font-size:.82rem">D1 Chip</h6>
+      <p style="font-size:.77rem;color:#8892a4;margin:0">Custom Tesla ASIC built on TSMC 7nm. 362 TFLOP/s FP32 per chip. Optimized for video workloads specifically — the memory subsystem is designed to stream large video tensors without stalling compute.</p>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864;font-size:.82rem">ExaPOD Architecture</h6>
+      <p style="font-size:.77rem;color:#8892a4;margin:0">25 D1 chips form a Training Tile. 120 Tiles form an ExaPOD. Each ExaPOD: 1.1 ExaFLOP/s. All chips communicate via a proprietary high-bandwidth mesh interconnect — no PCIe, no NVLink, no standard networking.</p>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864;font-size:.82rem">Video-Native Training</h6>
+      <p style="font-size:.77rem;color:#8892a4;margin:0">Dojo is architected to ingest compressed H.265 video streams directly, decompress on-chip, and feed tensors into training without a CPU-side decode step. Eliminates the CPU→GPU memory copy bottleneck that limits Nvidia-based video training.</p>
+    </div>
+    <div class="solution-card">
+      <h6 style="color:#00c864;font-size:.82rem">The Moat</h6>
+      <p style="font-size:.77rem;color:#8892a4;margin:0">Every competitor must rent GPU compute from AWS, Azure, or CoreWeave. Tesla owns its training compute. The economics compound: more cars sold → more edge cases → more Dojo training cycles → better FSD → more cars sold.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong style="color:var(--a)">The Data Flywheel:</strong>
+    <span style="color:#c0c9d6"> Waymo has driven ~50M miles in testing. Tesla's fleet drives ~50M miles <em>every two days</em>. This is not a quantitative advantage — it is a qualitative one. At 50M test miles, you hit common scenarios. At 50M miles per day, you begin to reliably capture the <strong style="color:#fff">one-in-a-million edge cases</strong> that actually kill people: the wrong-way driver at 3am, the mattress on the highway, the child chasing a ball between parked cars. Shadow Mode collects exactly those moments, automatically, without human labeling cost.</span>
+  </div>
+
+  <h5 class="fw-bold mt-4 mb-2" style="color:#fff">Technology Stack</h5>
+  <div class="mb-3">
+    <span class="tech-pill">FSD Inference Chip</span>
+    <span class="tech-pill">Shadow Mode</span>
+    <span class="tech-pill">Apache Kafka</span>
+    <span class="tech-pill">H.265 Video Compression</span>
+    <span class="tech-pill">4D Auto-Labeling</span>
+    <span class="tech-pill">NeRF Reconstruction</span>
+    <span class="tech-pill">Dojo Supercomputer</span>
+    <span class="tech-pill">D1 Custom ASIC</span>
+    <span class="tech-pill">ExaPOD Mesh</span>
+    <span class="tech-pill">OTA Updates</span>
+    <span class="tech-pill">Knowledge Distillation</span>
+    <span class="tech-pill">End-to-End Neural Network</span>
+  </div>
+
+  <div class="verdict">
+    <h4 class="fw-bold" style="color:var(--a)">The Verdict</h4>
+    <p style="color:#c0c9d6;max-width:560px;margin:.75rem auto 0">Tesla's FSD Data Engine is not a software product — it is an industrial pipeline. Every human who drives a Tesla is an unpaid data generator, producing labeled training data at a rate no competitor can match. Dojo eliminates the training cost; Shadow Mode eliminates the labeling cost; OTA eliminates the deployment cost. The moat is not the AI model — the moat is the closed loop. No startup can replicate 7 million cars collecting edge cases every day.</p>
+  </div>
+
+  <div class="mt-4 mb-2">
+    <a href="{{ url_for('demos.i40_overview') }}" class="btn btn-sm me-2" style="background:rgba(99,102,241,.15);color:#6366f1;border:1px solid rgba(99,102,241,.3)">← I4.0 Overview</a>
+    <a href="{{ url_for('demos.i40_spacex') }}" class="btn btn-sm me-2" style="background:rgba(14,165,233,.15);color:#0ea5e9;border:1px solid rgba(14,165,233,.3)">SpaceX →</a>
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm" style="background:rgba(227,25,55,.15);color:var(--a);border:1px solid rgba(227,25,55,.3)">All Demos</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1181,3 +1181,23 @@ def bp_edge_ai():
 @login_required
 def bp_space_cloud():
     return render_template('demos/bp_space_cloud.html')
+
+@demos_bp.route('/i40/overview')
+@login_required
+def i40_overview():
+    return render_template('demos/i40_overview.html')
+
+@demos_bp.route('/i40/tesla')
+@login_required
+def i40_tesla():
+    return render_template('demos/i40_tesla.html')
+
+@demos_bp.route('/i40/spacex')
+@login_required
+def i40_spacex():
+    return render_template('demos/i40_spacex.html')
+
+@demos_bp.route('/i40/xai')
+@login_required
+def i40_xai():
+    return render_template('demos/i40_xai.html')
