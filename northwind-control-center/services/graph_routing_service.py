@@ -33,12 +33,14 @@ _GRAPH_CACHE: dict | None = None   # {graph, cities, city_by_name}
 
 def _load_graph(conn_str: str) -> dict:
     """Load EuropeGraph into NetworkX and return a cache dict."""
-    conn = pyodbc.connect(conn_str, timeout=30)
+    from services.sqlite_fallback import sql_or_sqlite
+    conn, backend = sql_or_sqlite(conn_str, 'europe.db', timeout=30)
+    prefix = 'EuropeGraph.dbo.' if backend == 'mssql' else ''
     cur  = conn.cursor()
 
     cur.execute(
-        "SELECT CityID, Name, Country, Lat, Lng, Population "
-        "FROM EuropeGraph.dbo.EuropeCity ORDER BY CityID"
+        f"SELECT CityID, Name, Country, Lat, Lng, Population "
+        f"FROM {prefix}EuropeCity ORDER BY CityID"
     )
     cities = [
         {'id': r[0], 'name': r[1], 'country': r[2],
@@ -52,10 +54,10 @@ def _load_graph(conn_str: str) -> dict:
         G.add_node(c['name'], lat=c['lat'], lng=c['lng'])
 
     cur.execute(
-        "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType"
-        " FROM EuropeGraph.dbo.EuropeRoad r"
-        " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID=r.FromCityID"
-        " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID=r.ToCityID"
+        f"SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType"
+        f" FROM {prefix}EuropeRoad r"
+        f" JOIN {prefix}EuropeCity c1 ON c1.CityID=r.FromCityID"
+        f" JOIN {prefix}EuropeCity c2 ON c2.CityID=r.ToCityID"
     )
     for row in cur.fetchall():
         dist_km  = float(row[2])
@@ -67,7 +69,7 @@ def _load_graph(conn_str: str) -> dict:
                    ferry=bool(row[3]), ocean=(crossing == 2))
 
     conn.close()
-    return {'graph': G, 'cities': cities, 'city_by_name': city_by_name}
+    return {'graph': G, 'cities': cities, 'city_by_name': city_by_name, 'backend': backend}
 
 
 def _ensure_graph(conn_str: str) -> dict:
@@ -147,14 +149,14 @@ def _gr_step(**updates) -> bool:
     return _GR_ABORTED
 
 
-def _load_from_db(cur) -> tuple[list, dict]:
+def _load_from_db(cur, prefix='EuropeGraph.dbo.') -> tuple[list, dict]:
     """
-    Pull cities and edge count from EuropeGraph.dbo.*.
+    Pull cities from EuropeGraph (or bare SQLite names when prefix='').
     Returns (cities_list, city_by_name_dict).
     """
     cur.execute(
-        "SELECT CityID, Name, Country, Lat, Lng, Population "
-        "FROM EuropeGraph.dbo.EuropeCity ORDER BY CityID"
+        f"SELECT CityID, Name, Country, Lat, Lng, Population "
+        f"FROM {prefix}EuropeCity ORDER BY CityID"
     )
     cities = [
         {'id': r[0], 'name': r[1], 'country': r[2],
@@ -242,204 +244,244 @@ def _astar_steps(G: nx.Graph, start: str, end: str):
 # ---------------------------------------------------------------------------
 def _gr_worker(conn_str: str, start: str, end: str) -> None:
     global _GR_ABORTED
+    conn    = None
+    backend = 'mssql'
     try:
-        conn = pyodbc.connect(conn_str, autocommit=True, timeout=30)
+        conn = pyodbc.connect(conn_str, autocommit=True, timeout=10)
         cur  = conn.cursor()
+    except Exception:
+        backend = 'sqlite'
+        cur = None
 
-        # ── 1. SEED NODES — from EuropeGraph.dbo.EuropeCity ─────────────────
-        _gr_step(phase='seeding_nodes',
-                 phase_label='Reading EuropeGraph.dbo.EuropeCity …')
-        if _GR_ABORTED:
-            return
+    try:
+        if backend == 'mssql':
+            # ── 1. SEED NODES — from EuropeGraph.dbo.EuropeCity ─────────────
+            _gr_step(phase='seeding_nodes',
+                     phase_label='Reading EuropeGraph.dbo.EuropeCity …')
+            if _GR_ABORTED:
+                return
 
-        _gr_log(
-            "-- Source: pre-populated relational table (not XML)\n"
-            "SELECT CityID, Name, Country, Lat, Lng, Population\n"
-            "FROM   EuropeGraph.dbo.EuropeCity\n"
-            "ORDER  BY CityID;"
-        )
-        cities, city_by_name = _load_from_db(cur)
-
-        ddl_node = (
-            "IF OBJECT_ID('GraphRoad','U') IS NOT NULL DROP TABLE GraphRoad;\n"
-            "IF OBJECT_ID('GraphCity','U') IS NOT NULL DROP TABLE GraphCity;\n"
-            "CREATE TABLE [GraphCity] (\n"
-            "    CityID     INT           NOT NULL,\n"
-            "    Name       NVARCHAR(100) NOT NULL,\n"
-            "    Country    NVARCHAR(10)  NULL,\n"
-            "    Lat        FLOAT         NOT NULL,\n"
-            "    Lng        FLOAT         NOT NULL,\n"
-            "    Population INT           NULL\n"
-            ") AS NODE;"
-        )
-        _gr_log(ddl_node)
-        cur.execute("IF OBJECT_ID('GraphRoad','U') IS NOT NULL DROP TABLE GraphRoad")
-        cur.execute("IF OBJECT_ID('GraphCity','U') IS NOT NULL DROP TABLE GraphCity")
-        cur.execute(
-            "CREATE TABLE [GraphCity]("
-            "CityID INT NOT NULL, Name NVARCHAR(100) NOT NULL,"
-            "Country NVARCHAR(10) NULL, Lat FLOAT NOT NULL,"
-            "Lng FLOAT NOT NULL, Population INT NULL) AS NODE"
-        )
-
-        insert_cities_sql = (
-            f"-- Cross-database INSERT: {len(cities)} cities\n"
-            "INSERT INTO [GraphCity] (CityID, Name, Country, Lat, Lng, Population)\n"
-            "SELECT CityID, Name, Country, Lat, Lng, Population\n"
-            "FROM   EuropeGraph.dbo.EuropeCity;"
-        )
-        _gr_log(insert_cities_sql)
-        cur.execute(
-            "INSERT INTO [GraphCity](CityID,Name,Country,Lat,Lng,Population)"
-            " SELECT CityID,Name,Country,Lat,Lng,Population"
-            " FROM EuropeGraph.dbo.EuropeCity"
-        )
-
-        cities_for_state = cities  # already dicts with id/name/country/lat/lng/population
-        if _gr_step(phase='seeding_nodes',
-                    phase_label=f'GraphCity seeded — {len(cities)} cities',
-                    cities=cities_for_state):
-            return
-
-        # ── 2. SEED EDGES — from EuropeGraph.dbo.EuropeRoad (bidirectional) ──
-        ddl_edge = "CREATE TABLE [GraphRoad] (DistanceKM FLOAT NOT NULL) AS EDGE;"
-        _gr_log(ddl_edge)
-        cur.execute("CREATE TABLE [GraphRoad](DistanceKM FLOAT NOT NULL) AS EDGE")
-
-        cur.execute("SELECT COUNT(*) FROM EuropeGraph.dbo.EuropeRoad")
-        edge_count = cur.fetchone()[0]
-
-        insert_edges_sql = (
-            f"-- {edge_count:,} bidirectional rows from EuropeGraph.dbo.EuropeRoad\n"
-            "-- $node_id resolved via JOIN on CityID (no Python loop needed)\n"
-            "INSERT INTO [GraphRoad] ($from_id, $to_id, DistanceKM)\n"
-            "SELECT c1.$node_id, c2.$node_id, r.DistanceKM\n"
-            "FROM   EuropeGraph.dbo.EuropeRoad r\n"
-            "JOIN   [GraphCity] c1 ON c1.CityID = r.FromCityID\n"
-            "JOIN   [GraphCity] c2 ON c2.CityID = r.ToCityID;"
-        )
-        _gr_log(insert_edges_sql)
-        cur.execute(
-            "INSERT INTO [GraphRoad]($from_id,$to_id,DistanceKM)"
-            " SELECT c1.$node_id,c2.$node_id,r.DistanceKM"
-            " FROM EuropeGraph.dbo.EuropeRoad r"
-            " JOIN [GraphCity] c1 ON c1.CityID=r.FromCityID"
-            " JOIN [GraphCity] c2 ON c2.CityID=r.ToCityID"
-        )
-
-        if _gr_step(phase='seeding_edges',
-                    phase_label=f'GraphRoad seeded — {edge_count:,} directed edges'):
-            return
-
-        # ── 3. SQL SERVER SHORTEST_PATH (educational) ────────────────────
-        sp_sql = (
-            "-- SQL Server Graph SHORTEST_PATH\n"
-            "-- Finds min HOPS, NOT min km distance\n"
-            "SELECT TOP 1\n"
-            f"    c1.Name AS Origin,\n"
-            f"    STRING_AGG(c2.Name,' → ') WITHIN GROUP (GRAPH PATH) AS Route,\n"
-            f"    COUNT(c2.CityID)           WITHIN GROUP (GRAPH PATH) AS Hops\n"
-            f"FROM GraphCity        AS c1,\n"
-            f"     GraphRoad FOR PATH AS e,\n"
-            f"     GraphCity FOR PATH AS c2\n"
-            f"WHERE MATCH(SHORTEST_PATH(c1-(e)->c2+))\n"
-            f"  AND c1.Name = '{start}'\n"
-            f"  AND LAST_VALUE(c2.Name) WITHIN GROUP (GRAPH PATH) = '{end}'\n"
-            f"ORDER BY Hops;\n"
-            f"-- ⚠ Minimises hop count — NOT road distance.\n"
-            f"-- ⚠ Use A* (below) for true km-shortest routing."
-        )
-        _gr_log(sp_sql)
-
-        sp_route: list = []
-        sp_hops         = 0
-        try:
-            cur.execute(
-                "SELECT TOP 1 "
-                "  STRING_AGG(c2.Name,' -> ') WITHIN GROUP (GRAPH PATH) AS Route,"
-                "  COUNT(c2.CityID)           WITHIN GROUP (GRAPH PATH) AS Hops"
-                " FROM [GraphCity] AS c1,"
-                "      [GraphRoad] FOR PATH AS e,"
-                "      [GraphCity] FOR PATH AS c2"
-                " WHERE MATCH(SHORTEST_PATH(c1-(e)->c2+))"
-                "   AND c1.Name = ? AND LAST_VALUE(c2.Name) WITHIN GROUP (GRAPH PATH) = ?"
-                " ORDER BY Hops",
-                (start, end)
+            _gr_log(
+                "-- Source: pre-populated relational table (not XML)\n"
+                "SELECT CityID, Name, Country, Lat, Lng, Population\n"
+                "FROM   EuropeGraph.dbo.EuropeCity\n"
+                "ORDER  BY CityID;"
             )
-            row = cur.fetchone()
-            if row and row[0]:
-                sp_route = [s.strip() for s in row[0].split('->')]
-                sp_hops  = int(row[1])
-                _gr_log(
-                    f"-- SHORTEST_PATH result: {' → '.join(sp_route)}\n"
-                    f"-- Hops: {sp_hops}  (unweighted — may not be shortest km!)"
+            cities, city_by_name = _load_from_db(cur)
+
+            ddl_node = (
+                "IF OBJECT_ID('GraphRoad','U') IS NOT NULL DROP TABLE GraphRoad;\n"
+                "IF OBJECT_ID('GraphCity','U') IS NOT NULL DROP TABLE GraphCity;\n"
+                "CREATE TABLE [GraphCity] (\n"
+                "    CityID     INT           NOT NULL,\n"
+                "    Name       NVARCHAR(100) NOT NULL,\n"
+                "    Country    NVARCHAR(10)  NULL,\n"
+                "    Lat        FLOAT         NOT NULL,\n"
+                "    Lng        FLOAT         NOT NULL,\n"
+                "    Population INT           NULL\n"
+                ") AS NODE;"
+            )
+            _gr_log(ddl_node)
+            cur.execute("IF OBJECT_ID('GraphRoad','U') IS NOT NULL DROP TABLE GraphRoad")
+            cur.execute("IF OBJECT_ID('GraphCity','U') IS NOT NULL DROP TABLE GraphCity")
+            cur.execute(
+                "CREATE TABLE [GraphCity]("
+                "CityID INT NOT NULL, Name NVARCHAR(100) NOT NULL,"
+                "Country NVARCHAR(10) NULL, Lat FLOAT NOT NULL,"
+                "Lng FLOAT NOT NULL, Population INT NULL) AS NODE"
+            )
+
+            insert_cities_sql = (
+                f"-- Cross-database INSERT: {len(cities)} cities\n"
+                "INSERT INTO [GraphCity] (CityID, Name, Country, Lat, Lng, Population)\n"
+                "SELECT CityID, Name, Country, Lat, Lng, Population\n"
+                "FROM   EuropeGraph.dbo.EuropeCity;"
+            )
+            _gr_log(insert_cities_sql)
+            cur.execute(
+                "INSERT INTO [GraphCity](CityID,Name,Country,Lat,Lng,Population)"
+                " SELECT CityID,Name,Country,Lat,Lng,Population"
+                " FROM EuropeGraph.dbo.EuropeCity"
+            )
+
+            cities_for_state = cities
+            if _gr_step(phase='seeding_nodes',
+                        phase_label=f'GraphCity seeded — {len(cities)} cities',
+                        cities=cities_for_state):
+                return
+
+            # ── 2. SEED EDGES — from EuropeGraph.dbo.EuropeRoad ─────────────
+            ddl_edge = "CREATE TABLE [GraphRoad] (DistanceKM FLOAT NOT NULL) AS EDGE;"
+            _gr_log(ddl_edge)
+            cur.execute("CREATE TABLE [GraphRoad](DistanceKM FLOAT NOT NULL) AS EDGE")
+
+            cur.execute("SELECT COUNT(*) FROM EuropeGraph.dbo.EuropeRoad")
+            edge_count = cur.fetchone()[0]
+
+            insert_edges_sql = (
+                f"-- {edge_count:,} bidirectional rows from EuropeGraph.dbo.EuropeRoad\n"
+                "-- $node_id resolved via JOIN on CityID (no Python loop needed)\n"
+                "INSERT INTO [GraphRoad] ($from_id, $to_id, DistanceKM)\n"
+                "SELECT c1.$node_id, c2.$node_id, r.DistanceKM\n"
+                "FROM   EuropeGraph.dbo.EuropeRoad r\n"
+                "JOIN   [GraphCity] c1 ON c1.CityID = r.FromCityID\n"
+                "JOIN   [GraphCity] c2 ON c2.CityID = r.ToCityID;"
+            )
+            _gr_log(insert_edges_sql)
+            cur.execute(
+                "INSERT INTO [GraphRoad]($from_id,$to_id,DistanceKM)"
+                " SELECT c1.$node_id,c2.$node_id,r.DistanceKM"
+                " FROM EuropeGraph.dbo.EuropeRoad r"
+                " JOIN [GraphCity] c1 ON c1.CityID=r.FromCityID"
+                " JOIN [GraphCity] c2 ON c2.CityID=r.ToCityID"
+            )
+
+            if _gr_step(phase='seeding_edges',
+                        phase_label=f'GraphRoad seeded — {edge_count:,} directed edges'):
+                return
+
+            # ── 3. SQL SERVER SHORTEST_PATH (educational) ────────────────────
+            sp_sql = (
+                "-- SQL Server Graph SHORTEST_PATH\n"
+                "-- Finds min HOPS, NOT min km distance\n"
+                "SELECT TOP 1\n"
+                f"    c1.Name AS Origin,\n"
+                f"    STRING_AGG(c2.Name,' → ') WITHIN GROUP (GRAPH PATH) AS Route,\n"
+                f"    COUNT(c2.CityID)           WITHIN GROUP (GRAPH PATH) AS Hops\n"
+                f"FROM GraphCity        AS c1,\n"
+                f"     GraphRoad FOR PATH AS e,\n"
+                f"     GraphCity FOR PATH AS c2\n"
+                f"WHERE MATCH(SHORTEST_PATH(c1-(e)->c2+))\n"
+                f"  AND c1.Name = '{start}'\n"
+                f"  AND LAST_VALUE(c2.Name) WITHIN GROUP (GRAPH PATH) = '{end}'\n"
+                f"ORDER BY Hops;\n"
+                f"-- ⚠ Minimises hop count — NOT road distance.\n"
+                f"-- ⚠ Use A* (below) for true km-shortest routing."
+            )
+            _gr_log(sp_sql)
+
+            sp_route: list = []
+            sp_hops         = 0
+            try:
+                cur.execute(
+                    "SELECT TOP 1 "
+                    "  STRING_AGG(c2.Name,' -> ') WITHIN GROUP (GRAPH PATH) AS Route,"
+                    "  COUNT(c2.CityID)           WITHIN GROUP (GRAPH PATH) AS Hops"
+                    " FROM [GraphCity] AS c1,"
+                    "      [GraphRoad] FOR PATH AS e,"
+                    "      [GraphCity] FOR PATH AS c2"
+                    " WHERE MATCH(SHORTEST_PATH(c1-(e)->c2+))"
+                    "   AND c1.Name = ? AND LAST_VALUE(c2.Name) WITHIN GROUP (GRAPH PATH) = ?"
+                    " ORDER BY Hops",
+                    (start, end)
                 )
-        except pyodbc.Error as exc:
-            _gr_log(f"-- SHORTEST_PATH not supported on this SQL Server version.\n-- {exc}")
+                row = cur.fetchone()
+                if row and row[0]:
+                    sp_route = [s.strip() for s in row[0].split('->')]
+                    sp_hops  = int(row[1])
+                    _gr_log(
+                        f"-- SHORTEST_PATH result: {' → '.join(sp_route)}\n"
+                        f"-- Hops: {sp_hops}  (unweighted — may not be shortest km!)"
+                    )
+            except pyodbc.Error as exc:
+                _gr_log(f"-- SHORTEST_PATH not supported on this SQL Server version.\n-- {exc}")
 
-        # Log educational XML shredding block
-        xml_block = (
-            "-- ─────────────────────────────────────────────────────────────\n"
-            "-- Educational: SQL Server native XML shredding alternative\n"
-            "-- (requires file accessible from server filesystem)\n"
-            "-- ─────────────────────────────────────────────────────────────\n"
-            "DECLARE @xml XML =\n"
-            "  (SELECT CAST(BulkColumn AS XML)\n"
-            "   FROM OPENROWSET(BULK 'C:\\data\\europe_graph.xml', SINGLE_BLOB) AS x);\n"
-            "INSERT INTO GraphCity(CityID,Name,Country,Lat,Lng,Population)\n"
-            "SELECT City.value('@id','INT'), City.value('@name','NVARCHAR(100)'),\n"
-            "       City.value('@country','NVARCHAR(10)'), City.value('@lat','FLOAT'),\n"
-            "       City.value('@lng','FLOAT'), City.value('@pop','INT')\n"
-            "FROM @xml.nodes('/GraphData/Cities/City') AS Data(City);\n"
-            "-- Demo uses Python ElementTree for portability (no file-path config needed)"
-        )
-        _gr_log(xml_block)
+            # Log educational XML shredding block
+            xml_block = (
+                "-- ─────────────────────────────────────────────────────────────\n"
+                "-- Educational: SQL Server native XML shredding alternative\n"
+                "-- (requires file accessible from server filesystem)\n"
+                "-- ─────────────────────────────────────────────────────────────\n"
+                "DECLARE @xml XML =\n"
+                "  (SELECT CAST(BulkColumn AS XML)\n"
+                "   FROM OPENROWSET(BULK 'C:\\data\\europe_graph.xml', SINGLE_BLOB) AS x);\n"
+                "INSERT INTO GraphCity(CityID,Name,Country,Lat,Lng,Population)\n"
+                "SELECT City.value('@id','INT'), City.value('@name','NVARCHAR(100)'),\n"
+                "       City.value('@country','NVARCHAR(10)'), City.value('@lat','FLOAT'),\n"
+                "       City.value('@lng','FLOAT'), City.value('@pop','INT')\n"
+                "FROM @xml.nodes('/GraphData/Cities/City') AS Data(City);\n"
+                "-- Demo uses Python ElementTree for portability (no file-path config needed)"
+            )
+            _gr_log(xml_block)
 
-        if _gr_step(phase='querying_graph',
-                    phase_label='SQL Server SHORTEST_PATH executed',
-                    sqlserver_route=sp_route,
-                    sqlserver_hops=sp_hops):
-            return
+            if _gr_step(phase='querying_graph',
+                        phase_label='SQL Server SHORTEST_PATH executed',
+                        sqlserver_route=sp_route,
+                        sqlserver_hops=sp_hops):
+                return
 
-        # ── 4. BUILD NETWORKX GRAPH — from EuropeGraph relational tables ───
-        nx_sql = (
-            "-- NetworkX weighted graph from EuropeGraph.dbo.EuropeRoad\n"
-            f"-- Ferry (CrossingType=1): {FERRY_PENALTY}× penalty; "
-            f"Ocean (CrossingType=2): {OCEAN_PENALTY}× penalty\n"
-            "SELECT c1.Name AS src, c2.Name AS dst, r.DistanceKM, r.IsFerry, r.CrossingType\n"
-            "FROM   EuropeGraph.dbo.EuropeRoad  r\n"
-            "JOIN   EuropeGraph.dbo.EuropeCity  c1 ON c1.CityID = r.FromCityID\n"
-            "JOIN   EuropeGraph.dbo.EuropeCity  c2 ON c2.CityID = r.ToCityID;"
-        )
-        _gr_log(nx_sql)
+            # ── 4. BUILD NETWORKX GRAPH — from EuropeGraph relational tables ─
+            nx_sql = (
+                "-- NetworkX weighted graph from EuropeGraph.dbo.EuropeRoad\n"
+                f"-- Ferry (CrossingType=1): {FERRY_PENALTY}× penalty; "
+                f"Ocean (CrossingType=2): {OCEAN_PENALTY}× penalty\n"
+                "SELECT c1.Name AS src, c2.Name AS dst, r.DistanceKM, r.IsFerry, r.CrossingType\n"
+                "FROM   EuropeGraph.dbo.EuropeRoad  r\n"
+                "JOIN   EuropeGraph.dbo.EuropeCity  c1 ON c1.CityID = r.FromCityID\n"
+                "JOIN   EuropeGraph.dbo.EuropeCity  c2 ON c2.CityID = r.ToCityID;"
+            )
+            _gr_log(nx_sql)
 
-        G = nx.Graph()
-        for c in cities:
-            G.add_node(c['name'], lat=c['lat'], lng=c['lng'])
+            G = nx.Graph()
+            for c in cities:
+                G.add_node(c['name'], lat=c['lat'], lng=c['lng'])
 
-        cur.execute(
-            "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType"
-            " FROM EuropeGraph.dbo.EuropeRoad r"
-            " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID=r.FromCityID"
-            " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID=r.ToCityID"
-        )
-        for row in cur.fetchall():
-            dist_km  = float(row[2])
-            ferry    = bool(row[3])
-            crossing = int(row[4])
-            if crossing == 2:
-                weight = dist_km * OCEAN_PENALTY
-            elif crossing == 1:
-                weight = dist_km * FERRY_PENALTY
-            else:
-                weight = dist_km
-            G.add_edge(row[0], row[1], weight=weight, dist_km=dist_km, ferry=ferry,
-                       ocean=(crossing == 2))
+            cur.execute(
+                "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType"
+                " FROM EuropeGraph.dbo.EuropeRoad r"
+                " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID=r.FromCityID"
+                " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID=r.ToCityID"
+            )
+            for row in cur.fetchall():
+                dist_km  = float(row[2])
+                ferry    = bool(row[3])
+                crossing = int(row[4])
+                if crossing == 2:
+                    weight = dist_km * OCEAN_PENALTY
+                elif crossing == 1:
+                    weight = dist_km * FERRY_PENALTY
+                else:
+                    weight = dist_km
+                G.add_edge(row[0], row[1], weight=weight, dist_km=dist_km, ferry=ferry,
+                           ocean=(crossing == 2))
 
-        _gr_log(
-            f"-- NetworkX Graph ready: {G.number_of_nodes()} nodes,"
-            f" {G.number_of_edges()} undirected edges"
-        )
+            _gr_log(
+                f"-- NetworkX Graph ready: {G.number_of_nodes()} nodes,"
+                f" {G.number_of_edges()} undirected edges"
+            )
+
+        else:
+            # ── SQLITE FALLBACK — skip SQL Server graph phases ────────────────
+            _gr_step(phase='seeding_nodes',
+                     phase_label='SQL Server offline — loading SQLite cache …')
+            if _GR_ABORTED:
+                return
+            _gr_log(
+                "-- ⚠ SQL Server unreachable. Using SQLite fallback (europe.db).\n"
+                "-- Phases 1-3 (Graph table seeding + SHORTEST_PATH) are skipped.\n"
+                "-- A* runs on the pre-loaded NetworkX graph from the SQLite cache."
+            )
+            cache = _ensure_graph(conn_str)
+            cities       = cache['cities']
+            city_by_name = cache['city_by_name']
+            G            = cache['graph']
+
+            if _gr_step(phase='seeding_nodes',
+                        phase_label=f'SQLite: {len(cities)} cities loaded',
+                        cities=cities):
+                return
+            if _gr_step(phase='seeding_edges',
+                        phase_label=f'SQLite: {G.number_of_edges()} road edges loaded'):
+                return
+            if _gr_step(phase='querying_graph',
+                        phase_label='SHORTEST_PATH not available (SQL Server offline)',
+                        sqlserver_route=[], sqlserver_hops=0):
+                return
+
+            _gr_log(
+                f"-- NetworkX graph (SQLite cache): {G.number_of_nodes()} nodes,"
+                f" {G.number_of_edges()} undirected edges"
+            )
 
         if start not in G.nodes or end not in G.nodes:
             missing = start if start not in G.nodes else end
@@ -544,7 +586,8 @@ def _gr_worker(conn_str: str, start: str, end: str) -> None:
             _GR_STATE['error']       = str(exc)
     finally:
         try:
-            conn.close()  # type: ignore[name-defined]
+            if conn is not None:
+                conn.close()
         except Exception:
             pass
 
@@ -639,12 +682,14 @@ def graph_routing_step() -> None:
 
 def graph_routing_cities(conn_str: str) -> list:
     """Return all cities sorted by population desc, for datalist pre-population."""
-    conn = pyodbc.connect(conn_str, timeout=10)
+    from services.sqlite_fallback import sql_or_sqlite
+    conn, backend = sql_or_sqlite(conn_str, 'europe.db', timeout=10)
+    prefix = 'EuropeGraph.dbo.' if backend == 'mssql' else ''
     cur  = conn.cursor()
     cur.execute(
-        "SELECT CityID, Name, Country, Population "
-        "FROM EuropeGraph.dbo.EuropeCity "
-        "ORDER BY Population DESC"
+        f"SELECT CityID, Name, Country, Population "
+        f"FROM {prefix}EuropeCity "
+        f"ORDER BY Population DESC"
     )
     result = [
         {'id': int(r[0]), 'name': r[1], 'country': r[2], 'pop': int(r[3])}

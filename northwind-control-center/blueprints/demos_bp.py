@@ -10,6 +10,7 @@ from services import demo_service
 from services import graph_routing_service as grs
 from services import graph_pagerank_service as gprs
 from services import graph_lab_service as gl
+from services import energy_flow_service as efs
 from services import mapreduce_service as mrs
 from services import pubsub_service as pss
 from services import stream_service as sts
@@ -516,6 +517,54 @@ def graph_lab_solve():
     if 'error' in result:
         return jsonify(result), 400
     return jsonify(result)
+
+
+# ── Global Energy Flow ────────────────────────────────────────────────────────
+
+@demos_bp.route('/energy-flow')
+@login_required
+def energy_flow_page():
+    return render_template('demos/energy_flow.html')
+
+
+@demos_bp.route('/energy-flow/nodes')
+@login_required
+def energy_flow_nodes():
+    return jsonify(efs.get_all_nodes())
+
+
+@demos_bp.route('/energy-flow/edges')
+@login_required
+def energy_flow_edges():
+    month = request.args.get('month', '2021-01')
+    return jsonify(efs.get_all_edges(month))
+
+
+@demos_bp.route('/energy-flow/timeline')
+@login_required
+def energy_flow_timeline():
+    return jsonify(efs.get_timeline())
+
+
+@demos_bp.route('/energy-flow/chokepoints')
+@login_required
+def energy_flow_chokepoints():
+    return jsonify(efs.get_chokepoints_ui())
+
+
+@demos_bp.route('/energy-flow/compute', methods=['POST'])
+@login_required
+def energy_flow_compute():
+    data          = request.json or {}
+    month         = data.get('month', '2021-01')
+    constrictions = data.get('constrictions', {})
+    # Convert string keys/values coming from JSON
+    constrictions = {str(k): float(v) for k, v in constrictions.items()}
+    try:
+        result = efs.compute_multi_flow(month, constrictions)
+        return jsonify(result)
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
 
 
 # ── Graph PageRank ─────────────────────────────────────────────────────────────
@@ -4536,6 +4585,11 @@ def learn_cloud():
 @login_required
 def demos_cloud():
     return render_template('demos/index_cloud.html')
+
+@demos_bp.route('/graph')
+@login_required
+def demos_graph():
+    return render_template('demos/index_graph.html')
 
 @demos_bp.route('/database')
 @login_required

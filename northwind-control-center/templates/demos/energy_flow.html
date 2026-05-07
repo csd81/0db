@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Global Energy Flow{% endblock %}
+
+{% block content %}
+<style>
+#ef-shell {
+  margin: -1rem -1.5rem 0;
+  height: calc(100vh - 56px);
+  display: flex;
+  overflow: hidden;
+  background: #08090d;
+}
+
+/* ── Sidebar ─────────────────────────────── */
+#ef-sidebar {
+  width: 310px;
+  min-width: 310px;
+  height: 100%;
+  overflow-y: auto;
+  background: #0e1014;
+  border-right: 1px solid #1e2028;
+  display: flex;
+  flex-direction: column;
+  padding: .875rem;
+  gap: .5rem;
+  font-size: .82rem;
+}
+#ef-sidebar::-webkit-scrollbar { width: 3px; }
+#ef-sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+/* ── Map / Globe ─────────────────────────── */
+#ef-view-wrap { flex:1; height:100%; position:relative; }
+#ef-map, #ef-globe { position:absolute; inset:0; width:100%; height:100%; }
+#ef-view-toggle {
+  position:absolute; bottom:.75rem; right:.75rem; z-index:999;
+  display:flex; border-radius:.35rem; overflow:hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+#ef-view-toggle button {
+  padding:.25rem .65rem; font-size:.7rem; font-weight:700;
+  border:none; cursor:pointer; transition:background .15s, color .15s;
+  background:#1e2028; color:#8892a4;
+}
+#ef-view-toggle button.active { background:#f97316; color:#000; }
+.cesium-widget-credits, .cesium-viewer-toolbar { display:none !important; }
+
+/* ── Metric cards ────────────────────────── */
+.m-card {
+  background:#080a0e; border:1px solid #1e2028; border-radius:.3rem; padding:.35rem .5rem;
+}
+.m-label { font-size:.6rem; color:#5a6070; letter-spacing:.08em; text-transform:uppercase; }
+.m-val   { font-size:1.1rem; font-weight:700; line-height:1.1; }
+
+/* ── Timeline ────────────────────────────── */
+#timeline-wrap { position:relative; }
+#timeline-slider {
+  width:100%; accent-color:#f97316; cursor:pointer;
+}
+.shock-marks {
+  position:relative; height:8px; margin-top:-2px;
+}
+.shock-mark {
+  position:absolute; top:0; width:2px; height:8px;
+  background:#ef4444; border-radius:1px;
+  cursor:pointer;
+  transform:translateX(-50%);
+}
+.shock-mark:hover::after {
+  content: attr(data-label);
+  position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+  white-space:nowrap; background:#1e2028; color:#f97316;
+  padding:.15rem .4rem; border-radius:.2rem; font-size:.58rem;
+  z-index:10; pointer-events:none;
+}
+#timeline-label { font-size:.68rem; color:#f97316; min-height:1rem; }
+#snapshot-desc  { font-size:.63rem; color:#6c757d; min-height:2rem; line-height:1.35; }
+
+/* ── Commodity pills ─────────────────────── */
+.commodity-pill {
+  flex:1; padding:.25rem 0; font-size:.72rem; font-weight:700;
+  border-radius:.25rem; border:1px solid transparent; cursor:pointer;
+  transition: all .15s; text-align:center;
+}
+.commodity-pill[data-c="oil"]  { border-color:#f97316; color:#f97316; }
+.commodity-pill[data-c="gas"]  { border-color:#22d3ee; color:#22d3ee; }
+.commodity-pill[data-c="both"] { border-color:#a78bfa; color:#a78bfa; }
+.commodity-pill.active[data-c="oil"]  { background:#f97316; color:#000; }
+.commodity-pill.active[data-c="gas"]  { background:#22d3ee; color:#000; }
+.commodity-pill.active[data-c="both"] { background:#a78bfa; color:#000; }
+
+/* ── Crisis presets ──────────────────────── */
+.preset-btn {
+  flex:1; font-size:.65rem; font-weight:700; padding:.25rem .3rem;
+  border-radius:.25rem; border:1px solid #2a3040; background:#0e1014;
+  color:#adb5bd; cursor:pointer; transition: all .15s; white-space:nowrap;
+}
+.preset-btn:hover { background:#1e2028; color:#fff; }
+.preset-btn.armed { border-color:#ef4444; color:#ef4444; }
+
+/* ── Constriction sliders ────────────────── */
+.choke-row { display:flex; flex-direction:column; gap:.1rem; }
+.choke-lbl-row { display:flex; justify-content:space-between; align-items:center; }
+.choke-name { font-size:.67rem; color:#adb5bd; }
+.choke-val  { font-size:.62rem; color:#f97316; }
+input.choke-slider { width:100%; accent-color:#f97316; }
+input.choke-slider.normal { accent-color:#22d3ee; }
+
+/* ── Section label ───────────────────────── */
+.section-lbl { font-size:.58rem; color:#5a6070; letter-spacing:.08em; text-transform:uppercase; margin-bottom:.1rem; }
+
+/* ── Result panel ────────────────────────── */
+#result-panel {
+  background:#080a0e; border:1px solid #2a3040; border-radius:.3rem;
+  padding:.4rem .55rem; font-size:.65rem; line-height:1.45; color:#adb5bd;
+}
+
+/* ── Play button ─────────────────────────── */
+#btn-play { min-width:2rem; }
+</style>
+
+<div id="ef-shell">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+  <div id="ef-sidebar">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center gap-2">
+      <span class="fw-bold" style="color:#f97316;font-size:.9rem">⚡ Energy Flow</span>
+      <span id="ef-badge" class="badge bg-secondary ms-auto" style="font-size:.62rem">idle</span>
+    </div>
+
+    <!-- Commodity toggle -->
+    <div class="d-flex gap-1">
+      <button class="commodity-pill active" data-c="oil">🛢 Oil</button>
+      <button class="commodity-pill" data-c="gas">🔵 Gas</button>
+      <button class="commodity-pill" data-c="both">⚡ Both</button>
+    </div>
+
+    <!-- Timeline -->
+    <div>
+      <div class="section-lbl">Timeline</div>
+      <div id="timeline-wrap">
+        <div class="d-flex align-items-center gap-1">
+          <button id="btn-play" class="btn btn-sm btn-outline-warning px-2 py-0" style="font-size:.75rem">▶</button>
+          <input id="timeline-slider" type="range" min="0" max="64" value="0" step="1">
+        </div>
+        <div class="shock-marks" id="shock-marks"></div>
+      </div>
+      <div id="timeline-label">2021-01 — Global Baseline</div>
+      <div id="snapshot-desc">Pre-crisis baseline. All routes at full capacity.</div>
+    </div>
+
+    <!-- Crisis presets -->
+    <div>
+      <div class="section-lbl">Crisis Presets</div>
+      <div class="d-flex gap-1">
+        <button class="preset-btn" data-preset="houthi">🔴 Houthi</button>
+        <button class="preset-btn" data-preset="hormuz">🔴 Hormuz</button>
+        <button class="preset-btn" data-preset="suez">⚠ Suez</button>
+        <button class="preset-btn" data-preset="nordstream">⚡ Nord&nbsp;St.</button>
+      </div>
+    </div>
+
+    <!-- Constriction sliders -->
+    <div>
+      <div class="section-lbl">Chokepoint Capacity</div>
+      <div id="choke-sliders" class="d-flex flex-column gap-1"></div>
+    </div>
+
+    <!-- Compute button -->
+    <button id="btn-compute" class="btn btn-sm btn-success w-100">▶ Compute Max-Flow</button>
+
+    <!-- Metric cards -->
+    <div class="row g-1">
+      <div class="col-6">
+        <div class="m-card">
+          <div class="m-label">Oil Flow</div>
+          <div id="m-oil-flow" class="m-val" style="color:#f97316">—</div>
+          <div class="m-label">kbd</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="m-card">
+          <div class="m-label">Oil Deficit</div>
+          <div id="m-oil-def" class="m-val text-danger">—</div>
+          <div class="m-label">%</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="m-card">
+          <div class="m-label">Gas Flow</div>
+          <div id="m-gas-flow" class="m-val" style="color:#22d3ee">—</div>
+          <div class="m-label">bcm/yr</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="m-card">
+          <div class="m-label">Gas Deficit</div>
+          <div id="m-gas-def" class="m-val text-danger">—</div>
+          <div class="m-label">%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result panel -->
+    <div id="result-panel" class="d-none"></div>
+
+    <!-- Legend -->
+    <div class="mt-auto d-flex flex-wrap" style="font-size:.63rem;column-gap:.5rem;row-gap:.15rem">
+      <span><span style="color:#22c55e">●</span> Oil producer</span>
+      <span><span style="color:#3b82f6">●</span> Oil consumer</span>
+      <span><span style="color:#ef4444">◆</span> Chokepoint</span>
+      <span><span style="color:#22d3ee">◆</span> LNG export</span>
+      <span><span style="color:#0ea5e9">●</span> LNG import</span>
+      <span><span style="color:#6b7280">—</span> oil maritime</span>
+      <span><span style="color:#6b7280">╌</span> oil pipeline</span>
+      <span><span style="color:#164e63">╌</span> gas pipeline</span>
+      <span><span style="color:#0ea5e9">—</span> LNG shipping</span>
+      <span><span style="color:#f97316">—</span> saturated</span>
+      <span><span style="color:#ef4444">⚡</span> min-cut</span>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ── MAP / GLOBE ───────────────────────────────────────────────── -->
+  <div id="ef-view-wrap">
+    <div id="ef-map"></div>
+    <div id="ef-globe" style="display:none"></div>
+    <div id="ef-view-toggle">
+      <button id="btn-2d" class="active">2D</button>
+      <button id="btn-3d">3D</button>
+    </div>
+  </div>
+
+</div><!-- /ef-shell -->
+{% endblock %}
+
+{% block scripts %}
+<script>window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/';</script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Cesium.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/demos/energy_flow.js') }}"></script>
+{% endblock %}
