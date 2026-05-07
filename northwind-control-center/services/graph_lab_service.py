@@ -76,6 +76,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Uses Haversine distance to the goal as a heuristic to "aim" the search. '
             'Visits far fewer cities than Dijkstra — a "flashlight beam" effect.'
         ),
+        'best_db': {
+            'name':  'Amazon Neptune / Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Heuristic search over weighted relationships; SHORTEST PATH with cost built-in.',
+        },
         'phase': 1,
     },
     'dijkstra': {
@@ -88,6 +94,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Expands nodes in all directions by accumulated road cost. '
             'Guaranteed optimal on non-negative weights; no geographic bias.'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Native dijkstraSingleSource() procedure; edge weight stored as relationship property.',
+        },
         'phase': 1,
     },
     'bfs': {
@@ -100,6 +112,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Breadth-First Search ignores distance — finds the route with the fewest '
             'city-to-city transfers. Explores like a uniform expanding ring.'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'MATCH (a)-[*BFS]-(b) natively traverses relationships level-by-level.',
+        },
         'phase': 1,
     },
     'dfs': {
@@ -112,6 +130,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Depth-First Search plunges down one branch before backtracking. '
             'Shows network reachability — the "drunk explorer" effect.'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Recursive relationship traversal is native to graph engines; reachability in O(V+E).',
+        },
         'phase': 1,
     },
     'bellman_ford': {
@@ -124,6 +148,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Handles negative edge costs (wind assistance, subsidies). '
             f'Detects negative cycles. Runs on the reduced {REDUCED_N}-city graph.'
         ),
+        'best_db': {
+            'name':  'SQL Server',
+            'type':  'Relational DB',
+            'color': '#f59e0b',
+            'why':   'CostAdjustment column = signed weights; V-1 relaxation passes map to recursive CTEs.',
+        },
         'phase': 2,
     },
     'reliability': {
@@ -136,6 +166,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Finds the most probable route by minimising −log(ReliabilityScore). '
             'Equivalent to maximising ∏ p(edge) — a Viterbi-style objective.'
         ),
+        'best_db': {
+            'name':  'Amazon Neptune ML',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Probabilistic edge weights as relationship properties; Neptune ML adds learned scores.',
+        },
         'phase': 3,
     },
     'floyd_warshall': {
@@ -148,6 +184,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'All-pairs shortest paths in one O(V³) pass. '
             f'Restricted to the top-{REDUCED_N} cities; pre-computes the full distance matrix.'
         ),
+        'best_db': {
+            'name':  'BigQuery / ClickHouse',
+            'type':  'Columnar OLAP',
+            'color': '#a855f7',
+            'why':   'Dense all-pairs matrix: columnar scan over every (u,v) pair; vectorised triple-loop.',
+        },
         'phase': 4,
     },
     'kruskal': {
@@ -161,6 +203,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'that does not create a cycle (Union-Find). '
             f'Visual: edges pop in across the {REDUCED_N}-city map, cheapest first.'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'spanningTree() GDS procedure; edge weights as relationship properties, Union-Find native.',
+        },
         'phase': 5,
     },
     'prim': {
@@ -174,6 +222,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Same MST result as Kruskal but expands as a geographic blob. '
             f'Restricted to the top-{REDUCED_N} cities.'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Priority-queue expansion over adjacency is native; Neo4j GDS spanningTree() supports both.',
+        },
         'phase': 5,
     },
     'euler_check': {
@@ -188,6 +242,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             '2 odd → Euler Path (every road once, start ≠ end). '
             'Otherwise: neither — the Königsberg bridge problem.'
         ),
+        'best_db': {
+            'name':  'PostgreSQL / SQL Server',
+            'type':  'Relational DB',
+            'color': '#f59e0b',
+            'why':   'SELECT node, COUNT(*) AS degree GROUP BY node — pure SQL, trivially scalable.',
+        },
         'phase': 6,
     },
     'tsp_approx': {
@@ -202,6 +262,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             f'Guaranteed ≤ 2× the optimal Hamilton cycle. '
             f'Runs on the {REDUCED_N}-city graph.'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Hamiltonian tour via MST + DFS preorder; relationship traversal is graph-native.',
+        },
         'phase': 6,
     },
     'articulation': {
@@ -216,6 +282,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Cut-vertices shown in red; bridges drawn as red links. '
             'Based on 1.36. Definíció (k-connectivity).'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Tarjan DFS = deep recursive relationship traversal; Neo4j GDS bridges() built-in.',
+        },
         'phase': 9,
     },
     'walk_count': {
@@ -233,6 +305,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'A^k[src, dst] = number of k-hop routes (may revisit cities). '
             f'Computes on the {REDUCED_N}-city adjacency matrix.'
         ),
+        'best_db': {
+            'name':  'BigQuery',
+            'type':  'Columnar OLAP',
+            'color': '#a855f7',
+            'why':   'Matrix power A^k via columnar self-join; Google Pregel runs walk counting natively.',
+        },
         'phase': 7,
     },
     'spanning_tree_count': {
@@ -246,6 +324,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             f'distinct spanning trees. L = D − A. Runs on the {REDUCED_N}-city graph. '
             'Uses slogdet to handle counts that reach 10^300+.'
         ),
+        'best_db': {
+            'name':  'BigQuery / NumPy',
+            'type':  'Columnar OLAP',
+            'color': '#a855f7',
+            'why':   'Kirchhoff determinant requires dense linear algebra — BLAS/columnar arrays, not row-store.',
+        },
         'phase': 7,
     },
     'graph_coloring': {
@@ -261,6 +345,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             "Brooks' theorem: χ ≤ Δ for most graphs. "
             '4-Color theorem: any planar map needs ≤ 4 colours.'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Greedy neighbor-constraint = MATCH (n)--(m) per node; graph coloring in Neo4j GDS.',
+        },
         'phase': 8,
     },
     'planarity_check': {
@@ -275,6 +365,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Kuratowski: planar ⟺ no K₅/K₃,₃ minor. '
             '4-Color theorem applies to all planar graphs.'
         ),
+        'best_db': {
+            'name':  'Neo4j',
+            'type':  'Graph Database',
+            'color': '#22d3ee',
+            'why':   'Topological structural property of the relationship graph; O(V+E) over adjacency list.',
+        },
         'phase': 8,
     },
     'max_flow': {
@@ -289,6 +385,12 @@ ALGORITHM_REGISTRY: dict[str, dict] = {
             'Min-Cut Theorem: max-flow = capacity of the bottleneck cut. '
             f'Road=1000, Ferry=200, Ocean=100 units. {REDUCED_N}-city graph.'
         ),
+        'best_db': {
+            'name':  'SQL Server',
+            'type':  'Relational DB',
+            'color': '#f59e0b',
+            'why':   'Capacity + flow stored as edge columns; Ford-Fulkerson = iterative BFS with UPDATE.',
+        },
         'phase': 10,
     },
 }

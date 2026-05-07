@@ -27,8 +27,21 @@
 #gl-sidebar::-webkit-scrollbar { width: 3px; }
 #gl-sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-/* ── Map ────────────────────────────────── */
-#gl-map { flex: 1; height: 100%; }
+/* ── Map / Globe ────────────────────────── */
+#gl-view-wrap { flex: 1; height: 100%; position: relative; }
+#gl-map, #gl-globe { position: absolute; inset: 0; width: 100%; height: 100%; }
+#gl-view-toggle {
+  position: absolute; bottom: .75rem; right: .75rem; z-index: 999;
+  display: flex; border-radius: .35rem; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+#gl-view-toggle button {
+  padding: .25rem .65rem; font-size: .7rem; font-weight: 700;
+  border: none; cursor: pointer; transition: background .15s, color .15s;
+  background: #1e2028; color: #8892a4;
+}
+#gl-view-toggle button.active { background: #e9c46a; color: #000; }
+.cesium-widget-credits, .cesium-viewer-toolbar { display: none !important; }
 
 /* ── Metric cards ───────────────────────── */
 .m-card {
@@ -99,6 +112,9 @@
 
     <!-- Algorithm description -->
     <div id="algo-desc" class="text-muted" style="font-size:.69rem;min-height:2.4rem;line-height:1.35">—</div>
+
+    <!-- Best-database badge -->
+    <div id="db-badge" style="min-height:2.2rem"></div>
 
     <!-- Phase label -->
     <div id="phase-label" class="small text-muted" style="min-height:.9rem;font-size:.72rem">—</div>
@@ -175,13 +191,23 @@
 
   </div><!-- /sidebar -->
 
-  <!-- ── MAP ───────────────────────────────────────────────────────── -->
-  <div id="gl-map"></div>
+  <!-- ── MAP / GLOBE ───────────────────────────────────────────────── -->
+  <div id="gl-view-wrap">
+    <div id="gl-map"></div>
+    <div id="gl-globe" style="display:none"></div>
+    <div id="gl-view-toggle">
+      <button id="btn-2d" class="active">2D</button>
+      <button id="btn-3d">3D</button>
+    </div>
+  </div>
 
 </div><!-- /gl-shell -->
 {% endblock %}
 
 {% block scripts %}
+<script>window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/';</script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Cesium.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/demos/graph_lab.js') }}"></script>

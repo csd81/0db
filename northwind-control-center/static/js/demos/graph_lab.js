@@ -1,19 +1,27 @@
 'use strict';
 
-// ── Leaflet map ──────────────────────────────────────────────────────────────
-const map = L.map('gl-map', {zoomControl: true}).setView([35, 40], 3);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> &copy; <a href="https://carto.com">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19,
-}).addTo(map);
+// ── Tile URLs ────────────────────────────────────────────────────────────────
+const GL_TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+const GL_TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const LINE_ALT = 8000;  // metres — lift lines above ellipsoid for depth precision
 
-// Three path layers — reuse the same visual language as graph_routing.js
+// ── Leaflet map ──────────────────────────────────────────────────────────────
+const _initTheme = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+const map = L.map('gl-map', {zoomControl: true}).setView([35, 40], 3);
+const leafletLayer = L.tileLayer(
+    _initTheme === 'light' ? GL_TILE_LIGHT : GL_TILE_DARK,
+    {
+        attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> &copy; <a href="https://carto.com">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19,
+    }
+).addTo(map);
+
+// Three path layers — same visual language as graph_routing.js
 const landLine  = L.polyline([], {color: '#0d6efd', weight: 2.5, opacity: 0.85}).addTo(map);
 const ferryLine = L.polyline([], {color: '#fd7e14', weight: 3,   opacity: 0.9,  dashArray: '9 6'}).addTo(map);
 const oceanLine = L.polyline([], {color: '#9c4dcc', weight: 3,   opacity: 0.9,  dashArray: '4 9'}).addTo(map);
 
-// MST edge layer — individual polylines accumulated during animation
 let mstPolylines = [];
 
 const COLORS = {
@@ -29,10 +37,124 @@ const PALETTE = [
     '#f4a261', '#8338ec', '#06d6a0', '#fb5607',
 ];
 
+// ── Cesium 3D globe ──────────────────────────────────────────────────────────
+let cesiumViewer = null;
+let is3D         = false;
+let cPointColl   = null;
+let cPoints      = {};   // name → PointPrimitive
+let cPolylines   = [];   // Cesium Entity refs for cleanup
+
+function _cColor(hex) {
+    return Cesium.Color.fromCssColorString(hex);
+}
+
+function _initCesiumViewer() {
+    cesiumViewer = new Cesium.Viewer('gl-globe', {
+        animation: false, baseLayerPicker: false, fullscreenButton: false,
+        geocoder: false, homeButton: false, infoBox: false,
+        navigationHelpButton: false, sceneModePicker: false, timeline: false,
+        selectionIndicator: false,
+        imageryProvider: false,
+        terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+    });
+    cPointColl = cesiumViewer.scene.primitives.add(new Cesium.PointPrimitiveCollection());
+    _glSetTiles(document.documentElement.getAttribute('data-bs-theme') || 'dark');
+}
+
+function _glSetTiles(theme) {
+    if (!cesiumViewer) return;
+    cesiumViewer.imageryLayers.removeAll();
+    cesiumViewer.imageryLayers.addImageryProvider(
+        new Cesium.UrlTemplateImageryProvider({
+            url: theme === 'light'
+                ? 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
+                : 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+            credit: '',
+        })
+    );
+    cesiumViewer.scene.globe.baseColor = Cesium.Color.fromCssColorString(
+        theme === 'light' ? '#d0d8e4' : '#06080c');
+    cesiumViewer.scene.backgroundColor = theme === 'light'
+        ? new Cesium.Color(0.9, 0.93, 0.97, 1.0)
+        : new Cesium.Color(0.02, 0.03, 0.05, 1.0);
+}
+
+function _ensureCPoint(name, lat, lng, colorHex, pixelSize) {
+    const color = _cColor(colorHex);
+    const sz    = pixelSize || 5;
+    if (cPoints[name]) {
+        cPoints[name].color     = color;
+        cPoints[name].pixelSize = sz;
+    } else {
+        cPoints[name] = cPointColl.add({
+            position: Cesium.Cartesian3.fromDegrees(lng, lat, 5000),
+            color,
+            pixelSize: sz,
+            disableDepthTestDistance: 5e6,
+        });
+    }
+}
+
+function _clearCPoints() {
+    if (cPointColl) cPointColl.removeAll();
+    cPoints = {};
+}
+
+function _drawCLine(lat1, lng1, lat2, lng2, colorHex, width) {
+    if (!cesiumViewer) return;
+    const entity = cesiumViewer.entities.add({
+        polyline: {
+            positions: Cesium.Cartesian3.fromDegreesArrayHeights([
+                lng1, lat1, LINE_ALT,
+                lng2, lat2, LINE_ALT,
+            ]),
+            width: width || 2,
+            material: new Cesium.ColorMaterialProperty(_cColor(colorHex)),
+            arcType: Cesium.ArcType.GEODESIC,
+        },
+    });
+    cPolylines.push(entity);
+}
+
+function _clearCLines() {
+    if (!cesiumViewer) return;
+    for (const e of cPolylines) cesiumViewer.entities.remove(e);
+    cPolylines = [];
+}
+
+// ── 2D/3D toggle ─────────────────────────────────────────────────────────────
+document.getElementById('btn-2d').addEventListener('click', () => {
+    if (!is3D) return;
+    is3D = false;
+    document.getElementById('gl-map').style.display   = '';
+    document.getElementById('gl-globe').style.display = 'none';
+    document.getElementById('btn-2d').classList.add('active');
+    document.getElementById('btn-3d').classList.remove('active');
+    setTimeout(() => map.invalidateSize(), 50);
+});
+
+document.getElementById('btn-3d').addEventListener('click', () => {
+    if (is3D) return;
+    is3D = true;
+    if (!cesiumViewer) _initCesiumViewer();
+    document.getElementById('gl-map').style.display   = 'none';
+    document.getElementById('gl-globe').style.display = '';
+    document.getElementById('btn-2d').classList.remove('active');
+    document.getElementById('btn-3d').classList.add('active');
+    setTimeout(() => cesiumViewer.resize(), 50);
+});
+
+// ── Theme switching ───────────────────────────────────────────────────────────
+document.addEventListener('themeChanged', e => {
+    const theme = e.detail;
+    leafletLayer.setUrl(theme === 'light' ? GL_TILE_LIGHT : GL_TILE_DARK);
+    _glSetTiles(theme);
+});
+
 // ── State ────────────────────────────────────────────────────────────────────
-let registry    = null;   // {problems, algorithms, reduced_n}
-let cityNameMap = {};     // "Name (CC)" → raw name
-let labMarkers  = {};     // name → L.circleMarker (created lazily during animation)
+let registry    = null;
+let cityNameMap = {};
+let labMarkers  = {};
 let playTimer   = null;
 let playMs      = 80;
 
@@ -71,9 +193,12 @@ function updateAlgoUI() {
     const algo     = document.getElementById('sel-algo').value;
     const algoMeta = registry?.algorithms[algo] || {};
 
-    // Show/hide the "To" row
+    // Always show the To field — grey it out when the algorithm doesn't need it
     const needsDst = algoMeta.needs_dst !== false;
-    document.getElementById('dst-row').style.display = needsDst ? '' : 'none';
+    const dstInput = document.getElementById('sel-dst');
+    const dstRow   = document.getElementById('dst-row');
+    dstInput.disabled    = !needsDst;
+    dstRow.style.opacity = needsDst ? '1' : '0.3';
 
     // Build extra-param inputs (e.g. walk-length k)
     const extraParams = algoMeta.extra_params || [];
@@ -94,6 +219,18 @@ function updateAlgoUI() {
     }
 
     document.getElementById('algo-desc').textContent = algoMeta.description || '—';
+
+    // Best-database badge
+    const db = algoMeta.best_db || {};
+    document.getElementById('db-badge').innerHTML = db.name ? `
+      <span style="display:inline-flex;align-items:center;gap:.35rem;
+                   background:#0e1014;border:1px solid ${db.color}33;
+                   border-left:3px solid ${db.color};border-radius:.25rem;
+                   padding:.2rem .45rem;font-size:.65rem;color:${db.color}">
+        <b>${esc(db.type)}:</b>&nbsp;${esc(db.name)}
+      </span>
+      <div style="font-size:.62rem;color:#6c757d;margin-top:.2rem">${esc(db.why)}</div>
+    ` : '';
 }
 
 // ── City datalist ─────────────────────────────────────────────────────────────
@@ -117,7 +254,7 @@ function resolveCity(val) {
     return cityNameMap[v] || v;
 }
 
-// ── Markers — created lazily during animation ─────────────────────────────────
+// ── Leaflet markers ───────────────────────────────────────────────────────────
 function ensureMarker(name, coords, color, radius) {
     if (!labMarkers[name]) {
         const m = L.circleMarker([coords.lat, coords.lng], {
@@ -131,11 +268,13 @@ function ensureMarker(name, coords, color, radius) {
         labMarkers[name].setStyle({color, fillColor: color,
                                    radius: radius || labMarkers[name].options.radius});
     }
+    if (is3D) _ensureCPoint(name, coords.lat, coords.lng, color, (radius || 4) + 1);
 }
 
 function clearMarkers() {
     for (const m of Object.values(labMarkers)) map.removeLayer(m);
     labMarkers = {};
+    _clearCPoints();
 }
 
 // ── MST edge rendering ────────────────────────────────────────────────────────
@@ -146,6 +285,7 @@ function _addMstEdge(c1, c2, ferry, ocean) {
     if (dash) opts.dashArray = dash;
     const pl = L.polyline([[c1.lat, c1.lng], [c2.lat, c2.lng]], opts).addTo(map);
     mstPolylines.push(pl);
+    if (is3D) _drawCLine(c1.lat, c1.lng, c2.lat, c2.lng, color, 1.5);
 }
 
 function renderTreeEdges(treeEdges, cityCoords) {
@@ -153,7 +293,6 @@ function renderTreeEdges(treeEdges, cityCoords) {
         const c1 = cityCoords[e.u] || {lat: e.lat1, lng: e.lng1};
         const c2 = cityCoords[e.v] || {lat: e.lat2, lng: e.lng2};
         _addMstEdge(c1, c2, e.ferry, e.ocean);
-        // Colour both endpoints as "path" green
         if (cityCoords[e.u]) ensureMarker(e.u, cityCoords[e.u], COLORS.path, 4);
         if (cityCoords[e.v]) ensureMarker(e.v, cityCoords[e.v], COLORS.path, 4);
     }
@@ -166,9 +305,10 @@ function renderTreeEdges(treeEdges, cityCoords) {
 function clearMstEdges() {
     for (const pl of mstPolylines) map.removeLayer(pl);
     mstPolylines = [];
+    _clearCLines();
 }
 
-// ── Path line rendering — same _buildSegments logic as graph_routing.js ───────
+// ── Path line rendering ───────────────────────────────────────────────────────
 function _buildSegments(path) {
     const land = [], ferry = [], ocean = [];
     if (!path || path.length < 2) return {land, ferry, ocean};
@@ -205,6 +345,14 @@ function renderFinalPath(path, cityCoords) {
     ferryLine.setLatLngs(ferry);
     oceanLine.setLatLngs(ocean);
 
+    if (is3D) {
+        for (let i = 1; i < path.length; i++) {
+            const a = path[i-1], b = path[i];
+            const col = b.ocean ? '#9c4dcc' : b.ferry ? '#fd7e14' : '#0d6efd';
+            _drawCLine(a.lat, a.lng, b.lat, b.lng, col, 2.5);
+        }
+    }
+
     for (const hop of path) {
         ensureMarker(hop.name, {lat: hop.lat, lng: hop.lng, country: hop.country},
                      COLORS.path, 5);
@@ -221,6 +369,7 @@ function renderBridgeEdges(treeEdges, cityCoords) {
         const pl = L.polyline([[c1.lat, c1.lng], [c2.lat, c2.lng]],
                               {color: '#ff2255', weight: 2.5, opacity: 0.9}).addTo(map);
         mstPolylines.push(pl);
+        if (is3D) _drawCLine(c1.lat, c1.lng, c2.lat, c2.lng, '#ff2255', 2.5);
     }
 }
 
@@ -253,16 +402,16 @@ function setLabel(text) {
 
 // ── Universal event replayer ──────────────────────────────────────────────────
 function applyStep(step, cityCoords) {
-    const coords = cityCoords[step.node] || cityCoords[step.source];
-
     if (step.type === 'visit_node') {
-        if (coords) ensureMarker(step.node, coords, COLORS.current, 5);
+        const c = cityCoords[step.node];
+        if (c) ensureMarker(step.node, c, COLORS.current, 5);
     }
     else if (step.type === 'enqueue' || step.type === 'push_stack') {
         const c = cityCoords[step.node];
         if (c) ensureMarker(step.node, c, COLORS.frontier, 4);
         if (step.source && labMarkers[step.source]) {
             labMarkers[step.source].setStyle({color: COLORS.settled, fillColor: COLORS.settled});
+            if (is3D && cPoints[step.source]) cPoints[step.source].color = _cColor(COLORS.settled);
         }
     }
     else if (step.type === 'pivot_node') {
@@ -270,7 +419,6 @@ function applyStep(step, cityCoords) {
         if (c) ensureMarker(step.node, c, '#ffc107', 7);
     }
     else if (step.type === 'mst_edge') {
-        // Draw the edge being admitted to the spanning tree
         const c1 = cityCoords[step.source];
         const c2 = cityCoords[step.target];
         if (c1 && c2) _addMstEdge(c1, c2, false, false);
@@ -280,6 +428,7 @@ function applyStep(step, cityCoords) {
     else if (step.type === 'relax_edge') {
         if (step.source && labMarkers[step.source]) {
             labMarkers[step.source].setStyle({color: COLORS.settled, fillColor: COLORS.settled});
+            if (is3D && cPoints[step.source]) cPoints[step.source].color = _cColor(COLORS.settled);
         }
         const tc = cityCoords[step.target];
         if (tc) ensureMarker(step.target, tc, COLORS.frontier, 4);
@@ -287,7 +436,6 @@ function applyStep(step, cityCoords) {
     else if (step.type === 'check_node') {
         const c    = cityCoords[step.node];
         const role = step.flags?.role;
-        // walk_count: source = blue, dest = orange; euler/matrix: red
         const color = role === 'source' ? '#0dcaf0'
                     : role === 'dest'   ? '#fd7e14'
                     : '#ff2255';
@@ -308,6 +456,7 @@ function applyStep(step, cityCoords) {
             const pl = L.polyline([[c1.lat, c1.lng], [c2.lat, c2.lng]],
                                   {color: '#ff2255', weight: 2.5, opacity: 0.9}).addTo(map);
             mstPolylines.push(pl);
+            if (is3D) _drawCLine(c1.lat, c1.lng, c2.lat, c2.lng, '#ff2255', 2.5);
         }
     }
     else if (step.type === 'negative_relax') {
@@ -322,7 +471,7 @@ function applyStep(step, cityCoords) {
     }
 }
 
-// ── Result panel (analysis algorithms) ───────────────────────────────────────
+// ── Result panel ──────────────────────────────────────────────────────────────
 function setResultPanel(text) {
     const p = document.getElementById('result-panel');
     if (!p) return;
@@ -330,7 +479,7 @@ function setResultPanel(text) {
     p.classList.toggle('d-none', !text);
 }
 
-// ── Completion renderer — branches on result_type ─────────────────────────────
+// ── Completion renderer ───────────────────────────────────────────────────────
 function _onComplete(data, cityCoords, solveMs) {
     setBadge('done', 'success');
 
@@ -354,11 +503,7 @@ function _onComplete(data, cityCoords, solveMs) {
 
     } else if (data.result_type === 'analysis') {
         const a = data.analysis || {};
-        // Bridges: rendered as red lines using the tree_edges slot
-        if ((data.tree_edges || []).length) {
-            renderBridgeEdges(data.tree_edges, cityCoords);
-        }
-        // Cut-vertices: re-apply red markers after animation settles
+        if ((data.tree_edges || []).length) renderBridgeEdges(data.tree_edges, cityCoords);
         for (const name of (a.cut_vertices || [])) {
             const c = cityCoords[name];
             if (c) ensureMarker(name, c, '#ff2255', 8);
@@ -396,7 +541,6 @@ async function runLab() {
     const algorithm = document.getElementById('sel-algo').value;
     const needsDst  = registry?.algorithms[algorithm]?.needs_dst !== false;
 
-    // Collect any extra params (e.g. k for walk_count)
     const extraParams = {};
     for (const p of (registry?.algorithms[algorithm]?.extra_params || [])) {
         const el = document.getElementById(`ep-${p.id}`);
