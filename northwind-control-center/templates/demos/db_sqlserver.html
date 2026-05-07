@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% block title %}Microsoft SQL Server — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-microsoft fs-2 me-3" style="color:#00a4ef"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Microsoft SQL Server</h2>
+    <p class="text-muted mb-0">Relational OLTP · T-SQL · Always On AG · Dominant in .NET/Windows enterprise stacks</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Launched in 1989 as a joint Microsoft/Sybase product, SQL Server has become the second-largest commercial RDBMS globally and the undisputed king of Windows/.NET enterprise environments. Its Transact-SQL (T-SQL) dialect, tight integration with Azure, Visual Studio, and Active Directory, and battle-tested Always On Availability Groups make it the default choice for ERP systems (Microsoft Dynamics), ASP.NET backends, and Fortune 500 analytics. <a href="https://github.com/microsoft/sql-server-samples" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">SQL Server 2022<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> introduced ledger tables, Azure Synapse Link, and S3-compatible object storage integration.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="sqlserverTabs">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#ss-overview"><i class="bi bi-1-circle me-1"></i>Overview</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ss-model"><i class="bi bi-2-circle me-1"></i>Data Model</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ss-query"><i class="bi bi-3-circle me-1"></i>Query Language</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ss-usecases"><i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ss-arch"><i class="bi bi-5-circle me-1"></i>Architecture</button></li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1 -->
+<div class="tab-pane fade show active" id="ss-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>1989 (Sybase/Microsoft joint)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Commercial + SQL Server Express (free)</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>Relational OLTP</td></tr>
+            <tr><td style="color:#8b949e">Storage model</td><td>Row + Columnstore (in-memory) indexes</td></tr>
+            <tr><td style="color:#8b949e">Concurrency</td><td>MVCC (Read Committed Snapshot) or locking</td></tr>
+            <tr><td style="color:#8b949e">Cloud version</td><td>Azure SQL Database / Managed Instance</td></tr>
+            <tr><td style="color:#8b949e">DB-Engines rank</td><td>#3 overall (2024)</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-buildings me-2"></i>Who Uses SQL Server</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(0,164,239,.15);color:#00a4ef;border:1px solid rgba(0,164,239,.3)">Stack Overflow</span>
+            <span class="badge" style="background:rgba(0,164,239,.15);color:#00a4ef;border:1px solid rgba(0,164,239,.3)">Dell</span>
+            <span class="badge" style="background:rgba(0,164,239,.15);color:#00a4ef;border:1px solid rgba(0,164,239,.3)">NHS (UK)</span>
+            <span class="badge" style="background:rgba(0,164,239,.15);color:#00a4ef;border:1px solid rgba(0,164,239,.3)">BMW</span>
+            <span class="badge" style="background:rgba(0,164,239,.15);color:#00a4ef;border:1px solid rgba(0,164,239,.3)">Xerox</span>
+            <span class="badge" style="background:rgba(0,164,239,.15);color:#00a4ef;border:1px solid rgba(0,164,239,.3)">3M</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-diagram-2 me-2"></i>Architecture Overview</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="font-size:.72rem;color:#c9d1d9;background:#0e1014;padding:1rem;border-radius:6px;margin:0;line-height:1.5">
+┌────────────────────────────────────┐
+│       SQL Server Instance          │
+│  ┌────────────┐ ┌───────────────┐  │
+│  │ Buffer Pool│ │ Plan Cache    │  │
+│  │ (BPool)    │ │ (Procedure    │  │
+│  │            │ │  Cache)       │  │
+│  └────────────┘ └───────────────┘  │
+│  ┌────────────────────────────┐    │
+│  │ Query Processor            │    │
+│  │  Optimizer → Executor      │    │
+│  └────────────────────────────┘    │
+└──────────────┬─────────────────────┘
+               │
+┌──────────────▼─────────────────────┐
+│         SQL Server Database        │
+│  .mdf (data) .ldf (log) .ndf       │
+│  Transaction Log (WAL)             │
+└────────────────────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab-pane fade" id="ss-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-layers me-2"></i>Core Abstractions</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#00a4ef">Pages (8KB)</strong> — base I/O unit. Each page stores rows for a heap or index. Extents (8 pages) are the allocation unit.</p>
+          <p><strong style="color:#00a4ef">Filegroups</strong> — logical groups of data files. OLTP on PRIMARY, archives on SECONDARY. Read-only filegroups for historical data.</p>
+          <p><strong style="color:#00a4ef">Clustered Index</strong> — determines physical row order. Every table should have one (leaf pages = data pages). Without it, you get a heap.</p>
+          <p><strong style="color:#00a4ef">Columnstore Index (2012+)</strong> — batch-mode columnar index enabling 10-100x analytics speedup on OLTP tables. No schema change needed.</p>
+          <p><strong style="color:#00a4ef">In-Memory OLTP (Hekaton)</strong> — memory-optimized tables with lock-free MVCC, compiled stored procedures, 30x OLTP speedup.</p>
+          <p><strong style="color:#00a4ef">Temporal Tables (2016+)</strong> — system-versioned history table automatically maintained. Query AS OF a past time.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-code-square me-2"></i>Schema Example</span>
+        </div>
+        <div class="card-body p-2">
+          <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">-- Temporal table with history
+CREATE TABLE dbo.Employees (
+    EmployeeID   INT          IDENTITY PRIMARY KEY,
+    Name         NVARCHAR(100),
+    Department   NVARCHAR(50),
+    Salary       DECIMAL(10,2),
+    ValidFrom    DATETIME2 GENERATED ALWAYS AS ROW START,
+    ValidTo      DATETIME2 GENERATED ALWAYS AS ROW END,
+    PERIOD FOR SYSTEM_TIME (ValidFrom, ValidTo)
+)
+WITH (SYSTEM_VERSIONING = ON
+    (HISTORY_TABLE = dbo.EmployeesHistory));
+
+-- Columnstore index on OLTP table
+CREATE NONCLUSTERED COLUMNSTORE INDEX
+    cci_orders ON dbo.Orders
+    (OrderDate, CustomerID, Total, Status)
+    WHERE Status = 'COMPLETED';
+
+-- Query temporal data
+SELECT Name, Salary
+FROM dbo.Employees
+FOR SYSTEM_TIME AS OF '2023-01-01';</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3 -->
+<div class="tab-pane fade" id="ss-query">
+  <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+    <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+      <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-terminal me-2"></i>T-SQL Primer</span>
+    </div>
+    <div class="card-body p-2">
+      <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">-- 1. Window functions with OFFSET-FETCH pagination
+SELECT TOP (10) WITH TIES
+    CustomerID, Name,
+    SUM(Total) OVER (PARTITION BY CustomerID) AS lifetime_value,
+    ROW_NUMBER() OVER (ORDER BY SUM(Total) DESC) AS rank
+FROM Orders o JOIN Customers c USING (CustomerID)
+GROUP BY CustomerID, Name
+ORDER BY lifetime_value DESC
+OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
+
+-- 2. CTE with recursion (org chart)
+WITH OrgChart AS (
+    SELECT EmployeeID, ManagerID, Name, 0 AS Level
+    FROM Employees WHERE ManagerID IS NULL
+    UNION ALL
+    SELECT e.EmployeeID, e.ManagerID, e.Name, oc.Level + 1
+    FROM Employees e JOIN OrgChart oc ON e.ManagerID = oc.EmployeeID
+)
+SELECT REPLICATE('  ', Level) + Name AS HierarchyName FROM OrgChart;
+
+-- 3. MERGE (upsert)
+MERGE dbo.Inventory AS tgt
+USING dbo.Staging AS src ON tgt.ProductID = src.ProductID
+WHEN MATCHED THEN
+    UPDATE SET tgt.Qty = src.Qty, tgt.Updated = GETDATE()
+WHEN NOT MATCHED THEN
+    INSERT (ProductID, Qty, Updated)
+    VALUES (src.ProductID, src.Qty, GETDATE());
+
+-- 4. JSON support (2016+)
+SELECT JSON_VALUE(payload, '$.userId') AS user_id,
+       JSON_QUERY(payload, '$.items') AS items
+FROM Events
+WHERE ISJSON(payload) = 1
+  AND JSON_VALUE(payload, '$.type') = 'purchase';
+
+-- 5. OPENJSON — expand JSON array to rows
+SELECT j.order_id, j.product, j.qty
+FROM Events e
+CROSS APPLY OPENJSON(e.payload, '$.items')
+    WITH (order_id INT, product NVARCHAR(100), qty INT) j;
+
+-- 6. DBCC CHECKDB — integrity check
+DBCC CHECKDB ('Northwind') WITH NO_INFOMSGS, ALL_ERRORMSGS;</pre>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4 -->
+<div class="tab-pane fade" id="ss-usecases">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-trophy me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#00a4ef">ERP (Microsoft Dynamics)</strong> — Dynamics 365 uses SQL Server as its data tier. The combination dominates mid-market ERP worldwide.</p>
+          <p><strong style="color:#00a4ef">.NET / ASP.NET Backends</strong> — Entity Framework, Dapper, and ADO.NET have first-class SQL Server support. Stack Overflow runs on SQL Server.</p>
+          <p><strong style="color:#00a4ef">BI &amp; SSRS Reporting</strong> — SQL Server Reporting Services, Analysis Services (SSAS cubes), and Integration Services (SSIS) form a complete BI stack.</p>
+          <p><strong style="color:#00a4ef">HTAP via Columnstore</strong> — add a non-clustered columnstore index to an OLTP table and run analytics on live data without a separate DWH.</p>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-bar-chart me-2"></i>Trade-offs</span>
+        </div>
+        <div class="card-body p-2">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <thead><tr><th>vs.</th><th>SQL Server wins</th><th>SQL Server loses</th></tr></thead>
+            <tbody>
+              <tr><td>PostgreSQL</td><td>GUI tools (SSMS), Azure integration, SSIS</td><td>Licensing cost, Linux ecosystem</td></tr>
+              <tr><td>Oracle</td><td>Price, Azure cloud native, Windows fit</td><td>RAC clustering, optimizer decades</td></tr>
+              <tr><td>MySQL</td><td>Enterprise features, SSMS tooling</td><td>Open-source, LAMP stack ecosystem</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-speedometer2 me-2"></i>Performance</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9">
+          <p><strong>OLTP:</strong> &lt;1ms with in-memory tables</p>
+          <p><strong>Columnstore batch mode:</strong> 10-100x analytics</p>
+          <p><strong>Adaptive Query Processing:</strong> plans adjust mid-execution</p>
+          <p><strong>In-Memory OLTP:</strong> 30x vs disk-based tables</p>
+          <p><strong>Always Encrypted:</strong> query on encrypted columns</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5 -->
+<div class="tab-pane fade" id="ss-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-cpu me-2"></i>Storage Engine</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#00a4ef">Buffer Pool</strong> — 8KB page cache in RAM. Dirty pages written to disk by lazywriter/checkpoint. Key tuning: max server memory.</p>
+          <p><strong style="color:#00a4ef">Write-Ahead Log</strong> — transaction log (.ldf) is sequentially written. COMMIT returns after log flush. Checkpoint writes dirty data pages.</p>
+          <p><strong style="color:#00a4ef">Row vs. Page Compression</strong> — ROW compression eliminates fixed-width overhead; PAGE adds dictionary compression across the page.</p>
+          <p><strong style="color:#00a4ef">Extent Management</strong> — Mixed extents (multiple objects) vs. Uniform extents (single object). GAM, SGAM, IAM pages track allocation.</p>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-shield-check me-2"></i>Always On AG</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p>Always On Availability Groups (2012+) provide enterprise HA/DR: up to 8 secondary replicas, synchronous or async commit, readable secondaries for analytics offload, and automatic failover in &lt;30 seconds.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+        <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+          <span class="fw-bold" style="color:#00a4ef"><i class="bi bi-gear me-2"></i>Key Config</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9">
+          <table class="table table-sm mb-0">
+            <tr><td style="color:#8b949e">max server memory (MB)</td><td>Buffer pool ceiling</td></tr>
+            <tr><td style="color:#8b949e">RCSI</td><td>Read Committed Snapshot — eliminates reader/writer blocks</td></tr>
+            <tr><td style="color:#8b949e">Cost threshold for parallelism</td><td>Min plan cost to go parallel (default 5 = too low)</td></tr>
+            <tr><td style="color:#8b949e">max degree of parallelism</td><td>MAXDOP — cores per query</td></tr>
+            <tr><td style="color:#8b949e">Auto-create / update stats</td><td>Keep ON; statistics drive the optimizer</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

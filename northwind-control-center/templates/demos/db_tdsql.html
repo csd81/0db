@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}TDSQL — Tencent Distributed MySQL{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-layers fs-2 me-3" style="color:#1aad19"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Tencent TDSQL</h2>
+      <p class="text-muted mb-0">Distributed MySQL · WeChat Pay · Financial-grade synchronous replication</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    TDSQL (Tencent Distributed SQL) was built internally at Tencent in 2012 (<a href="https://dl.acm.org/doi/10.14778/3574245.3574246" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">VLDB 2022 paper<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>), initially to power
+    WeChat Pay's explosive growth after the 2013 WeChat red packet launch. It became a commercial
+    product on Tencent Cloud in 2019. TDSQL extends MySQL with transparent horizontal sharding,
+    distributed transactions, and MAR (Multi-source Asynchronous Replication) — Tencent's synchronous
+    replication protocol that provides zero-data-loss durability without the latency of Paxos.
+    TDSQL-C is the serverless variant (MySQL and PostgreSQL-compatible, scales to zero).
+  </p>
+
+  <ul class="nav nav-tabs mb-3" id="tdsqlTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">Query Language</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(26,173,25,.3)">
+            <div class="card-header" style="background:rgba(26,173,25,.08);border-bottom:1px solid rgba(26,173,25,.2)">
+              <span class="fw-semibold" style="color:#1aad19">Born from WeChat Red Packets</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">
+                In February 2014 (Chinese New Year), WeChat launched digital red packets (hongbao).
+                800 million red packets were sent in 24 hours — a traffic spike that would have
+                destroyed traditional MySQL. TDSQL's transparent sharding absorbed the load
+                seamlessly. The system processed peak 1.58 million transactions per second during
+                the 2023 Spring Festival.
+              </p>
+              <p style="font-size:.85rem;color:#c9d1d9">
+                TDSQL's key innovation is its <strong>MAR replication protocol</strong> — a
+                synchronous multi-copy replication that guarantees zero data loss (RPO=0) while
+                maintaining near-synchronous latency by pipelining log writes across replicas.
+                This is stricter than MySQL's semisynchronous replication but faster than
+                Paxos consensus.
+              </p>
+              <div class="row g-2 mt-2">
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid rgba(26,173,25,.3);border-radius:6px;padding:.75rem"><div style="color:#1aad19;font-weight:600;font-size:.82rem">TDSQL MySQL</div><div style="font-size:.77rem;color:#8b949e">Distributed MySQL, horizontal sharding, MAR replication</div></div></div>
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid rgba(26,173,25,.3);border-radius:6px;padding:.75rem"><div style="color:#1aad19;font-weight:600;font-size:.82rem">TDSQL PostgreSQL</div><div style="font-size:.77rem;color:#8b949e">Distributed PostgreSQL, Citus-inspired sharding</div></div></div>
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid rgba(26,173,25,.3);border-radius:6px;padding:.75rem"><div style="color:#1aad19;font-weight:600;font-size:.82rem">TDSQL-C Serverless</div><div style="font-size:.77rem;color:#8b949e">Scales to zero, per-second billing, MySQL/PG compatible</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(26,173,25,.3)">
+            <div class="card-header" style="background:rgba(26,173,25,.08);border-bottom:1px solid rgba(26,173,25,.2)">
+              <span class="fw-semibold" style="color:#1aad19">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Internal launch</td><td>2012 (Tencent)</td></tr>
+                  <tr><td class="text-muted">Commercial</td><td>2019 (Tencent Cloud)</td></tr>
+                  <tr><td class="text-muted">Compatibility</td><td>MySQL 5.7/8.0, PostgreSQL</td></tr>
+                  <tr><td class="text-muted">Replication</td><td>MAR (Multi-source Async Repl.)</td></tr>
+                  <tr><td class="text-muted">Peak TPS</td><td>1.58M (Spring Festival 2023)</td></tr>
+                  <tr><td class="text-muted">RPO</td><td>0 (zero data loss)</td></tr>
+                  <tr><td class="text-muted">RTO</td><td>&lt;30s (automatic failover)</td></tr>
+                  <tr><td class="text-muted">Notable users</td><td>WeChat Pay, Postal Savings Bank, China Merchants Bank</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(26,173,25,.3)">
+            <div class="card-header" style="background:rgba(26,173,25,.08);border-bottom:1px solid rgba(26,173,25,.2)">
+              <span class="fw-semibold" style="color:#1aad19">Transparent Sharding via Proxy</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- Application connects to TDSQL Proxy (looks like MySQL)
+-- Proxy transparently routes to correct shard
+
+-- Shard table (configured via Tencent Cloud console or CLI):
+-- Table: payments
+-- Shard key: user_id
+-- Shard count: 8 (physical MySQL InnoDB instances)
+
+-- Application code: standard MySQL — no sharding awareness
+import mysql.connector
+
+conn = mysql.connector.connect(
+    host='tdsql-proxy.example.tencent.com',
+    port=3306,
+    user='appuser', password='...', database='wechat_pay'
+)
+
+cursor = conn.cursor()
+
+# Standard MySQL INSERT — proxy routes to shard by user_id hash
+cursor.execute("""
+    INSERT INTO payments (payment_id, user_id, amount, currency, status)
+    VALUES (%s, %s, %s, %s, %s)
+""", ('pay-001', 10086, 88.00, 'CNY', 'pending'))
+
+# Standard MySQL SELECT — proxy routes to correct shard
+cursor.execute("""
+    SELECT payment_id, amount, status, created_at
+    FROM payments
+    WHERE user_id = %s
+    ORDER BY created_at DESC LIMIT 20
+""", (10086,))
+
+# Cross-shard query — proxy fans out to all shards, merges results
+cursor.execute("""
+    SELECT status, COUNT(*), SUM(amount)
+    FROM payments
+    WHERE created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+    GROUP BY status
+""")
+# Proxy: fans out to 8 shards, aggregates 8 result sets</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(26,173,25,.3)">
+            <div class="card-header" style="background:rgba(26,173,25,.08);border-bottom:1px solid rgba(26,173,25,.2)">
+              <span class="fw-semibold" style="color:#1aad19">Global Unique Sequences &amp; XA Transactions</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1dns solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── Global Unique Sequence (across shards)
+-- Standard AUTO_INCREMENT only unique within one shard
+-- TDSQL provides globally unique IDs via sequence service
+
+CREATE SEQUENCE payment_seq
+    START WITH 1
+    INCREMENT BY 1
+    MINVALUE 1
+    CACHE 1000;  -- pre-allocate 1000 IDs to reduce coordination
+
+-- Use in application:
+INSERT INTO payments (payment_id, user_id, amount)
+VALUES (NEXT VALUE FOR payment_seq, 10086, 88.00);
+
+-- ── Distributed Transaction (XA compatible)
+-- Single-shard transactions: standard MySQL ACID (no overhead)
+-- Cross-shard transactions: TDSQL's enhanced 2PC (XA + MAR)
+
+XA START 'txn-001';
+-- Shard 1: deduct from sender's account (user_id=10086)
+UPDATE accounts SET balance = balance - 100 WHERE user_id = 10086;
+-- Shard 5: add to receiver's account (user_id=99999)
+UPDATE accounts SET balance = balance + 100 WHERE user_id = 99999;
+XA END 'txn-001';
+XA PREPARE 'txn-001';
+-- MAR: all replicas ack prepare before COMMIT
+XA COMMIT 'txn-001';
+
+-- ── Global binlog (for downstream replication/CDC)
+-- TDSQL aggregates per-shard binlogs into global binlog stream
+-- Applications can subscribe to global binlog via DTS (Data Transfer Service)
+-- Used for: ElasticSearch sync, Redis cache invalidation, audit logging</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(26,173,25,.3)">
+            <div class="card-header" style="background:rgba(26,173,25,.08);border-bottom:1px solid rgba(26,173,25,.2)">
+              <span class="fw-semibold" style="color:#1aad19">MySQL-Compatible SQL — Financial Use Patterns</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── 1. Idempotent INSERT (critical for payment systems)
+INSERT INTO payments (payment_id, user_id, amount, status)
+VALUES ('pay-uuid-001', 10086, 88.00, 'pending')
+ON DUPLICATE KEY UPDATE
+    status = IF(status = 'pending', 'pending', status);
+    -- Prevents double-payment: if payment_id exists, no-op
+
+-- ── 2. Payment state machine with optimistic locking
+-- version column prevents concurrent state transitions
+UPDATE payments
+SET status = 'completed',
+    completed_at = NOW(),
+    version = version + 1
+WHERE payment_id = 'pay-uuid-001'
+  AND status = 'pending'
+  AND version = 3;
+-- Check rows affected: 0 = conflict (someone else updated), retry
+
+-- ── 3. Read-write split (TDSQL proxy handles automatically)
+-- Writes → primary shard (strong consistency)
+-- Reads with hint → replica (eventual consistency, lower latency)
+SELECT /*+ TDSQL_SLAVE() */ balance FROM accounts WHERE user_id = 10086;
+-- Routes to replica — balance may be 100ms stale (acceptable for display)
+
+-- ── 4. Window functions for financial analytics
+SELECT user_id,
+       payment_date,
+       amount,
+       SUM(amount)  OVER (PARTITION BY user_id ORDER BY payment_date) AS running_total,
+       AVG(amount)  OVER (PARTITION BY user_id ORDER BY payment_date ROWS 6 PRECEDING) AS weekly_avg,
+       ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY amount DESC) AS spend_rank
+FROM payments
+WHERE payment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY);
+
+-- ── 5. JSON for flexible transaction metadata
+INSERT INTO transactions (txn_id, user_id, metadata) VALUES (
+    'txn-001', 10086,
+    JSON_OBJECT(
+        'merchant', 'Starbucks',
+        'category', 'food',
+        'location', JSON_OBJECT('city', 'Shenzhen', 'lat', 22.54, 'lng', 114.06),
+        'tags', JSON_ARRAY('coffee', 'breakfast')
+    )
+);
+SELECT JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.merchant')) AS merchant
+FROM transactions
+WHERE user_id = 10086
+  AND JSON_EXTRACT(metadata, '$.category') = '"food'";</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(26,173,25,.3)">
+            <div class="card-header" style="background:rgba(26,173,25,.08);border-bottom:1px solid rgba(26,173,25,.2)">
+              <span class="fw-semibold" style="color:#1aad19">Killer Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#1aad19">WeChat Pay (1.2B users)</div><p style="font-size:.83rem;color:#8b949e">All WeChat Pay transactions run on TDSQL. Spring Festival 2023: 1.58M TPS peak, 10B+ red packets in one day. Zero data loss across primary/replica failover events.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#1aad19">Postal Savings Bank of China</div><p style="font-size:.83rem;color:#8b949e">PSB (600M customers, largest retail bank by customer count) uses TDSQL for core banking system. Replaced Oracle RAC with TDSQL across hundreds of provincial branches.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#1aad19">China Merchants Bank</div><p style="font-size:.83rem;color:#8b949e">CMB uses TDSQL for credit card processing and online banking. Key requirement: synchronous replication — no data loss acceptable for financial transactions. TDSQL MAR delivers RPO=0.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(26,173,25,.3)">
+            <div class="card-header" style="background:rgba(26,173,25,.08);border-bottom:1px solid rgba(26,173,25,.2)">
+              <span class="fw-semibold" style="color:#1aad19">TDSQL vs OceanBase vs TiDB</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-dark" style="font-size:.79rem">
+                  <thead><tr><th>Feature</th><th style="color:#1aad19">TDSQL</th><th>OceanBase</th><th>TiDB</th></tr></thead>
+                  <tbody>
+                    <tr><td>Compatibility</td><td>MySQL (primarily)</td><td>MySQL + Oracle</td><td>MySQL</td></tr>
+                    <tr><td>Consensus</td><td>MAR (Tencent)</td><td>Paxos</td><td>Raft (TiKV)</td></tr>
+                    <tr><td>HTAP</td><td>Limited</td><td>Hybrid row-column</td><td>TiFlash columnar</td></tr>
+                    <tr><td>TPC-C record</td><td>No</td><td>707M tpmC</td><td>No</td></tr>
+                    <tr><td>Open source</td><td>No</td><td>Yes (2021)</td><td>Yes</td></tr>
+                    <tr><td>Serverless</td><td>TDSQL-C</td><td>TDSQL-C (OB)</td><td>TiDB Serverless</td></tr>
+                    <tr><td>Primary market</td><td>Tencent ecosystem</td><td>Alibaba/finance</td><td>Global</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(26,173,25,.3)">
+            <div class="card-header" style="background:rgba(26,173,25,.08);border-bottom:1px solid rgba(26,173,25,.2)">
+              <span class="fw-semibold" style="color:#1aad19">TDSQL Architecture: MAR Replication &amp; Proxy</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌──────────────────────────────────────────────────────────────────────┐
+│  Client / Application                                                │
+│  └──▶ TDSQL Proxy Cluster (ZooKeeper for metadata, load balanced)    │
+│         ├── Parses SQL, identifies shard key                         │
+│         ├── Routes to correct MySQL shard                            │
+│         ├── Merges cross-shard results                               │
+│         └── Read/write splitting (primary vs replica hints)          │
+├──────────────────────────────────────────────────────────────────────┤
+│  Shard Group 1         Shard Group 2         Shard Group N           │
+│  ┌────────────────┐    ┌────────────────┐    ┌────────────────┐      │
+│  │  Primary       │    │  Primary       │    │  Primary       │      │
+│  │  (MySQL InnoDB)│    │  (MySQL InnoDB)│    │  (MySQL InnoDB)│      │
+│  │       │ MAR    │    │       │ MAR    │    │       │ MAR    │      │
+│  │  ┌────▼──────┐ │    │  ┌────▼──────┐ │    │  ┌────▼──────┐ │      │
+│  │  │ Replica 1 │ │    │  │ Replica 1 │ │    │  │ Replica 1 │ │      │
+│  │  │ Replica 2 │ │    │  │ Replica 2 │ │    │  │ Replica 2 │ │      │
+│  │  └───────────┘ │    │  └───────────┘ │    │  └───────────┘ │      │
+│  └────────────────┘    └────────────────┘    └────────────────┘      │
+├──────────────────────────────────────────────────────────────────────┤
+│  MAR Replication Protocol:                                           │
+│  Primary writes binlog → all replicas acknowledge →                  │
+│  Only then primary returns COMMIT to client                          │
+│  (Zero data loss: RPO=0, vs semisync which allows 1-transaction gap) │
+│                                                                      │
+│  ZooKeeper: stores shard topology, replica status, proxy config      │
+│  DTS: subscribes to global binlog for downstream system sync         │
+└──────────────────────────────────────────────────────────────────────┘</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

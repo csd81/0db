@@ -236,6 +236,8 @@
   </div>
 </div>
 
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">Tight coupling occurs when a transaction synchronously calls an external service — if that service is slow or unavailable, the INSERT blocks or rolls back, cascading the failure to every caller up the stack. The loose coupling pattern replaces the direct call with an append to a durable event log: the INSERT completes immediately, and a separate process consumes the log at its own pace, retrying failures without ever touching the original transaction. The demo implements both patterns using a SQL Server AFTER trigger writing to <code>order_log</code> and a SQL Agent job processing it asynchronously, then deliberately breaks the downstream service to show that the tight version fails the INSERT while the loose version never notices. This event-log pattern — write durably, process independently — is the design principle behind Kafka, SQS, and every resilient distributed system.</p>
+
 <!-- ═══════════════════ LOOSE COUPLING PANEL ═══════════════════ -->
 <div id="panel-loose" style="display:none">
 

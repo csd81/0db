@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% block title %}GaussDB — Huawei AI-Native Enterprise Database{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-cpu-fill fs-2 me-3" style="color:#cf0a2c"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Huawei GaussDB</h2>
+      <p class="text-muted mb-0">AI-native · PostgreSQL-compatible · HTAP · China financial-grade</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    GaussDB is Huawei Cloud's enterprise-grade distributed database, commercially launched in 2019. The open-source variant <a href="https://github.com/opengauss-mirror/openGauss-server" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">openGauss<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> is Apache 2.0.
+    Built on PostgreSQL-compatible internals, it comes in two primary forms: GaussDB (OLTP, shared-nothing
+    distributed relational) and GaussDB (DWS) for analytics. Its defining feature is AI4DB
+    (AI for Database) — an AI layer that automatically recommends indexes, diagnoses slow queries,
+    tunes knobs, and predicts failures. GaussDB is Huawei's answer to Oracle for China's financial
+    sector, which is legally required to eliminate foreign databases by 2027 under government directives.
+  </p>
+
+  <ul class="nav nav-tabs mb-3" id="gaussTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="text-start nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">Query Language</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(207,10,44,.3)">
+            <div class="card-header" style="background:rgba(207,10,44,.08);border-bottom:1px solid rgba(207,10,44,.2)">
+              <span class="fw-semibold" style="color:#cf0a2c">China's Oracle Replacement at Banking Scale</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">
+                China's "Xinchuang" (信创) policy mandates replacement of Western IT infrastructure
+                with domestic alternatives in government, banking, and critical infrastructure.
+                GaussDB is Huawei's offering for this transition, specifically targeting Oracle and
+                IBM Db2 installations in the financial sector.
+              </p>
+              <p style="font-size:.85rem;color:#c9d1d9">
+                The AI4DB component includes: self-diagnosis (automatic slow query root cause analysis),
+                index advisor (recommends indexes based on actual workload), knob tuning (adjusts
+                memory and parallelism parameters automatically), and performance predictor (forecasts
+                degradation before it happens). This is particularly valuable for DBAs migrating
+                from Oracle who aren't familiar with PostgreSQL tuning.
+              </p>
+              <div class="row g-2 mt-2">
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid rgba(207,10,44,.3);border-radius:6px;padding:.75rem"><div style="color:#cf0a2c;font-weight:600;font-size:.82rem">GaussDB OLTP</div><div style="font-size:.77rem;color:#8b949e">Distributed relational, Paxos consensus, ACID, financial-grade HA</div></div></div>
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid rgba(207,10,44,.3);border-radius:6px;padding:.75rem"><div style="color:#cf0a2c;font-weight:600;font-size:.82rem">GaussDB DWS</div><div style="font-size:.77rem;color:#8b949e">MPP analytics (formerly FusionInsight), columnar storage, Hadoop integration</div></div></div>
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid rgba(207,10,44,.3);border-radius:6px;padding:.75rem"><div style="color:#cf0a2c;font-weight:600;font-size:.82rem">AI4DB Layer</div><div style="font-size:.77rem;color:#8b949e">Automatic index recommendation, slow query diagnosis, knob tuning, anomaly detection</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(207,10,44,.3)">
+            <div class="card-header" style="background:rgba(207,10,44,.08);border-bottom:1px solid rgba(207,10,44,.2)">
+              <span class="fw-semibold" style="color:#cf0a2c">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Launched</td><td>2019 (Huawei Cloud)</td></tr>
+                  <tr><td class="text-muted">Compatibility</td><td>PostgreSQL (primary), partial Oracle</td></tr>
+                  <tr><td class="text-muted">Consensus</td><td>Paxos (OLTP), N/A (DWS)</td></tr>
+                  <tr><td class="text-muted">Replication</td><td>Synchronous, 3 replicas min.</td></tr>
+                  <tr><td class="text-muted">AI features</td><td>AI4DB (index, knob, diagnosis)</td></tr>
+                  <tr><td class="text-muted">Certification</td><td>PCIDSS, CC EAL4+ (bank-grade)</td></tr>
+                  <tr><td class="text-muted">Market</td><td>China financial, telco, govt</td></tr>
+                  <tr><td class="text-muted">Notable users</td><td>Bank of Communications, China Mobile</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(207,10,44,.3)">
+            <div class="card-header" style="background:rgba(207,10,44,.08);border-bottom:1px solid rgba(207,10,44,.2)">
+              <span class="fw-semibold" style="color:#cf0a2c">Distributed Relational Model</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- GaussDB OLTP: standard PostgreSQL-compatible DDL
+
+CREATE TABLE transactions (
+    txn_id       BIGSERIAL PRIMARY KEY,
+    account_from BIGINT NOT NULL,
+    account_to   BIGINT NOT NULL,
+    amount       DECIMAL(18,4) NOT NULL,
+    currency     CHAR(3) DEFAULT 'CNY',
+    txn_type     VARCHAR(20),
+    status       VARCHAR(10) DEFAULT 'pending',
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT chk_amount CHECK (amount > 0)
+)
+DISTRIBUTE BY HASH (account_from)  -- GaussDB-specific: distribute by column
+PARTITION BY RANGE (created_at) (
+    PARTITION p2024q1 VALUES LESS THAN ('2024-04-01'),
+    PARTITION p2024q2 VALUES LESS THAN ('2024-07-01'),
+    PARTITION p2024q3 VALUES LESS THAN ('2024-10-01'),
+    PARTITION p2024q4 VALUES LESS THAN ('2025-01-01')
+);
+
+-- Column-store table (for analytics on same system)
+CREATE TABLE txn_summary (
+    day         DATE,
+    txn_type    VARCHAR(20),
+    total_amount DECIMAL(18,4),
+    count       BIGINT
+) WITH (ORIENTATION = COLUMN)  -- columnar storage in GaussDB DWS
+  DISTRIBUTE BY HASH (txn_type);
+
+-- Compressed table (OLTP hot data → compress old partitions)
+ALTER TABLE transactions
+PARTITION p2024q1
+SET (COMPRESSION = LOW);</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(207,10,44,.3)">
+            <div class="card-header" style="background:rgba(207,10,44,.08);border-bottom:1px solid rgba(207,10,44,.2)">
+              <span class="fw-semibold" style="color:#cf0a2c">AI4DB — Intelligent DBA Assistant</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- AI4DB: Index Advisor
+-- Analyzes workload captured from pg_stat_statements equivalent
+SELECT * FROM gs_index_advisor(
+    'SELECT * FROM transactions WHERE account_from = 123 AND status = ''pending''',
+    'transactions'
+);
+-- Returns: CREATE INDEX idx_txn_account_status ON transactions(account_from, status)
+-- Estimated benefit: 85% reduction in scan cost
+
+-- AI4DB: Self-Diagnosis
+SELECT diagnosis_result, suggestion
+FROM gs_wdr_snapshot_diagnosis()  -- Workload Diagnosis Report
+WHERE severity = 'HIGH'
+ORDER BY impact_score DESC;
+-- Returns: "Full table scan on transactions: missing index on (account_from)"
+-- Suggests: "CREATE INDEX CONCURRENTLY ..."
+
+-- AI4DB: Knob Tuning (automatic parameter adjustment)
+-- GaussDB monitors workload type and adjusts:
+-- work_mem, shared_buffers, max_parallel_workers_per_gather
+-- Based on: CPU/memory metrics, query patterns, concurrency levels
+
+-- Slow query trace (built-in)
+SELECT query, total_time, calls, mean_time, stddev_time
+FROM gs_stat_activity_ng
+WHERE state = 'active' AND total_time > 1000
+ORDER BY total_time DESC;
+
+-- Automatic failover via Paxos:
+-- Primary fails → Paxos election → new primary in &lt;10s
+-- All committed transactions preserved (synchronous replication)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(207,10,44,.3)">
+            <div class="card-header" style="background:rgba(207,10,44,.08);border-bottom:1px solid rgba(207,10,44,.2)">
+              <span class="fw-semibold" style="color:#cf0a2c">PostgreSQL-Compatible SQL + GaussDB Extensions</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── 1. Standard PostgreSQL SQL (fully compatible)
+SELECT t.txn_id,
+       a1.account_name AS sender,
+       a2.account_name AS receiver,
+       t.amount,
+       t.created_at
+FROM transactions t
+JOIN accounts a1 ON t.account_from = a1.id
+JOIN accounts a2 ON t.account_to   = a2.id
+WHERE t.created_at > NOW() - INTERVAL '1 day'
+  AND t.amount > 10000
+ORDER BY t.created_at DESC;
+
+-- ── 2. Window functions (same as PostgreSQL)
+SELECT account_from,
+       amount,
+       SUM(amount) OVER (
+           PARTITION BY account_from
+           ORDER BY created_at
+           ROWS UNBOUNDED PRECEDING
+       ) AS cumulative_outflow
+FROM transactions
+WHERE status = 'completed';
+
+-- ── 3. CTE with recursive (detect circular transfers — fraud)
+WITH RECURSIVE transfer_chain AS (
+    SELECT txn_id, account_from, account_to, amount, ARRAY[account_from] AS path
+    FROM transactions
+    WHERE account_from = 123456
+
+    UNION ALL
+
+    SELECT t.txn_id, t.account_from, t.account_to, t.amount, path || t.account_from
+    FROM transactions t
+    JOIN transfer_chain tc ON t.account_from = tc.account_to
+    WHERE NOT t.account_from = ANY(path)  -- avoid infinite loop
+      AND array_length(path, 1) &lt; 10
+)
+SELECT * FROM transfer_chain WHERE account_to = 123456;  -- circular transfer
+
+-- ── 4. MERGE (upsert — PostgreSQL 15 compatible)
+MERGE INTO account_balances b
+USING (SELECT account_id, SUM(amount) AS net FROM transactions GROUP BY account_id) t
+ON b.account_id = t.account_id
+WHEN MATCHED THEN
+    UPDATE SET balance = balance + t.net, updated_at = NOW()
+WHEN NOT MATCHED THEN
+    INSERT (account_id, balance, updated_at)
+    VALUES (t.account_id, t.net, NOW());
+
+-- ── 5. Stored procedure (PL/pgSQL compatible)
+CREATE OR REPLACE PROCEDURE transfer_funds(
+    p_from BIGINT, p_to BIGINT, p_amount DECIMAL, OUT p_txn_id BIGINT
+) LANGUAGE plpgsql AS $$
+BEGIN
+    -- Check balance
+    IF (SELECT balance FROM accounts WHERE id = p_from FOR UPDATE) &lt; p_amount THEN
+        RAISE EXCEPTION 'Insufficient funds';
+    END IF;
+    UPDATE accounts SET balance = balance - p_amount WHERE id = p_from;
+    UPDATE accounts SET balance = balance + p_amount WHERE id = p_to;
+    INSERT INTO transactions (account_from, account_to, amount, status)
+    VALUES (p_from, p_to, p_amount, 'completed')
+    RETURNING txn_id INTO p_txn_id;
+END;
+$$;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(207,10,44,.3)">
+            <div class="card-header" style="background:rgba(207,10,44,.08);border-bottom:1px solid rgba(207,10,44,.2)">
+              <span class="fw-semibold" style="color:#cf0a2c">Killer Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#cf0a2c">Bank of Communications (China)</div><p style="font-size:.83rem;color:#8b949e">One of China's "Big Five" state banks. Core banking system migration from IBM Db2 to GaussDB, driven by Xinchuang compliance and cost reduction. Processes millions of daily transactions.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#cf0a2c">China Mobile Subscriber Data</div><p style="font-size:.83rem;color:#8b949e">China Mobile (1B+ subscribers) uses GaussDB for subscriber management, billing, and real-time charging systems. Telco-grade HA requirements: 99.9999% (six nines) availability.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#cf0a2c">China Telecom Network Operations</div><p style="font-size:.83rem;color:#8b949e">Network operations center databases: topology, fault management, configuration management. GaussDB DWS for network analytics and capacity planning.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(207,10,44,.3)">
+            <div class="card-header" style="background:rgba(207,10,44,.08);border-bottom:1px solid rgba(207,10,44,.2)">
+              <span class="fw-semibold" style="color:#cf0a2c">HA Architecture</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;font-size:.77rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+GaussDB OLTP High Availability:
+
+┌──────────────────────────────────────────────┐
+│  Paxos Consensus Group (3 or 5 replicas)     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │ Primary  │  │Follower 1│  │Follower 2│    │
+│  │(write)   │  │(hot       │  │(hot      │   │
+│  │          │  │ standby) │  │ standby) │    │
+│  └────┬─────┘  └──────────┘  └──────────┘    │
+│       │ Paxos log replication (synchronous)  │
+│       │ All committed = majority ack'd       │
+└───────┴──────────────────────────────────────┘
+
+Failover: Paxos election → &lt;10s
+RPO: 0 (zero data loss, synchronous)
+RTO: &lt;30s automatic (no manual intervention)
+
+Zone configuration:
+- 3-zone: 1 primary + 1 follower/zone
+- Cross-region: 5-zone Paxos for active-active DR
+
+AI4DB Monitoring:
+- Workload fingerprinting → index recommendations
+- Memory pressure detection → knob adjustments
+- Anomaly detection → alerting before failure
+- Query plan regression → automatic reversion</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(207,10,44,.3)">
+            <div class="card-header" style="background:rgba(207,10,44,.08);border-bottom:1px solid rgba(207,10,44,.2)">
+              <span class="fw-semibold" style="color:#cf0a2c">GaussDB Distributed Architecture</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌──────────────────────────────────────────────────────────────────────┐
+│  GaussDB Distributed (Shared-Nothing MPP)                            │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────┐              │
+│  │  Coordinator Nodes (CN)                            │              │
+│  │  ├── Query parsing, planning, distribution          │             │
+│  │  ├── Client connections (load balanced)             │             │
+│  │  └── Transaction coordination (2PC for cross-DN)   │              │
+│  └─────────────────────┬──────────────────────────────┘              │
+│                        │                                             │
+│  ┌──────────┐  ┌───────┴──────────┐  ┌──────────────────────────┐    │
+│  │  Data    │  │  Data Node 2     │  │  Data Node N             │    │
+│  │  Node 1  │  │  (Paxos group)   │  │  (Paxos group)           │    │
+│  │  Primary │  │  Primary         │  │  Primary                  │   │
+│  │  Follow  │  │  Follow  Follow  │  │  Follow  Follow          │    │
+│  └──────────┘  └──────────────────┘  └──────────────────────────┘    │
+│                                                                      │
+│  Each Data Node = Paxos group (3 replicas, synchronous)              │
+│  Hash distribution: DISTRIBUTE BY HASH(col)                          │
+│  Partition pruning at CN level (no unnecessary DN scans)             │
+│                                                                      │
+│  Storage: DMS (Distributed Memory Segment), DSS (shared storage)     │
+│  Backup: OBS (Object Storage Service, Huawei Cloud)                  │
+└──────────────────────────────────────────────────────────────────────┘
+
+GaussDB DWS (Analytics):
+  ├── MPP columnar nodes (ORIENTATION = COLUMN tables)
+  ├── Vectorized execution engine (SIMD instructions)
+  ├── Resource pool management (workload isolation)
+  └── HStore (hybrid row-column): hot data in row, cold in column</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

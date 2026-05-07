@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+{% block title %}Pinecone — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-stars fs-2 me-3" style="color:#00c8d5"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Pinecone</h2>
+    <p class="text-muted mb-0">Vector Database · HNSW ANN · Semantic Search · RAG Infrastructure</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Pinecone launched in 2021 as the first managed vector database, arriving just as large language models began producing high-dimensional embeddings that needed to be stored and searched efficiently. A vector database answers questions traditional databases cannot: "find the 10 most semantically similar documents to this query." It powers Retrieval-Augmented Generation (RAG), semantic search, recommendation systems, duplicate detection, and anomaly detection — making it the core infrastructure of the AI application layer.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="pineTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pine-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pine-model">
+      <i class="bi bi-2-circle me-1"></i>Data Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pine-query">
+      <i class="bi bi-3-circle me-1"></i>API &amp; Patterns
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pine-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pine-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="pine-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2021 (Pinecone Systems)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Proprietary managed service</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>Vector database (ANN similarity search)</td></tr>
+            <tr><td style="color:#8b949e">Index type</td><td><a href="https://arxiv.org/abs/1603.09320" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">HNSW<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> (Hierarchical Navigable Small World)</td></tr>
+            <tr><td style="color:#8b949e">Distance metrics</td><td>Cosine, dot product, Euclidean</td></tr>
+            <tr><td style="color:#8b949e">Dimensions</td><td>Up to 20,000 (OpenAI ada-002 = 1536)</td></tr>
+            <tr><td style="color:#8b949e">Scale</td><td>Billions of vectors, 100k+ QPS</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-question-circle me-2"></i>What is a Vector?</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p>An embedding model (like OpenAI text-embedding-3-small) converts any text, image, or audio into a dense float array — e.g., <code style="color:#93c5fd">[0.021, -0.143, 0.892, ...]</code> with 1536 dimensions.</p>
+          <p class="mb-0">Semantically similar inputs have vectors that are close in this high-dimensional space. "The cat sat on the mat" and "A feline rested on a rug" will have nearly identical vectors even though they share no keywords.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-diagram-2 me-2"></i>RAG Architecture</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:1rem;font-size:.72rem;color:#c9d1d9;line-height:1.7;overflow-x:auto">─── INDEXING PHASE (one-time) ───────────────
+
+  Documents
+    │
+    ▼
+  [Chunking] → split into 500-token chunks
+    │
+    ▼
+  [Embedding Model] → OpenAI / Cohere / local
+    │ 1536-dim float vector per chunk
+    ▼
+  [Pinecone upsert] → vector + metadata stored
+
+─── QUERY PHASE (runtime) ───────────────────
+
+  User question: "How do I reset my password?"
+    │
+    ▼
+  [Embedding Model] → question vector
+    │
+    ▼
+  [Pinecone query(vector, top_k=5)]
+    │ Returns 5 most similar document chunks
+    ▼
+  [LLM prompt: "Using this context: {chunks}
+    Answer: {question}"]
+    │
+    ▼
+  Grounded, accurate answer</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA MODEL -->
+<div class="tab-pane fade" id="pine-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-layers me-2"></i>Index / Namespace / Vector</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Pinecone data model hierarchy:
+
+Index (one per application or use case)
+  └─ Namespace (logical partition, e.g. by tenant)
+       └─ Vector {
+            id: "doc-chunk-00042",    // unique string
+            values: [0.021, -0.143, ...],  // 1536 floats
+            metadata: {               // JSON for filtering
+              "source": "docs/setup.md",
+              "page": 3,
+              "language": "en",
+              "category": "troubleshooting"
+            }
+          }
+
+-- Index configurations:
+-- dimension: must match embedding model output
+-- metric: cosine | dotproduct | euclidean
+-- pod_type: p1 (balanced) | p2 (low-latency) | s1 (storage)
+-- replicas: copies for read throughput
+
+-- Serverless (recommended, 2024+):
+-- No pod management, pay per query</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-search me-2"></i>Hybrid Filtering</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Metadata filter: combine ANN + exact filter
+-- Find top 10 similar English troubleshooting docs
+
+results = index.query(
+    vector=query_embedding,   # 1536-dim float list
+    top_k=10,
+    namespace="docs-v2",
+    filter={
+        "language": {"$eq": "en"},
+        "category": {"$in": ["troubleshooting", "faq"]},
+        "page": {"$lt": 50}
+    },
+    include_metadata=True
+)
+
+-- Sparse-dense hybrid (keyword + semantic)
+results = index.query(
+    vector=dense_embedding,
+    sparse_vector={             # BM25 keyword weights
+        "indices": [42, 91, 201],
+        "values": [0.8, 0.6, 0.4]
+    },
+    top_k=10
+)</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: API & PATTERNS -->
+<div class="tab-pane fade" id="pine-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-code-slash me-2"></i>Python SDK: Index + Upsert</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">from pinecone import Pinecone
+from openai import OpenAI
+
+pc = Pinecone(api_key="YOUR_API_KEY")
+oai = OpenAI()
+
+# Create serverless index
+pc.create_index(
+    name="docs",
+    dimension=1536,
+    metric="cosine",
+    spec=ServerlessSpec(cloud="aws", region="us-east-1")
+)
+index = pc.Index("docs")
+
+# Embed + upsert chunks
+chunks = load_and_chunk_documents("docs/")
+embeddings = oai.embeddings.create(
+    model="text-embedding-3-small",
+    input=[c.text for c in chunks]
+).data
+
+vectors = [
+    {"id": f"chunk-{i}",
+     "values": e.embedding,
+     "metadata": {"text": chunks[i].text,
+                  "source": chunks[i].source}}
+    for i, e in enumerate(embeddings)
+]
+index.upsert(vectors=vectors, namespace="v1")</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-lightning me-2"></i>RAG Query + LLM</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">def answer(question: str) -> str:
+    # 1. Embed the question
+    q_vec = oai.embeddings.create(
+        model="text-embedding-3-small",
+        input=question
+    ).data[0].embedding
+
+    # 2. Find semantically similar chunks
+    results = index.query(
+        vector=q_vec,
+        top_k=5,
+        namespace="v1",
+        include_metadata=True
+    )
+
+    # 3. Build context from retrieved chunks
+    context = "\n\n".join([
+        m["metadata"]["text"]
+        for m in results["matches"]
+    ])
+
+    # 4. LLM generates grounded answer
+    resp = oai.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system",
+             "content": f"Context:\n{context}"},
+            {"role": "user", "content": question}
+        ]
+    )
+    return resp.choices[0].message.content</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="pine-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-grid-1x2 me-2"></i>Use Cases</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#00c8d5">RAG (Q&amp;A over documents):</span> Store embedded company docs, code, policies. Query returns relevant chunks as context for the LLM. Eliminates hallucination on domain-specific knowledge.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#00c8d5">Semantic search:</span> Replace keyword search (BM25) with meaning-based retrieval. "Show me comfortable running shoes for wide feet" matches "athletic footwear broad toe box" without keyword overlap.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#00c8d5">Recommendations:</span> User's embedding (from past behavior) queries item embeddings. Returns items similar to what they've interacted with. Used by Spotify, Netflix, Etsy.</div>
+          <div style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#00c8d5">Duplicate detection:</span> Embed all records, query each against the index. High cosine similarity (&gt;0.98) indicates duplicates. Scales to millions of records with ANN.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">Similarity search</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Purpose-built</span></td></tr>
+            <tr><td style="color:#8b949e">Managed ops</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Zero ops</span></td></tr>
+            <tr><td style="color:#8b949e">Exact match</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Via metadata filter only</span></td></tr>
+            <tr><td style="color:#8b949e">ACID / joins</td><td><span class="badge" style="background:rgba(239,68,68,.2);color:#ef4444">Not supported</span></td></tr>
+            <tr><td style="color:#8b949e">Cost model</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Per vector/query</span></td></tr>
+            <tr><td style="color:#8b949e">Lock-in</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">High (or use pgvector)</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="pine-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-cpu me-2"></i><a href="https://arxiv.org/abs/1603.09320" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">HNSW<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>: How ANN Works</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#00c8d5">Approximate Nearest Neighbor (ANN):</strong> Exact nearest-neighbor search in 1536 dimensions requires scanning every vector — O(N×D). HNSW builds a multi-layer navigable small-world graph where each node connects to M neighbors across layers.</p>
+          <p><strong style="color:#00c8d5">HNSW query:</strong> Start at a random entry point in the top layer, greedily navigate toward the query vector, descend layers until reaching the bottom. Returns ~top-k results in O(log N) time. Recall typically 95–99%.</p>
+          <p><strong style="color:#00c8d5">Pinecone's twist:</strong> Shards (pods) each hold a partition of the index. Queries fan out to all shards, each returns local top-k, global top-k is merged. Replicas provide read throughput scaling.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,200,213,.35)">
+        <div class="card-header" style="background:rgba(0,200,213,.1);border-bottom:1px solid rgba(0,200,213,.25)">
+          <span class="fw-bold" style="color:#00c8d5"><i class="bi bi-puzzle me-2"></i><a href="https://github.com/pgvector/pgvector" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">pgvector<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> Alternative</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- pgvector: vector search inside PostgreSQL
+-- No separate service, ACID guarantees
+
+CREATE EXTENSION vector;
+
+CREATE TABLE documents (
+  id    BIGSERIAL PRIMARY KEY,
+  chunk TEXT,
+  vec   VECTOR(1536),
+  source TEXT,
+  category TEXT
+);
+
+-- HNSW index (pgvector 0.5+)
+CREATE INDEX ON documents
+  USING hnsw (vec vector_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
+
+-- Semantic search with SQL join
+SELECT d.chunk, d.source,
+  1 - (d.vec &lt;=&gt; $1::vector) AS similarity
+FROM documents d
+WHERE d.category = 'troubleshooting'
+ORDER BY d.vec &lt;=&gt; $1::vector
+LIMIT 5;
+-- $1 = query embedding from app layer
+
+-- pgvector vs Pinecone:
+-- pgvector: <10M vectors, SQL joins, no extra cost
+-- Pinecone: 100M+ vectors, managed, faster ANN</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

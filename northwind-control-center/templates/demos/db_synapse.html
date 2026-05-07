@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Azure Synapse Analytics — Unified Analytics Platform{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-diagram-2 fs-2 me-3" style="color:#0072c6"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Azure Synapse Analytics</h2>
+      <p class="text-muted mb-0">Unified analytics · Dedicated SQL + Serverless SQL + Spark · One workspace</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    <a href="https://github.com/Azure/azure-synapse-analytics-end2end" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Azure Synapse Analytics<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (2020, evolved from Azure SQL Data Warehouse) combines multiple analytics
+    engines in a single workspace: Dedicated SQL Pools (MPP warehouse), Serverless SQL (query files
+    in ADLS Gen2 without loading them), Apache Spark (notebooks for data engineering and ML), and
+    Power BI for visualization. Synapse Link enables zero-ETL analytical reads from Cosmos DB,
+    Azure SQL, and Dataverse — the analytical replica is maintained automatically.
+  </p>
+
+  <ul class="nav nav-tabs mb-3" id="synapseTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">Query Language</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Four Engines, One Workspace</span>
+            </div>
+            <div class="card-body">
+              <div class="row g-2 mb-3">
+                <div class="col-md-3">
+                  <div style="background:#0d1117;border:1px solid rgba(0,114,198,.4);border-radius:8px;padding:.85rem">
+                    <div class="fw-semibold mb-1" style="color:#0072c6;font-size:.85rem">Dedicated SQL Pool</div>
+                    <p style="font-size:.77rem;color:#8b949e;margin:0">MPP T-SQL warehouse. Provisioned DWU capacity. Clustered Columnstore Indexes. Best for predictable, heavy warehouse queries.</p>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div style="background:#0d1117;border:1px solid rgba(0,114,198,.4);border-radius:8px;padding:.85rem">
+                    <div class="fw-semibold mb-1" style="color:#0072c6;font-size:.85rem">Serverless SQL Pool</div>
+                    <p style="font-size:.77rem;color:#8b949e;margin:0">Query CSV, Parquet, JSON, Delta in ADLS Gen2 directly. Pay per TB scanned. No loading needed. OPENROWSET().</p>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div style="background:#0d1117;border:1px solid rgba(0,114,198,.4);border-radius:8px;padding:.85rem">
+                    <div class="fw-semibold mb-1" style="color:#0072c6;font-size:.85rem">Apache Spark</div>
+                    <p style="font-size:.77rem;color:#8b949e;margin:0">Managed Spark clusters. Python/Scala/R/SQL notebooks. Delta Lake support. Synapse ML library. Data engineering pipelines.</p>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div style="background:#0d1117;border:1px solid rgba(0,114,198,.4);border-radius:8px;padding:.85rem">
+                    <div class="fw-semibold mb-1" style="color:#0072c6;font-size:.85rem">Synapse Link</div>
+                    <p style="font-size:.77rem;color:#8b949e;margin:0">Zero-ETL from Cosmos DB, Azure SQL, Dataverse. Analytical replica auto-maintained. No pipeline = no lag from ETL.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Launched</td><td>2020 (evolved from SQL DW 2016)</td></tr>
+                  <tr><td class="text-muted">SQL engine</td><td>T-SQL (Dedicated + Serverless)</td></tr>
+                  <tr><td class="text-muted">Spark</td><td>Apache Spark 3.x (managed)</td></tr>
+                  <tr><td class="text-muted">Storage</td><td>ADLS Gen2 (Azure Data Lake)</td></tr>
+                  <tr><td class="text-muted">Max DWU</td><td>DW30000c (~18,000 vCores)</td></tr>
+                  <tr><td class="text-muted">Serverless</td><td>Pay per TB scanned</td></tr>
+                  <tr><td class="text-muted">Zero-ETL</td><td>Synapse Link (Cosmos/SQL)</td></tr>
+                  <tr><td class="text-muted">Notable users</td><td>Unilever, Microsoft internal telemetry</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Dedicated SQL Pool — Distribution &amp; CCI</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- Distribution styles (same concept as Redshift)
+CREATE TABLE fact_sales (
+    sale_id      BIGINT,
+    product_id   INT,
+    customer_id  INT,
+    sale_date    DATE,
+    quantity     INT,
+    revenue      DECIMAL(10,2)
+)
+WITH (
+    DISTRIBUTION = HASH (customer_id),   -- co-locate by customer for JOINs
+    CLUSTERED COLUMNSTORE INDEX          -- CCI: columnar storage, best compression
+);
+
+-- Dimension table: replicate to all nodes (small table)
+CREATE TABLE dim_products (...)
+WITH (DISTRIBUTION = REPLICATE, HEAP);
+
+-- Staging table: no distribution needed
+CREATE TABLE stg_raw_events (...)
+WITH (DISTRIBUTION = ROUND_ROBIN, HEAP);
+
+-- PolyBase: load from ADLS Gen2
+CREATE EXTERNAL DATA SOURCE adls_source
+WITH (TYPE = HADOOP, LOCATION = 'abfss://container@account.dfs.core.windows.net');
+
+CREATE EXTERNAL FILE FORMAT parquet_format
+WITH (FORMAT_TYPE = PARQUET, DATA_COMPRESSION = 'snappy');
+
+CREATE EXTERNAL TABLE ext_sales
+WITH (LOCATION='/sales/', DATA_SOURCE=adls_source, FILE_FORMAT=parquet_format)
+AS SELECT * FROM dbo.fact_sales;</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Serverless SQL — Query Data Lake</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── OPENROWSET: query files without loading
+SELECT TOP 100 *
+FROM OPENROWSET(
+    BULK 'https://account.dfs.core.windows.net/container/sales/2024/**',
+    FORMAT = 'PARQUET'
+) AS sales;
+
+-- ── Query CSV with schema
+SELECT *
+FROM OPENROWSET(
+    BULK 'https://account.dfs.core.windows.net/container/events/*.csv',
+    FORMAT = 'CSV',
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    FIRSTROW = 2
+) WITH (
+    event_id   BIGINT  1,
+    event_type VARCHAR(50) 2,
+    occurred_at DATETIME2  3
+) AS events;
+
+-- ── Create External Table (logical view over data lake)
+CREATE EXTERNAL TABLE sales_parquet
+WITH (
+    LOCATION = 'sales/2024/',
+    DATA_SOURCE = adls_ds,
+    FILE_FORMAT = parquet_fmt
+)
+AS
+SELECT * FROM OPENROWSET(BULK ...) AS r;
+
+-- ── CETAS: Create External Table As Select
+-- Transform and save results back to data lake
+CREATE EXTERNAL TABLE aggregated_sales
+WITH (LOCATION='aggregated/', DATA_SOURCE=adls_ds, FILE_FORMAT=parquet_fmt)
+AS
+SELECT DATE_TRUNC('month', sale_date) AS month,
+       product_id, SUM(revenue) AS total_revenue
+FROM sales_parquet
+GROUP BY 1, 2;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Synapse Spark + T-SQL Cross-Engine Queries</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+# ── Spark notebook (Python) — data engineering pipeline
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
+
+# Read from ADLS Gen2 (Delta Lake)
+df = spark.read.format("delta").load("abfss://container@account.dfs.core.windows.net/silver/sales")
+
+# Transform
+from pyspark.sql.functions import col, sum, to_date, date_trunc
+agg = (df.filter(col("status") == "completed")
+         .withColumn("month", date_trunc("month", col("sale_date")))
+         .groupBy("month", "product_id")
+         .agg(sum("revenue").alias("monthly_revenue")))
+
+# Write to Synapse Dedicated SQL Pool via connector
+agg.write.format("com.microsoft.sqlserver.jdbc.spark") \
+    .option("url", "jdbc:sqlserver://workspace.sql.azuresynapse.net") \
+    .option("dbtable", "gold.monthly_sales") \
+    .option("authentication", "ActiveDirectoryIntegrated") \
+    .mode("overwrite").save()
+
+-- ── T-SQL: query the Spark-written table
+SELECT month, product_id, monthly_revenue,
+       monthly_revenue / SUM(monthly_revenue) OVER (PARTITION BY month) AS share
+FROM gold.monthly_sales
+ORDER BY month DESC, monthly_revenue DESC;
+
+-- ── Synapse Link: query Cosmos DB operational data analytically
+-- (columnar replica maintained automatically, zero ETL)
+SELECT c.customerId,
+       COUNT(*) AS order_count,
+       SUM(c.total) AS lifetime_value
+FROM OPENROWSET(
+    'CosmosDB',
+    N'account=myaccount;database=northwind;collection=orders',
+    orders
+) WITH (customerId VARCHAR(100), total FLOAT, status VARCHAR(20)) AS c
+WHERE c.status = 'shipped'
+GROUP BY c.customerId
+HAVING SUM(c.total) > 1000;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Ideal Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#0072c6">Enterprise Data Lakehouse</div><p style="font-size:.83rem;color:#8b949e">Combine raw data in ADLS Gen2 (queried via Serverless SQL or Spark) with curated data in Dedicated SQL Pool. Data Factory pipelines orchestrate ETL. Unilever global supply chain analytics.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#0072c6">Real-Time Operational Analytics</div><p style="font-size:.83rem;color:#8b949e">Synapse Link from Cosmos DB or Azure SQL → zero-ETL analytical queries on operational data. No replication lag from batch ETL pipelines. Used for real-time retail dashboards.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#0072c6">ML Feature Engineering</div><p style="font-size:.83rem;color:#8b949e">Spark notebooks for feature computation at scale, writing to Azure ML Feature Store. Synapse ML (MMLSpark) for distributed model training directly in Spark without exporting data.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Architecture: ADLS Gen2 as Common Storage</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;font-size:.77rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌───────────────────────────────────────────────────────┐
+│  Azure Data Lake Storage Gen2 (ADLS)                  │
+│  ├── /bronze/  (raw ingestion from Data Factory)      │
+│  ├── /silver/  (cleaned, Delta Lake format)           │
+│  └── /gold/    (aggregated, query-ready Parquet)      │
+├───────────────────────────────────────────────────────┤
+│  Synapse Workspace                                    │
+│  ├── Serverless SQL ──────── queries /silver, /gold   │
+│  ├── Dedicated SQL Pool ──── loads /gold, CCI         │
+│  ├── Spark Pools ─────────── processes /bronze→silver │
+│  └── Pipelines ───────────── orchestrates flow        │
+├───────────────────────────────────────────────────────┤
+│  Connected Services                                   │
+│  ├── Synapse Link ← Cosmos DB (zero-ETL)              │
+│  ├── Synapse Link ← Azure SQL DB (zero-ETL)           │
+│  ├── Azure ML ← feature store integration             │
+│  ├── Power BI ← DirectQuery on Dedicated Pool         │
+│  └── Purview ← data catalog and lineage               │
+└───────────────────────────────────────────────────────┘
+
+DWU scaling: pause/resume Dedicated Pool
+  (pay only when running, unlike always-on Snowflake)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Dedicated SQL Pool: Control + Compute Nodes</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌─────────────────────────────────────────────────────────────────┐
+│  Control Node                                                   │
+│  ├── Query parsing, optimization, DMS coordination              │
+│  └── Distributes query fragments to compute nodes               │
+│                │                                                │
+│       ┌────────┴─────────────────────────────────┐              │
+│  ┌────▼────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐│               │
+│  │Compute  │ │Compute  │ │Compute  │ │Compute  ││               │
+│  │Node 1   │ │Node 2   │ │Node 3   │ │Node ...  ││              │
+│  │(60 dist)│ │(60 dist)│ │(60 dist)│ │(60 dist)││               │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘│               │
+│       │           DMS (Data Movement Service)     │             │
+│       └──── shuffles/broadcasts data between nodes              │
+├─────────────────────────────────────────────────────────────────┤
+│  Storage: ADLS Gen2 (60 shards per table, columnar blocks)      │
+│           CCI: Rowgroups of 1M rows, compressed                 │
+│           Delta stores: small updates before rowgroup rebuild   │
+│           Zone maps: min/max per rowgroup for pruning           │
+└─────────────────────────────────────────────────────────────────┘
+
+DWU = Data Warehouse Units:
+  DW100c  = 1 compute node, 60 distributions
+  DW6000c = 60 compute nodes, 1 distribution per node per node
+
+Pause/Resume: control plane stops VMs, storage persists in ADLS
+Scale (DWU change): redistributes data across new node count</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

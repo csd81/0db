@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% block title %}TimescaleDB — Time-Series on PostgreSQL{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-graph-up-arrow fs-2 me-3" style="color:#fdb515"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">TimescaleDB</h2>
+      <p class="text-muted mb-0">PostgreSQL extension · Hypertables · Full SQL for time-series</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    Founded in 2017, Timescale Inc. built <a href="https://github.com/timescale/timescaledb" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">TimescaleDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> as a PostgreSQL extension — not a fork,
+    not a replacement. Every Postgres tool (pg_dump, JDBC drivers, PostGIS, foreign data wrappers)
+    works unchanged. Hypertables automatically partition time-series data into chunks while
+    exposing a single table interface. Continuous aggregates provide real-time materialized views
+    refreshed automatically. Native compression achieves 90–95% storage reduction.
+  </p>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3" id="tsTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">Query Language</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- OVERVIEW -->
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">The "Full SQL for Time-Series" Bet</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Purpose-built time-series databases (InfluxDB, Prometheus) sacrifice SQL for speed.
+                TimescaleDB makes the opposite bet: time-series IS relational. IoT readings JOIN to
+                device metadata tables. Financial ticks JOIN to instrument reference tables.
+                Log events JOIN to user tables. A custom query language breaks that.
+              </p>
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Hypertables look like regular PostgreSQL tables but are automatically partitioned
+                into chunks by time interval. Each chunk is a real PostgreSQL table — this means
+                chunk exclusion via table constraint exclusion, no special query planner needed.
+                Grafana Cloud uses TimescaleDB as its metrics backend for millions of series.
+              </p>
+              <div class="mt-3">
+                <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- Create hypertable from existing table
+CREATE TABLE metrics (
+    time        TIMESTAMPTZ NOT NULL,
+    device_id   TEXT NOT NULL,
+    metric_name TEXT NOT NULL,
+    value       DOUBLE PRECISION
+);
+
+-- Convert to hypertable, partition by 1 day
+SELECT create_hypertable('metrics', 'time',
+    chunk_time_interval => INTERVAL '1 day');
+
+-- Add space partitioning by device_id (8 hash buckets)
+SELECT add_dimension('metrics', 'device_id', number_partitions => 8);
+
+-- Query exactly like regular PostgreSQL
+SELECT time, value
+FROM metrics
+WHERE device_id = 'sensor-42'
+  AND time > NOW() - INTERVAL '24 hours'
+ORDER BY time DESC;</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Born</td><td>2017 (NYC)</td></tr>
+                  <tr><td class="text-muted">License</td><td>Apache 2.0 (OSS) + TSL (enterprise)</td></tr>
+                  <tr><td class="text-muted">Written in</td><td>C (PostgreSQL extension)</td></tr>
+                  <tr><td class="text-muted">Query</td><td>Standard SQL (PostgreSQL dialect)</td></tr>
+                  <tr><td class="text-muted">Storage</td><td>PostgreSQL heap + compression</td></tr>
+                  <tr><td class="text-muted">Compression</td><td>90–95% vs uncompressed</td></tr>
+                  <tr><td class="text-muted">Retention</td><td>Automated via policies</td></tr>
+                  <tr><td class="text-muted">Cloud</td><td>Timescale Cloud (fully managed)</td></tr>
+                  <tr><td class="text-muted">Notable users</td><td>Grafana Cloud, Outscale, Hive</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA MODEL -->
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">Hypertable Chunk Architecture</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- Hypertable: single logical table, many physical chunks
+SELECT show_chunks('metrics');
+-- _timescaledb_internal._hyper_1_1_chunk  (2024-01-01 to 2024-01-02)
+-- _timescaledb_internal._hyper_1_2_chunk  (2024-01-02 to 2024-01-03)
+-- _timescaledb_internal._hyper_1_3_chunk  (2024-01-03 to 2024-01-04)
+
+-- Each chunk IS a regular PostgreSQL table
+\d _timescaledb_internal._hyper_1_1_chunk
+-- Same columns as metrics table + CHECK constraint on time range
+
+-- Chunk exclusion: query only touches relevant chunks
+EXPLAIN SELECT * FROM metrics
+WHERE time BETWEEN '2024-01-02' AND '2024-01-03';
+-- → Scans ONLY _hyper_1_2_chunk (one chunk, not all 365)
+
+-- Continuous Aggregates (real-time materialized views)
+CREATE MATERIALIZED VIEW metrics_hourly
+WITH (timescaledb.continuous) AS
+SELECT
+    time_bucket('1 hour', time) AS bucket,
+    device_id,
+    AVG(value)   AS avg_value,
+    MAX(value)   AS max_value,
+    MIN(value)   AS min_value,
+    COUNT(*)     AS sample_count
+FROM metrics
+GROUP BY bucket, device_id;
+
+-- Auto-refresh policy: refresh every 30 min, lag 1h
+SELECT add_continuous_aggregate_policy('metrics_hourly',
+    start_offset => INTERVAL '3 hours',
+    end_offset   => INTERVAL '1 hour',
+    schedule_interval => INTERVAL '30 minutes');</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">Native Compression &amp; Retention</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- Enable compression on hypertable
+ALTER TABLE metrics SET (
+    timescaledb.compress,
+    timescaledb.compress_segmentby = 'device_id',
+    timescaledb.compress_orderby   = 'time DESC'
+);
+
+-- Auto-compress chunks older than 7 days
+SELECT add_compression_policy('metrics',
+    compress_after => INTERVAL '7 days');
+
+-- Check compression ratio
+SELECT pg_size_pretty(before_compression_total_bytes) AS before,
+       pg_size_pretty(after_compression_total_bytes)  AS after,
+       ROUND(compression_ratio::numeric, 2)           AS ratio
+FROM hypertable_compression_stats('metrics');
+-- before: 15 GB  |  after: 780 MB  |  ratio: 20.5x
+
+-- Retention policy: drop data older than 90 days
+SELECT add_retention_policy('metrics',
+    drop_after => INTERVAL '90 days');
+
+-- Tiered storage (Timescale Cloud): move old chunks to S3
+SELECT add_tiering_policy('metrics',
+    tiering_after => INTERVAL '30 days');</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUERY -->
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">Time-Series SQL Hyperfunctions</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── 1. time_bucket() — equivalent to PromQL's step
+SELECT time_bucket('5 minutes', time) AS bucket,
+       device_id,
+       AVG(value) AS avg_temp
+FROM metrics
+WHERE metric_name = 'temperature'
+  AND time > NOW() - INTERVAL '24 hours'
+GROUP BY bucket, device_id
+ORDER BY bucket DESC;
+
+-- ── 2. first() / last() — first/last value in a group
+SELECT time_bucket('1 hour', time) AS bucket,
+       device_id,
+       first(value, time) AS open,   -- first value chronologically
+       last(value, time)  AS close   -- last value chronologically
+FROM metrics
+WHERE metric_name = 'price'
+GROUP BY bucket, device_id;
+
+-- ── 3. interpolate() — fill gaps in sparse series
+SELECT time_bucket_gapfill('1 hour', time) AS bucket,
+       device_id,
+       interpolate(AVG(value))              AS interpolated_temp
+FROM metrics
+WHERE device_id = 'sensor-1'
+  AND time BETWEEN '2024-01-01' AND '2024-01-02'
+GROUP BY bucket, device_id;
+
+-- ── 4. locf() — last observation carried forward
+SELECT time_bucket_gapfill('15 minutes', time) AS bucket,
+       device_id,
+       locf(last(value, time)) AS carried_forward
+FROM metrics
+WHERE device_id = 'sensor-1'
+GROUP BY bucket, device_id;
+
+-- ── 5. histogram() — value distribution
+SELECT device_id,
+       histogram(value, 0, 100, 10) AS temp_distribution
+FROM metrics
+WHERE metric_name = 'cpu_percent'
+  AND time > NOW() - INTERVAL '1 hour'
+GROUP BY device_id;
+
+-- ── 6. JOIN with relational metadata (TimescaleDB's killer advantage)
+SELECT m.time,
+       m.value AS temperature,
+       d.location,
+       d.owner,
+       d.firmware_version
+FROM metrics m
+JOIN devices d ON m.device_id = d.id
+JOIN device_groups g ON d.group_id = g.id
+WHERE g.name = 'manufacturing-floor-a'
+  AND m.metric_name = 'temperature'
+  AND m.time > NOW() - INTERVAL '6 hours'
+  AND m.value > d.temperature_threshold   -- alert threshold from metadata
+ORDER BY m.time DESC;
+
+-- ── 7. Approximate percentile with tdigest
+SELECT device_id,
+       approx_percentile(0.50, percentile_agg(value)) AS p50,
+       approx_percentile(0.95, percentile_agg(value)) AS p95,
+       approx_percentile(0.99, percentile_agg(value)) AS p99
+FROM metrics
+WHERE metric_name = 'response_time_ms'
+  AND time > NOW() - INTERVAL '1 day'
+GROUP BY device_id;
+
+-- ── 8. Moving average with window functions (standard SQL)
+SELECT time,
+       device_id,
+       value,
+       AVG(value) OVER (
+           PARTITION BY device_id
+           ORDER BY time
+           ROWS BETWEEN 11 PRECEDING AND CURRENT ROW
+       ) AS moving_avg_12
+FROM metrics
+WHERE device_id = 'sensor-42'
+ORDER BY time DESC;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USE CASES -->
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">Killer Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <div class="fw-semibold mb-1" style="color:#fdb515">Infrastructure Metrics (Grafana Cloud)</div>
+                <p style="font-size:.83rem;color:#8b949e">Grafana Cloud uses TimescaleDB as its metrics backend. Millions of metric series ingested via Prometheus remote_write. SQL lets analysts write custom dashboards impossible in PromQL.</p>
+              </div>
+              <div class="mb-3">
+                <div class="fw-semibold mb-1" style="color:#fdb515">Financial Tick Data with Relational Joins</div>
+                <p style="font-size:.83rem;color:#8b949e">Trading systems store tick-by-tick OHLCV data and JOIN to instrument metadata, corporate actions, and index memberships — all in one SQL query. InfluxDB or Prometheus can't do this.</p>
+              </div>
+              <div class="mb-3">
+                <div class="fw-semibold mb-1" style="color:#fdb515">IoT &amp; Industrial Monitoring</div>
+                <p style="font-size:.83rem;color:#8b949e">Factory floors: sensor readings JOIN to machine specs, maintenance schedules, and production orders. Outscale (European cloud) uses TimescaleDB for infrastructure KPI tracking.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">TimescaleDB vs Alternatives</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-dark" style="font-size:.8rem">
+                  <thead><tr><th>Feature</th><th style="color:#fdb515">TimescaleDB</th><th>InfluxDB</th><th>Prometheus</th></tr></thead>
+                  <tbody>
+                    <tr><td>Query language</td><td>Full SQL</td><td>Flux / InfluxQL</td><td>PromQL</td></tr>
+                    <tr><td>JOINs</td><td>Yes (relational)</td><td>No</td><td>No</td></tr>
+                    <tr><td>Postgres ecosystem</td><td>100% compatible</td><td>No</td><td>No</td></tr>
+                    <tr><td>Ingest rate</td><td>~1M rows/sec/node</td><td>High</td><td>Scrape-limited</td></tr>
+                    <tr><td>Compression</td><td>10–20x native</td><td>High</td><td>~1.37 bytes/sample</td></tr>
+                    <tr><td>Retention policy</td><td>SQL policy</td><td>Built-in</td><td>Thanos needed</td></tr>
+                    <tr><td>Continuous agg</td><td>Yes (real-time)</td><td>Tasks</td><td>Recording rules</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCHITECTURE -->
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">Extension Architecture</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌────────────────────────────────────────────────┐
+│           PostgreSQL Query Engine              │
+│  (Planner / Executor / Storage Manager)        │
+├────────────────────────────────────────────────┤
+│          TimescaleDB Extension (C)             │
+│  ┌─────────────────────────────────────────┐   │
+│  │  Hypertable DDL hooks                   │   │
+│  │  Chunk exclusion planner hooks          │   │
+│  │  INSERT routing to correct chunk        │   │
+│  │  Continuous Aggregate refresh worker    │   │
+│  │  Compression worker                     │   │
+│  │  Retention / tiering policies           │   │
+│  └─────────────────────────────────────────┘   │
+├────────────────────────────────────────────────┤
+│  Physical chunks: regular PostgreSQL tables    │
+│  _hyper_1_1_chunk (2024-01-01 → 2024-01-02)    │
+│  _hyper_1_2_chunk (2024-01-02 → 2024-01-03)    │
+│    ...                                         │
+│  Compressed chunk (columnar TSC format)        │
+└────────────────────────────────────────────────┘
+
+# Because chunks are real Postgres tables:
+- pg_dump / pg_restore works on individual chunks
+- Logical replication replicates chunks
+- pg_partman / Citus can co-exist
+- All pg extensions work (PostGIS, pgvector, etc.)</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(253,181,21,.3)">
+            <div class="card-header" style="background:rgba(253,181,21,.08);border-bottom:1px solid rgba(253,181,21,.2)">
+              <span class="fw-semibold" style="color:#fdb515">Timescale Cloud: Tiered Storage</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+# Tiered storage: hot → cool → archive
+hot tier  (SSD, recent data)    ← default storage
+cool tier (S3, compressed)      ← tiering policy
+archive   (Glacier/Deep Archive) ← lifecycle rules
+
+# Data automatically moves based on age
+# Queries transparently span both tiers:
+SELECT avg(value)
+FROM metrics
+WHERE time > NOW() - INTERVAL '365 days'  -- spans hot+cool
+GROUP BY time_bucket('1 day', time);
+-- TimescaleDB fetches S3 chunks as needed
+
+# Distributed hypertables (multi-node)
+SELECT add_data_node('dn1', 'host=ts-node-1 port=5432 dbname=tsdb');
+SELECT add_data_node('dn2', 'host=ts-node-2 port=5432 dbname=tsdb');
+
+SELECT create_distributed_hypertable(
+    'metrics', 'time', 'device_id',
+    replication_factor => 2   -- 2 copies per chunk
+);
+-- Access node: single entry point
+-- Data nodes: hold actual chunk data
+
+# Performance: 10-100x faster range queries vs
+# partitioned Postgres table (chunk pruning + compression)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -10,6 +10,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+  <!-- Apply saved theme before first paint to prevent flash -->
+  <script>(function(){var t=localStorage.getItem('nwcc_theme');if(t)document.documentElement.setAttribute('data-bs-theme',t);})()</script>
 </head>
 <body>
 
@@ -50,7 +52,138 @@
         </li>
 
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {% if request.endpoint in ('query_studio','run_query','operations','events','process_events','retry_event','analytics_page','graph_explorer','run_graph','insights','train_model','predict_value','inventory_risk','anomalies') or request.blueprint in ('exports','connections','replication','consensus','dqs','column_store','neo4j_bp','redis_bp','mongo_bp','cassandra_bp','rqlite_bp','elasticsearch_bp','cqrs','pgvector','demos','services_bp','shop') %}active{% endif %}"
+          <a class="nav-link dropdown-toggle {% if request.blueprint == 'demos' %}active{% endif %}"
+             href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-play-circle-fill"></i> Demos
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'demos.demos_database' %}active{% endif %}"
+                 href="{{ url_for('demos.demos_database') }}">
+                <i class="bi bi-database-fill me-1"></i> Database Demos
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'demos.demos_cloud' %}active{% endif %}"
+                 href="{{ url_for('demos.demos_cloud') }}">
+                <i class="bi bi-cloud-fill me-1"></i> Cloud Demos
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'demos.demos_other' %}active{% endif %}"
+                 href="{{ url_for('demos.demos_other') }}">
+                <i class="bi bi-stars me-1"></i> Case Studies
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'demos.global_infra_page' %}active{% endif %}"
+                 href="{{ url_for('demos.global_infra_page') }}">
+                <i class="bi bi-globe2 me-1" style="color:#4ade80"></i> Global Infra Twin
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'demos.graph_routing_page' %}active{% endif %}"
+                 href="{{ url_for('demos.graph_routing_page') }}">
+                <i class="bi bi-diagram-3-fill me-1" style="color:#22d3ee"></i> Graph City Router
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item {% if request.endpoint == 'demos.index' %}active{% endif %}"
+                 href="{{ url_for('demos.index') }}">
+                <i class="bi bi-grid me-1"></i> All Demos
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle {% if request.endpoint in ('demos.learn_databases','demos.learn_cloud','demos.cloud_fundamentals','demos.cloud_ch2','demos.cloud_ch4','demos.cloud_ch5','demos.cloud_ch7','demos.cloud_ch8','demos.cloud_ch9','demos.cloud_ch10','demos.cloud_ch11','demos.cloud_ch12','demos.c18_cloud','demos.c3_replication','demos.c14_raft','demos.c15_elasticsearch','demos.tsql_primer','demos.loose_coupling','demos.isolation_demo','demos.data_quality','demos.columnstore','demos.migration','demos.bqml','demos.c8_graph','demos.c9_inmemory','demos.c11_sql_lab','demos.c12_dba','demos.c13_neo4j','demos.c16_cdc','demos.c17_mongo') %}active{% endif %}"
+             href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-book-fill"></i> Learn
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.learn_databases' %}active{% endif %}" href="{{ url_for('demos.learn_databases') }}"><i class="bi bi-database-fill me-1" style="color:#818cf8"></i> Database Chapters</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.learn_cloud' %}active{% endif %}" href="{{ url_for('demos.learn_cloud') }}"><i class="bi bi-cloud-fill me-1" style="color:#38bdf8"></i> Cloud Chapters</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle {% if request.endpoint and (request.endpoint.startswith('demos.db_') or request.endpoint in ('demos.c13_neo4j','demos.c15_elasticsearch','demos.c17_mongo','demos.bigtable_page','demos.bigquery_pruning_page')) %}active{% endif %}"
+             href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-server"></i> Databases
+          </a>
+          <ul class="dropdown-menu" style="max-height:85vh;overflow-y:auto">
+            <li><span class="dropdown-header">Relational OLTP</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_postgresql' %}active{% endif %}" href="{{ url_for('demos.db_postgresql') }}"><i class="bi bi-database-fill me-1" style="color:#336791"></i>PostgreSQL</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_mysql' %}active{% endif %}" href="{{ url_for('demos.db_mysql') }}"><i class="bi bi-database me-1" style="color:#4479a1"></i>MySQL</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_oracle' %}active{% endif %}" href="{{ url_for('demos.db_oracle') }}"><i class="bi bi-building me-1" style="color:#f80000"></i>Oracle</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_sqlserver' %}active{% endif %}" href="{{ url_for('demos.db_sqlserver') }}"><i class="bi bi-microsoft me-1" style="color:#00a4ef"></i>SQL Server</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_sqlite' %}active{% endif %}" href="{{ url_for('demos.db_sqlite') }}"><i class="bi bi-file-earmark-binary me-1" style="color:#0f80cc"></i>SQLite</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_mariadb' %}active{% endif %}" href="{{ url_for('demos.db_mariadb') }}"><i class="bi bi-database me-1" style="color:#c0765a"></i>MariaDB</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_db2' %}active{% endif %}" href="{{ url_for('demos.db_db2') }}"><i class="bi bi-building-fill me-1" style="color:#052fad"></i>IBM Db2</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">Relational (Cloud)</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_aurora' %}active{% endif %}" href="{{ url_for('demos.db_aurora') }}"><i class="bi bi-cloud-fill me-1" style="color:#ff9900"></i>Amazon Aurora</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_azure_sql' %}active{% endif %}" href="{{ url_for('demos.db_azure_sql') }}"><i class="bi bi-cloud me-1" style="color:#00a4ef"></i>Azure SQL</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_polardb' %}active{% endif %}" href="{{ url_for('demos.db_polardb') }}"><i class="bi bi-cloud me-1" style="color:#ff6a00"></i>PolarDB</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">NoSQL Document</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.c17_mongo' %}active{% endif %}" href="{{ url_for('demos.c17_mongo') }}"><i class="bi bi-leaf me-1" style="color:#34d399"></i>MongoDB</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_dynamodb' %}active{% endif %}" href="{{ url_for('demos.db_dynamodb') }}"><i class="bi bi-lightning-fill me-1" style="color:#ff9900"></i>DynamoDB</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_firestore' %}active{% endif %}" href="{{ url_for('demos.db_firestore') }}"><i class="bi bi-fire me-1" style="color:#ffca28"></i>Firestore</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_couchbase' %}active{% endif %}" href="{{ url_for('demos.db_couchbase') }}"><i class="bi bi-database me-1" style="color:#ea2328"></i>Couchbase</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_cosmosdb' %}active{% endif %}" href="{{ url_for('demos.db_cosmosdb') }}"><i class="bi bi-globe me-1" style="color:#0072c6"></i>Cosmos DB</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">Key-Value / Cache</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_redis' %}active{% endif %}" href="{{ url_for('demos.db_redis') }}"><i class="bi bi-memory me-1" style="color:#dc382d"></i>Redis</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_memcached' %}active{% endif %}" href="{{ url_for('demos.db_memcached') }}"><i class="bi bi-cpu me-1" style="color:#6ea832"></i>Memcached</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">Wide-Column</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_cassandra' %}active{% endif %}" href="{{ url_for('demos.db_cassandra') }}"><i class="bi bi-grid-3x3 me-1" style="color:#1287b1"></i>Cassandra</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.bigtable_page' %}active{% endif %}" href="{{ url_for('demos.bigtable_page') }}"><i class="bi bi-table me-1" style="color:#4285f4"></i>Bigtable</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">Graph</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.c13_neo4j' %}active{% endif %}" href="{{ url_for('demos.c13_neo4j') }}"><i class="bi bi-diagram-3-fill me-1" style="color:#34d399"></i>Neo4j</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">OLAP / Warehouse</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_snowflake' %}active{% endif %}" href="{{ url_for('demos.db_snowflake') }}"><i class="bi bi-snow me-1" style="color:#29b5e8"></i>Snowflake</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_clickhouse' %}active{% endif %}" href="{{ url_for('demos.db_clickhouse') }}"><i class="bi bi-bar-chart-fill me-1" style="color:#f5a623"></i>ClickHouse</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.bigquery_pruning_page' %}active{% endif %}" href="{{ url_for('demos.bigquery_pruning_page') }}"><i class="bi bi-google me-1" style="color:#4285f4"></i>BigQuery</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_redshift' %}active{% endif %}" href="{{ url_for('demos.db_redshift') }}"><i class="bi bi-bar-chart-fill me-1" style="color:#8c4fff"></i>Redshift</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_synapse' %}active{% endif %}" href="{{ url_for('demos.db_synapse') }}"><i class="bi bi-diagram-2 me-1" style="color:#0072c6"></i>Azure Synapse</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">Search</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.c15_elasticsearch' %}active{% endif %}" href="{{ url_for('demos.c15_elasticsearch') }}"><i class="bi bi-search me-1" style="color:#f97316"></i>Elasticsearch</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_opensearch' %}active{% endif %}" href="{{ url_for('demos.db_opensearch') }}"><i class="bi bi-search-heart me-1" style="color:#005eb8"></i>OpenSearch</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">Vector</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_pinecone' %}active{% endif %}" href="{{ url_for('demos.db_pinecone') }}"><i class="bi bi-stars me-1" style="color:#00c8d5"></i>Pinecone</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_milvus' %}active{% endif %}" href="{{ url_for('demos.db_milvus') }}"><i class="bi bi-broadcast me-1" style="color:#00b5eb"></i>Milvus</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_qdrant' %}active{% endif %}" href="{{ url_for('demos.db_qdrant') }}"><i class="bi bi-pentagon me-1" style="color:#dc382d"></i>Qdrant</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">Time-Series</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_influxdb' %}active{% endif %}" href="{{ url_for('demos.db_influxdb') }}"><i class="bi bi-graph-up me-1" style="color:#22adf6"></i>InfluxDB</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_prometheus' %}active{% endif %}" href="{{ url_for('demos.db_prometheus') }}"><i class="bi bi-fire me-1" style="color:#e6522c"></i>Prometheus</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_timescaledb' %}active{% endif %}" href="{{ url_for('demos.db_timescaledb') }}"><i class="bi bi-graph-up-arrow me-1" style="color:#fdb515"></i>TimescaleDB</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">NewSQL / Distributed</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_cockroachdb' %}active{% endif %}" href="{{ url_for('demos.db_cockroachdb') }}"><i class="bi bi-shield-check me-1" style="color:#6933ff"></i>CockroachDB</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_spanner' %}active{% endif %}" href="{{ url_for('demos.db_spanner') }}"><i class="bi bi-globe2 me-1" style="color:#4285f4"></i>Cloud Spanner</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_tidb' %}active{% endif %}" href="{{ url_for('demos.db_tidb') }}"><i class="bi bi-infinity me-1" style="color:#e8261d"></i>TiDB</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_oceanbase' %}active{% endif %}" href="{{ url_for('demos.db_oceanbase') }}"><i class="bi bi-water me-1" style="color:#1677ff"></i>OceanBase</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-header">Chinese Cloud</span></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_gaussdb' %}active{% endif %}" href="{{ url_for('demos.db_gaussdb') }}"><i class="bi bi-cpu-fill me-1" style="color:#cf0a2c"></i>GaussDB</a></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_tdsql' %}active{% endif %}" href="{{ url_for('demos.db_tdsql') }}"><i class="bi bi-layers me-1" style="color:#1aad19"></i>TDSQL</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item {% if request.endpoint == 'demos.db_index' %}active{% endif %}" href="{{ url_for('demos.db_index') }}"><i class="bi bi-grid-3x3 me-1"></i>All Databases →</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle {% if request.endpoint in ('query_studio','run_query','operations','events','process_events','retry_event','analytics_page','graph_explorer','run_graph','insights','train_model','predict_value','inventory_risk','anomalies') or request.blueprint in ('exports','connections','replication','consensus','dqs','column_store','neo4j_bp','redis_bp','mongo_bp','cassandra_bp','rqlite_bp','elasticsearch_bp','cqrs','pgvector','services_bp','shop') %}active{% endif %}"
              href="#" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-grid-3x3-gap-fill"></i> Tools
           </a>
@@ -198,12 +331,6 @@
               </a>
             </li>
             <li>
-              <a class="dropdown-item {% if request.blueprint == 'demos' %}active{% endif %}"
-                 href="{{ url_for('demos.index') }}">
-                <i class="bi bi-play-circle-fill"></i> Visual Demos
-              </a>
-            </li>
-            <li>
               <a class="dropdown-item {% if request.blueprint == 'services_bp' %}active{% endif %}"
                  href="{{ url_for('services_bp.index') }}">
                 <i class="bi bi-toggles2"></i> Services
@@ -226,6 +353,14 @@
 
       <!-- Right side -->
       <ul class="navbar-nav ms-auto align-items-center gap-2 me-1">
+
+        <!-- Theme toggle -->
+        <li class="nav-item d-flex align-items-center">
+          <button id="theme-toggle" title="Switch to light mode">
+            <i class="bi bi-sun-fill"></i>
+          </button>
+        </li>
+
         {% if current_user %}
 
         <!-- Active connection badge -->
@@ -300,20 +435,288 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 (function() {
+  // Nav collapse
   var brand = document.getElementById('nav-toggle-brand');
   var nav   = document.getElementById('navbarMain');
-  if (!brand || !nav) return;
-  if (localStorage.getItem('nwcc_nav_collapsed') === '1') nav.classList.add('nav-collapsed');
-  brand.addEventListener('click', function(e) {
-    e.stopPropagation();
-    var hidden = nav.classList.toggle('nav-collapsed');
-    localStorage.setItem('nwcc_nav_collapsed', hidden ? '1' : '0');
-    if (!hidden) {
-      nav.style.removeProperty('display');
-      nav.style.display = 'flex';
-      requestAnimationFrame(function() { nav.style.removeProperty('display'); });
+  if (brand && nav) {
+    if (localStorage.getItem('nwcc_nav_collapsed') === '1') nav.classList.add('nav-collapsed');
+    brand.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var hidden = nav.classList.toggle('nav-collapsed');
+      localStorage.setItem('nwcc_nav_collapsed', hidden ? '1' : '0');
+      if (!hidden) {
+        nav.style.removeProperty('display');
+        nav.style.display = 'flex';
+        requestAnimationFrame(function() { nav.style.removeProperty('display'); });
+      }
+    });
+  }
+
+  // Theme toggle
+  var btn  = document.getElementById('theme-toggle');
+  var html = document.documentElement;
+
+  // Inline-style color maps: dark bg → light bg, light text → dark text
+  var BG_MAP = {
+    '#13141a':'#ffffff','#13151a':'#ffffff','#13151b':'#ffffff',
+    '#0e1014':'#f8fafc','#0d0f16':'#f8fafc','#0d1117':'#f8fafc',
+    '#111418':'#f8fafc','#141618':'#f8fafc',
+    '#080a10':'#ffffff','#080a0e':'#ffffff','#080a0d':'#ffffff',
+    '#060809':'#ffffff','#06080a':'#ffffff','#060810':'#ffffff',
+    '#0a0c14':'#ffffff','#0a0c10':'#ffffff','#0a0c12':'#ffffff',
+    '#0a0d11':'#ffffff','#0a0b0f':'#ffffff','#0a0a0f':'#ffffff',
+    '#07090e':'#ffffff','#070a14':'#ffffff','#09090f':'#ffffff',
+    '#0c0f18':'#ffffff','#08080e':'#ffffff','#090b13':'#ffffff',
+    '#10131f':'#f4f6fb','#10131e':'#f4f6fb',
+    '#1e2028':'#f0f3f8','#1e2030':'#f0f3f8','#1e2228':'#f0f3f8',
+    '#1a1d24':'#f0f4f9','#1a1d25':'#f0f4f9','#1a2030':'#f0f4f9',
+    '#2a2d35':'#e8ecf4','#2a3040':'#e8ecf4','#2a3547':'#e8ecf4',
+    '#1e293b':'#eef1f6','#1e2530':'#eef1f6',
+    '#21262d':'#e8ecf4','#30363d':'#e8ecf4',
+    '#0f172a':'#f0f4f9','#0f1923':'#f0f4f9',
+    '#1a1b26':'#f0f4f9','#1b1d2a':'#f0f4f9',
+    '#12141a':'#f0f4f9','#111318':'#f8fafc',
+    '#2a2d3a':'#e8ecf4','#1e2038':'#eef1f6'
+  };
+  var TEXT_MAP = {
+    // Greyscale / muted text → black in light mode
+    '#cdd3de':'#111','#c9d1d9':'#111',
+    '#e2e8f0':'#111','#e6edf3':'#111','#e8edf3':'#111',
+    '#c0c9d6':'#111','#c8d3e0':'#111','#c8cdd6':'#111',
+    '#f1f5f9':'#111','#f0f4f8':'#111','#f4f4f5':'#111',
+    '#a8b5cc':'#111','#a8b4c8':'#111',
+    '#dde4f0':'#111','#dde8f0':'#111',
+    '#9ca3af':'#111','#94a3b8':'#111',
+    '#8892a4':'#111','#8b949e':'#111',
+    '#5a6070':'#111','#5a6a82':'#111','#6b7485':'#111',
+    '#6b7280':'#111','#64748b':'#111','#4b5563':'#111',
+    '#c4cdd8':'#111','#b8c4d0':'#111','#adb8c7':'#111',
+    // Pale indigo/violet → deep
+    '#818cf8':'#4338ca','#a5b4fc':'#3730a3',
+    '#a78bfa':'#6d28d9','#c4b5fd':'#6d28d9','#8338ec':'#6d28d9',
+    // Pale blue/sky → deep
+    '#38bdf8':'#0369a1','#7dd3fc':'#0369a1',
+    '#93c5fd':'#1d4ed8','#60a5fa':'#1d4ed8',
+    '#457b9d':'#1e40af','#4285f4':'#1d4ed8',
+    // Pale green/emerald → deep
+    '#34d399':'#059669','#6ee7b7':'#059669',
+    '#4ade80':'#15803d','#86efac':'#15803d',
+    '#00c864':'#15803d','#3fb950':'#15803d',
+    '#a3e635':'#4d7c0f',
+    // Pale teal/cyan → deep
+    '#22d3ee':'#0e7490','#67e8f9':'#0e7490',
+    '#06d6a0':'#0f766e','#2a9d8f':'#0f766e','#2dd4bf':'#0f766e',
+    // Pale yellow/amber → deep
+    '#facc15':'#a16207','#fde68a':'#92400e',
+    '#fbbf24':'#b45309','#e9c46a':'#92400e',
+    '#f59e0b':'#b45309','#d29922':'#92400e',
+    // Pale orange → deep
+    '#fb923c':'#c2410c','#fdba74':'#c2410c',
+    '#f97316':'#c2410c','#ff6b35':'#c2410c',
+    '#ff9900':'#b45309',
+    // Pale red/rose/pink → deep
+    '#f87171':'#b91c1c','#fca5a5':'#b91c1c',
+    '#e63946':'#b91c1c','#fb7185':'#be123c',
+    '#f43f5e':'#be123c','#f472b6':'#be185d',
+    '#e879f9':'#a21caf','#f0abfc':'#a21caf',
+    // Other accent colors (low contrast on white)
+    '#dcdcaa':'#92400e',  // VS Code yellow → amber
+    '#b5cea8':'#4d7c0f',  // VS Code number green → dark green
+    '#c3e88d':'#4d7c0f',
+    '#ce9178':'#c2410c',  // VS Code string orange → dark orange
+    '#82aaff':'#1d4ed8',  // light blue → deep blue
+    '#d2a8ff':'#6d28d9',  // light purple → deep purple
+    '#4ec9b0':'#0f766e',  // VS Code type teal → deep teal
+    '#c792ea':'#6d28d9',  // light purple
+    '#ff7b72':'#b91c1c',  // light red
+    '#569cd6':'#1d4ed8',  // VS Code blue → deep blue
+    '#9cdcfe':'#0369a1',  // VS Code variable blue
+    '#6a9955':'#166534',  // VS Code comment green
+    // Additional blues/teals (low contrast on white)
+    '#7dd3f8':'#0369a1','#79c0ff':'#1d4ed8','#88bbff':'#1d4ed8',
+    '#88ddff':'#0e7490','#a8d8ff':'#1d4ed8','#aabbff':'#1d4ed8',
+    '#0dcaf0':'#0e7490','#58a6ff':'#1d4ed8','#4a9eff':'#1d4ed8',
+    '#4d9de0':'#1d4ed8','#4488ff':'#1d4ed8','#4a7ff7':'#1d4ed8',
+    '#22adf6':'#0369a1','#6cb8e6':'#1d4ed8','#0ea5e9':'#0369a1',
+    '#29b5e8':'#0369a1','#00b4d8':'#0e7490','#00b5eb':'#0e7490',
+    '#00a4ef':'#0369a1','#0db7ed':'#0369a1','#1677ff':'#1d4ed8',
+    '#1877f2':'#1d4ed8','#1287b1':'#1d4ed8','#0f80cc':'#1d4ed8',
+    '#00c8d5':'#0e7490','#00d4aa':'#0f766e','#46bdc6':'#0e7490',
+    '#10b981':'#0f766e',
+    // Additional greens (low contrast on white)
+    '#22c55e':'#15803d','#46d369':'#15803d','#6ec96e':'#15803d',
+    '#6abf4b':'#15803d','#1aad19':'#15803d','#1db954':'#15803d',
+    '#34a853':'#15803d','#6ea832':'#4d7c0f','#00c853':'#15803d',
+    '#00bfa5':'#0f766e','#2ecc71':'#15803d','#25d366':'#15803d',
+    '#07c160':'#15803d','#00c9a7':'#0f766e',
+    // Additional purples (low contrast on white)
+    '#6366f1':'#4338ca','#8b5cf6':'#6d28d9','#a855f7':'#7e22ce',
+    '#a259ff':'#6d28d9','#d8b4fe':'#6d28d9','#c084fc':'#7e22ce',
+    '#6933ff':'#4338ca','#8c4fff':'#6d28d9',
+    // Additional reds/pinks/roses (low contrast on white)
+    '#ef4444':'#b91c1c','#ff4444':'#b91c1c','#ff6b6b':'#b91c1c',
+    '#ff6b8a':'#be123c','#ff8888':'#b91c1c','#ffaaaa':'#b91c1c',
+    '#ff9988':'#b91c1c','#ff3860':'#be123c','#ff2255':'#be123c',
+    '#ff0050':'#be123c','#fe2c55':'#be123c','#ef476f':'#be123c',
+    '#e74c3c':'#b91c1c','#f85149':'#b91c1c','#e6522c':'#c2410c',
+    '#ea4335':'#b91c1c','#e34234':'#b91c1c','#f9a8d4':'#be185d',
+    // Additional oranges (low contrast on white)
+    '#e8710a':'#c2410c','#fb5607':'#c2410c','#fba060':'#c2410c',
+    '#f4a261':'#c2410c','#f78c6c':'#c2410c','#f9826c':'#c2410c',
+    '#ff6d00':'#c2410c','#ff6a00':'#c2410c','#ff6900':'#c2410c',
+    '#ff8c00':'#b45309','#c0765a':'#c2410c','#f38020':'#c2410c',
+    '#fd7e14':'#c2410c',
+    // Additional yellows/ambers (low contrast on white)
+    '#fcd34d':'#b45309','#ffcc77':'#b45309','#ffcb6b':'#b45309',
+    '#fcd9a0':'#b45309','#ffd999':'#b45309','#ffd988':'#b45309',
+    '#ffd700':'#a16207','#d4d400':'#a16207','#ffca28':'#b45309',
+    '#ffc107':'#b45309','#fbbc05':'#b45309','#fdb515':'#b45309',
+    '#e3b341':'#92400e','#c89b3c':'#92400e','#f5a623':'#b45309',
+    // Pale pastels used as text
+    '#fef08a':'#a16207','#aaffcc':'#059669','#88ffdd':'#0f766e',
+    '#88ffbb':'#059669','#a5f3fc':'#0e7490','#ffaaaa':'#b91c1c',
+  };
+
+  function lin(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}
+  function bgLuminance(el){
+    var bg=getComputedStyle(el).backgroundColor;
+    var m=bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/);
+    if(!m) return 1;
+    if(m[4]!==undefined && +m[4]<0.05) return 1; // transparent
+    return 0.2126*lin(+m[1])+0.7152*lin(+m[2])+0.0722*lin(+m[3]);
+  }
+
+  function patchTheme(root, toLight) {
+    // Pass 1 — inline style string replacements (no layout reflow needed)
+    root.querySelectorAll('[style]').forEach(function(el) {
+      var s = el.getAttribute('style');
+      if (!s) return;
+      if (toLight) {
+        if (!el.getAttribute('data-style-dark')) el.setAttribute('data-style-dark', s);
+        var p = s;
+        Object.keys(BG_MAP).forEach(function(k) {
+          p = p.split('background:'+k).join('background:'+BG_MAP[k]);
+          p = p.split('background-color:'+k).join('background-color:'+BG_MAP[k]);
+        });
+        Object.keys(TEXT_MAP).forEach(function(k) {
+          p = p.split('color:'+k).join('color:'+TEXT_MAP[k]);
+        });
+        if (p !== s) el.setAttribute('style', p);
+      } else {
+        var dark = el.getAttribute('data-style-dark');
+        if (dark !== null) { el.setAttribute('style', dark); el.removeAttribute('data-style-dark'); }
+      }
+    });
+
+    // Pass 2 — computed-style scan: catches class-defined dark backgrounds
+    var els = root.querySelectorAll('div,section,article,aside,pre,code,table,td,th,li,span[class],button[class],a[class]');
+    els.forEach(function(el) {
+      if (toLight) {
+        if (el.hasAttribute('data-cs-bg')) return;
+        if (bgLuminance(el) < 0.05) {
+          el.setAttribute('data-cs-bg', el.style.backgroundColor || '');
+          el.style.setProperty('background-color', '#ffffff', 'important');
+        }
+      } else {
+        if (el.hasAttribute('data-cs-bg')) {
+          el.style.removeProperty('background-color');
+          var orig = el.getAttribute('data-cs-bg');
+          if (orig) el.style.backgroundColor = orig;
+          el.removeAttribute('data-cs-bg');
+        }
+      }
+    });
+
+    // Pass 2b — SVG fill presentation attributes (not reachable by CSS or Pass 1/2/3).
+    // SVG backgrounds are handled by CSS ([data-bs-theme="light"] svg { background }).
+    // Only rect/circle/text fill *attributes* need JS patching.
+    root.querySelectorAll('svg').forEach(function(svg) {
+      if (toLight) {
+        // dark shape fills → light
+        svg.querySelectorAll('rect,circle,ellipse').forEach(function(sh) {
+          var f = sh.getAttribute('fill');
+          if (!f || sh.hasAttribute('data-fill-dark')) return;
+          var hex = f.replace('#','');
+          if (hex.length !== 6) return;
+          var rv=parseInt(hex.slice(0,2),16), gv=parseInt(hex.slice(2,4),16), bv=parseInt(hex.slice(4,6),16);
+          var lum = 0.2126*lin(rv)+0.7152*lin(gv)+0.0722*lin(bv);
+          if (lum < 0.1) { sh.setAttribute('data-fill-dark', f); sh.setAttribute('fill','#eef2f8'); }
+        });
+        // grey text fills → black
+        svg.querySelectorAll('text,tspan').forEach(function(t) {
+          var f = t.getAttribute('fill');
+          if (!f || t.hasAttribute('data-fill-dark')) return;
+          var hex = f.replace('#','');
+          if (hex.length !== 6) return;
+          var rv=parseInt(hex.slice(0,2),16), gv=parseInt(hex.slice(2,4),16), bv=parseInt(hex.slice(4,6),16);
+          var max=Math.max(rv,gv,bv), min=Math.min(rv,gv,bv);
+          var sat = max===0 ? 0 : (max-min)/max;
+          var lum = 0.2126*lin(rv)+0.7152*lin(gv)+0.0722*lin(bv);
+          if (sat < 0.20 && lum > 0.04) { t.setAttribute('data-fill-dark', f); t.setAttribute('fill','#111'); }
+        });
+      } else {
+        svg.querySelectorAll('[data-fill-dark]').forEach(function(el) {
+          el.setAttribute('fill', el.getAttribute('data-fill-dark'));
+          el.removeAttribute('data-fill-dark');
+        });
+      }
+    });
+
+    // Pass 3 — universal grey-text → #111
+    // Catches any grey set via class, CSS variable, or inline style not in TEXT_MAP.
+    // Uses HSV saturation: sat < 0.20 = grey (no meaningful color component).
+    // Skips already-near-black text (lum < 0.04) to avoid redundant writes.
+    var textEls = root.querySelectorAll('p,span,h1,h2,h3,h4,h5,h6,li,td,th,a,label,small,code,pre,caption,div[class],button[class]');
+    textEls.forEach(function(el) {
+      if (toLight) {
+        if (el.hasAttribute('data-cs-text')) return;
+        var col = getComputedStyle(el).color;
+        var m = col.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (!m) return;
+        var r=+m[1], g=+m[2], b=+m[3];
+        var max=Math.max(r,g,b), min=Math.min(r,g,b);
+        var sat = max===0 ? 0 : (max-min)/max;
+        var lum = 0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b);
+        if (sat < 0.20 && lum > 0.04) {
+          el.setAttribute('data-cs-text', el.style.color || '');
+          el.style.setProperty('color', '#111', 'important');
+        }
+      } else {
+        if (el.hasAttribute('data-cs-text')) {
+          el.style.removeProperty('color');
+          var orig2 = el.getAttribute('data-cs-text');
+          if (orig2) el.style.color = orig2;
+          el.removeAttribute('data-cs-text');
+        }
+      }
+    });
+  }
+
+  function applyTheme(theme) {
+    html.setAttribute('data-bs-theme', theme);
+    localStorage.setItem('nwcc_theme', theme);
+    patchTheme(document, theme === 'light');
+    document.dispatchEvent(new CustomEvent('themeChanged', {detail: theme}));
+    if (btn) {
+      var icon = btn.querySelector('i');
+      if (theme === 'dark') {
+        icon.className = 'bi bi-sun-fill';
+        btn.title = 'Switch to light mode';
+      } else {
+        icon.className = 'bi bi-moon-fill';
+        btn.title = 'Switch to dark mode';
+      }
     }
-  });
+  }
+
+  // Sync icon with whatever theme was applied by the inline <head> script
+  applyTheme(html.getAttribute('data-bs-theme') || 'dark');
+
+  if (btn) {
+    btn.addEventListener('click', function() {
+      applyTheme(html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
+    });
+  }
 })();
 </script>
 {% block scripts %}{% endblock %}

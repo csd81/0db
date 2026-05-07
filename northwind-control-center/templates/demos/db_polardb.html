@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% block title %}PolarDB — Alibaba Cloud-Native Database{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-cloud fs-2 me-3" style="color:#ff6a00"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Alibaba Cloud PolarDB</h2>
+      <p class="text-muted mb-0">MySQL/PostgreSQL-compatible · PolarFS shared storage · HTAP via IMCI</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    PolarDB (2018, <a href="https://dl.acm.org/doi/10.14778/3229863.3229869" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">PolarFS VLDB 2018<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>) is <a href="https://github.com/ApsaraDB/PolarDB-for-PostgreSQL" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Alibaba Cloud's cloud-native database<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>, engineered as a compute-storage separated
+    alternative to standard MySQL and PostgreSQL — similar to Amazon Aurora but built for China's
+    hyperscale infrastructure. PolarFS (Polar File System) uses RDMA-connected SSD pools for shared
+    storage with 1/10th the write amplification of standard MySQL. IMCI (In-Memory Columnar Index)
+    enables HTAP: the same PolarDB instance handles both OLTP row queries and OLAP column scans.
+    PolarDB handled Alibaba's Singles' Day (11.11) peak — 580K TPS.
+  </p>
+
+  <ul class="nav nav-tabs mb-3" id="polarTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">Query Language</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,106,0,.3)">
+            <div class="card-header" style="background:rgba(255,106,0,.08);border-bottom:1px solid rgba(255,106,0,.2)">
+              <span class="fw-semibold" style="color:#ff6a00">Alibaba's Oracle Replacement</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">
+                PolarDB was born out of Alibaba's "de-IOE" initiative — eliminating IBM, Oracle,
+                and EMC from their infrastructure. PolarDB provides MySQL and PostgreSQL compatibility
+                while outperforming them via PolarFS shared storage.
+              </p>
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Unlike standard MySQL replication (full binlog shipping), PolarDB primary nodes write
+                only redo log records to PolarFS. Read replicas apply the same redo log from shared
+                storage — replica lag drops from seconds to milliseconds because they share the same
+                physical storage rather than replicating data.
+              </p>
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;margin-top:1rem">
+-- PolarDB variants:
+-- PolarDB MySQL Edition  — MySQL 5.6/5.7/8.0 compatible
+-- PolarDB PostgreSQL Edition — PostgreSQL 11/14/15 compatible
+-- PolarDB-X — distributed SQL (horizontal sharding layer on top)
+
+-- HTAP: route queries automatically
+-- OLTP → row engine (primary/read replica)
+-- OLAP → IMCI columnar index (same or dedicated node)
+
+-- Force IMCI for analytics:
+SET polar_optimizer_enable_imci = ON;
+SELECT product_category, SUM(order_total), COUNT(*)
+FROM orders
+WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31'
+GROUP BY product_category
+ORDER BY SUM(order_total) DESC;</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,106,0,.3)">
+            <div class="card-header" style="background:rgba(255,106,0,.08);border-bottom:1px solid rgba(255,106,0,.2)">
+              <span class="fw-semibold" style="color:#ff6a00">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Launched</td><td>2018</td></tr>
+                  <tr><td class="text-muted">Compatibility</td><td>MySQL 8.0, PostgreSQL 15</td></tr>
+                  <tr><td class="text-muted">Peak TPS</td><td>580K (Singles' Day 2023)</td></tr>
+                  <tr><td class="text-muted">Max storage</td><td>100 TB per cluster</td></tr>
+                  <tr><td class="text-muted">Read replicas</td><td>Up to 16</td></tr>
+                  <tr><td class="text-muted">HTAP</td><td>IMCI columnar index</td></tr>
+                  <tr><td class="text-muted">Storage</td><td>PolarFS (RDMA SSD pool)</td></tr>
+                  <tr><td class="text-muted">Write amp.</td><td>1/10th standard MySQL</td></tr>
+                  <tr><td class="text-muted">Notable users</td><td>Alibaba, Eleme, Pan Pacific Hotels</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,106,0,.3)">
+            <div class="card-header" style="background:rgba(255,106,0,.08);border-bottom:1px solid rgba(255,106,0,.2)">
+              <span class="fw-semibold" style="color:#ff6a00">IMCI — In-Memory Columnar Index</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- IMCI: maintains a columnar replica of row data in memory
+-- Synchronized automatically from redo log
+-- Queries can hit IMCI without read-replica lag
+
+-- Add IMCI to a table
+ALTER TABLE orders ADD COLUMN GROUP(
+    order_id, customer_id, order_date,
+    product_id, quantity, total
+) COMMENT 'imci';
+
+-- PolarDB optimizer decides row vs columnar:
+-- Point lookup (WHERE id = X)    → row engine
+-- Full-scan aggregation           → IMCI columnar
+-- Mixed query                     → partition routing
+
+-- Check which engine was used:
+EXPLAIN FORMAT=TREE
+SELECT customer_id, SUM(total) FROM orders
+WHERE order_date > '2024-01-01'
+GROUP BY customer_id;
+-- → "Using In-Memory Columnar Index" in EXTRA
+
+-- IMCI on read node: dedicated analytics replica
+-- Primary: OLTP only
+-- Read node 1: IMCI enabled, handles analytics
+-- Read node 2..N: row engine, handles read scaling</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,106,0,.3)">
+            <div class="card-header" style="background:rgba(255,106,0,.08);border-bottom:1px solid rgba(255,106,0,.2)">
+              <span class="fw-semibold" style="color:#ff6a00">PolarDB-X: Distributed SQL Layer</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- PolarDB-X: adds horizontal sharding on top of PolarDB storage
+-- MySQL-compatible, application sees single database
+
+-- Shard by order_id:
+CREATE TABLE orders (
+    order_id    BIGINT PRIMARY KEY,
+    customer_id BIGINT,
+    order_date  DATE,
+    total       DECIMAL(10,2)
+) DBPARTITION BY HASH(order_id) TBPARTITION BY HASH(order_id) TBPARTITIONS 8;
+
+-- Global secondary index (cross-shard lookup by customer_id)
+CREATE GLOBAL INDEX gsi_customer
+ON orders(customer_id)
+COVERING(order_date, total)
+DBPARTITION BY HASH(customer_id);
+
+-- Transparent distributed JOIN:
+SELECT c.name, COUNT(o.order_id) AS orders, SUM(o.total) AS spent
+FROM customers c JOIN orders o ON c.id = o.customer_id
+GROUP BY c.name;
+-- PolarDB-X Proxy routes to correct shards, aggregates results
+
+-- Distributed transaction:
+BEGIN;
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;  -- different shard
+COMMIT;  -- 2PC across shards</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(255,106,0,.3)">
+            <div class="card-header" style="background:rgba(255,106,0,.08);border-bottom:1px solid rgba(255,106,0,.2)">
+              <span class="fw-semibold" style="color:#ff6a00">MySQL/PostgreSQL-Compatible SQL</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── 1. Standard OLTP (same as MySQL 8.0)
+SELECT p.product_name, SUM(oi.quantity * oi.unit_price) AS revenue
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+JOIN orders o ON oi.order_id = o.order_id
+WHERE o.order_date BETWEEN '2024-01-01' AND '2024-12-31'
+  AND o.status = 'completed'
+GROUP BY p.product_name
+ORDER BY revenue DESC
+LIMIT 20;
+
+-- ── 2. Analytics on IMCI (same SQL, different execution path)
+-- PolarDB routes automatically based on query pattern + IMCI hint
+SELECT /*+ SET_VAR(polar_optimizer_enable_imci=ON) */
+    DATE_FORMAT(order_date, '%Y-%m') AS month,
+    customer_segment,
+    COUNT(DISTINCT customer_id) AS active_customers,
+    SUM(total) AS monthly_revenue,
+    AVG(total) AS avg_order_value
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE order_date >= '2023-01-01'
+GROUP BY month, customer_segment
+ORDER BY month, monthly_revenue DESC;
+
+-- ── 3. Window functions (MySQL 8.0 compatible)
+SELECT customer_id, order_date, total,
+       SUM(total) OVER (
+           PARTITION BY customer_id
+           ORDER BY order_date
+           ROWS UNBOUNDED PRECEDING
+       ) AS cumulative_spend,
+       RANK() OVER (PARTITION BY customer_id ORDER BY total DESC) AS order_rank
+FROM orders;
+
+-- ── 4. JSON (MySQL 8.0 native JSON)
+SELECT customer_id,
+       JSON_VALUE(preferences, '$.preferred_category') AS fav_category,
+       JSON_LENGTH(preferences->'$.wishlist') AS wishlist_count
+FROM customers
+WHERE JSON_CONTAINS(preferences->'$.interests', '"sports"');
+
+-- ── 5. Recycle Bin (PolarDB-specific: undrop tables)
+FLASHBACK TABLE orders TO BEFORE DROP;  -- recover dropped table
+SHOW RECYCLEBIN;                         -- list recoverable objects</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,106,0,.3)">
+            <div class="card-header" style="background:rgba(255,106,0,.08);border-bottom:1px solid rgba(255,106,0,.2)">
+              <span class="fw-semibold" style="color:#ff6a00">Killer Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#ff6a00">Alibaba E-Commerce (Singles' Day)</div><p style="font-size:.83rem;color:#8b949e">Peak 580K TPS during 11.11 (2023). PolarDB handles Alibaba's core commerce: product catalog, order processing, inventory. Replaced Oracle systems for APAC hyperscale workloads.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#ff6a00">Eleme Food Delivery</div><p style="font-size:.83rem;color:#8b949e">Eleme (Alibaba-owned, 200M users) processes real-time order routing, driver dispatch, and payment on PolarDB. Low-latency write + IMCI analytics for operations dashboards.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#ff6a00">Government Cloud (China)</div><p style="font-size:.83rem;color:#8b949e">Chinese government mandates domestic cloud. PolarDB is the primary Oracle replacement for provincial government digital services, tax systems, and citizen data platforms.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,106,0,.3)">
+            <div class="card-header" style="background:rgba(255,106,0,.08);border-bottom:1px solid rgba(255,106,0,.2)">
+              <span class="fw-semibold" style="color:#ff6a00">PolarDB vs Aurora vs Cloud Spanner</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-dark" style="font-size:.79rem">
+                  <thead><tr><th>Feature</th><th style="color:#ff6a00">PolarDB</th><th>Amazon Aurora</th><th>Cloud Spanner</th></tr></thead>
+                  <tbody>
+                    <tr><td>Compatibility</td><td>MySQL / PostgreSQL</td><td>MySQL / PostgreSQL</td><td>ANSI SQL</td></tr>
+                    <tr><td>HTAP</td><td>IMCI (native)</td><td>Parallel Query</td><td>No</td></tr>
+                    <tr><td>Global distribution</td><td>PolarDB Global</td><td>Aurora Global</td><td>Native global</td></tr>
+                    <tr><td>Sharding</td><td>PolarDB-X</td><td>No</td><td>Native</td></tr>
+                    <tr><td>Cloud</td><td>Alibaba Cloud only</td><td>AWS only</td><td>GCP only</td></tr>
+                    <tr><td>Market</td><td>APAC/China primary</td><td>Global</td><td>Global</td></tr>
+                    <tr><td>Open source</td><td>PolarDB-PG (OSS)</td><td>No</td><td>No</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(255,106,0,.3)">
+            <div class="card-header" style="background:rgba(255,106,0,.08);border-bottom:1px solid rgba(255,106,0,.2)">
+              <span class="fw-semibold" style="color:#ff6a00">PolarFS Shared Storage Architecture</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌──────────────────────────────────────────────────────────────────────┐
+│  Compute Layer                                                       │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐              │
+│  │   Primary    │   │  Read Replica│   │  IMCI Node   │              │
+│  │  (R/W)       │   │  (RO)        │   │  (Analytics) │              │
+│  │  Local buffer│   │  Local buffer│   │  Columnar mem│              │
+│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘              │
+│         │ redo log only    │                   │                     │
+│         │  (not pages)     │ redo log pull     │ redo log pull       │
+│         ▼                  ▼                   ▼                     │
+│  ┌───────────────────────────────────────────────────────────────┐   │
+│  │  PolarFS (Polar File System)                                  │   │
+│  │  RDMA-connected SSD pool across storage nodes                 │   │
+│  │  Parallel redo log write: 3-copy across storage nodes         │   │
+│  │  Chunk server: 64KB chunks, distributed metadata             │    │
+│  │  Write amplification: ~1.5x vs MySQL's ~10-15x               │    │
+│  └───────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────┘
+
+Key advantages over standard MySQL replication:
+1. No page shipping — only redo log (1/10th IO)
+2. Read replicas share physical storage (no replica lag from data copy)
+3. Replica lag: 1–20ms vs 100ms-1s for standard binlog replication
+4. Storage auto-grows: 10GB increments up to 100TB (no pre-allocation)
+5. Snapshot backup: point-in-time snapshot of PolarFS chunks (instant)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

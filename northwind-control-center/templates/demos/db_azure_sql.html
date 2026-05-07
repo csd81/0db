@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %}Azure SQL Database — Intelligent Cloud SQL Server{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-cloud fs-2 me-3" style="color:#00a4ef"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Azure SQL Database</h2>
+      <p class="text-muted mb-0">Managed SQL Server · Hyperscale · Intelligent Query Processing · Always On</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    Azure SQL Database (2010) is Microsoft's fully managed relational database built on SQL Server (<a href="https://dl.acm.org/doi/10.1145/3299869.3319904" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Socrates SIGMOD 2019 paper<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>).
+    Unlike RDS for SQL Server (which runs SQL Server on VMs), Azure SQL Database is a cloud-native
+    service engineered from the ground up for Azure infrastructure. It offers three tiers:
+    General Purpose (remote storage), Business Critical (local SSD with Always On AG under the hood),
+    and Hyperscale (up to 100 TB with snapshot-based instant backups). Intelligent Query Processing
+    (IQP) automatically optimizes queries without index hints or manual tuning.
+  </p>
+
+  <ul class="nav nav-tabs mb-3" id="azureSqlTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">T-SQL</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+            <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+              <span class="fw-semibold" style="color:#00a4ef">Three Service Tiers</span>
+            </div>
+            <div class="card-body">
+              <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                  <div style="background:#0d1117;border:1px solid rgba(0,164,239,.3);border-radius:8px;padding:1rem">
+                    <div class="fw-semibold mb-1" style="color:#00a4ef">General Purpose</div>
+                    <ul style="font-size:.78rem;color:#8b949e;padding-left:1.25rem;margin:0">
+                      <li>Remote Azure Premium Storage</li>
+                      <li>2–80 vCores, up to 4TB</li>
+                      <li>Best for: typical business apps</li>
+                      <li>RPO: 1–6 hours (geo-backup)</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div style="background:#0d1117;border:1px solid rgba(0,164,239,.5);border-radius:8px;padding:1rem">
+                    <div class="fw-semibold mb-1" style="color:#00a4ef">Business Critical</div>
+                    <ul style="font-size:.78rem;color:#8b949e;padding-left:1.25rem;margin:0">
+                      <li>Local SSD (NVMe), In-Memory OLTP</li>
+                      <li>4 replicas (Always On AG internal)</li>
+                      <li>Read replica included free</li>
+                      <li>99.99% SLA, sub-5ms failover</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div style="background:#0d1117;border:1px solid rgba(0,164,239,.7);border-radius:8px;padding:1rem">
+                    <div class="fw-semibold mb-1" style="color:#00a4ef">Hyperscale</div>
+                    <ul style="font-size:.78rem;color:#8b949e;padding-left:1.25rem;margin:0">
+                      <li>Up to 100 TB, auto-grow</li>
+                      <li>Snapshot-based instant backup</li>
+                      <li>Named replicas (up to 30)</li>
+                      <li>Log service architecture</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+            <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+              <span class="fw-semibold" style="color:#00a4ef">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Launched</td><td>2010</td></tr>
+                  <tr><td class="text-muted">Engine</td><td>SQL Server 2022 (latest)</td></tr>
+                  <tr><td class="text-muted">Query</td><td>T-SQL (full compatibility)</td></tr>
+                  <tr><td class="text-muted">Max size</td><td>100 TB (Hyperscale)</td></tr>
+                  <tr><td class="text-muted">SLA</td><td>99.99% (BC tier)</td></tr>
+                  <tr><td class="text-muted">Backup</td><td>Full/diff/log, 7-35 day retention</td></tr>
+                  <tr><td class="text-muted">Auth</td><td>SQL + Azure AD / Entra ID</td></tr>
+                  <tr><td class="text-muted">Geo-replication</td><td>Active geo-replication, failover groups</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+            <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+              <span class="fw-semibold" style="color:#00a4ef">Intelligent Query Processing (IQP)</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- IQP: automatic query optimization (compatibility level 150+)
+ALTER DATABASE NorthwindDB SET COMPATIBILITY_LEVEL = 160;
+
+-- ── Adaptive Joins: switches between hash/loop/merge at runtime
+-- No query hints needed — optimizer picks at first row
+SELECT o.OrderID, c.CompanyName
+FROM Orders o JOIN Customers c ON o.CustomerID = c.CustomerID
+WHERE o.OrderDate > '2024-01-01';
+-- Optimizer may start with nested-loop, switch to hash if rows exceed threshold
+
+-- ── Batch Mode on Rowstore: columnar processing for row heaps
+-- Previously only columnstore indexes got batch mode
+-- Now regular B-tree tables get batch mode for analytics
+
+-- ── Approximate COUNT DISTINCT (Hyperloglog, 2% error, 97% faster)
+SELECT APPROX_COUNT_DISTINCT(CustomerID) FROM Orders;
+-- vs COUNT(DISTINCT CustomerID) — exact but 97x slower
+
+-- ── Parameter Sensitive Plan Optimization (SQL 2022)
+-- Automatically generates multiple plans for skewed parameters
+-- Previously: one cached plan → bad for all but the "average" parameter
+
+-- ── Columnstore indexes for HTAP on same table
+CREATE NONCLUSTERED COLUMNSTORE INDEX NCCI_Orders_Analytics
+ON Orders (OrderDate, CustomerID, Freight, ShipCountry);
+-- OLTP: B-tree for point lookups
+-- Analytics: columnstore for full-table scans
+-- Same table, both indexes active simultaneously</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+            <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+              <span class="fw-semibold" style="color:#00a4ef">Elastic Pools &amp; Serverless</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── Elastic Pool: share DTU/vCore budget across many DBs
+-- SaaS multi-tenant: 1000 tenant DBs sharing 200 vCores
+-- Peak usage is rarely concurrent → pooling saves 60-80%
+
+-- ── Serverless compute tier (auto-pause + auto-resume)
+CREATE DATABASE NorthwindDev
+( SERVICE_OBJECTIVE = 'GP_S_Gen5_2',  -- Serverless, 2 vCores max
+  AUTO_PAUSE_DELAY = 60,              -- pause after 60 min idle
+  MIN_CAPACITY = 0.5 );               -- 0.5 vCore minimum when active
+
+-- Billed per second of compute used (not provisioned)
+-- Database auto-pauses when idle, auto-resumes on connection
+
+-- ── Ledger: tamper-proof auditable tables
+-- Blockchain-like verification using SQL Server 2022 ledger
+CREATE TABLE account_transactions (
+    transaction_id INT PRIMARY KEY,
+    account_id INT,
+    amount DECIMAL(10,2),
+    balance DECIMAL(10,2)
+)
+WITH (LEDGER = ON);  -- all rows cryptographically chained
+-- Azure Confidential Ledger stores root digests externally
+
+-- Verify integrity:
+EXECUTE sp_verify_database_ledger_from_digest_storage;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+            <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+              <span class="fw-semibold" style="color:#00a4ef">T-SQL — Azure SQL Specific Features</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── 1. Temporal tables — system-versioned history
+CREATE TABLE Employees (
+    EmployeeID INT PRIMARY KEY,
+    Name NVARCHAR(100),
+    Salary DECIMAL(10,2),
+    Department NVARCHAR(50),
+    ValidFrom DATETIME2 GENERATED ALWAYS AS ROW START,
+    ValidTo   DATETIME2 GENERATED ALWAYS AS ROW END,
+    PERIOD FOR SYSTEM_TIME (ValidFrom, ValidTo)
+)
+WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.EmployeesHistory));
+
+-- Query past state (as of a point in time)
+SELECT * FROM Employees
+FOR SYSTEM_TIME AS OF '2024-01-01T00:00:00';
+
+-- ── 2. JSON support (full round-trip)
+SELECT e.EmployeeID,
+       JSON_VALUE(e.ContactInfo, '$.email') AS Email,
+       JSON_QUERY(e.ContactInfo, '$.phones') AS Phones
+FROM Employees e
+WHERE JSON_VALUE(e.ContactInfo, '$.city') = 'Seattle';
+
+-- ── 3. Graph tables (SQL Server / Azure SQL)
+CREATE TABLE Employees AS NODE;
+CREATE TABLE Reports AS EDGE;
+
+INSERT INTO Reports ($from_id, $to_id)
+SELECT e1.$node_id, e2.$node_id
+FROM Employees e1, Employees e2
+WHERE e1.EmployeeID = 5 AND e2.EmployeeID = 2;
+
+-- MATCH clause for graph traversal
+SELECT manager.Name AS Manager, emp.Name AS DirectReport
+FROM Employees manager, Reports, Employees emp
+WHERE MATCH(manager-(Reports)->emp);
+
+-- ── 4. Query Store — automatically captures plans and regressions
+ALTER DATABASE NorthwindDB SET QUERY_STORE = ON;
+-- Force a previous good plan (plan pinning):
+EXEC sp_query_store_force_plan @query_id = 1, @plan_id = 3;
+
+-- ── 5. External REST endpoint (SQL 2022 / Azure SQL)
+-- Call REST APIs directly from T-SQL
+EXEC sp_invoke_external_rest_endpoint
+    @url = 'https://api.openai.com/v1/embeddings',
+    @method = 'POST',
+    @headers = '{"Authorization":"Bearer ...","Content-Type":"application/json"}',
+    @payload = '{"model":"text-embedding-ada-002","input":"Hello world"}',
+    @response = @result OUTPUT;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+            <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+              <span class="fw-semibold" style="color:#00a4ef">Ideal Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#00a4ef">.NET / Azure Enterprise Apps</div><p style="font-size:.83rem;color:#8b949e">The natural choice for .NET applications on Azure. Entity Framework, Dapper, ADO.NET all have first-class support. Azure AD integrated auth for zero-credential database access.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#00a4ef">SaaS Multi-Tenant (Elastic Pools)</div><p style="font-size:.83rem;color:#8b949e">Law firms, medical SaaS, financial SaaS — each tenant gets their own database (data isolation) but shares compute via Elastic Pool. Scales economically to thousands of tenants.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#00a4ef">Compliance / Auditing (Ledger)</div><p style="font-size:.83rem;color:#8b949e">Financial transactions requiring tamper-proof audit trails. SQL Ledger tables provide cryptographic chain-of-custody without external blockchain infrastructure.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+            <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+              <span class="fw-semibold" style="color:#00a4ef">Azure SQL vs RDS SQL Server vs SQL MI</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-dark" style="font-size:.79rem">
+                  <thead><tr><th>Feature</th><th style="color:#00a4ef">Azure SQL DB</th><th>SQL Managed Instance</th><th>RDS SQL Server</th></tr></thead>
+                  <tbody>
+                    <tr><td>SQL Agent</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+                    <tr><td>Linked servers</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+                    <tr><td>Cross-DB queries</td><td>Elastic query</td><td>Yes</td><td>Yes</td></tr>
+                    <tr><td>Max size</td><td>100 TB</td><td>16 TB</td><td>16 TB</td></tr>
+                    <tr><td>Cloud-native</td><td>★★★★★</td><td>★★★</td><td>★★</td></tr>
+                    <tr><td>Migration ease</td><td>Moderate</td><td>High</td><td>High</td></tr>
+                    <tr><td>Cost</td><td>Lower</td><td>Higher</td><td>Higher</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(0,164,239,.3)">
+            <div class="card-header" style="background:rgba(0,164,239,.08);border-bottom:1px solid rgba(0,164,239,.2)">
+              <span class="fw-semibold" style="color:#00a4ef">Hyperscale Architecture</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌─────────────────────────────────────────────────────────────────────┐
+│  Hyperscale Tier Architecture                                       │
+│                                                                     │
+│  ┌──────────────────┐  ┌──────────────────────────────────────┐     │
+│  │  Primary Compute  │  │  Named Replica (up to 30)            │    │
+│  │  (SQL Server)     │  │  Read-only, isolated compute         │    │
+│  │  Local SSD cache  │  │  Can handle analytics without        │    │
+│  │  (hot pages)      │  │  impacting primary OLTP              │    │
+│  └────────┬──────────┘  └──────────────────────────────────────┘    │
+│           │                         │                               │
+│           ▼ log records (not pages) │                               │
+│  ┌────────────────────────────────────────────────────────────┐     │
+│  │  Log Service (distributed, durable)                        │     │
+│  │  All writes land here first → ack to primary               │     │
+│  │  Page Servers pull log to materialize pages               │      │
+│  └──────────┬─────────────────────────────────────────────────┘     │
+│             │                                                       │
+│  ┌──────────▼──────────────────────────────────────────────────┐    │
+│  │  Page Servers (distributed, shard by page range)           │     │
+│  │  Each holds a range of database pages (materialized)       │     │
+│  │  Compute nodes fetch pages from Page Servers on cache miss │     │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                     │
+│  Key insight: instant backup = snapshot of Page Server state        │
+│  Restore = point another compute at existing Page Server snapshot   │
+│  No "restore from backup" IO needed — seconds not hours             │
+└─────────────────────────────────────────────────────────────────────┘</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

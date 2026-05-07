@@ -116,9 +116,9 @@ code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.7
         <dl class="mb-0" style="font-size:.8rem">
           <dt style="color:#cdd3de">TAO (The Associations and Objects) — Meta</dt>
           <dd style="color:#8892a4">Meta's custom graph DB. Every entity (User, Post, Page) is an Object; every relationship (Like, Follow, FriendOf) is an Association. Read-through cache tier using Memcached. Stores 100+ trillion edges. Globally replicated to 20+ data centers.</dd>
-          <dt style="color:#cdd3de">Apache Cassandra</dt>
+          <dt style="color:#cdd3de"><a href="https://github.com/apache/cassandra" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Apache Cassandra<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a></dt>
           <dd style="color:#8892a4">Timeline/feed storage. Wide-row per user: <code>partition(user_id) → sorted(post_timestamp, post_id)</code>. AP system — never refuses a write. Used by Instagram, Twitter. ~1M writes/second at Twitter scale.</dd>
-          <dt style="color:#cdd3de">RocksDB (embedded KV)</dt>
+          <dt style="color:#cdd3de"><a href="https://github.com/facebook/rocksdb" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">RocksDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (embedded KV)</dt>
           <dd style="color:#8892a4">LSM-tree key-value store. Optimized for write-heavy workloads. Used inside Cassandra, Kafka, and as a standalone store at Meta/LinkedIn. Handles billions of tiny updates efficiently.</dd>
           <dt style="color:#cdd3de" class="mb-0">Memcached + Mcrouter</dt>
           <dd class="mb-0" style="color:#8892a4">Meta's distributed cache. Mcrouter is a Memcached proxy that handles routing, replication, and failure. Facebook serves ~70% of requests entirely from Memcached — never touching MySQL.</dd>
@@ -129,7 +129,7 @@ code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.7
       <div class="stack-card p-3 h-100">
         <h6 class="fw-bold mb-3" style="color:var(--a)">⚙️ Compute &amp; Processing</h6>
         <dl class="mb-0" style="font-size:.8rem">
-          <dt style="color:#cdd3de">Apache Kafka</dt>
+          <dt style="color:#cdd3de"><a href="https://github.com/apache/kafka" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Apache Kafka<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a></dt>
           <dd style="color:#8892a4">The nervous system of social platforms. Topics: <code>user-posts</code>, <code>notifications</code>, <code>feed-updates</code>, <code>analytics-events</code>. Partitioned by <code>user_id</code> for ordered per-user processing. LinkedIn originated Kafka; now used by every major social platform.</dd>
           <dt style="color:#cdd3de">Apache Storm / Heron</dt>
           <dd style="color:#8892a4">Stream processing. Heron (Twitter's replacement for Storm) processes 10M+ events/second. Counts likes, trending topics (every 30 seconds), and notification coalescing ("X and 47 others liked your post").</dd>

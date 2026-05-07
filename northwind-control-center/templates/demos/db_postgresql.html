@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+{% block title %}PostgreSQL — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-database-fill fs-2 me-3" style="color:#336791"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">PostgreSQL</h2>
+    <p class="text-muted mb-0">Relational OLTP · SQL + JSONB · MVCC · Most feature-rich open-source RDBMS</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  PostgreSQL emerged from UC Berkeley's <a href="https://dsf.berkeley.edu/papers/ERL-M85-95.pdf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">POSTGRES project<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> in 1986 and has evolved into the world's most advanced open-source relational database. It combines strict ACID guarantees with an extraordinary extension ecosystem — JSONB for semi-structured data, <a href="https://github.com/postgis/postgis" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">PostGIS<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> for geospatial queries, and <a href="https://github.com/pgvector/pgvector" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">pgvector<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> for AI embeddings — making it the database of choice for Instagram, Shopify, Apple, and countless SaaS companies.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="pgTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pg-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pg-model">
+      <i class="bi bi-2-circle me-1"></i>Data Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pg-query">
+      <i class="bi bi-3-circle me-1"></i>Query Language
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pg-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pg-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="pg-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>1996 (POSTGRES 1986)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>PostgreSQL License (permissive, like MIT)</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>Relational OLTP</td></tr>
+            <tr><td style="color:#8b949e">Storage model</td><td>Row-oriented heap files</td></tr>
+            <tr><td style="color:#8b949e">Concurrency</td><td>MVCC (Multi-Version Concurrency Control)</td></tr>
+            <tr><td style="color:#8b949e">Replication</td><td>Streaming + logical, synchronous optional</td></tr>
+            <tr><td style="color:#8b949e">Wire protocol</td><td>pgwire (PostgreSQL protocol)</td></tr>
+            <tr><td style="color:#8b949e">Notable users</td><td>Instagram, Apple, Shopify, Twitch, Reddit</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-star me-2"></i>Why PostgreSQL Dominates</span>
+        </div>
+        <div class="card-body p-3">
+          <ul style="font-size:.78rem;color:#c9d1d9;padding-left:1.2rem;margin-bottom:0;line-height:1.9">
+            <li>Full SQL compliance with window functions, CTEs, lateral joins</li>
+            <li>30+ native data types: JSONB, arrays, hstore, UUID, ranges, geometric</li>
+            <li><a href="https://github.com/postgis/postgis" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">PostGIS<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> extension — the gold standard for GIS/geospatial queries</li>
+            <li><a href="https://github.com/pgvector/pgvector" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">pgvector<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> extension — vector similarity search for AI/ML workloads</li>
+            <li>Table inheritance and partitioning for massive datasets</li>
+            <li>Logical replication enables zero-downtime upgrades and ETL</li>
+            <li>EXPLAIN ANALYZE with visual plans via pgAdmin / auto_explain</li>
+            <li>Rich trigger and rule system for complex audit trails</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-diagram-2 me-2"></i>Architecture Overview</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:1rem;font-size:.72rem;color:#c9d1d9;line-height:1.7;overflow-x:auto">┌─────────────────────────────────────────┐
+│           CLIENT APPLICATION            │
+│    (JDBC / psycopg2 / pgwire)           │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────▼──────────────────────┐
+│         POSTMASTER PROCESS              │
+│   Listens :5432, forks per connection   │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────▼──────────────────────┐
+│        BACKEND PROCESS (per conn)       │
+│  Parser → Rewriter → Planner → Executor │
+└──────────┬───────────────┬──────────────┘
+           │               │
+┌──────────▼──────┐ ┌──────▼───────────────┐
+│  shared_buffers │ │    WAL Buffer        │
+│  (page cache)   │ │  (Write-Ahead Log)   │
+└──────────┬──────┘ └──────┬───────────────┘
+           │               │
+┌──────────▼───────────────▼──────────────┐
+│              DISK STORAGE               │
+│  base/ (heap files)   pg_wal/ (WAL)     │
+│  pg_index/            pg_tblspc/        │
+└─────────────────────────────────────────┘
+           │
+┌──────────▼──────────────────────────────┐
+│         BACKGROUND WORKERS              │
+│  autovacuum · checkpointer · bgwriter   │
+│  walreceiver · walwriter · archiver     │
+└─────────────────────────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA MODEL -->
+<div class="tab-pane fade" id="pg-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-table me-2"></i>Relational + Extended Types</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Standard relational schema
+CREATE TABLE orders (
+  order_id   SERIAL PRIMARY KEY,
+  customer   VARCHAR(100) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  total      NUMERIC(12,2),
+  tags       TEXT[],          -- native array
+  metadata   JSONB            -- semi-structured
+);
+
+-- JSONB: fast, indexed, binary
+CREATE INDEX idx_meta ON orders USING GIN (metadata);
+
+-- PostGIS geometry
+CREATE TABLE stores (
+  id       SERIAL PRIMARY KEY,
+  name     TEXT,
+  location GEOMETRY(Point, 4326)  -- lat/lon WGS84
+);
+
+-- pgvector for AI embeddings (1536-dim for OpenAI)
+CREATE EXTENSION vector;
+CREATE TABLE embeddings (
+  id    SERIAL PRIMARY KEY,
+  chunk TEXT,
+  vec   VECTOR(1536)
+);
+CREATE INDEX ON embeddings USING ivfflat (vec vector_cosine_ops);</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-collection me-2"></i>Rich Type System</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #21262d;font-size:.7rem;color:#c9d1d9">
+                <div style="color:#336791;font-weight:600;margin-bottom:.3rem">Numeric</div>
+                INTEGER, BIGINT, NUMERIC, REAL, DOUBLE PRECISION, MONEY
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #21262d;font-size:.7rem;color:#c9d1d9">
+                <div style="color:#336791;font-weight:600;margin-bottom:.3rem">Text</div>
+                TEXT, VARCHAR(n), CHAR(n), CITEXT (case-insensitive)
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #21262d;font-size:.7rem;color:#c9d1d9">
+                <div style="color:#336791;font-weight:600;margin-bottom:.3rem">Date/Time</div>
+                DATE, TIME, TIMESTAMP, TIMESTAMPTZ, INTERVAL
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #21262d;font-size:.7rem;color:#c9d1d9">
+                <div style="color:#336791;font-weight:600;margin-bottom:.3rem">JSON</div>
+                JSON (text), JSONB (binary, indexed, preferred)
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #21262d;font-size:.7rem;color:#c9d1d9">
+                <div style="color:#336791;font-weight:600;margin-bottom:.3rem">Collections</div>
+                ARRAY[], hstore (key-value pairs)
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded" style="background:#0d0f16;border:1px solid #21262d;font-size:.7rem;color:#c9d1d9">
+                <div style="color:#336791;font-weight:600;margin-bottom:.3rem">Special</div>
+                UUID, INET, CIDR, MACADDR, BIT, BYTEA
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: QUERY LANGUAGE -->
+<div class="tab-pane fade" id="pg-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-code-slash me-2"></i>Window Functions &amp; CTEs</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Running total with window function
+SELECT order_id, customer, total,
+  SUM(total) OVER (
+    PARTITION BY customer
+    ORDER BY created_at
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  ) AS running_total,
+  RANK() OVER (PARTITION BY customer ORDER BY total DESC) AS rank
+FROM orders;
+
+-- Recursive CTE: org chart traversal
+WITH RECURSIVE org AS (
+  SELECT id, name, manager_id, 1 AS level
+  FROM employees WHERE manager_id IS NULL
+  UNION ALL
+  SELECT e.id, e.name, e.manager_id, o.level + 1
+  FROM employees e JOIN org o ON e.manager_id = o.id
+)
+SELECT level, name FROM org ORDER BY level, name;</pre>
+        </div>
+      </div>
+
+      <div class="card" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-braces me-2"></i>JSONB Operators</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Extract nested value
+SELECT metadata->'shipping'->>'city' AS city
+FROM orders WHERE metadata @> '{"priority": "express"}';
+
+-- JSON path query (PostgreSQL 12+)
+SELECT * FROM orders
+WHERE metadata @? '$.items[*].sku ? (@ == "SKU-999")';
+
+-- Update JSONB in-place
+UPDATE orders
+SET metadata = jsonb_set(metadata, '{status}', '"shipped"')
+WHERE order_id = 42;
+
+-- Aggregate to JSON
+SELECT customer,
+  jsonb_agg(jsonb_build_object('id', order_id, 'total', total))
+FROM orders GROUP BY customer;</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-speedometer me-2"></i>EXPLAIN ANALYZE</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Analyze query plan with actual timings
+EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+SELECT c.name, COUNT(o.order_id), SUM(o.total)
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+WHERE c.region = 'Europe'
+GROUP BY c.name
+ORDER BY SUM(o.total) DESC
+LIMIT 20;
+-- Output: Hash Aggregate → Hash Join → Bitmap Heap Scan
+-- Buffers: shared hit=1284, read=48
+-- Planning Time: 2.1 ms, Execution Time: 18.4 ms
+
+-- Bulk load (fastest ingestion)
+COPY orders (customer, total, metadata)
+FROM '/tmp/orders.csv' WITH (FORMAT csv, HEADER true);</pre>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-geo-alt me-2"></i>PostGIS &amp; pgvector</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Nearest stores within 5km
+SELECT name, ST_Distance(location::geography,
+  ST_MakePoint(-73.9857, 40.7484)::geography) AS metres
+FROM stores
+WHERE ST_DWithin(location::geography,
+  ST_MakePoint(-73.9857, 40.7484)::geography, 5000)
+ORDER BY metres LIMIT 5;
+
+-- Semantic similarity search (pgvector)
+SELECT chunk, 1 - (vec <=> $1::vector) AS similarity
+FROM embeddings
+ORDER BY vec <=> $1::vector
+LIMIT 10;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="pg-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-building me-2"></i>Real-World Deployments</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-3" style="font-size:.78rem;color:#c9d1d9">
+            <span class="fw-bold" style="color:#336791">Instagram</span> — Runs PostgreSQL for user data, follower graphs, and media metadata. Pushes tens of thousands of queries per second with <a href="https://github.com/pgbouncer/pgbouncer" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">PgBouncer<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> pooling and read replicas.
+          </div>
+          <div class="mb-3" style="font-size:.78rem;color:#c9d1d9">
+            <span class="fw-bold" style="color:#336791">Apple</span> — Uses PostgreSQL internally across many services. Contributed significantly to WAL improvements and logical replication features.
+          </div>
+          <div class="mb-3" style="font-size:.78rem;color:#c9d1d9">
+            <span class="fw-bold" style="color:#336791">Shopify</span> — Migrated from MySQL to PostgreSQL for JSONB support and better partitioning. Manages billions of commerce transactions annually.
+          </div>
+          <div style="font-size:.78rem;color:#c9d1d9">
+            <span class="fw-bold" style="color:#336791">Supabase / Neon</span> — Both "serverless PostgreSQL" platforms are built entirely on Postgres, exposing it as a managed cloud service with branching and instant provisioning.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">Consistency</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Full ACID</span></td></tr>
+            <tr><td style="color:#8b949e">Horizontal scale</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Moderate (Citus)</span></td></tr>
+            <tr><td style="color:#8b949e">Write latency</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">1–5 ms (local)</span></td></tr>
+            <tr><td style="color:#8b949e">Analytics</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">OK (not columnar)</span></td></tr>
+            <tr><td style="color:#8b949e">Operational cost</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Low (open-source)</span></td></tr>
+            <tr><td style="color:#8b949e">Schema flexibility</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">High (JSONB + DDL)</span></td></tr>
+            <tr><td style="color:#8b949e">CAP position</td><td><span class="badge" style="background:rgba(129,140,248,.2);color:#818cf8">CP</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="pg-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-cpu me-2"></i>MVCC &amp; Storage</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#336791">MVCC (Multi-Version Concurrency Control):</strong> Every row update creates a new tuple version. Old versions remain visible to concurrent transactions. Readers never block writers; writers never block readers.</p>
+          <p><strong style="color:#336791">Heap Storage:</strong> Tables stored as 8KB pages in <code style="color:#93c5fd">base/&lt;dboid&gt;/&lt;relfilenode&gt;</code>. Each page has a header, item pointers (line pointers), and row data (tuples) with xmin/xmax visibility markers.</p>
+          <p><strong style="color:#336791">autovacuum:</strong> Reclaims dead tuples left by MVCC. Without it, table bloat accumulates. Key parameters: <code style="color:#93c5fd">autovacuum_vacuum_cost_delay</code>, <code style="color:#93c5fd">autovacuum_vacuum_scale_factor</code>.</p>
+          <p><strong style="color:#336791">WAL (Write-Ahead Log):</strong> All changes written to WAL before data pages. Enables crash recovery, streaming replication, and point-in-time recovery (PITR). WAL segment = 16MB.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(51,103,145,.35)">
+        <div class="card-header" style="background:rgba(51,103,145,.12);border-bottom:1px solid rgba(51,103,145,.25)">
+          <span class="fw-bold" style="color:#336791"><i class="bi bi-sliders me-2"></i>Key Config Knobs</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7"># postgresql.conf — production tuning
+
+# Memory
+shared_buffers = 8GB          # 25% of RAM
+effective_cache_size = 24GB   # hint for planner
+work_mem = 64MB               # per sort/hash op
+maintenance_work_mem = 2GB    # VACUUM, CREATE INDEX
+
+# WAL &amp; replication
+wal_level = logical           # enables replication
+max_wal_senders = 10
+synchronous_commit = on       # durability guarantee
+
+# Connections (use <a href="https://github.com/pgbouncer/pgbouncer" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px">PgBouncer</a> for pooling!)
+max_connections = 200
+
+# Checkpointing
+checkpoint_completion_target = 0.9
+max_wal_size = 4GB</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

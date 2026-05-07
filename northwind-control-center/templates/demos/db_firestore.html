@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Google Cloud Firestore — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-fire fs-2 me-3" style="color:#ffca28"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Google Cloud Firestore</h2>
+    <p class="text-muted mb-0">NoSQL Document · SDK-based queries · Real-time sync · Serverless auto-scaling</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Launched in 2017 as the successor to Firebase Realtime Database, <a href="https://github.com/firebase/firebase-js-sdk" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Firestore<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> is Google's serverless, globally distributed document database designed specifically for mobile and web applications. Its killer features: real-time listeners (apps update instantly when data changes), offline support (client SDKs cache data locally for offline use), and security rules that let you skip a backend server entirely for simple apps. Firestore auto-scales to zero cost when idle and handles billions of reads per day at Google's own scale. The trade-off for this simplicity: no server-side JOINs, limited query expressiveness, and a document-oriented data model that requires upfront design.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="firestoreTabs">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#fs-overview"><i class="bi bi-1-circle me-1"></i>Overview</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fs-model"><i class="bi bi-2-circle me-1"></i>Data Model</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fs-query"><i class="bi bi-3-circle me-1"></i>SDK Queries</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fs-usecases"><i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fs-arch"><i class="bi bi-5-circle me-1"></i>Architecture</button></li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1 -->
+<div class="tab-pane fade show active" id="fs-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2017 (Cloud Firestore), Firebase 2012</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Proprietary (Google Cloud)</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>NoSQL Document (Serverless)</td></tr>
+            <tr><td style="color:#8b949e">Pricing</td><td>Per read/write/delete + storage</td></tr>
+            <tr><td style="color:#8b949e">Query engine</td><td>SDK-based (no server-side SQL)</td></tr>
+            <tr><td style="color:#8b949e">Real-time</td><td>onSnapshot() listeners push updates</td></tr>
+            <tr><td style="color:#8b949e">Offline</td><td>Client SDK local cache</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-buildings me-2"></i>Who Uses Firestore</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(255,202,40,.15);color:#ffca28;border:1px solid rgba(255,202,40,.3)">Duolingo</span>
+            <span class="badge" style="background:rgba(255,202,40,.15);color:#ffca28;border:1px solid rgba(255,202,40,.3)">The New York Times</span>
+            <span class="badge" style="background:rgba(255,202,40,.15);color:#ffca28;border:1px solid rgba(255,202,40,.3)">Trivago</span>
+            <span class="badge" style="background:rgba(255,202,40,.15);color:#ffca28;border:1px solid rgba(255,202,40,.3)">Headspace</span>
+            <span class="badge" style="background:rgba(255,202,40,.15);color:#ffca28;border:1px solid rgba(255,202,40,.3)">Khan Academy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-diagram-2 me-2"></i>Data Hierarchy</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="font-size:.72rem;color:#c9d1d9;background:#0e1014;padding:1rem;border-radius:6px;margin:0;line-height:1.5">
+Firestore Database
+│
+├── Collection: "users"
+│   ├── Document: "user_42"
+│   │   ├── name: "Alice"
+│   │   ├── email: "alice@..."
+│   │   └── Subcollection: "orders"
+│   │       ├── Document: "ord_001"
+│   │       │   ├── total: 59.99
+│   │       │   └── status: "shipped"
+│   │       └── Document: "ord_002"
+│   └── Document: "user_99"
+│
+└── Collection: "products"
+    └── Document: "prod_123"
+        ├── name: "Widget"
+        └── price: 29.99</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab-pane fade" id="fs-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-layers me-2"></i>Core Concepts</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#ffca28">Collections &amp; Documents</strong> — documents live in collections. Every document has a unique ID (auto-generated or custom). Documents can contain subcollections (nested collections).</p>
+          <p><strong style="color:#ffca28">Field Types</strong> — String, Number, Boolean, Timestamp, GeoPoint, Array, Map (nested object), Null, Reference (pointer to another document), Bytes.</p>
+          <p><strong style="color:#ffca28">1MB document limit</strong> — each document is max 1MB. Large arrays or deeply nested maps can hit this. Design with this constraint in mind.</p>
+          <p><strong style="color:#ffca28">Indexes</strong> — single-field indexes created automatically. Composite indexes must be explicitly created for queries on multiple fields. Every query requires an index.</p>
+          <p><strong style="color:#ffca28">Security Rules</strong> — Firestore Security Rules evaluate on the server. Apps can write directly from the browser/mobile with no backend server, using rules to enforce access control.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-shield-lock me-2"></i>Security Rules Example</span>
+        </div>
+        <div class="card-body p-2">
+          <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read/write only their own document
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // Orders: owner can read/write, admin can read all
+    match /orders/{orderId} {
+      allow read: if request.auth.uid == resource.data.userId
+        || request.auth.token.admin == true;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.total > 0;
+      allow update: if request.auth.token.admin == true;
+    }
+
+    // Public read for products
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth.token.admin == true;
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3 -->
+<div class="tab-pane fade" id="fs-query">
+  <div class="card" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+    <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+      <span class="fw-bold" style="color:#ffca28"><i class="bi bi-terminal me-2"></i>SDK Query Primer (JavaScript)</span>
+    </div>
+    <div class="card-body p-2">
+      <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">import { getFirestore, collection, doc, addDoc,
+  getDoc, getDocs, query, where, orderBy,
+  limit, onSnapshot, updateDoc, writeBatch,
+  serverTimestamp, increment } from 'firebase/firestore';
+
+const db = getFirestore();
+
+// 1. Add a document (auto-generated ID)
+const docRef = await addDoc(collection(db, 'orders'), {
+  userId: 'user_42',
+  total: 59.99,
+  status: 'pending',
+  createdAt: serverTimestamp()
+});
+
+// 2. Get a single document by ID
+const snap = await getDoc(doc(db, 'users', 'user_42'));
+if (snap.exists()) console.log(snap.data());
+
+// 3. Query with filters (requires composite index)
+const q = query(
+  collection(db, 'orders'),
+  where('status', '==', 'pending'),
+  where('total', '>', 50),
+  orderBy('total', 'desc'),
+  limit(10)
+);
+const results = await getDocs(q);
+results.forEach(d => console.log(d.id, d.data()));
+
+// 4. Real-time listener — updates push to client
+const unsubscribe = onSnapshot(
+  query(collection(db, 'orders'),
+        where('userId', '==', 'user_42')),
+  (snapshot) => {
+    snapshot.docChanges().forEach(change => {
+      if (change.type === 'added') console.log('New:', change.doc.data());
+      if (change.type === 'modified') console.log('Updated:', change.doc.data());
+      if (change.type === 'removed') console.log('Deleted:', change.doc.id);
+    });
+  }
+);
+// unsubscribe() to stop listening
+
+// 5. Atomic batch write
+const batch = writeBatch(db);
+batch.set(doc(db, 'orders', 'ord_123'), { status: 'shipped' });
+batch.update(doc(db, 'users', 'user_42'), {
+  orderCount: increment(1)
+});
+await batch.commit(); // atomic: all or nothing
+
+// 6. Transaction — read-then-write atomically
+import { runTransaction } from 'firebase/firestore';
+await runTransaction(db, async (txn) => {
+  const userRef = doc(db, 'users', 'user_42');
+  const userSnap = await txn.get(userRef);
+  const points = userSnap.data().loyaltyPoints;
+  txn.update(userRef, { loyaltyPoints: points + 100 });
+});</pre>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4 -->
+<div class="tab-pane fade" id="fs-usecases">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-trophy me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#ffca28">Real-Time Chat &amp; Collaboration</strong> — onSnapshot listeners deliver messages to all participants instantly. No polling. Firestore scales this automatically.</p>
+          <p><strong style="color:#ffca28">Mobile App Backends (no backend server)</strong> — Flutter/React Native apps write directly to Firestore with security rules as the authorization layer. Duolingo uses Firebase/Firestore for content delivery.</p>
+          <p><strong style="color:#ffca28">Gaming State Sync</strong> — lobby/matchmaking state, player inventory, leaderboards. Real-time updates across players without a dedicated game server.</p>
+          <p><strong style="color:#ffca28">Offline-First Apps</strong> — the client SDK caches all queries locally. Apps work offline and sync automatically when connectivity resumes. Ideal for field workers.</p>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-x-circle me-2"></i>Limitations</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong>No JOINs</strong> — data must be denormalized for query patterns. Server-side JOIN is impossible; client-side multi-collection lookups require multiple reads.</p>
+          <p><strong>No aggregation queries (historically)</strong> — COUNT(*), SUM(), AVG() require client-side accumulation or Cloud Functions triggers (now supported via aggregation queries in newer versions).</p>
+          <p><strong>Index required for every compound query</strong> — if you add a new filter or sort, you must create a composite index first. Can surprise developers used to SQL.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-speedometer2 me-2"></i>Performance &amp; Pricing</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9">
+          <p><strong>Read latency:</strong> &lt;100ms globally</p>
+          <p><strong>Writes:</strong> Strong consistency within region</p>
+          <p><strong>Free tier:</strong> 50K reads, 20K writes/day</p>
+          <p><strong>Scale:</strong> Automatic, no provisioning</p>
+          <p><strong>Limit:</strong> 1 write/sec per document</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5 -->
+<div class="tab-pane fade" id="fs-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-cpu me-2"></i>Internal Architecture</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#ffca28">Spanner under the hood</strong> — Firestore is built on top of Google Cloud Spanner, inheriting its globally consistent, strongly consistent storage. This gives Firestore its consistency guarantees.</p>
+          <p><strong style="color:#ffca28">Document storage</strong> — documents are stored as structured data in Spanner with indexes maintained automatically. Composite indexes must be explicitly created.</p>
+          <p><strong style="color:#ffca28">Real-time push</strong> — a separate streaming layer maintains WebSocket/gRPC connections to clients and pushes delta updates when documents change. Google manages this at global scale.</p>
+          <p><strong style="color:#ffca28">Offline cache</strong> — client SDKs maintain a local cache (IndexedDB in browsers, SQLite on mobile). Queries run against the cache when offline and sync when online.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(255,202,40,.3)">
+        <div class="card-header" style="background:rgba(255,202,40,.08);border-bottom:1px solid rgba(255,202,40,.2)">
+          <span class="fw-bold" style="color:#ffca28"><i class="bi bi-layers me-2"></i>Consistency Model</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#ffca28">Strong consistency</strong> — reads after writes always return the latest data (within a single region/multi-region configuration). This is stronger than DynamoDB's eventual consistency default.</p>
+          <p><strong style="color:#ffca28">Document-level atomicity</strong> — operations on a single document are atomic. Batch writes (up to 500 documents) and transactions provide multi-document atomicity.</p>
+          <p><strong style="color:#ffca28">Write limit</strong> — max 1 sustained write/second per document. Design your data model to avoid "hot documents" (e.g., global counters). Use distributed counters for high-write metrics.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

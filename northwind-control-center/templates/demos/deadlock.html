@@ -31,6 +31,8 @@
   <h2 class="mb-0 fw-bold">🔒 Deadlock Detection Demo</h2>
 </div>
 
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">A deadlock occurs when Transaction A holds Lock 1 and waits for Lock 2 while Transaction B holds Lock 2 and waits for Lock 1 — a circular dependency that neither can resolve without external help. SQL Server's deadlock monitor scans the wait-for graph every 5 seconds and, upon detecting a cycle, selects the cheapest transaction as a victim and terminates it with error 1205. The demo places two sessions racing to update the same horse-racing bet in opposite column order, visualizing the lock graph forming and the moment the monitor fires. Applying <code>WITH (UPDLOCK)</code> at read time prevents the deadlock entirely by acquiring an update lock before write contention arises, enforcing a consistent lock acquisition order.</p>
+
 <!-- Connection Selector -->
 <div class="mb-4">
   {% if pg_conns %}

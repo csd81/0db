@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Milvus — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-broadcast fs-2 me-3" style="color:#00b5eb"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Milvus</h2>
+    <p class="text-muted mb-0">Vector Database · HNSW + IVF + DiskANN · Cloud-native · Billion-scale ANN search</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Open-sourced in 2019 by <a href="https://github.com/milvus-io/milvus" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Zilliz<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>, <a href="https://dl.acm.org/doi/10.1145/3448016.3457560" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Milvus<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> is the largest open-source vector database by GitHub stars and the go-to choice for enterprise-scale similarity search. Built cloud-native from the ground up — separate coordinator nodes, worker nodes, and object storage — it scales to billions of vectors while maintaining sub-100ms query latency. Milvus integrates FAISS (Facebook AI Similarity Search) as a core indexing library and supports multiple ANN algorithms: HNSW (graph-based), IVF (inverted file), DiskANN (disk-resident for memory efficiency), and SCANN (Google's approach). Used by Walmart for product search, Shopee for recommendations, and NVIDIA for its cuVS integration.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="milvusTabs">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#mv-overview"><i class="bi bi-1-circle me-1"></i>Overview</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mv-model"><i class="bi bi-2-circle me-1"></i>Data Model</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mv-query"><i class="bi bi-3-circle me-1"></i>SDK &amp; Queries</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mv-usecases"><i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mv-arch"><i class="bi bi-5-circle me-1"></i>Architecture</button></li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1 -->
+<div class="tab-pane fade show active" id="mv-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2019 (Zilliz, open-source)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Apache 2.0</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>Vector Database</td></tr>
+            <tr><td style="color:#8b949e">Index types</td><td>HNSW, IVF_FLAT, IVF_PQ, DiskANN, SCANN, GPU</td></tr>
+            <tr><td style="color:#8b949e">Similarity</td><td>Cosine, Inner Product (IP), L2 (Euclidean)</td></tr>
+            <tr><td style="color:#8b949e">Storage</td><td>S3-compatible object storage + local disk</td></tr>
+            <tr><td style="color:#8b949e">Scale tested</td><td>10 billion vectors in production</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-buildings me-2"></i>Who Uses Milvus</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(0,181,235,.15);color:#00b5eb;border:1px solid rgba(0,181,235,.3)">Walmart</span>
+            <span class="badge" style="background:rgba(0,181,235,.15);color:#00b5eb;border:1px solid rgba(0,181,235,.3)">Shopee</span>
+            <span class="badge" style="background:rgba(0,181,235,.15);color:#00b5eb;border:1px solid rgba(0,181,235,.3)">NVIDIA (cuVS)</span>
+            <span class="badge" style="background:rgba(0,181,235,.15);color:#00b5eb;border:1px solid rgba(0,181,235,.3)">eBay</span>
+            <span class="badge" style="background:rgba(0,181,235,.15);color:#00b5eb;border:1px solid rgba(0,181,235,.3)">Roblox</span>
+            <span class="badge" style="background:rgba(0,181,235,.15);color:#00b5eb;border:1px solid rgba(0,181,235,.3)">Salesforce</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-diagram-2 me-2"></i>ANN Index Comparison</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <thead><tr><th>Index</th><th>Memory</th><th>Speed</th><th>Best for</th></tr></thead>
+            <tbody>
+              <tr><td style="color:#00b5eb">HNSW</td><td>High</td><td>Fastest</td><td>In-memory, &lt;100M vecs</td></tr>
+              <tr><td style="color:#00b5eb">IVF_FLAT</td><td>Medium</td><td>Fast</td><td>Balanced, moderate scale</td></tr>
+              <tr><td style="color:#00b5eb">IVF_PQ</td><td>Low</td><td>Medium</td><td>Billion-scale, memory constrained</td></tr>
+              <tr><td style="color:#00b5eb">DiskANN</td><td>Minimal (disk)</td><td>Medium</td><td>Billion-scale on SSD</td></tr>
+              <tr><td style="color:#00b5eb">SCANN</td><td>Medium</td><td>Fast</td><td>Google-optimized, accurate</td></tr>
+              <tr><td style="color:#00b5eb">GPU_IVF</td><td>GPU VRAM</td><td>Extreme</td><td>Real-time + GPU available</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab-pane fade" id="mv-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-layers me-2"></i>Data Hierarchy</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#00b5eb">Collection</strong> — top-level entity (like a table). Has a schema defining fields and their types. Partitioned for organizational/performance purposes.</p>
+          <p><strong style="color:#00b5eb">Partition</strong> — logical sub-division of a collection (e.g., by category or date). Enables partition-level search to reduce search scope.</p>
+          <p><strong style="color:#00b5eb">Entity (Row)</strong> — a single record with a primary key, vector field(s), and optional scalar fields (integers, strings, booleans).</p>
+          <p><strong style="color:#00b5eb">Dense Vector</strong> — float32 arrays (typically 128-4096 dims). The main search field. Multiple vector fields allowed per collection.</p>
+          <p><strong style="color:#00b5eb">Sparse Vector</strong> — token→weight mappings for BM25/keyword-style hybrid search alongside dense vectors.</p>
+          <p><strong style="color:#00b5eb">Segments</strong> — internal storage unit. Growing segments (in memory) are sealed and persisted to object storage when full. Index built on sealed segments.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-code-square me-2"></i>Schema Definition</span>
+        </div>
+        <div class="card-body p-2">
+          <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">from pymilvus import MilvusClient, DataType
+
+client = MilvusClient("http://localhost:19530")
+
+# Define schema
+schema = MilvusClient.create_schema(auto_id=False)
+schema.add_field("id",          DataType.INT64,        is_primary=True)
+schema.add_field("product_id",  DataType.INT64)
+schema.add_field("title",       DataType.VARCHAR, max_length=512)
+schema.add_field("category",    DataType.VARCHAR, max_length=64)
+schema.add_field("price",       DataType.FLOAT)
+schema.add_field("embedding",   DataType.FLOAT_VECTOR, dim=1536)
+# Sparse for hybrid search
+schema.add_field("sparse_vec",  DataType.SPARSE_FLOAT_VECTOR)
+
+# Index parameters
+index_params = client.prepare_index_params()
+index_params.add_index(
+    field_name="embedding",
+    index_type="HNSW",
+    metric_type="COSINE",
+    params={"M": 16, "efConstruction": 200}
+)
+index_params.add_index(
+    field_name="sparse_vec",
+    index_type="SPARSE_INVERTED_INDEX",
+    metric_type="BM25"
+)
+
+client.create_collection(
+    collection_name="products",
+    schema=schema,
+    index_params=index_params
+)</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3 -->
+<div class="tab-pane fade" id="mv-query">
+  <div class="card" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+    <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+      <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-terminal me-2"></i>Python SDK Primer</span>
+    </div>
+    <div class="card-body p-2">
+      <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">from pymilvus import MilvusClient
+import numpy as np
+
+client = MilvusClient("http://localhost:19530")
+
+# 1. Insert entities
+data = [
+    {"id": 1, "product_id": 101, "title": "iPhone 15 Pro",
+     "category": "electronics", "price": 999.0,
+     "embedding": np.random.rand(1536).tolist()},
+    {"id": 2, "product_id": 102, "title": "MacBook Pro M3",
+     "category": "electronics", "price": 1999.0,
+     "embedding": np.random.rand(1536).tolist()},
+]
+client.insert(collection_name="products", data=data)
+
+# 2. Basic ANN search
+query_vector = np.random.rand(1536).tolist()
+results = client.search(
+    collection_name="products",
+    data=[query_vector],
+    anns_field="embedding",
+    limit=10,
+    output_fields=["product_id", "title", "price"],
+    search_params={"metric_type": "COSINE", "params": {"ef": 100}}
+)
+for hit in results[0]:
+    print(f"id={hit['id']}, title={hit['entity']['title']}, score={hit['distance']:.4f}")
+
+# 3. Filtered ANN search (pre-filtering)
+results = client.search(
+    collection_name="products",
+    data=[query_vector],
+    anns_field="embedding",
+    filter="category == 'electronics' and price < 1500",
+    limit=5,
+    output_fields=["title", "price"],
+    search_params={"metric_type": "COSINE", "params": {"ef": 200}}
+)
+
+# 4. Hybrid search (dense + sparse BM25)
+from pymilvus import AnnSearchRequest, RRFRanker
+
+dense_req = AnnSearchRequest(
+    data=[query_vector],
+    anns_field="embedding",
+    param={"metric_type": "COSINE", "params": {"ef": 100}},
+    limit=10
+)
+sparse_req = AnnSearchRequest(
+    data=[{"apple": 0.8, "macbook": 1.2}],  # BM25 tokens
+    anns_field="sparse_vec",
+    param={"metric_type": "BM25"},
+    limit=10
+)
+results = client.hybrid_search(
+    collection_name="products",
+    reqs=[dense_req, sparse_req],
+    ranker=RRFRanker(k=60),  # Reciprocal Rank Fusion
+    limit=10
+)
+
+# 5. Query (scalar filter, no vector)
+entities = client.query(
+    collection_name="products",
+    filter="category == 'electronics' and price > 500",
+    output_fields=["id", "title", "price"],
+    limit=100
+)
+
+# 6. Collection stats
+client.get_collection_stats("products")</pre>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4 -->
+<div class="tab-pane fade" id="mv-usecases">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-trophy me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#00b5eb">RAG (Retrieval-Augmented Generation)</strong> — store document embeddings in Milvus, retrieve the top-K most relevant chunks for LLM context injection. The backbone of enterprise AI document search.</p>
+          <p><strong style="color:#00b5eb">E-commerce Semantic Search (Walmart)</strong> — customers searching "cozy winter jacket" semantically match "fleece parka" even without keyword overlap. Milvus handles billion-product catalogs at Walmart scale.</p>
+          <p><strong style="color:#00b5eb">Recommendation Systems (Shopee)</strong> — user behavior embeddings (click sequences, purchase history) used to find similar users/items. Two-tower model outputs go into Milvus for online serving.</p>
+          <p><strong style="color:#00b5eb">Duplicate Detection at Scale</strong> — media companies embed images/videos and search for near-duplicates (perceptual hashing → vector search → 99.9% duplicate pairs found instantly at billion scale).</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-speedometer2 me-2"></i>Performance</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9">
+          <p><strong>HNSW:</strong> &lt;10ms for 100M vecs in-memory</p>
+          <p><strong>IVF_PQ:</strong> &lt;50ms for 1B vecs</p>
+          <p><strong>DiskANN:</strong> &lt;100ms on SSD for 10B vecs</p>
+          <p><strong>GPU index:</strong> 10x faster build + search</p>
+          <p><strong>Throughput:</strong> 10,000+ QPS per node</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5 -->
+<div class="tab-pane fade" id="mv-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-cpu me-2"></i>Cloud-Native Components</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#00b5eb">Root Coordinator</strong> — manages collection metadata (schemas, partitions, segments). Stores metadata in etcd.</p>
+          <p><strong style="color:#00b5eb">Data Coordinator + DataNode</strong> — manages segment lifecycle: growing → sealed → indexed. DataNodes write to object storage (S3/MinIO).</p>
+          <p><strong style="color:#00b5eb">Query Coordinator + QueryNode</strong> — manages query routing and segment loading. QueryNodes load segments from object storage into memory on demand.</p>
+          <p><strong style="color:#00b5eb">Index Coordinator + IndexNode</strong> — builds ANN indexes (HNSW, IVF) on sealed segments asynchronously. Index stored in object storage.</p>
+          <p><strong style="color:#00b5eb">Proxy</strong> — stateless load balancer. Routes SDK requests to appropriate coordinator/node.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(0,181,235,.3)">
+        <div class="card-header" style="background:rgba(0,181,235,.08);border-bottom:1px solid rgba(0,181,235,.2)">
+          <span class="fw-bold" style="color:#00b5eb"><i class="bi bi-funnel me-2"></i>Write Path &amp; WAL</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#00b5eb">Message Queue</strong> — Milvus uses Pulsar or Kafka as a Write-Ahead Log (WAL). Every insert/delete is published to the log before being applied.</p>
+          <p><strong style="color:#00b5eb">Growing Segments</strong> — new entities go into in-memory growing segments (binlogs). Multiple DataNodes subscribe to WAL partitions.</p>
+          <p><strong style="color:#00b5eb">Sealed Segments</strong> — when a growing segment reaches the threshold (default 512MB), it's sealed and persisted to object storage as immutable binlog files.</p>
+          <p><strong style="color:#00b5eb">Index Building</strong> — IndexNode reads sealed segments from object storage and builds ANN indexes asynchronously. Built indexes stored back to object storage. QueryNodes load indexes on demand.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

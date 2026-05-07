@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}SQLite — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-file-earmark-binary fs-2 me-3" style="color:#0f80cc"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">SQLite</h2>
+    <p class="text-muted mb-0">Embedded Relational · SQL · Serverless · Most deployed database engine on Earth</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Created by D. Richard Hipp in 2000, <a href="https://github.com/sqlite/sqlite" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">SQLite<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> is the world's most widely deployed database — estimated to run on over a trillion instances. Every iPhone, Android device, Chrome browser, Firefox, macOS, Python installation, and Electron app ships with SQLite. Its killer feature is simplicity: no server process, no configuration, no network protocol — just a single C library linked into your application that reads and writes a single portable file. It's the right choice for local data, mobile apps, caching, and testing, but not for high-concurrency server workloads.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="sqliteTabs">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sqlite-overview"><i class="bi bi-1-circle me-1"></i>Overview</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sqlite-model"><i class="bi bi-2-circle me-1"></i>Data Model</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sqlite-query"><i class="bi bi-3-circle me-1"></i>Query Language</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sqlite-usecases"><i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sqlite-arch"><i class="bi bi-5-circle me-1"></i>Architecture</button></li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1 -->
+<div class="tab-pane fade show active" id="sqlite-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2000 (D. Richard Hipp)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Public Domain (no license needed)</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>Embedded Relational</td></tr>
+            <tr><td style="color:#8b949e">Storage model</td><td>Single file, B-tree pages</td></tr>
+            <tr><td style="color:#8b949e">Concurrency</td><td>Single writer, multiple readers (WAL mode)</td></tr>
+            <tr><td style="color:#8b949e">Max DB size</td><td>281 TB (theoretical)</td></tr>
+            <tr><td style="color:#8b949e">Deployed instances</td><td>~1 trillion (estimated)</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-buildings me-2"></i>Where It Lives</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(15,128,204,.15);color:#0f80cc;border:1px solid rgba(15,128,204,.3)">Every iPhone (iOS)</span>
+            <span class="badge" style="background:rgba(15,128,204,.15);color:#0f80cc;border:1px solid rgba(15,128,204,.3)">Android</span>
+            <span class="badge" style="background:rgba(15,128,204,.15);color:#0f80cc;border:1px solid rgba(15,128,204,.3)">Chrome / Firefox</span>
+            <span class="badge" style="background:rgba(15,128,204,.15);color:#0f80cc;border:1px solid rgba(15,128,204,.3)">Python stdlib</span>
+            <span class="badge" style="background:rgba(15,128,204,.15);color:#0f80cc;border:1px solid rgba(15,128,204,.3)">macOS</span>
+            <span class="badge" style="background:rgba(15,128,204,.15);color:#0f80cc;border:1px solid rgba(15,128,204,.3)">Electron apps</span>
+            <span class="badge" style="background:rgba(15,128,204,.15);color:#0f80cc;border:1px solid rgba(15,128,204,.3)">WhatsApp</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-diagram-2 me-2"></i>Architecture Overview</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="font-size:.72rem;color:#c9d1d9;background:#0e1014;padding:1rem;border-radius:6px;margin:0;line-height:1.5">
+Your Application
+      │
+      │  #include "sqlite3.h"
+      │
+┌─────▼──────────────────────┐
+│       SQLite Library       │
+│  SQL Parser → Optimizer    │
+│  → Virtual Machine (VDBE)  │
+│  → B-Tree Module           │
+│  → Pager (cache)           │
+│  → OS Interface (VFS)      │
+└─────────────┬──────────────┘
+              │
+┌─────────────▼───────────────┐
+│    myapp.db (single file)   │
+│  Page 1: Header             │
+│  Pages 2-N: B-tree nodes    │
+│  (tables, indexes, blobs)   │
+└─────────────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab-pane fade" id="sqlite-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-layers me-2"></i>Type System</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p>SQLite uses <strong style="color:#0f80cc">dynamic typing with type affinity</strong> — columns declare a preferred type but any value can be stored in any column. This is the biggest gotcha for SQL Server/Oracle developers.</p>
+          <p><strong>5 storage classes:</strong> NULL · INTEGER (1-8 bytes) · REAL (float64) · TEXT (UTF-8/16) · BLOB</p>
+          <p><strong>Type affinity determines coercion:</strong> declare <code>INT</code> and SQLite stores integers efficiently; declare <code>TEXT</code> and numbers become strings.</p>
+          <p><strong>Strict Tables (3.37+)</strong> — add <code>STRICT</code> to CREATE TABLE to enforce proper type checking like traditional RDBMS.</p>
+          <p><strong>WITHOUT ROWID tables</strong> — use the PRIMARY KEY as the B-tree key, eliminating the implicit 64-bit rowid and saving space for narrow-key tables.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-code-square me-2"></i>Schema Example</span>
+        </div>
+        <div class="card-body p-2">
+          <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">-- Strict table (3.37+) — type-safe
+CREATE TABLE orders (
+    id       INTEGER PRIMARY KEY, -- alias for rowid
+    cust_id  INTEGER NOT NULL,
+    total    REAL    NOT NULL,
+    status   TEXT    DEFAULT 'pending',
+    created  TEXT    DEFAULT (datetime('now'))
+) STRICT;
+
+-- WITHOUT ROWID — for key-value lookups
+CREATE TABLE sessions (
+    token    TEXT PRIMARY KEY,
+    user_id  INTEGER,
+    expires  INTEGER -- Unix timestamp
+) WITHOUT ROWID;
+
+-- Virtual table (FTS5 full-text search)
+CREATE VIRTUAL TABLE docs USING fts5(
+    title, body,
+    content='articles',
+    content_rowid='id'
+);
+
+-- Partial index
+CREATE INDEX idx_active_orders
+ON orders(cust_id)
+WHERE status = 'pending';</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3 -->
+<div class="tab-pane fade" id="sqlite-query">
+  <div class="card" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+    <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+      <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-terminal me-2"></i>SQL Primer</span>
+    </div>
+    <div class="card-body p-2">
+      <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">-- 1. Window functions (3.25+)
+SELECT name, salary,
+       RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS dept_rank,
+       AVG(salary) OVER (PARTITION BY dept) AS dept_avg
+FROM employees;
+
+-- 2. Recursive CTE
+WITH RECURSIVE fib(a, b) AS (
+    VALUES (0, 1)
+    UNION ALL
+    SELECT b, a+b FROM fib WHERE b < 1000
+)
+SELECT a FROM fib;
+
+-- 3. JSON functions (built-in extension)
+SELECT json_extract(payload, '$.user.name') AS username,
+       json_each.value AS item
+FROM events, json_each(events.payload, '$.items')
+WHERE json_extract(payload, '$.type') = 'order';
+
+-- 4. FTS5 full-text search
+INSERT INTO docs(title, body) VALUES
+    ('SQLite Guide', 'SQLite is an embedded database...');
+
+SELECT title, snippet(docs, 1, '<b>','</b>','...',10)
+FROM docs WHERE docs MATCH 'embedded database'
+ORDER BY rank;
+
+-- 5. UPSERT (INSERT OR REPLACE / ON CONFLICT)
+INSERT INTO sessions(token, user_id, expires)
+VALUES ('abc123', 42, strftime('%s','now')+3600)
+ON CONFLICT(token) DO UPDATE SET
+    expires = excluded.expires,
+    user_id = excluded.user_id;
+
+-- 6. Analyze query plan
+EXPLAIN QUERY PLAN
+SELECT * FROM orders WHERE cust_id = 42 AND status = 'pending';</pre>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4 -->
+<div class="tab-pane fade" id="sqlite-usecases">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-trophy me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#0f80cc">Mobile Apps (iOS/Android)</strong> — CoreData on iOS wraps SQLite. Android Room is SQLite. WhatsApp stores message history in SQLite.</p>
+          <p><strong style="color:#0f80cc">Browser Local Storage</strong> — Chrome uses SQLite for cookies, history, bookmarks, and web storage. Firefox uses it for profiles.</p>
+          <p><strong style="color:#0f80cc">Unit Testing</strong> — spin up an in-memory SQLite database (<code>:memory:</code>) for each test, no cleanup needed. Fast and isolated.</p>
+          <p><strong style="color:#0f80cc">Local-First Applications</strong> — offline-capable apps store data locally, sync to server. Used in VS Code, Obsidian, and many Electron apps.</p>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-x-circle me-2"></i>When NOT to Use SQLite</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong>High concurrency writes</strong> — SQLite allows only one writer at a time (even in WAL mode). For multiple concurrent writers, use PostgreSQL or MySQL.</p>
+          <p><strong>Network access</strong> — SQLite has no server; it can't be shared across machines without a file system mount (which is unreliable over NFS).</p>
+          <p><strong>Very large datasets with complex queries</strong> — no query parallelism, no partitioning, single-threaded B-tree. PostgreSQL handles this better.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-speedometer2 me-2"></i>Performance</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9">
+          <p><strong>In-memory (</strong><code>:memory:</code><strong>):</strong> &lt;1μs reads</p>
+          <p><strong>WAL mode reads:</strong> concurrent, no lock</p>
+          <p><strong>Bulk insert:</strong> wrap in a single transaction for 100x speedup</p>
+          <p><strong>PRAGMA cache_size:</strong> default 2000 pages; increase for read-heavy workloads</p>
+          <p><strong>PRAGMA synchronous=NORMAL:</strong> safe but faster than FULL</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5 -->
+<div class="tab-pane fade" id="sqlite-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-cpu me-2"></i>Storage Engine</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#0f80cc">B-tree Pages</strong> — all tables and indexes are stored as B-trees in fixed-size pages (default 4096 bytes). The pager module manages the page cache.</p>
+          <p><strong style="color:#0f80cc">Journal Mode</strong> — default: rollback journal (writes original page before modifying). WAL mode: writes to a separate WAL file, enabling concurrent readers.</p>
+          <p><strong style="color:#0f80cc">WAL Mode</strong> — enables read/write concurrency (readers don't block writer, writer doesn't block readers). Use <code>PRAGMA journal_mode=WAL;</code>.</p>
+          <p><strong style="color:#0f80cc">VDBE</strong> — Virtual DataBase Engine: a register-based virtual machine that executes compiled SQL bytecode. <code>EXPLAIN</code> shows the bytecode.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(15,128,204,.3)">
+        <div class="card-header" style="background:rgba(15,128,204,.08);border-bottom:1px solid rgba(15,128,204,.2)">
+          <span class="fw-bold" style="color:#0f80cc"><i class="bi bi-gear me-2"></i>Key PRAGMAs</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9">
+          <table class="table table-sm mb-0">
+            <tr><td style="color:#8b949e">journal_mode=WAL</td><td>Concurrent readers + faster writes</td></tr>
+            <tr><td style="color:#8b949e">synchronous=NORMAL</td><td>Safe + faster (vs FULL)</td></tr>
+            <tr><td style="color:#8b949e">cache_size=-32000</td><td>32MB page cache (negative = KiB)</td></tr>
+            <tr><td style="color:#8b949e">foreign_keys=ON</td><td>Enforce FK constraints (OFF by default!)</td></tr>
+            <tr><td style="color:#8b949e">mmap_size=268435456</td><td>Memory-map 256MB for faster reads</td></tr>
+            <tr><td style="color:#8b949e">temp_store=MEMORY</td><td>Temp tables in RAM</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

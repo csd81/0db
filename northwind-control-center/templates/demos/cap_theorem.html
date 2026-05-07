@@ -9,6 +9,8 @@
   <h2 class="mb-0 fw-bold">⚖️ CAP Theorem</h2>
 </div>
 
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6"><a href="https://dl.acm.org/doi/10.1145/564585.564601" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Brewer's CAP Theorem<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> proves that any distributed data store can guarantee at most two of three properties simultaneously: Consistency (every read returns the most recent write), Availability (every non-failing node always responds), and Partition Tolerance (the system operates correctly during network splits). Since network partitions cannot be prevented in practice, the real engineering choice is always CP versus AP — sacrifice availability to preserve consistency, or serve potentially stale data to remain available. The demo maps real databases — Cassandra (AP), HBase (CP), Zookeeper (CP), CouchDB (AP) — onto the triangle and simulates what each design choice means for a shopping cart during a datacenter split. PACELC extends CAP to also model the latency-consistency trade-off that exists even when there is no active partition.</p>
+
 <!-- Core theorem statement -->
 <div class="alert mb-4 py-2" style="background:#0a0c14;border:1px solid #457b9d;color:#cdd3de;font-size:.82rem">
   <strong style="color:#e9c46a">Brewer's CAP Theorem (2000):</strong>
@@ -189,7 +191,7 @@ London partition: unreachable
             <td>Accepts writes on both sides</td>
             <td>Tunable consistency (ONE / QUORUM / ALL)</td>
             <td>Netflix watch history, IoT sensor ingestion</td></tr>
-        <tr><td><strong>Apache ZooKeeper / etcd</strong></td>
+        <tr><td><strong><a href="https://github.com/apache/zookeeper" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Apache ZooKeeper<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> / <a href="https://github.com/etcd-io/etcd" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">etcd<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a></strong></td>
             <td><span style="color:#06d6a0">CP</span></td>
             <td>Minority partitions become read-only</td>
             <td>Raft/ZAB consensus — majority quorum required</td>
@@ -229,7 +231,7 @@ London partition: unreachable
     Strategies: Last-Write-Wins (timestamp), CRDT (conflict-free replicated data types), read-repair, anti-entropy gossip.
   </div>
   <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.55rem .8rem;font-size:.7rem;color:#8892a4">
-    <strong style="color:#06d6a0">PACELC Extension (2012)</strong><br>
+    <a href="https://dl.acm.org/doi/10.1145/2491984" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px"><strong style="color:#06d6a0">PACELC Extension (2012)<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></strong></a><br>
     CAP only addresses the partition case. PACELC extends it: even when the system is running normally
     (no partition, <strong>E</strong>lse), there is a trade-off between <strong>L</strong>atency and <strong>C</strong>onsistency.
     A strongly consistent system must wait for replication acknowledgment (higher latency).

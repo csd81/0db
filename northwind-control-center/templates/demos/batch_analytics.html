@@ -55,6 +55,8 @@
   <span id="run-ts"   style="font-size:.65rem;color:#5a6070"></span>
 </div>
 
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">This demo runs the same aggregation query through two engines side by side: SQL Server's row-store B-tree index, which loads full tuples even when only two columns are needed, and a pandas columnar scan, which reads only the relevant columns from contiguous memory. Timings are measured at 2,155 Northwind rows and extrapolated to 10 million to show how the gap widens with row count. The cost difference is not a constant multiplier — it grows with row width because wider rows mean more wasted I/O in the row-store path. This is the core reason every data warehouse uses columnar storage for analytical workloads.</p>
+
 <!-- Concept banner -->
 <div class="d-flex gap-2 mb-2 align-items-stretch">
   <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
@@ -66,7 +68,7 @@
     <strong style="color:#06d6a0">Columnar (Dremel / BigQuery / pandas)</strong> — stores one column contiguously as a <em>column stripe</em>.
     Fast for: aggregations, GROUP BY — skips unneeded stripes entirely.
     Slow for: point lookups — must reconstruct a row from many separate stripes.
-    <span style="color:#5a6070">— Melnik et al., VLDB 2010</span>
+    <a href="https://research.google/pubs/pub36632/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px"><span style="color:#5a6070">— Melnik et al., VLDB 2010<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></span></a>
   </div>
   <div style="flex:1;background:#080a10;border:1px solid #1e2028;border-radius:.35rem;padding:.45rem .7rem;font-size:.7rem;color:#8892a4">
     <strong style="color:#8338ec">Dremel column skipping</strong> — Q1 only needs
@@ -213,7 +215,7 @@
 <!-- Dremel Architecture -->
 <div class="ba-card mb-2">
   <div class="ba-hdr" style="color:#8338ec">
-    <i class="bi bi-diagram-3"></i> Dremel Architecture — Melnik et al., VLDB 2010
+    <i class="bi bi-diagram-3"></i> Dremel Architecture — <a href="https://research.google/pubs/pub36632/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Melnik et al., VLDB 2010<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>
     <span class="ms-auto" style="font-size:.58rem;color:#5a6070;text-transform:none;letter-spacing:0">
       the paper behind BigQuery
     </span>

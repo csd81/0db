@@ -44,7 +44,10 @@ def _conn_str():
 
 def get_connection():
     if 'db_conn' not in g:
-        g.db_conn = pyodbc.connect(_conn_str(), timeout=10)
+        from services.sqlite_fallback import sql_or_sqlite
+        conn, backend = sql_or_sqlite(_conn_str(), 'northwind.db', timeout=10)
+        g.db_conn    = conn
+        g.db_backend = backend
     return g.db_conn
 
 

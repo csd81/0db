@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %}Snowflake — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-snow fs-2 me-3" style="color:#29b5e8"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Snowflake</h2>
+    <p class="text-muted mb-0">Cloud Data Warehouse · Separated compute/storage · Micro-partitions · Time Travel</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Snowflake launched in 2012 with a radical idea: build a data warehouse that lives entirely in the cloud, with compute and storage separated so each can scale independently. Its micro-partition storage, virtual warehouses, and instant data sharing across organizations made it the fastest-growing database company in history — reaching a $70B valuation at IPO. Today it is the default enterprise data warehouse for companies running <a href="https://github.com/dbt-labs/dbt-core" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">dbt<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> pipelines and Fivetran data loads.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="sfTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sf-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sf-model">
+      <i class="bi bi-2-circle me-1"></i>Data Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sf-query">
+      <i class="bi bi-3-circle me-1"></i>SQL Extensions
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sf-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sf-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="sf-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2012 (Benoit Dageville, Thierry Cruanes)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Proprietary SaaS (AWS / Azure / GCP)</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>Cloud OLAP / Data Warehouse</td></tr>
+            <tr><td style="color:#8b949e">Storage</td><td>Columnar micro-partitions on object storage</td></tr>
+            <tr><td style="color:#8b949e">Compute</td><td>Virtual Warehouses (independent clusters)</td></tr>
+            <tr><td style="color:#8b949e">Concurrency</td><td>Multi-cluster auto-scaling per VW</td></tr>
+            <tr><td style="color:#8b949e">Notable users</td><td>Capital One, DoorDash, Office Depot, Honeywell</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-star me-2"></i>Signature Features</span>
+        </div>
+        <div class="card-body p-3">
+          <ul style="font-size:.78rem;color:#c9d1d9;padding-left:1.2rem;margin-bottom:0;line-height:1.9">
+            <li>Zero-copy cloning — clone 10TB table in seconds (metadata only)</li>
+            <li>Time Travel — query any table as it was up to 90 days ago</li>
+            <li>Data Sharing — live cross-org queries with no data copy</li>
+            <li>Automatic clustering — no manual partition management</li>
+            <li>Semi-structured: VARIANT column for JSON/Avro/Parquet</li>
+            <li>Result cache — identical queries return instantly</li>
+            <li>Snowpipe — continuous micro-batch ingestion from S3/GCS</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-layers me-2"></i>3-Layer Architecture</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:1rem;font-size:.72rem;color:#c9d1d9;line-height:1.7;overflow-x:auto">┌─────────────────────────────────────────┐
+│         CLOUD SERVICES LAYER            │
+│  Query optimizer │ Metadata │ Security  │
+│  Access control  │ Result cache         │
+└─────────────────────────────────────────┘
+                   │
+┌───────────────────────────────────────┐
+│      VIRTUAL WAREHOUSES (compute)     │
+│                                       │
+│  ┌──────────────┐ ┌──────────────┐    │
+│  │  VW: Small   │ │  VW: XLarge  │    │
+│  │  (analytics) │ │  (ETL jobs)  │    │
+│  └──────────────┘ └──────────────┘    │
+│  Independent — can pause/resume       │
+│  Multiple VWs query same storage      │
+└───────────────────────────────────────┘
+                   │
+┌────────────────────────────────────────┐
+│     STORAGE LAYER (object storage)     │
+│  Micro-partitions (50-500 MB each)     │
+│  Columnar, compressed, immutable       │
+│  S3 (AWS) / Blob (Azure) / GCS (GCP)   │
+│  Zone maps track min/max per column    │
+└────────────────────────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA MODEL -->
+<div class="tab-pane fade" id="sf-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-table me-2"></i>Micro-partitions &amp; Clustering</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Standard table (auto micro-partitioned)
+CREATE TABLE orders (
+  order_id    NUMBER AUTOINCREMENT PRIMARY KEY,
+  customer_id NUMBER,
+  order_date  DATE,
+  region      VARCHAR(50),
+  total       NUMBER(12,2),
+  payload     VARIANT  -- JSON/Avro/Parquet semi-structured
+);
+
+-- Explicit clustering key (improves partition pruning)
+ALTER TABLE orders
+  CLUSTER BY (region, TO_DATE(order_date, 'YYYY-MM'));
+
+-- Zero-copy clone (instant, no data copied)
+CREATE TABLE orders_backup CLONE orders;
+
+-- Time Travel: query table as of yesterday
+SELECT * FROM orders AT (OFFSET => -86400)
+WHERE region = 'EMEA';</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-braces me-2"></i>VARIANT (Semi-structured)</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Load JSON directly into VARIANT
+INSERT INTO orders (payload)
+SELECT PARSE_JSON('{
+  "customer": {"name": "Alice", "tier": "gold"},
+  "items": [{"sku":"A1","qty":2},{"sku":"B3","qty":1}],
+  "shipping": {"method": "express", "days": 2}
+}');
+
+-- Query VARIANT with colon path syntax
+SELECT
+  payload:customer:name::STRING AS name,
+  payload:shipping:method::STRING AS ship,
+  ARRAY_SIZE(payload:items) AS item_count
+FROM orders;
+
+-- Lateral FLATTEN to unnest arrays
+SELECT o.order_id, f.value:sku::STRING AS sku
+FROM orders o,
+LATERAL FLATTEN(input => o.payload:items) f;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: SQL EXTENSIONS -->
+<div class="tab-pane fade" id="sf-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-code-slash me-2"></i>QUALIFY &amp; MATCH_RECOGNIZE</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- QUALIFY: filter on window functions (no subquery!)
+SELECT customer_id, total,
+  RANK() OVER (PARTITION BY region ORDER BY total DESC) AS rnk
+FROM orders
+QUALIFY rnk <= 3;   -- top 3 per region, inline
+
+-- PIVOT: rotate rows to columns
+SELECT * FROM monthly_sales
+PIVOT (SUM(amount) FOR month IN ('Jan','Feb','Mar','Apr'))
+ORDER BY product;
+
+-- MATCH_RECOGNIZE: pattern matching in sequences
+-- Find sessions: page views followed by a purchase
+SELECT *
+FROM events
+MATCH_RECOGNIZE (
+  PARTITION BY user_id ORDER BY event_time
+  MEASURES FIRST(view.url) AS landing_page
+  PATTERN (view+ purchase)
+  DEFINE
+    view     AS event_type = 'pageview',
+    purchase AS event_type = 'order'
+);</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-arrow-repeat me-2"></i>Streams &amp; Tasks (ELT)</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Stream: CDC on a Snowflake table
+CREATE STREAM orders_stream ON TABLE orders;
+
+-- Stream exposes new/changed rows with metadata
+SELECT METADATA$ACTION,  -- INSERT/DELETE
+       METADATA$ISUPDATE,
+       order_id, total
+FROM orders_stream;
+
+-- Task: scheduled SQL (like a cron job)
+CREATE TASK refresh_dashboard
+  WAREHOUSE = 'XSMALL'
+  SCHEDULE = '5 MINUTE'
+AS
+  MERGE INTO dashboard_summary d
+  USING (SELECT region, SUM(total) AS revenue
+         FROM orders_stream GROUP BY region) s
+  ON d.region = s.region
+  WHEN MATCHED THEN UPDATE SET d.revenue = s.revenue
+  WHEN NOT MATCHED THEN INSERT VALUES (s.region, s.revenue);</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="sf-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-grid-1x2 me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#29b5e8">Enterprise DWH:</span> Replace on-premises Teradata/Netezza. No capacity planning, pay per second of compute. <a href="https://github.com/dbt-labs/dbt-core" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">dbt<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> transforms, Fivetran/<a href="https://github.com/airbytehq/airbyte" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Airbyte<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> loads, Tableau/Looker BI on top.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#29b5e8">Data Sharing:</span> A vendor shares a live dataset with 500 customers. Each customer queries live data — no ETL, no data copy. Snowflake Marketplace powers commercial data products.</div>
+          <div style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#29b5e8">ELT pipelines:</span> Snowpipe ingests from S3, Tasks transform, Streams capture CDC. The entire pipeline lives inside Snowflake with no external orchestrator needed for simple cases.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">Query performance</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Excellent (analytics)</span></td></tr>
+            <tr><td style="color:#8b949e">Concurrency</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Multi-VW isolation</span></td></tr>
+            <tr><td style="color:#8b949e">OLTP suitability</td><td><span class="badge" style="background:rgba(239,68,68,.2);color:#ef4444">Poor (no row update)</span></td></tr>
+            <tr><td style="color:#8b949e">Cost model</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Credits + storage</span></td></tr>
+            <tr><td style="color:#8b949e">Setup</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Zero ops (managed)</span></td></tr>
+            <tr><td style="color:#8b949e">Vendor lock-in</td><td><span class="badge" style="background:rgba(239,68,68,.2);color:#ef4444">High (proprietary)</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="sf-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-cpu me-2"></i>Micro-partitions</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#29b5e8">Micro-partition:</strong> Tables are divided into 50–500 MB immutable columnar files stored in object storage. Each micro-partition stores metadata: min/max per column (zone maps). The query optimizer uses zone maps to skip irrelevant partitions without scanning them.</p>
+          <p><strong style="color:#29b5e8">No indexes needed:</strong> Automatic partition pruning via zone maps replaces manual index creation. Add a clustering key if zone map pruning is insufficient (high cardinality columns, date range queries).</p>
+          <p><strong style="color:#29b5e8">Result cache:</strong> Identical queries return the cached result in milliseconds without consuming VW compute credits. Cache is shared across all users of the account.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(41,181,232,.35)">
+        <div class="card-header" style="background:rgba(41,181,232,.1);border-bottom:1px solid rgba(41,181,232,.25)">
+          <span class="fw-bold" style="color:#29b5e8"><i class="bi bi-sliders me-2"></i>Virtual Warehouse Sizing</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Create and size a virtual warehouse
+CREATE WAREHOUSE analytics_wh
+  WAREHOUSE_SIZE = 'LARGE'    -- XS / S / M / L / XL / 2XL..
+  AUTO_SUSPEND = 60           -- pause after 60s idle
+  AUTO_RESUME = TRUE          -- wake on query
+  MAX_CLUSTER_COUNT = 5       -- multi-cluster for concurrency
+  MIN_CLUSTER_COUNT = 1;
+
+-- Switch warehouse for a session
+USE WAREHOUSE analytics_wh;
+
+-- Monitor credit consumption
+SELECT warehouse_name,
+  SUM(credits_used) AS credits,
+  SUM(execution_time_ms)/1000 AS exec_sec
+FROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY
+WHERE start_time >= DATEADD('day', -7, CURRENT_DATE)
+GROUP BY warehouse_name ORDER BY credits DESC;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block title %}CockroachDB — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-shield-check fs-2 me-3" style="color:#6933ff"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">CockroachDB</h2>
+    <p class="text-muted mb-0">Distributed SQL · Raft consensus · Serializable isolation · PostgreSQL-compatible</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  CockroachDB was founded in 2015 by ex-Googlers who built <a href="https://research.google/pubs/pub39966/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Spanner<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>. The name reflects its design goal: like a cockroach, it survives anything — node failures, region outages, even an entire cloud provider going down. It implements the full PostgreSQL wire protocol, so your existing Postgres drivers work without changes, but data is transparently sharded across a cluster of nodes using <a href="https://raft.github.io/raft.pdf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Raft consensus<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>, giving you global active-active distributed SQL with serializable isolation.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="crdbTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#crdb-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#crdb-model">
+      <i class="bi bi-2-circle me-1"></i>Data Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#crdb-query">
+      <i class="bi bi-3-circle me-1"></i>SQL &amp; Distribution
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#crdb-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#crdb-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="crdb-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2015 (Spencer Kimball, Peter Mattis, Ben Darnell)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>BSL (Core), CCL (Enterprise)</td></tr>
+            <tr><td style="color:#8b949e">SQL compat.</td><td>PostgreSQL wire protocol (most features)</td></tr>
+            <tr><td style="color:#8b949e">Consistency</td><td>Serializable (strongest isolation)</td></tr>
+            <tr><td style="color:#8b949e">Replication</td><td><a href="https://raft.github.io/raft.pdf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Raft<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> consensus (3 or 5 replicas per range)</td></tr>
+            <tr><td style="color:#8b949e">Storage</td><td><a href="https://github.com/facebook/rocksdb" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">RocksDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (LSM) per node</td></tr>
+            <tr><td style="color:#8b949e">Notable users</td><td>Bose, Comcast, Shipt, Freddie Mac</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-shield-check me-2"></i>Survivor by Design</span>
+        </div>
+        <div class="card-body p-3">
+          <ul style="font-size:.78rem;color:#c9d1d9;padding-left:1.2rem;margin-bottom:0;line-height:1.9">
+            <li>Raft consensus: majority of replicas must agree</li>
+            <li>Lose 1 of 3 replicas → still fully functional</li>
+            <li>Lose 2 of 5 replicas → still fully functional</li>
+            <li>Full region failure → traffic reroutes to surviving regions</li>
+            <li>No replica ever returns stale reads to clients</li>
+            <li>Automatic range rebalancing when nodes join/leave</li>
+            <li>Rolling upgrades with zero downtime</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-diagram-2 me-2"></i>Distributed Architecture</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:1rem;font-size:.72rem;color:#c9d1d9;line-height:1.7;overflow-x:auto">┌──────────────────────────────────────────┐
+│            SQL LAYER                     │
+│  Full PostgreSQL SQL → optimizer         │
+│  → distributed execution plan            │
+└───────────────────┬──────────────────────┘
+                    │
+┌───────────────────▼──────────────────────┐
+│  TRANSACTION LAYER (Serializable)        │
+│  Hybrid Logical Clock (HLC) timestamps   │
+│  Optimistic concurrency + Raft abort     │
+└───────────────────┬──────────────────────┘
+                    │
+┌───────────────────▼─────────────────────────┐
+│           RANGE LAYER                       │
+│  Table data split into 512MB ranges         │
+│                                             │
+│  Range 1 [/orders/1-100]   Replicas: A B C  │
+│  Range 2 [/orders/101-200] Replicas: B C D  │
+│  Range 3 [/orders/201-300] Replicas: A C D  │
+│                                             │
+│  Each range = independent Raft group        │
+│  Leaseholder node handles reads/writes      │
+└───────────────────┬─────────────────────────┘
+                    │
+┌───────────────────▼──────────────────────┐
+│     STORAGE LAYER (RocksDB per node)     │
+│  LSM Tree, SSTs, WAL, compaction         │
+└──────────────────────────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA MODEL -->
+<div class="tab-pane fade" id="crdb-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-table me-2"></i>Relational + Distribution</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Standard PostgreSQL DDL
+CREATE TABLE orders (
+  order_id   UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  customer   STRING NOT NULL,
+  region     STRING NOT NULL,
+  total      DECIMAL(12,2),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  INDEX idx_customer (customer),
+  INDEX idx_region_created (region, created_at)
+);
+
+-- Geo-partitioning: data stays in its region
+ALTER TABLE orders PARTITION BY LIST (region) (
+  PARTITION us_east VALUES IN ('us-east-1'),
+  PARTITION us_west VALUES IN ('us-west-2'),
+  PARTITION eu      VALUES IN ('eu-west-1')
+);
+
+-- Pin EU data to EU nodes (GDPR compliance!)
+ALTER PARTITION eu OF INDEX orders@primary
+  CONFIGURE ZONE USING
+    num_replicas = 3,
+    constraints = '[+region=eu-west-1]',
+    lease_preferences = '[[+region=eu-west-1]]';</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-globe me-2"></i>Multi-Region Patterns</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Multi-region database setup
+ALTER DATABASE ecommerce
+  SET PRIMARY REGION "us-east-1";
+ALTER DATABASE ecommerce
+  ADD REGION "eu-west-1";
+ALTER DATABASE ecommerce
+  ADD REGION "ap-northeast-1";
+
+-- Global table: replicated to all regions
+-- Fast reads everywhere, slower writes
+ALTER TABLE product_catalog SET locality GLOBAL;
+
+-- Regional table: home region is leaseholder
+-- Low latency reads/writes in home region
+ALTER TABLE orders
+  SET LOCALITY REGIONAL BY ROW AS region;
+-- CockroachDB automatically routes based on
+-- the 'region' column value
+
+-- Follower reads: read slightly stale data
+-- from local replica (no cross-region round trip)
+SELECT * FROM orders
+AS OF SYSTEM TIME follower_read_timestamp()
+WHERE region = 'eu-west-1' AND customer_id = $1;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: SQL & DISTRIBUTION -->
+<div class="tab-pane fade" id="crdb-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-code-slash me-2"></i>PostgreSQL-Compatible SQL</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Serializable transaction (ACID)
+BEGIN;
+  SELECT balance FROM accounts WHERE id = $1 FOR UPDATE;
+  UPDATE accounts SET balance = balance - 100 WHERE id = $1;
+  UPDATE accounts SET balance = balance + 100 WHERE id = $2;
+COMMIT;
+-- If concurrent txn touches same rows: one will retry
+
+-- SAVEPOINT for nested logic
+BEGIN;
+  SAVEPOINT cockroach_restart;
+  -- ... operations ...
+  RELEASE SAVEPOINT cockroach_restart;
+COMMIT;
+
+-- AS OF SYSTEM TIME: time-travel reads
+SELECT * FROM orders
+AS OF SYSTEM TIME '-10m'
+WHERE region = 'us-east-1';
+
+-- SHOW RANGES: see how data is distributed
+SHOW RANGES FROM TABLE orders;
+-- Shows: start/end key, replicas, leaseholder node</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-speedometer me-2"></i>EXPLAIN (DISTSQL)</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Distributed query plan
+EXPLAIN (DISTSQL)
+SELECT region, COUNT(*), SUM(total)
+FROM orders
+WHERE created_at > now() - INTERVAL '30d'
+GROUP BY region;
+
+-- Output shows:
+-- TableReader → distributed across nodes
+-- Aggregator → partial agg on each node
+-- Final Aggregator → merge on gateway
+-- Each node processes its local ranges
+
+-- Force index usage
+SELECT * FROM orders@idx_region_created
+WHERE region = 'eu-west-1'
+  AND created_at > now() - INTERVAL '7d'
+ORDER BY created_at DESC LIMIT 100;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="crdb-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-building me-2"></i>Real-World Deployments</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#6933ff">Bose:</span> Migrated from MySQL to CockroachDB for global inventory management. Active-active in 3 regions — retail systems in US, EU, and Asia all write to their nearest region with no cross-region latency penalty.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#6933ff">Freddie Mac:</span> Financial transactions require serializable isolation. CockroachDB's guarantee that no transaction reads stale data is critical for mortgage processing correctness.</div>
+          <div style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#6933ff">Shipt:</span> Kubernetes-native deployment. CockroachDB's Operator for k8s provides declarative cluster management, rolling upgrades, and automated backups in containerized environments.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">Consistency</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Serializable</span></td></tr>
+            <tr><td style="color:#8b949e">SQL compat.</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">PostgreSQL wire</span></td></tr>
+            <tr><td style="color:#8b949e">Global HA</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Built-in multi-region</span></td></tr>
+            <tr><td style="color:#8b949e">Write latency</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Higher (Raft RTT)</span></td></tr>
+            <tr><td style="color:#8b949e">OLAP</td><td><span class="badge" style="background:rgba(239,68,68,.2);color:#ef4444">Not suitable</span></td></tr>
+            <tr><td style="color:#8b949e">CAP</td><td><span class="badge" style="background:rgba(105,51,255,.2);color:#6933ff">CP (Raft majority)</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="crdb-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-cpu me-2"></i><a href="https://raft.github.io/raft.pdf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Raft<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> + HLC</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#6933ff">Raft consensus:</strong> Each 512MB range has 3 or 5 replicas. The leaseholder replica receives all reads/writes for that range. It proposes changes to followers, which acknowledge; once a majority acknowledges, the change is committed. Losing the leaseholder triggers automatic election.</p>
+          <p><strong style="color:#6933ff">Hybrid Logical Clock (HLC):</strong> CockroachDB uses HLC (wall clock + logical component) to establish a total order of events across nodes without requiring synchronized clocks. This enables serializability across a geographically distributed cluster.</p>
+          <p><strong style="color:#6933ff"><a href="https://github.com/facebook/rocksdb" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">RocksDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> storage:</strong> Each node stores its replica data in RocksDB (an LSM-based store, C++ version of LevelDB). SSTs, compaction, and Bloom filters handle the storage layer efficiently.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(105,51,255,.35)">
+        <div class="card-header" style="background:rgba(105,51,255,.1);border-bottom:1px solid rgba(105,51,255,.25)">
+          <span class="fw-bold" style="color:#6933ff"><i class="bi bi-sliders me-2"></i>Operations &amp; Monitoring</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Cluster status
+SELECT node_id, address, is_live, replicas_leaders
+FROM crdb_internal.kv_node_status;
+
+-- Active transactions
+SELECT * FROM [SHOW TRANSACTIONS];
+
+-- Find hot ranges (high QPS)
+SELECT range_id, store_id, lease_holder_node_id,
+  queries_per_second
+FROM crdb_internal.ranges_no_leases
+ORDER BY queries_per_second DESC LIMIT 10;
+
+-- Zone config: control replication
+ALTER TABLE orders CONFIGURE ZONE USING
+  num_replicas = 5,
+  gc.ttlseconds = 90000;
+
+-- Backup to S3 (Enterprise)
+BACKUP DATABASE ecommerce
+  INTO 's3://my-bucket/crdb-backup?AUTH=implicit'
+  AS OF SYSTEM TIME '-10s';</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

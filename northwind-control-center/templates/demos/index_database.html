@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% block title %}Database Demos | Visual Demo Lab{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <i class="bi bi-database-fill fs-2 me-3" style="color:#818cf8"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Database Demos</h2>
+    <p class="text-muted mb-0">Interactive SQL, replication, in-memory, and NoSQL demonstrations</p>
+  </div>
+  <div class="ms-auto">
+    <a href="{{ url_for('demos.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>All Demos</a>
+  </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-4 g-4">
+
+  <div class="col">
+    <div class="card h-100 border-primary">
+      <div class="card-body">
+        <div class="fs-1 mb-2">⚡</div>
+        <h5 class="card-title fw-bold">ACID Bank Transfer</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Watch atomicity in action: a bank transfer that commits cleanly or rolls back completely.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.acid') }}" class="btn btn-primary w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100 border-danger">
+      <div class="card-body">
+        <div class="fs-1 mb-2">🔒</div>
+        <h5 class="card-title fw-bold">Deadlock Detection</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Three transactions lock resources in a cycle. PostgreSQL detects the deadlock and kills one victim.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.deadlock') }}" class="btn btn-danger w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100 border-warning">
+      <div class="card-body">
+        <div class="fs-1 mb-2">⚙️</div>
+        <h5 class="card-title fw-bold">Trigger Chain</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Insert a row and watch the Python-side trigger fire and append to the audit log in real time.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.trigger_chain') }}" class="btn btn-warning w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100 border-info">
+      <div class="card-body">
+        <div class="fs-1 mb-2">📦</div>
+        <h5 class="card-title fw-bold">Log Shipping</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Step through how transaction log entries are replayed from master to replica.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.log_shipping') }}" class="btn btn-info w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100 border-success">
+      <div class="card-body">
+        <div class="fs-1 mb-2">🔄</div>
+        <h5 class="card-title fw-bold">Snapshot Replication</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Watch a snapshot propagate from a central hub to branch nodes.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.snapshot') }}" class="btn btn-success w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactional Replication -->
+  <div class="col-md-3">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="fs-1 mb-2">⚡</div>
+        <h5 class="card-title fw-bold">Transactional Replication</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Live order stream: stock check + balance check → commit or rollback. Publisher → Distributor → Subscriber in near real-time.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.transactional') }}" class="btn btn-warning w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blockchain PoW -->
+  <div class="col-md-3">
+    <div class="card h-100 border-dark">
+      <div class="card-body">
+        <div class="fs-1 mb-2">⛓</div>
+        <h5 class="card-title fw-bold">Blockchain — Proof of Work</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Three peers race to mine blocks via SHA-256 PoW. Forks form when two peers finish simultaneously — first-seen rule resolves them. Chain stored in live <strong>rqlite</strong>.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.blockchain') }}" class="btn btn-dark w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NYSE -->
+  <div class="col-md-3">
+    <div class="card h-100 border-danger">
+      <div class="card-body">
+        <div class="fs-1 mb-2">🏛</div>
+        <h5 class="card-title fw-bold">NYSE — Auction Market + DMM</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Designated Market Maker legally obligated to provide liquidity.
+          Trigger a Flash Crash and watch the DMM catch the falling knife with its own capital.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.nyse') }}" class="btn btn-danger w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NASDAQ -->
+  <div class="col-md-3">
+    <div class="card h-100 border-dark">
+      <div class="card-body">
+        <div class="fs-1 mb-2">🏛</div>
+        <h5 class="card-title fw-bold">NASDAQ Simulation</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Fragmented pipeline: Broker → Matching Engine → DTCC → Custodian.
+          T+1 settlement, HFT colocation vs retail latency, SIPC-protected custody.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.nasdaq') }}" class="btn btn-dark w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Crypto Exchange -->
+  <div class="col-md-3">
+    <div class="card h-100 border-primary">
+      <div class="card-body">
+        <div class="fs-1 mb-2">📈</div>
+        <h5 class="card-title fw-bold">Crypto Exchange (CEX)</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Order matching engine, Kafka event stream, ACID ledger — shows why a CEX is NOT a blockchain.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.crypto_exchange') }}" class="btn btn-primary w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merge Replication -->
+  <div class="col-md-3">
+    <div class="card h-100 border-secondary">
+      <div class="card-body">
+        <div class="fs-1 mb-2">🚐</div>
+        <h5 class="card-title fw-bold">Merge Replication</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Last-mile delivery: driver works offline, both sides change data, then Merge Agent syncs bidirectionally and resolves conflicts (Central Office wins).
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.merge_replication') }}" class="btn btn-secondary w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HFT Latency Arbitrage Race -->
+  <div class="col-md-3">
+    <div class="card h-100 border-warning">
+      <div class="card-body">
+        <div class="fs-1 mb-2">⚡</div>
+        <h5 class="card-title fw-bold">HFT Latency Arbitrage Race</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          NYSE drops WMT $0.05 — who reaches Chicago CBOT first to capture the $5 spread?
+          Co-located HFT via microwave vs retail cloud server. Configure &amp; race.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.hft') }}" class="btn btn-warning w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Order Fulfillment -->
+  <div class="col-md-3">
+    <div class="card h-100 border-success">
+      <div class="card-body">
+        <div class="fs-1 mb-2">🚚</div>
+        <h5 class="card-title fw-bold">Order Fulfillment</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          Cell-by-cell order reading with FK traversal, live package building, constraint-driven rollback, and shipment.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.fulfill') }}" class="btn btn-success w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph Routing -->
+  <div class="col-md-3">
+    <div class="card h-100 border-info">
+      <div class="card-body">
+        <div class="fs-1 mb-2">🗺️</div>
+        <h5 class="card-title fw-bold">Graph City Router</h5>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">
+          SQL Server Graph NODE/EDGE tables, MATCH, SHORTEST_PATH — then NetworkX A* for weighted European road routing on a live Leaflet map.
+        </p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.graph_routing_page') }}" class="btn btn-info w-100">
+          <i class="bi bi-play-circle me-1"></i> Launch
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Extra demos (beyond book chapters) ─────────────────────────────────── -->
+<h4 class="mt-5 mb-3 fw-bold" style="color:#818cf8">
+  <i class="bi bi-plus-circle me-2"></i>Extra
+</h4>
+<div class="row row-cols-1 row-cols-md-4 g-3">
+
+  <div class="col">
+    <div class="card h-100" style="border-color:#34d399;background:#0e1014">
+      <div class="card-body">
+        <div class="fs-2 mb-1">🌿</div>
+        <h6 class="card-title fw-bold" style="color:#34d399">Neo4j — Graph Database</h6>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">Property graph vs relational. Cypher vs SQL: friends-of-friends, shortest path, variable-length traversal. Live sandbox on Social + Northwind graph.</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c13_neo4j') }}" class="btn btn-sm w-100" style="background:#34d399;color:#000;border:none">Launch</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100" style="border-color:#38bdf8;background:#0e1014">
+      <div class="card-body">
+        <div class="fs-2 mb-1">🗳️</div>
+        <h6 class="card-title fw-bold" style="color:#38bdf8">Distributed Consensus — Raft</h6>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">PoW vs Raft. rqlite 3-node cluster over SQLite. Chaos Monkey: kill the leader, ~1 s failover, automatic log catch-up.</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c14_raft') }}" class="btn btn-sm w-100" style="background:#38bdf8;color:#000;border:none">Launch</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100" style="border-color:#f97316;background:#0e1014">
+      <div class="card-body">
+        <div class="fs-2 mb-1">🔍</div>
+        <h6 class="card-title fw-bold" style="color:#f97316">Elasticsearch Full-Text Search</h6>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">Inverted index + BM25 scoring. Bucket/metric aggregations. SQL + Elasticsearch dual-DB via CDC → Kafka.</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c15_elasticsearch') }}" class="btn btn-sm w-100" style="background:#f97316;color:#fff;border:none">Launch</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100" style="border-color:#a78bfa;background:#0e1014">
+      <div class="card-body">
+        <div class="fs-2 mb-1">🔁</div>
+        <h6 class="card-title fw-bold" style="color:#a78bfa">CDC, Kafka &amp; Flyway</h6>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">CDC via transaction log tap on Northwind. Kafka decouples SQL Server from consumers. Flyway versioned migrations. ACID test runner: 20 threads, 4 isolation levels.</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c16_cdc') }}" class="btn btn-sm w-100" style="background:#a78bfa;color:#000;border:none">Launch</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100" style="border-color:#34d399;background:#0e1014">
+      <div class="card-body">
+        <div class="fs-2 mb-1">🍃</div>
+        <h6 class="card-title fw-bold" style="color:#34d399">MongoDB, CQRS &amp; pgvector</h6>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">$jsonSchema validation. CQRS read/write split on replica sets. pgvector HNSW semantic search: "chai" → Ipoh Coffee by cosine distance.</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c17_mongo') }}" class="btn btn-sm w-100" style="background:#34d399;color:#000;border:none">Launch</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card h-100" style="border-color:#38bdf8;background:#0e1014">
+      <div class="card-body">
+        <div class="fs-2 mb-1">☁️</div>
+        <h6 class="card-title fw-bold" style="color:#38bdf8">Cloud Database Ecosystems</h6>
+        <p class="card-text" style="font-size:.72rem;color:#8892a4">Cloud SQL vs RDS vs Azure SQL. Spanner TrueTime, Aurora Global, Cosmos DB consistency. BigQuery ML, TiDB TiFlash, AlloyDB, Ledger Tables.</p>
+      </div>
+      <div class="card-footer bg-transparent border-top-0">
+        <a href="{{ url_for('demos.c18_cloud') }}" class="btn btn-sm w-100" style="background:#38bdf8;color:#000;border:none">Launch</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

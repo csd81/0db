@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block title %}Amazon Redshift — Cloud Data Warehouse{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-bar-chart-fill fs-2 me-3" style="color:#8c4fff"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Amazon Redshift</h2>
+      <p class="text-muted mb-0">MPP columnar warehouse · Redshift Spectrum · RA3 compute-storage separation</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    Amazon Redshift launched in 2013 as the first cloud data warehouse at scale (<a href="https://dl.acm.org/doi/10.1145/3514221.3526055" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">SIGMOD 2022 paper<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>), bringing petabyte-scale
+    analytics to companies that couldn't afford Oracle Exadata. Its MPP (Massively Parallel Processing)
+    architecture distributes data across compute nodes (slices), each processing its partition in parallel.
+    RA3 nodes (2019) decoupled compute from storage via managed S3-backed storage, enabling independent scaling.
+    Redshift Spectrum queries S3 data directly without loading it. AQUA (Advanced Query Accelerator)
+    pushes compute to the storage layer.
+  </p>
+
+  <ul class="nav nav-tabs mb-3" id="redshiftTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">Query Language</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(140,79,255,.3)">
+            <div class="card-header" style="background:rgba(140,79,255,.08);border-bottom:1px solid rgba(140,79,255,.2)">
+              <span class="fw-semibold" style="color:#8c4fff">MPP Columnar at Cloud Scale</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Redshift derives from PostgreSQL but shares almost no code at the storage/execution level.
+                Data is stored column-by-column with per-column compression (up to 80% reduction).
+                Queries are compiled to machine code at planning time (not interpreted), then executed
+                in parallel across all compute node slices.
+              </p>
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Distribution keys control which rows go to which node — choosing the right distribution
+                key eliminates cross-node data movement ("redistribution") for JOIN operations.
+                Sort keys enable zone map pruning: Redshift tracks min/max per 1MB block and skips
+                blocks that can't contain rows matching the WHERE predicate.
+              </p>
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;margin-top:1rem">
+-- Redshift Serverless: pay-per-query, no cluster management
+-- RPU (Redshift Processing Units): 8 RPU minimum
+-- Auto-scales for concurrent queries
+
+-- Redshift ML: train and run SageMaker models from SQL
+CREATE MODEL customer_churn_model
+FROM (SELECT age, plan_type, usage_gb, is_churn FROM training_data)
+TARGET is_churn
+FUNCTION predict_churn
+IAM_ROLE 'arn:aws:iam::123456789:role/RedshiftML';
+
+SELECT customer_id, predict_churn(age, plan_type, usage_gb) AS churn_prob
+FROM customers
+WHERE churn_prob > 0.8;</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(140,79,255,.3)">
+            <div class="card-header" style="background:rgba(140,79,255,.08);border-bottom:1px solid rgba(140,79,255,.2)">
+              <span class="fw-semibold" style="color:#8c4fff">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Launched</td><td>2013</td></tr>
+                  <tr><td class="text-muted">Engine</td><td>PostgreSQL-derived MPP</td></tr>
+                  <tr><td class="text-muted">Storage</td><td>Columnar, compressed</td></tr>
+                  <tr><td class="text-muted">Node types</td><td>RA3 (compute+S3), DC2 (local SSD)</td></tr>
+                  <tr><td class="text-muted">Max scale</td><td>Petabyte (Spectrum: unlimited)</td></tr>
+                  <tr><td class="text-muted">Concurrency</td><td>WLM queues, concurrency scaling</td></tr>
+                  <tr><td class="text-muted">S3 queries</td><td>Redshift Spectrum</td></tr>
+                  <tr><td class="text-muted">Hardware cache</td><td>AQUA (custom chips)</td></tr>
+                  <tr><td class="text-muted">Notable users</td><td>Nasdaq, McDonald's, Lyft</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(140,79,255,.3)">
+            <div class="card-header" style="background:rgba(140,79,255,.08);border-bottom:1px solid rgba(140,79,255,.2)">
+              <span class="fw-semibold" style="color:#8c4fff">Distribution Styles &amp; Sort Keys</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- Distribution styles control data placement:
+
+-- KEY: rows with same key go to same slice → JOINs are local
+CREATE TABLE orders (
+    order_id    BIGINT,
+    customer_id BIGINT,
+    order_date  DATE,
+    total       DECIMAL(10,2)
+)
+DISTSTYLE KEY
+DISTKEY (customer_id)         -- hash to node by customer_id
+SORTKEY (order_date);         -- rows sorted on disk by date (zone maps)
+
+-- EVEN: round-robin (uniform distribution, bad for JOINs)
+CREATE TABLE staging_raw (...)
+DISTSTYLE EVEN;
+
+-- ALL: copy full table to every node (small dimension tables)
+CREATE TABLE countries (country_code CHAR(2), name TEXT)
+DISTSTYLE ALL;
+
+-- AUTO: Redshift decides based on table size
+CREATE TABLE products (...) DISTSTYLE AUTO;
+
+-- Compound sort key (range scan on multiple columns)
+CREATE TABLE events (
+    event_time  TIMESTAMP,
+    event_type  VARCHAR(50),
+    user_id     BIGINT
+)
+COMPOUND SORTKEY (event_time, event_type);
+
+-- Interleaved sort key (equal weight to each column)
+CREATE TABLE fact_sales (...)
+INTERLEAVED SORTKEY (sale_date, product_id, region);</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(140,79,255,.3)">
+            <div class="card-header" style="background:rgba(140,79,255,.08);border-bottom:1px solid rgba(140,79,255,.2)">
+              <span class="fw-semibold" style="color:#8c4fff">Columnar Compression Encodings</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+-- Column-level compression encodings
+CREATE TABLE page_views (
+    view_id    BIGINT     ENCODE ZSTD,
+    url        VARCHAR(2048) ENCODE LZO,     -- text → LZO
+    status     SMALLINT   ENCODE BYTEDICT,   -- few distinct values → dict
+    user_id    BIGINT     ENCODE DELTA32K,   -- sorted sequential IDs
+    view_time  TIMESTAMP  ENCODE AZ64,       -- numeric → AZ64 (best for numbers)
+    referer    VARCHAR(512) ENCODE ZSTD      -- general → ZSTD
+);
+
+-- ANALYZE COMPRESSION: let Redshift recommend encodings
+ANALYZE COMPRESSION page_views;
+-- Result: Redshift suggests optimal encoding per column
+
+-- Materialized views for pre-aggregated analytics
+CREATE MATERIALIZED VIEW daily_revenue AS
+SELECT
+    DATE_TRUNC('day', order_date) AS day,
+    product_category,
+    SUM(total)      AS revenue,
+    COUNT(*)        AS order_count
+FROM orders
+JOIN products USING (product_id)
+GROUP BY 1, 2;
+
+-- Auto-refresh when base tables change
+ALTER MATERIALIZED VIEW daily_revenue
+AUTO REFRESH YES;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(140,79,255,.3)">
+            <div class="card-header" style="background:rgba(140,79,255,.08);border-bottom:1px solid rgba(140,79,255,.2)">
+              <span class="fw-semibold" style="color:#8c4fff">Redshift SQL — Data Warehouse Patterns</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── 1. COPY from S3 (bulk load — orders of magnitude faster than INSERT)
+COPY orders
+FROM 's3://my-bucket/orders/2024/'
+IAM_ROLE 'arn:aws:iam::123456789:role/RedshiftS3'
+FORMAT PARQUET;  -- or CSV, JSON, ORC, AVRO
+
+-- ── 2. UNLOAD to S3 (export results)
+UNLOAD ('SELECT * FROM orders WHERE order_date > ''2024-01-01''')
+TO 's3://my-bucket/exports/orders/'
+IAM_ROLE 'arn:aws:iam::123456789:role/RedshiftS3'
+FORMAT PARQUET PARALLEL ON;
+
+-- ── 3. Redshift Spectrum: query S3 without loading
+CREATE EXTERNAL SCHEMA spectrum_schema
+FROM DATA CATALOG
+DATABASE 'mydb'
+IAM_ROLE 'arn:aws:iam::123456789:role/RedshiftSpectrum'
+CREATE EXTERNAL DATABASE IF NOT EXISTS;
+
+CREATE EXTERNAL TABLE spectrum_schema.historical_orders (
+    order_id BIGINT, customer_id BIGINT, total FLOAT
+)
+STORED AS PARQUET
+LOCATION 's3://my-bucket/historical/';
+
+-- JOIN Redshift table with S3 data seamlessly
+SELECT r.customer_id, COUNT(*) AS recent_orders, SUM(h.total) AS historical_spend
+FROM orders r
+JOIN spectrum_schema.historical_orders h ON r.customer_id = h.customer_id
+WHERE r.order_date > CURRENT_DATE - 30
+GROUP BY r.customer_id;
+
+-- ── 4. Window functions for cohort analysis
+SELECT
+    DATE_TRUNC('month', first_purchase_date)  AS cohort_month,
+    DATE_TRUNC('month', order_date)           AS order_month,
+    COUNT(DISTINCT customer_id)               AS active_customers,
+    ROUND(COUNT(DISTINCT customer_id) * 100.0
+        / FIRST_VALUE(COUNT(DISTINCT customer_id)) OVER (
+              PARTITION BY DATE_TRUNC('month', first_purchase_date)
+              ORDER BY DATE_TRUNC('month', order_date)
+          ), 2)                               AS retention_rate
+FROM customer_orders
+GROUP BY 1, 2
+ORDER BY 1, 2;
+
+-- ── 5. EXPLAIN to see distribution and broadcast operations
+EXPLAIN
+SELECT c.name, SUM(o.total)
+FROM customers c JOIN orders o ON c.id = o.customer_id
+GROUP BY c.name;
+-- XN HashAggregate  (cost=...)
+--   → XN Hash (cost=...)
+--       → XN Seq Scan on orders (DS_BCAST_INNER) ← broadcast small table
+--   → XN Seq Scan on customers</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(140,79,255,.3)">
+            <div class="card-header" style="background:rgba(140,79,255,.08);border-bottom:1px solid rgba(140,79,255,.2)">
+              <span class="fw-semibold" style="color:#8c4fff">Killer Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#8c4fff">Enterprise BI &amp; Reporting</div><p style="font-size:.83rem;color:#8b949e">Nasdaq runs market data analytics on Redshift. McDonald's enterprise BI. Heavily used as the destination for AWS Glue / Kinesis Firehose ETL pipelines feeding into Tableau, QuickSight, or Looker.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#8c4fff">Data Lake Analytics</div><p style="font-size:.83rem;color:#8b949e">Redshift Spectrum enables query-in-place on S3 data lake. Hot data in Redshift cluster; cold historical data in S3. Single SQL query spans both. Lyft uses this pattern for event analytics.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#8c4fff">Real-Time Streaming Analytics</div><p style="font-size:.83rem;color:#8b949e">Redshift Streaming Ingestion: directly ingest from Kinesis Data Streams or MSK (Kafka) into materialized views. Sub-second latency from stream to queryable table.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(140,79,255,.3)">
+            <div class="card-header" style="background:rgba(140,79,255,.08);border-bottom:1px solid rgba(140,79,255,.2)">
+              <span class="fw-semibold" style="color:#8c4fff">Redshift vs Snowflake vs BigQuery</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-dark" style="font-size:.79rem">
+                  <thead><tr><th>Feature</th><th style="color:#8c4fff">Redshift</th><th>Snowflake</th><th>BigQuery</th></tr></thead>
+                  <tbody>
+                    <tr><td>Pricing model</td><td>Per node/hour</td><td>Per credit</td><td>Per TB scanned</td></tr>
+                    <tr><td>Cloud</td><td>AWS only</td><td>AWS/Azure/GCP</td><td>GCP only</td></tr>
+                    <tr><td>Concurrency</td><td>WLM queues</td><td>Multi-cluster</td><td>Serverless</td></tr>
+                    <tr><td>Data sharing</td><td>Datashare</td><td>Native share</td><td>Analytics Hub</td></tr>
+                    <tr><td>S3 queries</td><td>Spectrum</td><td>External tables</td><td>BigLake (GCS)</td></tr>
+                    <tr><td>ML integration</td><td>Redshift ML</td><td>Cortex/Snowpark</td><td>BQML</td></tr>
+                    <tr><td>Best for</td><td>AWS-native teams</td><td>Multi-cloud</td><td>GCP + BigQuery ML</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(140,79,255,.3)">
+            <div class="card-header" style="background:rgba(140,79,255,.08);border-bottom:1px solid rgba(140,79,255,.2)">
+              <span class="fw-semibold" style="color:#8c4fff">RA3 Architecture: Compute-Storage Separation</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌────────────────────────────────────────────────────────────────────┐
+│  Leader Node (single)                                              │
+│  ├── Query parsing and planning                                    │
+│  ├── Query compilation to C++ (LLVM)                               │
+│  ├── WLM (Workload Management) — assign queries to queues          │
+│  └── Aggregates partial results from compute nodes                 │
+├────────────────────────────────────────────────────────────────────┤
+│  Compute Nodes (2–128 RA3 nodes, 2–32 slices each)                 │
+│                                                                    │
+│  RA3.xlplus  — 4 vCPU,  32 GB RAM,  64 TB managed storage          │
+│  RA3.4xlarge — 12 vCPU, 96 GB RAM,  128 TB managed storage         │
+│  RA3.16xlarge— 48 vCPU, 384 GB RAM, 128 TB managed storage         │
+│                                                                    │
+│  Each node: NVMe SSD cache (hot data) + S3-backed managed storage  │
+│  AQUA: custom hardware (FPGAs) in storage layer run predicates     │
+│  before data hits compute nodes                                    │
+├────────────────────────────────────────────────────────────────────┤
+│  Managed Storage (S3-backed, per-node namespace)                   │
+│  ├── Columnar blocks (1 MB each)                                   │
+│  ├── Zone maps (min/max per block for pruning)                     │
+│  ├── Per-column compression                                        │
+│  └── Automatic tiering: SSD cache → S3 (LRU)                       │
+└────────────────────────────────────────────────────────────────────┘
+
+WLM Queues example:
+  Queue 1: "ETL" — 2 concurrent queries, 60% memory
+  Queue 2: "BI Reports" — 10 concurrent, 30% memory
+  Queue 3: "Default" — 5 concurrent, 10% memory
+  Concurrency scaling: overflow queries → auto-add compute nodes</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

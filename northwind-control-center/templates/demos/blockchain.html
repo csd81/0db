@@ -18,12 +18,14 @@
   </button>
 </div>
 
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">Bitcoin's Proof-of-Work consensus requires that a block's SHA-256 hash start with a required number of zero bits, forcing miners to try billions of nonces until one satisfies the constraint. Each additional leading zero roughly doubles the expected computation, which is how the network maintains ~10-minute block times by raising difficulty as total hash power grows. Three peer nodes race to mine each block; when two finish simultaneously, a fork occurs and the first-broadcast block wins while the other becomes an orphan. The chain of linked hashes makes tampering with any historical block immediately detectable because every subsequent block's hash would change.</p>
+
 <!-- Explanation -->
 <div class="alert alert-secondary py-2 mb-3 small">
   <strong>How it works:</strong>
   Three peers race to mine each block by finding a nonce where
   <code>SHA-256(prev_hash | txs | peer | nonce)</code> starts with <code>00</code>.
-  The winner broadcasts to the <strong>rqlite</strong> network ledger.
+  The winner broadcasts to the <a href="https://github.com/rqlite/rqlite" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px"><strong>rqlite</strong><i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> network ledger.
   If two peers finish during the propagation window → <strong>fork</strong> — the
   first-seen block wins, the other is <strong>orphaned</strong>.
   Unlike traditional DB replication, no central authority decides the winner —
@@ -106,7 +108,7 @@
   <span><span class="badge bg-success">BLOCK</span> block accepted into chain</span>
   <span><span class="badge bg-danger">FORK</span> two peers mined same height simultaneously</span>
   <span><span class="badge bg-secondary text-decoration-line-through">orphaned</span> discarded block (first-seen rule)</span>
-  <span>DB: <strong>rqlite</strong> v8 — Raft consensus, single-node</span>
+  <span>DB: <a href="https://github.com/rqlite/rqlite" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px"><strong>rqlite</strong><i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> v8 — Raft consensus, single-node</span>
 </div>
 {% endblock %}
 

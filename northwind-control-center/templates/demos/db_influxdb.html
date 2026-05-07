@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+{% block title %}InfluxDB — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-graph-up fs-2 me-3" style="color:#22adf6"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">InfluxDB</h2>
+    <p class="text-muted mb-0">Time-Series · TSM Engine · Line Protocol · Flux · Telegraf-InfluxDB-Grafana stack</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  <a href="https://github.com/influxdata/influxdb" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">InfluxDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> was created in 2013 by InfluxData specifically for time-indexed data — metrics, events, and sensor readings where every record has a timestamp as its primary dimension. Its measurement → tags → fields model is purpose-built for the way monitoring data is produced and queried. InfluxDB is the "I" in the TIG stack (<a href="https://github.com/influxdata/telegraf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Telegraf<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> collects, InfluxDB stores, <a href="https://github.com/grafana/grafana" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Grafana<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> visualizes) and is the default choice for infrastructure monitoring, IoT sensor ingestion, and application performance telemetry.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="ifxTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#ifx-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ifx-model">
+      <i class="bi bi-2-circle me-1"></i>Data Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ifx-query">
+      <i class="bi bi-3-circle me-1"></i>Flux &amp; InfluxQL
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ifx-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ifx-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="ifx-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2013 (InfluxData, Paul Dix)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>MIT (OSS v1/v2), BSL (v3+)</td></tr>
+            <tr><td style="color:#8b949e">Storage engine</td><td>TSM (Time-Structured Merge Tree)</td></tr>
+            <tr><td style="color:#8b949e">Data model</td><td>Measurement → Tags → Fields → Timestamp</td></tr>
+            <tr><td style="color:#8b949e">Query languages</td><td>Flux (v2+), InfluxQL (SQL-like, v1)</td></tr>
+            <tr><td style="color:#8b949e">Write protocol</td><td>Line Protocol (compact text format)</td></tr>
+            <tr><td style="color:#8b949e">Ecosystem</td><td><a href="https://github.com/influxdata/telegraf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Telegraf<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (500+ input plugins) + <a href="https://github.com/grafana/grafana" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Grafana<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-diagram-2 me-2"></i>TIG Stack</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">  ┌──────────────────────────────────┐
+  │          TELEGRAF                │
+  │  500+ input plugins collect:     │
+  │  CPU, memory, disk, net, Docker, │
+  │  Kafka, PostgreSQL, SNMP, ...    │
+  └──────────────┬───────────────────┘
+                 │ Line Protocol (UDP/HTTP)
+  ┌──────────────▼───────────────────┐
+  │          INFLUXDB                │
+  │  TSM storage, retention policies,│
+  │  continuous queries / tasks      │
+  └──────────────┬───────────────────┘
+                 │ HTTP API / Flux
+  ┌──────────────▼───────────────────┐
+  │           GRAFANA                │
+  │  Dashboards, alerting,           │
+  │  InfluxDB data source plugin     │
+  └──────────────────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-clock-history me-2"></i>Why Time-Series Databases Exist</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#22adf6">The append-only nature:</strong> Time-series data is almost always written once in timestamp order and never updated. This allows optimizations impossible in general-purpose databases: no MVCC overhead, no row-level locking, no B-tree rebalancing on writes.</p>
+          <p><strong style="color:#22adf6">Compression wins:</strong> Consecutive timestamps differ by a fixed interval (1s, 10s). Delta-of-delta encoding compresses a day of 1-second timestamps into a few bytes. <a href="https://www.vldb.org/pvldb/vol8/p1816-teller.pdf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Gorilla encoding<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> for floats achieves similar ratios. InfluxDB's TSM achieves 10-40x compression ratios on typical metrics.</p>
+          <p><strong style="color:#22adf6">Retention is built-in:</strong> Infrastructure metrics from 6 months ago are worthless. Retention policies auto-delete data after a configured duration without expensive DELETE queries. Continuous queries downsample: keep 1-year of hourly averages, 30 days of per-minute, 7 days of per-second.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA MODEL -->
+<div class="tab-pane fade" id="ifx-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-table me-2"></i>Measurement / Tags / Fields</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Conceptual model:
+-- Measurement = table name (like "cpu", "disk")
+-- Tags = indexed string metadata (host, region)
+-- Fields = actual values (float/int/bool/string)
+-- Time = timestamp (nanosecond precision)
+
+-- Line Protocol (write format):
+measurement,tag1=val1,tag2=val2 field1=x,field2=y timestamp
+
+-- Examples:
+cpu,host=web01,region=us-east cpu_percent=45.2,load_1m=1.8 1706054400000000000
+cpu,host=web02,region=us-east cpu_percent=62.1,load_1m=2.3 1706054400000000000
+disk,host=web01,device=sda1 used_bytes=50000000000i,free_bytes=30000000000i
+
+-- Tags vs Fields:
+-- Tags: indexed, great for filtering/grouping
+--       keep cardinality LOW (&lt;100k distinct values)
+-- Fields: not indexed, numeric data, measured values
+-- NEVER put a timestamp or UUID in a tag!</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-calendar me-2"></i>Retention Policies</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- InfluxQL (v1) retention policy
+CREATE RETENTION POLICY "7d" ON "monitoring"
+  DURATION 7d
+  REPLICATION 1
+  DEFAULT;
+
+CREATE RETENTION POLICY "1y" ON "monitoring"
+  DURATION 52w
+  REPLICATION 1;
+
+-- Continuous query: downsample per-second to hourly
+CREATE CONTINUOUS QUERY cq_hourly
+ON monitoring BEGIN
+  SELECT mean(cpu_percent) AS cpu_mean,
+         max(cpu_percent)  AS cpu_max
+  INTO "1y"."cpu_hourly"
+  FROM "7d"."cpu"
+  GROUP BY time(1h), host, region
+END;
+
+-- InfluxDB v3 (IOx): bucket + retention
+influx bucket create --name metrics --retention 7d</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: FLUX & INFLUXQL -->
+<div class="tab-pane fade" id="ifx-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-code-slash me-2"></i>Flux Language (Functional Pipeline)</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">// Flux: pipe-forward operator |>
+// Average CPU per host, last 24h
+from(bucket: "monitoring")
+  |> range(start: -24h)
+  |> filter(fn: (r) => r._measurement == "cpu")
+  |> filter(fn: (r) => r._field == "cpu_percent")
+  |> aggregateWindow(every: 1h, fn: mean)
+  |> group(columns: ["host"])
+  |> mean()
+
+// Moving average (rolling window)
+from(bucket: "monitoring")
+  |> range(start: -7d)
+  |> filter(fn: (r) => r._measurement == "http_requests")
+  |> timedMovingAverage(every: 1h, period: 6h)
+
+// Join two measurements
+cpuData = from(bucket: "monitoring")
+  |> range(start: -1h)
+  |> filter(fn: (r) => r._measurement == "cpu")
+memData = from(bucket: "monitoring")
+  |> range(start: -1h)
+  |> filter(fn: (r) => r._measurement == "memory")
+join(tables: {cpu: cpuData, mem: memData},
+     on: ["_time", "host"])</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-bar-chart me-2"></i>InfluxQL (SQL-like, v1)</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- InfluxQL: familiar SQL-like syntax
+SELECT mean("cpu_percent"), max("cpu_percent")
+FROM "cpu"
+WHERE time > now() - 24h
+  AND "host" = 'web01'
+GROUP BY time(1h), "host"
+ORDER BY time DESC
+LIMIT 24;
+
+-- fill(previous): forward-fill gaps
+SELECT mean("temperature")
+FROM "sensors"
+WHERE time > now() - 7d
+GROUP BY time(5m), "device_id"
+fill(previous);
+
+-- Derivative (rate of change)
+SELECT derivative(mean("bytes_sent"), 1s) AS bps
+FROM "network"
+WHERE time > now() - 1h
+GROUP BY time(10s), "interface";</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="ifx-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-grid-1x2 me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#22adf6">Infrastructure monitoring:</span> The TIG stack (<a href="https://github.com/influxdata/telegraf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Telegraf<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> + <a href="https://github.com/influxdata/influxdb" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">InfluxDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> + <a href="https://github.com/grafana/grafana" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Grafana<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>) is the most popular open-source monitoring stack. Telegraf's 500+ plugins collect from everything — Linux system stats, Docker containers, Kubernetes pods, PostgreSQL, Kafka.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#22adf6">IoT sensor data:</span> A factory floor with 10,000 sensors writing temperature every second generates 864M readings/day. InfluxDB handles this with write batching and automatic retention expiry.</div>
+          <div style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#22adf6">Financial tick data:</span> Stock price ticks, order book snapshots, and trade records are inherently time-indexed. InfluxDB's nanosecond timestamp precision and fast range queries make it suitable for backtesting pipelines.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">Write throughput</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Very high (append)</span></td></tr>
+            <tr><td style="color:#8b949e">Compression</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">10-40x (delta+Gorilla)</span></td></tr>
+            <tr><td style="color:#8b949e">General SQL</td><td><span class="badge" style="background:rgba(239,68,68,.2);color:#ef4444">Not supported</span></td></tr>
+            <tr><td style="color:#8b949e">Cardinality limit</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Careful! High = OOM</span></td></tr>
+            <tr><td style="color:#8b949e">Ecosystem</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Excellent (TIG)</span></td></tr>
+            <tr><td style="color:#8b949e">Best for</td><td><span class="badge" style="background:rgba(34,173,246,.2);color:#22adf6">Monitoring / IoT</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="ifx-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-cpu me-2"></i>TSM Storage Engine</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#22adf6">TSM (Time-Structured Merge Tree):</strong> Inspired by LSM trees but optimized for time-series. Writes go to an in-memory Write-Ahead Log (WAL) and Cache. The Cache flushes to immutable TSM files periodically. Background compaction merges TSM files.</p>
+          <p><strong style="color:#22adf6">Series cardinality:</strong> Each unique combination of measurement + tag set is a "series." High cardinality (millions of unique series, e.g., one series per user_id) bloats the in-memory index and causes OOM. Keep tag values to bounded enumerations.</p>
+          <p><strong style="color:#22adf6">Shard groups:</strong> Data is physically partitioned into time-based shard groups (default: 7 days). Each shard group is an independent TSM storage directory. Retention policies delete entire expired shard groups atomically.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(34,173,246,.35)">
+        <div class="card-header" style="background:rgba(34,173,246,.1);border-bottom:1px solid rgba(34,173,246,.25)">
+          <span class="fw-bold" style="color:#22adf6"><i class="bi bi-sliders me-2"></i>Telegraf Config Example</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7"># telegraf.conf
+[agent]
+  interval = "10s"
+  flush_interval = "10s"
+
+[[inputs.cpu]]
+  percpu = false
+  totalcpu = true
+  collect_cpu_time = false
+
+[[inputs.mem]]
+
+[[inputs.disk]]
+  ignore_fs = ["tmpfs", "devtmpfs"]
+
+[[inputs.docker]]
+  endpoint = "unix:///var/run/docker.sock"
+
+[[outputs.influxdb_v2]]
+  urls = ["http://influxdb:8086"]
+  token = "$INFLUX_TOKEN"
+  organization = "myorg"
+  bucket = "monitoring"</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

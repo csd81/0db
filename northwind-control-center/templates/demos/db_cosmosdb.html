@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+{% block title %}Azure Cosmos DB — Multi-Model Globally Distributed DB{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-globe fs-2 me-3" style="color:#0072c6"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Azure Cosmos DB</h2>
+      <p class="text-muted mb-0">Multi-API · 5 consistency levels · Global active-active · &lt;10ms P99</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    Cosmos DB (2017, <a href="https://dl.acm.org/doi/10.1145/3318464.3386177" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">SIGMOD 2020 paper<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>) is Microsoft's globally distributed, multi-model database. Its unique differentiator:
+    one engine, multiple API surfaces — SQL (NoSQL), MongoDB, Cassandra, Gremlin (graph), and Azure Table.
+    Applications using any of these wire protocols can benefit from global distribution, 5 tunable
+    consistency levels, and guaranteed single-digit millisecond reads. Xbox Live uses Cosmos DB for
+    3.5 billion users' gaming state. Rolls-Royce uses it for jet engine telemetry.
+  </p>
+
+  <ul class="nav nav-tabs mb-3" id="cosmosTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">Query Language</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">One Engine, Multiple Wire Protocols</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Cosmos DB's internal format — Atom-Record-Sequence (ARS) — is a binary encoding that
+                can represent documents, key-value pairs, wide-column rows, and graph edges.
+                The API you choose is just a wire protocol: MongoDB driver, Cassandra CQL, Gremlin,
+                or Cosmos SQL all read/write to the same underlying ARS storage.
+              </p>
+              <p style="font-size:.85rem;color:#c9d1d9">
+                The billing unit is <strong>Request Units (RU/s)</strong> — a normalized measure of
+                CPU + memory + IOPS consumed per operation. A 1KB document read costs 1 RU; complex
+                queries cost more. You provision RU/s (or use Serverless for pay-per-operation).
+                Every operation returns its consumed RUs in the response header.
+              </p>
+              <div class="row g-2 mt-2">
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;text-align:center"><div style="color:#0072c6;font-weight:600">NoSQL API</div><div style="font-size:.78rem;color:#8b949e">Native Cosmos SQL over JSON</div></div></div>
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;text-align:center"><div style="color:#0072c6;font-weight:600">MongoDB API</div><div style="font-size:.78rem;color:#8b949e">MongoDB wire protocol compatible</div></div></div>
+                <div class="col-md-4"><div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;text-align:center"><div style="color:#0072c6;font-weight:600">Cassandra API</div><div style="font-size:.78rem;color:#8b949e">CQL + Cassandra drivers</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Launched</td><td>2017 (DocumentDB 2014)</td></tr>
+                  <tr><td class="text-muted">APIs</td><td>NoSQL, MongoDB, Cassandra, Gremlin, Table</td></tr>
+                  <tr><td class="text-muted">Consistency</td><td>5 levels (Strong → Eventual)</td></tr>
+                  <tr><td class="text-muted">SLA latency</td><td>&lt;10ms P99 reads, &lt;15ms writes</td></tr>
+                  <tr><td class="text-muted">Availability</td><td>99.999% (multi-region)</td></tr>
+                  <tr><td class="text-muted">Billing</td><td>RU/s provisioned or Serverless</td></tr>
+                  <tr><td class="text-muted">Regions</td><td>60+ Azure regions</td></tr>
+                  <tr><td class="text-muted">Notable users</td><td>Xbox Live, Walmart, Rolls-Royce</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">5 Consistency Levels</span>
+            </div>
+            <div class="card-body">
+              <div class="row g-2">
+                <div class="col"><div style="background:#0d1117;border:1px solid rgba(0,114,198,.4);border-radius:6px;padding:.75rem"><div style="color:#0072c6;font-weight:600;font-size:.82rem">Strong</div><div style="font-size:.76rem;color:#8b949e;margin-top:.25rem">Read returns most recent write. One region only (or single-write). Highest consistency, highest latency.</div></div></div>
+                <div class="col"><div style="background:#0d1117;border:1px solid rgba(0,114,198,.3);border-radius:6px;padding:.75rem"><div style="color:#4d9de0;font-weight:600;font-size:.82rem">Bounded Staleness</div><div style="font-size:.76rem;color:#8b949e;margin-top:.25rem">Reads lag behind writes by K versions or T seconds. Predictable staleness window.</div></div></div>
+                <div class="col"><div style="background:#0d1117;border:1px solid rgba(0,114,198,.2);border-radius:6px;padding:.75rem"><div style="color:#6cb8e6;font-weight:600;font-size:.82rem">Session</div><div style="font-size:.76rem;color:#8b949e;margin-top:.25rem">Read-your-writes within a session. Default and most popular. Balances consistency with performance.</div></div></div>
+                <div class="col"><div style="background:#0d1117;border:1px solid rgba(0,114,198,.15);border-radius:6px;padding:.75rem"><div style="color:#8b949e;font-weight:600;font-size:.82rem">Consistent Prefix</div><div style="font-size:.76rem;color:#8b949e;margin-top:.25rem">Never see out-of-order writes. If A then B was written, reads see A, or A+B, never B alone.</div></div></div>
+                <div class="col"><div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem"><div style="color:#8b949e;font-weight:600;font-size:.82rem">Eventual</div><div style="font-size:.76rem;color:#8b949e;margin-top:.25rem">Lowest latency. No ordering guarantee. Best for read-heavy globally distributed apps.</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Partition Keys &amp; Auto-Indexing</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+// Cosmos DB NoSQL API — JSON documents
+// Container: "orders" with partition key = /customerId
+
+{
+  "id": "order-12345",
+  "customerId": "cust-789",        // partition key — all queries filtered by this go to one partition
+  "orderDate": "2024-01-15",
+  "status": "shipped",
+  "items": [
+    {"productId": "prod-1", "qty": 2, "price": 29.99},
+    {"productId": "prod-2", "qty": 1, "price": 149.00}
+  ],
+  "shipping": {
+    "address": "123 Main St",
+    "city": "Seattle",
+    "estimatedDelivery": "2024-01-18"
+  },
+  "_etag": "\"0100a7e9-0000-0100-0000-65a4b8a30000\"",  // Cosmos system property
+  "_ts": 1705276579                                      // Unix timestamp (Cosmos)
+}
+
+// Every field is automatically indexed — no index management needed
+// Composite indexes for ORDER BY + WHERE:
+{
+  "indexingPolicy": {
+    "compositeIndexes": [[
+      {"path": "/customerId", "order": "ascending"},
+      {"path": "/orderDate",  "order": "descending"}
+    ]]
+  }
+}
+
+// Exclude paths to reduce RU costs and storage:
+{
+  "indexingPolicy": {
+    "excludedPaths": [{"path": "/items/*"}, {"path": "/shipping/*"}]
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Python SDK — CRUD Operations</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+from azure.cosmos import CosmosClient, PartitionKey
+
+client = CosmosClient(url=ENDPOINT, credential=KEY)
+db = client.create_database_if_not_exists("northwind")
+container = db.create_container_if_not_exists(
+    id="orders",
+    partition_key=PartitionKey(path="/customerId"),
+    offer_throughput=400  # RU/s (autoscale: use default_ttl + max_throughput)
+)
+
+# CREATE — upsert a document
+container.upsert_item({
+    "id": "order-001",
+    "customerId": "cust-42",
+    "total": 199.99,
+    "status": "pending"
+})
+
+# READ — by id + partition key (1 RU, fastest path)
+item = container.read_item(item="order-001", partition_key="cust-42")
+
+# QUERY — cross-partition query (costs more RUs)
+results = list(container.query_items(
+    query="SELECT * FROM c WHERE c.status = @status",
+    parameters=[{"name": "@status", "value": "pending"}],
+    enable_cross_partition_query=True
+))
+
+# PATCH — partial update (no read-modify-write needed)
+container.patch_item(
+    item="order-001", partition_key="cust-42",
+    patch_operations=[
+        {"op": "replace", "path": "/status", "value": "shipped"},
+        {"op": "add", "path": "/shippedAt", "value": "2024-01-16"}
+    ]
+)
+
+# BATCH — transactional batch within a partition
+batch = [
+    ("create", ({"id": "order-002", "customerId": "cust-42"},), {}),
+    ("replace", ("order-001", {"id": "order-001", "customerId": "cust-42", "status": "complete"}), {}),
+]
+container.execute_item_batch(batch, partition_key="cust-42")</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Cosmos SQL (NoSQL API) Query Examples</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── 1. Basic SELECT with WHERE
+SELECT c.id, c.customerId, c.total, c.status
+FROM c
+WHERE c.customerId = "cust-42"
+  AND c.status IN ("pending", "processing")
+ORDER BY c.orderDate DESC
+OFFSET 0 LIMIT 10
+
+-- ── 2. Nested document access
+SELECT c.id, c.shipping.city, ARRAY_LENGTH(c.items) AS item_count
+FROM c
+WHERE c.shipping.city = "Seattle"
+
+-- ── 3. JOIN (self-join for arrays — not cross-container!)
+SELECT c.id, item.productId, item.qty
+FROM c
+JOIN item IN c.items          -- unnests the items array
+WHERE item.qty > 1
+
+-- ── 4. Aggregate with GROUP BY
+SELECT c.status, COUNT(1) AS count, SUM(c.total) AS revenue
+FROM c
+GROUP BY c.status
+
+-- ── 5. Array functions
+SELECT c.id,
+       ARRAY_CONTAINS(c.tags, "premium") AS is_premium,
+       ARRAY_LENGTH(c.items)             AS num_items
+FROM c
+WHERE ARRAY_CONTAINS(c.tags, "urgent")
+
+-- ── 6. String functions
+SELECT c.id,
+       UPPER(c.customerId)    AS upperId,
+       SUBSTRING(c.id, 0, 8) AS shortId,
+       CONTAINS(c.notes, "refund") AS has_refund_note
+FROM c
+
+-- ── 7. Type-checking (Cosmos stores schema-free JSON)
+SELECT c.id, IS_DEFINED(c.discountCode) AS has_discount
+FROM c
+WHERE IS_NUMBER(c.total) AND c.total > 500
+
+-- ── 8. Spatial query (Point, Polygon, LineString)
+SELECT c.id, c.name
+FROM c
+WHERE ST_DISTANCE(c.location, {"type":"Point","coordinates":[-122.33,47.61]}) &lt; 5000</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Killer Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#0072c6">Gaming User State (Xbox Live)</div><p style="font-size:.83rem;color:#8b949e">3.5 billion user accounts. Player inventory, achievements, session state. Requires &lt;10ms reads globally. Single-digit ms P99 read latency guaranteed by Cosmos SLA.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#0072c6">Retail Real-Time Inventory (Walmart)</div><p style="font-size:.83rem;color:#8b949e">Walmart migrated to Cosmos DB for real-time inventory visibility across 10,000 stores. MongoDB API compatibility meant minimal code changes from their previous MongoDB setup.</p></div>
+              <div class="mb-2"><div class="fw-semibold mb-1" style="color:#0072c6">IoT Telemetry (Rolls-Royce)</div><p style="font-size:.83rem;color:#8b949e">Jet engine telemetry: millions of data points per second ingested globally, queried from multiple regions for real-time aircraft monitoring and predictive maintenance.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Architecture Deep-Dive</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;font-size:.77rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+Cosmos DB internal architecture:
+
+Physical partition (max 50 GB, ~10K RU/s)
+  └── Replica set (4 replicas: 1 primary, 3 secondary)
+      └── ARS (Atom-Record-Sequence) pages
+          └── Backed by SSDs in Azure datacenter
+
+Global distribution:
+  Write region ──replication──▶ Region 2 (async, &lt;2ms typical)
+               ──replication──▶ Region 3
+               ──replication──▶ Region 4
+
+Consistency implementation:
+  Strong: quorum write + quorum read across replicas
+  Session: session token (LSN - Log Sequence Number)
+  Eventual: read from any replica, no wait
+
+Partition routing:
+  Client ──▶ Gateway (resolves partition key to physical partition)
+         ──▶ Replica set primary (write) or any replica (read)
+
+Auto-partition split: when partition exceeds 50 GB or 10K RU/s
+→ Splits into 2 physical partitions (transparent to application)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(0,114,198,.3)">
+            <div class="card-header" style="background:rgba(0,114,198,.08);border-bottom:1px solid rgba(0,114,198,.2)">
+              <span class="fw-semibold" style="color:#0072c6">Change Feed &amp; Cosmos DB for PostgreSQL (Citus)</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── Change Feed: real-time stream of inserts/updates (no deletes)
+-- Used for: event sourcing, cache invalidation, data pipelines
+
+from azure.cosmos import CosmosClient
+from azure.cosmos.change_feed import ChangeFeedStartFrom
+
+for change in container.query_items_change_feed(
+    start_from=ChangeFeedStartFrom.Now()
+):
+    # Process each changed document
+    print(f"Changed: {change['id']} status={change.get('status')}")
+
+# ── Cosmos DB for PostgreSQL (Citus distributed tables)
+-- Horizontally scale PostgreSQL with Cosmos as the managed service
+CREATE TABLE events (
+    id          BIGSERIAL,
+    user_id     BIGINT,
+    event_type  TEXT,
+    occurred_at TIMESTAMPTZ DEFAULT NOW()
+);
+SELECT create_distributed_table('events', 'user_id');
+
+-- Distributed query automatically sharded:
+SELECT user_id, COUNT(*) FROM events
+WHERE occurred_at > NOW() - INTERVAL '24 hours'
+GROUP BY user_id
+HAVING COUNT(*) > 100;
+
+-- ── Zero-ETL: Cosmos DB → Azure Synapse Link (no ETL pipeline)
+-- Enable analytical store on container (HTAP — columnar replica)
+-- Synapse Analytics queries columnar replica directly with Spark SQL
+-- No impact on OLTP performance (separate columnar copy maintained)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

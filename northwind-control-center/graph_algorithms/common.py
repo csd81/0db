@@ -19,6 +19,9 @@ from dataclasses import dataclass, field
 import networkx as nx
 import pyodbc
 
+# sqlite_fallback import is deferred to _build_graph() to avoid circular imports
+# at module-load time (services/ imports graph_algorithms/).
+
 FERRY_PENALTY = 1.5
 OCEAN_PENALTY = 5.0
 REDUCED_N     = 200   # top cities by population for O(V²/V³) algorithms
@@ -76,12 +79,15 @@ def _build_graph(conn_str: str, top_n: int | None = None) -> dict:
     and the extended schema (+ CostAdjustment / ReliabilityScore / Capacity).
     Falls back to sensible defaults when extended columns are absent.
     """
-    conn = pyodbc.connect(conn_str, timeout=30)
-    cur  = conn.cursor()
+    from services.sqlite_fallback import sql_or_sqlite  # noqa: PLC0415
+    conn, backend = sql_or_sqlite(conn_str, 'europe.db', timeout=30)
+    cur = conn.cursor()
+    # Three-part names (EuropeGraph.dbo.X) are only valid against MS SQL.
+    prefix = 'EuropeGraph.dbo.' if backend == 'mssql' else ''
 
     cur.execute(
-        "SELECT CityID, Name, Country, Lat, Lng, Population "
-        "FROM EuropeGraph.dbo.EuropeCity ORDER BY Population DESC"
+        f"SELECT CityID, Name, Country, Lat, Lng, Population "
+        f"FROM {prefix}EuropeCity ORDER BY Population DESC"
     )
     all_cities = [
         {'id': r[0], 'name': r[1], 'country': r[2],
@@ -97,22 +103,23 @@ def _build_graph(conn_str: str, top_n: int | None = None) -> dict:
         G.add_node(c['name'], lat=c['lat'], lng=c['lng'])
 
     # Try extended schema first; fall back to legacy if new columns are absent.
+    _ext_err = (pyodbc.Error, Exception) if backend == 'sqlite' else pyodbc.Error
     try:
         cur.execute(
-            "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType,"
-            "       r.CostAdjustment, r.ReliabilityScore, r.Capacity"
-            " FROM EuropeGraph.dbo.EuropeRoad r"
-            " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID = r.FromCityID"
-            " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID = r.ToCityID"
+            f"SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType,"
+            f"       r.CostAdjustment, r.ReliabilityScore, r.Capacity"
+            f" FROM {prefix}EuropeRoad r"
+            f" JOIN {prefix}EuropeCity c1 ON c1.CityID = r.FromCityID"
+            f" JOIN {prefix}EuropeCity c2 ON c2.CityID = r.ToCityID"
         )
         road_rows    = cur.fetchall()
         has_extended = True
-    except pyodbc.Error:
+    except _ext_err:
         cur.execute(
-            "SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType"
-            " FROM EuropeGraph.dbo.EuropeRoad r"
-            " JOIN EuropeGraph.dbo.EuropeCity c1 ON c1.CityID = r.FromCityID"
-            " JOIN EuropeGraph.dbo.EuropeCity c2 ON c2.CityID = r.ToCityID"
+            f"SELECT c1.Name, c2.Name, r.DistanceKM, r.IsFerry, r.CrossingType"
+            f" FROM {prefix}EuropeRoad r"
+            f" JOIN {prefix}EuropeCity c1 ON c1.CityID = r.FromCityID"
+            f" JOIN {prefix}EuropeCity c2 ON c2.CityID = r.ToCityID"
         )
         road_rows    = cur.fetchall()
         has_extended = False

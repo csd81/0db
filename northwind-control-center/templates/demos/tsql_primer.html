@@ -102,6 +102,8 @@
   </div>
 </div>
 
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">The lab runs the order-processing problem in two versions: a broken script that executes multiple UPDATE statements without a transaction, and a corrected version wrapped in <code>BEGIN TRAN / TRY / CATCH / ROLLBACK</code>. The broken version deliberately fails mid-way by introducing a constraint violation after the first UPDATE succeeds, leaving the database in a partially updated, corrupted state that no subsequent query can automatically fix. The fixed version catches that error in the CATCH block, executes ROLLBACK, and leaves both accounts unchanged — demonstrating atomicity in action against live Northwind data. This is the foundational database programming lesson: every multi-step mutation that must succeed or fail as a unit must be wrapped in an explicit transaction.</p>
+
 <!-- Main layout -->
 <div class="row g-3">
 

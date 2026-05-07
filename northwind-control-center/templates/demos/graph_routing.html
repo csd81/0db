@@ -64,12 +64,29 @@
 .section-lbl  { font-size: .6rem; color: #5a6070; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .2rem; }
 .speed-btn         { opacity: .45; }
 .speed-btn.active  { opacity: 1; }
+
+/* ── View wrapper ─────────────────────────────────── */
+#gr-view-wrap { flex: 1; height: 100%; position: relative; }
+#gr-map, #gr-globe { position: absolute; inset: 0; width: 100%; height: 100%; }
+#gr-view-toggle {
+  position: absolute; bottom: .75rem; right: .75rem; z-index: 999;
+  display: flex; gap: 0; border-radius: .35rem; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+#gr-view-toggle button {
+  padding: .25rem .65rem; font-size: .7rem; font-weight: 700;
+  border: none; cursor: pointer; transition: background .15s, color .15s;
+  background: #1e2028; color: #8892a4;
+}
+#gr-view-toggle button.active { background: #22d3ee; color: #000; }
+.cesium-widget-credits, .cesium-viewer-toolbar { display:none !important; }
 </style>
 
 <div id="gr-shell">
 
   <!-- ── SIDEBAR ─────────────────────────────────────────────────── -->
   <div id="gr-sidebar">
+<p class="mb-3 px-2" style="font-size:.72rem;color:#8b949e;line-height:1.6" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">The EuropeGraph dataset encodes real road and ferry distances between major European cities as a weighted directed graph where edge weights are kilometres. Dijkstra's algorithm finds the shortest path by greedily expanding the lowest-cost frontier node; A* improves on Dijkstra by using the geodesic straight-line distance to the destination as an admissible heuristic, pruning branches that cannot possibly beat the current best path and reducing explored nodes by 60–80%. Configuring the ferry penalty multiplier shows how pricing asymmetry between road and maritime routes changes the optimal itinerary, exactly as it does in real logistics routing systems. This is the algorithm inside every navigation app, package router, and network packet scheduler on the planet.</p>
 
     <!-- Header -->
     <div class="d-flex align-items-center gap-2">
@@ -177,8 +194,15 @@
 
   </div><!-- /sidebar -->
 
-  <!-- ── MAP ─────────────────────────────────────────────────────── -->
-  <div id="gr-map"></div>
+  <!-- ── MAP / GLOBE ───────────────────────────────────────────── -->
+  <div id="gr-view-wrap">
+    <div id="gr-map"></div>
+    <div id="gr-globe" style="display:none"></div>
+    <div id="gr-view-toggle">
+      <button id="btn-2d" class="active">2D</button>
+      <button id="btn-3d">3D</button>
+    </div>
+  </div>
 
 </div><!-- /gr-shell -->
 {% endblock %}
@@ -186,5 +210,8 @@
 {% block scripts %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/';</script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Cesium.js"></script>
 <script src="{{ url_for('static', filename='js/demos/graph_routing.js') }}"></script>
 {% endblock %}

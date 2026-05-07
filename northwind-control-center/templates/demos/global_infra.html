@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block title %}Global Infrastructure Digital Twin{% endblock %}
+
+{% block content %}
+<style>
+#gi-shell {
+  margin: -1rem -1.5rem 0;
+  height: calc(100vh - 56px);
+  display: flex;
+  overflow: hidden;
+  background: #06080c;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+#gi-sidebar {
+  width: 310px;
+  min-width: 310px;
+  height: 100%;
+  overflow-y: auto;
+  background: #0a0c10;
+  border-right: 1px solid #181b22;
+  display: flex;
+  flex-direction: column;
+  padding: .85rem;
+  gap: .55rem;
+}
+#gi-sidebar::-webkit-scrollbar { width: 3px; }
+#gi-sidebar::-webkit-scrollbar-thumb { background: #252830; border-radius: 2px; }
+
+/* ── Map ──────────────────────────────────────────────────────────────────── */
+#gi-map { flex: 1; height: 100%; }
+
+/* ── Typography helpers ───────────────────────────────────────────────────── */
+.sec-label {
+  font-size: .58rem;
+  color: #4a5060;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: .18rem;
+}
+
+/* ── Metric cards ─────────────────────────────────────────────────────────── */
+.m-card {
+  background: #06080e;
+  border: 1px solid #181b22;
+  border-radius: .3rem;
+  padding: .32rem .5rem;
+}
+.m-label { font-size: .58rem; color: #4a5060; letter-spacing: .08em; text-transform: uppercase; }
+.m-val   { font-size: 1.2rem; font-weight: 700; line-height: 1.15; }
+
+/* ── Path comparison panel ────────────────────────────────────────────────── */
+.path-panel {
+  border: 1px solid #181b22;
+  border-radius: .35rem;
+  background: #06080e;
+  padding: .45rem .55rem;
+}
+.path-panel.winner { border-color: #166534; background: #052010; }
+.path-panel-title  { font-size: .65rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.path-ms    { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+.path-sub   { font-size: .65rem; color: #6b7280; }
+.path-route { font-size: .6rem; color: #4b5563; word-break: break-all; margin-top: .2rem; max-height: 2.8rem; overflow: hidden; }
+
+/* ── Layer toggles ────────────────────────────────────────────────────────── */
+.layer-toggle {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .68rem; cursor: pointer; user-select: none;
+  padding: .15rem 0;
+}
+.layer-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── Crisis panel ─────────────────────────────────────────────────────────── */
+#crisis-panel {
+  border: 1px solid #3b1b1b;
+  border-radius: .35rem;
+  background: #0f0606;
+  padding: .45rem .55rem;
+}
+#crisis-select {
+  font-size: .68rem;
+  background: #0a0c10;
+  color: #ccc;
+  border-color: #333;
+}
+
+/* ── Log ──────────────────────────────────────────────────────────────────── */
+.log-box {
+  background: #04050a;
+  color: #4ade80;
+  font-size: .62rem;
+  font-family: 'Cascadia Code','Fira Code',monospace;
+  height: 80px;
+  overflow-y: auto;
+  padding: .35rem .45rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border-radius: .25rem;
+  border: 1px solid #14181f;
+}
+.log-box::-webkit-scrollbar { width: 2px; }
+.log-box::-webkit-scrollbar-thumb { background: #252830; }
+
+/* ── Node-type legend ─────────────────────────────────────────────────────── */
+.legend-item { font-size: .62rem; display: flex; align-items: center; gap: .3rem; }
+.legend-dot  { width: 7px; height: 7px; border-radius: 50%; }
+</style>
+
+<div id="gi-shell">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────────────── -->
+  <div id="gi-sidebar">
+
+    <p class="mb-0" style="font-size:.68rem;color:#6b7280;line-height:1.55">
+      A weighted global network graph of cloud datacenters, IXPs, submarine cable
+      landings, and Starlink ground stations. NetworkX Dijkstra finds the
+      minimum-latency path on two parallel graphs — terrestrial fiber
+      (200 000 km/s in glass) and Starlink laser mesh (vacuum at 300 000 km/s).
+      Each of the 35 gateways feeds 10 000+ LEO satellites linked by
+      200 Gbps optical ISLs. The 33 % vacuum advantage explains why Starlink
+      wins long transoceanic hops despite covering more km — and why fiber
+      wins short hops where the 24 ms uplink+downlink overhead dominates.
+    </p>
+
+    <!-- Dropdowns -->
+    <div>
+      <div class="sec-label">Source</div>
+      <select id="sel-src" class="form-select form-select-sm bg-dark text-light border-secondary" style="font-size:.72rem"></select>
+    </div>
+    <div>
+      <div class="sec-label">Destination</div>
+      <select id="sel-dst" class="form-select form-select-sm bg-dark text-light border-secondary" style="font-size:.72rem"></select>
+    </div>
+
+    <button id="btn-route" class="btn btn-sm w-100" style="background:#0f3460;color:#93c5fd;border:1px solid #1e4080;font-size:.75rem">
+      🌐 Route &amp; Compare
+    </button>
+
+    <!-- Results -->
+    <div id="results-wrap" class="d-none">
+      <div class="sec-label">Path Comparison</div>
+      <div id="panel-fiber" class="path-panel mb-1">
+        <div class="path-panel-title" style="color:#22d3ee">⚡ Terrestrial Fiber</div>
+        <div class="d-flex align-items-baseline gap-2 mt-1">
+          <span id="fiber-ms"  class="path-ms" style="color:#22d3ee">—</span>
+          <span class="path-sub">ms</span>
+          <span class="path-sub ms-2"><span id="fiber-km">—</span> km</span>
+          <span class="path-sub ms-1"><span id="fiber-hops">—</span> hops</span>
+        </div>
+        <div id="fiber-route" class="path-route"></div>
+      </div>
+      <div id="panel-starlink" class="path-panel">
+        <div class="path-panel-title" style="color:#4ade80">🛰 Starlink Laser Mesh</div>
+        <div class="d-flex align-items-baseline gap-2 mt-1">
+          <span id="sl-ms"   class="path-ms" style="color:#4ade80">—</span>
+          <span class="path-sub">ms</span>
+          <span class="path-sub ms-2"><span id="sl-km">—</span> km</span>
+          <span class="path-sub ms-1"><span id="sl-hops">—</span> hops</span>
+        </div>
+        <div id="sl-route" class="path-route"></div>
+      </div>
+      <div id="savings-note" class="mt-1" style="font-size:.62rem;color:#6b7280"></div>
+      <div id="congestion-note" class="mt-1" style="font-size:.6rem;color:#f59e0b"></div>
+    </div>
+
+    <div id="error-wrap" class="d-none">
+      <div class="alert alert-danger py-1 px-2 mb-0" id="error-msg" style="font-size:.72rem"></div>
+    </div>
+
+    <!-- Layer toggles -->
+    <div>
+      <div class="sec-label">Map Layers</div>
+      <label class="layer-toggle"><input type="checkbox" id="tog-cloud"   checked> <span class="layer-dot" style="background:#f97316"></span> Cloud DCs</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-ixp"     checked> <span class="layer-dot" style="background:#a855f7"></span> IXPs</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-cable"   checked> <span class="layer-dot" style="background:#22d3ee"></span> Cable Landings</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-gw"      checked> <span class="layer-dot" style="background:#4ade80"></span> Starlink GWs</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-openai"  checked> <span class="layer-dot" style="background:#06b6d4"></span> OpenAI Stargate</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-awsai"   checked> <span class="layer-dot" style="background:#f59e0b"></span> AWS AI Campus</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-metaai"  checked> <span class="layer-dot" style="background:#818cf8"></span> Meta AI Campus</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-chk"     checked> <span class="layer-dot" style="background:#ef4444"></span> Chokepoints</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-edges"   checked> <span class="layer-dot" style="background:#334155;border:1px solid #4ade80"></span> Backbone Edges</label>
+      <label class="layer-toggle"><input type="checkbox" id="tog-sats"> <span class="layer-dot" style="background:#22c55e;opacity:.6"></span> Live Satellites <span style="color:#4b5563;font-size:.58rem">(dynamic)</span></label>
+    </div>
+
+    <!-- Geopolitical crisis -->
+    <div id="crisis-panel">
+      <div class="path-panel-title mb-1" style="color:#ef4444">💥 Geopolitical Crisis</div>
+      <div class="sec-label">Cut a cable edge</div>
+      <select id="crisis-select" class="form-select form-select-sm mb-1" style="font-size:.65rem">
+        <option value="">— No crisis —</option>
+      </select>
+      <button id="btn-crisis" class="btn btn-sm w-100" style="background:#2d0a0a;color:#ef4444;border:1px solid #5c1212;font-size:.72rem">
+        ✂ Apply Cut &amp; Reroute
+      </button>
+    </div>
+
+    <!-- Follow the Sun -->
+    <div id="fts-panel" style="border:1px solid #0f3460;border-radius:.35rem;background:#060c1a;padding:.45rem .55rem">
+      <div class="path-panel-title mb-1" style="color:#38bdf8">🌍 Follow the Sun</div>
+      <div class="sec-label">Simulation time (minute of day)</div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <input type="range" id="hour-slider" min="0" max="1439" value="720"
+               class="form-range" style="flex:1;height:4px;accent-color:#38bdf8">
+        <span id="hour-display" style="font-size:.72rem;color:#38bdf8;white-space:nowrap;min-width:3.2rem;text-align:right">—</span>
+      </div>
+      <div id="dynamic-badge" class="d-none mb-1" style="font-size:.58rem;color:#4ade80;background:#052010;border:1px solid #1a4a2888;border-radius:3px;padding:1px 5px">🛰 Dynamic orbital topology active</div>
+      <div id="fts-loads" class="d-flex gap-1 mb-1" style="flex-wrap:wrap">
+        <span style="font-size:.6rem;color:#4b5563">Congestion off</span>
+      </div>
+      <div class="d-flex gap-1">
+        <button id="btn-fts-play" class="btn btn-sm" style="flex:1;background:#0a1a30;color:#38bdf8;border:1px solid #1e4080;font-size:.65rem">▶ Animate 24h</button>
+        <button id="btn-fts-now"  class="btn btn-sm" style="flex:1;background:#050f1a;color:#6b7280;border:1px solid #1c2530;font-size:.65rem">⊙ Now</button>
+        <button id="btn-fts-off"  class="btn btn-sm px-2" style="background:#0a0c10;color:#6b7280;border:1px solid #252830;font-size:.65rem" title="Clear congestion">✕</button>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div>
+      <div class="sec-label">Routing Log</div>
+      <div class="log-box" id="gi-log">Ready. Select source and destination, then click Route &amp; Compare.</div>
+    </div>
+
+    <!-- Legend -->
+    <div class="d-flex flex-wrap gap-x-2 gap-y-1 mt-auto" style="column-gap:.5rem;row-gap:.3rem">
+      <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>AWS</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#facc15"></div>GCP</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Azure</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e05c2a"></div>Oracle</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>Stargate</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>AWS AI</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#818cf8"></div>Meta AI</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>IXP</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div>Cable</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>Starlink GW</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Chokepoint</div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ── MAP ────────────────────────────────────────────────────────────── -->
+  <div id="gi-map"></div>
+
+</div><!-- /gi-shell -->
+
+<!-- Hover tooltip for Cesium node picks -->
+<div id="cesium-tooltip"
+     style="position:fixed;display:none;pointer-events:none;
+            background:#0a0c10;border:1px solid #252830;color:#e2e8f0;
+            font-size:.68rem;padding:4px 9px;border-radius:4px;z-index:9999;
+            line-height:1.5;white-space:nowrap;"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/';</script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<style>
+  /* Cesium widget overrides */
+  .cesium-widget-credits, .cesium-viewer-toolbar { display: none !important; }
+  #gi-map { position: relative; }
+  #gi-map canvas { display: block; width: 100% !important; height: 100% !important; }
+</style>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Cesium.js"></script>
+<script src="{{ url_for('static', filename='js/demos/global_infra.js') }}"></script>
+{% endblock %}

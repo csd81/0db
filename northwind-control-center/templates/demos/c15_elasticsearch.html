@@ -10,6 +10,8 @@
   </div>
 </div>
 
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">Elasticsearch pre-processes every indexed document at write time, building an inverted index that maps each term to the list of documents containing it — the structural opposite of a row-oriented database that stores documents and builds term lookups on the fly. The BM25 scoring algorithm ranks search results by term frequency in the document, inverse document frequency across the corpus, and field-length normalization, consistently outperforming SQL <code>LIKE</code> queries for relevance. Aggregation pipelines run analytics — counts, averages, date histograms — directly on the indexed data without requiring a separate OLAP system. This architecture is the engine behind every e-commerce search bar, log analytics platform, and APM tool at scale.</p>
+
 <!-- Tabs -->
 <ul class="nav nav-tabs mb-3" id="c15tabs" style="border-color:rgba(249,115,22,.3)">
   <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('limits',this)">SQL LIKE Limits</a></li>
@@ -347,7 +349,7 @@ FROM Categories</pre>
         <li>Adding more search terms narrows results (all terms must match with <code>operator: and</code>)</li>
       </ul>
       <div class="mt-2 p-2" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:4px">
-        <span style="color:#34d399;font-size:.73rem">BM25 has been the industry standard for full-text ranking since the 1990s — used in Lucene, Solr, Elasticsearch, and many other systems.</span>
+        <span style="color:#34d399;font-size:.73rem"><a href="https://dl.acm.org/doi/10.1561/1500000019" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">BM25<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> has been the industry standard for full-text ranking since the 1990s — used in <a href="https://github.com/apache/lucene" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Lucene<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>, <a href="https://github.com/apache/solr" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Solr<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>, Elasticsearch, and many other systems.</span>
       </div>
     </div>
   </div>
@@ -441,7 +443,7 @@ FROM Categories</pre>
       <ul style="font-size:.78rem;color:#9ca3af;padding-left:1.2rem">
         <li>SQL owns authoritative data and ACID transactions</li>
         <li>ES owns the search projection — a denormalized read view</li>
-        <li>Sync via trigger, CDC, or message queue (e.g. Debezium → Kafka → ES)</li>
+        <li>Sync via trigger, CDC, or message queue (e.g. <a href="https://github.com/debezium/debezium" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Debezium<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> → Kafka → ES)</li>
         <li>If ES is temporarily down: fall back to SQL <code>LIKE</code> (degraded UX, not data loss)</li>
       </ul>
       <div class="p-2" style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:4px">

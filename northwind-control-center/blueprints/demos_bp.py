@@ -1540,7 +1540,7 @@ def loose_coupling_insert_order():
             cur = conn.cursor()
 
             cur.execute("INSERT INTO Orders (CustomerID, OrderDate) VALUES ('AROUT', GETDATE())")
-            cur.execute("SELECT @@IDENTITY")
+            cur.execute("SELECT SCOPE_IDENTITY()")
             order_id = int(cur.fetchone()[0])
 
             if scenario == 'good':
@@ -3134,11 +3134,7 @@ def _mot_setup(c):
             log.append('Database mot_bench already exists')
 
         # ── Step 2: add MOT filegroup ─────────────────────────────────────────
-        cur.execute("""
-            SELECT COUNT(*) FROM sys.filegroups fg
-            JOIN sys.databases db ON db.database_id = fg.database_id
-            WHERE db.name='mot_bench' AND fg.type='FX'
-        """)
+        cur.execute("SELECT COUNT(*) FROM mot_bench.sys.filegroups WHERE type='FX'")
         if cur.fetchone()[0] == 0:
             try:
                 cur.execute("ALTER DATABASE mot_bench ADD FILEGROUP mot_fg CONTAINS MEMORY_OPTIMIZED_DATA")
@@ -4519,3 +4515,309 @@ def cloud_ch11():
 @login_required
 def cloud_ch12():
     return render_template('demos/cloud_ch12.html')
+
+
+# ── Learn — chapter index pages ───────────────────────────────────────────────
+
+@demos_bp.route('/learn/databases')
+@login_required
+def learn_databases():
+    return render_template('learn/databases.html')
+
+@demos_bp.route('/learn/cloud')
+@login_required
+def learn_cloud():
+    return render_template('learn/cloud.html')
+
+
+# ── Demo subpages by subject ──────────────────────────────────────────────────
+
+@demos_bp.route('/cloud')
+@login_required
+def demos_cloud():
+    return render_template('demos/index_cloud.html')
+
+@demos_bp.route('/database')
+@login_required
+def demos_database():
+    return render_template('demos/index_database.html')
+
+@demos_bp.route('/other')
+@login_required
+def demos_other():
+    return render_template('demos/index_other.html')
+
+
+# ── DBMS Encyclopedia ─────────────────────────────────────────────────────────
+
+@demos_bp.route('/databases')
+@login_required
+def db_index():
+    return render_template('demos/db_index.html')
+
+@demos_bp.route('/db-postgresql')
+@login_required
+def db_postgresql():
+    return render_template('demos/db_postgresql.html')
+
+@demos_bp.route('/db-mysql')
+@login_required
+def db_mysql():
+    return render_template('demos/db_mysql.html')
+
+@demos_bp.route('/db-redis')
+@login_required
+def db_redis():
+    return render_template('demos/db_redis.html')
+
+@demos_bp.route('/db-cassandra')
+@login_required
+def db_cassandra():
+    return render_template('demos/db_cassandra.html')
+
+@demos_bp.route('/db-snowflake')
+@login_required
+def db_snowflake():
+    return render_template('demos/db_snowflake.html')
+
+@demos_bp.route('/db-dynamodb')
+@login_required
+def db_dynamodb():
+    return render_template('demos/db_dynamodb.html')
+
+@demos_bp.route('/db-clickhouse')
+@login_required
+def db_clickhouse():
+    return render_template('demos/db_clickhouse.html')
+
+@demos_bp.route('/db-influxdb')
+@login_required
+def db_influxdb():
+    return render_template('demos/db_influxdb.html')
+
+@demos_bp.route('/db-pinecone')
+@login_required
+def db_pinecone():
+    return render_template('demos/db_pinecone.html')
+
+@demos_bp.route('/db-cockroachdb')
+@login_required
+def db_cockroachdb():
+    return render_template('demos/db_cockroachdb.html')
+
+# Phase 2 — Enterprise Relational Giants
+
+@demos_bp.route('/db-oracle')
+@login_required
+def db_oracle():
+    return render_template('demos/db_oracle.html')
+
+@demos_bp.route('/db-sqlserver')
+@login_required
+def db_sqlserver():
+    return render_template('demos/db_sqlserver.html')
+
+@demos_bp.route('/db-sqlite')
+@login_required
+def db_sqlite():
+    return render_template('demos/db_sqlite.html')
+
+@demos_bp.route('/db-mariadb')
+@login_required
+def db_mariadb():
+    return render_template('demos/db_mariadb.html')
+
+@demos_bp.route('/db-db2')
+@login_required
+def db_db2():
+    return render_template('demos/db_db2.html')
+
+# Phase 3 — Additional NoSQL & Cache
+
+@demos_bp.route('/db-memcached')
+@login_required
+def db_memcached():
+    return render_template('demos/db_memcached.html')
+
+@demos_bp.route('/db-couchbase')
+@login_required
+def db_couchbase():
+    return render_template('demos/db_couchbase.html')
+
+@demos_bp.route('/db-firestore')
+@login_required
+def db_firestore():
+    return render_template('demos/db_firestore.html')
+
+# Phase 4 — NewSQL / Distributed SQL Completion
+
+@demos_bp.route('/db-spanner')
+@login_required
+def db_spanner():
+    return render_template('demos/db_spanner.html')
+
+@demos_bp.route('/db-tidb')
+@login_required
+def db_tidb():
+    return render_template('demos/db_tidb.html')
+
+@demos_bp.route('/db-oceanbase')
+@login_required
+def db_oceanbase():
+    return render_template('demos/db_oceanbase.html')
+
+# Phase 5 — Additional Search & Vector
+
+@demos_bp.route('/db-opensearch')
+@login_required
+def db_opensearch():
+    return render_template('demos/db_opensearch.html')
+
+@demos_bp.route('/db-milvus')
+@login_required
+def db_milvus():
+    return render_template('demos/db_milvus.html')
+
+@demos_bp.route('/db-qdrant')
+@login_required
+def db_qdrant():
+    return render_template('demos/db_qdrant.html')
+
+# Phase 6 — Additional Time-Series
+
+@demos_bp.route('/db-prometheus')
+@login_required
+def db_prometheus():
+    return render_template('demos/db_prometheus.html')
+
+@demos_bp.route('/db-timescaledb')
+@login_required
+def db_timescaledb():
+    return render_template('demos/db_timescaledb.html')
+
+# Phase 7 — Cloud-Native Managed Services
+
+@demos_bp.route('/db-aurora')
+@login_required
+def db_aurora():
+    return render_template('demos/db_aurora.html')
+
+@demos_bp.route('/db-redshift')
+@login_required
+def db_redshift():
+    return render_template('demos/db_redshift.html')
+
+@demos_bp.route('/db-cosmosdb')
+@login_required
+def db_cosmosdb():
+    return render_template('demos/db_cosmosdb.html')
+
+@demos_bp.route('/db-azure-sql')
+@login_required
+def db_azure_sql():
+    return render_template('demos/db_azure_sql.html')
+
+@demos_bp.route('/db-synapse')
+@login_required
+def db_synapse():
+    return render_template('demos/db_synapse.html')
+
+@demos_bp.route('/db-polardb')
+@login_required
+def db_polardb():
+    return render_template('demos/db_polardb.html')
+
+# Phase 8 — Chinese Cloud Databases
+
+@demos_bp.route('/db-gaussdb')
+@login_required
+def db_gaussdb():
+    return render_template('demos/db_gaussdb.html')
+
+@demos_bp.route('/db-tdsql')
+@login_required
+def db_tdsql():
+    return render_template('demos/db_tdsql.html')
+
+
+# ── Global Infrastructure Digital Twin ───────────────────────────────────────
+
+@demos_bp.route('/global-infra')
+@login_required
+def global_infra_page():
+    return render_template('demos/global_infra.html')
+
+
+@demos_bp.route('/global-infra/nodes')
+@login_required
+def global_infra_nodes():
+    from services.global_infra_service import get_all_nodes, get_cloud_nodes
+    conn_str = _build_conn_str(current_app.config)
+    return jsonify({
+        'all':   get_all_nodes(conn_str),
+        'cloud': get_cloud_nodes(conn_str),
+    })
+
+
+@demos_bp.route('/global-infra/edges')
+@login_required
+def global_infra_edges():
+    from services.global_infra_service import get_edges_for_display
+    return jsonify(get_edges_for_display(_build_conn_str(current_app.config)))
+
+
+@demos_bp.route('/global-infra/route')
+@login_required
+def global_infra_route():
+    from services.global_infra_service import route as gi_route
+    src      = request.args.get('src', '').strip()
+    dst      = request.args.get('dst', '').strip()
+    disabled = request.args.get('disabled_edge', '').strip()
+    if not src or not dst:
+        return jsonify({'error': 'src and dst are required'}), 400
+    edge = tuple(disabled.split(',')) if ',' in disabled else None
+
+    # ?t= is minute-of-day (0–1439) — enables SQL orbital snapshot routing
+    # ?hour= is legacy UTC hour (0–23) — used only when ?t= is absent
+    t_raw    = request.args.get('t', '').strip()
+    hour_raw = request.args.get('hour', '').strip()
+    minute   = int(t_raw)    if t_raw.isdigit()    and 0 <= int(t_raw)    <= 1439 else None
+    hour     = int(hour_raw) if hour_raw.isdigit() and 0 <= int(hour_raw) <= 23   \
+               and minute is None else None
+
+    result = gi_route(src, dst, edge,
+                      conn_str=_build_conn_str(current_app.config),
+                      hour_utc=hour, minute=minute)
+    if 'error' in result and not result.get('terrestrial'):
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+@demos_bp.route('/global-infra/topology')
+@login_required
+def global_infra_topology():
+    """Return 2 000 satellite positions for a given minute-of-day (0–1439)."""
+    from services.global_infra_service import get_dynamic_topology
+    raw = request.args.get('t', '').strip()
+    minute = int(raw) if raw.isdigit() and 0 <= int(raw) <= 1439 else 0
+    return jsonify(get_dynamic_topology(minute, _build_conn_str(current_app.config)))
+
+
+@demos_bp.route('/global-infra/route-dynamic')
+@login_required
+def global_infra_route_dynamic():
+    """Route through the pre-computed dynamic satellite topology for a given minute."""
+    from services.global_infra_service import route_dynamic as gi_dyn
+    src      = request.args.get('src', '').strip()
+    dst      = request.args.get('dst', '').strip()
+    disabled = request.args.get('disabled_edge', '').strip()
+    raw      = request.args.get('t', '').strip()
+    if not src or not dst:
+        return jsonify({'error': 'src and dst are required'}), 400
+    minute = int(raw) if raw.isdigit() and 0 <= int(raw) <= 1439 else 0
+    edge   = tuple(disabled.split(',')) if ',' in disabled else None
+    result = gi_dyn(src, dst, minute, conn_str=_build_conn_str(current_app.config),
+                    disabled_edge=edge)
+    if 'error' in result and not result.get('terrestrial'):
+        return jsonify(result), 400
+    return jsonify(result)

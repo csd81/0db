@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}TiDB — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-infinity fs-2 me-3" style="color:#e8261d"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">TiDB</h2>
+    <p class="text-muted mb-0">NewSQL · MySQL-compatible · HTAP (TiFlash) · Scale-out MySQL without sharding</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Developed by <a href="https://github.com/pingcap/tidb" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">PingCAP<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> and open-sourced in 2015, <a href="https://dl.acm.org/doi/10.14778/3415478.3415535" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">TiDB<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> is a MySQL-compatible distributed SQL database that scales horizontally like a NoSQL system while maintaining full ACID transactions. Its headline feature: applications written for MySQL can migrate to TiDB with zero code changes — the same SQL queries, same wire protocol, same JDBC/Python drivers. Internally, TiDB separates the SQL layer (TiDB servers) from storage (TiKV, a distributed key-value store with Raft consensus). TiFlash adds a columnar replica for analytics (HTAP), enabling mixed OLTP and OLAP workloads on the same data. Used heavily at Zhihu (China's Quora), JD.com, and Meituan.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="tidbTabs">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tidb-overview"><i class="bi bi-1-circle me-1"></i>Overview</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tidb-model"><i class="bi bi-2-circle me-1"></i>Data Model</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tidb-query"><i class="bi bi-3-circle me-1"></i>Query Language</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tidb-usecases"><i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tidb-arch"><i class="bi bi-5-circle me-1"></i>Architecture</button></li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1 -->
+<div class="tab-pane fade show active" id="tidb-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2015 (PingCAP, open-source)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Apache 2.0</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>NewSQL / Distributed SQL</td></tr>
+            <tr><td style="color:#8b949e">Compatibility</td><td>MySQL 5.7/8.0 protocol</td></tr>
+            <tr><td style="color:#8b949e">Consensus</td><td>Raft (per Region/shard)</td></tr>
+            <tr><td style="color:#8b949e">HTAP</td><td>TiKV (row OLTP) + TiFlash (columnar OLAP)</td></tr>
+            <tr><td style="color:#8b949e">Cloud</td><td>TiDB Cloud (managed on AWS/GCP)</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-buildings me-2"></i>Who Uses TiDB</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(232,38,29,.15);color:#e8261d;border:1px solid rgba(232,38,29,.3)">Zhihu</span>
+            <span class="badge" style="background:rgba(232,38,29,.15);color:#e8261d;border:1px solid rgba(232,38,29,.3)">JD.com</span>
+            <span class="badge" style="background:rgba(232,38,29,.15);color:#e8261d;border:1px solid rgba(232,38,29,.3)">Meituan</span>
+            <span class="badge" style="background:rgba(232,38,29,.15);color:#e8261d;border:1px solid rgba(232,38,29,.3)">Shopee</span>
+            <span class="badge" style="background:rgba(232,38,29,.15);color:#e8261d;border:1px solid rgba(232,38,29,.3)">Netease</span>
+            <span class="badge" style="background:rgba(232,38,29,.15);color:#e8261d;border:1px solid rgba(232,38,29,.3)">Square (now Block)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-diagram-2 me-2"></i>HTAP Architecture</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="font-size:.72rem;color:#c9d1d9;background:#0e1014;padding:1rem;border-radius:6px;margin:0;line-height:1.5">
+Application (MySQL protocol)
+         │
+┌────────▼──────────────────────────┐
+│   TiDB Servers (SQL Layer)        │
+│   Parse → Optimize → Execute      │
+│   Routes OLTP → TiKV              │
+│   Routes OLAP → TiFlash           │
+└────────┬──────────────────────────┘
+         │
+┌────────▼────────────┐  ┌──────────────────┐
+│  PD (Placement      │  │  TiFlash         │
+│   Driver)           │  │  (Columnar OLAP) │
+│  Metadata + Sched.  │  │  Raft replica    │
+└────────┬────────────┘  └──────────────────┘
+         │ Raft consensus
+┌────────▼────────────────────────────────┐
+│  TiKV (Distributed KV Store)            │
+│  Region: [key_start, key_end) → 3 nodes │
+│  Region 1  Region 2  Region N           │
+└─────────────────────────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab-pane fade" id="tidb-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-layers me-2"></i>Regions &amp; Sharding</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#e8261d">Transparent Sharding</strong> — TiDB automatically shards data into "Regions" (default 96MB). Applications use standard MySQL SQL; sharding is invisible.</p>
+          <p><strong style="color:#e8261d">Region = Raft Group</strong> — each Region is replicated 3x via Raft consensus. A write succeeds when 2 of 3 replicas acknowledge (quorum).</p>
+          <p><strong style="color:#e8261d">PD (Placement Driver)</strong> — stores Region metadata (which nodes hold which key ranges), schedules Region splits/merges, and rebalances load across TiKV nodes.</p>
+          <p><strong style="color:#e8261d">TiFlash Replicas</strong> — opt-in columnar replicas synchronized from TiKV via Raft. Analytics queries are automatically routed to TiFlash by the optimizer if a TiFlash replica exists.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-code-square me-2"></i>DDL Examples</span>
+        </div>
+        <div class="card-body p-2">
+          <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">-- Standard MySQL DDL — works as-is
+CREATE TABLE orders (
+    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id    BIGINT NOT NULL,
+    total      DECIMAL(10,2),
+    status     VARCHAR(20) DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user (user_id),
+    INDEX idx_status_date (status, created_at)
+) ENGINE=InnoDB;
+
+-- Add TiFlash replica for analytics
+ALTER TABLE orders
+SET TIFLASH REPLICA 1;
+
+-- Shard the table across regions:
+-- No action needed — TiDB does this automatically!
+-- Monitor regions:
+SHOW TABLE orders REGIONS;
+
+-- Partition hint (force read from TiFlash)
+SELECT /*+ READ_FROM_STORAGE(tiflash[orders]) */
+    status, COUNT(*), SUM(total)
+FROM orders
+GROUP BY status;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3 -->
+<div class="tab-pane fade" id="tidb-query">
+  <div class="card" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+    <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+      <span class="fw-bold" style="color:#e8261d"><i class="bi bi-terminal me-2"></i>MySQL-Compatible SQL</span>
+    </div>
+    <div class="card-body p-2">
+      <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto">-- 1. Same queries as MySQL — no changes needed
+SELECT u.name, COUNT(o.id) AS order_count, SUM(o.total) AS ltv
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.country = 'US' AND o.status = 'completed'
+GROUP BY u.id, u.name
+HAVING ltv > 1000
+ORDER BY ltv DESC
+LIMIT 100;
+
+-- 2. Window functions (MySQL 8.0 compatible)
+SELECT id, user_id, total,
+       RANK() OVER (PARTITION BY user_id
+                    ORDER BY total DESC) AS user_rank,
+       SUM(total) OVER (PARTITION BY user_id) AS user_total
+FROM orders WHERE status = 'completed';
+
+-- 3. Pessimistic transactions (like MySQL InnoDB)
+BEGIN PESSIMISTIC;
+SELECT balance FROM accounts WHERE id = 42 FOR UPDATE;
+UPDATE accounts SET balance = balance - 100 WHERE id = 42;
+UPDATE accounts SET balance = balance + 100 WHERE id = 99;
+COMMIT;
+
+-- 4. Optimistic transactions (TiDB default for older versions)
+BEGIN OPTIMISTIC;
+UPDATE inventory SET qty = qty - 1 WHERE product_id = 7;
+COMMIT;  -- may fail if write conflict detected at commit
+
+-- 5. EXPLAIN ANALYZE (shows TiKV vs TiFlash routing)
+EXPLAIN ANALYZE
+SELECT /*+ READ_FROM_STORAGE(tiflash[orders]) */
+    DATE(created_at) AS dt, SUM(total)
+FROM orders WHERE created_at > '2024-01-01'
+GROUP BY dt ORDER BY dt;
+
+-- 6. Check TiFlash sync status
+SELECT * FROM information_schema.tiflash_replica
+WHERE TABLE_NAME = 'orders';</pre>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4 -->
+<div class="tab-pane fade" id="tidb-usecases">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-trophy me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#e8261d">MySQL Scale-Out</strong> — the #1 use case: a MySQL table has grown to 10TB+ and queries are slow. Migrate to TiDB (zero code changes), scale horizontally, performance restored.</p>
+          <p><strong style="color:#e8261d">HTAP Workloads</strong> — e-commerce platforms (JD.com, Meituan) run both OLTP (order processing) and analytics (daily sales reports) on the same TiDB cluster — OLTP on TiKV, analytics on TiFlash.</p>
+          <p><strong style="color:#e8261d">Zhihu (Chinese Quora)</strong> — 100+ TiDB nodes, hundreds of TB of data, serving Q&amp;A content for hundreds of millions of users. Replaced multiple MySQL clusters.</p>
+          <p><strong style="color:#e8261d">Financial Services</strong> — serializable transactions, automatic HA, cross-datacenter replication. Used by WeBank and other Chinese fintech companies.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-speedometer2 me-2"></i>Performance</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9">
+          <p><strong>OLTP:</strong> Similar to MySQL per node, scales horizontally</p>
+          <p><strong>TiFlash analytics:</strong> Columnar MPP, much faster than TiKV for scans</p>
+          <p><strong>Scale:</strong> 100+ nodes in production deployments</p>
+          <p><strong>Raft:</strong> Cross-AZ replication ~20-50ms</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5 -->
+<div class="tab-pane fade" id="tidb-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-cpu me-2"></i>TiKV Storage</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#e8261d">RocksDB</strong> — TiKV uses RocksDB as its local storage engine (LSM-tree). Each TiKV node stores multiple Regions as RocksDB column families.</p>
+          <p><strong style="color:#e8261d">Raft Log</strong> — all writes are first appended to the Raft log, replicated to the quorum, then applied to RocksDB. This guarantees durability and consistency.</p>
+          <p><strong style="color:#e8261d">MVCC</strong> — TiKV implements multi-version concurrency control at the KV layer. Every key has multiple versions (timestamp → value). Old versions are garbage collected by TiDB's GC worker.</p>
+          <p><strong style="color:#e8261d">2-Phase Commit</strong> — distributed transactions use Percolator-style 2PC (Google's approach) with TiKV locks stored in the KV store itself.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(232,38,29,.3)">
+        <div class="card-header" style="background:rgba(232,38,29,.08);border-bottom:1px solid rgba(232,38,29,.2)">
+          <span class="fw-bold" style="color:#e8261d"><i class="bi bi-bar-chart me-2"></i>TiFlash Columnar Engine</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#e8261d">Async Replication</strong> — TiFlash receives data changes from TiKV via Raft learner protocol (not part of the Raft quorum — no write latency impact on OLTP).</p>
+          <p><strong style="color:#e8261d">Columnar Storage</strong> — data is physically reorganized from row format (TiKV) to columnar format (TiFlash). SIMD-accelerated vectorized execution for analytics.</p>
+          <p><strong style="color:#e8261d">Automatic Routing</strong> — the TiDB optimizer automatically routes queries to TiFlash when: (1) a TiFlash replica exists, (2) a full table scan is needed, (3) it estimates TiFlash will be faster.</p>
+          <p><strong style="color:#e8261d">TiSpark</strong> — Apache Spark connector reads from TiKV/TiFlash directly, enabling large-scale ETL and ML workloads on TiDB data without exporting.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

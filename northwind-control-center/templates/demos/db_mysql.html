@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block title %}MySQL — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-database fs-2 me-3" style="color:#4479a1"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">MySQL</h2>
+    <p class="text-muted mb-0">Relational OLTP · InnoDB engine · GTIDs · Most deployed open-source database</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  MySQL launched in 1995 and became the backbone of the LAMP stack, powering the first generation of web applications. Now owned by Oracle, it remains the world's most deployed open-source RDBMS by sheer installation count. InnoDB's clustered B+tree primary key, MVCC, and binary log replication make it a reliable workhorse for WordPress, Shopify, GitHub, and Twitter's original read-heavy workloads.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="mysqlTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#my-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-model">
+      <i class="bi bi-2-circle me-1"></i>Data Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-query">
+      <i class="bi bi-3-circle me-1"></i>Query Language
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="my-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>1995 (MySQL AB, acquired by Oracle 2010)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>GPL v2 (commercial license available)</td></tr>
+            <tr><td style="color:#8b949e">Default engine</td><td>InnoDB (MVCC, FK, row-level locking)</td></tr>
+            <tr><td style="color:#8b949e">Concurrency</td><td>MVCC via InnoDB undo logs</td></tr>
+            <tr><td style="color:#8b949e">Replication</td><td>Binary log (statement/row/mixed), GTIDs, Group Replication</td></tr>
+            <tr><td style="color:#8b949e">Notable users</td><td>WordPress.com, Shopify, GitHub, Airbnb</td></tr>
+            <tr><td style="color:#8b949e">Forks</td><td><a href="https://github.com/MariaDB/server" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">MariaDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (community), <a href="https://github.com/percona/percona-server" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Percona Server<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-star me-2"></i>InnoDB Strengths</span>
+        </div>
+        <div class="card-body p-3">
+          <ul style="font-size:.78rem;color:#c9d1d9;padding-left:1.2rem;margin-bottom:0;line-height:1.9">
+            <li>Clustered primary key — PK lookups read fewer pages</li>
+            <li>Row-level locking (not table-level like MyISAM)</li>
+            <li>Foreign key constraints enforced at engine level</li>
+            <li>MVCC with undo log space management</li>
+            <li>Doublewrite buffer prevents partial page writes on crash</li>
+            <li>Buffer pool (equivalent to PostgreSQL's shared_buffers)</li>
+            <li>Binary log enables point-in-time recovery and replication</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-diagram-2 me-2"></i>InnoDB Architecture</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:1rem;font-size:.72rem;color:#c9d1d9;line-height:1.7;overflow-x:auto">┌──────────────────────────────────────────┐
+│           MYSQL SERVER LAYER             │
+│  Connections │ Parser │ Optimizer │ Cache│
+└─────────────────────┬────────────────────┘
+                      │ Storage Engine API
+┌─────────────────────▼────────────────────┐
+│              InnoDB ENGINE               │
+│                                          │
+│  ┌──────────────────────────────────┐    │
+│  │        BUFFER POOL (RAM)         │    │
+│  │  Page cache + Change buffer +    │    │
+│  │  Adaptive hash index             │    │
+│  └──────────────┬───────────────────┘    │
+│                 │                        │
+│  ┌──────────────▼───────────────────┐    │
+│  │         REDO LOG (on-disk)       │    │
+│  │  Circular ring — crash recovery  │    │
+│  └──────────────────────────────────┘    │
+│  ┌──────────────────────────────────┐    │
+│  │  DOUBLEWRITE BUFFER              │    │
+│  │  Prevents torn page writes       │    │
+│  └──────────────────────────────────┘    │
+└──────────────────────────────────────────┘
+         │                    │
+┌────────▼──────┐   ┌─────────▼───────────┐
+│  .ibd files   │   │  Binary Log (binlog)│
+│ Tablespace    │   │  Replication + PITR │
+└───────────────┘   └─────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA MODEL -->
+<div class="tab-pane fade" id="my-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-table me-2"></i>Schema Definition</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- InnoDB table: clustered on PRIMARY KEY
+CREATE TABLE orders (
+  order_id  INT AUTO_INCREMENT PRIMARY KEY,
+  user_id   INT NOT NULL,
+  status    ENUM('pending','paid','shipped','done'),
+  total     DECIMAL(12,2) NOT NULL,
+  payload   JSON,           -- MySQL 5.7.8+ JSON column
+  created   DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_user (user_id),
+  INDEX idx_status_created (status, created),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Range partitioning by year
+ALTER TABLE orders PARTITION BY RANGE (YEAR(created)) (
+  PARTITION p2022 VALUES LESS THAN (2023),
+  PARTITION p2023 VALUES LESS THAN (2024),
+  PARTITION p2024 VALUES LESS THAN (2025),
+  PARTITION future VALUES LESS THAN MAXVALUE
+);</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-braces me-2"></i>JSON Column</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Insert JSON payload
+INSERT INTO orders (user_id, total, payload)
+VALUES (42, 99.95, '{"items":[{"sku":"A1","qty":2}],
+  "shipping":"express"}');
+
+-- Extract with JSON_EXTRACT / -> shorthand
+SELECT order_id,
+  payload->'$.shipping' AS ship_type,
+  JSON_EXTRACT(payload, '$.items[0].sku') AS first_sku
+FROM orders WHERE user_id = 42;
+
+-- Functional index on JSON path (MySQL 8.0+)
+ALTER TABLE orders ADD COLUMN ship_type VARCHAR(50)
+  GENERATED ALWAYS AS (payload->>'$.shipping') VIRTUAL;
+CREATE INDEX idx_ship ON orders (ship_type);</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: QUERY LANGUAGE -->
+<div class="tab-pane fade" id="my-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-code-slash me-2"></i>Window Functions (8.0+)</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Rank users by spend per region
+SELECT user_id, region, total_spend,
+  RANK() OVER (PARTITION BY region
+               ORDER BY total_spend DESC) AS rk,
+  NTILE(4) OVER (ORDER BY total_spend) AS quartile
+FROM user_summary;
+
+-- Running total
+SELECT created, total,
+  SUM(total) OVER (ORDER BY created
+    ROWS UNBOUNDED PRECEDING) AS cumulative
+FROM orders WHERE user_id = 42;
+
+-- LAG / LEAD for period comparisons
+SELECT month, revenue,
+  LAG(revenue) OVER (ORDER BY month) AS prev_month,
+  revenue - LAG(revenue) OVER (ORDER BY month) AS delta
+FROM monthly_revenue;</pre>
+        </div>
+      </div>
+
+      <div class="card" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-speedometer me-2"></i>EXPLAIN FORMAT=JSON</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">EXPLAIN FORMAT=JSON
+SELECT u.name, COUNT(o.order_id), SUM(o.total)
+FROM users u
+JOIN orders o ON o.user_id = u.id
+WHERE o.status = 'paid'
+GROUP BY u.id;
+
+-- Check for: key (which index used),
+--            rows (estimated rows scanned),
+--            filtered (% rows remaining after cond),
+--            Extra: Using index (covering index hit!)</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-arrow-repeat me-2"></i>Group Replication</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Set up Group Replication (primary node)
+SET GLOBAL group_replication_bootstrap_group = ON;
+START GROUP_REPLICATION;
+SET GLOBAL group_replication_bootstrap_group = OFF;
+
+-- Check group members and their roles
+SELECT MEMBER_ID, MEMBER_HOST, MEMBER_STATE, MEMBER_ROLE
+FROM performance_schema.replication_group_members;
+
+-- Monitor lag on replica
+SHOW REPLICA STATUS\G
+-- Key fields: Seconds_Behind_Source,
+--             Retrieved_Gtid_Set,
+--             Executed_Gtid_Set</pre>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-lightning me-2"></i>Stored Procedure</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">DELIMITER //
+CREATE PROCEDURE ProcessOrder(IN p_order_id INT)
+BEGIN
+  DECLARE v_total DECIMAL(12,2);
+  START TRANSACTION;
+    SELECT total INTO v_total FROM orders
+    WHERE order_id = p_order_id FOR UPDATE;
+
+    UPDATE inventory SET qty = qty - 1
+    WHERE sku IN (SELECT sku FROM order_items
+                  WHERE order_id = p_order_id);
+
+    UPDATE orders SET status='paid'
+    WHERE order_id = p_order_id;
+  COMMIT;
+END//
+DELIMITER ;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="my-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-building me-2"></i>Real-World Deployments</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-3" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#4479a1">WordPress.com</span> — The entire WordPress ecosystem (43% of the web) relies on MySQL. Automattic runs a massive multi-tenant MySQL infrastructure serving millions of blogs.</div>
+          <div class="mb-3" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#4479a1">GitHub</span> — Ran MySQL with <a href="https://github.com/vitessio/vitess" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Vitess<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> for horizontal sharding of 80M+ repositories. Vitess added MySQL-compatible query routing across shards without app-layer changes.</div>
+          <div style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#4479a1">Shopify</span> — Started on MySQL, heavily customized with <a href="https://github.com/vitessio/vitess" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Vitess<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> sharding and GTID replication. Processes billions of dollars in GMV annually.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">ACID</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Full (InnoDB)</span></td></tr>
+            <tr><td style="color:#8b949e">Horizontal scale</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Via Vitess/ProxySQL</span></td></tr>
+            <tr><td style="color:#8b949e">Write throughput</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Very high (binlog)</span></td></tr>
+            <tr><td style="color:#8b949e">Ecosystem</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Massive (LAMP)</span></td></tr>
+            <tr><td style="color:#8b949e">Feature depth</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Less than PG</span></td></tr>
+            <tr><td style="color:#8b949e">CAP</td><td><span class="badge" style="background:rgba(129,140,248,.2);color:#818cf8">CP</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="my-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-cpu me-2"></i>InnoDB Internals</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#4479a1">Clustered Index:</strong> The primary key IS the table. Rows are stored sorted by PK on disk. Secondary indexes store the PK value as the row locator. Implications: PK inserts should be monotonically increasing (AUTO_INCREMENT) to avoid B+tree page splits.</p>
+          <p><strong style="color:#4479a1">Buffer Pool:</strong> MySQL's page cache. Default 128MB — should be 70–80% of RAM in production. The LRU list has a "young" sublist (recently accessed) and "old" sublist (cold pages). Full table scans won't evict hot working set.</p>
+          <p><strong style="color:#4479a1">Doublewrite Buffer:</strong> Before writing a 16KB page to disk, InnoDB first writes it to the doublewrite buffer (sequential I/O). On crash, InnoDB can recover a torn page from the doublewrite copy.</p>
+          <p><strong style="color:#4479a1">Binary Log:</strong> Statement-level or row-based record of all DDL + DML. Primary → Replica replication reads binlog. GTIDs (Global Transaction IDs) make failover safe by giving every transaction a globally unique ID.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(68,121,161,.35)">
+        <div class="card-header" style="background:rgba(68,121,161,.1);border-bottom:1px solid rgba(68,121,161,.25)">
+          <span class="fw-bold" style="color:#4479a1"><i class="bi bi-sliders me-2"></i>Key Config Knobs</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7"># my.cnf — production InnoDB tuning
+
+[mysqld]
+# InnoDB buffer pool (most important!)
+innodb_buffer_pool_size = 12G
+innodb_buffer_pool_instances = 8
+
+# I/O
+innodb_io_capacity = 2000
+innodb_io_capacity_max = 4000
+innodb_flush_method = O_DIRECT
+
+# Logging
+innodb_log_file_size = 2G      # larger = fewer flushes
+sync_binlog = 1                # durable binlog
+innodb_flush_log_at_trx_commit = 1  # full ACID
+
+# Replication
+server_id = 1
+log_bin = mysql-bin
+binlog_format = ROW
+gtid_mode = ON
+enforce_gtid_consistency = ON</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

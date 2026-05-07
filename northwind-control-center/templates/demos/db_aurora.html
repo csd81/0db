@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block title %}Amazon Aurora — Cloud-Native Relational DB{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-cloud-fill fs-2 me-3" style="color:#ff9900"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Amazon Aurora</h2>
+      <p class="text-muted mb-0">MySQL/PostgreSQL-compatible · 6-copy quorum storage · 5× MySQL throughput</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    Launched by AWS in 2014 (<a href="https://dl.acm.org/doi/10.1145/3035918.3056101" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">SIGMOD 2017 paper<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a>), Aurora decouples compute from storage. Instead of shipping redo log pages
+    to replicas, Aurora ships only the redo log itself — the storage layer reconstructs pages on demand.
+    This architecture enables instant failover, crash recovery in under 30 seconds, and up to 128 TB
+    of auto-scaling storage without any configuration. Aurora is MySQL or PostgreSQL from the application's
+    perspective, but with fundamentally different internals.
+  </p>
+
+  <ul class="nav nav-tabs mb-3" id="auroraTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">Query Language</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+            <div class="card-header" style="background:rgba(255,153,0,.08);border-bottom:1px solid rgba(255,153,0,.2)">
+              <span class="fw-semibold" style="color:#ff9900">The Log IS the Database</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Traditional MySQL ships full data pages to replicas — 7–8x write amplification.
+                Aurora ships only the redo log records to 6 storage nodes across 3 AZs.
+                Storage nodes reconstruct pages themselves. The result: <strong>1/7th the I/O</strong>
+                of standard MySQL at equivalent throughput.
+              </p>
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Crash recovery doesn't need to replay the full redo log — the storage nodes already
+                have the materialized pages. Restart takes under 30 seconds even from a cold crash.
+                Airbnb migrated away from MySQL clusters to Aurora and cut their DBA overhead dramatically.
+              </p>
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;margin-top:1rem">
+-- Aurora Global Database: cross-region reads
+-- Primary cluster: us-east-1 (writes)
+-- Secondary cluster: eu-west-1 (reads, RPO ~1s, RTO ~1min)
+-- Secondary cluster: ap-northeast-1 (reads)
+
+-- Aurora Serverless v2: scales 0.5 ACU → 128 ACU per instance
+-- No more over-provisioning for variable workloads
+
+-- Aurora ML: call SageMaker directly from SQL
+SELECT aws_sagemaker.invoke_endpoint(
+    'my-fraud-model',
+    '{"amount": 5000, "merchant": "unknown", "country": "RU"}'
+) AS fraud_probability
+FROM transactions
+WHERE transaction_id = 12345;</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+            <div class="card-header" style="background:rgba(255,153,0,.08);border-bottom:1px solid rgba(255,153,0,.2)">
+              <span class="fw-semibold" style="color:#ff9900">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Launched</td><td>2014 (AWS re:Invent)</td></tr>
+                  <tr><td class="text-muted">Compatibility</td><td>MySQL 8.0, PostgreSQL 16</td></tr>
+                  <tr><td class="text-muted">Replicas</td><td>Up to 15 read replicas</td></tr>
+                  <tr><td class="text-muted">Storage</td><td>Auto 10GB → 128TB</td></tr>
+                  <tr><td class="text-muted">Durability</td><td>6 copies, 3 AZs, quorum write</td></tr>
+                  <tr><td class="text-muted">Failover</td><td>&lt;30s (no data loss)</td></tr>
+                  <tr><td class="text-muted">Backups</td><td>Continuous, 1s RPO, S3</td></tr>
+                  <tr><td class="text-muted">Serverless</td><td>Aurora Serverless v2</td></tr>
+                  <tr><td class="text-muted">Notable users</td><td>Airbnb, Samsung, Capital One</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+            <div class="card-header" style="background:rgba(255,153,0,.08);border-bottom:1px solid rgba(255,153,0,.2)">
+              <span class="fw-semibold" style="color:#ff9900">Aurora-Specific Features Beyond MySQL/PostgreSQL</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- ── Aurora Parallel Query (in-place analytics)
+-- Pushes down filter/projection to storage nodes
+-- Avoids data transfer to compute node for large scans
+SET aurora_pq_force=ON;
+SELECT customer_id, SUM(order_total)
+FROM orders
+WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31'
+GROUP BY customer_id
+HAVING SUM(order_total) > 10000;
+-- Storage nodes execute predicate pushdown across all 6 copies
+
+-- ── Zero-ETL: Aurora → Redshift (no pipeline needed)
+-- Data streams from Aurora to Redshift in near-real-time
+-- Enable in AWS Console: Aurora cluster → Zero-ETL integration → Redshift
+
+-- ── Aurora Global Database read endpoint
+-- Writer endpoint: mydb.cluster-xxxx.us-east-1.rds.amazonaws.com
+-- Reader endpoint: mydb.cluster-ro-xxxx.us-east-1.rds.amazonaws.com
+-- Global reader: mydb.cluster-xxxx.eu-west-1.rds.amazonaws.com
+
+-- ── Backtrack: point-in-time rewind without restore
+CALL mysql.rds_set_configuration('binlog retention hours', 24);
+-- Aurora can rewind the cluster to any second in the past
+-- No need to restore from snapshot (much faster)
+
+-- ── Aurora Serverless v2 — configure min/max ACU
+aws rds modify-db-cluster \
+    --db-cluster-identifier my-cluster \
+    --serverless-v2-scaling-configuration MinCapacity=0.5,MaxCapacity=64
+
+-- Each ACU ≈ 2GB RAM
+-- Scales in increments of 0.5 ACU in milliseconds
+-- Costs: $0.12/ACU-hour (us-east-1)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+            <div class="card-header" style="background:rgba(255,153,0,.08);border-bottom:1px solid rgba(255,153,0,.2)">
+              <span class="fw-semibold" style="color:#ff9900">MySQL/PostgreSQL SQL — Zero Application Changes</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+-- Aurora MySQL: same SQL as MySQL 8.0
+-- ── 1. Standard OLTP
+SELECT o.order_id, c.email, o.total
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE o.status = 'pending'
+  AND o.created_at > NOW() - INTERVAL 24 HOUR
+ORDER BY o.created_at DESC
+LIMIT 100;
+
+-- ── 2. Window functions (MySQL 8.0 / Aurora MySQL 3)
+SELECT customer_id,
+       order_date,
+       order_total,
+       SUM(order_total) OVER (
+           PARTITION BY customer_id
+           ORDER BY order_date
+           ROWS UNBOUNDED PRECEDING
+       ) AS running_total
+FROM orders;
+
+-- ── 3. JSON columns
+INSERT INTO sessions (session_id, metadata) VALUES (
+    'sess-123',
+    JSON_OBJECT('ip', '1.2.3.4', 'ua', 'Chrome/120', 'features', JSON_ARRAY('a', 'b'))
+);
+SELECT JSON_EXTRACT(metadata, '$.ip') FROM sessions WHERE session_id = 'sess-123';
+
+-- ── 4. Aurora PostgreSQL: same as PostgreSQL 16
+-- Full CTE, window functions, JSONB, PostGIS, pgvector all work
+CREATE EXTENSION IF NOT EXISTS vector;
+ALTER TABLE products ADD COLUMN embedding vector(1536);
+CREATE INDEX ON products USING ivfflat (embedding vector_cosine_ops);
+
+SELECT name, 1 - (embedding &lt;=> $1::vector) AS similarity
+FROM products
+ORDER BY embedding &lt;=> $1::vector
+LIMIT 10;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+            <div class="card-header" style="background:rgba(255,153,0,.08);border-bottom:1px solid rgba(255,153,0,.2)">
+              <span class="fw-semibold" style="color:#ff9900">When to Choose Aurora</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-3"><div class="fw-semibold mb-1" style="color:#ff9900">Migrating MySQL/PostgreSQL to AWS</div><p style="font-size:.83rem;color:#8b949e">Zero application changes. AWS DMS (Database Migration Service) handles the migration. Airbnb, Pinterest, Netflix all run Aurora as their primary OLTP database.</p></div>
+              <div class="mb-3"><div class="fw-semibold mb-1" style="color:#ff9900">Variable Traffic (Serverless v2)</div><p style="font-size:.83rem;color:#8b949e">SaaS products with unpredictable load patterns. Scales from 0.5 ACU to 128 ACU in milliseconds. Pay only for capacity used, not provisioned.</p></div>
+              <div class="mb-3"><div class="fw-semibold mb-1" style="color:#ff9900">Multi-Region Active-Active</div><p style="font-size:.83rem;color:#8b949e">Aurora Global Database provides cross-region read replicas with &lt;1s replication lag. Failover to secondary region in ~1 minute for DR.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+            <div class="card-header" style="background:rgba(255,153,0,.08);border-bottom:1px solid rgba(255,153,0,.2)">
+              <span class="fw-semibold" style="color:#ff9900">Aurora vs RDS vs Self-Managed</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-dark" style="font-size:.8rem">
+                  <thead><tr><th>Feature</th><th style="color:#ff9900">Aurora</th><th>RDS MySQL</th><th>EC2 + MySQL</th></tr></thead>
+                  <tbody>
+                    <tr><td>Storage limit</td><td>128 TB</td><td>64 TB</td><td>Unlimited</td></tr>
+                    <tr><td>Read replicas</td><td>15</td><td>5</td><td>Manual</td></tr>
+                    <tr><td>Failover</td><td>&lt;30s</td><td>1–2min</td><td>Manual</td></tr>
+                    <tr><td>Cost vs MySQL</td><td>~3× more</td><td>~2× more</td><td>Baseline</td></tr>
+                    <tr><td>Managed</td><td>Fully managed</td><td>Managed</td><td>DIY</td></tr>
+                    <tr><td>Throughput</td><td>5× MySQL</td><td>1× MySQL</td><td>1× MySQL</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(255,153,0,.3)">
+            <div class="card-header" style="background:rgba(255,153,0,.08);border-bottom:1px solid rgba(255,153,0,.2)">
+              <span class="fw-semibold" style="color:#ff9900">Aurora Storage Architecture</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌──────────────────────────────────────────────────────────────────┐
+│  Compute Layer (EC2 instances)                                   │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐      │
+│  │   Writer       │  │  Read Replica  │  │  Read Replica  │      │
+│  │  (Primary)     │  │     (AZ-b)     │  │     (AZ-c)     │      │
+│  │  MySQL/PG      │  │  MySQL/PG      │  │  MySQL/PG      │      │
+│  └────────┬───────┘  └───────┬────────┘  └───────┬────────┘      │
+│           │  redo log only   │                    │              │
+│           │  (not pages)     └──────────────────┘                │
+│           ▼                                                      │
+│  Aurora Storage Layer (distributed, shared)                      │
+│  ┌─────────────────────────────────────────────────────────┐     │
+│  │  AZ-1: Storage Node A  ●  Storage Node B                │     │
+│  │  AZ-2: Storage Node C  ●  Storage Node D                │     │
+│  │  AZ-3: Storage Node E  ●  Storage Node F                │     │
+│  │                                                         │     │
+│  │  Write quorum: 4/6 nodes must acknowledge               │     │
+│  │  Read quorum:  3/6 nodes (can tolerate 2 failures)      │     │
+│  │  Protection Group: 10 GB segment, 6-way replicated      │     │
+│  └─────────────────────────────────────────────────────────┘     │
+└──────────────────────────────────────────────────────────────────┘
+
+Key insight: Writer sends redo log to 6 storage nodes.
+Storage nodes reconstruct pages independently.
+→ Writer does NOT wait for page reconstruction (only log ack)
+→ Read replicas fetch pages from storage, not from writer
+→ No replica lag from page shipping — only metadata lag (~10ms)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

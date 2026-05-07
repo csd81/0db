@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% block title %}ClickHouse — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-bar-chart-fill fs-2 me-3" style="color:#f5a623"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">ClickHouse</h2>
+    <p class="text-muted mb-0">Columnar OLAP · MergeTree · 100B+ rows/sec · Real-time analytics</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  ClickHouse was open-sourced by Yandex in 2016 after being built internally to power Yandex Metrica — the second-largest web analytics service in the world, processing trillions of rows. It is consistently the fastest columnar database for analytical queries, achieving scan rates that make BigQuery and Redshift look slow. Cloudflare runs ClickHouse to analyze billions of DNS queries per day in real time. Uber, eBay, and ByteDance use it for observability and user analytics at scale.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="chTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#ch-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ch-model">
+      <i class="bi bi-2-circle me-1"></i>Data Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ch-query">
+      <i class="bi bi-3-circle me-1"></i>SQL Extensions
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ch-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ch-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="ch-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2009 internal, <a href="https://github.com/ClickHouse/ClickHouse" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">2016 open-source<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (Yandex)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Apache 2.0</td></tr>
+            <tr><td style="color:#8b949e">Storage</td><td>Columnar (each column = separate files)</td></tr>
+            <tr><td style="color:#8b949e">Engine family</td><td>MergeTree (primary, many variants)</td></tr>
+            <tr><td style="color:#8b949e">Query speed</td><td>100B+ rows/sec scan on commodity hardware</td></tr>
+            <tr><td style="color:#8b949e">Compression</td><td>LZ4 / ZSTD, 5-10x column compression ratio</td></tr>
+            <tr><td style="color:#8b949e">Notable users</td><td>Yandex, Cloudflare, Uber, eBay, ByteDance</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-star me-2"></i>Why ClickHouse Wins on Speed</span>
+        </div>
+        <div class="card-body p-3">
+          <ul style="font-size:.78rem;color:#c9d1d9;padding-left:1.2rem;margin-bottom:0;line-height:1.9">
+            <li>Column files: only reads the columns a query touches</li>
+            <li>SIMD vectorized execution (AVX-512 on modern CPUs)</li>
+            <li>Sparse primary index: skips whole granules (8192 rows)</li>
+            <li>Skip indexes (bloom filter, min-max) per column</li>
+            <li>LZ4 decompression is faster than memory bandwidth</li>
+            <li>Single-threaded I/O design avoids lock contention</li>
+            <li>Materialized views + AggregatingMergeTree pre-aggregate</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-diagram-2 me-2"></i>MergeTree Storage Layout</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:1rem;font-size:.72rem;color:#c9d1d9;line-height:1.7;overflow-x:auto">Table: page_views
+Columns: user_id, page_url, ts, country, duration
+
+On-disk per part (immutable data part):
+  user_id.bin     ← compressed column data
+  user_id.mrk3    ← mark file (granule offsets)
+  page_url.bin
+  page_url.mrk3
+  ts.bin
+  ts.mrk3
+  ...
+  primary.idx     ← sparse index (every 8192 rows)
+                    stores: (ts, user_id) per granule
+  skp_idx_url.idx ← skip index (bloom filter on url)
+  skp_idx_url.mrk3
+
+Query: SELECT COUNT() FROM page_views
+       WHERE country='US' AND ts > now() - INTERVAL 1 DAY
+
+Execution:
+  1. Primary index: skip granules outside time range
+  2. Skip index: bloom filter skips granules w/o 'US'
+  3. Decompress country + ts columns only
+  4. Count in SIMD vectorized loop</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA MODEL -->
+<div class="tab-pane fade" id="ch-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-table me-2"></i>MergeTree Table Definition</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Core MergeTree table
+CREATE TABLE page_views (
+  ts         DateTime,
+  user_id    UInt64,
+  page_url   LowCardinality(String),  -- dictionary encode
+  country    LowCardinality(String),
+  duration   UInt16,
+  is_bounce  UInt8
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(ts)   -- monthly partitions
+ORDER BY (country, ts)       -- sparse index order
+TTL ts + INTERVAL 90 DAY;   -- auto-delete old data
+
+-- Bloom filter skip index on page_url
+ALTER TABLE page_views
+  ADD INDEX idx_url page_url
+  TYPE bloom_filter(0.01)
+  GRANULARITY 4;</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-collection me-2"></i>MergeTree Family</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.75rem;color:#c9d1d9"><span class="badge me-2" style="background:rgba(245,166,35,.2);color:#f5a623">MergeTree</span>Base engine. Immutable parts merged in background. Best general-purpose.</div>
+          <div class="mb-2" style="font-size:.75rem;color:#c9d1d9"><span class="badge me-2" style="background:rgba(245,166,35,.2);color:#f5a623">ReplacingMergeTree</span>De-duplicates rows with same ORDER BY key during merge. Last-write-wins.</div>
+          <div class="mb-2" style="font-size:.75rem;color:#c9d1d9"><span class="badge me-2" style="background:rgba(245,166,35,.2);color:#f5a623">AggregatingMergeTree</span>Pre-aggregated states (e.g., uniqState, sumState). Pairs with materialized views for pre-computation.</div>
+          <div class="mb-2" style="font-size:.75rem;color:#c9d1d9"><span class="badge me-2" style="background:rgba(245,166,35,.2);color:#f5a623">CollapsingMergeTree</span>CDC-style: sign column (+1/-1) collapses old versions during merge. Good for mutable state.</div>
+          <div style="font-size:.75rem;color:#c9d1d9"><span class="badge me-2" style="background:rgba(245,166,35,.2);color:#f5a623">ReplicatedMergeTree</span>Any of the above with <a href="https://github.com/apache/zookeeper" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">ZooKeeper<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>/ClickHouse Keeper for replication.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: SQL EXTENSIONS -->
+<div class="tab-pane fade" id="ch-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-code-slash me-2"></i>Array Functions &amp; SAMPLE</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Array join: unnest an array column
+SELECT user_id, tag
+FROM events
+ARRAY JOIN tags AS tag
+WHERE ts > now() - INTERVAL 7 DAY;
+
+-- arrayMap / arrayFilter on inline arrays
+SELECT
+  arrayMap(x -> x * 2, [1, 2, 3, 4]) AS doubled,
+  arrayFilter(x -> x > 50, scores) AS high_scores
+FROM students;
+
+-- SAMPLE: query 1% of data (approximate)
+SELECT page_url, count() * 100 AS approx_views
+FROM page_views SAMPLE 0.01
+GROUP BY page_url ORDER BY approx_views DESC LIMIT 10;
+
+-- WITH ROLLUP / WITH TOTALS
+SELECT country, city, sum(revenue)
+FROM sales
+GROUP BY country, city WITH ROLLUP;</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-layers me-2"></i>Materialized Views</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Source table (raw events)
+CREATE TABLE raw_events (
+  ts        DateTime,
+  user_id   UInt64,
+  event     String,
+  country   String
+) ENGINE = MergeTree() ORDER BY ts;
+
+-- Pre-aggregated summary (AggregatingMergeTree)
+CREATE TABLE hourly_summary (
+  hour    DateTime,
+  country LowCardinality(String),
+  users   AggregateFunction(uniq, UInt64),
+  events  AggregateFunction(count)
+) ENGINE = AggregatingMergeTree()
+  PARTITION BY toYYYYMM(hour)
+  ORDER BY (country, hour);
+
+-- Materialized view: auto-populates on insert
+CREATE MATERIALIZED VIEW mv_hourly
+TO hourly_summary AS
+SELECT toStartOfHour(ts) AS hour,
+  country,
+  uniqState(user_id) AS users,
+  countState() AS events
+FROM raw_events GROUP BY hour, country;
+
+-- Query from summary (fast)
+SELECT hour, country,
+  uniqMerge(users), countMerge(events)
+FROM hourly_summary
+WHERE hour >= now() - INTERVAL 24 HOUR
+GROUP BY hour, country;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="ch-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-building me-2"></i>Real-World Deployments</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#f5a623">Cloudflare:</span> Analyzes 6M+ DNS queries per second in real time. ClickHouse replaced a Kafka+Spark pipeline with direct ingestion and sub-second query latency on petabyte-scale data.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#f5a623">Uber:</span> Real-time trip analytics and driver incentive calculation. Hundreds of billions of rows with queries completing in seconds.</div>
+          <div style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#f5a623"><a href="https://github.com/SigNoz/signoz" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">SigNoz<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> / <a href="https://github.com/grafana/grafana" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Grafana<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>:</span> Open-source observability stacks use ClickHouse for storing traces and logs. Alternative to Elasticsearch for log analytics at scale.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">Scan speed</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Industry-leading</span></td></tr>
+            <tr><td style="color:#8b949e">OLTP writes</td><td><span class="badge" style="background:rgba(239,68,68,.2);color:#ef4444">Poor (no row update)</span></td></tr>
+            <tr><td style="color:#8b949e">Joins</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Supported but costly</span></td></tr>
+            <tr><td style="color:#8b949e">Consistency</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Eventual (async merge)</span></td></tr>
+            <tr><td style="color:#8b949e">Cost</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Open-source</span></td></tr>
+            <tr><td style="color:#8b949e">Best for</td><td><span class="badge" style="background:rgba(245,166,35,.2);color:#f5a623">Analytics &amp; observability</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="ch-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-cpu me-2"></i>Parts &amp; Merges</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#f5a623">Data parts:</strong> Each INSERT creates a new immutable data part on disk. Parts contain sorted, compressed column files. Background merge threads continuously merge small parts into larger ones.</p>
+          <p><strong style="color:#f5a623">Sparse primary index:</strong> ClickHouse doesn't index every row — it indexes every 8192nd row (a granule). Queries skip granules by consulting the primary index, then read only relevant granules from disk.</p>
+          <p><strong style="color:#f5a623">Replication:</strong> ReplicatedMergeTree tables use ClickHouse Keeper (<a href="https://github.com/apache/zookeeper" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">ZooKeeper<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>-compatible) to coordinate. Each shard replica independently verifies and applies parts from ZK-tracked log.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(245,166,35,.35)">
+        <div class="card-header" style="background:rgba(245,166,35,.1);border-bottom:1px solid rgba(245,166,35,.25)">
+          <span class="fw-bold" style="color:#f5a623"><i class="bi bi-sliders me-2"></i>Key Settings</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- config.xml / users.xml key settings
+
+-- Max threads for parallel query execution
+max_threads = 16   -- usually = CPU cores
+
+-- Memory limit per query
+max_memory_usage = 10000000000   -- 10GB
+
+-- Merge settings
+merge_tree_min_rows_for_concurrent_read = 163840
+min_merge_bytes_to_use_direct_io = 10737418240
+
+-- Distributed queries
+-- In distributed table:
+SELECT /*+ SETTINGS distributed_product_mode='local' */
+  country, sum(revenue)
+FROM distributed_sales
+GROUP BY country;
+
+-- EXPLAIN pipeline (see execution stages)
+EXPLAIN PIPELINE
+SELECT country, sum(revenue)
+FROM page_views
+WHERE ts > now() - INTERVAL 7 DAY
+GROUP BY country;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

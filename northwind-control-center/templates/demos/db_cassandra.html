@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Cassandra — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-grid-3x3 fs-2 me-3" style="color:#1287b1"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Apache Cassandra</h2>
+    <p class="text-muted mb-0">Wide-Column Store · CQL · Ring topology · Tunable consistency · Linear scaling</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  <a href="https://www.cs.cornell.edu/projects/ladis2009/papers/lakshman-ladis2009.pdf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Cassandra<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> was born at Facebook in 2008 to handle the inbox search problem — billions of messages written at any time from anywhere. Released as <a href="https://github.com/apache/cassandra" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">open-source<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> in 2010, it became the database of choice when you need linear horizontal scaling with no single point of failure. Apple runs 75,000+ Cassandra nodes. Netflix uses it for watchlist and streaming metadata. Discord stored trillions of messages in Cassandra before migrating parts to ScyllaDB.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="cassTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cass-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cass-model">
+      <i class="bi bi-2-circle me-1"></i>Data Model
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cass-query">
+      <i class="bi bi-3-circle me-1"></i>CQL Language
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cass-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cass-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="cass-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2008 (Facebook), Apache 2010</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>Apache 2.0</td></tr>
+            <tr><td style="color:#8b949e">CAP</td><td>AP (tunable toward CP)</td></tr>
+            <tr><td style="color:#8b949e">Consistency</td><td>Eventual by default, tunable per-query</td></tr>
+            <tr><td style="color:#8b949e">Replication</td><td>Multi-master, N replicas per keyspace</td></tr>
+            <tr><td style="color:#8b949e">Scale</td><td>Linear — add nodes, gain throughput</td></tr>
+            <tr><td style="color:#8b949e">Notable users</td><td>Apple (75k nodes), Netflix, Discord, Instagram</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-exclamation-triangle me-2"></i>The Golden Rule</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#1287b1">Design queries first, then schema.</strong> Cassandra cannot do joins, GROUP BY, or ad-hoc WHERE on non-key columns. Every query must be served by exactly one table designed for it. Denormalization is not a smell — it is the pattern.</p>
+          <p class="mb-0">If you need to query messages by user AND by time AND by conversation, you create three separate tables. Disk is cheap; unplanned full-cluster scans are not.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-diagram-2 me-2"></i>Ring Topology</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:1rem;font-size:.72rem;color:#c9d1d9;line-height:1.7;overflow-x:auto">         ┌──── Token Ring ────┐
+         │                    │
+    Node A ──────────── Node B
+    (0..63)             (64..127)
+        │                   │
+    Node D ──────────── Node C
+   (192..255)          (128..191)
+
+Each node owns a token range.
+Partition key is hashed (Murmur3)
+to determine which node is "home."
+
+With Replication Factor = 3:
+  Each partition is stored on 3
+  consecutive nodes in the ring.
+
+  Write to Partition X:
+    Coordinator receives write
+    → forwards to replica nodes 1,2,3
+    → waits for QUORUM (2/3) acks
+    → returns success to client
+
+  No Primary! All nodes equal.
+  Any node can be coordinator.</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA MODEL -->
+<div class="tab-pane fade" id="cass-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-layers me-2"></i>Keyspace &gt; Table &gt; Partition</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Keyspace (like a database/schema)
+CREATE KEYSPACE messenger
+  WITH replication = {
+    'class': 'NetworkTopologyStrategy',
+    'dc1': 3,   -- 3 replicas in dc1
+    'dc2': 2    -- 2 replicas in dc2
+  };
+
+USE messenger;
+
+-- Table: messages by conversation
+-- Partition key: conversation_id
+-- Clustering key: created_at (DESC = newest first)
+CREATE TABLE messages_by_conversation (
+  conversation_id UUID,
+  created_at      TIMEUUID,   -- time + UUID, sortable
+  sender_id       UUID,
+  content         TEXT,
+  attachment_url  TEXT,
+  PRIMARY KEY (conversation_id, created_at)
+) WITH CLUSTERING ORDER BY (created_at DESC)
+  AND compaction = {
+    'class': 'TimeWindowCompactionStrategy',
+    'compaction_window_size': '1',
+    'compaction_window_unit': 'DAYS'
+  };</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-key me-2"></i>Primary Key Anatomy</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">PRIMARY KEY ((partition_key), clustering_col1, ...)
+              ─────┬─────    ──────────┬────────
+                   │                  │
+              Determines         Controls sort
+              which node         order within
+              owns the data      the partition
+
+-- Examples:
+PRIMARY KEY (user_id)
+  → one partition per user (can get large)
+
+PRIMARY KEY ((user_id, month), created_at)
+  → composite partition (bounds partition size)
+  → clustering on created_at within bucket
+
+-- Counter table (distributed counters)
+CREATE TABLE page_views (
+  page_url TEXT PRIMARY KEY,
+  views    COUNTER
+);
+UPDATE page_views SET views = views + 1
+WHERE page_url = '/home';</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: CQL LANGUAGE -->
+<div class="tab-pane fade" id="cass-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-code-slash me-2"></i>Basic CQL</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Write (upsert by default — last-write-wins)
+INSERT INTO messages_by_conversation
+  (conversation_id, created_at, sender_id, content)
+VALUES (
+  a1b2c3d4-...,
+  now(),
+  f9e8d7c6-...,
+  'Hello!'
+) USING TTL 2592000;   -- auto-delete after 30 days
+
+-- Read a partition (efficient)
+SELECT * FROM messages_by_conversation
+WHERE conversation_id = a1b2c3d4-...
+LIMIT 50;
+
+-- Slice within partition (by clustering key)
+SELECT * FROM messages_by_conversation
+WHERE conversation_id = a1b2c3d4-...
+  AND created_at > minTimeuuid('2024-01-01 00:00')
+  AND created_at < maxTimeuuid('2024-02-01 00:00');</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-sliders me-2"></i>Consistency Tuning</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Consistency levels per statement
+SELECT * FROM orders WHERE id = ?
+USING CONSISTENCY QUORUM;
+-- QUORUM = ceil(RF/2) + 1 acks required
+-- With RF=3: 2 nodes must respond
+
+-- Levels (weakest → strongest):
+--  ONE      – fastest, risk stale read
+--  LOCAL_ONE – one replica in local DC
+--  QUORUM   – majority cluster-wide
+--  LOCAL_QUORUM – majority in local DC (recommended)
+--  ALL      – all replicas (slowest, max consistency)
+
+-- Strong consistency trick:
+-- Write QUORUM + Read QUORUM → linearizable
+-- (W + R > RF ensures overlap)
+
+-- Lightweight transactions (compare-and-set)
+INSERT INTO users (id, email)
+VALUES (?, ?) IF NOT EXISTS;
+-- Uses Paxos — 4 round trips, use sparingly</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="cass-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-building me-2"></i>Real-World Deployments</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#1287b1">Apple:</span> Operates over 75,000 Cassandra nodes — one of the largest known deployments. Used for iCloud storage metadata, Siri backend, and app analytics.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#1287b1">Netflix:</span> Stores watchlist, viewing history, and streaming metadata. Chose Cassandra for multi-region active-active — content must be available even when a region goes down.</div>
+          <div style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#1287b1">Discord:</span> Stored trillions of messages. Hit Cassandra's hot partition limits (large partitions, GC pressure) at scale; migrated to <a href="https://github.com/scylladb/scylla" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">ScyllaDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (C++ Cassandra-compatible) for lower tail latency.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">Write throughput</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Exceptional</span></td></tr>
+            <tr><td style="color:#8b949e">Horizontal scale</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Linear (add nodes)</span></td></tr>
+            <tr><td style="color:#8b949e">SPOF</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">None</span></td></tr>
+            <tr><td style="color:#8b949e">Joins / GROUP BY</td><td><span class="badge" style="background:rgba(239,68,68,.2);color:#ef4444">Not supported</span></td></tr>
+            <tr><td style="color:#8b949e">Consistency</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Eventual (tunable)</span></td></tr>
+            <tr><td style="color:#8b949e">CAP</td><td><span class="badge" style="background:rgba(129,140,248,.2);color:#818cf8">AP (tunable)</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="cass-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-cpu me-2"></i>Storage Engine (LSM)</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#1287b1">LSM Tree (Log-Structured Merge):</strong> Writes go to an in-memory structure (Memtable) + commit log. When full, Memtable flushes to an immutable SSTable on disk. SSTables are periodically merged (compacted) to remove tombstones and reduce read amplification.</p>
+          <p><strong style="color:#1287b1">Compaction strategies:</strong> STCS (Size-Tiered, default, great for write-heavy), LCS (Leveled, better for reads, write amplification), TWCS (Time-Window, ideal for time-series with TTLs).</p>
+          <p><strong style="color:#1287b1">Gossip protocol:</strong> Nodes share state by gossiping with 3 random peers every second. Failure detection uses a phi accrual detector. The entire cluster topology is known by every node within seconds.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(18,135,177,.35)">
+        <div class="card-header" style="background:rgba(18,135,177,.1);border-bottom:1px solid rgba(18,135,177,.25)">
+          <span class="fw-bold" style="color:#1287b1"><i class="bi bi-sliders me-2"></i>Key Config</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7"># cassandra.yaml
+cluster_name: 'prod-cluster'
+num_tokens: 256           # vnodes (virtual nodes)
+
+# Snitch: determines DC/rack topology
+endpoint_snitch: GossipingPropertyFileSnitch
+
+# Heap (tune for GC pressure)
+# Set MAX_HEAP_SIZE in cassandra-env.sh
+# Typically 8-16GB; G1GC recommended
+
+# Read/write path
+memtable_allocation_type: heap_buffers
+commitlog_sync: periodic
+commitlog_sync_period_in_ms: 10000
+
+# Partitioner (consistent hashing)
+partitioner: org.apache.cassandra.dht.Murmur3Partitioner
+
+# nodetool commands:
+nodetool status          # cluster state
+nodetool tpstats         # thread pool stats
+nodetool compactionstats # compaction progress
+nodetool repair          # anti-entropy repair</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

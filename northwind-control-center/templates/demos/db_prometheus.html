@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+{% block title %}Prometheus — Time-Series Monitoring DB{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center mb-2">
+    <i class="bi bi-fire fs-2 me-3" style="color:#e6522c"></i>
+    <div>
+      <h2 class="mb-0 fw-bold">Prometheus</h2>
+      <p class="text-muted mb-0">Pull-based metrics · PromQL · CNCF de facto monitoring standard</p>
+    </div>
+  </div>
+  <p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+    Born at SoundCloud in 2012 (<a href="https://github.com/prometheus/prometheus" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">GitHub<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>), Prometheus became CNCF's second project (after Kubernetes) in 2016.
+    Its pull-based scrape model, multi-dimensional labels, and PromQL functional query language
+    made it the default metrics backbone for every Kubernetes cluster on the planet.
+    Thanos, Cortex, and VictoriaMetrics extend it for long-term storage at petabyte scale.
+  </p>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3" id="promTabs" role="tablist" style="border-bottom:1px solid #30363d">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview">Overview</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-model">Data Model</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-query">PromQL</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usecases">Use Cases</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-arch">Architecture</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- OVERVIEW -->
+    <div class="tab-pane fade show active" id="tab-overview">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Origin &amp; Positioning</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">
+                Prometheus was built by Matt Proud and Julius Volz at SoundCloud, inspired by Google's
+                internal <strong>Borgmon</strong> monitoring system. Unlike push-based systems (Graphite, StatsD),
+                Prometheus <em>scrapes</em> metric endpoints — services expose a <code>/metrics</code> HTTP endpoint
+                and Prometheus polls them on a configurable interval.
+              </p>
+              <p style="font-size:.85rem;color:#c9d1d9">
+                The combination of multi-dimensional labels, a local TSDB with 2-hour blocks, and the
+                expressive PromQL made it the undisputed monitoring standard for cloud-native infrastructure.
+                Grafana's most popular datasource by an enormous margin.
+              </p>
+              <div class="mt-3">
+                <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+# prometheus.yml — scrape config
+scrape_configs:
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: 'true'
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Key Facts</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm table-dark mb-0" style="font-size:.82rem">
+                <tbody>
+                  <tr><td class="text-muted">Born</td><td>2012 (SoundCloud)</td></tr>
+                  <tr><td class="text-muted">CNCF</td><td>2016, Graduated 2018</td></tr>
+                  <tr><td class="text-muted">License</td><td>Apache 2.0</td></tr>
+                  <tr><td class="text-muted">Written in</td><td>Go</td></tr>
+                  <tr><td class="text-muted">Query</td><td>PromQL</td></tr>
+                  <tr><td class="text-muted">Storage</td><td>Local TSDB (custom)</td></tr>
+                  <tr><td class="text-muted">Scrape model</td><td>Pull-based HTTP</td></tr>
+                  <tr><td class="text-muted">Retention</td><td>15d default (local)</td></tr>
+                  <tr><td class="text-muted">Long-term</td><td>Thanos / Cortex / Victoria</td></tr>
+                  <tr><td class="text-muted">Users</td><td>Every K8s cluster globally</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Four Metric Types</span>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1rem">
+                    <div class="fw-semibold mb-1" style="color:#e6522c">Counter</div>
+                    <p style="font-size:.8rem;color:#8b949e;margin:0">Monotonically increasing value. Only resets on restart. Used for: HTTP requests, errors, bytes. Always use <code>rate()</code> or <code>increase()</code> with counters.</p>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1rem">
+                    <div class="fw-semibold mb-1" style="color:#e6522c">Gauge</div>
+                    <p style="font-size:.8rem;color:#8b949e;margin:0">Can go up or down. Current state snapshot. Used for: memory usage, active connections, temperature, queue depth.</p>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1rem">
+                    <div class="fw-semibold mb-1" style="color:#e6522c">Histogram</div>
+                    <p style="font-size:.8rem;color:#8b949e;margin:0">Samples observations into configurable buckets. Exposes _bucket, _count, _sum. Use <code>histogram_quantile()</code> for P50/P99 latency.</p>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1rem">
+                    <div class="fw-semibold mb-1" style="color:#e6522c">Summary</div>
+                    <p style="font-size:.8rem;color:#8b949e;margin:0">Pre-computed quantiles on client side. Less flexible than Histograms (can't aggregate across instances). Used for known-latency SLO tracking.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA MODEL -->
+    <div class="tab-pane fade" id="tab-model">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Time-Series Identity</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">Each time-series is uniquely identified by its metric name + set of key=value labels. Each sample is a (timestamp_ms, float64) pair.</p>
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+# Metric name + label set = unique series
+http_requests_total{
+  job="api-server",
+  instance="10.0.0.1:8080",
+  method="GET",
+  status="200",
+  path="/api/orders"
+}
+
+# Exposition format (text-based /metrics endpoint)
+# HELP http_requests_total The total number of HTTP requests.
+# TYPE http_requests_total counter
+http_requests_total{method="GET",status="200"} 1234567 1714000000000
+http_requests_total{method="POST",status="201"} 89012
+http_requests_total{method="POST",status="400"} 234
+
+# Histogram exposition
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{le="0.005"} 24054
+http_request_duration_seconds_bucket{le="0.01"}  33444
+http_request_duration_seconds_bucket{le="0.025"} 100392
+http_request_duration_seconds_bucket{le="0.05"}  129389
+http_request_duration_seconds_bucket{le="+Inf"}  144320
+http_request_duration_seconds_sum   53423.0
+http_request_duration_seconds_count 144320</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">TSDB Storage Layout</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:.85rem;color:#c9d1d9">Prometheus TSDB stores data in 2-hour in-memory blocks. Completed blocks are written to disk and eventually compacted.</p>
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+data/
+├── 01BKGTZQ1SYQJTR4AB2QSV8H1Q/  # 2h block (compacted)
+│   ├── chunks/
+│   │   └── 000001              # Gorilla-compressed samples
+│   ├── index                   # Series inverted index
+│   ├── meta.json               # Block metadata
+│   └── tombstones              # Deletion markers
+├── 01BKGTZQ1HHWHV8FBJXW1Y3W0K/
+├── chunks_head/                # Current in-memory WAL
+│   └── 000001
+└── wal/                        # Write-Ahead Log
+    ├── 00000000
+    └── 00000001
+
+# Retention config
+storage.tsdb.retention.time: 15d
+storage.tsdb.retention.size: 50GB
+storage.tsdb.path: /prometheus
+
+# Per-series compression: ~1.37 bytes/sample (Gorilla encoding)</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Instrumentation: Exposing Metrics from Your App</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto">
+from prometheus_client import Counter, Histogram, Gauge, start_http_server
+import time
+
+# Define metrics
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'Request latency in seconds',
+    ['endpoint'],
+    buckets=[.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5]
+)
+ACTIVE_CONNECTIONS = Gauge(
+    'active_connections',
+    'Number of active connections'
+)
+
+# Use in a Flask route
+@app.route('/api/orders')
+def get_orders():
+    ACTIVE_CONNECTIONS.inc()
+    start = time.time()
+    try:
+        result = db.query(...)
+        REQUEST_COUNT.labels(method='GET', endpoint='/api/orders', status='200').inc()
+        return result
+    except Exception:
+        REQUEST_COUNT.labels(method='GET', endpoint='/api/orders', status='500').inc()
+        raise
+    finally:
+        REQUEST_LATENCY.labels(endpoint='/api/orders').observe(time.time() - start)
+        ACTIVE_CONNECTIONS.dec()
+
+start_http_server(8000)  # Exposes /metrics on :8000</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMQL -->
+    <div class="tab-pane fade" id="tab-query">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">PromQL — Prometheus Query Language</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+# ── 1. Instant vector — current value of all series matching selector
+http_requests_total{job="api", status="200"}
+
+# ── 2. Range vector — 5-min window (required by rate/irate)
+http_requests_total{job="api"}[5m]
+
+# ── 3. rate() — per-second rate of a counter over a range
+rate(http_requests_total{job="api"}[5m])
+
+# ── 4. irate() — instantaneous rate (last 2 samples in range, spiky)
+irate(http_requests_total{job="api"}[1m])
+
+# ── 5. sum() aggregation — total RPS across all instances, by status
+sum by(status) (rate(http_requests_total[5m]))
+
+# ── 6. P99 latency from histogram (most important SLO query)
+histogram_quantile(0.99,
+  sum by(le, endpoint) (
+    rate(http_request_duration_seconds_bucket{job="api"}[5m])
+  )
+)
+
+# ── 7. Error rate — percentage of 5xx responses
+100 * sum(rate(http_requests_total{status=~"5.."}[5m]))
+  / sum(rate(http_requests_total[5m]))
+
+# ── 8. CPU usage across all pods (node-exporter)
+100 - (avg by(instance) (
+  rate(node_cpu_seconds_total{mode="idle"}[5m])
+) * 100)
+
+# ── 9. Memory working set (Kubernetes)
+container_memory_working_set_bytes{
+  namespace="production",
+  container!=""
+} / container_spec_memory_limit_bytes > 0.8  # alert if > 80%
+
+# ── 10. Recording rule (pre-compute expensive queries)
+# In rules/slo.yml:
+groups:
+  - name: slo_rules
+    interval: 30s
+    rules:
+      - record: job:http_requests:rate5m
+        expr: sum by(job) (rate(http_requests_total[5m]))
+
+      - record: job:http_error_ratio:rate5m
+        expr: |
+          sum by(job) (rate(http_requests_total{status=~"5.."}[5m]))
+          / sum by(job) (rate(http_requests_total[5m]))
+
+      - alert: HighErrorRate
+        expr: job:http_error_ratio:rate5m > 0.01
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "Error rate {% raw %}{{ $value | humanizePercentage }}{% endraw %} on {% raw %}{{ $labels.job }}{% endraw %}"
+
+# ── 11. Predict disk full (linear extrapolation)
+predict_linear(node_filesystem_free_bytes[6h], 4 * 3600) &lt; 0
+
+# ── 12. Absent — alert when metric disappears (job down)
+absent(up{job="api"} == 1)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USE CASES -->
+    <div class="tab-pane fade" id="tab-usecases">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Killer Use Cases</span>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <div class="fw-semibold mb-1" style="color:#e6522c">Kubernetes Cluster Monitoring</div>
+                <p style="font-size:.83rem;color:#8b949e">The default monitoring stack: Prometheus Operator + kube-state-metrics + node-exporter + Alertmanager. Used by every managed K8s offering (EKS, GKE, AKS). Netflix, Spotify, GitHub.</p>
+              </div>
+              <div class="mb-3">
+                <div class="fw-semibold mb-1" style="color:#e6522c">SRE Alerting &amp; SLO Tracking</div>
+                <p style="font-size:.83rem;color:#8b949e">Multi-window multi-burn-rate alerts for SLO error budgets. Google SRE book approach implemented via Prometheus alerting rules. Grafana + Prometheus = standard SRE dashboard.</p>
+              </div>
+              <div class="mb-3">
+                <div class="fw-semibold mb-1" style="color:#e6522c">Microservices Observability</div>
+                <p style="font-size:.83rem;color:#8b949e">RED method (Rate, Errors, Duration) per service. Service mesh integration (Istio, Linkerd expose Prometheus metrics natively). Combined with Jaeger for traces.</p>
+              </div>
+              <div class="mb-3">
+                <div class="fw-semibold mb-1" style="color:#e6522c">IoT &amp; Edge Metrics</div>
+                <p style="font-size:.83rem;color:#8b949e">Prometheus Pushgateway for short-lived batch jobs. Edge agents push to gateway; Prometheus scrapes it. Used for factory floor sensors, edge ML inference metrics.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Trade-Off: Prometheus vs Alternatives</span>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-dark" style="font-size:.8rem">
+                  <thead><tr><th>Aspect</th><th style="color:#e6522c">Prometheus</th><th>InfluxDB</th><th>Datadog</th></tr></thead>
+                  <tbody>
+                    <tr><td>Model</td><td>Pull (scrape)</td><td>Push/pull</td><td>Agent push</td></tr>
+                    <tr><td>Query</td><td>PromQL</td><td>Flux/InfluxQL</td><td>DQL</td></tr>
+                    <tr><td>Long-term</td><td>Thanos/Cortex</td><td>Built-in</td><td>Built-in (SaaS)</td></tr>
+                    <tr><td>High cardinality</td><td>Struggles >10M</td><td>Better</td><td>Best</td></tr>
+                    <tr><td>K8s native</td><td>★★★★★</td><td>★★★</td><td>★★★★</td></tr>
+                    <tr><td>Cost</td><td>Free (OSS)</td><td>OSS + cloud</td><td>$$$ SaaS</td></tr>
+                    <tr><td>Alerting</td><td>Alertmanager</td><td>Built-in</td><td>Built-in</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="mt-2 p-2" style="background:#0d1117;border-radius:6px;font-size:.8rem;color:#8b949e">
+                <strong style="color:#e6522c">When NOT to use Prometheus:</strong> High-cardinality metrics (millions of unique label combinations — e.g., per-user metrics), long-term storage beyond 2 weeks without Thanos, non-infrastructure application data.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCHITECTURE -->
+    <div class="tab-pane fade" id="tab-arch">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Core Architecture</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+┌──────────────────────────────────────────────────────────┐
+│                  Prometheus Server                       │
+│                                                          │
+│  ┌──────────────┐   ┌──────────────┐  ┌─────────────┐    │
+│  │  Retrieval   │   │  TSDB        │  │  HTTP API   │    │
+│  │  (scrape     │──▶│  (WAL +      │──▶│  /query     │   │
+│  │   engine)    │   │  2h blocks)  │  │  /metrics   │    │
+│  └──────────────┘   └──────────────┘  └─────────────┘    │
+│         │                                      │         │
+│  ┌──────▼──────┐                       ┌──────▼──────┐   │
+│  │  Service    │                       │  Alertmanager│  │
+│  │  Discovery  │                       │  (dedupe,   │   │
+│  │  (K8s/DNS/  │                       │   route,    │   │
+│  │   Consul)   │                       │   silence)  │   │
+│  └─────────────┘                       └─────────────┘   │
+└──────────────────────────────────────────────────────────┘
+         │ HTTP scrape every 15s
+  ┌──────┴────────────────────────────────┐
+  │          Target /metrics endpoints    │
+  ├── node-exporter    :9100             │
+  ├── kube-state-metrics :8080           │
+  ├── app pod          :8000             │
+  └── postgres-exporter :9187            │
+
+Long-term storage extension:
+Prometheus ──remote_write──▶ Thanos Receiver ──▶ S3/GCS
+                           ──▶ Cortex          ──▶ Cassandra
+                           ──▶ VictoriaMetrics ──▶ local disk</pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100" style="background:#13141a;border:1px solid rgba(230,82,44,.3)">
+            <div class="card-header" style="background:rgba(230,82,44,.08);border-bottom:1px solid rgba(230,82,44,.2)">
+              <span class="fw-semibold" style="color:#e6522c">Thanos: HA + Long-Term at Scale</span>
+            </div>
+            <div class="card-body">
+              <pre style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;font-size:.78rem;color:#e6edf3;overflow-x:auto;line-height:1.1">
+# Thanos architecture (multi-cluster, long-term)
+┌───────────────────────────────────────────────┐
+│  Prometheus (region-1)                        │
+│    └── Thanos Sidecar ──uploads──▶ S3 bucket  │
+│                       ──▶ Thanos Store API    │
+│  Prometheus (region-2)                        │
+│    └── Thanos Sidecar ──uploads──▶ S3 bucket  │
+│                                               │
+│  Thanos Querier ◀── fans out queries to ──▶   │
+│    ├── Sidecar (recent 2h)                    │
+│    └── Store Gateway (historical S3)          │
+│                                               │
+│  Thanos Compactor (runs on S3, deduplicate    │
+│    and downsample old blocks)                 │
+└───────────────────────────────────────────────┘
+
+# Downsampling: raw → 5min → 1hr resolutions
+# Retention: 90d raw, 1yr 5min, forever 1hr
+thanos compactor \
+  --objstore.config-file=bucket.yaml \
+  --retention.resolution-raw=90d \
+  --retention.resolution-5m=365d \
+  --retention.resolution-1h=0d</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -58,6 +58,8 @@
   <span style="font-size:.75rem;color:#5a6070">Column pruning + partition pruning — slash query cost by 95%+</span>
 </div>
 
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">Cloud data warehouses charge by bytes scanned, so query shape is directly billing shape. Column pruning means the engine reads only the columns named in SELECT and WHERE, ignoring all others on disk; partition pruning means it skips entire date-range partitions that cannot match the WHERE clause. This demo runs three queries on a simulated 12-month order table and measures scanned bytes collapsing from gigabytes to megabytes as each optimization is applied. At $5 per terabyte, the difference between a naive <code>SELECT *</code> and a fully-pruned query is the difference between a $5 charge and a fraction of a cent.</p>
+
 <div class="row g-2">
 
   <!-- LEFT: Query builder -->
@@ -152,7 +154,7 @@
         <div>Each column stored as a separate file stripe.<br>
           Fast for analytics (read only needed columns).<br>
           Excellent compression (same-type values).<br>
-          Used by: BigQuery, Parquet, ORC, DuckDB.
+          Used by: BigQuery, Parquet, ORC, <a href="https://github.com/duckdb/duckdb" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">DuckDB<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a>.
         </div>
         <br>
         <div style="font-size:.63rem">

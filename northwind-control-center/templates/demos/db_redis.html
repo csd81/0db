@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% block title %}Redis — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-memory fs-2 me-3" style="color:#dc382d"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Redis</h2>
+    <p class="text-muted mb-0">In-Memory Data Store · 8 data types · Pub/Sub · Streams · Sub-millisecond latency</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Redis (Remote Dictionary Server) was created by Salvatore Sanfilippo in 2009 as a key-value store that keeps its entire dataset in RAM. What sets Redis apart is not just speed — it is the richness of its data structures. Strings, lists, hashes, sets, sorted sets, streams, HyperLogLogs, and geospatial indexes each enable entirely different use cases from a single system, making Redis the first choice for session caches, gaming leaderboards, rate limiters, and real-time pub/sub messaging.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="redisTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#redis-overview">
+      <i class="bi bi-1-circle me-1"></i>Overview
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#redis-model">
+      <i class="bi bi-2-circle me-1"></i>Data Structures
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#redis-query">
+      <i class="bi bi-3-circle me-1"></i>Commands
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#redis-usecases">
+      <i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#redis-arch">
+      <i class="bi bi-5-circle me-1"></i>Architecture
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-pane fade show active" id="redis-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2009 (Salvatore Sanfilippo / antirez)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>BSD 3-clause (v7.4+: SSPL / RSALv2)</td></tr>
+            <tr><td style="color:#8b949e">Storage</td><td>In-memory (RAM), optional persistence</td></tr>
+            <tr><td style="color:#8b949e">Concurrency</td><td>Single-threaded event loop (no locks!)</td></tr>
+            <tr><td style="color:#8b949e">Latency</td><td>&lt;1 ms p99 for GET/SET on local network</td></tr>
+            <tr><td style="color:#8b949e">Throughput</td><td>1M+ ops/sec on commodity hardware</td></tr>
+            <tr><td style="color:#8b949e">Notable users</td><td>Twitter, GitHub, Pinterest, Snapchat, Stack Overflow</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-8-circle me-2"></i>8 Native Data Types</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="row g-2">
+            <div class="col-6"><div class="p-2 rounded text-center" style="background:#0d0f16;border:1px solid rgba(220,56,45,.3);font-size:.7rem;color:#c9d1d9"><div style="color:#dc382d;font-weight:700">String</div>bytes, int, float</div></div>
+            <div class="col-6"><div class="p-2 rounded text-center" style="background:#0d0f16;border:1px solid rgba(220,56,45,.3);font-size:.7rem;color:#c9d1d9"><div style="color:#dc382d;font-weight:700">List</div>linked list, LPUSH/RPOP</div></div>
+            <div class="col-6"><div class="p-2 rounded text-center" style="background:#0d0f16;border:1px solid rgba(220,56,45,.3);font-size:.7rem;color:#c9d1d9"><div style="color:#dc382d;font-weight:700">Hash</div>field→value map</div></div>
+            <div class="col-6"><div class="p-2 rounded text-center" style="background:#0d0f16;border:1px solid rgba(220,56,45,.3);font-size:.7rem;color:#c9d1d9"><div style="color:#dc382d;font-weight:700">Set</div>unique string members</div></div>
+            <div class="col-6"><div class="p-2 rounded text-center" style="background:#0d0f16;border:1px solid rgba(220,56,45,.3);font-size:.7rem;color:#c9d1d9"><div style="color:#dc382d;font-weight:700">Sorted Set</div>score-ordered members</div></div>
+            <div class="col-6"><div class="p-2 rounded text-center" style="background:#0d0f16;border:1px solid rgba(220,56,45,.3);font-size:.7rem;color:#c9d1d9"><div style="color:#dc382d;font-weight:700">Stream</div>append-only log</div></div>
+            <div class="col-6"><div class="p-2 rounded text-center" style="background:#0d0f16;border:1px solid rgba(220,56,45,.3);font-size:.7rem;color:#c9d1d9"><div style="color:#dc382d;font-weight:700">HyperLogLog</div>cardinality estimate</div></div>
+            <div class="col-6"><div class="p-2 rounded text-center" style="background:#0d0f16;border:1px solid rgba(220,56,45,.3);font-size:.7rem;color:#c9d1d9"><div style="color:#dc382d;font-weight:700">Geo</div>geospatial index</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-diagram-2 me-2"></i>Architecture Overview</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:1rem;font-size:.72rem;color:#c9d1d9;line-height:1.7;overflow-x:auto">┌─────────────────────────────────────────┐
+│            CLIENT (RESP protocol)       │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────▼──────────────────────┐
+│        SINGLE-THREADED EVENT LOOP       │
+│   (epoll/kqueue, non-blocking I/O)      │
+│   All commands serialized — no locks    │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────▼──────────────────────┐
+│           IN-MEMORY DICTIONARY          │
+│   Hash table of {key → type + value}    │
+│   Keys have optional TTL (expire)       │
+└──────────┬───────────────┬──────────────┘
+           │               │
+┌──────────▼──────┐ ┌──────▼───────────────┐
+│  RDB Snapshot   │ │  AOF Append-Only     │
+│  (point-in-time │ │  File (every write)  │
+│   periodic)     │ │                      │
+└─────────────────┘ └──────────────────────┘
+
+── High Availability ──────────────────────
+  Redis Sentinel: monitors primary,
+    promotes replica on failure
+  Redis Cluster: 16384 hash slots,
+    auto-sharding across nodes
+──────────────────────────────────────────</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DATA STRUCTURES -->
+<div class="tab-pane fade" id="redis-model">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-list me-2"></i>List, Hash, Set</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- LIST (deque, O(1) push/pop at both ends)
+RPUSH queue "job:1001" "job:1002"
+LPOP queue          -- consume from left (FIFO)
+LRANGE queue 0 -1   -- view all items
+
+-- HASH (flat map, like a row)
+HSET user:42 name "Alice" email "a@x.com" credits 500
+HGET user:42 name       -- "Alice"
+HMGET user:42 name credits
+HINCRBY user:42 credits 100
+
+-- SET (unique strings)
+SADD online:users 42 99 17
+SISMEMBER online:users 42   -- 1 (true)
+SCARD online:users          -- 3 (count)
+SINTER online:users premium:users  -- intersection</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-trophy me-2"></i>Sorted Set &amp; Stream</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- SORTED SET: leaderboard
+ZADD leaderboard 9850 "alice" 7200 "bob" 12100 "carol"
+ZREVRANK leaderboard "alice"   -- rank from top (0-based)
+ZREVRANGE leaderboard 0 9 WITHSCORES  -- top 10
+ZINCRBY leaderboard 500 "alice"        -- atomic score bump
+
+-- STREAM: Kafka-lite event log
+XADD events * action "purchase" user_id 42 amount 99.5
+XADD events * action "view" user_id 17 product "SKU-9"
+
+-- Consumer group (competing consumers)
+XGROUP CREATE events mygroup $ MKSTREAM
+XREADGROUP GROUP mygroup worker1 COUNT 10 STREAMS events >
+XACK events mygroup <message-id></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: COMMANDS -->
+<div class="tab-pane fade" id="redis-query">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-code-slash me-2"></i>Core Patterns</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- String + TTL (session token)
+SET session:tok:abc123 '{"user":42,"role":"admin"}' EX 3600
+GET session:tok:abc123
+TTL session:tok:abc123       -- seconds remaining
+PERSIST session:tok:abc123   -- remove expiry
+
+-- Atomic counter / rate limiter
+INCR rate:user:42            -- atomic increment
+EXPIRE rate:user:42 60       -- reset window
+
+-- Distributed lock (SET NX PX)
+SET lock:checkout:42 "worker-1" NX PX 5000
+-- NX = only set if Not eXists
+-- PX 5000 = expire after 5000ms
+
+-- Pipeline (batch commands, 1 round-trip)
+MULTI
+  INCR page_views
+  ZADD top_pages 100 "homepage"
+  HSET stats day "2024-01-15" views 100
+EXEC</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-broadcast me-2"></i>Pub/Sub &amp; Lua</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7">-- Pub/Sub (fire-and-forget, not durable)
+SUBSCRIBE notifications:user:42
+PSUBSCRIBE notifications:*      -- pattern subscribe
+PUBLISH notifications:user:42 '{"type":"order","id":99}'
+
+-- Lua scripting (atomic, server-side)
+EVAL "
+  local current = redis.call('GET', KEYS[1])
+  if current and tonumber(current) >= tonumber(ARGV[1]) then
+    redis.call('DECRBY', KEYS[1], ARGV[1])
+    return 1
+  end
+  return 0
+" 1 inventory:SKU-9 5
+-- Atomically deduct 5 if inventory >= 5</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: STRENGTHS & USE CASES -->
+<div class="tab-pane fade" id="redis-usecases">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-grid-1x2 me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#dc382d">Session cache:</span> Twitter stored 300M user sessions in Redis. GET by session token &lt;1ms. TTL auto-expires stale sessions.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#dc382d">Leaderboards:</span> Sorted Sets provide O(log N) ZADD and ZREVRANGE. Gaming companies run real-time global leaderboards for millions of players.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#dc382d">Rate limiting:</span> INCR + EXPIRE per user:endpoint key. Atomic, no race condition, auto-resets after window. Used by Stripe, Shopify APIs.</div>
+          <div class="mb-2" style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#dc382d">Task queues:</span> <a href="https://github.com/celery/celery" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Celery<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (Python) defaults to Redis as broker. RPUSH to enqueue, BLPOP to dequeue (blocking pop). Reliable with BRPOPLPUSH pattern.</div>
+          <div style="font-size:.78rem;color:#c9d1d9"><span class="fw-bold" style="color:#dc382d">Streams as Kafka-lite:</span> For moderate throughput (&lt;100k msg/s), Redis Streams with consumer groups replaces Kafka without the operational overhead.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-bar-chart me-2"></i>Trade-off Profile</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.75rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e">Latency</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">&lt;1ms p99</span></td></tr>
+            <tr><td style="color:#8b949e">Durability</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Optional (AOF+RDB)</span></td></tr>
+            <tr><td style="color:#8b949e">Data size</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">Limited by RAM</span></td></tr>
+            <tr><td style="color:#8b949e">Queries</td><td><span class="badge" style="background:rgba(251,146,60,.2);color:#fb923c">No SQL / joins</span></td></tr>
+            <tr><td style="color:#8b949e">HA</td><td><span class="badge" style="background:rgba(52,211,153,.2);color:#34d399">Sentinel / Cluster</span></td></tr>
+            <tr><td style="color:#8b949e">CAP</td><td><span class="badge" style="background:rgba(129,140,248,.2);color:#818cf8">AP (Cluster) / CP (Sentinel)</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: ARCHITECTURE -->
+<div class="tab-pane fade" id="redis-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-cpu me-2"></i>Single-Thread + Persistence</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9;line-height:1.8">
+          <p><strong style="color:#dc382d">Single-threaded event loop:</strong> All commands execute sequentially with no lock contention. This is why Redis commands have O(1)/O(log N) guarantees and why KEYS * or SMEMBERS on large sets blocks the server.</p>
+          <p><strong style="color:#dc382d">RDB (snapshot):</strong> Fork + copy-on-write snapshot at configured intervals (save 900 1 = after 900s if 1 key changed). Fast restore, but you may lose minutes of data on crash.</p>
+          <p><strong style="color:#dc382d">AOF (Append-Only File):</strong> Logs every write command. appendfsync everysec = at most 1s data loss. appendfsync always = no data loss but slower. AOF rewrite compacts history periodically.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(220,56,45,.35)">
+        <div class="card-header" style="background:rgba(220,56,45,.1);border-bottom:1px solid rgba(220,56,45,.25)">
+          <span class="fw-bold" style="color:#dc382d"><i class="bi bi-sliders me-2"></i>Eviction Policies</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="background:#0d0f16;border:1px solid #21262d;border-radius:6px;padding:.9rem;font-size:.72rem;color:#c9d1d9;line-height:1.7"># redis.conf — key settings
+
+maxmemory 8gb
+# What to do when memory is full:
+maxmemory-policy allkeys-lru
+# Policies:
+#   noeviction     -- return error (default)
+#   allkeys-lru    -- evict least-recently-used
+#   volatile-lru   -- LRU among keys with TTL
+#   allkeys-lfu    -- least-frequently-used
+#   allkeys-random -- random eviction
+
+# Persistence
+appendonly yes
+appendfsync everysec   # balance of safety/speed
+
+# Cluster
+cluster-enabled yes
+cluster-node-timeout 15000   # ms before failover</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

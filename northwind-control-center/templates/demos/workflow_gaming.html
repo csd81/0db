@@ -122,7 +122,7 @@ code { background:#0a0d11; padding:.15rem .4rem; border-radius:4px; font-size:.7
           <dd style="color:#8892a4">Game items have wildly varying attributes: swords have attack/speed, armor has defense/weight, potions have effect/duration. MongoDB flexible document model — no schema migration needed when new item types added. Aggregation pipeline for inventory queries. Used by multiple AAA studios for loot systems.</dd>
           <dt style="color:#cdd3de">Redis Sorted Sets (Leaderboards)</dt>
           <dd style="color:#8892a4"><code>ZADD leaderboard {score} {player_id}</code> — O(log N) insert. <code>ZREVRANK leaderboard {player_id}</code> → global rank in O(log N). <code>ZREVRANGE leaderboard 0 99</code> → top 100 in O(log N + K). Redis Sorted Set is the canonical leaderboard solution — handles 100M players with sub-millisecond rank queries. Used by every major mobile and PC game.</dd>
-          <dt style="color:#cdd3de" class="mb-0">Cassandra (Match History)</dt>
+          <dt style="color:#cdd3de" class="mb-0"><a href="https://github.com/apache/cassandra" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Cassandra<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> (Match History)</dt>
           <dd class="mb-0" style="color:#8892a4">Write-heavy, append-only match results. Wide-row per player: <code>partition(player_id) → sorted(match_timestamp DESC, match_id)</code>. Riot's League of Legends processes 40M matches/day — Cassandra never rejects a write even under peak load (AP system). Each row: ~2 KB of match stats.</dd>
         </dl>
       </div>

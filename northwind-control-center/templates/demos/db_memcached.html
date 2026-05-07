@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}Memcached — DBMS Encyclopedia{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-2">
+  <i class="bi bi-cpu fs-2 me-3" style="color:#6ea832"></i>
+  <div>
+    <h2 class="mb-0 fw-bold">Memcached</h2>
+    <p class="text-muted mb-0">Key-Value Cache · In-Memory · Sub-millisecond · Simple distributed object caching</p>
+  </div>
+</div>
+<p class="mb-4" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">
+  Created in 2003 by Brad Fitzpatrick at LiveJournal to dramatically reduce database load, <a href="https://github.com/memcached/memcached" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Memcached<i class="bi bi-github ms-1" style="font-size:.6rem;color:#8b949e"></i></a> pioneered the idea of a shared distributed in-memory cache as a separate tier. Its design philosophy is radical simplicity: no persistence, no data types beyond opaque blobs, no clustering logic (that's the client's job), no pub/sub, no scripting — just the fastest possible get/set over a binary or ASCII protocol. <a href="https://www.usenix.org/system/files/conference/nsdi13/nsdi13-final170_update.pdf" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Facebook served over 1 billion requests per day from Memcached<i class="bi bi-file-earmark-text ms-1" style="font-size:.6rem;color:#93c5fd"></i></a> at its peak. While Redis has largely superseded it for new projects (offering persistence and richer data structures), Memcached remains deployed at massive scale at Facebook, YouTube, and Wikipedia precisely because its simplicity makes it fast and predictable.
+</p>
+
+<ul class="nav nav-tabs mb-4" id="memcachedTabs">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#mc-overview"><i class="bi bi-1-circle me-1"></i>Overview</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mc-model"><i class="bi bi-2-circle me-1"></i>Data Model</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mc-query"><i class="bi bi-3-circle me-1"></i>Commands</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mc-usecases"><i class="bi bi-4-circle me-1"></i>Strengths &amp; Use Cases</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mc-arch"><i class="bi bi-5-circle me-1"></i>Architecture</button></li>
+</ul>
+
+<div class="tab-content">
+
+<!-- TAB 1 -->
+<div class="tab-pane fade show active" id="mc-overview">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-info-circle me-2"></i>Key Facts</span>
+        </div>
+        <div class="card-body p-3">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <tr><td style="color:#8b949e;width:38%">Born</td><td>2003 (Brad Fitzpatrick, LiveJournal)</td></tr>
+            <tr><td style="color:#8b949e">License</td><td>BSD</td></tr>
+            <tr><td style="color:#8b949e">Category</td><td>Distributed In-Memory Cache</td></tr>
+            <tr><td style="color:#8b949e">Data types</td><td>One: opaque byte string (key→value)</td></tr>
+            <tr><td style="color:#8b949e">Persistence</td><td>None (pure cache, data evicted on restart)</td></tr>
+            <tr><td style="color:#8b949e">Clustering</td><td>Client-side consistent hashing (no server cluster)</td></tr>
+            <tr><td style="color:#8b949e">Max value size</td><td>1MB</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-buildings me-2"></i>Who Uses Memcached</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(110,168,50,.15);color:#6ea832;border:1px solid rgba(110,168,50,.3)">Facebook</span>
+            <span class="badge" style="background:rgba(110,168,50,.15);color:#6ea832;border:1px solid rgba(110,168,50,.3)">Wikipedia</span>
+            <span class="badge" style="background:rgba(110,168,50,.15);color:#6ea832;border:1px solid rgba(110,168,50,.3)">YouTube (historically)</span>
+            <span class="badge" style="background:rgba(110,168,50,.15);color:#6ea832;border:1px solid rgba(110,168,50,.3)">Slack</span>
+            <span class="badge" style="background:rgba(110,168,50,.15);color:#6ea832;border:1px solid rgba(110,168,50,.3)">Etsy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-diagram-2 me-2"></i>Distributed Architecture</span>
+        </div>
+        <div class="card-body p-3">
+          <pre style="font-size:.72rem;color:#c9d1d9;background:#0e1014;padding:1rem;border-radius:6px;margin:0;line-height:1.5">
+Application Servers
+  │  │  │  │
+  └──┴──┴──┘
+       │
+   Client Library
+   (consistent hashing)
+   │         │         │
+┌──▼──┐  ┌──▼──┐  ┌──▼──┐
+│ MC1 │  │ MC2 │  │ MC3 │
+│128GB│  │128GB│  │128GB│
+└─────┘  └─────┘  └─────┘
+
+key "user:42" → hash → MC2
+key "sess:abc"→ hash → MC1
+(no inter-server communication!)</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab-pane fade" id="mc-model">
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-layers me-2"></i>The Data Model: Radical Simplicity</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <p><strong style="color:#6ea832">One data type: key → value</strong></p>
+              <p>Every item stored in Memcached is just: <code>key</code> (string, max 250 bytes) → <code>value</code> (opaque byte blob, max 1MB) + <code>expiry</code> (TTL in seconds).</p>
+              <p>There are no lists, sets, hashes, sorted sets, or streams. If you need those, use Redis.</p>
+              <p><strong style="color:#6ea832">Slab Allocator</strong></p>
+              <p>Memory is pre-allocated in slab classes (groups of same-size chunks). Items stored in the smallest slab class that fits. This eliminates memory fragmentation at the cost of some waste.</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong style="color:#6ea832">LRU Eviction</strong></p>
+              <p>When memory is full, the Least Recently Used item is evicted. Applications must handle cache misses gracefully — Memcached is a best-effort cache, not a store.</p>
+              <p><strong style="color:#6ea832">No Replication</strong></p>
+              <p>Standard Memcached has no built-in replication. If a server goes down, its data is gone (but your database still has the canonical copy). Facebook built their own replication layer (mcrouter) on top.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3 -->
+<div class="tab-pane fade" id="mc-query">
+  <div class="card" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+    <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+      <span class="fw-bold" style="color:#6ea832"><i class="bi bi-terminal me-2"></i>Memcached Commands</span>
+    </div>
+    <div class="card-body p-2">
+      <pre style="font-size:.73rem;color:#c9d1d9;background:#0e1014;padding:.75rem;border-radius:6px;margin:0;overflow-x:auto"># ASCII protocol (telnet to memcached:11211)
+
+# SET — store unconditionally
+set user:42 0 3600 18
+{"name":"Alice","age":30}
+STORED
+
+# GET — retrieve value
+get user:42
+VALUE user:42 0 18
+{"name":"Alice","age":30}
+END
+
+# ADD — only if key doesn't exist
+add lock:resource1 0 30 1
+STORED   # (or NOT_STORED if key exists)
+
+# REPLACE — only if key exists
+replace user:42 0 3600 15
+{"name":"Alice*"}
+
+# DELETE
+delete user:42
+DELETED
+
+# INCR / DECR — atomic counter on integer values
+set page_views:home 0 0 1
+0
+incr page_views:home 1
+1
+incr page_views:home 1
+2
+
+# GETS + CAS (Check-And-Set) — optimistic locking
+gets user:42
+VALUE user:42 0 18 12345678   # CAS token = 12345678
+{"name":"Alice","age":30}
+END
+
+cas user:42 0 3600 15 12345678  # update only if token matches
+{"name":"Alice*"}
+STORED   # or EXISTS (CAS token changed)
+
+# STATS — server diagnostics
+stats
+STAT pid 12345
+STAT uptime 86400
+STAT curr_connections 52
+STAT curr_items 1402847
+STAT bytes 2147483648
+STAT get_hits 98234567
+STAT get_misses 1234567
+STAT evictions 0</pre>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4 -->
+<div class="tab-pane fade" id="mc-usecases">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-trophy me-2"></i>Killer Use Cases</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.82rem;color:#c9d1d9">
+          <p><strong style="color:#6ea832">Database Query Cache</strong> — cache expensive SQL query results for seconds/minutes. Dramatically reduces database load for read-heavy apps. The classic use case that birthed Memcached.</p>
+          <p><strong style="color:#6ea832">Session Store</strong> — store web session data (stateless app servers can retrieve any user's session from Memcached). Simple, fast, TTL-based cleanup is perfect here.</p>
+          <p><strong style="color:#6ea832">HTML Fragment Cache</strong> — cache rendered HTML snippets (product listings, navigation menus) to avoid re-rendering on every request.</p>
+          <p><strong style="color:#6ea832">API Response Cache</strong> — cache responses from expensive upstream APIs with short TTLs. Rate-limit protection + latency reduction.</p>
+        </div>
+      </div>
+      <div class="card" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-bar-chart me-2"></i>Memcached vs Redis</span>
+        </div>
+        <div class="card-body p-2">
+          <table class="table table-sm mb-0" style="font-size:.78rem;color:#c9d1d9">
+            <thead><tr><th>Feature</th><th>Memcached</th><th>Redis</th></tr></thead>
+            <tbody>
+              <tr><td>Data types</td><td>String only</td><td>8 types (String, List, Hash, Set, ZSet, Stream...)</td></tr>
+              <tr><td>Persistence</td><td>None</td><td>RDB snapshots + AOF WAL</td></tr>
+              <tr><td>Replication</td><td>None (client-side)</td><td>Built-in replica + Sentinel + Cluster</td></tr>
+              <tr><td>Pub/Sub</td><td>No</td><td>Yes</td></tr>
+              <tr><td>Threading</td><td>Multi-threaded</td><td>Single-threaded (I/O multiplexed)</td></tr>
+              <tr><td>Best for</td><td>Pure object caching, multi-threaded</td><td>Everything else</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-speedometer2 me-2"></i>Performance</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.78rem;color:#c9d1d9">
+          <p><strong>Read latency:</strong> &lt;1ms (typically 50-200μs)</p>
+          <p><strong>Throughput:</strong> 200K+ ops/sec per core (multi-threaded)</p>
+          <p><strong>Multi-threaded:</strong> better than Redis for many-core servers with simple get/set workloads</p>
+          <p><strong>Scale:</strong> horizontal via client-side hashing — add nodes linearly</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5 -->
+<div class="tab-pane fade" id="mc-arch">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-cpu me-2"></i>Slab Allocator</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p><strong style="color:#6ea832">Slab Classes</strong> — memory divided into slab classes of increasing chunk sizes (e.g., 96B, 120B, 152B, ..., 1MB). Each class pre-allocates 1MB slabs divided into equal chunks.</p>
+          <p><strong style="color:#6ea832">Item Storage</strong> — an item is stored in the smallest slab class whose chunk size ≥ item size. Some space is wasted per item (internal fragmentation), but malloc() fragmentation is eliminated.</p>
+          <p><strong style="color:#6ea832">LRU per Slab</strong> — each slab class maintains its own LRU list. Eviction happens within the slab that's full, not globally. Use <code>stats slabs</code> and <code>stats items</code> to diagnose slab imbalance.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card" style="background:#13141a;border:1px solid rgba(110,168,50,.3)">
+        <div class="card-header" style="background:rgba(110,168,50,.08);border-bottom:1px solid rgba(110,168,50,.2)">
+          <span class="fw-bold" style="color:#6ea832"><i class="bi bi-gear me-2"></i>Client-Side Consistent Hashing</span>
+        </div>
+        <div class="card-body p-3" style="font-size:.81rem;color:#c9d1d9">
+          <p>Memcached has no cluster awareness. The client library (libmemcached, pylibmc, spymemcached) implements <strong style="color:#6ea832">consistent hashing</strong> to distribute keys across servers.</p>
+          <p>When a server is added/removed, only ~1/N of keys remap (where N = number of servers), minimizing cache invalidation. The hash ring is computed entirely client-side — servers don't talk to each other.</p>
+          <p><strong>Facebook's mcrouter</strong> adds a routing proxy layer, enabling replication, failover, and cold cluster warm-up while keeping the simple Memcached protocol.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

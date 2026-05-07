@@ -85,6 +85,9 @@
     <h5 class="mb-0 fw-bold">Isolation Level Visualizer</h5>
     <div style="font-size:.78rem;color:#6b7a96">Chapter 1 · The Webshop Race Condition — two sessions, one horse, two isolation levels</div>
   </div>
+
+<p class="mb-4 px-1" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">SQL Server's five transaction isolation levels — Read Uncommitted, Read Committed, Repeatable Read, Snapshot, and Serializable — each offer a different trade-off between data consistency and concurrent throughput. At Read Uncommitted a transaction reads uncommitted changes from other sessions (dirty read); at Serializable all reads are protected against phantom rows by range locks that block competing inserts for the duration of the transaction. The demo places two sessions in a horse-racing bet scenario, showing exactly which anomalies appear at each isolation level: dirty reads, non-repeatable reads, phantom rows, and the deadlocks that emerge at higher levels. Choosing the wrong isolation level is the most common source of subtle data corruption bugs that only manifest under concurrent load in production.</p>
+
 </div>
 
 <!-- Controls -->
@@ -380,13 +383,13 @@ function setLock(row, type, note) {
 
 async function play() {
   if (playing) return;
-  playing = true;
   document.getElementById('btn-play').disabled = true;
   resetDemo();
+  playing = true;
   await new Promise(r => setTimeout(r, 80));
 
   const sc = scenarios[level];
-  const baseDelay = 400; // scale factor: 1 unit = 400ms
+  const baseDelay = 1; // t values are already in ms
 
   sc.steps.forEach(step => {
     const tid = setTimeout(() => {
@@ -401,9 +404,10 @@ async function play() {
         return;
       }
 
-      // Show statement
+      // Show statement (remove old status first so repeated step IDs update correctly)
       const el = document.getElementById(step.id);
       if (el) {
+        el.classList.remove('status-ok','status-commit','status-wait','status-block','status-fail','status-deadlock','status-double-sell');
         el.classList.add('visible', 'status-' + step.status);
       }
 

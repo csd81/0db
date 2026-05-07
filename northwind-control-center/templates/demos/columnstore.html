@@ -96,6 +96,9 @@
 }
 </style>
 
+<p class="mb-4 px-1" style="font-size:.82rem;color:#8b949e;max-width:80ch;line-height:1.6">SQL Server's Clustered Columnstore Index physically reorganizes table data by column, storing all values for one column in contiguous 1-million-row segments that compress at 5–10× and enable vectorized CPU batch-mode execution. A revenue aggregation query reads only the Revenue and CategoryID column segments, skipping every other column on disk — the core advantage over row-store B-tree indexes that load full tuples even when one column is needed. Partition elimination adds a second filter: if the table is partitioned by OrderDate and the WHERE clause references a specific month, the optimizer skips all other monthly partitions at the storage layer before a single row is scanned. These two physical design decisions determine whether an analytical query on a billion-row table runs in seconds or hours.</p>
+
+
 <div class="mb-3">
   <h4 class="fw-bold mb-0" style="color:#e2e8f0">
     <i class="bi bi-layers me-2" style="color:#a78bfa"></i>Chapter 5 — Columnstore &amp; Partitioning
