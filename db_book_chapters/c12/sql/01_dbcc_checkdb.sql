@@ -1,4 +1,0 @@
-USE northwind;
-GO
-
-DBCC CHECKDB ('DB_name') WITH NO_INFOMSGS, ALL_ERRORMSGS
