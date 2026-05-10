@@ -16,7 +16,7 @@
 
   const M = (window.location.pathname.match(/^\/demos\/dimat\/(ch\d+|appendix)/) || [])[1];
   if (!M && !window.location.pathname.startsWith('/demos/dimat/challenges')
-        && !window.location.pathname.startsWith('/learn/dimat')) {
+        && !window.location.pathname.startsWith('/demos/learn/dimat')) {
     return; // Not a dimat page; bail.
   }
   const CH = M;  // may be undefined on /challenges or /learn/dimat

@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}Dimat — Kihívások{% endblock %}
+
+{% block content %}
+<style>
+  .dq-ch-section { background:#0d1117; border:1px solid #1e2533; border-radius:.5rem;
+    padding:1.1rem 1.3rem; margin-bottom:1rem; }
+  .dq-ch-h { display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem; }
+  .dq-ch-h h5 { margin:0; font-size:1rem; font-weight:700; color:#e6edf3; flex:1; }
+  .dq-ch-h .badge-count { font-size:.7rem; padding:.15rem .55rem; border-radius:.3rem;
+    background:#1e2a3a; color:#94a3b8; font-weight:600; }
+  .dq-ch-card { background:#161b22; border:1px solid #1e2533; border-radius:.35rem;
+    padding:.8rem 1rem; }
+  .dq-table { width:100%; border-collapse:collapse; font-size:.78rem; }
+  .dq-table th { text-transform:uppercase; letter-spacing:.06em; font-size:.65rem;
+    color:#64748b; padding:.4rem .6rem; text-align:left; border-bottom:1px solid #1e2533; }
+  .dq-table td { padding:.4rem .6rem; border-bottom:1px solid #161b28; color:#c9d1d9; }
+  .dq-table tr.you td { background:rgba(52,211,153,.07); color:#34d399; font-weight:700; }
+  .dq-rank { font-family:monospace; color:#94a3b8; width:2.5rem; }
+  .dq-xp   { color:#fbbf24; font-weight:700; font-family:monospace; }
+  .dq-period-row { display:flex; gap:.35rem; margin-bottom:.6rem; }
+  .dq-period-btn { font-size:.72rem; padding:.3rem .7rem; border-radius:.3rem;
+    border:1px solid #334155; background:#161b22; color:#94a3b8; cursor:pointer; font-weight:600; }
+  .dq-period-btn.active { background:#1e2a3a; color:#e2e8f0; border-color:#475569; }
+  .dq-ach-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:.6rem; }
+  .dq-ach-card { background:#161b22; border:1px solid #1e2533; border-radius:.35rem;
+    padding:.7rem .9rem; transition:all .15s; }
+  .dq-ach-card.locked { opacity:.45; filter:grayscale(.7); }
+  .dq-ach-card.earned { border-color:#fbbf24; background:#0d1a12; }
+  .dq-ach-icon { font-size:1.4rem; }
+  .dq-ach-title { font-size:.78rem; font-weight:700; color:#e6edf3; margin-top:.2rem; }
+  .dq-ach-desc  { font-size:.68rem; color:#8b949e; line-height:1.5; margin-top:.15rem; }
+  .dq-comm-bar { height:24px; background:#1e2533; border-radius:.4rem;
+    overflow:hidden; position:relative; }
+  .dq-comm-fill { height:100%; background:linear-gradient(90deg, #34d399, #38bdf8);
+    transition:width .8s; min-width:8px; }
+  .dq-comm-label { position:absolute; inset:0; display:flex; align-items:center;
+    justify-content:center; font-weight:700; color:#000; font-size:.78rem; text-shadow:0 0 4px rgba(255,255,255,.5); }
+  .dq-grade-row { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.6rem; }
+  .dq-grade-btn { font-size:.72rem; padding:.3rem .7rem; border-radius:.3rem;
+    border:1px solid #475569; background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; }
+  .dq-grade-btn:hover { background:#1e2533; color:#e2e8f0; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1100px">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:46px;height:46px;border-radius:50%;background:rgba(251,191,36,.18);
+                border:2px solid #fbbf24;display:flex;align-items:center;justify-content:center;font-size:1.4rem">
+      🏆
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:#fbbf24">Dimat Kihívások</h4>
+      <small class="text-muted" style="font-size:.78rem">Napi kihívás · SRS · Ranglista · Achievement-ek · Közösségi cél</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto"
+       style="text-decoration:none;font-size:.78rem;color:#94a3b8;
+              border:1px solid #334155;border-radius:6px;padding:.3rem .8rem">
+      ← Könyv főoldal
+    </a>
+  </div>
+
+  <!-- ME stats strip -->
+  <div class="dq-progress-strip" id="me-strip">
+    <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="me-xp">—</div><div class="dq-progress-stat-lbl">XP</div></div>
+    <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="me-streak">—</div><div class="dq-progress-stat-lbl">Streak (nap)</div></div>
+    <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="me-solved">—</div><div class="dq-progress-stat-lbl">Megoldva</div></div>
+    <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="me-chs">—</div><div class="dq-progress-stat-lbl">Fejezetek érintve</div></div>
+    <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="me-ach">—</div><div class="dq-progress-stat-lbl">Achievement</div></div>
+  </div>
+
+  <!-- Daily challenge -->
+  <div class="dq-ch-section">
+    <div class="dq-ch-h">
+      <span style="font-size:1.6rem">🌅</span>
+      <h5>Napi kihívás</h5>
+      <span class="badge-count" id="daily-date">—</span>
+    </div>
+    <div id="daily-area">
+      <div class="dq-ch-card"><span class="dq-spinner"></span> Betöltés…</div>
+    </div>
+  </div>
+
+  <!-- SRS -->
+  <div class="dq-ch-section">
+    <div class="dq-ch-h">
+      <span style="font-size:1.6rem">🔁</span>
+      <h5>Napi Ismétlés (SRS)</h5>
+      <span class="badge-count" id="srs-count">—</span>
+    </div>
+    <div id="srs-area">
+      <div class="dq-ch-card"><span class="dq-spinner"></span> Betöltés…</div>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="dq-ch-section">
+    <div class="dq-ch-h">
+      <span style="font-size:1.6rem">🏆</span>
+      <h5>Ranglista</h5>
+    </div>
+    <div class="dq-period-row">
+      <button class="dq-period-btn active" data-p="all">Mind</button>
+      <button class="dq-period-btn" data-p="month">Hónap</button>
+      <button class="dq-period-btn" data-p="week">Hét</button>
+    </div>
+    <div id="lb-area">
+      <div class="dq-ch-card"><span class="dq-spinner"></span> Betöltés…</div>
+    </div>
+  </div>
+
+  <!-- Community goal -->
+  <div class="dq-ch-section">
+    <div class="dq-ch-h">
+      <span style="font-size:1.6rem">🤝</span>
+      <h5>Közösségi cél</h5>
+      <span class="badge-count" id="comm-period">—</span>
+    </div>
+    <div id="comm-area">
+      <div class="dq-ch-card"><span class="dq-spinner"></span> Betöltés…</div>
+    </div>
+  </div>
+
+  <!-- Achievements -->
+  <div class="dq-ch-section">
+    <div class="dq-ch-h">
+      <span style="font-size:1.6rem">🎖️</span>
+      <h5>Achievement-galéria</h5>
+      <span class="badge-count" id="ach-count">—</span>
+    </div>
+    <div id="ach-area">
+      <div class="dq-ch-card"><span class="dq-spinner"></span> Betöltés…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const J = (url) => fetch(url, {credentials:'same-origin'}).then(r => r.ok ? r.json() : {});
+  const POST = (url, body) => fetch(url, {method:'POST', credentials:'same-origin',
+    headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}).then(r => r.json());
+
+  // ── ME strip
+  const me = await J('/demos/dimat/api/me');
+  $('me-xp').textContent = me.xp || 0;
+  $('me-streak').textContent = me.streak || 0;
+  $('me-solved').textContent = `${me.solved || 0} / ${me.total_exercises || '?'}`;
+  $('me-chs').textContent = me.chapters_touched || 0;
+  $('me-ach').textContent = (me.achievements || []).length;
+
+  // ── Daily challenge
+  const daily = await J('/demos/dimat/api/daily_challenge');
+  $('daily-date').textContent = daily.date || '';
+  if (!daily.questions || daily.questions.length === 0) {
+    $('daily-area').innerHTML = '<div class="dq-ch-card">Ma még nincs aktív kihívás.</div>';
+  } else {
+    $('daily-area').innerHTML = `
+      <div class="dq-ch-card">
+        <div style="font-size:.85rem;color:#c4cdd8;margin-bottom:.6rem">
+          Ma 10 vegyes kérdés vár — különböző fejezetekből.
+        </div>
+        <button class="dq-btn dq-btn-primary" id="daily-start">▶ Indítás</button>
+        <div id="daily-stage" style="margin-top:1rem"></div>
+      </div>`;
+    $('daily-start').onclick = () => playMixed(daily.questions, 'daily');
+  }
+
+  // ── SRS
+  const srsRes = await J('/demos/dimat/api/srs_due');
+  const due = srsRes.due || [];
+  $('srs-count').textContent = `${due.length} ismételni való`;
+  if (!me.authenticated) {
+    $('srs-area').innerHTML = '<div class="dq-ch-card">Az SRS-hez bejelentkezés szükséges.</div>';
+  } else if (!due.length) {
+    $('srs-area').innerHTML = '<div class="dq-ch-card">🎉 Ma nincs ismétlésre váró kérdés. Próbáld meg újra holnap!</div>';
+  } else {
+    $('srs-area').innerHTML = `
+      <div class="dq-ch-card">
+        <div style="font-size:.85rem;color:#c4cdd8;margin-bottom:.6rem">
+          ${due.length} korábban hibázott vagy régen érintett kérdés vár ismétlésre.
+          A SM-2 algoritmus döntheti el, mikor látod legközelebb.
+        </div>
+        <button class="dq-btn dq-btn-primary" id="srs-start">▶ Indítás</button>
+        <div id="srs-stage" style="margin-top:1rem"></div>
+      </div>`;
+    $('srs-start').onclick = () => playSRS(due);
+  }
+
+  // ── Leaderboard
+  let curPeriod = 'all';
+  document.querySelectorAll('.dq-period-btn').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('.dq-period-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      curPeriod = b.dataset.p;
+      loadLeaderboard();
+    };
+  });
+  async function loadLeaderboard() {
+    const lb = await J('/demos/dimat/api/leaderboard?period=' + curPeriod);
+    const rows = lb.rows || [];
+    if (!rows.length) {
+      $('lb-area').innerHTML = '<div class="dq-ch-card">Még nincs adat ehhez az időszakhoz.</div>';
+      return;
+    }
+    let html = '<div class="dq-ch-card"><table class="dq-table"><thead><tr><th>#</th><th>Játékos</th><th>XP</th></tr></thead><tbody>';
+    rows.forEach((r, i) => {
+      html += `<tr><td class="dq-rank">${i + 1}</td><td>${r.username}</td><td class="dq-xp">${r.xp.toLocaleString()}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    $('lb-area').innerHTML = html;
+  }
+  loadLeaderboard();
+
+  // ── Community goal
+  const comm = await J('/demos/dimat/api/community_goal');
+  $('comm-period').textContent = comm.period || '';
+  const pct = Math.min(100, Math.round((comm.problems_solved / Math.max(1, comm.goal)) * 100));
+  $('comm-area').innerHTML = `
+    <div class="dq-ch-card">
+      <div style="font-size:.85rem;color:#c4cdd8;margin-bottom:.6rem">
+        Ezen a hónapon a közösség együttes célja <strong>${comm.goal.toLocaleString()}</strong> megoldott feladat.
+        ${comm.reached_at ? '<span style="color:#34d399">🌟 Elértük!</span>' : 'Hajrá, közelítünk!'}
+      </div>
+      <div class="dq-comm-bar">
+        <div class="dq-comm-fill" style="width:${pct}%"></div>
+        <div class="dq-comm-label">${comm.problems_solved.toLocaleString()} / ${comm.goal.toLocaleString()} (${pct}%)</div>
+      </div>
+      ${comm.reached_at ? '<div style="margin-top:.65rem;color:#34d399;font-size:.78rem">🌟 Minden aktív tag megkapta a havi 🌟 jelvényt.</div>' : ''}
+    </div>`;
+
+  // ── Achievements
+  const achs = await J('/demos/dimat/api/achievements');
+  const all = achs.all || [];
+  const earned = new Set((achs.earned || []).map(a => a.key));
+  $('ach-count').textContent = `${earned.size} / ${all.length}`;
+  let html = '<div class="dq-ach-grid">';
+  all.forEach(a => {
+    const isEarned = earned.has(a.key);
+    html += `<div class="dq-ach-card ${isEarned ? 'earned' : 'locked'}" title="${a.description}">
+      <div class="dq-ach-icon">${a.icon}</div>
+      <div class="dq-ach-title">${a.title}</div>
+      <div class="dq-ach-desc">${a.description}</div>
+    </div>`;
+  });
+  html += '</div>';
+  $('ach-area').innerHTML = html;
+
+  // ── Mixed-questions player (used by daily challenge)
+  function playMixed(questions, mode) {
+    const stage = $(mode + '-stage');
+    let idx = 0, score = 0, t0 = Date.now();
+    const wrong = [];
+    function render() {
+      if (idx >= questions.length) {
+        stage.innerHTML = `<div style="padding:1rem;text-align:center">
+          <div style="font-size:2rem;font-weight:800;color:#34d399">${score} / ${questions.length}</div>
+          <div style="margin-top:.4rem;color:#94a3b8">${Math.round((Date.now()-t0)/1000)} s</div>
+        </div>`;
+        // Submit as a quiz_result tagged 'daily' for tracking
+        POST('/demos/dimat/api/quiz_result', {
+          ch: 'daily', score, total: questions.length,
+          duration_sec: Math.round((Date.now()-t0)/1000),
+          difficulty: 'normal', wrong_qids: wrong,
+        }).catch(() => {});
+        return;
+      }
+      const q = questions[idx];
+      let html = `<div style="font-weight:600;margin-bottom:.6rem">Q${idx+1}/${questions.length}: ${q.q}</div>`;
+      stage.innerHTML = html;
+      (q.options || []).forEach((o, i) => {
+        const b = document.createElement('button');
+        b.className = 'dq-btn'; b.style.display = 'block'; b.style.width = '100%';
+        b.style.textAlign = 'left'; b.style.marginBottom = '.3rem';
+        b.innerHTML = `<span style="display:inline-block;width:1.4rem;color:#64748b;font-weight:700">${o.k})</span> ${o.text}`;
+        b.onclick = () => {
+          if (o.k === q.answer) score++;
+          else wrong.push(q.id);
+          idx++; render();
+        };
+        stage.appendChild(b);
+      });
+    }
+    render();
+  }
+
+  // ── SRS player (with grade buttons after answer)
+  function playSRS(due) {
+    const stage = $('srs-stage');
+    let idx = 0;
+    const COUNT = Math.min(20, due.length);
+    async function render() {
+      if (idx >= COUNT) {
+        stage.innerHTML = '<div style="padding:1rem;text-align:center;color:#34d399">✓ Mai SRS befejezve!</div>';
+        return;
+      }
+      const item = due[idx];
+      // Pull the question from the chapter quiz
+      const quiz = await J(`/demos/dimat/api/quiz/${item.ch}`);
+      const q = (quiz.questions || []).find(x => x.id === item.question_id) || (quiz.questions || [])[0];
+      if (!q) { idx++; render(); return; }
+      stage.innerHTML = `
+        <div style="background:#161b22;padding:.85rem 1rem;border-radius:.4rem;border:1px solid #1e2533">
+          <div style="font-size:.7rem;color:#8b949e;margin-bottom:.4rem">${item.ch} · ismétlés ${idx+1}/${COUNT}</div>
+          <div style="font-weight:600;margin-bottom:.6rem">${q.q}</div>
+          <div id="srs-opts"></div>
+        </div>`;
+      const opts = $('srs-opts');
+      let chosen = null;
+      (q.options || []).forEach(o => {
+        const b = document.createElement('button');
+        b.className = 'dq-btn'; b.style.display = 'block'; b.style.width = '100%';
+        b.style.textAlign = 'left'; b.style.marginBottom = '.25rem';
+        b.innerHTML = `<span style="color:#64748b">${o.k})</span> ${o.text}`;
+        b.onclick = () => {
+          chosen = o.k;
+          [...opts.children].forEach(x => x.disabled = true);
+          if (o.k === q.answer) {
+            b.style.background = '#0d2b1e'; b.style.borderColor = '#34d399'; b.style.color = '#34d399';
+          } else {
+            b.style.background = '#2b0d11'; b.style.borderColor = '#ef4444'; b.style.color = '#ef4444';
+            const ans = [...opts.children].find(x => x.innerHTML.startsWith(`<span style="color:#64748b">${q.answer})`));
+            if (ans) { ans.style.background = '#0d2b1e'; ans.style.borderColor = '#34d399'; ans.style.color = '#34d399'; }
+          }
+          // Grade buttons
+          const grades = document.createElement('div');
+          grades.className = 'dq-grade-row';
+          grades.innerHTML = '<span style="font-size:.72rem;color:#94a3b8;align-self:center;margin-right:.3rem">Hogy ment?</span>';
+          [
+            ['😵 0', 0], ['😐 2', 2], ['🙂 3', 3], ['😊 4', 4], ['🤩 5', 5],
+          ].forEach(([lbl, g]) => {
+            const gb = document.createElement('button');
+            gb.className = 'dq-grade-btn'; gb.textContent = lbl;
+            gb.onclick = async () => {
+              await POST('/demos/dimat/api/srs_grade', {
+                ch: item.ch, question_id: item.question_id, grade: g,
+              });
+              idx++; render();
+            };
+            grades.appendChild(gb);
+          });
+          opts.appendChild(grades);
+        };
+        opts.appendChild(b);
+      });
+    }
+    render();
+  }
+})();
+</script>
+{% endblock %}
