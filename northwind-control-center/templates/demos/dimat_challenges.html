@@ -42,6 +42,10 @@
   .dq-grade-btn:hover { background:#1e2533; color:#e2e8f0; }
 </style>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+
 <div class="container-fluid py-3" style="max-width:1100px">
   <div class="d-flex align-items-center gap-3 mb-3">
     <div style="width:46px;height:46px;border-radius:50%;background:rgba(251,191,36,.18);
@@ -139,6 +143,30 @@
   const J = (url) => fetch(url, {credentials:'same-origin'}).then(r => r.ok ? r.json() : {});
   const POST = (url, body) => fetch(url, {method:'POST', credentials:'same-origin',
     headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}).then(r => r.json());
+
+  // Wait until KaTeX auto-render lands, then expose a render helper.
+  function renderMath(node) {
+    if (!node || !window.renderMathInElement) return;
+    try {
+      window.renderMathInElement(node, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '$',  right: '$',  display: false},
+        ],
+        throwOnError: false,
+      });
+    } catch (_) {}
+  }
+  // Best-effort wait: poll for a few hundred ms in case KaTeX hasn't loaded yet
+  async function waitKatex() {
+    for (let i = 0; i < 30; i++) {
+      if (window.renderMathInElement) return;
+      await new Promise(r => setTimeout(r, 100));
+    }
+  }
+  await waitKatex();
 
   // ── ME strip
   const me = await J('/demos/dimat/api/me');
@@ -272,6 +300,7 @@
         const b = document.createElement('button');
         b.className = 'dq-btn'; b.style.display = 'block'; b.style.width = '100%';
         b.style.textAlign = 'left'; b.style.marginBottom = '.3rem';
+        b.style.whiteSpace = 'normal';
         b.innerHTML = `<span style="display:inline-block;width:1.4rem;color:#64748b;font-weight:700">${o.k})</span> ${o.text}`;
         b.onclick = () => {
           if (o.k === q.answer) score++;
@@ -280,6 +309,7 @@
         };
         stage.appendChild(b);
       });
+      renderMath(stage);
     }
     render();
   }
@@ -311,6 +341,7 @@
         const b = document.createElement('button');
         b.className = 'dq-btn'; b.style.display = 'block'; b.style.width = '100%';
         b.style.textAlign = 'left'; b.style.marginBottom = '.25rem';
+        b.style.whiteSpace = 'normal';
         b.innerHTML = `<span style="color:#64748b">${o.k})</span> ${o.text}`;
         b.onclick = () => {
           chosen = o.k;
@@ -326,6 +357,7 @@
           const grades = document.createElement('div');
           grades.className = 'dq-grade-row';
           grades.innerHTML = '<span style="font-size:.72rem;color:#94a3b8;align-self:center;margin-right:.3rem">Hogy ment?</span>';
+          renderMath(opts);
           [
             ['😵 0', 0], ['😐 2', 2], ['🙂 3', 3], ['😊 4', 4], ['🤩 5', 5],
           ].forEach(([lbl, g]) => {
@@ -343,6 +375,7 @@
         };
         opts.appendChild(b);
       });
+      renderMath(stage);
     }
     render();
   }
