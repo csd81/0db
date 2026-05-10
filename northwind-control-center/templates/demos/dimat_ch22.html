@@ -1,0 +1,649 @@
+{% extends "base.html" %}
+{% block title %}II.14 — Hálózati folyamok{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<style>
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px;
+  color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s;
+  white-space:nowrap; user-select:none; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#0d1117; border:1px solid #1e2533; border-radius:.5rem;
+  padding:1rem; }
+
+:root { --acc:#38bdf8; }
+
+#ila-nav-links { display:flex; gap:0; border-bottom:1px solid #21262d; flex-shrink:0; overflow-x:auto; }
+
+.ila-tab { display:none; } .ila-tab.active { display:block; }
+.sec-label { font-size:.58rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#8b949e; margin:.9rem 0 .4rem; }
+.info-box { background:#0e1a12; border:1px solid #1a3a20; border-radius:.35rem; padding:.6rem .8rem; font-size:.72rem; color:#d2f4e8; line-height:1.7; margin-bottom:.5rem; }
+.info-box b { color:var(--acc); }
+.preset-row { display:flex; flex-wrap:wrap; gap:.35rem; margin-bottom:.5rem; }
+.preset-btn { font-size:.62rem; padding:.25rem .6rem; border-radius:.25rem; border:1px solid #21262d; background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; transition:all .15s; }
+.preset-btn:hover { border-color:var(--acc); color:var(--acc); }
+.preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); }
+.metric-row { display:grid; grid-template-columns:1fr 1fr; gap:.4rem; margin-bottom:.6rem; }
+.metric-box { background:#0d1117; border:1px solid #21262d; border-radius:.3rem; padding:.4rem .6rem; text-align:center; }
+.metric-val { font-size:1.1rem; font-weight:700; color:var(--acc); font-variant-numeric:tabular-nums; }
+.metric-lbl { font-size:.58rem; color:#8b949e; margin-top:.1rem; }
+.formula-box { background:#040a10; border:1px solid #0a1f2e; border-radius:.35rem; padding:.55rem .75rem; font-size:.72rem; color:#a8d8f0; margin:.4rem 0; }
+.ctrl-btn { font-size:.65rem; padding:.3rem .7rem; border-radius:.25rem; border:1px solid #21262d; background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; margin:.2rem .2rem .2rem 0; }
+.ctrl-btn:hover { border-color:var(--acc); color:var(--acc); }
+.ctrl-btn.green { border-color:#34d399; color:#34d399; }
+
+#step-log { font-size:.65rem; color:#8b949e; margin-top:.5rem; line-height:1.7; max-height:140px; overflow-y:auto; }
+#step-log .log-entry { padding:.1rem 0; border-bottom:1px solid #21262d11; }
+#step-log .log-aug { color:#34d399; }
+#step-log .log-done { color:#f97316; font-weight:700; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1180px">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.18);
+                border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+      🌊
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:#38bdf8">II.14 &mdash; Hálózati folyamok</h4>
+      <small class="text-muted" style="font-size:.75rem">Ford-Fulkerson &middot; Max-flow min-cut &middot; Javítható utak</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto"
+       style="text-decoration:none;font-size:.78rem;color:#94a3b8;
+              border:1px solid #334155;border-radius:6px;padding:.3rem .8rem">
+      ← Könyv főoldal
+    </a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap" id="dimat-nav-row">
+    <span class="ila-nav-link active" onclick="showTab('flow',this)">Folyam</span>
+    <span class="ila-nav-link" onclick="showTab('aug',this)">Javítható</span>
+    <span class="ila-nav-link" onclick="showTab('maxflow',this)">Max-flow</span>
+    <span class="ila-nav-link" onclick="showTab('mincut',this)">Min-cut</span>
+    <span class="ila-nav-link" onclick="showTab('bip',this)">Párosítás</span>
+  </div>
+
+  <div class="row g-3" id="dimat-content-row">
+    <div class="col-lg-5">
+
+      <!-- TAB 1: Folyam definíció -->
+      <div id="tab-flow" class="ila-tab active">
+        <div class="sec-label">Hálózat (network)</div>
+        <div class="info-box">
+          <b>G=(V,E,c)</b>: irányított gráf, kapacitásfüggvény \(c:E\to\mathbb{R}_+\).<br>
+          <b>a ∈ V</b>: forrás (source) &nbsp;|&nbsp; <b>b ∈ V</b>: nyelő (sink).<br>
+          <b>Folyam:</b> \(f:E\to\mathbb{R}_+\cup\{0\}\), ahol \(f(e)\le c(e)\) és Kirchhoff I. törvénye teljesül minden belső csúcson.
+        </div>
+        <div class="formula-box">\[F(f):=f^+(a)-f^-(a)=f^-(b)-f^+(b)\]</div>
+        <div class="sec-label">Preset hálózat</div>
+        <div class="preset-row" id="flow-presets">
+          <button class="preset-btn active" onclick="flowLoad('simple',this)">Egyszerű</button>
+          <button class="preset-btn" onclick="flowLoad('book',this)">Tankönyv</button>
+          <button class="preset-btn" onclick="flowLoad('diamond',this)">Gyémánt</button>
+          <button class="preset-btn" onclick="flowLoad('grid',this)">Rács</button>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="fl-n">—</div><div class="metric-lbl">csúcsok</div></div>
+          <div class="metric-box"><div class="metric-val" id="fl-e">—</div><div class="metric-lbl">élek</div></div>
+          <div class="metric-box"><div class="metric-val" id="fl-fval">0</div><div class="metric-lbl">F(f) folyamérték</div></div>
+          <div class="metric-box"><div class="metric-val" id="fl-kirchhoff">✓</div><div class="metric-lbl">Kirchhoff</div></div>
+        </div>
+        <div class="sec-label">Folyamérték beállítás</div>
+        <div class="info-box" style="font-size:.68rem">Kattints egy élre a folyamértéke módosításához (0…kapacitás). A canvas élfeliratok: <span style="color:#38bdf8">f/c</span> alakban.</div>
+      </div>
+
+      <!-- TAB 2: Javítható utak -->
+      <div id="tab-aug" class="ila-tab">
+        <div class="sec-label">14.9 Javítható út (correcting path)</div>
+        <div class="info-box">
+          Egy <b>javítható út</b> \(x_0=a,x_1,\ldots,x_k=b\) útban minden élen:<br>
+          &bull; előre mutató él: \(f&lt;c\) (van szabad kapacitás)<br>
+          &bull; visszafelé mutató él: \(f&gt;0\) (van visszafelé folyó anyag)
+        </div>
+        <div class="formula-box">\[\varepsilon := \min_i \varepsilon_i,\quad f\mapsto f+\varepsilon\]</div>
+        <div class="sec-label">Preset</div>
+        <div class="preset-row" id="aug-presets">
+          <button class="preset-btn active" onclick="augLoad('simple',this)">Egyszerű</button>
+          <button class="preset-btn" onclick="augLoad('book',this)">Tankönyv</button>
+          <button class="preset-btn" onclick="augLoad('diamond',this)">Gyémánt</button>
+        </div>
+        <button class="ctrl-btn" onclick="augStep()">Lépés →</button>
+        <button class="ctrl-btn" onclick="augReset()">Reset</button>
+        <div class="metric-row" style="margin-top:.4rem">
+          <div class="metric-box"><div class="metric-val" id="aug-fval">0</div><div class="metric-lbl">F(f)</div></div>
+          <div class="metric-box"><div class="metric-val" id="aug-iter">0</div><div class="metric-lbl">iteráció</div></div>
+        </div>
+        <div id="step-log"></div>
+      </div>
+
+      <!-- TAB 3: Max-flow -->
+      <div id="tab-maxflow" class="ila-tab">
+        <div class="sec-label">14.8 Ford-Fulkerson tétel</div>
+        <div class="info-box">
+          \(\max\{F(f): f\text{ megengedett}\} = \min\{C(V_1,V_2): (V_1,V_2)\text{ vágás}\}\)
+        </div>
+        <div class="formula-box">\[\text{max-flow} = \text{min-cut}\]</div>
+        <div class="sec-label">Preset</div>
+        <div class="preset-row" id="mf-presets">
+          <button class="preset-btn active" onclick="mfLoad('simple',this)">Egyszerű</button>
+          <button class="preset-btn" onclick="mfLoad('book',this)">Tankönyv</button>
+          <button class="preset-btn" onclick="mfLoad('diamond',this)">Gyémánt</button>
+          <button class="preset-btn" onclick="mfLoad('grid',this)">Rács</button>
+        </div>
+        <button class="ctrl-btn green" onclick="mfRun()">▶ Futtatás</button>
+        <button class="ctrl-btn" onclick="mfReset()">Reset</button>
+        <div class="metric-row" style="margin-top:.4rem">
+          <div class="metric-box"><div class="metric-val" id="mf-val">0</div><div class="metric-lbl">max F(f)</div></div>
+          <div class="metric-box"><div class="metric-val" id="mf-iter">0</div><div class="metric-lbl">lépések</div></div>
+        </div>
+        <div id="step-log2"></div>
+      </div>
+
+      <!-- TAB 4: Min-cut -->
+      <div id="tab-mincut" class="ila-tab">
+        <div class="sec-label">14.7 Vágás (cut)</div>
+        <div class="info-box">
+          \((V_1,V_2)\) vágás: \(a\in V_1,\;b\in V_2\).<br>
+          Kapacitása: \(C(V_1,V_2)=\sum_{(x,y)\in E,\;x\in V_1,\;y\in V_2}c(x,y)\).<br>
+          A min-cut élek teli folyammal rendelkeznek.
+        </div>
+        <div class="sec-label">Preset</div>
+        <div class="preset-row" id="mc-presets">
+          <button class="preset-btn active" onclick="mcLoad('simple',this)">Egyszerű</button>
+          <button class="preset-btn" onclick="mcLoad('book',this)">Tankönyv</button>
+          <button class="preset-btn" onclick="mcLoad('diamond',this)">Gyémánt</button>
+        </div>
+        <button class="ctrl-btn green" onclick="mcRun()">▶ Max-flow + Min-cut</button>
+        <div class="metric-row" style="margin-top:.4rem">
+          <div class="metric-box"><div class="metric-val" id="mc-flow">0</div><div class="metric-lbl">max F(f)</div></div>
+          <div class="metric-box"><div class="metric-val" id="mc-cap">0</div><div class="metric-lbl">min C(V₁,V₂)</div></div>
+        </div>
+        <div class="info-box" style="font-size:.68rem">Narancs: V₁ (forrás oldal), Kék: V₂ (nyelő oldal). Piros élek: min-cut élek.</div>
+      </div>
+
+      <!-- TAB 5: Párosítás folyammal -->
+      <div id="tab-bip" class="ila-tab">
+        <div class="sec-label">Párosítás folyamra visszavezetése</div>
+        <div class="info-box">
+          Páros gráf \(G=(A\cup B, E)\) → hálózat: adjunk szuperforrásat \(a\)-ból \(A\)-ba (kapacitás 1), minden \(A\)-ból \(B\)-be élnek kapacitás 1, \(B\)-ből szupernyelőbe kapacitás 1. Max folyam = max párosítás mérete.
+        </div>
+        <div class="sec-label">Preset</div>
+        <div class="preset-row" id="bip2-presets">
+          <button class="preset-btn active" onclick="bip2Load('3x3',this)">3+3 csúcs</button>
+          <button class="preset-btn" onclick="bip2Load('4x4',this)">4+4 csúcs</button>
+          <button class="preset-btn" onclick="bip2Load('hall',this)">Hall-példa</button>
+        </div>
+        <button class="ctrl-btn green" onclick="bip2Run()">▶ Max párosítás</button>
+        <div class="metric-row" style="margin-top:.4rem">
+          <div class="metric-box"><div class="metric-val" id="bip2-match">0</div><div class="metric-lbl">|párosítás|</div></div>
+          <div class="metric-box"><div class="metric-val" id="bip2-maxflow">0</div><div class="metric-lbl">max folyam</div></div>
+        </div>
+        <div class="info-box" style="font-size:.68rem">Sárga élek: párosítás (flow=1 a középső éleken).</div>
+      </div>
+
+    </div>
+    <div class="col-lg-7">
+      <div class="card-dark p-2" style="background:#0d1117;border:1px solid #1e2533;border-radius:.5rem;
+                                          height:560px;display:flex;flex-direction:column">
+        <canvas id="main-canvas" style="display:block;width:100%;height:100%;flex:1"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+  onload="renderMath()"></script>
+<script>
+function renderMath(){
+  document.querySelectorAll('.formula-box,.info-box').forEach(el=>{
+    const src=el.innerHTML;
+    const out=src.replace(/\\\[([\s\S]*?)\\\]/g,(_,m)=>{
+      try{return katex.renderToString(m.trim(),{displayMode:true,throwOnError:false})}catch(e){return _}
+    }).replace(/\\\(([\s\S]*?)\\\)/g,(_,m)=>{
+      try{return katex.renderToString(m.trim(),{displayMode:false,throwOnError:false})}catch(e){return _}
+    });
+    el.innerHTML=out;
+  });
+}
+
+/* ──── Tab ──── */
+let currentTab='flow';
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  const target = document.getElementById('tab-'+id);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (typeof currentTab !== 'undefined') currentTab=id;
+  if (typeof redraw === 'function') redraw();
+}
+
+/* ──── Canvas ──── */
+const canvas=document.getElementById('main-canvas');
+const ctx=canvas.getContext('2d');
+function resize(){const p=canvas.parentElement;canvas.width=p.clientWidth;canvas.height=p.clientHeight;redraw();}
+window.addEventListener('resize',resize);
+function redraw(){
+  if(currentTab==='flow')    flowDraw();
+  else if(currentTab==='aug')    augDraw();
+  else if(currentTab==='maxflow')mfDraw();
+  else if(currentTab==='mincut') mcDraw();
+  else if(currentTab==='bip')    bip2Draw();
+}
+
+/* ──── Network presets ──── */
+const NETS={
+  simple:{
+    nodes:['s','A','B','t'],
+    edges:[['s','A',4],['s','B',2],['A','B',1],['A','t',3],['B','t',3]],
+    src:0,snk:3
+  },
+  book:{
+    nodes:['a','C','B'],
+    edges:[['a','C',4],['a','B',2],['C','B',2]],
+    src:0,snk:2
+  },
+  diamond:{
+    nodes:['s','A','B','C','t'],
+    edges:[['s','A',10],['s','C',10],['A','B',4],['C','B',6],['A','t',8],['B','t',10],['C','t',2]],
+    src:0,snk:4
+  },
+  grid:{
+    nodes:['s','A','B','C','D','t'],
+    edges:[['s','A',5],['s','C',5],['A','B',3],['A','D',4],['C','B',3],['C','D',4],['B','t',6],['D','t',6]],
+    src:0,snk:5
+  }
+};
+
+/* ──── Flow state ──── */
+function makeNet(key){
+  const net=NETS[key];
+  return {
+    nodes:net.nodes.slice(),
+    edges:net.edges.map(([u,v,c])=>({u:net.nodes.indexOf(u),v:net.nodes.indexOf(v),c,f:0})),
+    src:net.src,snk:net.snk,
+    n:net.nodes.length
+  };
+}
+
+function netLayout(net){
+  const W=canvas.width||600,H=canvas.height||450;
+  const n=net.n;
+  // layer layout: source at left, sink at right, rest in middle
+  const layers=[[[net.src]]];
+  const visited=new Set([net.src]);
+  let cur=[net.src];
+  while(cur.length){
+    const nxt=[];
+    cur.forEach(u=>{net.edges.filter(e=>e.u===u&&!visited.has(e.v)).forEach(e=>{visited.add(e.v);nxt.push(e.v);});});
+    if(nxt.length) layers.push([nxt]);
+    cur=nxt;
+  }
+  // Ensure sink is last
+  const flat=layers.flat(2);
+  if(!flat.includes(net.snk)){layers.push([[net.snk]]);}
+  // assign x,y
+  const pos=new Array(n);
+  const L=layers.length;
+  layers.forEach((layer,li)=>{
+    const grp=layer.flat();
+    const cnt=grp.length;
+    grp.forEach((id,k)=>{
+      pos[id]={x:W*0.1+(W*0.8/(L-1||1))*li,y:H*0.15+(H*0.7/(cnt-1||1))*k};
+    });
+  });
+  // fallback for unvisited
+  for(let i=0;i<n;i++) if(!pos[i]) pos[i]={x:W/2,y:H/2};
+  return pos;
+}
+
+/* ─── Draw network ─── */
+function drawNet(net,pos,augPath,cutSet,cutEdges){
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // edges
+  net.edges.forEach((e,ei)=>{
+    const ps=pos[e.u],pt=pos[e.v];
+    const isCut=cutEdges&&cutEdges.includes(ei);
+    const isAug=augPath&&isOnPath(augPath,e.u,e.v);
+    const sat=e.c>0?e.f/e.c:0;
+    const col=isCut?'#ef4444':isAug?'#fbbf24':sat>0.99?'#f97316':sat>0?'#38bdf8':'#2a3a4a';
+    drawArrow(ps.x,ps.y,pt.x,pt.y,col,isCut?3:isAug?2.5:1.5);
+    // label
+    const mx=(ps.x+pt.x)/2,my=(ps.y+pt.y)/2;
+    ctx.fillStyle='#0d1117';ctx.fillRect(mx-18,my-9,36,18);
+    ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`${e.f}/${e.c}`,mx,my);
+  });
+  // nodes
+  net.nodes.forEach((label,i)=>{
+    const p=pos[i];
+    const isS=i===net.src,isSk=i===net.snk;
+    const inCut1=cutSet&&cutSet.has(i);
+    const col=isS?'#34d399':isSk?'#f97316':inCut1?'#fbbf24':'#38bdf8';
+    ctx.beginPath();ctx.arc(p.x,p.y,16,0,Math.PI*2);
+    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,p.x,p.y);
+    if(isS){ctx.fillStyle='#34d399';ctx.font='bold 9px sans-serif';ctx.fillText('forrás',p.x,p.y+26);}
+    if(isSk){ctx.fillStyle='#f97316';ctx.font='bold 9px sans-serif';ctx.fillText('nyelő',p.x,p.y+26);}
+  });
+}
+
+function drawArrow(x1,y1,x2,y2,col,lw){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+  const r=18;
+  const ex=x2-dx/len*r,ey=y2-dy/len*r;
+  const sx=x1+dx/len*r,sy=y1+dy/len*r;
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);
+  ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.stroke();
+  // arrowhead
+  const ang=Math.atan2(ey-sy,ex-sx);
+  const as=8;
+  ctx.beginPath();ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-as*Math.cos(ang-0.5),ey-as*Math.sin(ang-0.5));
+  ctx.lineTo(ex-as*Math.cos(ang+0.5),ey-as*Math.sin(ang+0.5));
+  ctx.closePath();ctx.fillStyle=col;ctx.fill();
+}
+
+function isOnPath(path,u,v){
+  for(let i=0;i<path.length-1;i++) if(path[i]===u&&path[i+1]===v) return true;
+  return false;
+}
+
+/* ─── TAB 1: Flow ─── */
+let flowNet=null,flowPos=null,flowSel=-1;
+function flowLoad(key,btn){
+  document.querySelectorAll('#flow-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  flowNet=makeNet(key);
+  flowPos=null;
+  flowDraw();
+  updateFlowMetrics();
+}
+function updateFlowMetrics(){
+  if(!flowNet) return;
+  document.getElementById('fl-n').textContent=flowNet.n;
+  document.getElementById('fl-e').textContent=flowNet.edges.length;
+  let fval=0;
+  flowNet.edges.filter(e=>e.u===flowNet.src).forEach(e=>fval+=e.f);
+  flowNet.edges.filter(e=>e.v===flowNet.src).forEach(e=>fval-=e.f);
+  document.getElementById('fl-fval').textContent=fval;
+  // kirchhoff check
+  let ok=true;
+  for(let v=0;v<flowNet.n;v++){
+    if(v===flowNet.src||v===flowNet.snk) continue;
+    let inflow=0,outflow=0;
+    flowNet.edges.forEach(e=>{if(e.v===v)inflow+=e.f;if(e.u===v)outflow+=e.f;});
+    if(Math.abs(inflow-outflow)>0.01) ok=false;
+  }
+  document.getElementById('fl-kirchhoff').textContent=ok?'✓':'✗';
+}
+function flowDraw(){
+  if(!canvas.width) resize();
+  if(!flowNet) return;
+  if(!flowPos) flowPos=netLayout(flowNet);
+  drawNet(flowNet,flowPos,null,null,null);
+}
+canvas.addEventListener('click',e=>{
+  if(currentTab!=='flow'||!flowNet) return;
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  // find clicked edge midpoint
+  flowNet.edges.forEach(ed=>{
+    const ps=flowPos[ed.u],pt=flowPos[ed.v];
+    const emx=(ps.x+pt.x)/2,emy=(ps.y+pt.y)/2;
+    if(Math.hypot(mx-emx,my-emy)<16){
+      ed.f=Math.min(ed.c,(ed.f+1)%( ed.c+1));
+      updateFlowMetrics();flowDraw();
+    }
+  });
+});
+
+/* ─── BFS augmenting path ─── */
+function bfsAugPath(net){
+  // residual graph BFS
+  const parent=new Array(net.n).fill(-1);
+  const visited=new Set([net.src]);
+  const queue=[net.src];
+  while(queue.length){
+    const u=queue.shift();
+    if(u===net.snk) break;
+    // forward edges
+    net.edges.forEach((e,i)=>{
+      if(e.u===u&&!visited.has(e.v)&&e.f<e.c){visited.add(e.v);parent[e.v]={node:u,edge:i,fwd:true};queue.push(e.v);}
+    });
+    // backward edges
+    net.edges.forEach((e,i)=>{
+      if(e.v===u&&!visited.has(e.u)&&e.f>0){visited.add(e.u);parent[e.u]={node:u,edge:i,fwd:false};queue.push(e.u);}
+    });
+  }
+  if(parent[net.snk]===-1) return null;
+  // reconstruct path
+  const path=[];let cur=net.snk;
+  while(cur!==net.src){const p=parent[cur];path.unshift({to:cur,from:p.node,edge:p.edge,fwd:p.fwd});cur=p.node;}
+  return path;
+}
+function augment(net,path){
+  const eps=Math.min(...path.map(s=>s.fwd?(net.edges[s.edge].c-net.edges[s.edge].f):net.edges[s.edge].f));
+  path.forEach(s=>{if(s.fwd)net.edges[s.edge].f+=eps;else net.edges[s.edge].f-=eps;});
+  return eps;
+}
+function flowValue(net){
+  let v=0;net.edges.forEach(e=>{if(e.u===net.src)v+=e.f;if(e.v===net.src)v-=e.f;});return v;
+}
+function pathNodes(path,src){return [src,...path.map(s=>s.to)];}
+
+/* ─── TAB 2: Augmenting step-by-step ─── */
+let augNet=null,augPos=null,augPathHighlight=null,augIter=0;
+function augLoad(key,btn){
+  document.querySelectorAll('#aug-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  augNet=makeNet(key);augPos=null;augPathHighlight=null;augIter=0;
+  document.getElementById('aug-fval').textContent=0;
+  document.getElementById('aug-iter').textContent=0;
+  document.getElementById('step-log').innerHTML='';
+  augDraw();
+}
+function augReset(){augLoad(null,null);if(augNet) augDraw();}
+function augStep(){
+  if(!augNet) return;
+  const path=bfsAugPath(augNet);
+  const log=document.getElementById('step-log');
+  if(!path){
+    log.innerHTML=`<div class="log-entry log-done">✓ Nincs javítható út. Max-flow = ${flowValue(augNet)}</div>`+log.innerHTML;
+    augPathHighlight=null;augDraw();return;
+  }
+  const eps=augment(augNet,path);
+  augIter++;
+  augPathHighlight=pathNodes(path,augNet.src);
+  document.getElementById('aug-fval').textContent=flowValue(augNet);
+  document.getElementById('aug-iter').textContent=augIter;
+  const nodeNames=augPathHighlight.map(i=>augNet.nodes[i]).join('→');
+  log.innerHTML=`<div class="log-entry log-aug">#${augIter} ${nodeNames} (+${eps})</div>`+log.innerHTML;
+  augDraw();
+}
+function augDraw(){
+  if(!canvas.width) resize();
+  if(!augNet) return;
+  if(!augPos) augPos=netLayout(augNet);
+  drawNet(augNet,augPos,augPathHighlight,null,null);
+}
+
+/* ─── TAB 3: Max-flow ─── */
+let mfNet=null,mfPos=null;
+function mfLoad(key,btn){
+  document.querySelectorAll('#mf-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  mfNet=makeNet(key);mfPos=null;
+  document.getElementById('mf-val').textContent=0;
+  document.getElementById('mf-iter').textContent=0;
+  document.getElementById('step-log2').innerHTML='';
+  mfDraw();
+}
+function mfReset(){if(mfNet) mfNet.edges.forEach(e=>e.f=0);mfDraw();}
+function mfRun(){
+  if(!mfNet) return;
+  mfNet.edges.forEach(e=>e.f=0);
+  let iter=0;const log=document.getElementById('step-log2');log.innerHTML='';
+  while(true){
+    const path=bfsAugPath(mfNet);
+    if(!path) break;
+    const eps=augment(mfNet,path);iter++;
+    const nodes=pathNodes(path,mfNet.src).map(i=>mfNet.nodes[i]).join('→');
+    log.innerHTML+=`<div class="log-entry log-aug">#${iter} ${nodes} (+${eps})</div>`;
+  }
+  const fv=flowValue(mfNet);
+  document.getElementById('mf-val').textContent=fv;
+  document.getElementById('mf-iter').textContent=iter;
+  log.innerHTML+=`<div class="log-entry log-done">Max F(f) = ${fv}</div>`;
+  mfDraw();
+}
+function mfDraw(){
+  if(!canvas.width) resize();
+  if(!mfNet) return;
+  if(!mfPos) mfPos=netLayout(mfNet);
+  drawNet(mfNet,mfPos,null,null,null);
+}
+
+/* ─── TAB 4: Min-cut ─── */
+let mcNet=null,mcPos=null,mcCutSet=null,mcCutEdges=null;
+function mcLoad(key,btn){
+  document.querySelectorAll('#mc-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  mcNet=makeNet(key);mcPos=null;mcCutSet=null;mcCutEdges=null;
+  document.getElementById('mc-flow').textContent=0;
+  document.getElementById('mc-cap').textContent=0;
+  mcDraw();
+}
+function mcRun(){
+  if(!mcNet) return;
+  mcNet.edges.forEach(e=>e.f=0);
+  while(true){const p=bfsAugPath(mcNet);if(!p) break;augment(mcNet,p);}
+  const fv=flowValue(mcNet);
+  // find min-cut via BFS on residual from src
+  const V1=new Set();
+  const queue=[mcNet.src];V1.add(mcNet.src);
+  while(queue.length){
+    const u=queue.shift();
+    mcNet.edges.forEach(e=>{
+      if(e.u===u&&!V1.has(e.v)&&e.f<e.c){V1.add(e.v);queue.push(e.v);}
+      if(e.v===u&&!V1.has(e.u)&&e.f>0){V1.add(e.u);queue.push(e.u);}
+    });
+  }
+  mcCutSet=V1;
+  mcCutEdges=[];
+  let cap=0;
+  mcNet.edges.forEach((e,i)=>{if(V1.has(e.u)&&!V1.has(e.v)){mcCutEdges.push(i);cap+=e.c;}});
+  document.getElementById('mc-flow').textContent=fv;
+  document.getElementById('mc-cap').textContent=cap;
+  mcDraw();
+}
+function mcDraw(){
+  if(!canvas.width) resize();
+  if(!mcNet) return;
+  if(!mcPos) mcPos=netLayout(mcNet);
+  drawNet(mcNet,mcPos,null,mcCutSet,mcCutEdges);
+  // divider line for cut
+  if(mcCutSet&&mcPos){
+    const W=canvas.width,H=canvas.height;
+    const v1xs=Array.from(mcCutSet).map(i=>mcPos[i].x);
+    const v2xs=[];for(let i=0;i<mcNet.n;i++) if(!mcCutSet.has(i)) v2xs.push(mcPos[i].x);
+    if(v1xs.length&&v2xs.length){
+      const x=( Math.max(...v1xs)+Math.min(...v2xs))/2;
+      ctx.beginPath();ctx.moveTo(x,H*0.05);ctx.lineTo(x,H*0.95);
+      ctx.strokeStyle='#ef444466';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#ef4444';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+      ctx.fillText('min-cut',x,H*0.04);
+    }
+  }
+}
+
+/* ─── TAB 5: Bipartite matching via flow ─── */
+const BIP_NETS={
+  '3x3':{
+    A:['a1','a2','a3'],B:['b1','b2','b3'],
+    ABedges:[[0,0],[0,1],[1,1],[1,2],[2,2]]
+  },
+  '4x4':{
+    A:['a1','a2','a3','a4'],B:['b1','b2','b3','b4'],
+    ABedges:[[0,0],[0,2],[1,0],[1,1],[2,1],[2,3],[3,2],[3,3]]
+  },
+  hall:{
+    A:['a1','a2','a3'],B:['b1','b2'],
+    ABedges:[[0,0],[0,1],[1,0],[1,1],[2,0],[2,1]]
+  }
+};
+let bip2Net=null,bip2Pos=null,bip2ABmap=null;
+function bip2Load(key,btn){
+  document.querySelectorAll('#bip2-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const bp=BIP_NETS[key];
+  // Build flow network: 0=super-src, 1..na = A nodes, na+1..na+nb = B nodes, na+nb+1 = super-snk
+  const na=bp.A.length,nb=bp.B.length;
+  const nodes=['s',...bp.A,...bp.B,'t'];
+  const edges=[];
+  bp.A.forEach((_,i)=>edges.push({u:0,v:1+i,c:1,f:0}));
+  bp.ABedges.forEach(([ai,bi])=>edges.push({u:1+ai,v:1+na+bi,c:1,f:0}));
+  bp.B.forEach((_,i)=>edges.push({u:1+na+i,v:1+na+nb,c:1,f:0}));
+  bip2Net={nodes,edges,src:0,snk:1+na+nb,n:nodes.length,na,nb};
+  bip2ABmap=bp.ABedges;
+  bip2Pos=null;
+  document.getElementById('bip2-match').textContent=0;
+  document.getElementById('bip2-maxflow').textContent=0;
+  bip2Draw();
+}
+function bip2Run(){
+  if(!bip2Net) return;
+  bip2Net.edges.forEach(e=>e.f=0);
+  while(true){const p=bfsAugPath(bip2Net);if(!p) break;augment(bip2Net,p);}
+  const fv=flowValue(bip2Net);
+  document.getElementById('bip2-match').textContent=fv;
+  document.getElementById('bip2-maxflow').textContent=fv;
+  bip2Draw();
+}
+function bip2Draw(){
+  if(!canvas.width) resize();
+  if(!bip2Net) return;
+  const W=canvas.width,H=canvas.height;
+  if(!bip2Pos){
+    const na=bip2Net.na,nb=bip2Net.nb;
+    const pos=new Array(bip2Net.n);
+    pos[0]={x:W*0.08,y:H/2}; // super-src
+    pos[bip2Net.snk]={x:W*0.92,y:H/2}; // super-snk
+    for(let i=0;i<na;i++) pos[1+i]={x:W*0.32,y:H*0.1+(H*0.8/(na-1||1))*i};
+    for(let i=0;i<nb;i++) pos[1+na+i]={x:W*0.68,y:H*0.1+(H*0.8/(nb-1||1))*i};
+    bip2Pos=pos;
+  }
+  ctx.clearRect(0,0,W,H);
+  bip2Net.edges.forEach((e,ei)=>{
+    const ps=bip2Pos[e.u],pt=bip2Pos[e.v];
+    // middle AB edges: highlight if matched
+    const isAB=e.u>=1&&e.u<=bip2Net.na&&e.v>=1+bip2Net.na&&e.v<bip2Net.snk;
+    const col=isAB&&e.f>0?'#fbbf24':e.f>0?'#38bdf8':'#2a3a4a';
+    drawArrow(ps.x,ps.y,pt.x,pt.y,col,isAB&&e.f>0?2.5:1.2);
+  });
+  bip2Net.nodes.forEach((label,i)=>{
+    const p=bip2Pos[i];
+    const col=i===0?'#34d399':i===bip2Net.snk?'#f97316':i<=bip2Net.na?'#38bdf8':'#a78bfa';
+    ctx.beginPath();ctx.arc(p.x,p.y,14,0,Math.PI*2);
+    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,p.x,p.y);
+  });
+}
+
+/* ──── Init ──── */
+window.addEventListener('load',()=>{
+  resize();
+  flowLoad('simple',null);
+  augLoad('simple',null);
+  mfLoad('simple',null);
+  mcLoad('simple',null);
+  bip2Load('3x3',null);
+});
+</script>
+{% endblock %}

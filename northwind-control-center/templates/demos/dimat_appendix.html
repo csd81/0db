@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+{% block title %}Függelék — Referencia-táblázatok{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<style>
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px;
+  color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s;
+  white-space:nowrap; user-select:none; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#0d1117; border:1px solid #1e2533; border-radius:.5rem;
+  padding:1rem; }
+
+:root { --acc:#a78bfa; }
+
+#ila-nav-links { display:flex; flex-direction:column; gap:0; border-bottom:1px solid #21262d; flex-shrink:0; }
+
+.ila-tab { display:none; } .ila-tab.active { display:block; }
+
+.sec-label { font-size:.58rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#8b949e; margin:1.2rem 0 .5rem; }
+.info-box { background:#1e1a2e; border:1px solid #3b3070; border-radius:.35rem; padding:.6rem .8rem; font-size:.72rem; color:#ddd6fe; line-height:1.7; margin-bottom:.6rem; }
+.info-box b { color:var(--acc); }
+.formula-box { background:#040a10; border:1px solid #0a1f2e; border-radius:.35rem; padding:.55rem .75rem; font-size:.72rem; color:#a8d8f0; margin:.4rem 0 .8rem; }
+table.ref { width:100%; border-collapse:collapse; font-size:.72rem; font-family:monospace; }
+table.ref th { background:#1e1a2e; color:var(--acc); padding:.35rem .6rem; text-align:left; border:1px solid #3b3070; font-size:.65rem; }
+table.ref td { padding:.3rem .6rem; border:1px solid #21262d; color:#c9d1d9; }
+table.ref tr:hover td { background:#1e1a2e33; }
+table.ref td:first-child { color:var(--acc); font-weight:700; }
+.poly-row { background:#0e1014; border:1px solid #21262d; border-radius:.35rem; padding:.5rem .75rem; margin:.4rem 0; font-size:.73rem; }
+.poly-label { color:var(--acc); font-weight:700; font-size:.75rem; min-width:50px; display:inline-block; }
+.slider-row { display:flex; align-items:center; gap:.5rem; font-size:.68rem; color:#8b949e; margin-bottom:.4rem; }
+.slider-row input[type=range] { flex:1; accent-color:var(--acc); }
+.slider-val { min-width:28px; text-align:right; color:var(--acc); font-weight:700; }
+.metric-box { background:#0d1117; border:1px solid #21262d; border-radius:.3rem; padding:.4rem .6rem; text-align:center; display:inline-block; margin:.2rem; }
+.metric-val { font-size:1.2rem; font-weight:700; color:var(--acc); }
+.metric-lbl { font-size:.58rem; color:#8b949e; }
+.step-box { background:#0d1a2a; border:1px solid #1a3a5a; border-radius:.35rem; padding:.6rem .8rem; margin:.5rem 0; font-size:.72rem; color:#c9d1d9; line-height:1.8; }
+.step-box b { color:#38bdf8; }
+.step-box .step-num { display:inline-block; background:#0a1f2e; color:var(--acc); border-radius:.2rem; padding:.05rem .35rem; font-weight:700; font-size:.68rem; margin-right:.4rem; }
+h3.ref-title { color:var(--acc); font-size:1.05rem; font-weight:700; margin:0 0 .75rem; letter-spacing:.02em; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1180px">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.18);
+                border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+      📚
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:#38bdf8">Függelék</h4>
+      <small class="text-muted" style="font-size:.75rem">III. rész &middot; Referencia-táblázatok</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto"
+       style="text-decoration:none;font-size:.78rem;color:#94a3b8;
+              border:1px solid #334155;border-radius:6px;padding:.3rem .8rem">
+      ← Könyv főoldal
+    </a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap" id="dimat-nav-row">
+    <span class="ila-nav-link active" onclick="showTab('binom',this)">(x/n) Polinomok</span>
+    <span class="ila-nav-link" onclick="showTab('power',this)">Pₖ(n) Hatványösszegek</span>
+    <span class="ila-nav-link" onclick="showTab('partial',this)">Parciális törtek</span>
+  </div>
+
+  <div class="row g-3" id="dimat-content-row">
+    <div class="col-lg-12">
+      
+      <div id="tab-binom" class="ila-tab active">
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <div class="card-dark">
+              <div class="sec-label">Kiszámoló</div>
+              <div class="info-box">Adj meg \(x\) és \(n\) értéket az \(\binom{x}{n}\) polinom kiértékeléséhez.</div>
+              <div class="slider-row">
+                <span>n =</span>
+                <input type="range" id="bn-n" min="0" max="10" value="3" oninput="binomCalc()">
+                <span class="slider-val" id="bn-n-v">3</span>
+              </div>
+              <div class="slider-row">
+                <span>x =</span>
+                <input type="range" id="bn-x" min="-5" max="20" value="5" oninput="binomCalc()">
+                <span class="slider-val" id="bn-x-v">5</span>
+              </div>
+              <div style="margin-top:.5rem">
+                <div class="metric-box" style="width:100%">
+                  <div class="metric-val" id="bn-result">10</div>
+                  <div class="metric-lbl" id="bn-formula">\(\binom{5}{3}\)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="card-dark">
+              <h3 class="ref-title" style="color:var(--acc);font-size:1.05rem;font-weight:700">Az \(\binom{x}{n}\) polinomok</h3>
+              <div class="info-box">
+                <b>Definíció:</b> \(\displaystyle\binom{x}{n}:=\frac{x(x-1)(x-2)\cdots(x-(n-1))}{n!}\)<br>
+                Természetes alapja a kombinatorikának: \(\binom{x}{n}\in\mathbb{Z}\) minden \(x\in\mathbb{Z}\), \(n\in\mathbb{N}_0\) esetén.
+              </div>
+              <div class="sec-label">Explicit alakok</div>
+              <div id="binom-poly-list"></div>
+              <div class="sec-label" style="margin-top:1rem">Koordinátatáblázat: \(x^n\) az \(\bigl\{\binom{x}{k}:k\le n\bigr\}\) bázisban</div>
+              <table class="cmp" id="binom-coord-table"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-power" class="ila-tab">
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <div class="card-dark">
+              <div class="sec-label">Kiértékelő</div>
+              <div class="info-box">Számold ki \(\sum_{i=1}^n i^k\) értékét.</div>
+              <div class="slider-row">
+                <span>n =</span>
+                <input type="range" id="pk-n" min="1" max="50" value="10" oninput="pkCalc()">
+                <span class="slider-val" id="pk-n-v">10</span>
+              </div>
+              <div class="slider-row">
+                <span>k =</span>
+                <input type="range" id="pk-k" min="0" max="12" value="2" oninput="pkCalc()">
+                <span class="slider-val" id="pk-k-v">2</span>
+              </div>
+              <div style="margin-top:.5rem">
+                <div class="metric-box" style="width:100%">
+                  <div class="metric-val" id="pk-result">385</div>
+                  <div class="metric-lbl">\(\sum_{i=1}^n i^k\)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="card-dark">
+              <h3 class="ref-title" style="color:var(--acc);font-size:1.05rem;font-weight:700">\(P_k(n):=\displaystyle\sum_{i=1}^n i^k\) polinomok</h3>
+              <div class="info-box">
+                Minden \(P_k(n)\) egy \((k+1)\)-edfokú polinom \(n\)-ben, vezető tagja \(\dfrac{n^{k+1}}{k+1}\). Bernoulli-számok kapcsolják össze az egyenleteket.
+              </div>
+              <div id="power-list"></div>
+              <div class="sec-label" style="margin-top:1rem">Kiértékelési táblázat</div>
+              <table class="cmp" id="power-table"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-partial" class="ila-tab">
+        <div class="card-dark">
+          <h3 class="ref-title" style="color:var(--acc);font-size:1.05rem;font-weight:700">Parciális törtekre bontás</h3>
+          <div class="info-box">
+            <b>Cél:</b> \(f(x)=\dfrac{p(x)}{q(x)}\) racionális törtfüggvény felírása egyszerűbb törtek összegeként.<br>
+            <b>Alkalmazás:</b> integrálszámítás, Laplace-transzformáció, sorfejtés, generátorfüggvények.
+          </div>
+          <div class="sec-label">0. lépés</div>
+          <div class="info-box"><b>deg p &lt; deg q</b>: Ha nem, polinom osztással: \(f(x)=s(x)+\dfrac{r(x)}{q(x)}\).</div>
+          <div class="sec-label">I. lépés</div>
+          <div class="info-box">A <b>nevezőt szorzattá bontjuk</b>. Valós esetben 4 szorzótípus:<br>
+            &bull; \((x-u)\) — egyszerű valós gyök<br>
+            &bull; \((x-v)^n\) — \(n\)-szeres valós gyök<br>
+            &bull; \((ax^2+bx+c)\) — egyszerű komplex gyökpár<br>
+            &bull; \((dx^2+ex+f)^m\) — \(m\)-szeres komplex gyökpár
+          </div>
+          <div class="sec-label">II. lépés — Valós eset</div>
+          <div class="info-box">Parciális törtekre bontás alakja:
+            \[f(x)=\frac{A_1}{x-u_1}+\cdots+\frac{B_{1,1}}{x-v_1}+\frac{B_{1,2}}{(x-v_1)^2}+\cdots+\frac{C_r x+D_r}{a_r x^2+b_r x+c_r}+\cdots\]
+          </div>
+          <div class="sec-label">Módszerek az együtthatókhoz</div>
+          <div class="info-box"><b>A — Behelyettesítés:</b> \(x=u\) gyökök behelyettesítése — azonnali eredmény egyszerű gyöknél.<br>
+            <b>B — Együtthatók összehasonlítása:</b> Közös nevezőre hozás után fokszám szerint egyenlővé tétel — lineáris egyenletrendszer.
+          </div>
+          <div class="sec-label">Példa</div>
+          <div class="info-box">
+            \[\frac{2x+1}{(x-1)(x+2)}=\frac{A}{x-1}+\frac{B}{x+2}\]
+            \(x=1\): \(A=\frac{3}{3}=1\) &nbsp;&nbsp; \(x=-2\): \(B=\frac{-3}{-3}=1\)<br>
+            Eredmény: \(\dfrac{1}{x-1}+\dfrac{1}{x+2}\)
+          </div>
+          <div class="sec-label">Irodalom</div>
+          <div class="info-box" style="font-size:.68rem">
+            Gróf József: <i>Matematika II.</i> Veszprémi Egyetemi Jegyzet, 1.4. fejezet (19–32. oldal)<br>
+            Obádovics Gyula: <i>Matematika</i> (kézikönyv), Műszaki Kiadó 1980, II.rész, V.fejezet (664–669. oldal)
+          </div>
+        </div>
+      </div>
+    
+    </div>
+    
+  </div>
+
+</div>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+  onload="initAll()"></script>
+<script>
+function renderK(s,display){
+  try{return katex.renderToString(s,{displayMode:!!display,throwOnError:false});}catch(e){return s;}
+}
+
+/* ── Tab ── */
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  const target = document.getElementById('tab-'+id);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (typeof currentTab !== 'undefined') currentTab=id;
+  if (typeof redraw === 'function') redraw();
+}
+
+/* ── Binomial polynomials ── */
+// C(x,n) = x(x-1)...(x-n+1)/n!
+// Compute polynomial coefficients in standard basis
+function binomCoeffs(n){
+  // product x(x-1)...(x-n+1) then divide by n!
+  let poly=[1]; // coeffs of constant 1 (poly in x, index = degree)
+  for(let k=0;k<n;k++){
+    // multiply by (x - k): new[i+1] += old[i], new[i] -= k*old[i]
+    const np=new Array(poly.length+1).fill(0);
+    for(let i=0;i<poly.length;i++){np[i+1]+=poly[i];np[i]-=k*poly[i];}
+    poly=np;
+  }
+  const fact=factorial(n);
+  return poly.map(c=>c/fact);
+}
+function factorial(n){let r=1;for(let i=2;i<=n;i++) r*=i;return r;}
+
+function formatPolyTex(coeffs){
+  // coeffs[i] = coefficient of x^i
+  const n=coeffs.length-1;let parts=[];
+  for(let d=n;d>=0;d--){
+    const c=coeffs[d];
+    if(Math.abs(c)<1e-12) continue;
+    const cr=fractionStr(c);
+    let term;
+    if(d===0) term=cr;
+    else if(d===1) term=(cr==='1'?'':(cr==='-1'?'-':cr))+'x';
+    else term=(cr==='1'?'':(cr==='-1'?'-':cr))+'x^{'+(d)+'}';
+    parts.push({term,pos:c>0});
+  }
+  if(!parts.length) return '0';
+  let s=parts[0].term;
+  for(let i=1;i<parts.length;i++) s+=(parts[i].pos?' + ':' - ')+parts[i].term.replace(/^-/,'');
+  return s;
+}
+function fractionStr(x){
+  if(Number.isInteger(x)) return x.toString();
+  // try to express as fraction with small denominator
+  for(let d=1;d<=5040;d++){
+    const n=Math.round(x*d);
+    if(Math.abs(n/d-x)<1e-9) return `\\tfrac{${n}}{${d}}`;
+  }
+  return x.toFixed(4);
+}
+
+function evalBinom(x,n){
+  let r=1;for(let k=0;k<n;k++) r*=(x-k);return r/factorial(n);
+}
+
+function buildBinomTable(){
+  const list=document.getElementById('binom-poly-list');
+  let html='';
+  for(let n=0;n<=8;n++){
+    const c=binomCoeffs(n);
+    const tex=`\\binom{x}{${n}} = ${formatPolyTex(c)}`;
+    html+=`<div class="poly-row"><span class="poly-label">n=${n}</span>${renderK(tex,false)}</div>`;
+  }
+  list.innerHTML=html;
+
+  // Coordinate table: rows = C(x,k), cols = x^0..x^7
+  const tbl=document.getElementById('binom-coord-table');
+  const maxN=7;
+  let th='<tr><th>\\binom{x}{k}</th>';
+  for(let j=0;j<=maxN;j++) th+=`<th>${renderK('x^{'+j+'}',false)}</th>`;
+  th+='</tr>';
+  let rows='';
+  for(let k=0;k<=maxN;k++){
+    // Express x^maxN in terms of C(x,k): that's the "Stirling numbers" direction
+    // Actually the table shows: coefficient of x^j in C(x,k) poly? No — table shows coefficients
+    // of x^n expanded in the C(x,k) basis. Let's do the simpler version: row k, col j = value of C(j,k) as in the textbook table (which was the Stirling-type table).
+    // The textbook shows: rows = C(x,k), columns = x^0,x,...,x^7; entries = COEFFICIENTS of x^j in C(x,k)
+    const c=binomCoeffs(k);
+    rows+=`<tr><td>${renderK('\\binom{x}{'+k+'}',false)}</td>`;
+    for(let j=0;j<=maxN;j++){
+      const val=j<c.length?c[j]:0;
+      const display=Math.abs(val)<1e-10?'':fractionStr(val).replace('\\tfrac','\\frac');
+      rows+=`<td style="color:${Math.abs(val)<1e-10?'#21262d':val>0?'#38bdf8':'#f97316'}">${display?renderK(display,false):'0'}</td>`;
+    }
+    rows+='</tr>';
+  }
+  tbl.innerHTML=th+rows;
+}
+
+function binomCalc(){
+  const n=+document.getElementById('bn-n').value;
+  const x=+document.getElementById('bn-x').value;
+  document.getElementById('bn-n-v').textContent=n;
+  document.getElementById('bn-x-v').textContent=x;
+  const val=evalBinom(x,n);
+  document.getElementById('bn-result').textContent=Number.isInteger(val)?val:val.toFixed(4);
+  document.getElementById('bn-formula').innerHTML=renderK(`\\binom{${x}}{${n}}`,false);
+}
+
+/* ── Power sums ── */
+const POWER_FORMULAS=[
+  'n',
+  '\\dfrac{n^2}{2}+\\dfrac{n}{2}=\\dfrac{n(n+1)}{2}',
+  '\\dfrac{n^3}{3}+\\dfrac{n^2}{2}+\\dfrac{n}{6}=\\dfrac{n(n+1)(2n+1)}{6}',
+  '\\dfrac{n^4}{4}+\\dfrac{n^3}{2}+\\dfrac{n^2}{4}=\\dfrac{n^2(n+1)^2}{4}',
+  '\\dfrac{n^5}{5}+\\dfrac{n^4}{2}+\\dfrac{n^3}{3}-\\dfrac{n}{30}',
+  '\\dfrac{n^6}{6}+\\dfrac{n^5}{2}+\\dfrac{5n^4}{12}-\\dfrac{n^2}{12}',
+  '\\dfrac{n^7}{7}+\\dfrac{n^6}{2}+\\dfrac{n^5}{2}-\\dfrac{n^3}{6}+\\dfrac{n}{42}',
+  '\\dfrac{n^8}{8}+\\dfrac{n^7}{2}+\\dfrac{7n^6}{12}-\\dfrac{7n^4}{24}+\\dfrac{n^2}{12}',
+  '\\dfrac{n^9}{9}+\\dfrac{n^8}{2}+\\dfrac{2n^7}{3}-\\dfrac{7n^5}{15}+\\dfrac{2n^3}{9}-\\dfrac{n}{30}',
+  '\\dfrac{n^{10}}{10}+\\dfrac{n^9}{2}+\\dfrac{3n^8}{4}-\\dfrac{7n^6}{10}+\\dfrac{n^4}{2}-\\dfrac{3n^2}{20}',
+];
+
+function evalPowerSum(n,k){
+  let s=0;for(let i=1;i<=n;i++) s+=Math.pow(i,k);return s;
+}
+
+function buildPowerList(){
+  const list=document.getElementById('power-list');
+  let html='';
+  POWER_FORMULAS.forEach((f,k)=>{
+    html+=`<div class="poly-row"><span class="poly-label">k=${k}</span>${renderK('\\displaystyle\\sum_{i=1}^n i^{'+k+'}='+f,false)}</div>`;
+  });
+  list.innerHTML=html;
+
+  // Table: rows = k=0..9, cols = n=1..12
+  const ns=[1,2,3,4,5,6,7,8,9,10,15,20];
+  const tbl=document.getElementById('power-table');
+  let th='<tr><th>k \\ n</th>'+ns.map(n=>`<th>${n}</th>`).join('')+'</tr>';
+  let rows='';
+  for(let k=0;k<=9;k++){
+    rows+=`<tr><td>k=${k}</td>`;
+    ns.forEach(n=>{
+      const v=evalPowerSum(n,k);
+      rows+=`<td>${v.toLocaleString()}</td>`;
+    });
+    rows+='</tr>';
+  }
+  tbl.innerHTML=th+rows;
+}
+
+function pkCalc(){
+  const n=+document.getElementById('pk-n').value;
+  const k=+document.getElementById('pk-k').value;
+  document.getElementById('pk-n-v').textContent=n;
+  document.getElementById('pk-k-v').textContent=k;
+  document.getElementById('pk-result').textContent=evalPowerSum(n,k).toLocaleString();
+}
+
+/* ── Init ── */
+function initAll(){
+  buildBinomTable();
+  buildPowerList();
+  binomCalc();
+  pkCalc();
+}
+</script>
+{% endblock %}

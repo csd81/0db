@@ -1,0 +1,630 @@
+{% extends "base.html" %}
+{% block title %}II.15 — Matroidok{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<style>
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px;
+  color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s;
+  white-space:nowrap; user-select:none; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#0d1117; border:1px solid #1e2533; border-radius:.5rem;
+  padding:1rem; }
+
+:root { --acc:#38bdf8; }
+
+#ila-nav-links { display:flex; gap:0; border-bottom:1px solid #21262d; flex-shrink:0; overflow-x:auto; }
+
+.ila-tab { display:none; } .ila-tab.active { display:block; }
+.sec-label { font-size:.58rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#8b949e; margin:.9rem 0 .4rem; }
+.info-box { background:#0e1a12; border:1px solid #1a3a20; border-radius:.35rem; padding:.6rem .8rem; font-size:.72rem; color:#d2f4e8; line-height:1.7; margin-bottom:.5rem; }
+.info-box b { color:var(--acc); }
+.preset-row { display:flex; flex-wrap:wrap; gap:.35rem; margin-bottom:.5rem; }
+.preset-btn { font-size:.62rem; padding:.25rem .6rem; border-radius:.25rem; border:1px solid #21262d; background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; transition:all .15s; }
+.preset-btn:hover { border-color:var(--acc); color:var(--acc); }
+.preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); }
+.metric-row { display:grid; grid-template-columns:1fr 1fr; gap:.4rem; margin-bottom:.6rem; }
+.metric-box { background:#0d1117; border:1px solid #21262d; border-radius:.3rem; padding:.4rem .6rem; text-align:center; }
+.metric-val { font-size:1rem; font-weight:700; color:var(--acc); word-break:break-all; font-variant-numeric:tabular-nums; }
+.metric-lbl { font-size:.58rem; color:#8b949e; margin-top:.1rem; }
+.formula-box { background:#040a10; border:1px solid #0a1f2e; border-radius:.35rem; padding:.55rem .75rem; font-size:.72rem; color:#a8d8f0; margin:.4rem 0; }
+.ctrl-btn { font-size:.65rem; padding:.3rem .7rem; border-radius:.25rem; border:1px solid #21262d; background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; margin:.2rem .2rem .2rem 0; }
+.ctrl-btn:hover { border-color:var(--acc); color:var(--acc); }
+.ctrl-btn.green { border-color:#34d399; color:#34d399; }
+
+.axiom-row { display:flex; align-items:center; gap:.5rem; padding:.25rem 0; font-size:.69rem; }
+.axiom-ok { color:#34d399; font-weight:700; font-size:.8rem; }
+.axiom-fail { color:#ef4444; font-weight:700; font-size:.8rem; }
+.indep-set { display:inline-block; padding:.1rem .4rem; border-radius:.25rem; font-size:.66rem; font-weight:700; margin:.1rem; }
+.slider-row { display:flex; align-items:center; gap:.5rem; font-size:.68rem; color:#8b949e; margin-bottom:.4rem; }
+.slider-row input[type=range] { flex:1; accent-color:var(--acc); }
+.slider-val { min-width:24px; text-align:right; color:var(--acc); font-weight:700; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1180px">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.18);
+                border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+      ⚙️
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:#38bdf8">II.15 &mdash; Matroidok</h4>
+      <small class="text-muted" style="font-size:.75rem">Grafikus &middot; Uniform &middot; Rangfüggvény &middot; Körök &amp; Bázisok</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto"
+       style="text-decoration:none;font-size:.78rem;color:#94a3b8;
+              border:1px solid #334155;border-radius:6px;padding:.3rem .8rem">
+      ← Könyv főoldal
+    </a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap" id="dimat-nav-row">
+    <span class="ila-nav-link active" onclick="showTab('axiom',this)">Axiómák</span>
+    <span class="ila-nav-link" onclick="showTab('graph',this)">Grafikus</span>
+    <span class="ila-nav-link" onclick="showTab('unif',this)">Uniform</span>
+    <span class="ila-nav-link" onclick="showTab('rank',this)">Rang</span>
+    <span class="ila-nav-link" onclick="showTab('circuit',this)">Körök</span>
+  </div>
+
+  <div class="row g-3" id="dimat-content-row">
+    <div class="col-lg-5">
+
+      <!-- TAB 1: Axiómák -->
+      <div id="tab-axiom" class="ila-tab active">
+        <div class="sec-label">15.1 Definíció — Függetlenségi axiómák</div>
+        <div class="info-box">
+          \(\mathcal{M}=(S,\mathcal{F})\) <b>matroid</b>, ha:<br>
+          <b>(I1)</b> \(\emptyset\in\mathcal{F}\)<br>
+          <b>(I2)</b> Ha \(Y\in\mathcal{F}\) és \(X\subseteq Y\), akkor \(X\in\mathcal{F}\) (leszálló)<br>
+          <b>(I3)</b> Ha \(X,Y\in\mathcal{F}\) és \(|X|&lt;|Y|\), akkor \(\exists s\in Y\setminus X: X\cup\{s\}\in\mathcal{F}\) (kiegészítési tulajdonság)
+        </div>
+        <div class="sec-label">Példa: grafikus matroid K₄ gráfon</div>
+        <div class="preset-row" id="axiom-presets">
+          <button class="preset-btn active" onclick="axiomLoad('k4',this)">K₄</button>
+          <button class="preset-btn" onclick="axiomLoad('c4',this)">C₄</button>
+          <button class="preset-btn" onclick="axiomLoad('path',this)">Út P₄</button>
+        </div>
+        <div class="sec-label">Axiómák ellenőrzése</div>
+        <div id="axiom-checks"></div>
+        <div class="sec-label">Független részhalmazok (F-elemek)</div>
+        <div id="indep-list" style="max-height:140px;overflow-y:auto;padding:.2rem 0"></div>
+      </div>
+
+      <!-- TAB 2: Grafikus matroid -->
+      <div id="tab-graph" class="ila-tab">
+        <div class="sec-label">15.5(ii) Grafikus matroid</div>
+        <div class="info-box">
+          \(G=(V,E)\) gráf. \(S:=E\), \(\mathcal{F}\):= körmentes élhalmazok (erdők). Ez matroid: <b>grafikus (graphic) matroid</b>.
+        </div>
+        <div class="sec-label">Gráf</div>
+        <div class="preset-row" id="gr-presets">
+          <button class="preset-btn active" onclick="grLoad('k4',this)">K₄</button>
+          <button class="preset-btn" onclick="grLoad('c5',this)">C₅+e</button>
+          <button class="preset-btn" onclick="grLoad('pet',this)">Petersen</button>
+        </div>
+        <div class="info-box" style="font-size:.68rem">Kattints élekre a kiválasztáshoz. Zöld = független (erdő), Piros = tartalmaz kört.</div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="gr-sel">0</div><div class="metric-lbl">kiválasztott élek</div></div>
+          <div class="metric-box"><div class="metric-val" id="gr-indep">—</div><div class="metric-lbl">Független?</div></div>
+          <div class="metric-box"><div class="metric-val" id="gr-rank">—</div><div class="metric-lbl">r(X)</div></div>
+          <div class="metric-box"><div class="metric-val" id="gr-circuit">—</div><div class="metric-lbl">Körök</div></div>
+        </div>
+        <button class="ctrl-btn" onclick="grClear()">Töröl</button>
+        <button class="ctrl-btn green" onclick="grMaxForest()">Max erdő</button>
+      </div>
+
+      <!-- TAB 3: Uniform matroid -->
+      <div id="tab-unif" class="ila-tab">
+        <div class="sec-label">15.5(iii) Uniform matroid U_{m,k}</div>
+        <div class="info-box">
+          \(S=\{1,\ldots,m\}\), \(\mathcal{F}=\{X\subseteq S:|X|\le k\}\).<br>
+          Körei: minden \((k+1)\)-elemű részhalmaz.<br>
+          Bázisai: minden \(k\)-elemű részhalmaz, szám: \(\binom{m}{k}\).
+        </div>
+        <div class="slider-row">
+          <span>m =</span>
+          <input type="range" id="um-m" min="2" max="8" value="5" oninput="unifUpdate()">
+          <span class="slider-val" id="um-m-v">5</span>
+        </div>
+        <div class="slider-row">
+          <span>k =</span>
+          <input type="range" id="um-k" min="0" max="8" value="2" oninput="unifUpdate()">
+          <span class="slider-val" id="um-k-v">2</span>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="um-indep">—</div><div class="metric-lbl">|F| (indep. h.sz.)</div></div>
+          <div class="metric-box"><div class="metric-val" id="um-bases">—</div><div class="metric-lbl">bázisok száma</div></div>
+          <div class="metric-box"><div class="metric-val" id="um-circuits">—</div><div class="metric-lbl">körök száma</div></div>
+          <div class="metric-box"><div class="metric-val" id="um-rank">—</div><div class="metric-lbl">r(M)</div></div>
+        </div>
+        <div class="info-box" style="font-size:.68rem">A canvas kördiagram jelöli: zöld = független, narancs = kör (minimális összefüggő), szürke = nem függ.</div>
+      </div>
+
+      <!-- TAB 4: Rangfüggvény -->
+      <div id="tab-rank" class="ila-tab">
+        <div class="sec-label">15.7 Rangfüggvény axiómái</div>
+        <div class="info-box">
+          \(r:\mathcal{P}(S)\to\mathbb{N}\) rangfüggvény, ha:<br>
+          <b>(r1)</b> \(r(\emptyset)=0\)<br>
+          <b>(r2)</b> \(r(Y)\le r(X)\) ha \(Y\subseteq X\) (monoton)<br>
+          <b>(r3)</b> \(r(X)\le|X|\) (szubkardinális)<br>
+          <b>(r4)</b> \(r(X\cup Y)+r(X\cap Y)\le r(X)+r(Y)\) (szubmoduláris)
+        </div>
+        <div class="formula-box">\[r(C)=|C|-1\quad\text{minden } C \text{ körre}\]</div>
+        <div class="sec-label">Grafikus matroid rangja</div>
+        <div class="preset-row" id="rk-presets">
+          <button class="preset-btn active" onclick="rkLoad('k4',this)">K₄</button>
+          <button class="preset-btn" onclick="rkLoad('c5',this)">C₅+e</button>
+        </div>
+        <div class="info-box" style="font-size:.68rem">Kattints élekre X halmaz kijelöléséhez. A canvas mutatja r(X) = max erdő mérete X-ben.</div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="rk-x">∅</div><div class="metric-lbl">|X|</div></div>
+          <div class="metric-box"><div class="metric-val" id="rk-rx">0</div><div class="metric-lbl">r(X)</div></div>
+          <div class="metric-box"><div class="metric-val" id="rk-rm">—</div><div class="metric-lbl">r(M)</div></div>
+          <div class="metric-box"><div class="metric-val" id="rk-sub">✓</div><div class="metric-lbl">szubkard.</div></div>
+        </div>
+      </div>
+
+      <!-- TAB 5: Körök & Bázisok -->
+      <div id="tab-circuit" class="ila-tab">
+        <div class="sec-label">15.8 Körök és bázisok</div>
+        <div class="info-box">
+          <b>Bázis:</b> maximális független részhalmaz.<br>
+          <b>Kör:</b> minimális összefüggő részhalmaz (nem független, de minden valódi részhalmaza az).<br>
+          <b>15.10:</b> Minden bázis azonos méretű; kicserélési tulajdonság.
+        </div>
+        <div class="formula-box">\[r(\mathcal{M}) = |B|\quad\text{minden } B \text{ bázisra}\]</div>
+        <div class="sec-label">Preset</div>
+        <div class="preset-row" id="ci-presets">
+          <button class="preset-btn active" onclick="ciLoad('k4',this)">K₄</button>
+          <button class="preset-btn" onclick="ciLoad('c4e',this)">C₄+e</button>
+          <button class="preset-btn" onclick="ciLoad('tree',this)">Fa</button>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="ci-bases">—</div><div class="metric-lbl">bázisok száma</div></div>
+          <div class="metric-box"><div class="metric-val" id="ci-circuits">—</div><div class="metric-lbl">körök száma</div></div>
+          <div class="metric-box"><div class="metric-val" id="ci-rank">—</div><div class="metric-lbl">r(M)</div></div>
+          <div class="metric-box"><div class="metric-val" id="ci-m">—</div><div class="metric-lbl">|E| (|S|)</div></div>
+        </div>
+        <button class="ctrl-btn" onclick="ciShowBasis()">Bázis megjelenít</button>
+        <button class="ctrl-btn" onclick="ciShowCircuit()">Kör megjelenít</button>
+        <div class="info-box" style="font-size:.68rem" id="ci-note">—</div>
+      </div>
+
+    </div>
+    <div class="col-lg-7">
+      <div class="card-dark p-2" style="background:#0d1117;border:1px solid #1e2533;border-radius:.5rem;
+                                          height:560px;display:flex;flex-direction:column">
+        <canvas id="main-canvas" style="display:block;width:100%;height:100%;flex:1"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+  onload="renderMath()"></script>
+<script>
+function renderMath(){
+  document.querySelectorAll('.formula-box,.info-box').forEach(el=>{
+    const src=el.innerHTML;
+    const out=src.replace(/\\\[([\s\S]*?)\\\]/g,(_,m)=>{
+      try{return katex.renderToString(m.trim(),{displayMode:true,throwOnError:false})}catch(e){return _}
+    }).replace(/\\\(([\s\S]*?)\\\)/g,(_,m)=>{
+      try{return katex.renderToString(m.trim(),{displayMode:false,throwOnError:false})}catch(e){return _}
+    });
+    el.innerHTML=out;
+  });
+}
+
+/* ── Tab ── */
+let currentTab='axiom';
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  const target = document.getElementById('tab-'+id);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (typeof currentTab !== 'undefined') currentTab=id;
+  if (typeof redraw === 'function') redraw();
+}
+
+/* ── Canvas ── */
+const canvas=document.getElementById('main-canvas');
+const ctx=canvas.getContext('2d');
+function resize(){const p=canvas.parentElement;canvas.width=p.clientWidth;canvas.height=p.clientHeight;redraw();}
+window.addEventListener('resize',resize);
+function redraw(){
+  if(currentTab==='axiom') axiomDraw();
+  else if(currentTab==='graph') grDraw();
+  else if(currentTab==='unif') unifDraw();
+  else if(currentTab==='rank') rkDraw();
+  else if(currentTab==='circuit') ciDraw();
+}
+
+/* ── Graph presets ── */
+const GRAPHS={
+  k4:{n:4,edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],labels:['1','2','3','4']},
+  c4:{n:4,edges:[[0,1],[1,2],[2,3],[3,0]],labels:['1','2','3','4']},
+  path:{n:4,edges:[[0,1],[1,2],[2,3]],labels:['1','2','3','4']},
+  c5:{n:6,edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,2]],labels:['1','2','3','4','5','6']},
+  pet:{n:10,edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],[5,7],[7,9],[9,6],[6,8],[8,5]],labels:['0','1','2','3','4','5','6','7','8','9']},
+  c4e:{n:4,edges:[[0,1],[1,2],[2,3],[3,0],[0,2]],labels:['1','2','3','4']},
+  tree:{n:5,edges:[[0,1],[0,2],[1,3],[1,4]],labels:['r','a','b','c','d']},
+};
+
+function circlePos(n,W,H,R){
+  return Array.from({length:n},(_,i)=>({x:W/2+R*Math.cos((2*Math.PI/n)*i-Math.PI/2),y:H/2+R*Math.sin((2*Math.PI/n)*i-Math.PI/2)}));
+}
+
+function hasCycle(n,selectedEdges,allEdges){
+  // union-find
+  const parent=Array.from({length:n},(_,i)=>i);
+  function find(x){return parent[x]===x?x:parent[x]=find(parent[x]);}
+  for(const ei of selectedEdges){
+    const [u,v]=allEdges[ei];
+    const pu=find(u),pv=find(v);
+    if(pu===pv) return true;
+    parent[pu]=pv;
+  }
+  return false;
+}
+
+function maxSpanningForest(n,edges){
+  // greedy: add edges not forming cycle
+  const parent=Array.from({length:n},(_,i)=>i);
+  function find(x){return parent[x]===x?x:parent[x]=find(parent[x]);}
+  const sel=[];
+  for(let i=0;i<edges.length;i++){
+    const [u,v]=edges[i];
+    const pu=find(u),pv=find(v);
+    if(pu!==pv){parent[pu]=pv;sel.push(i);}
+  }
+  return sel;
+}
+
+function rankOfSubset(n,selectedEdges,allEdges){
+  return maxSpanningForest(n,selectedEdges.map(i=>allEdges[i])).length;
+}
+
+function allCircuits(n,edges){
+  // find all minimal dependent sets (circuits)
+  const circuits=[];
+  const m=edges.length;
+  for(let mask=1;mask<(1<<m);mask++){
+    const sel=[];
+    for(let i=0;i<m;i++) if(mask>>i&1) sel.push(i);
+    if(!hasCycle(n,sel,edges)) continue;
+    // check if minimal: remove any one edge and it becomes independent
+    const isMin=sel.every(ei=>{
+      const sub=sel.filter(x=>x!==ei);
+      return !hasCycle(n,sub,edges);
+    });
+    if(isMin) circuits.push(sel);
+  }
+  return circuits;
+}
+
+function allBases(n,edges){
+  const r=maxSpanningForest(n,edges).length;
+  const m=edges.length;const bases=[];
+  for(let mask=0;mask<(1<<m);mask++){
+    const sel=[];for(let i=0;i<m;i++) if(mask>>i&1) sel.push(i);
+    if(sel.length===r&&!hasCycle(n,sel,edges)) bases.push(sel);
+  }
+  return bases;
+}
+
+function drawGraph(g,pos,selEdges,highlightNodes,edgeColors){
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  g.edges.forEach(([u,v],i)=>{
+    const isSel=selEdges&&selEdges.includes(i);
+    const col=edgeColors&&edgeColors[i]?edgeColors[i]:isSel?'#38bdf8':'#2a3a4a';
+    const lw=isSel?2.5:1.2;
+    ctx.beginPath();ctx.moveTo(pos[u].x,pos[u].y);ctx.lineTo(pos[v].x,pos[v].y);
+    ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.stroke();
+    // edge index label
+    const mx=(pos[u].x+pos[v].x)/2,my=(pos[u].y+pos[v].y)/2;
+    ctx.fillStyle='#0d1117';ctx.fillRect(mx-9,my-8,18,16);
+    ctx.fillStyle=isSel?'#38bdf8':'#6b7280';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('e'+(i+1),mx,my);
+  });
+  pos.forEach((p,i)=>{
+    const hl=highlightNodes&&highlightNodes.includes(i);
+    ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);
+    ctx.fillStyle=hl?'#fbbf24':'#38bdf8';ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(g.labels?g.labels[i]:i+1,p.x,p.y);
+  });
+}
+
+/* ── TAB 1: Axiómák ── */
+let axiomG=null,axiomPos=null;
+function axiomLoad(key,btn){
+  document.querySelectorAll('#axiom-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  axiomG=GRAPHS[key];axiomPos=null;
+  checkAxioms();axiomDraw();
+}
+function checkAxioms(){
+  const g=axiomG;if(!g) return;
+  const n=g.n,edges=g.edges,m=edges.length;
+  // Build F = all independent subsets (acyclic subsets)
+  const F=[];
+  for(let mask=0;mask<(1<<m);mask++){
+    const sel=[];for(let i=0;i<m;i++) if(mask>>i&1) sel.push(i);
+    if(!hasCycle(n,sel,edges)) F.push(sel);
+  }
+  // I1: ∅ ∈ F
+  const i1=F.some(x=>x.length===0);
+  // I2: downward closed
+  const i2=F.every(x=>x.every((_,j)=>{const sub=x.filter((_,k)=>k!==j);return F.some(y=>y.length===sub.length&&sub.every(e=>y.includes(e)));}));
+  // I3: augmentation (just spot-check: for any X,Y∈F with |X|<|Y|, ∃s∈Y\X: X∪{s}∈F)
+  let i3=true;
+  for(const X of F){for(const Y of F){
+    if(X.length>=Y.length) continue;
+    const YminX=Y.filter(e=>!X.includes(e));
+    const canAug=YminX.some(e=>{const Xs=X.concat([e]);return F.some(y=>y.length===Xs.length&&Xs.every(ei=>y.includes(ei)));});
+    if(!canAug){i3=false;break;}
+  }if(!i3) break;}
+  const checks=document.getElementById('axiom-checks');
+  checks.innerHTML=`
+    <div class="axiom-row"><span class="axiom-${i1?'ok':'fail'}">${i1?'✓':'✗'}</span> <span>(I1) ∅ ∈ F</span></div>
+    <div class="axiom-row"><span class="axiom-${i2?'ok':'fail'}">${i2?'✓':'✗'}</span> <span>(I2) Leszálló tulajdonság</span></div>
+    <div class="axiom-row"><span class="axiom-${i3?'ok':'fail'}">${i3?'✓':'✗'}</span> <span>(I3) Kiegészítési tulajdonság</span></div>
+  `;
+  // Show some independent sets
+  const list=document.getElementById('indep-list');
+  const samples=F.slice(0,20);
+  list.innerHTML=samples.map(s=>{
+    const label=s.length===0?'∅':'{'+s.map(i=>'e'+(i+1)).join(',')+'}';
+    return `<span class="indep-set" style="background:#0a1f2e;color:#38bdf8">${label}</span>`;
+  }).join('')+(F.length>20?`<span style="color:#8b949e;font-size:.65rem"> … (+${F.length-20} db)</span>`:'');
+}
+function axiomDraw(){
+  if(!canvas.width) resize();
+  if(!axiomG) return;
+  const W=canvas.width,H=canvas.height;
+  if(!axiomPos) axiomPos=circlePos(axiomG.n,W,H,Math.min(W,H)*0.36);
+  drawGraph(axiomG,axiomPos,null,null,null);
+  // show |F| label
+  const g=axiomG;const m=g.edges.length;
+  let fcount=0;for(let mask=0;mask<(1<<m);mask++){const sel=[];for(let i=0;i<m;i++) if(mask>>i&1) sel.push(i);if(!hasCycle(g.n,sel,g.edges)) fcount++;}
+  ctx.fillStyle='#8b949e';ctx.font='11px monospace';ctx.textAlign='center';
+  ctx.fillText(`|F| = ${fcount}  (összes független részhalmaz száma)`,W/2,H-18);
+}
+
+/* ── TAB 2: Grafikus matroid ── */
+let grG=null,grPos=null,grSel=[];
+function grLoad(key,btn){
+  document.querySelectorAll('#gr-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  grG=GRAPHS[key];grPos=null;grSel=[];
+  updateGrMetrics();grDraw();
+}
+function grClear(){grSel=[];updateGrMetrics();grDraw();}
+function grMaxForest(){
+  if(!grG) return;
+  grSel=maxSpanningForest(grG.n,grG.edges);
+  updateGrMetrics();grDraw();
+}
+function updateGrMetrics(){
+  if(!grG) return;
+  const indep=!hasCycle(grG.n,grSel,grG.edges);
+  document.getElementById('gr-sel').textContent=grSel.length;
+  document.getElementById('gr-indep').textContent=indep?'Igen ✓':'Nem ✗';
+  document.getElementById('gr-rank').textContent=indep?grSel.length:rankOfSubset(grG.n,grSel,grG.edges);
+  // count circuits in selection
+  if(!indep){
+    // find the cycle(s)
+    const cycles=[];const parent=Array.from({length:grG.n},(_,i)=>i);
+    function find(x){return parent[x]===x?x:parent[x]=find(parent[x]);}
+    let cc=0;
+    grSel.forEach(ei=>{const[u,v]=grG.edges[ei];const pu=find(u),pv=find(v);if(pu===pv)cc++;else parent[pu]=pv;});
+    document.getElementById('gr-circuit').textContent=cc;
+  } else {
+    document.getElementById('gr-circuit').textContent=0;
+  }
+}
+function grDraw(){
+  if(!canvas.width) resize();
+  if(!grG) return;
+  const W=canvas.width,H=canvas.height;
+  if(!grPos) grPos=circlePos(grG.n,W,H,Math.min(W,H)*0.38);
+  const indep=!hasCycle(grG.n,grSel,grG.edges);
+  const edgeColors={};
+  grSel.forEach(i=>{edgeColors[i]=indep?'#34d399':'#ef4444';});
+  drawGraph(grG,grPos,grSel,null,edgeColors);
+  const status=grSel.length===0?'Üres halmaz (∅ ∈ F ✓)':indep?`Független (erdő), r(X)=${grSel.length}`:`Nem független — kört tartalmaz`;
+  ctx.fillStyle=indep?'#34d399':'#ef4444';ctx.font='bold 12px monospace';ctx.textAlign='center';
+  ctx.fillText(status,W/2,H-20);
+}
+canvas.addEventListener('click',e=>{
+  if(currentTab!=='graph'&&currentTab!=='rank') return;
+  const net=currentTab==='graph'?grG:rkG;
+  const pos=currentTab==='graph'?grPos:rkPos;
+  const sel=currentTab==='graph'?grSel:rkSel;
+  if(!net||!pos) return;
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  net.edges.forEach(([u,v],i)=>{
+    const emx=(pos[u].x+pos[v].x)/2,emy=(pos[u].y+pos[v].y)/2;
+    if(Math.hypot(mx-emx,my-emy)<18){
+      const idx=sel.indexOf(i);
+      if(idx>=0) sel.splice(idx,1);else sel.push(i);
+      if(currentTab==='graph'){updateGrMetrics();grDraw();}
+      else {updateRkMetrics();rkDraw();}
+    }
+  });
+});
+
+/* ── TAB 3: Uniform ── */
+function binom(n,k){if(k<0||k>n) return 0;let r=1;for(let i=0;i<k;i++){r=r*(n-i)/(i+1);}return Math.round(r);}
+function unifUpdate(){
+  const m=+document.getElementById('um-m').value;
+  let k=+document.getElementById('um-k').value;
+  if(k>m){k=m;document.getElementById('um-k').value=m;}
+  document.getElementById('um-m-v').textContent=m;
+  document.getElementById('um-k-v').textContent=k;
+  // |F| = sum_{i=0}^{k} C(m,i)
+  let fcount=0;for(let i=0;i<=k;i++) fcount+=binom(m,i);
+  document.getElementById('um-indep').textContent=fcount;
+  document.getElementById('um-bases').textContent=binom(m,k);
+  document.getElementById('um-circuits').textContent=binom(m,k+1);
+  document.getElementById('um-rank').textContent=k;
+  unifDraw();
+}
+function unifDraw(){
+  if(!canvas.width) resize();
+  const m=+document.getElementById('um-m').value;
+  const k=+document.getElementById('um-k').value;
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // show elements as circles at top, subsets as a grid below
+  const elemR=16,elemSpacing=Math.min(44,W/(m+1));
+  const startX=W/2-elemSpacing*(m-1)/2;
+  const ey=H*0.12;
+  // element circles
+  for(let i=0;i<m;i++){
+    ctx.beginPath();ctx.arc(startX+i*elemSpacing,ey,elemR,0,Math.PI*2);
+    ctx.fillStyle='#38bdf8';ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,startX+i*elemSpacing,ey);
+  }
+  ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='center';
+  ctx.fillText(`S = {1, 2, …, ${m}}`,W/2,ey+30);
+  // draw subset grid: size 0..k+1
+  const maxSize=Math.min(k+1,m);
+  let yOff=H*0.22;
+  for(let sz=0;sz<=maxSize;sz++){
+    const subsets=[];
+    function gen(start,cur){if(cur.length===sz){subsets.push([...cur]);return;}if(start>m-1) return;gen(start+1,[...cur,start]);gen(start+1,cur);}
+    gen(0,[]);
+    if(subsets.length>16) break;
+    const cols=Math.min(subsets.length,8);
+    const boxW=Math.min(60,(W-40)/cols),boxH=22;
+    subsets.forEach((sub,si)=>{
+      const bx=W/2+(si%cols-cols/2)*boxW+boxW/2,by=yOff+Math.floor(si/cols)*26;
+      const isCircuit=sz===k+1;
+      const isBase=sz===k;
+      const col=isCircuit?'#f97316':isBase?'#34d399':sz>0?'#38bdf833':'#21262d';
+      const textCol=isCircuit?'#f97316':isBase?'#34d399':'#8b949e';
+      ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(bx-boxW*0.46,by-10,boxW*0.92,20,4);ctx.fill();
+      const label=sub.length===0?'∅':'{'+sub.map(i=>i+1).join(',')+'}';
+      ctx.fillStyle=textCol;ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(label,bx,by);
+    });
+    yOff+=Math.ceil(subsets.length/8)*28+4;
+  }
+  // legend
+  ctx.fillStyle='#34d399';ctx.font='10px sans-serif';ctx.textAlign='left';
+  ctx.fillText('■ bázis (|X|=k)',20,H-40);
+  ctx.fillStyle='#f97316';ctx.fillText('■ kör (|X|=k+1)',20,H-24);
+}
+
+/* ── TAB 4: Rang ── */
+let rkG=null,rkPos=null,rkSel=[];
+function rkLoad(key,btn){
+  document.querySelectorAll('#rk-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  rkG=GRAPHS[key];rkPos=null;rkSel=[];
+  updateRkMetrics();rkDraw();
+}
+function updateRkMetrics(){
+  if(!rkG) return;
+  const rx=rankOfSubset(rkG.n,rkSel,rkG.edges);
+  const rm=maxSpanningForest(rkG.n,rkG.edges).length;
+  document.getElementById('rk-x').textContent=rkSel.length;
+  document.getElementById('rk-rx').textContent=rx;
+  document.getElementById('rk-rm').textContent=rm;
+  document.getElementById('rk-sub').textContent=rx<=rkSel.length?'✓':'✗';
+}
+function rkDraw(){
+  if(!canvas.width) resize();
+  if(!rkG) return;
+  const W=canvas.width,H=canvas.height;
+  if(!rkPos) rkPos=circlePos(rkG.n,W,H,Math.min(W,H)*0.38);
+  // highlight max forest within rkSel
+  const forest=maxSpanningForest(rkG.n,rkSel.map(i=>rkG.edges[i]));
+  const forestEdges=rkSel.filter((_,fi)=>fi<forest.length);
+  const edgeColors={};
+  rkSel.forEach(i=>{edgeColors[i]='#38bdf855';});
+  const fwMap=maxSpanningForest(rkG.n,rkG.edges.filter((_,i)=>rkSel.includes(i)));
+  // recalc forest properly
+  const parentArr=Array.from({length:rkG.n},(_,i)=>i);
+  function find(x){return parentArr[x]===x?x:parentArr[x]=find(parentArr[x]);}
+  rkSel.forEach(ei=>{
+    const[u,v]=rkG.edges[ei];
+    const pu=find(u),pv=find(v);
+    if(pu!==pv){parentArr[pu]=pv;edgeColors[ei]='#34d399';}
+    else edgeColors[ei]='#ef444466';
+  });
+  drawGraph(rkG,rkPos,rkSel,null,edgeColors);
+  const rx=rankOfSubset(rkG.n,rkSel,rkG.edges);
+  ctx.fillStyle='#38bdf8';ctx.font='bold 12px monospace';ctx.textAlign='center';
+  ctx.fillText(`r(X) = ${rx}  (max erdő mérete X-ben = ${rx})`,W/2,H-20);
+}
+
+/* ── TAB 5: Körök & bázisok ── */
+let ciG=null,ciPos=null,ciBases=null,ciCircuits=null,ciHighlight=null,ciMode='';
+function ciLoad(key,btn){
+  document.querySelectorAll('#ci-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const keyMap={k4:'k4',c4e:'c4e',tree:'tree'};
+  ciG=GRAPHS[keyMap[key]];ciPos=null;ciHighlight=null;ciMode='';
+  // compute
+  ciBases=allBases(ciG.n,ciG.edges);
+  ciCircuits=ciG.edges.length<=12?allCircuits(ciG.n,ciG.edges):[];
+  const rm=maxSpanningForest(ciG.n,ciG.edges).length;
+  document.getElementById('ci-bases').textContent=ciBases.length;
+  document.getElementById('ci-circuits').textContent=ciCircuits.length+(ciG.edges.length>12?'+':'');
+  document.getElementById('ci-rank').textContent=rm;
+  document.getElementById('ci-m').textContent=ciG.edges.length;
+  document.getElementById('ci-note').textContent=`Rang r(M)=${rm}. Minden bázis ${rm}-elemű.`;
+  ciDraw();
+}
+function ciShowBasis(){
+  if(!ciBases||!ciBases.length) return;
+  const idx=Math.floor(Math.random()*ciBases.length);
+  ciHighlight=ciBases[idx];ciMode='basis';
+  document.getElementById('ci-note').textContent=`Bázis: {${ciBases[idx].map(i=>'e'+(i+1)).join(',')}}`;
+  ciDraw();
+}
+function ciShowCircuit(){
+  if(!ciCircuits||!ciCircuits.length) return;
+  const idx=Math.floor(Math.random()*ciCircuits.length);
+  ciHighlight=ciCircuits[idx];ciMode='circuit';
+  document.getElementById('ci-note').textContent=`Kör: {${ciCircuits[idx].map(i=>'e'+(i+1)).join(',')}}  (r(C)=${ciCircuits[idx].length-1})`;
+  ciDraw();
+}
+function ciDraw(){
+  if(!canvas.width) resize();
+  if(!ciG) return;
+  const W=canvas.width,H=canvas.height;
+  if(!ciPos) ciPos=circlePos(ciG.n,W,H,Math.min(W,H)*0.38);
+  const edgeColors={};
+  if(ciHighlight){
+    ciHighlight.forEach(i=>{edgeColors[i]=ciMode==='basis'?'#34d399':'#ef4444';});
+  }
+  drawGraph(ciG,ciPos,ciHighlight,null,edgeColors);
+  if(ciHighlight){
+    const label=ciMode==='basis'?'Bázis (zöld)':'Kör (piros)';
+    ctx.fillStyle=ciMode==='basis'?'#34d399':'#ef4444';ctx.font='bold 12px monospace';ctx.textAlign='center';
+    ctx.fillText(label,W/2,H-20);
+  }
+}
+
+/* ── Init ── */
+window.addEventListener('load',()=>{
+  resize();
+  axiomLoad('k4',null);
+  grLoad('k4',null);
+  unifUpdate();
+  rkLoad('k4',null);
+  ciLoad('k4',null);
+});
+</script>
+{% endblock %}

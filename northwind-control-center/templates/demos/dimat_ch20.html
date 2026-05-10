@@ -1,0 +1,636 @@
+{% extends "base.html" %}
+{% block title %}II.12 — Extremális gráfok{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<style>
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px;
+  color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s;
+  white-space:nowrap; user-select:none; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#0d1117; border:1px solid #1e2533; border-radius:.5rem;
+  padding:1rem; }
+
+:root { --acc:#38bdf8; }
+
+#ila-nav-links { display:flex; gap:0; border-bottom:1px solid #21262d; flex-shrink:0; overflow-x:auto; }
+
+.ila-tab { display:none; } .ila-tab.active { display:block; }
+.sec-label { font-size:.58rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#8b949e; margin:.9rem 0 .4rem; }
+.info-box { background:#0e1a12; border:1px solid #1a3a20; border-radius:.35rem; padding:.6rem .8rem; font-size:.72rem; color:#d2f4e8; line-height:1.7; margin-bottom:.5rem; }
+.info-box .katex { font-size:.88em; }
+.info-box b { color:var(--acc); }
+.preset-row { display:flex; flex-wrap:wrap; gap:.35rem; margin-bottom:.5rem; }
+.preset-btn { font-size:.62rem; padding:.25rem .6rem; border-radius:.25rem; border:1px solid #21262d;
+  background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; transition:all .15s; }
+.preset-btn:hover { border-color:var(--acc); color:var(--acc); }
+.preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); }
+.metric-row { display:grid; grid-template-columns:1fr 1fr; gap:.4rem; margin-bottom:.6rem; }
+.metric-box { background:#0d1117; border:1px solid #21262d; border-radius:.3rem; padding:.4rem .6rem; text-align:center; }
+.metric-val { font-size:1.1rem; font-weight:700; color:var(--acc); font-variant-numeric:tabular-nums; }
+.metric-lbl { font-size:.58rem; color:#8b949e; margin-top:.1rem; }
+.formula-box { background:#040a10; border:1px solid #0a1f2e; border-radius:.35rem; padding:.55rem .75rem; font-size:.72rem; color:#a8d8f0; margin:.4rem 0; }
+.formula-box .katex { font-size:.9em; }
+
+.ctrl-btn { font-size:.65rem; padding:.3rem .7rem; border-radius:.25rem; border:1px solid #21262d;
+  background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; }
+.ctrl-btn:hover { border-color:var(--acc); color:var(--acc); }
+table.cmp { width:100%; border-collapse:collapse; font-size:.66rem; }
+table.cmp th { background:#0a1f2e; color:var(--acc); padding:.3rem .5rem; text-align:center; border:1px solid #21262d; }
+table.cmp td { padding:.28rem .5rem; border:1px solid #21262d; text-align:center; color:#c9d1d9; }
+table.cmp tr:hover td { background:#0a1f2e44; }
+.slider-row { display:flex; align-items:center; gap:.5rem; font-size:.68rem; color:#8b949e; margin-bottom:.4rem; }
+.slider-row input[type=range] { flex:1; accent-color:var(--acc); }
+.slider-val { min-width:24px; text-align:right; color:var(--acc); font-weight:700; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1180px">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.18);
+                border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+      📊
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:#38bdf8">II.12 &mdash; Extremális gráfok</h4>
+      <small class="text-muted" style="font-size:.75rem">Turán-tétel &middot; T(n,r) &middot; Kővári-Sós-Turán</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto"
+       style="text-decoration:none;font-size:.78rem;color:#94a3b8;
+              border:1px solid #334155;border-radius:6px;padding:.3rem .8rem">
+      ← Könyv főoldal
+    </a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap" id="dimat-nav-row">
+    <span class="ila-nav-link active" onclick="showTab('turan',this)">Turán</span>
+    <span class="ila-nav-link" onclick="showTab('tgraph',this)">T(n,r)</span>
+    <span class="ila-nav-link" onclick="showTab('kst',this)">KST</span>
+    <span class="ila-nav-link" onclick="showTab('table',this)">Táblázat</span>
+    <span class="ila-nav-link" onclick="showTab('proof',this)">Bizonyítás</span>
+  </div>
+
+  <div class="row g-3" id="dimat-content-row">
+    <div class="col-lg-5">
+
+      <!-- TAB 1: Turán-tétel -->
+      <div id="tab-turan" class="ila-tab active">
+        <div class="sec-label">Alapfogalmak</div>
+        <div class="info-box">
+          <b>ex(n, H)</b> — az összes \(n\)-csúcsú \(H\)-mentes gráf maximális élszáma.<br>
+          <b>Turán-tétel (1941):</b> \(ex(n, K_{r+1}) = e(T(n,r))\), ahol \(T(n,r)\) a Turán-gráf.
+        </div>
+        <div class="formula-box">\[ex(n,K_{r+1})=\left(1-\tfrac{1}{r}\right)\tfrac{n^2}{2}+O(n)\]</div>
+        <div class="sec-label">Paraméterek</div>
+        <div class="slider-row">
+          <span>n =</span>
+          <input type="range" id="tn-n" min="4" max="20" value="10" oninput="turanUpdate()">
+          <span class="slider-val" id="tn-n-v">10</span>
+        </div>
+        <div class="slider-row">
+          <span>r =</span>
+          <input type="range" id="tn-r" min="2" max="6" value="3" oninput="turanUpdate()">
+          <span class="slider-val" id="tn-r-v">3</span>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="tn-ex">—</div><div class="metric-lbl">ex(n, K_r+1)</div></div>
+          <div class="metric-box"><div class="metric-val" id="tn-density">—</div><div class="metric-lbl">él / C(n,2)</div></div>
+        </div>
+        <div class="sec-label">Vizualizáció</div>
+        <div class="info-box" style="font-size:.68rem">A canvas a \(K_{r+1}\)-mentes Turán-gráfot rajzolja ki. Kattints egy csúcsra a szomszédsági osztályát kiemelni.</div>
+        <div style="display:flex;gap:.4rem;margin-top:.4rem">
+          <button class="ctrl-btn" onclick="turanDraw()">Újrarajzol</button>
+          <button class="ctrl-btn" onclick="turanAddRandom()">+ Véletlen él</button>
+        </div>
+      </div>
+
+      <!-- TAB 2: T(n,r) szerkezete -->
+      <div id="tab-tgraph" class="ila-tab">
+        <div class="sec-label">Turán-gráf definíciója</div>
+        <div class="info-box">
+          \(T(n,r)\): az \(n\) csúcsot \(r\) részbe osztjuk. Ha \(n=qr+s\) (\(0\le s&lt;r\)), akkor \(s\) rész \(q+1\) csúcsos, \(r-s\) rész \(q\) csúcsos. Minden érintkezik, amelyek különböző részben vannak.
+        </div>
+        <div class="formula-box">\[e(T(n,r))=\left(1-\tfrac{1}{r}\right)\tfrac{n^2}{2}-\tfrac{s(r-s)}{2r}\]</div>
+        <div class="sec-label">Preset</div>
+        <div class="preset-row" id="tg-presets">
+          <button class="preset-btn active" onclick="tgLoad(6,2,this)">T(6,2)</button>
+          <button class="preset-btn" onclick="tgLoad(6,3,this)">T(6,3)</button>
+          <button class="preset-btn" onclick="tgLoad(9,3,this)">T(9,3)</button>
+          <button class="preset-btn" onclick="tgLoad(12,4,this)">T(12,4)</button>
+          <button class="preset-btn" onclick="tgLoad(10,5,this)">T(10,5)</button>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="tg-n">6</div><div class="metric-lbl">n</div></div>
+          <div class="metric-box"><div class="metric-val" id="tg-r">2</div><div class="metric-lbl">r</div></div>
+          <div class="metric-box"><div class="metric-val" id="tg-e">9</div><div class="metric-lbl">élek</div></div>
+          <div class="metric-box"><div class="metric-val" id="tg-omega">2</div><div class="metric-lbl">ω(G)</div></div>
+        </div>
+        <div class="info-box" style="font-size:.68rem">Az egyes részeket különböző szín jelöli. A gráf valóban \(K_{r+1}\)-mentes, de tartalmaz \(K_r\)-t.</div>
+      </div>
+
+      <!-- TAB 3: Kővári-Sós-Turán -->
+      <div id="tab-kst" class="ila-tab">
+        <div class="sec-label">KST-tétel (1954)</div>
+        <div class="info-box">
+          Ha egy \(n\)-csúcsú bipartit gráfban nincs \(K_{s,t}\) (\(s\le t\)), akkor az élek száma legfeljebb
+          \[\tfrac{1}{2}(t-1)^{1/s}n^{2-1/s}+\tfrac{s-1}{2}n.\]
+          Különösen: \(ex(n,K_{2,2})\le\tfrac{1}{2}(1+\sqrt{4n-3})\cdot n/2\approx n^{3/2}/2\).
+        </div>
+        <div class="formula-box">\[ex(n,K_{s,t})\le \tfrac{1}{2}(t-1)^{1/s}n^{2-1/s}+O(n)\]</div>
+        <div class="sec-label">Szimulator: K_{s,t} keresés</div>
+        <div class="slider-row">
+          <span>s =</span>
+          <input type="range" id="kst-s" min="2" max="4" value="2" oninput="kstUpdate()">
+          <span class="slider-val" id="kst-s-v">2</span>
+        </div>
+        <div class="slider-row">
+          <span>t =</span>
+          <input type="range" id="kst-t" min="2" max="4" value="2" oninput="kstUpdate()">
+          <span class="slider-val" id="kst-t-v">2</span>
+        </div>
+        <div class="slider-row">
+          <span>n =</span>
+          <input type="range" id="kst-n" min="8" max="24" value="14" oninput="kstUpdate()">
+          <span class="slider-val" id="kst-n-v">14</span>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="kst-bound">—</div><div class="metric-lbl">KST korlát</div></div>
+          <div class="metric-box"><div class="metric-val" id="kst-found">—</div><div class="metric-lbl">K_s,t-k száma</div></div>
+        </div>
+        <div style="display:flex;gap:.4rem;margin-top:.5rem">
+          <button class="ctrl-btn" onclick="kstGen()">Új véletlen gráf</button>
+          <button class="ctrl-btn" onclick="kstHighlight()">Kiemel</button>
+        </div>
+      </div>
+
+      <!-- TAB 4: Összehasonlítás táblázat -->
+      <div id="tab-table" class="ila-tab">
+        <div class="sec-label">ex(n, K_k) értékek</div>
+        <div class="info-box" style="font-size:.68rem">
+          A Turán-szám pontos értéke \(T(n,k-1)\) élszáma. Az alábbi táblázat kis n értékekre mutatja az ex(n,K_k) és a relatív sűrűséget.
+        </div>
+        <table class="cmp" id="turan-table"></table>
+        <div class="sec-label" style="margin-top:.8rem">Asszimptotikus sűrűség</div>
+        <div class="info-box" style="font-size:.68rem">
+          \(\lim_{n\to\infty}\dfrac{ex(n,K_{r+1})}{\binom{n}{2}}=1-\dfrac{1}{r}\)
+          <br>K₃-mentes: 50% &nbsp;|&nbsp; K₄-mentes: 67% &nbsp;|&nbsp; K₅-mentes: 75%
+        </div>
+      </div>
+
+      <!-- TAB 5: Bizonyítás -->
+      <div id="tab-proof" class="ila-tab">
+        <div class="sec-label">Turán-tétel bizonyítása (Zykov-módszer)</div>
+        <div class="info-box" style="font-size:.69rem; line-height:1.8">
+          <b>Lépés 1 — Zykov-szimmetrizáció:</b> Ha \(u,v\) nem szomszédos, cseréljük a kisebb fokú csúcsot a nagyobb másolatára. Ez nem csökkenti az élszámot és nem hoz létre \(K_{r+1}\)-t.<br><br>
+          <b>Lépés 2 — Teljes r-pártit gráf:</b> A szimmetrizált gráf teljes többpártit gráf. Maximálni akarjuk az élek számát \(K_{r+1}\) nélkül, tehát legfeljebb \(r\) rész van.<br><br>
+          <b>Lépés 3 — Egyenlő részméret:</b> Ha két rész mérete különbözik (\(a&lt;b\)), mozgassunk át egy csúcsot: \(a(b-1)+(b-1)(n-a-b+1)&gt;ab+(b-1)(n-a-b)\) ha \(a&lt;b\). Az egyenlő részek maximálják az élszámot.<br><br>
+          <b>Következmény:</b> Az optimum \(T(n,r)\), amelynek élszáma \(\left(1-\tfrac1r\right)\tfrac{n^2}{2}-O(n)\).
+        </div>
+        <div class="sec-label">Interaktív eljárás</div>
+        <div class="preset-row">
+          <button class="preset-btn active" onclick="proofLoad('step0',this)">Kezdeti gráf</button>
+          <button class="preset-btn" onclick="proofLoad('step1',this)">Szimmetrizálás</button>
+          <button class="preset-btn" onclick="proofLoad('step2',this)">Teljes r-pártit</button>
+          <button class="preset-btn" onclick="proofLoad('step3',this)">T(n,r)</button>
+        </div>
+        <div class="info-box" id="proof-msg" style="font-size:.68rem">Kiindulás: K₃-mentes gráf, n=8.</div>
+      </div>
+
+    </div>
+    <div class="col-lg-7">
+      <div class="card-dark p-2" style="background:#0d1117;border:1px solid #1e2533;border-radius:.5rem;
+                                          height:560px;display:flex;flex-direction:column">
+        <canvas id="main-canvas" style="display:block;width:100%;height:100%;flex:1"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+  onload="renderMath()"></script>
+<script>
+/* ───────── KaTeX render ───────── */
+function renderMath(){
+  document.querySelectorAll('.formula-box,.info-box').forEach(el=>{
+    const src=el.innerHTML;
+    const out=src.replace(/\\\[([\s\S]*?)\\\]/g,(_,m)=>{
+      try{return katex.renderToString(m.trim(),{displayMode:true,throwOnError:false})}catch(e){return _}
+    }).replace(/\\\(([\s\S]*?)\\\)/g,(_,m)=>{
+      try{return katex.renderToString(m.trim(),{displayMode:false,throwOnError:false})}catch(e){return _}
+    });
+    el.innerHTML=out;
+  });
+}
+
+/* ───────── Tab system ───────── */
+let currentTab='turan';
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  const target = document.getElementById('tab-'+id);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (typeof currentTab !== 'undefined') currentTab=id;
+  if (typeof redraw === 'function') redraw();
+}
+
+/* ───────── Canvas setup ───────── */
+const canvas=document.getElementById('main-canvas');
+const ctx=canvas.getContext('2d');
+function resize(){
+  const p=canvas.parentElement;
+  canvas.width=p.clientWidth;canvas.height=p.clientHeight;
+  redraw();
+}
+window.addEventListener('resize',resize);
+
+function redraw(){
+  if(currentTab==='turan')   turanDraw();
+  else if(currentTab==='tgraph') tgDraw(tgState.n,tgState.r);
+  else if(currentTab==='kst')    kstDraw();
+  else if(currentTab==='proof')  proofDraw();
+}
+
+/* ─────────────────────────────────────────────
+   TAB 1: Turán-tétel / ex(n,K_{r+1})
+───────────────────────────────────────────── */
+let turanGraph={nodes:[],edges:[],groups:[]};
+let turanSel=-1;
+let extraEdges=[];
+
+function turanEdgeCount(n,r){
+  const q=Math.floor(n/r),s=n%r;
+  return Math.floor((r-s)*q*q/2 + s*(q+1)*q + s*(s-1)*(q+1)*(q+1)/2);
+}
+
+function turanUpdate(){
+  const n=+document.getElementById('tn-n').value;
+  const r=+document.getElementById('tn-r').value;
+  document.getElementById('tn-n-v').textContent=n;
+  document.getElementById('tn-r-v').textContent=r;
+  const ex=turanEdgeCount(n,r);
+  document.getElementById('tn-ex').textContent=ex;
+  const density=(ex/(n*(n-1)/2)*100).toFixed(1)+'%';
+  document.getElementById('tn-density').textContent=density;
+  extraEdges=[];
+  turanBuild(n,r);
+  turanDraw();
+}
+
+function turanBuild(n,r){
+  const W=canvas.width||600,H=canvas.height||500;
+  const q=Math.floor(n/r),s=n%r;
+  turanGraph.groups=[];
+  let assigned=[];
+  let idx=0;
+  for(let i=0;i<r;i++){
+    const size=(i<s)?q+1:q;
+    const grp=[];
+    for(let j=0;j<size;j++) grp.push(idx++);
+    turanGraph.groups.push(grp);
+  }
+  turanGraph.nodes=[];
+  for(let g=0;g<r;g++){
+    const grp=turanGraph.groups[g];
+    const angle0=((2*Math.PI/r)*g)-Math.PI/2;
+    const cx=W/2+Math.min(W,H)*0.3*Math.cos(angle0);
+    const cy=H/2+Math.min(W,H)*0.3*Math.sin(angle0);
+    const cnt=grp.length;
+    grp.forEach((id,k)=>{
+      const a=cnt===1?0:(2*Math.PI/cnt)*k;
+      const rad=cnt===1?0:Math.min(W,H)*0.09;
+      turanGraph.nodes[id]={x:cx+rad*Math.cos(a),y:cy+rad*Math.sin(a),g};
+    });
+  }
+  turanGraph.edges=[];
+  for(let g1=0;g1<r;g1++)for(let g2=g1+1;g2<r;g2++){
+    for(const u of turanGraph.groups[g1])for(const v of turanGraph.groups[g2])
+      turanGraph.edges.push([u,v]);
+  }
+}
+
+const GROUP_COLORS=['#38bdf8','#34d399','#f97316','#a78bfa','#fb7185','#fbbf24'];
+
+function turanDraw(){
+  if(!canvas.width) resize();
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  if(!turanGraph.nodes.length) turanBuild(+document.getElementById('tn-n').value,+document.getElementById('tn-r').value);
+
+  // edges
+  turanGraph.edges.forEach(([u,v])=>{
+    const nu=turanGraph.nodes[u],nv=turanGraph.nodes[v];
+    ctx.beginPath();ctx.moveTo(nu.x,nu.y);ctx.lineTo(nv.x,nv.y);
+    const hl=(turanSel===u||turanSel===v);
+    ctx.strokeStyle=hl?'#38bdf8':'#2a3a4a';ctx.lineWidth=hl?2:1;ctx.stroke();
+  });
+  // extra (possibly forbidden) edges
+  extraEdges.forEach(([u,v,ok])=>{
+    const nu=turanGraph.nodes[u],nv=turanGraph.nodes[v];
+    ctx.beginPath();ctx.moveTo(nu.x,nu.y);ctx.lineTo(nv.x,nv.y);
+    ctx.strokeStyle=ok?'#34d399':'#ef4444';ctx.lineWidth=2.5;ctx.setLineDash([5,3]);ctx.stroke();
+    ctx.setLineDash([]);
+  });
+  // nodes
+  turanGraph.nodes.forEach((nd,i)=>{
+    const col=GROUP_COLORS[nd.g%GROUP_COLORS.length];
+    ctx.beginPath();ctx.arc(nd.x,nd.y,10,0,Math.PI*2);
+    ctx.fillStyle=(turanSel===i)?'#fff':col;ctx.fill();
+    ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,nd.x,nd.y);
+  });
+}
+
+function turanAddRandom(){
+  const n=turanGraph.nodes.length;
+  if(n<2) return;
+  const u=Math.floor(Math.random()*n);
+  let v;do{v=Math.floor(Math.random()*n);}while(v===u);
+  const gu=turanGraph.nodes[u].g,gv=turanGraph.nodes[v].g;
+  const ok=gu!==gv;
+  extraEdges.push([u,v,ok]);
+  turanDraw();
+}
+
+canvas.addEventListener('click',e=>{
+  if(currentTab!=='turan') return;
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  turanSel=-1;
+  turanGraph.nodes.forEach((nd,i)=>{
+    if(Math.hypot(nd.x-mx,nd.y-my)<12) turanSel=i;
+  });
+  turanDraw();
+});
+
+/* ─────────────────────────────────────────────
+   TAB 2: T(n,r) szerkezet
+───────────────────────────────────────────── */
+const tgState={n:6,r:2};
+
+function tgLoad(n,r,btn){
+  document.querySelectorAll('#tg-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  tgState.n=n;tgState.r=r;
+  tgDraw(n,r);
+}
+
+function tgDraw(n,r){
+  if(!canvas.width) resize();
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const q=Math.floor(n/r),s=n%r;
+  // Build groups
+  const groups=[];let idx=0;
+  for(let i=0;i<r;i++){
+    const size=(i<s)?q+1:q;
+    const grp=[];for(let j=0;j<size;j++) grp.push(idx++);
+    groups.push(grp);
+  }
+  // positions
+  const pos=new Array(n);
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.35;
+  for(let g=0;g<r;g++){
+    const grp=groups[g];
+    const ang0=((2*Math.PI/r)*g)-Math.PI/2;
+    const gx=cx+R*Math.cos(ang0),gy=cy+R*Math.sin(ang0);
+    const cnt=grp.length,rr=cnt===1?0:Math.min(W,H)*0.09;
+    grp.forEach((id,k)=>{
+      const a=cnt===1?0:(2*Math.PI/cnt)*k;
+      pos[id]={x:gx+rr*Math.cos(a),y:gy+rr*Math.sin(a),g};
+    });
+  }
+  // edges
+  for(let g1=0;g1<r;g1++)for(let g2=g1+1;g2<r;g2++){
+    for(const u of groups[g1])for(const v of groups[g2]){
+      ctx.beginPath();ctx.moveTo(pos[u].x,pos[u].y);ctx.lineTo(pos[v].x,pos[v].y);
+      ctx.strokeStyle='#334155';ctx.lineWidth=1;ctx.stroke();
+    }
+  }
+  // group ovals
+  groups.forEach((grp,g)=>{
+    if(grp.length<2) return;
+    const xs=grp.map(i=>pos[i].x),ys=grp.map(i=>pos[i].y);
+    const mx2=(Math.min(...xs)+Math.max(...xs))/2,my2=(Math.min(...ys)+Math.max(...ys))/2;
+    const rw=(Math.max(...xs)-Math.min(...xs))/2+18,rh=(Math.max(...ys)-Math.min(...ys))/2+18;
+    ctx.beginPath();ctx.ellipse(mx2,my2,Math.max(rw,20),Math.max(rh,20),0,0,Math.PI*2);
+    ctx.strokeStyle=GROUP_COLORS[g%GROUP_COLORS.length]+'55';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=GROUP_COLORS[g%GROUP_COLORS.length]+'11';ctx.fill();
+  });
+  // nodes
+  pos.forEach((nd,i)=>{
+    const col=GROUP_COLORS[nd.g%GROUP_COLORS.length];
+    ctx.beginPath();ctx.arc(nd.x,nd.y,10,0,Math.PI*2);
+    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,nd.x,nd.y);
+  });
+  // group labels
+  groups.forEach((grp,g)=>{
+    const xs=grp.map(i=>pos[i].x),ys=grp.map(i=>pos[i].y);
+    const lx=(Math.min(...xs)+Math.max(...xs))/2,ly=Math.min(...ys)-22;
+    ctx.fillStyle=GROUP_COLORS[g%GROUP_COLORS.length];ctx.font='bold 11px sans-serif';
+    ctx.textAlign='center';ctx.fillText(`V${g+1} (${grp.length})`,lx,ly);
+  });
+  // edge count
+  let ec=0;for(let g1=0;g1<r;g1++)for(let g2=g1+1;g2<r;g2++) ec+=groups[g1].length*groups[g2].length;
+  document.getElementById('tg-n').textContent=n;
+  document.getElementById('tg-r').textContent=r;
+  document.getElementById('tg-e').textContent=ec;
+  document.getElementById('tg-omega').textContent=r;
+}
+
+/* ─────────────────────────────────────────────
+   TAB 3: Kővári-Sós-Turán
+───────────────────────────────────────────── */
+let kstGraph={nodes:[],edges:[]};
+let kstHighlighted=[];
+
+function kstBound(n,s,t){
+  return Math.floor(0.5*Math.pow(t-1,1/s)*Math.pow(n,2-1/s)+(s-1)/2*n);
+}
+
+function kstBuildRandom(n,s,t){
+  const W=canvas.width||600,H=canvas.height||500;
+  kstGraph.nodes=[];kstGraph.edges=[];kstHighlighted=[];
+  const half=Math.floor(n/2);
+  for(let i=0;i<n;i++){
+    const side=(i<half)?0:1;
+    const cnt=side===0?half:n-half;
+    const pos=side===0?i:i-half;
+    kstGraph.nodes.push({
+      x:side===0?W*0.25:W*0.75,
+      y:H*0.1+(H*0.8/(cnt-1||1))*pos,
+      side
+    });
+  }
+  const maxEdges=kstBound(n,s,t)+Math.floor(Math.random()*10)-5;
+  const attempts=maxEdges*3;
+  for(let a=0;a<attempts&&kstGraph.edges.length<maxEdges;a++){
+    const u=Math.floor(Math.random()*half);
+    const v=half+Math.floor(Math.random()*(n-half));
+    if(!kstGraph.edges.find(e=>e[0]===u&&e[1]===v))
+      kstGraph.edges.push([u,v]);
+  }
+}
+
+function kstUpdate(){
+  const s=+document.getElementById('kst-s').value;
+  const t=+document.getElementById('kst-t').value;
+  const n=+document.getElementById('kst-n').value;
+  document.getElementById('kst-s-v').textContent=s;
+  document.getElementById('kst-t-v').textContent=t;
+  document.getElementById('kst-n-v').textContent=n;
+  const b=kstBound(n,s,t);
+  document.getElementById('kst-bound').textContent=b;
+  kstDraw();
+}
+
+function kstGen(){
+  const s=+document.getElementById('kst-s').value;
+  const t=+document.getElementById('kst-t').value;
+  const n=+document.getElementById('kst-n').value;
+  kstBuildRandom(n,s,t);
+  kstHighlightSubgraph(s,t);
+  kstDraw();
+}
+
+function kstHighlightSubgraph(s,t){
+  kstHighlighted=[];
+  const half=kstGraph.nodes.filter(nd=>nd.side===0).length;
+  const left=kstGraph.nodes.map((nd,i)=>nd.side===0?i:-1).filter(i=>i>=0);
+  const right=kstGraph.nodes.map((nd,i)=>nd.side===1?i:-1).filter(i=>i>=0);
+  // try to find K_{s,t}
+  function subsets(arr,k){
+    if(k===0) return [[]];
+    if(arr.length<k) return [];
+    const [h,...t2]=arr;
+    return [...subsets(t2,k-1).map(s=>[h,...s]),...subsets(t2,k)];
+  }
+  for(const ls of subsets(left,Math.min(s,left.length))){
+    for(const rs of subsets(right,Math.min(t,right.length))){
+      const all=ls.every(u=>rs.every(v=>kstGraph.edges.find(e=>e[0]===u&&e[1]===v)));
+      if(all){kstHighlighted=[...ls,...rs];break;}
+    }
+    if(kstHighlighted.length) break;
+  }
+  document.getElementById('kst-found').textContent=kstHighlighted.length?'Igen':'Nem';
+}
+
+function kstHighlight(){kstHighlightSubgraph(+document.getElementById('kst-s').value,+document.getElementById('kst-t').value);kstDraw();}
+
+function kstDraw(){
+  if(!canvas.width) resize();
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  if(!kstGraph.nodes.length) kstGen();
+  // divider
+  ctx.beginPath();ctx.moveTo(W/2,H*0.05);ctx.lineTo(W/2,H*0.95);
+  ctx.strokeStyle='#21262d';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#8b949e';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('A oldal',W*0.25,H*0.05);ctx.fillText('B oldal',W*0.75,H*0.05);
+  // edges
+  kstGraph.edges.forEach(([u,v])=>{
+    const nu=kstGraph.nodes[u],nv=kstGraph.nodes[v];
+    const hl=kstHighlighted.includes(u)&&kstHighlighted.includes(v);
+    ctx.beginPath();ctx.moveTo(nu.x,nu.y);ctx.lineTo(nv.x,nv.y);
+    ctx.strokeStyle=hl?'#fbbf24':'#2a3a4a';ctx.lineWidth=hl?2.5:1;ctx.stroke();
+  });
+  // nodes
+  kstGraph.nodes.forEach((nd,i)=>{
+    const hl=kstHighlighted.includes(i);
+    ctx.beginPath();ctx.arc(nd.x,nd.y,9,0,Math.PI*2);
+    ctx.fillStyle=hl?'#fbbf24':(nd.side===0?'#38bdf8':'#34d399');
+    ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,nd.x,nd.y);
+  });
+}
+
+/* ─────────────────────────────────────────────
+   TAB 4: Táblázat
+───────────────────────────────────────────── */
+function buildTable(){
+  const ns=[5,6,7,8,9,10,12,15,20];
+  const ks=[3,4,5,6];
+  const tbl=document.getElementById('turan-table');
+  let html='<tr><th>n \\ K_k</th>';
+  ks.forEach(k=>html+=`<th>K_${k} (r=${k-1})</th>`);
+  html+='</tr>';
+  ns.forEach(n=>{
+    html+=`<tr><td><b>${n}</b></td>`;
+    ks.forEach(k=>{
+      const r=k-1;
+      const ex=turanEdgeCount(n,r);
+      const tot=n*(n-1)/2;
+      const pct=(ex/tot*100).toFixed(0);
+      const g=Math.floor(parseInt(pct)/100*120);
+      html+=`<td style="color:hsl(${g},70%,65%)">${ex} <span style="color:#6b7280;font-size:.58rem">(${pct}%)</span></td>`;
+    });
+    html+='</tr>';
+  });
+  tbl.innerHTML=html;
+}
+
+/* ─────────────────────────────────────────────
+   TAB 5: Bizonyítás lépések
+───────────────────────────────────────────── */
+const PROOF_STEPS={
+  step0:{msg:'Kiindulás: egy K₃-mentes gráf, n=8, nem optimális.',nodes:[0,1,2,3,4,5,6,7],edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0],[0,4]]},
+  step1:{msg:'Zykov-szimmetrizáció: minden él nélküli pár esetén a kisebb fokút helyettesítjük a nagyobbéval.',nodes:[0,1,2,3,4,5,6,7],edges:[[0,1],[0,2],[0,3],[0,4],[1,2],[1,5],[1,6],[2,7],[3,7]]},
+  step2:{msg:'A szimmetrizált gráf teljes kétpártit gráf: K_{4,4}.',nodes:[0,1,2,3,4,5,6,7],edges:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7]]},
+  step3:{msg:'T(8,2) = K_{4,4}: optimum K₃-mentes esetén. Élek: 16 = ex(8,K₃).',nodes:[0,1,2,3,4,5,6,7],edges:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7]]}
+};
+let proofState='step0';
+
+function proofLoad(step,btn){
+  document.querySelectorAll('#tab-proof .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  proofState=step;
+  document.getElementById('proof-msg').textContent=PROOF_STEPS[step].msg;
+  proofDraw();
+}
+
+function proofDraw(){
+  if(!canvas.width) resize();
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const step=PROOF_STEPS[proofState];
+  const n=step.nodes.length;
+  const pos=step.nodes.map((_,i)=>{
+    // two-row layout for bipartite
+    const side=i<4?0:1;
+    return {
+      x:side===0?W*0.3:W*0.7,
+      y:H*0.15+(H*0.7/(3))*( side===0?i:i-4 ),
+      side
+    };
+  });
+  step.edges.forEach(([u,v])=>{
+    ctx.beginPath();ctx.moveTo(pos[u].x,pos[u].y);ctx.lineTo(pos[v].x,pos[v].y);
+    ctx.strokeStyle=proofState==='step2'||proofState==='step3'?'#38bdf8':'#2a3a4a';ctx.lineWidth=1.5;ctx.stroke();
+  });
+  pos.forEach((nd,i)=>{
+    ctx.beginPath();ctx.arc(nd.x,nd.y,11,0,Math.PI*2);
+    ctx.fillStyle=nd.side===0?'#38bdf8':'#34d399';ctx.fill();
+    ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,nd.x,nd.y);
+  });
+  // edge count
+  ctx.fillStyle='#8b949e';ctx.font='12px monospace';ctx.textAlign='center';
+  ctx.fillText(`|E| = ${step.edges.length}`,W/2,H-20);
+}
+
+/* ───────── Init ───────── */
+window.addEventListener('load',()=>{
+  resize();
+  turanUpdate();
+  kstGen();
+  buildTable();
+});
+</script>
+{% endblock %}

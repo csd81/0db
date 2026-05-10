@@ -1,0 +1,720 @@
+{% extends "base.html" %}
+{% block title %}II.13 — Gráfok spektruma{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<style>
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px;
+  color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s;
+  white-space:nowrap; user-select:none; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#0d1117; border:1px solid #1e2533; border-radius:.5rem;
+  padding:1rem; }
+
+:root { --acc:#38bdf8; }
+
+#ila-nav-links { display:flex; gap:0; border-bottom:1px solid #21262d; flex-shrink:0; overflow-x:auto; }
+
+.ila-tab { display:none; } .ila-tab.active { display:block; }
+.sec-label { font-size:.58rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#8b949e; margin:.9rem 0 .4rem; }
+.info-box { background:#0e1a12; border:1px solid #1a3a20; border-radius:.35rem; padding:.6rem .8rem; font-size:.72rem; color:#d2f4e8; line-height:1.7; margin-bottom:.5rem; }
+.info-box .katex { font-size:.88em; }
+.info-box b { color:var(--acc); }
+.preset-row { display:flex; flex-wrap:wrap; gap:.35rem; margin-bottom:.5rem; }
+.preset-btn { font-size:.62rem; padding:.25rem .6rem; border-radius:.25rem; border:1px solid #21262d;
+  background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; transition:all .15s; }
+.preset-btn:hover { border-color:var(--acc); color:var(--acc); }
+.preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); }
+.metric-row { display:grid; grid-template-columns:1fr 1fr; gap:.4rem; margin-bottom:.6rem; }
+.metric-box { background:#0d1117; border:1px solid #21262d; border-radius:.3rem; padding:.4rem .6rem; text-align:center; }
+.metric-val { font-size:1rem; font-weight:700; color:var(--acc); font-variant-numeric:tabular-nums; word-break:break-all; }
+.metric-lbl { font-size:.58rem; color:#8b949e; margin-top:.1rem; }
+.formula-box { background:#040a10; border:1px solid #0a1f2e; border-radius:.35rem; padding:.55rem .75rem; font-size:.72rem; color:#a8d8f0; margin:.4rem 0; }
+.formula-box .katex { font-size:.9em; }
+.ctrl-btn { font-size:.65rem; padding:.3rem .7rem; border-radius:.25rem; border:1px solid #21262d;
+  background:#161b22; color:#c9d1d9; cursor:pointer; font-weight:600; }
+.ctrl-btn:hover { border-color:var(--acc); color:var(--acc); }
+
+table.cmp { width:100%; border-collapse:collapse; font-size:.66rem; }
+table.cmp th { background:#0a1f2e; color:var(--acc); padding:.3rem .5rem; text-align:center; border:1px solid #21262d; }
+table.cmp td { padding:.28rem .5rem; border:1px solid #21262d; text-align:center; color:#c9d1d9; }
+.eig-chip { display:inline-block; padding:.1rem .4rem; border-radius:.25rem; font-size:.68rem; font-weight:700;
+  margin:.1rem; font-variant-numeric:tabular-nums; }
+.matrix-grid { display:grid; gap:2px; margin:.4rem auto; width:fit-content; }
+.matrix-cell { width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+  font-size:.7rem; font-weight:700; border-radius:3px; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1180px">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.18);
+                border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+      🌐
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:#38bdf8">II.13 &mdash; Gráfok spektruma</h4>
+      <small class="text-muted" style="font-size:.75rem">Szomszédsági mátrix &middot; Sajátértékek &middot; Lovász–Pelikán</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto"
+       style="text-decoration:none;font-size:.78rem;color:#94a3b8;
+              border:1px solid #334155;border-radius:6px;padding:.3rem .8rem">
+      ← Könyv főoldal
+    </a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap" id="dimat-nav-row">
+    <span class="ila-nav-link active" onclick="showTab('adj',this)">Mátrix</span>
+    <span class="ila-nav-link" onclick="showTab('spec',this)">Spektrum</span>
+    <span class="ila-nav-link" onclick="showTab('reg',this)">Reguláris</span>
+    <span class="ila-nav-link" onclick="showTab('bip',this)">Kétpólusú</span>
+    <span class="ila-nav-link" onclick="showTab('comp',this)">Komplement</span>
+  </div>
+
+  <div class="row g-3" id="dimat-content-row">
+    <div class="col-lg-5">
+
+      <!-- TAB 1: Szomszédsági mátrix & sajátértékek -->
+      <div id="tab-adj" class="ila-tab active">
+        <div class="sec-label">Gráf kiválasztása</div>
+        <div class="preset-row" id="adj-presets">
+          <button class="preset-btn active" onclick="adjLoad('k4',this)">K₄</button>
+          <button class="preset-btn" onclick="adjLoad('c5',this)">C₅</button>
+          <button class="preset-btn" onclick="adjLoad('pet',this)">Petersen</button>
+          <button class="preset-btn" onclick="adjLoad('path4',this)">P₄</button>
+          <button class="preset-btn" onclick="adjLoad('k33',this)">K₃,₃</button>
+          <button class="preset-btn" onclick="adjLoad('star5',this)">K₁,₄</button>
+        </div>
+        <div class="sec-label">Szomszédsági mátrix A</div>
+        <div id="adj-matrix-wrap" style="overflow-x:auto"></div>
+        <div class="sec-label">Karakterisztikus polinom</div>
+        <div class="formula-box" id="charpoly-box">\[p_G(\lambda)=\det(\lambda I-A)\]</div>
+        <div class="sec-label">Spektrum \(\sigma(G)\)</div>
+        <div id="eig-chips" style="padding:.3rem 0;line-height:2"></div>
+        <div class="metric-row" style="margin-top:.4rem">
+          <div class="metric-box"><div class="metric-val" id="lambda1">—</div><div class="metric-lbl">λ₁ (max)</div></div>
+          <div class="metric-box"><div class="metric-val" id="lambdan">—</div><div class="metric-lbl">λₙ (min)</div></div>
+          <div class="metric-box"><div class="metric-val" id="trace0">—</div><div class="metric-lbl">Σλᵢ = 0</div></div>
+          <div class="metric-box"><div class="metric-val" id="trace2">—</div><div class="metric-lbl">Σλᵢ² = 2|E|</div></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Spektrum vizualizáció -->
+      <div id="tab-spec" class="ila-tab">
+        <div class="sec-label">Gráf</div>
+        <div class="preset-row" id="spec-presets">
+          <button class="preset-btn active" onclick="specLoad('k4',this)">K₄</button>
+          <button class="preset-btn" onclick="specLoad('c6',this)">C₆</button>
+          <button class="preset-btn" onclick="specLoad('pet',this)">Petersen</button>
+          <button class="preset-btn" onclick="specLoad('cube',this)">Q₃</button>
+          <button class="preset-btn" onclick="specLoad('k33',this)">K₃,₃</button>
+        </div>
+        <div class="sec-label">Sajátértékek (számegyenes)</div>
+        <div class="info-box" style="font-size:.68rem">A Canvas a sajátértékeket a számegyenesen mutatja. Az összes sajátérték összege 0 (nyom = 0), négyzetösszege = 2|E|.</div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="sp-n">—</div><div class="metric-lbl">n</div></div>
+          <div class="metric-box"><div class="metric-val" id="sp-e">—</div><div class="metric-lbl">|E|</div></div>
+          <div class="metric-box"><div class="metric-val" id="sp-l1">—</div><div class="metric-lbl">λ₁</div></div>
+          <div class="metric-box"><div class="metric-val" id="sp-ln">—</div><div class="metric-lbl">λₙ</div></div>
+        </div>
+        <div class="info-box" style="font-size:.68rem" id="spec-note">—</div>
+      </div>
+
+      <!-- TAB 3: Reguláris gráfok -->
+      <div id="tab-reg" class="ila-tab">
+        <div class="sec-label">13.4. Tétel (reguláris gráf spektruma)</div>
+        <div class="info-box">
+          Ha \(G\) <b>\(k\)-reguláris</b>, akkor:<br>
+          &bull; \(\lambda_1 = k\) (maximális sajátérték)<br>
+          &bull; \(\mathbf{1}=(1,\ldots,1)^T\) sajátvektor \(\lambda_1=k\)-hoz<br>
+          &bull; \(\sum_i \lambda_i = 0\) &nbsp;(nyom=0)<br>
+          &bull; \(-k \le \lambda_i \le k\) minden \(i\)-re<br>
+          &bull; Ha \(G\) összefüggő: \(\lambda_1=k\) egyszerű sajátérték.
+        </div>
+        <div class="formula-box">\[\lambda_1=k,\quad |\lambda_i|\le k,\quad \sum_i\lambda_i=0\]</div>
+        <div class="sec-label">Példák</div>
+        <div class="preset-row" id="reg-presets">
+          <button class="preset-btn active" onclick="regLoad('k4',this)">K₄ (3-reg)</button>
+          <button class="preset-btn" onclick="regLoad('c6',this)">C₆ (2-reg)</button>
+          <button class="preset-btn" onclick="regLoad('pet',this)">Petersen (3-reg)</button>
+          <button class="preset-btn" onclick="regLoad('cube',this)">Q₃ (3-reg)</button>
+          <button class="preset-btn" onclick="regLoad('k33',this)">K₃,₃ (3-reg)</button>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="reg-k">—</div><div class="metric-lbl">k-reguláris</div></div>
+          <div class="metric-box"><div class="metric-val" id="reg-l1">—</div><div class="metric-lbl">λ₁</div></div>
+          <div class="metric-box"><div class="metric-val" id="reg-ln">—</div><div class="metric-lbl">λₙ</div></div>
+          <div class="metric-box"><div class="metric-val" id="reg-sym">—</div><div class="metric-lbl">Szimm?</div></div>
+        </div>
+        <div class="info-box" style="font-size:.68rem" id="reg-note">—</div>
+      </div>
+
+      <!-- TAB 4: Lovász–Pelikán tétel -->
+      <div id="tab-bip" class="ila-tab">
+        <div class="sec-label">13.8–13.9. Tétel (Lovász–Pelikán)</div>
+        <div class="info-box">
+          \(G\) kétpólusú \(\Longleftrightarrow\) \(\sigma(G)\) szimmetrikus 0-ra, azaz:<br>
+          \(\lambda \in \sigma(G) \Rightarrow -\lambda \in \sigma(G)\) (azonos multiplicitással).
+        </div>
+        <div class="formula-box">\[G\text{ kétpólusú}\iff p_G(\lambda)=\lambda^n p_G(-1/\lambda)\cdot(-1)^n\]</div>
+        <div class="sec-label">Példák</div>
+        <div class="preset-row" id="bip-presets">
+          <button class="preset-btn active" onclick="bipLoad('k33',this)">K₃,₃ (bip)</button>
+          <button class="preset-btn" onclick="bipLoad('c6',this)">C₆ (bip)</button>
+          <button class="preset-btn" onclick="bipLoad('c4',this)">C₄ (bip)</button>
+          <button class="preset-btn" onclick="bipLoad('k4',this)">K₄ (nem bip)</button>
+          <button class="preset-btn" onclick="bipLoad('c5',this)">C₅ (nem bip)</button>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="bip-sym">—</div><div class="metric-lbl">Szimm?</div></div>
+          <div class="metric-box"><div class="metric-val" id="bip-isBip">—</div><div class="metric-lbl">Kétpólusú?</div></div>
+        </div>
+        <div id="bip-eig-chips" style="padding:.3rem 0;line-height:2"></div>
+        <div class="info-box" style="font-size:.68rem" id="bip-note">—</div>
+      </div>
+
+      <!-- TAB 5: Komplementer spektrum -->
+      <div id="tab-comp" class="ila-tab">
+        <div class="sec-label">13.5. Tétel (komplementer spektrum)</div>
+        <div class="info-box">
+          Ha \(\lambda\) sajátértéke \(G\)-nek \(\mathbf{v}\) sajátvektorral, és \(\mathbf{v}\perp\mathbf{1}\), akkor \(-1-\lambda\) sajátértéke \(\bar{G}\)-nek ugyanazzal a sajátvektorral.<br>
+          A \(\mathbf{1}\) sajátvektor esetén: ha \(\lambda_1(G)=k\) (k-reguláris), akkor \(\bar G\) \((n-1-k)\)-reguláris, \(\lambda_1(\bar G)=n-1-k\).
+        </div>
+        <div class="formula-box">\[\lambda_i(\bar G)=\begin{cases}n-1-k & i=1\\ -1-\lambda_i(G) & i\ge2\end{cases}\]</div>
+        <div class="sec-label">Példák</div>
+        <div class="preset-row" id="comp-presets">
+          <button class="preset-btn active" onclick="compLoad('k4',this)">K₄ / \(\bar{K_4}\)</button>
+          <button class="preset-btn" onclick="compLoad('c5',this)">C₅ / \(\bar{C_5}\)</button>
+          <button class="preset-btn" onclick="compLoad('c6',this)">C₆ / \(\bar{C_6}\)</button>
+          <button class="preset-btn" onclick="compLoad('pet',this)">Petersen / kompl.</button>
+        </div>
+        <div class="info-box" style="font-size:.68rem">
+          <b>G spektruma:</b> <span id="comp-g-eigs">—</span><br>
+          <b>Ḡ spektruma:</b> <span id="comp-cg-eigs">—</span>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-val" id="comp-n">—</div><div class="metric-lbl">n</div></div>
+          <div class="metric-box"><div class="metric-val" id="comp-k">—</div><div class="metric-lbl">k (G reg.)</div></div>
+          <div class="metric-box"><div class="metric-val" id="comp-ck">—</div><div class="metric-lbl">n-1-k (Ḡ)</div></div>
+          <div class="metric-box"><div class="metric-val" id="comp-check">—</div><div class="metric-lbl">Tétel OK?</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="col-lg-7">
+      <div class="card-dark p-2" style="background:#0d1117;border:1px solid #1e2533;border-radius:.5rem;
+                                          height:560px;display:flex;flex-direction:column">
+        <canvas id="main-canvas" style="display:block;width:100%;height:100%;flex:1"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+  onload="renderMath()"></script>
+<script>
+/* ───────── KaTeX ───────── */
+function renderMath(){
+  document.querySelectorAll('.formula-box,.info-box').forEach(el=>{
+    const src=el.innerHTML;
+    const out=src.replace(/\\\[([\s\S]*?)\\\]/g,(_,m)=>{
+      try{return katex.renderToString(m.trim(),{displayMode:true,throwOnError:false})}catch(e){return _}
+    }).replace(/\\\(([\s\S]*?)\\\)/g,(_,m)=>{
+      try{return katex.renderToString(m.trim(),{displayMode:false,throwOnError:false})}catch(e){return _}
+    });
+    el.innerHTML=out;
+  });
+}
+
+/* ───────── Tab system ───────── */
+let currentTab='adj';
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  const target = document.getElementById('tab-'+id);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (typeof currentTab !== 'undefined') currentTab=id;
+  if (typeof redraw === 'function') redraw();
+}
+
+/* ───────── Canvas ───────── */
+const canvas=document.getElementById('main-canvas');
+const ctx=canvas.getContext('2d');
+function resize(){
+  const p=canvas.parentElement;
+  canvas.width=p.clientWidth;canvas.height=p.clientHeight;
+  redraw();
+}
+window.addEventListener('resize',resize);
+function redraw(){
+  if(currentTab==='adj')   adjDraw();
+  else if(currentTab==='spec')  specDraw();
+  else if(currentTab==='reg')   regDraw();
+  else if(currentTab==='bip')   bipDraw();
+  else if(currentTab==='comp')  compDraw();
+}
+
+/* ───────── Graph presets ───────── */
+const GRAPHS={
+  k4:{n:4,edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],label:'K₄'},
+  c4:{n:4,edges:[[0,1],[1,2],[2,3],[3,0]],label:'C₄'},
+  c5:{n:5,edges:[[0,1],[1,2],[2,3],[3,4],[4,0]],label:'C₅'},
+  c6:{n:6,edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]],label:'C₆'},
+  path4:{n:4,edges:[[0,1],[1,2],[2,3]],label:'P₄'},
+  k33:{n:6,edges:[[0,3],[0,4],[0,5],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5]],label:'K₃,₃'},
+  star5:{n:5,edges:[[0,1],[0,2],[0,3],[0,4]],label:'K₁,₄'},
+  pet:{n:10,edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],[5,7],[7,9],[9,6],[6,8],[8,5]],label:'Petersen'},
+  cube:{n:8,edges:[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]],label:'Q₃'},
+};
+
+/* ───────── Matrix & eigenvalue utilities ───────── */
+function buildAdj(g){
+  const A=Array.from({length:g.n},()=>new Array(g.n).fill(0));
+  g.edges.forEach(([u,v])=>{A[u][v]=1;A[v][u]=1;});
+  return A;
+}
+
+/* Power iteration to find dominant eigenvalue */
+function eigPowerIter(A,n,iter=200){
+  let v=new Array(n).fill(1);
+  for(let it=0;it<iter;it++){
+    const nv=new Array(n).fill(0);
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++) nv[i]+=A[i][j]*v[j];
+    const norm=Math.sqrt(nv.reduce((s,x)=>s+x*x,0));
+    if(norm<1e-12) break;
+    v=nv.map(x=>x/norm);
+  }
+  const Av=new Array(n).fill(0);
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++) Av[i]+=A[i][j]*v[j];
+  return v.reduce((s,x,i)=>s+x*Av[i],0);
+}
+
+/* Full eigenvalues via QR iteration (symmetric matrix) */
+function eigenvalues(A,n){
+  // Jacobi method for small symmetric matrices
+  let M=A.map(r=>[...r]);
+  const MAX=100;
+  for(let iter=0;iter<MAX;iter++){
+    let p=-1,q=-1,mx=0;
+    for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+      if(Math.abs(M[i][j])>mx){mx=Math.abs(M[i][j]);p=i;q=j;}
+    }
+    if(mx<1e-10) break;
+    const theta=(M[q][q]-M[p][p])/(2*M[p][q]);
+    const t=Math.sign(theta)/(Math.abs(theta)+Math.sqrt(1+theta*theta));
+    const c=1/Math.sqrt(1+t*t),s=t*c;
+    const newM=M.map(r=>[...r]);
+    for(let i=0;i<n;i++){
+      newM[i][p]=c*M[i][p]-s*M[i][q];
+      newM[i][q]=s*M[i][p]+c*M[i][q];
+    }
+    for(let i=0;i<n;i++){
+      newM[p][i]=c*M[p][i]-s*M[q][i];
+      newM[q][i]=s*M[p][i]+c*M[q][i];
+    }
+    newM[p][p]=c*c*M[p][p]-2*s*c*M[p][q]+s*s*M[q][q];
+    newM[q][q]=s*s*M[p][p]+2*s*c*M[p][q]+c*c*M[q][q];
+    newM[p][q]=0;newM[q][p]=0;
+    M=newM;
+  }
+  return M.map((r,i)=>r[i]).sort((a,b)=>b-a);
+}
+
+function fmt(x){ return (Math.round(x*1000)/1000).toString(); }
+
+function charPolyCoeffs(eigs){
+  // p(lambda)=prod(lambda - eig_i) => coeffs
+  let c=[1];
+  eigs.forEach(e=>{
+    const nc=new Array(c.length+1).fill(0);
+    for(let i=0;i<c.length;i++){nc[i]+=c[i];nc[i+1]-=e*c[i];}
+    c=nc;
+  });
+  return c;
+}
+
+function eigChips(eigs){
+  const COLS=['#38bdf8','#34d399','#f97316','#a78bfa','#fb7185','#fbbf24','#e879f9'];
+  return eigs.map((e,i)=>{
+    const col=COLS[i%COLS.length];
+    return `<span class="eig-chip" style="background:${col}22;color:${col};border:1px solid ${col}55">${fmt(e)}</span>`;
+  }).join('');
+}
+
+/* ───────── Node positions (circle layout) ───────── */
+function circlePos(n,W,H,R){
+  return Array.from({length:n},(_,i)=>({
+    x:W/2+R*Math.cos((2*Math.PI/n)*i-Math.PI/2),
+    y:H/2+R*Math.sin((2*Math.PI/n)*i-Math.PI/2)
+  }));
+}
+
+function bipartitePos(g,W,H){
+  // detect left/right for bipartite
+  const pos=new Array(g.n);
+  const color=new Array(g.n).fill(-1);
+  const adj=Array.from({length:g.n},()=>[]);
+  g.edges.forEach(([u,v])=>{adj[u].push(v);adj[v].push(u);});
+  let leftCnt=0,rightCnt=0;
+  function bfs(start){
+    color[start]=0;const q=[start];
+    while(q.length){const u=q.shift();for(const v of adj[u]){if(color[v]===-1){color[v]=1-color[u];q.push(v);}}}
+  }
+  for(let i=0;i<g.n;i++) if(color[i]===-1) bfs(i);
+  const left=color.map((c,i)=>c===0?i:-1).filter(i=>i>=0);
+  const right=color.map((c,i)=>c===1?i:-1).filter(i=>i>=0);
+  left.forEach((id,k)=>pos[id]={x:W*0.28,y:H*0.1+(H*0.8/(left.length-1||1))*k});
+  right.forEach((id,k)=>pos[id]={x:W*0.72,y:H*0.1+(H*0.8/(right.length-1||1))*k});
+  return pos;
+}
+
+function drawGraph(g,pos,nodeColors,highlightEdges){
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  g.edges.forEach(([u,v])=>{
+    const hl=highlightEdges&&highlightEdges.some(([a,b])=>(a===u&&b===v)||(a===v&&b===u));
+    ctx.beginPath();ctx.moveTo(pos[u].x,pos[u].y);ctx.lineTo(pos[v].x,pos[v].y);
+    ctx.strokeStyle=hl?'#fbbf24':'#2a3a4a';ctx.lineWidth=hl?2.5:1;ctx.stroke();
+  });
+  pos.forEach((p,i)=>{
+    const col=(nodeColors&&nodeColors[i])||'#38bdf8';
+    ctx.beginPath();ctx.arc(p.x,p.y,11,0,Math.PI*2);
+    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,p.x,p.y);
+  });
+}
+
+/* ─────────────────────────────────────────────
+   TAB 1: Szomszédsági mátrix
+───────────────────────────────────────────── */
+let adjGKey='k4';
+function adjLoad(key,btn){
+  document.querySelectorAll('#adj-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  adjGKey=key;
+  adjCompute(key);
+  adjDraw();
+}
+
+function adjCompute(key){
+  const g=GRAPHS[key];
+  const A=buildAdj(g);
+  const n=g.n;
+  // render matrix
+  const wrap=document.getElementById('adj-matrix-wrap');
+  let html=`<div class="matrix-grid" style="grid-template-columns:repeat(${n},28px)">`;
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+    const v=A[i][j];
+    const bg=v?'#0a1f2e':'#111827';
+    const col=v?'#38bdf8':'#4b5563';
+    html+=`<div class="matrix-cell" style="background:${bg};color:${col}">${v}</div>`;
+  }
+  html+='</div>';
+  wrap.innerHTML=html;
+  // eigenvalues
+  const eigs=eigenvalues(A,n);
+  document.getElementById('eig-chips').innerHTML=eigChips(eigs);
+  document.getElementById('lambda1').textContent=fmt(eigs[0]);
+  document.getElementById('lambdan').textContent=fmt(eigs[n-1]);
+  const trace1=eigs.reduce((s,x)=>s+x,0);
+  const trace2=eigs.reduce((s,x)=>s+x*x,0);
+  document.getElementById('trace0').textContent=fmt(trace1);
+  document.getElementById('trace2').textContent=fmt(trace2)+' / '+(2*g.edges.length);
+  // char poly label
+  const c=charPolyCoeffs(eigs);
+  let poly=`p_G(\\lambda)=`;
+  c.forEach((coef,i)=>{
+    const pw=c.length-1-i;
+    const r=Math.round(coef*10)/10;
+    if(Math.abs(r)<0.01) return;
+    const sign=(r>0&&i>0)?'+':'';
+    const term=pw===0?r:pw===1?`${r===1?'':r}\\lambda`:`${r===1?'':r}\\lambda^{${pw}}`;
+    poly+=`${sign}${term}`;
+  });
+  try{
+    document.getElementById('charpoly-box').innerHTML=katex.renderToString(poly,{displayMode:true,throwOnError:false});
+  }catch(e){}
+}
+
+function adjDraw(){
+  if(!canvas.width) resize();
+  const g=GRAPHS[adjGKey];
+  const W=canvas.width,H=canvas.height;
+  const pos=circlePos(g.n,W,H,Math.min(W,H)*0.35);
+  drawGraph(g,pos,null,null);
+}
+
+/* ─────────────────────────────────────────────
+   TAB 2: Spektrum vizualizáció
+───────────────────────────────────────────── */
+let specGKey='k4';
+let specEigs=[];
+function specLoad(key,btn){
+  document.querySelectorAll('#spec-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  specGKey=key;
+  specCompute(key);
+  specDraw();
+}
+
+function specCompute(key){
+  const g=GRAPHS[key];
+  const A=buildAdj(g);
+  specEigs=eigenvalues(A,g.n);
+  document.getElementById('sp-n').textContent=g.n;
+  document.getElementById('sp-e').textContent=g.edges.length;
+  document.getElementById('sp-l1').textContent=fmt(specEigs[0]);
+  document.getElementById('sp-ln').textContent=fmt(specEigs[g.n-1]);
+  const note=document.getElementById('spec-note');
+  const sym=specEigs.every(l=>specEigs.some(l2=>Math.abs(l+l2)<0.01));
+  note.textContent=`${g.label}: ${sym?'Szimmetrikus spektrum (kétpólusú)':'Nem szimmetrikus spektrum'}.`;
+}
+
+function specDraw(){
+  if(!canvas.width) resize();
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // draw graph in upper portion
+  const g=GRAPHS[specGKey];
+  const pos=circlePos(g.n,W,H*0.5,Math.min(W,H*0.5)*0.38);
+  pos.forEach(p=>p.y+=H*0.05);
+  drawGraph(g,pos,null,null);
+  // number line in lower portion
+  const margin=60,lineY=H*0.78;
+  const eigs=specEigs;
+  if(!eigs.length) return;
+  const mn=Math.min(...eigs)-1,mx=Math.max(...eigs)+1;
+  const toX=v=>margin+(v-mn)/(mx-mn)*(W-2*margin);
+  // axis
+  ctx.beginPath();ctx.moveTo(margin,lineY);ctx.lineTo(W-margin,lineY);
+  ctx.strokeStyle='#334155';ctx.lineWidth=2;ctx.stroke();
+  // zero mark
+  const zx=toX(0);
+  ctx.beginPath();ctx.moveTo(zx,lineY-12);ctx.lineTo(zx,lineY+12);
+  ctx.strokeStyle='#8b949e';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#8b949e';ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('0',zx,lineY+22);
+  // eigenvalue dots
+  const COLS=['#38bdf8','#34d399','#f97316','#a78bfa','#fb7185','#fbbf24','#e879f9','#67e8f9','#6ee7b7','#fcd34d'];
+  eigs.forEach((e,i)=>{
+    const ex=toX(e);
+    ctx.beginPath();ctx.arc(ex,lineY,8,0,Math.PI*2);
+    ctx.fillStyle=COLS[i%COLS.length];ctx.fill();
+    ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=COLS[i%COLS.length];ctx.font='bold 9px monospace';ctx.textAlign='center';
+    ctx.fillText(fmt(e),ex,lineY-(i%2===0?20:34));
+  });
+  // sum label
+  ctx.fillStyle='#8b949e';ctx.font='11px monospace';ctx.textAlign='center';
+  ctx.fillText(`Σλᵢ = ${fmt(eigs.reduce((s,x)=>s+x,0))}   Σλᵢ² = ${fmt(eigs.reduce((s,x)=>s+x*x,0))}`,W/2,H-18);
+}
+
+/* ─────────────────────────────────────────────
+   TAB 3: Reguláris gráfok
+───────────────────────────────────────────── */
+let regGKey='k4';
+function regLoad(key,btn){
+  document.querySelectorAll('#reg-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  regGKey=key;
+  regCompute(key);
+  regDraw();
+}
+
+function regCompute(key){
+  const g=GRAPHS[key];
+  const A=buildAdj(g);
+  const eigs=eigenvalues(A,g.n);
+  const k=A[0].reduce((s,x)=>s+x,0);
+  document.getElementById('reg-k').textContent=k;
+  document.getElementById('reg-l1').textContent=fmt(eigs[0]);
+  document.getElementById('reg-ln').textContent=fmt(eigs[g.n-1]);
+  const sym=eigs.every(l=>eigs.some(l2=>Math.abs(l+l2)<0.01));
+  document.getElementById('reg-sym').textContent=sym?'Igen':'Nem';
+  const note=document.getElementById('reg-note');
+  const ok=Math.abs(eigs[0]-k)<0.01;
+  note.textContent=ok?`λ₁ = ${fmt(eigs[0])} = k = ${k}. A tétel teljesül.`:`Figyelem: λ₁ ≠ k — nem reguláris gráf?`;
+}
+
+function regDraw(){
+  if(!canvas.width) resize();
+  const g=GRAPHS[regGKey];
+  const W=canvas.width,H=canvas.height;
+  const A=buildAdj(g);
+  const k=A[0].reduce((s,x)=>s+x,0);
+  const pos=circlePos(g.n,W,H,Math.min(W,H)*0.38);
+  ctx.clearRect(0,0,W,H);
+  // color by degree (should all be same)
+  const nodeColors=pos.map((_,i)=>{
+    const deg=A[i].reduce((s,x)=>s+x,0);
+    return deg===k?'#38bdf8':'#fb7185';
+  });
+  drawGraph(g,pos,nodeColors,null);
+  // label k
+  ctx.fillStyle='#38bdf8';ctx.font='bold 13px monospace';ctx.textAlign='center';
+  ctx.fillText(`${k}-reguláris | λ₁ = ${k}`,W/2,H-20);
+}
+
+/* ─────────────────────────────────────────────
+   TAB 4: Lovász–Pelikán (kétpólusú ↔ szimm)
+───────────────────────────────────────────── */
+let bipGKey='k33';
+function bipLoad(key,btn){
+  document.querySelectorAll('#bip-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  bipGKey=key;
+  bipCompute(key);
+  bipDraw();
+}
+
+function isBipartite(g){
+  const color=new Array(g.n).fill(-1);
+  const adj=Array.from({length:g.n},()=>[]);
+  g.edges.forEach(([u,v])=>{adj[u].push(v);adj[v].push(u);});
+  for(let s=0;s<g.n;s++){
+    if(color[s]!==-1) continue;
+    color[s]=0;const q=[s];
+    while(q.length){
+      const u=q.shift();
+      for(const v of adj[u]){
+        if(color[v]===-1){color[v]=1-color[u];q.push(v);}
+        else if(color[v]===color[u]) return {bip:false,color};
+      }
+    }
+  }
+  return {bip:true,color};
+}
+
+function bipCompute(key){
+  const g=GRAPHS[key];
+  const A=buildAdj(g);
+  const eigs=eigenvalues(A,g.n);
+  const sym=eigs.every(l=>eigs.some(l2=>Math.abs(l+l2)<0.01));
+  const {bip}=isBipartite(g);
+  document.getElementById('bip-sym').textContent=sym?'Igen':'Nem';
+  document.getElementById('bip-isBip').textContent=bip?'Igen':'Nem';
+  document.getElementById('bip-eig-chips').innerHTML=eigChips(eigs);
+  const note=document.getElementById('bip-note');
+  note.textContent=bip===sym
+    ?`Lovász–Pelikán teljesül: ${bip?'kétpólusú ↔ szimm. spektrum':'nem kétpólusú ↔ aszimm. spektrum'}.`
+    :'Ellentmondás — ellenőrizd az adatot!';
+}
+
+function bipDraw(){
+  if(!canvas.width) resize();
+  const g=GRAPHS[bipGKey];
+  const W=canvas.width,H=canvas.height;
+  const {bip,color}=isBipartite(g);
+  let pos;
+  if(bip){
+    pos=bipartitePos(g,W,H);
+  } else {
+    pos=circlePos(g.n,W,H,Math.min(W,H)*0.38);
+  }
+  const nodeColors=color.map(c=>c===0?'#38bdf8':'#34d399');
+  ctx.clearRect(0,0,W,H);
+  if(bip){
+    ctx.beginPath();ctx.moveTo(W/2,H*0.05);ctx.lineTo(W/2,H*0.95);
+    ctx.strokeStyle='#21262d';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+  }
+  drawGraph(g,pos,nodeColors,null);
+  ctx.fillStyle=bip?'#34d399':'#fb7185';ctx.font='bold 13px monospace';ctx.textAlign='center';
+  ctx.fillText(bip?'Kétpólusú gráf — szimmetrikus spektrum':'Nem kétpólusú — aszimmetrikus spektrum',W/2,H-20);
+}
+
+/* ─────────────────────────────────────────────
+   TAB 5: Komplementer spektrum
+───────────────────────────────────────────── */
+let compGKey='k4';
+function compLoad(key,btn){
+  document.querySelectorAll('#comp-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  compGKey=key;
+  compCompute(key);
+  compDraw();
+}
+
+function complement(g){
+  const edges=[];
+  for(let i=0;i<g.n;i++) for(let j=i+1;j<g.n;j++){
+    if(!g.edges.find(([u,v])=>(u===i&&v===j)||(u===j&&v===i))) edges.push([i,j]);
+  }
+  return {n:g.n,edges,label:`Ḡ (${g.label})`};
+}
+
+function compCompute(key){
+  const g=GRAPHS[key];
+  const cg=complement(g);
+  const A=buildAdj(g);
+  const Ac=buildAdj(cg);
+  const eigs=eigenvalues(A,g.n);
+  const eigsc=eigenvalues(Ac,g.n);
+  document.getElementById('comp-g-eigs').textContent=eigs.map(fmt).join(', ');
+  document.getElementById('comp-cg-eigs').textContent=eigsc.map(fmt).join(', ');
+  const k=A[0].reduce((s,x)=>s+x,0);
+  const ck=Ac[0].reduce((s,x)=>s+x,0);
+  document.getElementById('comp-n').textContent=g.n;
+  document.getElementById('comp-k').textContent=k;
+  document.getElementById('comp-ck').textContent=ck;
+  // verify: for i>=1, lambda_i(Gbar) = -1 - lambda_i(G) (sorted desc)
+  const ok=eigs.slice(1).every((_,i)=>Math.abs(eigsc[i+1]-(-1-eigs[i+1]))<0.05);
+  document.getElementById('comp-check').textContent=ok?'✓':'✗';
+}
+
+function compDraw(){
+  if(!canvas.width) resize();
+  const g=GRAPHS[compGKey];
+  const cg=complement(g);
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // draw G on left, Gbar on right
+  const posG=circlePos(g.n,W*0.28,H/2,Math.min(W*0.22,H*0.38));
+  posG.forEach(p=>{p.x+=W*0.04;});
+  const posCG=circlePos(cg.n,W*0.28,H/2,Math.min(W*0.22,H*0.38));
+  posCG.forEach(p=>{p.x+=W*0.52;});
+  // divider
+  ctx.beginPath();ctx.moveTo(W/2,H*0.05);ctx.lineTo(W/2,H*0.95);
+  ctx.strokeStyle='#21262d';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+  // G
+  g.edges.forEach(([u,v])=>{
+    ctx.beginPath();ctx.moveTo(posG[u].x,posG[u].y);ctx.lineTo(posG[v].x,posG[v].y);
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+  });
+  posG.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,9,0,Math.PI*2);
+    ctx.fillStyle='#38bdf8';ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,p.x,p.y);
+  });
+  // Gbar
+  cg.edges.forEach(([u,v])=>{
+    ctx.beginPath();ctx.moveTo(posCG[u].x,posCG[u].y);ctx.lineTo(posCG[v].x,posCG[v].y);
+    ctx.strokeStyle='#f97316';ctx.lineWidth=1.5;ctx.stroke();
+  });
+  posCG.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,9,0,Math.PI*2);
+    ctx.fillStyle='#f97316';ctx.fill();ctx.strokeStyle='#0e1014';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,p.x,p.y);
+  });
+  // labels
+  ctx.fillStyle='#38bdf8';ctx.font='bold 13px monospace';ctx.textAlign='center';
+  ctx.fillText(g.label,W*0.25,H*0.06);
+  ctx.fillStyle='#f97316';
+  ctx.fillText(cg.label,W*0.75,H*0.06);
+}
+
+/* ───────── Init ───────── */
+window.addEventListener('load',()=>{
+  resize();
+  adjLoad('k4',null);
+  specLoad('k4',null);
+  regLoad('k4',null);
+  bipLoad('k33',null);
+  compLoad('k4',null);
+});
+</script>
+{% endblock %}
