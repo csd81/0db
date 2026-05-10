@@ -102,6 +102,55 @@ def _create_schema() -> None:
                 last_error      TEXT,
                 created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
             );
+
+            -- ── Dimat (Discrete Math) gamification tables ──────────────────
+            CREATE TABLE IF NOT EXISTS dimat_progress (
+                user_id     INTEGER NOT NULL,
+                ch          TEXT    NOT NULL,
+                exercise_id TEXT    NOT NULL,
+                status      TEXT    NOT NULL,
+                xp_awarded  INTEGER DEFAULT 0,
+                updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, ch, exercise_id)
+            );
+            CREATE TABLE IF NOT EXISTS dimat_quiz_results (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id      INTEGER NOT NULL,
+                ch           TEXT    NOT NULL,
+                score        INTEGER NOT NULL,
+                total        INTEGER NOT NULL,
+                duration_sec INTEGER DEFAULT 0,
+                difficulty   TEXT    DEFAULT 'normal',
+                xp_awarded   INTEGER DEFAULT 0,
+                wrong_qids   TEXT,
+                taken_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS dimat_achievements (
+                user_id    INTEGER NOT NULL,
+                ach_key    TEXT    NOT NULL,
+                earned_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, ach_key)
+            );
+            CREATE TABLE IF NOT EXISTS dimat_srs (
+                user_id        INTEGER NOT NULL,
+                ch             TEXT    NOT NULL,
+                question_id    TEXT    NOT NULL,
+                ease           REAL    DEFAULT 2.5,
+                interval_days  INTEGER DEFAULT 1,
+                due_at         DATETIME,
+                mistake_count  INTEGER DEFAULT 0,
+                last_seen_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, ch, question_id)
+            );
+            CREATE TABLE IF NOT EXISTS dimat_community_goal (
+                period          TEXT PRIMARY KEY,
+                problems_solved INTEGER DEFAULT 0,
+                goal            INTEGER DEFAULT 10000,
+                reached_at      DATETIME
+            );
+            CREATE INDEX IF NOT EXISTS idx_dimat_progress_user ON dimat_progress(user_id);
+            CREATE INDEX IF NOT EXISTS idx_dimat_quiz_user_ch ON dimat_quiz_results(user_id, ch);
+            CREATE INDEX IF NOT EXISTS idx_dimat_srs_due ON dimat_srs(user_id, due_at);
         """)
         _conn.commit()
 
@@ -344,3 +393,18 @@ def load_config_into_app(app) -> None:
         for key, value in stored.items():
             if key in _STORABLE_KEYS:
                 app.config[key] = value
+
+
+# ── Dimat: shared accessor + low-level helpers ─────────────────────────────────
+# All functions below operate on the existing _conn / _write_lock; they
+# tolerate user_id=0 (anonymous reader) by storing rows but never reading
+# anonymous progress on subsequent visits.
+
+def dimat_conn():
+    """Return the meta_db connection so dimat_* services can issue SQL directly."""
+    return _conn
+
+
+def dimat_lock():
+    """Return the write lock so dimat_* services can serialise their writes."""
+    return _write_lock

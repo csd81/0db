@@ -94,6 +94,13 @@ with app.app_context():
     meta_db.init_meta_db(app)
     _smart_startup(app)
 
+# Load dimat exercise corpus into memory at startup (cheap; ~462 entries)
+try:
+    from services import dimat_data
+    dimat_data.load_all()
+except Exception as _e:
+    print(f"[dimat_data] load_all failed: {_e}")
+
 scheduler = BackgroundScheduler(daemon=True)
 
 from services.replication_service import register_all_jobs

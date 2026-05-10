@@ -4578,6 +4578,382 @@ def learn_databases():
 def learn_cloud():
     return render_template('learn/cloud.html')
 
+@demos_bp.route('/learn/ila')
+@login_required
+def learn_ila():
+    return render_template('learn/ila.html')
+
+@demos_bp.route('/learn/dimat')
+@login_required
+def learn_dimat():
+    return render_template('learn/dimat.html')
+
+@demos_bp.route('/dimat/ch0')
+@login_required
+def dimat_ch0():
+    return render_template('demos/dimat_ch0.html')
+
+@demos_bp.route('/dimat/ch1')
+@login_required
+def dimat_ch1():
+    return render_template('demos/dimat_ch1.html')
+
+@demos_bp.route('/dimat/ch2')
+@login_required
+def dimat_ch2():
+    return render_template('demos/dimat_ch2.html')
+
+@demos_bp.route('/dimat/ch3')
+@login_required
+def dimat_ch3():
+    return render_template('demos/dimat_ch3.html')
+
+@demos_bp.route('/dimat/ch4')
+@login_required
+def dimat_ch4():
+    return render_template('demos/dimat_ch4.html')
+
+@demos_bp.route('/dimat/ch5')
+@login_required
+def dimat_ch5():
+    return render_template('demos/dimat_ch5.html')
+
+@demos_bp.route('/dimat/ch6')
+@login_required
+def dimat_ch6():
+    return render_template('demos/dimat_ch6.html')
+
+@demos_bp.route('/dimat/ch7')
+@login_required
+def dimat_ch7():
+    return render_template('demos/dimat_ch7.html')
+
+@demos_bp.route('/dimat/ch8')
+@login_required
+def dimat_ch8():
+    return render_template('demos/dimat_ch8.html')
+
+@demos_bp.route('/dimat/ch9')
+@login_required
+def dimat_ch9():
+    return render_template('demos/dimat_ch9.html')
+
+@demos_bp.route('/dimat/ch10')
+@login_required
+def dimat_ch10():
+    return render_template('demos/dimat_ch10.html')
+
+@demos_bp.route('/dimat/ch11')
+@login_required
+def dimat_ch11():
+    return render_template('demos/dimat_ch11.html')
+
+@demos_bp.route('/dimat/ch12')
+@login_required
+def dimat_ch12():
+    return render_template('demos/dimat_ch12.html')
+
+@demos_bp.route('/dimat/ch13')
+@login_required
+def dimat_ch13():
+    return render_template('demos/dimat_ch13.html')
+
+@demos_bp.route('/dimat/ch14')
+@login_required
+def dimat_ch14():
+    return render_template('demos/dimat_ch14.html')
+
+@demos_bp.route('/dimat/ch15')
+@login_required
+def dimat_ch15():
+    return render_template('demos/dimat_ch15.html')
+
+@demos_bp.route('/dimat/ch16')
+@login_required
+def dimat_ch16():
+    return render_template('demos/dimat_ch16.html')
+
+@demos_bp.route('/dimat/ch17')
+@login_required
+def dimat_ch17():
+    return render_template('demos/dimat_ch17.html')
+
+@demos_bp.route('/dimat/ch18')
+@login_required
+def dimat_ch18():
+    return render_template('demos/dimat_ch18.html')
+
+@demos_bp.route('/dimat/ch19')
+@login_required
+def dimat_ch19():
+    return render_template('demos/dimat_ch19.html')
+
+@demos_bp.route('/dimat/ch20')
+@login_required
+def dimat_ch20():
+    return render_template('demos/dimat_ch20.html')
+
+@demos_bp.route('/dimat/ch21')
+@login_required
+def dimat_ch21():
+    return render_template('demos/dimat_ch21.html')
+
+@demos_bp.route('/dimat/ch22')
+@login_required
+def dimat_ch22():
+    return render_template('demos/dimat_ch22.html')
+
+@demos_bp.route('/dimat/ch23')
+@login_required
+def dimat_ch23():
+    return render_template('demos/dimat_ch23.html')
+
+@demos_bp.route('/dimat/appendix')
+@login_required
+def dimat_appendix():
+    return render_template('demos/dimat_appendix.html')
+
+
+# ── Dimat: gamification API ──────────────────────────────────────────────────
+# All read endpoints permit anonymous access (returning empty progress/leaderboards)
+# so the page is browsable; only POSTs require login (decorator below applies session check).
+
+from flask import session as _session
+from services import dimat_data as _dimat_data
+from services import dimat_quiz_gen as _dimat_quiz
+from services import dimat_progress as _dimat_progress
+from services import dimat_srs as _dimat_srs
+from services import dimat_achievements as _dimat_ach
+from services import dimat_community as _dimat_comm
+
+
+def _uid():
+    return _session.get('user_id', 0)
+
+
+@demos_bp.route('/dimat/api/exercises/<ch>')
+def api_dimat_exercises(ch):
+    data = _dimat_data.get_chapter(ch)
+    return jsonify({
+        'ch': ch,
+        'title': data.get('title', ch),
+        'count': len(data.get('exercises', [])),
+        'exercises': data.get('exercises', []),
+    })
+
+
+@demos_bp.route('/dimat/api/quiz/<ch>')
+def api_dimat_quiz(ch):
+    diff = request.args.get('d', 'normal')
+    if diff not in ('easy', 'normal', 'hard'):
+        diff = 'normal'
+    items = _dimat_quiz.generate_for_chapter(ch, diff)
+    return jsonify({'ch': ch, 'difficulty': diff, 'questions': items})
+
+
+@demos_bp.route('/dimat/api/daily_challenge')
+def api_dimat_daily():
+    from datetime import datetime
+    seed = datetime.utcnow().strftime('%Y-%m-%d')
+    return jsonify({
+        'date': seed,
+        'questions': _dimat_quiz.daily_challenge(seed_extra=seed),
+    })
+
+
+@demos_bp.route('/dimat/api/progress', methods=['POST'])
+@login_required
+def api_dimat_progress():
+    body = request.get_json(force=True) or {}
+    ch = body.get('ch', '')
+    ex_id = body.get('exercise_id', '')
+    status = body.get('status', '')
+    res = _dimat_progress.record_progress(_uid(), ch, ex_id, status)
+    newly = _dimat_ach.check(_uid())
+    return jsonify({**res, 'newly_earned': newly})
+
+
+@demos_bp.route('/dimat/api/quiz_result', methods=['POST'])
+@login_required
+def api_dimat_quiz_result():
+    body = request.get_json(force=True) or {}
+    res = _dimat_progress.record_quiz(
+        _uid(),
+        body.get('ch', ''),
+        int(body.get('score', 0)),
+        int(body.get('total', 0)),
+        int(body.get('duration_sec', 0)),
+        body.get('difficulty', 'normal'),
+        body.get('wrong_qids') or [],
+    )
+    newly = _dimat_ach.check(_uid())
+    return jsonify({**res, 'newly_earned': newly})
+
+
+@demos_bp.route('/dimat/api/game_result', methods=['POST'])
+@login_required
+def api_dimat_game_result():
+    body = request.get_json(force=True) or {}
+    res = _dimat_progress.record_game(
+        _uid(),
+        body.get('ch', ''),
+        int(body.get('score', 0)),
+        int(body.get('max_score', 100)),
+    )
+    newly = _dimat_ach.check(_uid())
+    return jsonify({**res, 'newly_earned': newly})
+
+
+@demos_bp.route('/dimat/api/srs_due')
+def api_dimat_srs_due():
+    return jsonify({'due': _dimat_srs.list_due(_uid(), limit=20)})
+
+
+@demos_bp.route('/dimat/api/srs_grade', methods=['POST'])
+@login_required
+def api_dimat_srs_grade():
+    body = request.get_json(force=True) or {}
+    return jsonify(_dimat_srs.grade(
+        _uid(),
+        body.get('ch', ''),
+        body.get('question_id', ''),
+        int(body.get('grade', 3)),
+    ))
+
+
+@demos_bp.route('/dimat/api/me')
+def api_dimat_me():
+    return jsonify(_dimat_progress.me(_uid()))
+
+
+@demos_bp.route('/dimat/api/leaderboard')
+def api_dimat_leaderboard():
+    ch = request.args.get('ch') or None
+    period = request.args.get('period', 'all')
+    if period not in ('week', 'month', 'all'):
+        period = 'all'
+    return jsonify({
+        'period': period, 'ch': ch,
+        'rows': _dimat_progress.leaderboard(ch=ch, period=period, limit=20),
+    })
+
+
+@demos_bp.route('/dimat/api/achievements')
+def api_dimat_achievements():
+    return jsonify({
+        'all': _dimat_ach.list_all(),
+        'earned': _dimat_ach.list_earned(_uid()),
+    })
+
+
+@demos_bp.route('/dimat/api/community_goal')
+def api_dimat_community():
+    return jsonify(_dimat_comm.status())
+
+
+@demos_bp.route('/dimat/api/skill_tree')
+def api_dimat_skill_tree():
+    return jsonify(_dimat_data.get_skill_tree())
+
+
+@demos_bp.route('/dimat/challenges')
+@login_required
+def dimat_challenges():
+    return render_template('demos/dimat_challenges.html')
+
+
+@demos_bp.route('/ila/ch1')
+@login_required
+def ila_ch1():
+    return render_template('demos/ila_ch1.html')
+
+@demos_bp.route('/ila/ch2')
+@login_required
+def ila_ch2():
+    return render_template('demos/ila_ch2.html')
+
+@demos_bp.route('/ila/ch3')
+@login_required
+def ila_ch3():
+    return render_template('demos/ila_ch3.html')
+
+@demos_bp.route('/ila/ch4')
+@login_required
+def ila_ch4():
+    return render_template('demos/ila_ch4.html')
+
+@demos_bp.route('/ila/ch5')
+@login_required
+def ila_ch5():
+    return render_template('demos/ila_ch5.html')
+
+@demos_bp.route('/ila/ch6')
+@login_required
+def ila_ch6():
+    return render_template('demos/ila_ch6.html')
+
+@demos_bp.route('/ila/ch7')
+@login_required
+def ila_ch7():
+    return render_template('demos/ila_ch7.html')
+
+@demos_bp.route('/ila/ch8')
+@login_required
+def ila_ch8():
+    return render_template('demos/ila_ch8.html')
+
+@demos_bp.route('/ila/ch9')
+@login_required
+def ila_ch9():
+    return render_template('demos/ila_ch9.html')
+
+@demos_bp.route('/ila/ch10')
+@login_required
+def ila_ch10():
+    return render_template('demos/ila_ch10.html')
+
+@demos_bp.route('/ila/ch11')
+@login_required
+def ila_ch11():
+    return render_template('demos/ila_ch11.html')
+
+@demos_bp.route('/ila/ch12')
+@login_required
+def ila_ch12():
+    return render_template('demos/ila_ch12.html')
+
+@demos_bp.route('/ila/ch13')
+@login_required
+def ila_ch13():
+    return render_template('demos/ila_ch13.html')
+
+@demos_bp.route('/ila/ch14')
+@login_required
+def ila_ch14():
+    return render_template('demos/ila_ch14.html')
+
+@demos_bp.route('/ila/ch15')
+@login_required
+def ila_ch15():
+    return render_template('demos/ila_ch15.html')
+
+@demos_bp.route('/ila/ch16')
+@login_required
+def ila_ch16():
+    return render_template('demos/ila_ch16.html')
+
+
+@demos_bp.route('/ila/ch17')
+@login_required
+def ila_ch17():
+    return render_template('demos/ila_ch17.html')
+
+
+@demos_bp.route('/ila/ch18')
+@login_required
+def ila_ch18():
+    return render_template('demos/ila_ch18.html')
+
 
 # ── Demo subpages by subject ──────────────────────────────────────────────────
 
