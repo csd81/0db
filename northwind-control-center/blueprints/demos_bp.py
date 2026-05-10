@@ -4742,6 +4742,20 @@ def api_dimat_exercises(ch):
     })
 
 
+@demos_bp.route('/dimat/api/exercise_status/<ch>')
+def api_dimat_exercise_status(ch):
+    """Returns {exercise_id: status} for the current user, for one chapter."""
+    uid = _uid()
+    if not uid:
+        return jsonify({'ch': ch, 'statuses': {}})
+    conn = meta_db.dimat_conn()
+    rows = conn.execute(
+        "SELECT exercise_id, status FROM dimat_progress WHERE user_id=? AND ch=?",
+        (uid, ch),
+    ).fetchall()
+    return jsonify({'ch': ch, 'statuses': {r[0]: r[1] for r in rows}})
+
+
 @demos_bp.route('/dimat/api/quiz/<ch>')
 def api_dimat_quiz(ch):
     diff = request.args.get('d', 'normal')

@@ -1,0 +1,257 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   dimat_unified.css — shared styles for the Discrete Math chapter pages.
+   Loaded by base.html when request.path starts with /demos/dimat or /learn/dimat.
+   Each chapter still has its own --acc colour, but layout primitives live here.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Universal tabs added by dimat_quiz.js (Feladatok / Kvíz / Mini-játék) ── */
+
+.dq-injected-nav {
+  display: inline-flex;
+  gap: .25rem;
+  margin-left: .5rem;
+  padding-left: .75rem;
+  border-left: 1px dashed #334155;
+}
+.dq-injected-nav .ila-nav-link {
+  /* Inherits base .ila-nav-link styling from the chapter file. We only
+     override the universal-tab marker so they're visually distinct. */
+  position: relative;
+}
+.dq-injected-nav .ila-nav-link::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #38bdf8, #a78bfa);
+  transform: translateX(-50%);
+  opacity: .35;
+}
+.dq-injected-nav .ila-nav-link.active::before { opacity: 1; }
+
+/* ── Exercise card (Feladatok tab) ── */
+
+.dq-ex-list { display: flex; flex-direction: column; gap: .75rem; }
+.dq-filter-row {
+  display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: 1rem;
+  padding-bottom: .75rem; border-bottom: 1px solid #1e2533;
+}
+.dq-filter-chip {
+  font-size: .72rem; padding: .3rem .7rem; border-radius: 999px;
+  border: 1px solid #334155; background: #161b22; color: #c9d1d9;
+  cursor: pointer; font-weight: 600; transition: all .15s;
+}
+.dq-filter-chip:hover { border-color: #94a3b8; }
+.dq-filter-chip.active { background: #1e2a3a; color: #e2e8f0; border-color: #475569; }
+
+.dq-ex-card {
+  background: #0d1117;
+  border: 1px solid #1e2533;
+  border-left-width: 3px;
+  border-radius: .5rem;
+  padding: .9rem 1.1rem;
+  transition: border-color .15s, background .15s;
+}
+.dq-ex-card[data-status="solved"]   { border-left-color: #34d399; }
+.dq-ex-card[data-status="revealed"] { border-left-color: #38bdf8; }
+.dq-ex-card[data-status="attempted"]{ border-left-color: #fbbf24; }
+.dq-ex-card[data-status=""]         { border-left-color: #475569; }
+.dq-ex-card:hover { background: #11161e; }
+
+.dq-ex-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: .5rem; flex-wrap: wrap; margin-bottom: .35rem;
+}
+.dq-ex-id    { font-family: monospace; font-size: .82rem; color: #94a3b8; font-weight: 700; }
+.dq-ex-title { font-size: .9rem; color: #e6edf3; font-weight: 600; flex: 1; }
+.dq-ex-pill  { font-size: .65rem; padding: .15rem .55rem; border-radius: .3rem; font-weight: 700; letter-spacing: .04em; }
+.dq-pill-untried   { background: #1f2937; color: #94a3b8; }
+.dq-pill-attempted { background: #3b2f0a; color: #fbbf24; }
+.dq-pill-solved    { background: #0d2b1e; color: #34d399; }
+.dq-pill-revealed  { background: #0a1f2e; color: #38bdf8; }
+.dq-ex-body {
+  font-size: .82rem; color: #c4cdd8; line-height: 1.7;
+  margin: .25rem 0 .65rem;
+}
+.dq-ex-body :first-child { margin-top: 0; }
+.dq-ex-body p:last-child { margin-bottom: 0; }
+.dq-ex-actions { display: flex; gap: .35rem; flex-wrap: wrap; }
+.dq-btn {
+  font-size: .72rem; padding: .3rem .8rem; border-radius: .3rem;
+  border: 1px solid #334155; background: #161b22; color: #c9d1d9;
+  cursor: pointer; font-weight: 600; transition: all .15s;
+}
+.dq-btn:hover { border-color: #94a3b8; color: #e6edf3; }
+.dq-btn-primary { background: #0d2b1e; border-color: #34d399; color: #34d399; }
+.dq-btn-primary:hover { background: #145a3a; color: #fff; }
+.dq-btn-hint    { background: #2b1f0a; border-color: #fbbf24; color: #fbbf24; }
+.dq-btn-reveal  { background: #0a1f2e; border-color: #38bdf8; color: #38bdf8; }
+.dq-solution-block {
+  margin-top: .75rem; padding: .85rem 1rem;
+  background: #050a14; border: 1px solid #0a1f2e; border-radius: .35rem;
+  font-size: .8rem; color: #c4cdd8; line-height: 1.85;
+}
+.dq-solution-block details { margin-top: 0; }
+
+/* ── Quiz UI ── */
+
+.dq-quiz-wrap { max-width: 760px; margin: 0 auto; }
+.dq-quiz-controls {
+  display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.dq-diff-row { display: inline-flex; border-radius: .35rem; overflow: hidden; border: 1px solid #334155; }
+.dq-diff-btn {
+  font-size: .72rem; padding: .35rem .9rem; border: none; background: transparent;
+  color: #94a3b8; cursor: pointer; font-weight: 600; transition: all .15s;
+}
+.dq-diff-btn:hover { background: #1e2533; color: #e2e8f0; }
+.dq-diff-btn.active { background: #34d399; color: #000; }
+
+.dq-quiz-progress {
+  height: 6px; background: #1e2533; border-radius: 3px;
+  margin-bottom: 1rem; overflow: hidden;
+}
+.dq-quiz-progress-bar {
+  height: 100%; background: linear-gradient(90deg, #34d399, #38bdf8);
+  width: 0; transition: width .3s;
+}
+.dq-quiz-timer {
+  font-family: monospace; font-size: 1.05rem; font-weight: 700; color: #fbbf24;
+  background: #1e2533; padding: .35rem .8rem; border-radius: .35rem;
+}
+.dq-quiz-timer.warn { color: #ef4444; animation: dq-pulse 1s infinite; }
+@keyframes dq-pulse { 50% { opacity: .55; } }
+
+.dq-quiz-q {
+  background: #0d1117; border: 1px solid #1e2533; border-radius: .5rem;
+  padding: 1.1rem 1.3rem; margin-bottom: .8rem;
+}
+.dq-quiz-q-text { font-size: .92rem; color: #e6edf3; line-height: 1.7; margin-bottom: .8rem; font-weight: 500; }
+.dq-quiz-options { display: flex; flex-direction: column; gap: .35rem; }
+.dq-quiz-opt {
+  text-align: left; padding: .55rem .85rem; border-radius: .35rem;
+  border: 1px solid #334155; background: #161b22; color: #c9d1d9;
+  cursor: pointer; font-size: .82rem; line-height: 1.5; transition: all .12s;
+}
+.dq-quiz-opt:hover { border-color: #94a3b8; background: #1e2533; }
+.dq-quiz-opt.selected { background: #0a1f2e; border-color: #38bdf8; color: #7dd3fc; }
+.dq-quiz-opt.correct  { background: #0d2b1e; border-color: #34d399; color: #34d399; }
+.dq-quiz-opt.wrong    { background: #2b0d11; border-color: #ef4444; color: #ef4444; }
+.dq-quiz-opt[disabled] { cursor: default; }
+.dq-quiz-opt-letter {
+  display: inline-block; width: 1.4rem; font-weight: 700; color: #64748b;
+}
+.dq-quiz-opt.selected .dq-quiz-opt-letter,
+.dq-quiz-opt.correct .dq-quiz-opt-letter,
+.dq-quiz-opt.wrong .dq-quiz-opt-letter { color: inherit; }
+
+.dq-quiz-result {
+  text-align: center; padding: 2rem 1rem;
+  background: #0d1117; border: 1px solid #1e2533; border-radius: .6rem;
+}
+.dq-quiz-score {
+  font-size: 2.5rem; font-weight: 800; line-height: 1;
+  background: linear-gradient(135deg, #34d399, #38bdf8);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.dq-quiz-pct { font-size: .85rem; color: #94a3b8; margin-top: .35rem; }
+.dq-quiz-xp  { font-size: 1.2rem; color: #fbbf24; margin-top: .5rem; font-weight: 700; }
+
+/* ── Mini-game container ── */
+
+.dq-game-wrap {
+  background: #0d1117; border: 1px solid #1e2533; border-radius: .5rem;
+  padding: 1rem; min-height: 480px; display: flex; flex-direction: column;
+}
+.dq-game-header {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  margin-bottom: .75rem; padding-bottom: .65rem; border-bottom: 1px solid #1e2533;
+}
+.dq-game-title { font-weight: 700; color: #e6edf3; font-size: .95rem; }
+.dq-game-score { margin-left: auto; font-family: monospace; color: #fbbf24; font-weight: 700; }
+.dq-game-canvas-wrap {
+  position: relative; flex: 1; min-height: 360px;
+  background: #050a14; border-radius: .35rem; overflow: hidden;
+}
+.dq-game-canvas { display: block; width: 100%; height: 100%; }
+.dq-game-hint { font-size: .75rem; color: #8b949e; margin-top: .5rem; line-height: 1.6; }
+.dq-text-mode-pane {
+  flex: 1; background: #050a14; border-radius: .35rem; padding: 1rem;
+  overflow-y: auto; max-height: 460px;
+  font-size: .82rem; color: #c4cdd8; line-height: 1.8;
+}
+
+/* ── Toast ── */
+
+#dq-toast-stack {
+  position: fixed; right: 1rem; bottom: 1rem; z-index: 9999;
+  display: flex; flex-direction: column-reverse; gap: .5rem;
+  pointer-events: none;
+}
+.dq-toast {
+  pointer-events: auto;
+  background: #0d1117; border: 1px solid #34d399;
+  border-left-width: 4px; padding: .65rem 1rem;
+  border-radius: .35rem; min-width: 240px; max-width: 360px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.5);
+  font-size: .82rem; color: #c4cdd8;
+  animation: dq-slide-in .3s ease-out, dq-fade-out .35s ease-in 4.5s forwards;
+}
+.dq-toast.toast-xp     { border-color: #fbbf24; }
+.dq-toast.toast-badge  { border-color: #a78bfa; }
+.dq-toast.toast-error  { border-color: #ef4444; }
+.dq-toast strong { color: #e6edf3; display: block; margin-bottom: .15rem; }
+@keyframes dq-slide-in { from { transform: translateX(100%); opacity: 0; } }
+@keyframes dq-fade-out { to { opacity: 0; transform: translateY(20px); } }
+
+/* ── Empty / loading states ── */
+
+.dq-empty {
+  text-align: center; padding: 2.5rem 1rem;
+  color: #64748b; font-size: .85rem; line-height: 1.7;
+}
+.dq-empty-icon { font-size: 2rem; margin-bottom: .5rem; display: block; }
+.dq-spinner {
+  display: inline-block; width: 1.2rem; height: 1.2rem;
+  border: 2px solid #334155; border-top-color: #34d399;
+  border-radius: 50%; animation: dq-spin .8s linear infinite;
+  vertical-align: middle;
+}
+@keyframes dq-spin { to { transform: rotate(360deg); } }
+
+/* ── Mobile ── */
+
+@media (max-width: 640px) {
+  .dq-quiz-controls { flex-direction: column; align-items: stretch; }
+  .dq-game-wrap { padding: .65rem; }
+  .dq-game-canvas-wrap { min-height: 280px; }
+  .dq-injected-nav { margin-left: 0; padding-left: 0; border-left: none; margin-top: .25rem; flex-wrap: wrap; }
+}
+
+/* ── Skill-tree on /learn/dimat ── */
+
+#dq-skill-tree-canvas {
+  width: 100%; height: 540px; background: #0d1117;
+  border: 1px solid #1e2533; border-radius: .5rem;
+  display: block;
+}
+.dq-progress-strip {
+  display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;
+  background: #0d1117; border: 1px solid #1e2533; border-radius: .5rem;
+  padding: .85rem 1.2rem; margin-bottom: 1.2rem;
+}
+.dq-progress-stat { display: flex; flex-direction: column; gap: .1rem; }
+.dq-progress-stat-val {
+  font-size: 1.3rem; font-weight: 800; color: #34d399; font-variant-numeric: tabular-nums;
+}
+.dq-progress-stat-lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #64748b; }
+.dq-completion-ring {
+  display: inline-block; width: 18px; height: 18px; border-radius: 50%;
+  background: conic-gradient(#34d399 var(--pct, 0%), #1e2533 var(--pct, 0%));
+  vertical-align: middle; margin-right: .35rem;
+}
