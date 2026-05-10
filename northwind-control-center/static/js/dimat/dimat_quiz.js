@@ -550,6 +550,10 @@
     const wrap = el('div', {class: 'dq-game-wrap'});
     panel.appendChild(wrap);
 
+    // Ensure shared game library is loaded (small, cached after first hit)
+    if (!window.DimatGameLib) {
+      await loadScript('/static/js/dimat/games/_lib.js').catch(() => null);
+    }
     // Try to load the chapter-specific game module on demand
     if (CH && !window.DimatGames.get(CH)) {
       await loadScript('/static/js/dimat/games/' + CH + '.js').catch(() => null);
