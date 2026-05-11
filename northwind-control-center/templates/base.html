@@ -427,6 +427,18 @@
 {% endwith %}
 
 <div class="container-fluid py-4 px-4">
+  {# Back-to-ToC link on ILA chapter pages #}
+  {% if request.endpoint and request.endpoint.startswith('demos.ila_ch') %}
+  <div style="max-width:1100px;margin:0 auto .5rem;">
+    <a href="{{ url_for('demos.learn_ila') }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;
+              color:#a78bfa;font-size:.78rem;font-weight:600;
+              padding:.3rem .65rem;border:1px solid #a78bfa55;border-radius:.3rem;
+              background:#a78bfa11;transition:background .15s,border-color .15s;">
+      <span aria-hidden="true">←</span> Vissza a tartalomjegyzékhez
+    </a>
+  </div>
+  {% endif %}
   {% block content %}{% endblock %}
 </div>
 
