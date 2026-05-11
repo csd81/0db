@@ -1,0 +1,918 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #a3e635; --acc2: #bef264; --acc3: #84cc16; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(163,230,53,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.pill { display:inline-block; padding:.2rem .7rem; border-radius:999px; font-size:.78rem; font-weight:600; margin:.15rem; }
+.pill-ok  { background:rgba(163,230,53,.15); color:var(--acc); border:1px solid var(--acc); }
+.pill-no  { background:rgba(239,68,68,.15); color:#ef4444; border:1px solid #ef4444; }
+.pill-neu { background:rgba(148,163,184,.1); color:#94a3b8; border:1px solid #334155; }
+.badge-acc { background:rgba(163,230,53,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; }
+.def-box  { border-left:3px solid var(--acc); background:rgba(163,230,53,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.thm-box  { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.ex-box   { border-left:3px solid #fbbf24; background:rgba(251,191,36,.05); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.inp-sm   { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .6rem; font-size:.85rem; width:5rem; text-align:center; }
+.inp-sm:focus { outline:none; border-color:var(--acc); }
+.inp-md   { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .7rem; font-size:.85rem; width:8rem; text-align:center; }
+.inp-md:focus { outline:none; border-color:var(--acc); }
+.inp-lg   { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.35rem .8rem; font-size:.85rem; }
+.inp-lg:focus { outline:none; border-color:var(--acc); }
+.btn-acc  { background:var(--acc); color:#050a00; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec  { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.step-row { display:flex; align-items:flex-start; gap:.5rem; padding:.35rem .7rem; border-radius:6px; font-family:monospace; font-size:.86rem; margin:.15rem 0; }
+.step-row.hi   { background:rgba(163,230,53,.12); color:#d9f99d; }
+.step-row.done { background:rgba(56,189,248,.08); color:#7dd3fc; }
+.step-row.grey { color:#475569; }
+.metric-lbl { font-size:.72rem; color:#64748b; text-transform:uppercase; letter-spacing:.05em; }
+.metric-val { font-size:1.3rem; font-weight:700; color:var(--acc); font-family:monospace; }
+.mult-tbl { border-collapse:collapse; font-size:.8rem; }
+.mult-tbl th, .mult-tbl td { padding:.3rem .5rem; border:1px solid #1e2533; text-align:center; min-width:2.4rem; }
+.mult-tbl th { background:#1a1f2e; color:#94a3b8; }
+.mult-tbl td { color:#e2e8f0; }
+.mult-tbl td.ident { color:var(--acc); font-weight:700; }
+.mult-tbl td.zero  { color:#ef4444; font-weight:600; }
+.rsa-step { background:#12161f; border:1px solid #1e2533; border-radius:8px; padding:.65rem 1rem; display:flex; align-items:flex-start; gap:.65rem; margin:.3rem 0; }
+.rsa-step.active { border-color:var(--acc); background:rgba(163,230,53,.04); }
+.step-badge { background:var(--acc); color:#050a00; border-radius:50%; width:1.4rem; height:1.4rem; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; flex-shrink:0; margin-top:.1rem; }
+.isbn-digit input { width:2rem; height:2rem; text-align:center; background:#1e2533; border:1px solid #334155; color:#e2e8f0; border-radius:5px; font-size:.9rem; font-family:monospace; }
+.isbn-digit input:focus { outline:none; border-color:var(--acc); }
+.isbn-digit .lbl { font-size:.62rem; color:#64748b; margin-top:2px; text-align:center; }
+.isbn-check { width:2rem; height:2rem; background:rgba(163,230,53,.12); border:1px solid var(--acc); border-radius:5px; display:flex; align-items:center; justify-content:center; font-family:monospace; color:var(--acc); font-weight:700; font-size:.9rem; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:960px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(163,230,53,.15);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-shield-lock-fill" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">18. fejezet — Számelmélet 2.</h4>
+      <small class="text-muted">Kongruenciák · Kongruencia egyenletek · Euler &amp; Fermat · Maradékosztályok · RSA</small>
+    </div>
+    <a href="{{ url_for('demos.learn_ila') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← ILA főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-kong',this)">Kongruenciák</span>
+    <span class="ila-nav-link" onclick="showTab('t-keq',this)">Kongruencia egyenletek</span>
+    <span class="ila-nav-link" onclick="showTab('t-euler',this)">Euler &amp; Fermat</span>
+    <span class="ila-nav-link" onclick="showTab('t-mrad',this)">Maradékosztályok</span>
+    <span class="ila-nav-link" onclick="showTab('t-rsa',this)">RSA titkosítás</span>
+  </div>
+
+  <!-- ═══════════════ TAB 1: Kongruenciák ═══════════════ -->
+  <div id="t-kong" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">1. Definíció</div>
+          <div class="def-box">
+            <strong>a ≡ b (mod n)</strong> &nbsp;↔&nbsp; n ∣ (a − b)<br>
+            <span class="text-muted small">Ekvivalensen: a és b azonos maradékot adnak n-nel való osztáskor.</span>
+          </div>
+          <div class="ex-box small">
+            15 ≡ 19 (mod 4) &nbsp;— &nbsp;15−19=−4, osztható 4-gyel<br>
+            124 ≡ −6 (mod 10) &nbsp;— &nbsp;130 osztható 10-zel<br>
+            a ≡ a+kn (mod n) &nbsp;minden k∈ℤ-re
+          </div>
+        </div>
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">4. Tétel — Kongruencia-aritmetika</div>
+          <div class="thm-box small">
+            <strong>1.</strong> A mod n kongruencia ekvivalenciareláció ℤ-n.<br>
+            <strong>2.</strong> Ha a₁≡b₁ és a₂≡b₂ (mod n), akkor:<br>
+            &nbsp;&nbsp;a₁+a₂ ≡ b₁+b₂ (mod n)<br>
+            &nbsp;&nbsp;a₁a₂ ≡ b₁b₂ (mod n)<br>
+            &nbsp;&nbsp;ca₁ ≡ cb₁ (mod n) &nbsp;minden c∈ℤ-re
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">5. Tétel — Egyszerűsítési szabályok</div>
+          <table style="width:100%;font-size:.82rem;border-collapse:collapse;">
+            <tr><td style="padding:.35rem;border-bottom:1px solid #1e2533;color:var(--acc);font-weight:600;width:1.5rem;">1.</td>
+                <td style="padding:.35rem;border-bottom:1px solid #1e2533;">a≡b (mod n), m∣n &nbsp;⟹&nbsp; a≡b (mod m)</td></tr>
+            <tr><td style="padding:.35rem;border-bottom:1px solid #1e2533;color:var(--acc);font-weight:600;">2.</td>
+                <td style="padding:.35rem;border-bottom:1px solid #1e2533;">ac≡bc (mod n) &nbsp;⟹&nbsp; a≡b (mod n/(c,n))</td></tr>
+            <tr><td style="padding:.35rem;color:var(--acc);font-weight:600;">3.</td>
+                <td style="padding:.35rem;">ac≡bc (mod n), (c,n)=1 &nbsp;⟹&nbsp; a≡b (mod n)</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Interaktív kongruencia-ellenőrző</div>
+          <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+            <label class="text-muted small">a =</label>
+            <input id="kA" class="inp-sm" type="number" value="15">
+            <label class="text-muted small">b =</label>
+            <input id="kB" class="inp-sm" type="number" value="19">
+            <label class="text-muted small">n =</label>
+            <input id="kN" class="inp-sm" type="number" value="4" min="1">
+            <button class="btn-acc" onclick="checkCong()">Ellenőriz</button>
+          </div>
+          <div id="kongResult"></div>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-sec" onclick="setCong(15,19,4)">15≡19 (mod 4)</button>
+            <button class="btn-sec" onclick="setCong(124,-6,10)">124≡−6 (mod 10)</button>
+            <button class="btn-sec" onclick="setCong(7,14,3)">7≡14 (mod 3)?</button>
+            <button class="btn-sec" onclick="setCong(100,0,10)">100≡0 (mod 10)</button>
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">6. Példa — ISBN-10 ellenőrző számjegy</div>
+          <p class="text-muted small mb-2">Feltétel: ∑i·xᵢ ≡ 0 (mod 11) (i=1..10). Add meg x₁..x₉-et, x₁₀ automatikus.</p>
+          <div class="d-flex gap-1 align-items-end mb-2" id="isbnRow"></div>
+          <div id="isbnResult" class="mt-1"></div>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-sec" onclick="setISBN([0,3,0,6,4,0,6,1,5])">030640615?</button>
+            <button class="btn-sec" onclick="setISBN([0,1,9,5,3,5,6,5,0])">019535650?</button>
+          </div>
+          <div class="mt-2" style="border-top:1px solid #1e2533;padding-top:.75rem;">
+            <p class="text-muted small mb-1">Teljes 10-jegyű kód validálása (X=10):</p>
+            <div class="d-flex gap-2 align-items-center">
+              <input id="isbnFull" class="inp-lg" placeholder="pl. 0306406152" style="width:11rem;">
+              <button class="btn-sec" onclick="checkISBNFull()">Validál</button>
+            </div>
+            <div id="isbnFullRes" class="mt-1 small"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 2: Kongruencia egyenletek ═══════════════ -->
+  <div id="t-keq" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Lineáris kongruencia egyenlet</div>
+          <div class="def-box">
+            <strong>ax ≡ b (mod n)</strong><br>
+            <span class="text-muted small">Megoldást modulo n keressük.</span>
+          </div>
+          <div class="badge-acc mb-2 mt-2">8. Tétel — Megoldhatóság</div>
+          <div class="thm-box small">
+            Legyen d=(a,n).<br>
+            <strong>1.</strong> Megoldható &nbsp;↔&nbsp; d∣b<br>
+            <strong>2.</strong> Ha megoldható: modulo n/d egyértelmű; modulo n pontosan d megoldás.
+          </div>
+          <div class="ex-box small mt-2">
+            <strong>9. Példa:</strong> 18x≡27 (mod 21)<br>
+            d=(18,21)=3, 3∣27 ✓<br>
+            21−18=3 &rarr; 21·9−18·9=27, x₀=−9<br>
+            x≡−9≡5 (mod 7)<br>
+            Összes mod 21: <strong>x≡5, 12, 19</strong>
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">11. Tétel — Kínai maradéktétel</div>
+          <div class="thm-box small">
+            Ha m₁,…,mₖ páronként relatív prímek, akkor az<br>
+            x≡a₁ (mod m₁), …, x≡aₖ (mod mₖ)<br>
+            rendszernek minden a₁,…,aₖ esetén van megoldása, és modulo m₁·…·mₖ egyértelmű.
+          </div>
+          <div class="ex-box small mt-1">
+            <strong>10. Példa:</strong> x≡210 (mod 123), x≡198 (mod 48)<br>
+            d=(123,48)=3, 3∣(198−210)=−12 ✓<br>
+            Megoldás: <strong>x≡1686 (mod 1968)</strong>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Lineáris kongruencia megoldó — ax ≡ b (mod n)</div>
+          <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+            <label class="text-muted small">a=</label><input id="lcA" class="inp-sm" type="number" value="18">
+            <label class="text-muted small">b=</label><input id="lcB" class="inp-sm" type="number" value="27">
+            <label class="text-muted small">n=</label><input id="lcN" class="inp-sm" type="number" value="21">
+            <button class="btn-acc" onclick="solveLC()">Megold</button>
+          </div>
+          <div id="lcResult"></div>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-sec" onclick="setLC(5,3,4)">5x≡3(mod 4)</button>
+            <button class="btn-sec" onclick="setLC(18,27,21)">18x≡27(mod 21)</button>
+            <button class="btn-sec" onclick="setLC(3,5,9)">3x≡5(mod 9)→∤</button>
+            <button class="btn-sec" onclick="setLC(7,1,11)">7x≡1(mod 11)</button>
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Kongruencia-rendszer megoldó &nbsp;— &nbsp;x≡a (mod m) &amp; x≡b (mod n)</div>
+          <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+            <span class="text-muted small">x≡</span>
+            <input id="crtA" class="inp-sm" type="number" value="210">
+            <span class="text-muted small">(mod</span>
+            <input id="crtM" class="inp-sm" type="number" value="123">
+            <span class="text-muted small">)</span>
+            <span class="text-muted small">és &nbsp;x≡</span>
+            <input id="crtB" class="inp-sm" type="number" value="198">
+            <span class="text-muted small">(mod</span>
+            <input id="crtN" class="inp-sm" type="number" value="48">
+            <span class="text-muted small">)</span>
+            <button class="btn-acc" onclick="solveCRT()">Megold</button>
+          </div>
+          <div id="crtResult"></div>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-sec" onclick="setCRT(210,123,198,48)">10. Példa</button>
+            <button class="btn-sec" onclick="setCRT(1,3,1,5)">x≡1(3),x≡1(5)</button>
+            <button class="btn-sec" onclick="setCRT(2,5,3,7)">x≡2(5),x≡3(7)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 3: Euler & Fermat ═══════════════ -->
+  <div id="t-euler" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">12–19. Definíciók &amp; Példák — Maradékosztályok és φ</div>
+          <div class="def-box small">
+            <strong>ℤₙ</strong> = mod n maradékosztályok halmaza, |ℤₙ|=n<br>
+            <strong>Redukált maradékosztály:</strong> ā ahol (a,n)=1<br>
+            <strong>φ(n)</strong> = redukált maradékosztályok száma (Euler-féle φ)
+          </div>
+          <div class="ex-box small">
+            φ(8)=4 &nbsp;({1,3,5,7} rel. prím 8-hoz)<br>
+            φ(5)=4 &nbsp;({1,2,3,4}, p prím → φ(p)=p−1)<br>
+            <strong>27. Tétel:</strong> φ(pᵏ) = pᵏ−pᵏ⁻¹<br>
+            <strong>28. Tétel:</strong> φ(n) = n·∏(1−1/pᵢ) &nbsp;(prímfelbontásból)
+          </div>
+        </div>
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">22. Tétel — Euler tétele</div>
+          <div class="thm-box">
+            Ha (a,n)=1, akkor:<br>
+            <strong style="font-size:1.1rem;">a<sup>φ(n)</sup> ≡ 1 (mod n)</strong>
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">23–24. Tétel — Fermat tétele</div>
+          <div class="thm-box">
+            Ha p prím és p∤a:<br>
+            <strong style="font-size:1.1rem;">a<sup>p−1</sup> ≡ 1 (mod p)</strong><br>
+            <strong>Következmény:</strong> a<sup>p</sup> ≡ a (mod p) &nbsp;minden a∈ℤ-re
+          </div>
+          <div class="ex-box small mt-1">
+            <strong>29. Példa:</strong> 21³⁶² mod 100 = ?<br>
+            φ(100)=φ(4·25)=(4−2)(25−5)=40<br>
+            21⁴⁰≡1 (mod 100) → 21³⁶⁰≡1<br>
+            21³⁶² ≡ 21² = 441 ≡ <strong>41</strong> (mod 100)
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Euler φ(n) kalkulátor</div>
+          <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+            <label class="text-muted small">n =</label>
+            <input id="phiN" class="inp-md" type="number" value="100">
+            <button class="btn-acc" onclick="calcPhi()">Számít</button>
+          </div>
+          <div id="phiResult"></div>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-sec" onclick="phiSet(8)">φ(8)</button>
+            <button class="btn-sec" onclick="phiSet(5)">φ(5)</button>
+            <button class="btn-sec" onclick="phiSet(100)">φ(100)</button>
+            <button class="btn-sec" onclick="phiSet(2537)">φ(2537)</button>
+            <button class="btn-sec" onclick="phiSet(360)">φ(360)</button>
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Moduláris hatványozás — ismételt négyzetre emelés</div>
+          <p class="text-muted small">a<sup>k</sup> mod n kiszámítása bináris módszerrel.</p>
+          <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+            <label class="text-muted small">a=</label><input id="mpA" class="inp-sm" type="number" value="21">
+            <label class="text-muted small">k=</label><input id="mpK" class="inp-md" type="number" value="362">
+            <label class="text-muted small">n=</label><input id="mpN" class="inp-sm" type="number" value="100">
+            <button class="btn-acc" onclick="modExpCalc()">Számít</button>
+          </div>
+          <div id="mpSteps" style="max-height:160px;overflow-y:auto;"></div>
+          <div id="mpResult" class="mt-1"></div>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-sec" onclick="setModExp(21,362,100)">21³⁶² mod 100</button>
+            <button class="btn-sec" onclick="setModExp(2,10,1000)">2¹⁰ mod 1000</button>
+            <button class="btn-sec" onclick="setModExp(3,100,7)">3¹⁰⁰ mod 7</button>
+            <button class="btn-sec" onclick="setModExp(1825,13,2537)">1825¹³ mod 2537</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 4: Maradékosztályok ═══════════════ -->
+  <div id="t-mrad" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">30–34. Tétel — ℤₙ gyűrű és test</div>
+          <div class="thm-box small">
+            <strong>30. Tétel:</strong> (ℤₙ, +, ·) kommutatív gyűrű<br>
+            (ā+b̄=ā+b, ā·b̄=ā·b)<br>
+            <strong>32. Tétel:</strong> p prím → ℤₚ test (minden ≠0̄ elem invertálható)<br>
+            <strong>34. Tétel:</strong> n összetett → ℤₙ-ben van zérusosztó → nem test
+          </div>
+          <div class="ex-box small">
+            <strong>35. Példa — Zérusosztók:</strong><br>
+            ℤ₄: &nbsp;2̄·2̄ = 4̄ = 0̄ &nbsp;(2̄ zérusosztó)<br>
+            ℤ₆: &nbsp;2̄·3̄ = 6̄ = 0̄ &nbsp;(2̄ és 3̄ zérusosztók)
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">37. Példa — ℤ₈ szorzástábla (redukált)</div>
+          <p class="text-muted small mb-2">A={1̄,3̄,5̄,7̄} csoport a szorzásra (36. Tétel):</p>
+          <div id="z8static"></div>
+          <div class="mt-2 d-flex gap-1 align-items-center">
+            <label class="text-muted small">ℤₙ:</label>
+            <input id="znInput" class="inp-sm" type="number" value="8" min="2" max="13" style="width:3.5rem;">
+            <button class="btn-sec" onclick="buildZnTable()">Teljes tábla</button>
+          </div>
+          <div id="znTable" class="mt-2 overflow-auto"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">31. Példa — Caesar-titkosítás (ℤ₂₆)</div>
+          <p class="text-muted small">A=0,B=1,…,Z=25; titkosítás: (x+k) mod 26; visszafejtés: (x−k) mod 26.</p>
+          <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+            <label class="text-muted small">Üzenet:</label>
+            <input id="caesarMsg" class="inp-lg" value="SZIA" style="width:10rem;text-transform:uppercase;">
+            <label class="text-muted small">k=</label>
+            <input id="caesarK" class="inp-sm" type="number" value="7" min="1" max="25">
+            <button class="btn-acc" onclick="caesarEncode()">Titkosít</button>
+          </div>
+          <div id="caesarViz" style="min-height:3rem;"></div>
+          <div id="caesarResult" class="mt-1"></div>
+          <div class="mt-2">
+            <div class="d-flex gap-2 align-items-center">
+              <input id="caesarCipher" class="inp-lg" placeholder="Kódolt szöveg" style="width:10rem;text-transform:uppercase;">
+              <button class="btn-sec" onclick="caesarDecode()">Visszafejt</button>
+            </div>
+            <div id="caesarDecResult" class="mt-1 small" style="font-family:monospace;color:var(--acc);"></div>
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">ℤₙ aritmetika kalkulátor</div>
+          <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+            <input id="zopA" class="inp-sm" type="number" value="3">
+            <select id="zopOp" class="inp-sm" style="width:auto;">
+              <option>+</option><option>−</option><option selected>×</option><option>÷</option>
+            </select>
+            <input id="zopB" class="inp-sm" type="number" value="5">
+            <span class="text-muted small">(mod</span>
+            <input id="zopN" class="inp-sm" type="number" value="8" min="2">
+            <span class="text-muted small">)</span>
+            <button class="btn-acc" onclick="zopCalc()">Számít</button>
+          </div>
+          <div id="zopResult"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 5: RSA titkosítás ═══════════════ -->
+  <div id="t-rsa" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">RSA algoritmus (Rivest–Shamir–Adleman, 1977)</div>
+          <div class="rsa-step"><div class="step-badge">1</div><div class="small">Válasszunk két különböző nagy prímszámot: <strong>p</strong> és <strong>q</strong></div></div>
+          <div class="rsa-step"><div class="step-badge">2</div><div class="small"><strong>n = pq</strong>, &nbsp; <strong>k = φ(n) = (p−1)(q−1)</strong></div></div>
+          <div class="rsa-step"><div class="step-badge">3</div><div class="small">Válasszunk <strong>e</strong>-t: 1&lt;e&lt;k és (e,k)=1</div></div>
+          <div class="rsa-step"><div class="step-badge">4</div><div class="small"><strong>d</strong>: ed ≡ 1 (mod k) &nbsp;(e inverze ℤₖ-ban, Euklideszi algoritmussal)</div></div>
+          <div class="rsa-step"><div class="step-badge">5</div><div class="small"><strong>Nyilvános kulcs:</strong> (e, n) &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Titkos kulcs:</strong> d</div></div>
+          <div class="rsa-step"><div class="step-badge">6</div><div class="small"><strong>Titkosítás:</strong> c ≡ x<sup>e</sup> (mod n)</div></div>
+          <div class="rsa-step"><div class="step-badge">7</div><div class="small"><strong>Visszafejtés:</strong> x ≡ c<sup>d</sup> (mod n)</div></div>
+          <div class="thm-box small mt-2">
+            <strong>Helyesség:</strong> ed−1=kℓ=(p−1)(q−1)ℓ<br>
+            Fermat tétele: x<sup>p−1</sup>≡1 (mod p) → c<sup>d</sup>≡x (mod p)<br>
+            Hasonlóan mod q; Kínai maradéktétel: c<sup>d</sup>≡x (mod n) ✓<br>
+            <strong>Biztonság:</strong> n=pq felbontása (nagy prímek esetén) computationally intractable.
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Mini-RSA demo — 38. Példa alapján</div>
+          <p class="text-muted small">Kis prímekkel szemlélteti az RSA működését lépésről lépésre.</p>
+
+          <div class="mb-2">
+            <label class="text-muted small d-block mb-1">① Prímek választása:</label>
+            <div class="d-flex gap-2 align-items-center">
+              <label class="text-muted small">p=</label>
+              <select id="rsaP" class="inp-sm" style="width:auto;" onchange="rsaInit()">
+                <option value="43">43</option><option value="41">41</option><option value="37">37</option>
+                <option value="31">31</option><option value="29">29</option><option value="23">23</option>
+              </select>
+              <label class="text-muted small">q=</label>
+              <select id="rsaQ" class="inp-sm" style="width:auto;" onchange="rsaInit()">
+                <option value="59">59</option><option value="53">53</option><option value="47">47</option>
+                <option value="43">43</option><option value="41">41</option><option value="37">37</option>
+              </select>
+            </div>
+            <div id="rsaInfo1" class="step-row done mt-1" style="font-size:.8rem;"></div>
+          </div>
+
+          <div class="mb-2">
+            <label class="text-muted small d-block mb-1">② Nyilvános kitevő (e) választása:</label>
+            <div class="d-flex gap-2 align-items-center">
+              <select id="rsaE" class="inp-sm" style="width:auto;min-width:5rem;" onchange="rsaSelectE()"></select>
+              <span class="text-muted small">(gcd(e,k)=1)</span>
+            </div>
+            <div id="rsaInfo2" class="step-row done mt-1" style="font-size:.8rem;"></div>
+          </div>
+
+          <div class="mb-2">
+            <label class="text-muted small d-block mb-1">③ Üzenet titkosítása (latin betűk, max 4):</label>
+            <div class="d-flex gap-2 align-items-center">
+              <input id="rsaMsg" class="inp-lg" value="SZIA" placeholder="pl. SZIA" style="width:8rem;text-transform:uppercase;">
+              <button class="btn-acc" onclick="rsaRun()">Titkosít &amp; Visszafejt</button>
+            </div>
+          </div>
+
+          <div id="rsaOutput" style="min-height:120px;"></div>
+
+          <div class="mt-2 d-flex gap-1 flex-wrap">
+            <button class="btn-sec" onclick="rsaPreset()">38. Példa (p=43,q=59,e=13,"SZIA")</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ─── Math helpers ─── */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){[a,b]=[b,a%b];} return a; }
+function lcm(a,b){ return Math.abs(a*b)/gcd(a,b); }
+
+function gcdExt(a,b){
+  if(b===0) return {g:a,x:1,y:0};
+  const r=gcdExt(b,a%b);
+  return {g:r.g, x:r.y, y:r.x-Math.floor(a/b)*r.y};
+}
+
+function factorize(n){
+  const f={};
+  for(let p=2;p*p<=n;p++) while(n%p===0){f[p]=(f[p]||0)+1;n=Math.floor(n/p);}
+  if(n>1) f[n]=(f[n]||0)+1;
+  return f;
+}
+
+function eulerPhi(n){
+  const f=factorize(n);
+  let r=n;
+  for(const p of Object.keys(f)) r=Math.round(r/parseInt(p)*(parseInt(p)-1));
+  return r;
+}
+
+function modPow(base,exp,mod){
+  let b=BigInt(base),e=BigInt(exp),m=BigInt(mod);
+  if(m===1n) return 0;
+  let result=1n; b=b%m;
+  while(e>0n){
+    if(e%2n===1n) result=result*b%m;
+    e=e/2n; b=b*b%m;
+  }
+  return Number(result);
+}
+
+function modPowSteps(base,exp,mod){
+  const steps=[];
+  let b=BigInt(base),e=BigInt(exp),m=BigInt(mod);
+  let result=1n, curr=b%m, pw=0;
+  while(e>0n){
+    const bit=e%2n;
+    const oldRes=result;
+    if(bit===1n){ result=result*curr%m; }
+    steps.push({pw,bit:Number(bit),curr:Number(curr),res:Number(result),oldRes:Number(oldRes)});
+    curr=curr*curr%m; e=e/2n; pw++;
+  }
+  return steps;
+}
+
+/* ─── TAB 1: Kongruenciák ─── */
+function checkCong(){
+  const a=parseInt(document.getElementById('kA').value);
+  const b=parseInt(document.getElementById('kB').value);
+  const n=parseInt(document.getElementById('kN').value);
+  const el=document.getElementById('kongResult');
+  if(isNaN(a)||isNaN(b)||isNaN(n)||n<=0){el.innerHTML='<span class="pill pill-no">Érvénytelen</span>';return;}
+  const diff=a-b;
+  const ok=diff%n===0;
+  const ra=((a%n)+n)%n, rb=((b%n)+n)%n;
+  el.innerHTML=`<div class="d-flex gap-2 flex-wrap mb-1">
+    <span class="pill ${ok?'pill-ok':'pill-no'}">${a}≡${b} (mod ${n}) — ${ok?'IGAZ ✓':'HAMIS ✗'}</span>
+  </div>
+  <div class="ex-box small">
+    ${a}−${b}=${diff} &nbsp;→&nbsp; ${Math.abs(diff)} mod ${n} = ${Math.abs(diff)%n}
+    ${ok?'<br><span style="color:var(--acc)">Osztható n-nel → kongruens ✓</span>':'<br><span style="color:#ef4444">Nem osztható n-nel ✗</span>'}<br>
+    Maradékok: ${a} mod ${n} = <strong>${ra}</strong>, &nbsp;${b} mod ${n} = <strong>${rb}</strong>
+  </div>`;
+}
+function setCong(a,b,n){
+  document.getElementById('kA').value=a;
+  document.getElementById('kB').value=b;
+  document.getElementById('kN').value=n;
+  checkCong();
+}
+
+/* ─── ISBN-10 ─── */
+function buildISBNRow(){
+  const row=document.getElementById('isbnRow');
+  row.innerHTML='';
+  for(let i=1;i<=9;i++){
+    const d=document.createElement('div');
+    d.className='isbn-digit d-flex flex-column align-items-center';
+    d.innerHTML=`<input id="isbn${i}" type="text" maxlength="1" value="0" oninput="this.value=this.value.replace(/[^0-9]*/,'')">
+                 <div class="lbl">x${i}</div>`;
+    row.appendChild(d);
+  }
+  const d=document.createElement('div');
+  d.className='isbn-digit d-flex flex-column align-items-center';
+  d.innerHTML=`<div class="isbn-check" id="isbn10d">?</div><div class="lbl">x₁₀</div>`;
+  row.appendChild(d);
+}
+
+function calcISBN(){
+  let sum=0;
+  const digs=[];
+  for(let i=1;i<=9;i++){
+    const v=parseInt(document.getElementById('isbn'+i).value)||0;
+    digs.push(v); sum+=i*v;
+  }
+  const x10=((sum%11)+11)%11;
+  document.getElementById('isbn10d').textContent=x10===10?'X':x10;
+  const verify=sum+10*x10;
+  document.getElementById('isbnResult').innerHTML=`<div class="ex-box small">
+    ∑i·xᵢ = ${digs.map((v,i)=>`${i+1}·${v}`).join('+')} = <strong>${sum}</strong><br>
+    x₁₀ ≡ ${sum} mod 11 = <strong style="color:var(--acc)">${x10===10?'X (=10)':x10}</strong><br>
+    Ellenőrzés: ${sum}+10·${x10}=${verify} ≡ ${verify%11} (mod 11) ${verify%11===0?'✓ Érvényes!':'✗'}
+  </div>`;
+}
+
+function setISBN(arr){
+  for(let i=0;i<9;i++) document.getElementById('isbn'+(i+1)).value=arr[i];
+  calcISBN();
+}
+
+function checkISBNFull(){
+  const s=document.getElementById('isbnFull').value.replace(/[^0-9Xx]/g,'').toUpperCase();
+  const el=document.getElementById('isbnFullRes');
+  if(s.length!==10){el.innerHTML='<span class="pill pill-no">Pontosan 10 karakter szükséges</span>';return;}
+  let sum=0;
+  for(let i=0;i<10;i++) sum+=(i+1)*(s[i]==='X'?10:parseInt(s[i]));
+  const ok=sum%11===0;
+  el.innerHTML=`∑i·xᵢ = ${sum} ≡ ${sum%11} (mod 11) → <span class="pill ${ok?'pill-ok':'pill-no'}">${ok?'Érvényes ISBN-10 ✓':'Érvénytelen ✗'}</span>`;
+}
+
+/* ─── TAB 2: Lineáris kongruencia ─── */
+function solveLC(){
+  const a=parseInt(document.getElementById('lcA').value);
+  const b=parseInt(document.getElementById('lcB').value);
+  const n=parseInt(document.getElementById('lcN').value);
+  const el=document.getElementById('lcResult');
+  if(isNaN(a)||isNaN(b)||isNaN(n)||n<=0){el.innerHTML='<span class="pill pill-no">Érvénytelen</span>';return;}
+  const aN=((a%n)+n)%n;
+  const {g,x:x0}=gcdExt(aN,n);
+  if(b%g!==0){
+    el.innerHTML=`<span class="pill pill-no">(${a},${n})=${g} ∤ ${b} → NEM MEGOLDHATÓ</span>
+      <div class="ex-box small mt-1">${g}∣${b} feltétel nem teljesül.</div>`;
+    return;
+  }
+  const scale=b/g;
+  const xPart=((x0*scale)%n+n)%n;
+  const nDg=n/g;
+  const sols=[];
+  for(let i=0;i<g;i++) sols.push((xPart+i*nDg)%n);
+  el.innerHTML=`<span class="pill pill-ok">(${a},${n})=${g} ∣ ${b} → MEGOLDHATÓ ✓</span>
+  <div class="ex-box mt-1 small">
+    Partikuláris megoldás: x₀ = <strong>${xPart}</strong><br>
+    Egyértelmű mod n/d = mod <strong>${nDg}</strong>: &nbsp;x≡${xPart} (mod ${nDg})<br>
+    Összes megoldás mod ${n} (${g} db):<br>
+    <strong style="color:var(--acc)">${sols.map(s=>`x ≡ ${s} (mod ${n})`).join(' &nbsp;|&nbsp; ')}</strong><br>
+    Ellenőrzés: ${a}·${xPart} = ${a*xPart} ≡ ${((a*xPart)%n+n)%n} (mod ${n}) ${((a*xPart)%n+n)%n===((b%n+n)%n)?'✓':'✗'}
+  </div>`;
+}
+function setLC(a,b,n){
+  document.getElementById('lcA').value=a;
+  document.getElementById('lcB').value=b;
+  document.getElementById('lcN').value=n;
+  solveLC();
+}
+
+/* ─── CRT solver ─── */
+function solveCRT(){
+  const a=parseInt(document.getElementById('crtA').value);
+  const m=parseInt(document.getElementById('crtM').value);
+  const b=parseInt(document.getElementById('crtB').value);
+  const n=parseInt(document.getElementById('crtN').value);
+  const el=document.getElementById('crtResult');
+  if(isNaN(a)||isNaN(m)||isNaN(b)||isNaN(n)||m<=0||n<=0){el.innerHTML='<span class="pill pill-no">Érvénytelen</span>';return;}
+  const d=gcd(m,n);
+  if((b-a)%d!==0){
+    el.innerHTML=`<span class="pill pill-no">(${m},${n})=${d} ∤ (${b}−${a})=${b-a} → NEM MEGOLDHATÓ</span>`;
+    return;
+  }
+  const {g,x:y0}=gcdExt(m,n);
+  const scale=(b-a)/d;
+  const ySol=y0*scale;
+  const L=lcm(m,n);
+  const xSol=((a+m*ySol)%L+L)%L;
+  el.innerHTML=`<span class="pill pill-ok">Megoldható: (${m},${n})=${d} ∣ ${b-a} ✓</span>
+  <div class="ex-box small mt-1">
+    lkkt(${m},${n}) = ${L}<br>
+    <strong>x ≡ <span style="color:var(--acc)">${xSol}</span> (mod ${L})</strong><br>
+    Ellenőrzés: ${xSol} mod ${m} = ${xSol%m} ${xSol%m===((a%m+m)%m)?'✓':'✗'}, &nbsp;
+    ${xSol} mod ${n} = ${xSol%n} ${xSol%n===((b%n+n)%n)?'✓':'✗'}
+  </div>`;
+}
+function setCRT(a,m,b,n){
+  document.getElementById('crtA').value=a; document.getElementById('crtM').value=m;
+  document.getElementById('crtB').value=b; document.getElementById('crtN').value=n;
+  solveCRT();
+}
+
+/* ─── TAB 3: Phi & modular exp ─── */
+function calcPhi(){
+  const n=parseInt(document.getElementById('phiN').value);
+  const el=document.getElementById('phiResult');
+  if(isNaN(n)||n<1){el.innerHTML='<span class="pill pill-no">n ≥ 1 kell</span>';return;}
+  const phi=eulerPhi(n);
+  const f=factorize(n);
+  const fStr=Object.entries(f).map(([p,k])=>k>1?`${p}^${k}`:p).join('·')||'1';
+  const formula=Object.entries(f).map(([p,k])=>
+    k>1?`(${p}^${k}−${p}^${k-1})`:`(${p}−1)`).join('·');
+  el.innerHTML=`<div class="row g-2">
+    <div class="col-6 text-center"><div class="metric-lbl">φ(${n})</div><div class="metric-val">${phi}</div></div>
+    <div class="col-6 text-center"><div class="metric-lbl">Prímfelbontás</div><div class="metric-val" style="font-size:.9rem;">${fStr}</div></div>
+  </div>
+  <div class="ex-box small mt-2">
+    φ(${n}) = ${formula} = <strong>${phi}</strong>
+    ${n>1?`<br>Euler-tétel: ha (a,${n})=1, akkor a<sup>${phi}</sup>≡1 (mod ${n})`:''}
+  </div>`;
+}
+function phiSet(n){document.getElementById('phiN').value=n;calcPhi();}
+
+function modExpCalc(){
+  const a=parseInt(document.getElementById('mpA').value);
+  const k=parseInt(document.getElementById('mpK').value);
+  const n=parseInt(document.getElementById('mpN').value);
+  if(isNaN(a)||isNaN(k)||isNaN(n)||n<=0||k<0){
+    document.getElementById('mpResult').innerHTML='<span class="pill pill-no">Érvénytelen</span>';return;
+  }
+  const steps=modPowSteps(a,k,n);
+  const result=modPow(a,k,n);
+  const binK=k.toString(2);
+  const stepsEl=document.getElementById('mpSteps');
+  stepsEl.innerHTML=`<p class="text-muted small mb-1">${a}^${k} binárisan: ${binK}<sub>2</sub></p>`+
+    steps.slice(0,10).map(s=>`<div class="step-row ${s.bit?'hi':'grey'}">
+      <span style="color:#64748b;width:4.5rem;">${a}^${Math.pow(2,s.pw)|0}:</span>
+      <span style="width:5rem;">${s.curr}</span>
+      ${s.bit?`<span style="color:var(--acc)">✓ eredmény: ${s.oldRes}→${s.res}</span>`:'<span style="color:#334155">— 0 bit, kihagyva</span>'}
+    </div>`).join('')+
+    (steps.length>10?`<div class="text-muted small">... (${steps.length-10} lépés kihagyva)</div>`:'');
+  document.getElementById('mpResult').innerHTML=`<div class="thm-box mt-1">
+    <strong>${a}<sup>${k}</sup> mod ${n} = <span style="color:var(--acc);font-size:1.15rem;">${result}</span></strong>
+  </div>`;
+}
+function setModExp(a,k,n){
+  document.getElementById('mpA').value=a;
+  document.getElementById('mpK').value=k;
+  document.getElementById('mpN').value=n;
+  modExpCalc();
+}
+
+/* ─── TAB 4: ℤₙ táblázat & Caesar & aritmetika ─── */
+function buildZ8Static(){
+  const red=[1,3,5,7];
+  let h='<table class="mult-tbl"><tr><th>·</th>';
+  red.forEach(a=>h+=`<th>${a}</th>`);
+  h+='</tr>';
+  red.forEach(a=>{
+    h+=`<tr><th>${a}</th>`;
+    red.forEach(b=>{
+      const p=(a*b)%8;
+      h+=`<td class="${p===1?'ident':''}">${p}</td>`;
+    });
+    h+='</tr>';
+  });
+  h+='</table>';
+  document.getElementById('z8static').innerHTML=h;
+}
+
+function buildZnTable(){
+  const n=parseInt(document.getElementById('znInput').value);
+  if(isNaN(n)||n<2||n>13){document.getElementById('znTable').innerHTML='<span class="text-muted small">2≤n≤13</span>';return;}
+  const el=[];
+  for(let i=0;i<n;i++) el.push(i);
+  let h=`<p class="text-muted small mb-1">ℤ${n} szorzástábla (piros=zérusosztó, zöld=1):</p>
+    <table class="mult-tbl"><tr><th>×</th>`;
+  el.forEach(a=>h+=`<th>${a}</th>`);
+  h+='</tr>';
+  el.forEach(a=>{
+    h+=`<tr><th>${a}</th>`;
+    el.forEach(b=>{
+      const p=(a*b)%n;
+      const cls=p===0&&a!==0&&b!==0?'zero':p===1?'ident':'';
+      h+=`<td${cls?` class="${cls}"`:''} >${p}</td>`;
+    });
+    h+='</tr>';
+  });
+  h+='</table>';
+  document.getElementById('znTable').innerHTML=h;
+}
+
+function caesarEncode(){
+  const msg=document.getElementById('caesarMsg').value.toUpperCase().replace(/[^A-Z]/g,'');
+  const k=((parseInt(document.getElementById('caesarK').value)%26)+26)%26;
+  if(!msg) return;
+  let enc='', viz='<div class="d-flex flex-wrap gap-1">';
+  msg.split('').forEach(c=>{
+    const ov=c.charCodeAt(0)-65;
+    const ev=(ov+k)%26;
+    const ec=String.fromCharCode(ev+65);
+    enc+=ec;
+    viz+=`<div style="text-align:center;">
+      <div style="width:1.6rem;height:1.6rem;background:#1e2533;border-radius:4px;line-height:1.6rem;font-family:monospace;font-size:.85rem;color:#e2e8f0;">${c}</div>
+      <div style="font-size:.6rem;color:#475569">+${k}↓</div>
+      <div style="width:1.6rem;height:1.6rem;background:rgba(163,230,53,.15);border-radius:4px;line-height:1.6rem;font-family:monospace;font-size:.85rem;color:var(--acc);">${ec}</div>
+    </div>`;
+  });
+  viz+='</div>';
+  document.getElementById('caesarViz').innerHTML=viz;
+  document.getElementById('caesarResult').innerHTML=`<div class="ex-box small">
+    Eredeti: <strong>${msg}</strong> &nbsp;|&nbsp; Kulcs: k=${k}<br>
+    Titkosított: <strong style="color:var(--acc);letter-spacing:.08em">${enc}</strong>
+  </div>`;
+  document.getElementById('caesarCipher').value=enc;
+}
+
+function caesarDecode(){
+  const cipher=document.getElementById('caesarCipher').value.toUpperCase().replace(/[^A-Z]/g,'');
+  const k=((parseInt(document.getElementById('caesarK').value)%26)+26)%26;
+  if(!cipher) return;
+  const dec=cipher.split('').map(c=>String.fromCharCode(((c.charCodeAt(0)-65-k+26)%26)+65)).join('');
+  document.getElementById('caesarDecResult').innerHTML=`Visszafejtve (k=${k}): <strong style="color:var(--acc)">${dec}</strong>`;
+}
+
+function zopCalc(){
+  const a=parseInt(document.getElementById('zopA').value);
+  const b=parseInt(document.getElementById('zopB').value);
+  const n=parseInt(document.getElementById('zopN').value);
+  const op=document.getElementById('zopOp').value;
+  const el=document.getElementById('zopResult');
+  if(isNaN(a)||isNaN(b)||isNaN(n)||n<2){el.innerHTML='<span class="pill pill-no">Érvénytelen</span>';return;}
+  const aN=((a%n)+n)%n, bN=((b%n)+n)%n;
+  let result,note='';
+  if(op==='+') result=(aN+bN)%n;
+  else if(op==='−') result=((aN-bN)%n+n)%n;
+  else if(op==='×') result=(aN*bN)%n;
+  else {
+    const {g,x}=gcdExt(bN,n);
+    if(g!==1){el.innerHTML=`<span class="pill pill-no">${b} nem invertálható mod ${n} (${bN},${n})=${g}≠1</span>`;return;}
+    const inv=((x%n)+n)%n;
+    result=(aN*inv)%n;
+    note=`<br>${b}⁻¹ ≡ ${inv} (mod ${n})`;
+  }
+  el.innerHTML=`<div class="ex-box small">
+    ${aN} ${op} ${bN} ≡ <strong style="color:var(--acc);font-size:1.05rem;">${result}</strong> (mod ${n})${note}
+  </div>`;
+}
+
+/* ─── TAB 5: RSA ─── */
+let RSA={p:43,q:59,n:2537,k:2436,e:13,d:937};
+
+function rsaInit(){
+  const p=parseInt(document.getElementById('rsaP').value);
+  const q=parseInt(document.getElementById('rsaQ').value);
+  if(p===q){document.getElementById('rsaInfo1').innerHTML='<span style="color:#ef4444">p ≠ q szükséges!</span>';return;}
+  const n=p*q, k=(p-1)*(q-1);
+  RSA={p,q,n,k,e:0,d:0};
+  document.getElementById('rsaInfo1').innerHTML=`n = ${p}×${q} = <strong>${n}</strong>, k = φ(n) = ${p-1}×${q-1} = <strong>${k}</strong>`;
+  // Populate e dropdown
+  const sel=document.getElementById('rsaE');
+  const eList=[];
+  for(let e=2;e<Math.min(k,150);e++) if(gcd(e,k)===1) eList.push(e);
+  sel.innerHTML=eList.slice(0,30).map(e=>`<option value="${e}">${e}</option>`).join('');
+  rsaSelectE();
+}
+
+function rsaSelectE(){
+  const e=parseInt(document.getElementById('rsaE').value);
+  if(!e||!RSA.k) return;
+  const {g,x}=gcdExt(e,RSA.k);
+  const d=((x%RSA.k)+RSA.k)%RSA.k;
+  RSA.e=e; RSA.d=d;
+  const chk=modPow(e,1,RSA.k); // just to verify
+  const edModK=(BigInt(e)*BigInt(d))%BigInt(RSA.k);
+  document.getElementById('rsaInfo2').innerHTML=
+    `e=${e}, d=<strong>${d}</strong> &nbsp;[ed = ${e}×${d} ≡ ${edModK} (mod ${RSA.k}) ✓]`;
+}
+
+function rsaRun(){
+  const {n,e,d}=RSA;
+  if(!n||!e||!d){document.getElementById('rsaOutput').innerHTML='<span class="pill pill-no">Állítsd be a paramétereket!</span>';return;}
+  const msg=document.getElementById('rsaMsg').value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
+  if(!msg){document.getElementById('rsaOutput').innerHTML='<span class="pill pill-no">Írj be latin betűket!</span>';return;}
+
+  // Pair into blocks (2-char if n>2525, else 1-char)
+  const use2=(n>2525);
+  const blocks=[];
+  if(use2){
+    for(let i=0;i<msg.length;i+=2){
+      if(i+1<msg.length){
+        blocks.push({lbl:msg[i]+msg[i+1], x:(msg.charCodeAt(i)-65)*100+(msg.charCodeAt(i+1)-65)});
+      } else {
+        blocks.push({lbl:msg[i], x:msg.charCodeAt(i)-65});
+      }
+    }
+  } else {
+    for(let i=0;i<msg.length;i++) blocks.push({lbl:msg[i],x:msg.charCodeAt(i)-65});
+  }
+
+  const rows=blocks.map(({lbl,x})=>{
+    const c=modPow(x,e,n);
+    const xBack=modPow(c,d,n);
+    const ok=xBack===x;
+    return {lbl,x,c,xBack,ok};
+  });
+
+  let html=`<div class="ex-box small mb-2">
+    n=${n}, e=${e} (nyilvános) &nbsp;|&nbsp; d=${d} (titkos)<br>
+    Blokkolás: ${use2?'kétjegyű (n>2525)':'egyjegyű (n≤2525)'}
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+    <thead><tr style="border-bottom:1px solid #334155;">
+      <th style="padding:.35rem;color:#64748b;text-align:left">Blokk</th>
+      <th style="padding:.35rem;color:#64748b;text-align:center">x</th>
+      <th style="padding:.35rem;color:#64748b;text-align:center">c=x<sup>e</sup> mod n</th>
+      <th style="padding:.35rem;color:#64748b;text-align:center">c<sup>d</sup> mod n</th>
+    </tr></thead><tbody>`;
+  rows.forEach(({lbl,x,c,xBack,ok})=>{
+    html+=`<tr style="border-bottom:1px solid #1e2533;">
+      <td style="padding:.35rem;font-family:monospace;color:#e2e8f0">${lbl}</td>
+      <td style="padding:.35rem;text-align:center;color:#94a3b8">${x}</td>
+      <td style="padding:.35rem;text-align:center;color:var(--acc);font-weight:700">${c}</td>
+      <td style="padding:.35rem;text-align:center;color:${ok?'#34d399':'#ef4444'}">${xBack} ${ok?'✓':'✗'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>
+  <div class="thm-box small mt-2">
+    Titkosított: <strong>${rows.map(r=>String(r.c).padStart(use2?4:2,'0')).join('')}</strong><br>
+    Visszafejtve: ${rows.every(r=>r.ok)?'<span style="color:#34d399">✓ Helyes!</span>':'<span style="color:#ef4444">✗ Hiba</span>'}
+  </div>`;
+  document.getElementById('rsaOutput').innerHTML=html;
+}
+
+function rsaPreset(){
+  document.getElementById('rsaP').value='43';
+  document.getElementById('rsaQ').value='59';
+  rsaInit();
+  // Select e=13
+  const sel=document.getElementById('rsaE');
+  Array.from(sel.options).forEach((o,i)=>{if(o.value==='13') sel.selectedIndex=i;});
+  rsaSelectE();
+  document.getElementById('rsaMsg').value='SZIA';
+  rsaRun();
+}
+
+/* ─── Init ─── */
+function reRender(el){
+  if(window.renderMathInElement) renderMathInElement(el,{
+    delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},
+                {left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],
+    throwOnError:false
+  });
+}
+function initAll(){
+  reRender(document.body);
+  buildISBNRow();
+  buildZ8Static();
+  rsaInit();
+  calcPhi();
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(initAll,400));
+else setTimeout(initAll,400);
+</script>
+{% endblock %}

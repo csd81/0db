@@ -1,0 +1,716 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #f59e0b; --acc2: #fbbf24; --acc3: #d97706; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(245,158,11,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.pill { display:inline-block; padding:.2rem .7rem; border-radius:999px; font-size:.78rem; font-weight:600; margin:.15rem; }
+.pill-ok  { background:rgba(52,211,153,.15); color:#34d399; border:1px solid #34d399; }
+.pill-no  { background:rgba(239,68,68,.15);  color:#ef4444;  border:1px solid #ef4444; }
+.pill-neu { background:rgba(148,163,184,.1); color:#94a3b8; border:1px solid #334155; }
+.badge-acc { background:rgba(245,158,11,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; }
+.def-box  { border-left:3px solid var(--acc); background:rgba(245,158,11,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.thm-box  { border-left:3px solid #22d3ee; background:rgba(34,211,238,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.ex-box   { border-left:3px solid #a3e635; background:rgba(163,230,53,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.inp-sm   { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .6rem; font-size:.85rem; width:5rem; text-align:center; }
+.inp-sm:focus { outline:none; border-color:var(--acc); }
+.inp-md   { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .7rem; font-size:.85rem; width:7rem; text-align:center; }
+.inp-md:focus { outline:none; border-color:var(--acc); }
+.btn-acc  { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec  { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.step-row { display:flex; align-items:center; gap:.5rem; padding:.4rem .7rem; border-radius:6px; font-family:monospace; font-size:.9rem; margin:.2rem 0; transition:background .3s; }
+.step-row.hi { background:rgba(245,158,11,.18); color:#fcd34d; }
+.step-row.done { background:rgba(52,211,153,.1); color:#6ee7b7; }
+.step-row.grey { color:#475569; }
+.metric-lbl { font-size:.72rem; color:#64748b; text-transform:uppercase; letter-spacing:.05em; }
+.metric-val { font-size:1.4rem; font-weight:700; color:var(--acc); }
+canvas { border-radius:8px; display:block; }
+table.cmp-tbl { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.cmp-tbl th { background:#1a1f2e; color:#94a3b8; padding:.5rem .7rem; text-align:left; border-bottom:1px solid #1e2533; }
+table.cmp-tbl td { padding:.5rem .7rem; border-bottom:1px solid #161b28; vertical-align:middle; }
+table.cmp-tbl tr:hover td { background:rgba(245,158,11,.04); }
+.sieve-grid { display:grid; grid-template-columns:repeat(10,1fr); gap:4px; max-width:460px; }
+.sieve-cell { background:#1e2533; color:#94a3b8; border-radius:5px; text-align:center; padding:.35rem 0; font-size:.82rem; cursor:pointer; transition:background .2s,color .2s; font-family:monospace; }
+.sieve-cell.current { background:var(--acc); color:#000; font-weight:700; }
+.sieve-cell.prime   { background:rgba(245,158,11,.25); color:#fcd34d; font-weight:600; }
+.sieve-cell.removed { background:#0e1014; color:#2d3748; text-decoration:line-through; }
+.sieve-cell.one     { background:#12161f; color:#475569; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:960px;">
+  <!-- Header -->
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(245,158,11,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-hash" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">17. fejezet — Számelmélet 1.</h4>
+      <small class="text-muted">Oszthatóság · lnko · Diofantosz · lkkt · Prímszámok</small>
+    </div>
+    <a href="{{ url_for('demos.learn_ila') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← ILA főoldal</a>
+  </div>
+
+  <!-- Nav tabs -->
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-oszt',this)">Oszthatóság</span>
+    <span class="ila-nav-link" onclick="showTab('t-lnko',this)">lnko &amp; Euklideszi</span>
+    <span class="ila-nav-link" onclick="showTab('t-diof',this)">Diofantoszi egyenletek</span>
+    <span class="ila-nav-link" onclick="showTab('t-lkkt',this)">lkkt &amp; Prímfelbontás</span>
+    <span class="ila-nav-link" onclick="showTab('t-prim',this)">Prímszámok+</span>
+  </div>
+
+  <!-- ═══════════════ TAB 1: Oszthatóság ═══════════════ -->
+  <div id="t-oszt" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">1. Definíció</div>
+          <div class="def-box">
+            <strong>a∣b</strong> (a osztja b-t), ha létezik olyan egész <em>q</em>, hogy <strong>b = a·q</strong>.
+          </div>
+          <p class="text-muted small mb-1">Jelölés: <code>a∣b</code>. Ha nem osztja: <code>a∤b</code>.</p>
+
+          <div class="badge-acc mb-2">2. Tétel — Oszthatóság tulajdonságai</div>
+          <table class="cmp-tbl">
+            <tr><td><span class="pill pill-neu">1.</span></td><td>a∣a &nbsp;<em>(reflexív)</em></td></tr>
+            <tr><td><span class="pill pill-neu">2.</span></td><td>a∣b, b∣c ⟹ a∣c &nbsp;<em>(tranzitív)</em></td></tr>
+            <tr><td><span class="pill pill-neu">3.</span></td><td>a∣b, b∣a ⟹ a=±b &nbsp;<em>(antiszimmetrikus)</em></td></tr>
+            <tr><td><span class="pill pill-neu">4.</span></td><td>a∣b, a∣c ⟹ a∣(bx+cy) &nbsp;<em>(lin. kombináció)</em></td></tr>
+            <tr><td><span class="pill pill-neu">5.</span></td><td>a∣b ⟹ ac∣bc</td></tr>
+            <tr><td><span class="pill pill-neu">6.</span></td><td>ac∣bc, c≠0 ⟹ a∣b</td></tr>
+            <tr><td><span class="pill pill-neu">7.</span></td><td>1∣a és a∣0 mindig</td></tr>
+            <tr><td><span class="pill pill-neu">8.</span></td><td>a∣b, b≠0 ⟹ |a|≤|b|</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">3. Tétel — Maradékos osztás</div>
+          <div class="thm-box">
+            Minden egész <em>b</em>-hez és <em>a&gt;0</em>-hoz egyértelműen léteznek <em>q, r</em>, hogy:<br>
+            <strong>b = a·q + r, &nbsp; 0 ≤ r &lt; a</strong>
+          </div>
+          <div class="ex-box small">
+            <strong>38 = 12·3 + 2</strong> &nbsp;(q=3, r=2)<br>
+            <strong>40 = (−7)·(−5) + 5</strong> &nbsp;(de r kell ≥0: 40=(−7)·(−6)+(−2) — nem helyes; 40=(−7)·(−6)+… ellenőrizzük inkább a könyvbeli példát: 40÷(−7): 40=(−7)·(−6)+(-2) → r<0, korrigálás: 40=(−7)·(−5)+5 ✓)
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Interaktív oszthatóság-ellenőrző</div>
+          <p class="text-muted small">Ellenőrzés: a∣b?</p>
+          <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+            <label class="text-muted small">a =</label>
+            <input id="divA" class="inp-sm" type="number" value="12">
+            <label class="text-muted small">b =</label>
+            <input id="divB" class="inp-sm" type="number" value="36">
+            <button class="btn-acc" onclick="checkDiv()">Ellenőriz</button>
+          </div>
+          <div id="divResult" class="mt-2"></div>
+          <div class="mt-3">
+            <p class="text-muted small mb-1">Gyors példák:</p>
+            <div class="d-flex gap-1 flex-wrap">
+              <button class="btn-sec" onclick="setDiv(12,18)">12∣18?</button>
+              <button class="btn-sec" onclick="setDiv(7,49)">7∣49?</button>
+              <button class="btn-sec" onclick="setDiv(5,37)">5∣37?</button>
+              <button class="btn-sec" onclick="setDiv(13,0)">13∣0?</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 2: lnko & Euklideszi ═══════════════ -->
+  <div id="t-lnko" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">7. Definíció — lnko</div>
+          <div class="def-box">
+            <strong>(a,b)</strong> = a és b legnagyobb közös osztója (lnko):<br>
+            <em>d = (a,b)</em> ahol d∣a, d∣b, és minden c∣a, c∣b esetén c∣d.
+          </div>
+          <div class="ex-box small">
+            (12,18) = <strong>6</strong> &nbsp;|&nbsp; (12,20) = <strong>4</strong> &nbsp;|&nbsp; (14,33) = <strong>1</strong>
+          </div>
+        </div>
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">11. Tétel — Bézout-azonosság</div>
+          <div class="thm-box">
+            Ha d=(a,b), akkor léteznek x₀,y₀ egészek, hogy:<br>
+            <strong>a·x₀ + b·y₀ = d</strong>
+          </div>
+          <p class="text-muted small">Az Euklideszi algoritmus visszahelyettesítéssel adja meg x₀,y₀-t.</p>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">14–15. Tétel — Tulajdonságok</div>
+          <div class="thm-box small">
+            (a,b) = (b,a) = (a,−b) = (|a|,|b|) = (a, b+ax)<br>
+            m·(a,b) = (ma,mb)<br>
+            Ha g=(a,b): (a/g, b/g) = 1
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc mb-2">20–22. Euklideszi algoritmus — animáció</div>
+          <p class="text-muted small">22. Példa: gcd(528, 1020) = 12; back-substitúció: 528·29 − 1020·15 = 12</p>
+          <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+            <label class="text-muted small">a =</label>
+            <input id="eucA" class="inp-md" type="number" value="528">
+            <label class="text-muted small">b =</label>
+            <input id="eucB" class="inp-md" type="number" value="1020">
+            <button class="btn-acc" onclick="eucReset()">Indít</button>
+            <button class="btn-sec" onclick="eucStep()">Lépés →</button>
+            <button class="btn-sec" onclick="eucAuto()">▶ Auto</button>
+          </div>
+          <div id="eucSteps" style="min-height:180px;"></div>
+          <div id="eucBezout" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 3: Diofantoszi ═══════════════ -->
+  <div id="t-diof" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Lineáris diofantoszi egyenlet</div>
+          <div class="def-box">
+            <strong>ax + by = c</strong> &nbsp;(a,b,c egészek; x,y ismeretlen egészek)
+          </div>
+          <div class="thm-box">
+            <strong>Megoldhatóság:</strong> akkor és csak akkor megoldható, ha<br>
+            <strong>(a,b) ∣ c</strong>
+          </div>
+        </div>
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">23. Tétel — Általános megoldás</div>
+          <div class="thm-box small">
+            Ha x₀,y₀ egy partikuláris megoldás, az összes megoldás:<br>
+            <strong>x = x₀ + k·(b/g)</strong><br>
+            <strong>y = y₀ − k·(a/g)</strong><br>
+            ahol g=(a,b), k∈ℤ tetszőleges.
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">24. Példa</div>
+          <div class="ex-box small">
+            <strong>20x + 12y = 16</strong><br>
+            g = (20,12) = 4, és 4∣16 ✓<br>
+            Egyszerűsítve: 5x + 3y = 4<br>
+            Partikuláris: x₀=−4, y₀=8<br>
+            Általános: <strong>x = −4+3k, y = 8−5k</strong>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Interaktív diofantoszi megoldó</div>
+          <p class="text-muted small">ax + by = c egyenlet megoldása az Euklideszi algoritmussal</p>
+          <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+            <label class="text-muted small">a =</label>
+            <input id="diofA" class="inp-sm" type="number" value="20">
+            <label class="text-muted small">b =</label>
+            <input id="diofB" class="inp-sm" type="number" value="12">
+            <label class="text-muted small">c =</label>
+            <input id="diofC" class="inp-sm" type="number" value="16">
+            <button class="btn-acc" onclick="solveDiof()">Megold</button>
+          </div>
+          <div id="diofResult" style="min-height:200px;"></div>
+          <div class="mt-3">
+            <p class="text-muted small mb-1">Gyors példák:</p>
+            <div class="d-flex gap-1 flex-wrap">
+              <button class="btn-sec" onclick="setDiof(20,12,16)">20x+12y=16</button>
+              <button class="btn-sec" onclick="setDiof(3,5,1)">3x+5y=1</button>
+              <button class="btn-sec" onclick="setDiof(6,4,3)">6x+4y=3 (∤)</button>
+              <button class="btn-sec" onclick="setDiof(15,25,35)">15x+25y=35</button>
+            </div>
+          </div>
+          <div class="card-dark mt-3" style="background:#0a0d14;">
+            <p class="text-muted small mb-2">k paraméter vizsgálata (partikuláris megoldás esetén):</p>
+            <div class="d-flex gap-2 align-items-center">
+              <label class="text-muted small">k =</label>
+              <input id="diofK" class="inp-sm" type="number" value="0">
+              <button class="btn-sec" onclick="evalK()">Kiértékel</button>
+            </div>
+            <div id="diofKResult" class="mt-2 small" style="font-family:monospace;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 4: lkkt & Prímfelbontás ═══════════════ -->
+  <div id="t-lkkt" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">25. Definíció — lkkt</div>
+          <div class="def-box">
+            <strong>[a,b]</strong> = a és b legkisebb közös többszöröse (lkkt):<br>
+            <em>m = [a,b]</em> ahol a∣m, b∣m, és a∣t, b∣t ⟹ m∣t.
+          </div>
+          <div class="ex-box small">
+            [16,24] = <strong>48</strong> &nbsp;|&nbsp; [24,30] = <strong>120</strong>
+          </div>
+        </div>
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">30. Tétel</div>
+          <div class="thm-box">
+            <strong>(a,b) · [a,b] = a · b</strong>
+          </div>
+          <div class="thm-box mt-2 small">
+            <strong>31. Tétel (asszociativitás):</strong><br>
+            (a,b,c) = ((a,b),c)<br>
+            [a,b,c] = [[a,b],c]
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">38. Tétel — Prímfelbontással</div>
+          <div class="thm-box small">
+            Ha <em>a = ∏pᵢᵃⁱ</em>, <em>b = ∏pᵢᵇⁱ</em>, akkor:<br>
+            <strong>(a,b) = ∏pᵢ^min(aᵢ,bᵢ)</strong><br>
+            <strong>[a,b] = ∏pᵢ^max(aᵢ,bᵢ)</strong>
+          </div>
+          <div class="ex-box small mt-2">
+            <strong>39. Példa:</strong><br>
+            550 = 2¹·5²·11¹<br>
+            6776 = 2³·7¹·11²<br>
+            lnko = 2¹·5⁰·7⁰·11¹ = <strong>22</strong><br>
+            lkkt = 2³·5²·7¹·11² = <strong>169400</strong>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Interaktív lnko/lkkt számológép</div>
+          <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+            <label class="text-muted small">a =</label>
+            <input id="gcdA" class="inp-md" type="number" value="550">
+            <label class="text-muted small">b =</label>
+            <input id="gcdB" class="inp-md" type="number" value="6776">
+            <button class="btn-acc" onclick="calcGcdLcm()">Számol</button>
+          </div>
+          <div id="gcdResult"></div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Prímfelbontás lépésről lépésre</div>
+          <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+            <label class="text-muted small">n =</label>
+            <input id="pfN" class="inp-md" type="number" value="550">
+            <button class="btn-acc" onclick="primeFactorize()">Felbont</button>
+          </div>
+          <div id="pfResult"></div>
+          <div class="mt-3">
+            <p class="text-muted small mb-1">Gyors példák:</p>
+            <div class="d-flex gap-1 flex-wrap">
+              <button class="btn-sec" onclick="pfSet(550)">550</button>
+              <button class="btn-sec" onclick="pfSet(6776)">6776</button>
+              <button class="btn-sec" onclick="pfSet(360)">360</button>
+              <button class="btn-sec" onclick="pfSet(1024)">1024</button>
+              <button class="btn-sec" onclick="pfSet(2310)">2310</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 5: Prímszámok+ ═══════════════ -->
+  <div id="t-prim" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">40. Példa — Eratosztenész szitája (≤100)</div>
+          <div class="d-flex gap-2 mb-2 align-items-center flex-wrap">
+            <button class="btn-acc" onclick="sieveStep()">Lépés →</button>
+            <button class="btn-sec" onclick="sieveAuto()">▶ Auto</button>
+            <button class="btn-sec" onclick="sieveReset()">Újra</button>
+            <span id="sieveStatus" class="text-muted small ms-2"></span>
+          </div>
+          <div id="sieveGrid" class="sieve-grid"></div>
+          <div id="sievePrimes" class="mt-2 small" style="color:#fcd34d;"></div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">43. Tétel — Prímszámtétel</div>
+          <div class="thm-box">
+            Ha π(n) = prímek száma 1..n közt, akkor:<br>
+            <strong>lim π(n) / (n / ln n) = 1</strong>
+          </div>
+          <p class="text-muted small">Vagyis nagy n-re π(n) ≈ n/ln(n). Pl. π(1000) = 168, 1000/ln(1000) ≈ 145.</p>
+          <div class="row mt-2 g-2">
+            <div class="col-4 text-center">
+              <div class="metric-lbl">π(100)</div>
+              <div class="metric-val">25</div>
+              <div class="text-muted" style="font-size:.7rem;">100/ln100 ≈ 21.7</div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="metric-lbl">π(1000)</div>
+              <div class="metric-val">168</div>
+              <div class="text-muted" style="font-size:.7rem;">1000/ln1000 ≈ 144.8</div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="metric-lbl">π(10⁶)</div>
+              <div class="metric-val">78498</div>
+              <div class="text-muted" style="font-size:.7rem;">10⁶/ln10⁶ ≈ 72382</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">32–37. Tétel — Prímek alapjai</div>
+          <div class="def-box small">
+            <strong>32. Def:</strong> p&gt;1 prímszám, ha osztói csak 1 és p.
+          </div>
+          <div class="thm-box small mt-1">
+            <strong>34. Tétel:</strong> Minden n&gt;1 prímek szorzata.
+          </div>
+          <div class="thm-box small mt-1">
+            <strong>37. Tétel (Főtétel):</strong> Az n&gt;1 prímfaktorizációja egyértelmű (sorrend eltekintve).
+          </div>
+        </div>
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">41. Tétel — Végtelen sok prím (Euklidész)</div>
+          <div class="thm-box small">
+            <strong>Bizonyítás:</strong> Tegyük fel, véges sok prím van: p₁,p₂,…,pₙ.<br>
+            Legyen N = p₁·p₂·⋯·pₙ + 1.<br>
+            N-t pᵢ-vel osztva r=1 marad → pᵢ ∤ N.<br>
+            Tehát N-nek van egy új prímtényezője. ⟹ Ellentmondás. □
+          </div>
+          <div class="ex-box small mt-1">
+            pl. 2·3·5·7·11·13+1 = 30031 = 59·509 (mindkettő új prím!)
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">42. Tétel — Tetszőlegesen nagy prímhézagok</div>
+          <div class="thm-box small">
+            Minden k-ra létezik k egymást követő összetett szám:<br>
+            <strong>(k+1)! + 2, (k+1)! + 3, …, (k+1)! + (k+1)</strong><br>
+            Mindegyiket osztja a megfelelő j (j=2..k+1).
+          </div>
+          <div id="gapCalc" class="mt-2">
+            <div class="d-flex gap-2 align-items-center">
+              <label class="text-muted small">k =</label>
+              <input id="gapK" class="inp-sm" type="number" value="4" min="1" max="8">
+              <button class="btn-sec" onclick="calcGap()">Mutat</button>
+            </div>
+            <div id="gapResult" class="mt-2 small" style="font-family:monospace;color:#94a3b8;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ─── TAB 1: Oszthatóság ─── */
+function checkDiv(){
+  const a=parseInt(document.getElementById('divA').value);
+  const b=parseInt(document.getElementById('divB').value);
+  const el=document.getElementById('divResult');
+  if(isNaN(a)||isNaN(b)){el.innerHTML='<span class="pill pill-no">Érvénytelen bemenet</span>';return;}
+  if(a===0){el.innerHTML='<span class="pill pill-no">a ≠ 0 szükséges</span>';return;}
+  const ok=b%a===0;
+  const q=Math.trunc(b/a), r=b-a*q;
+  el.innerHTML=`
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="pill ${ok?'pill-ok':'pill-no'}">${a}∣${b} — ${ok?'IGEN ✓':'NEM ✗'}</span>
+    </div>
+    <div class="ex-box small mt-2">
+      Maradékos osztás: ${b} = ${a}·${q} + ${r}
+      ${ok?'<br><span style="color:#34d399">r=0, tehát osztja!</span>':'<br><span style="color:#ef4444">r='+r+'≠0, nem osztja.</span>'}
+    </div>`;
+}
+function setDiv(a,b){
+  document.getElementById('divA').value=a;
+  document.getElementById('divB').value=b;
+  checkDiv();
+}
+
+/* ─── TAB 2: Euklideszi algoritmus ─── */
+let eucRows=[], eucIdx=0, eucTimer=null;
+let eucAval=0, eucBval=0;
+
+function gcdExtended(a,b){
+  if(b===0) return {g:a,x:1,y:0,steps:[{a,b,q:0,r:0,last:true}]};
+  const steps=[];
+  let r0=a,r1=b,s0=1,s1=0,t0=0,t1=1;
+  while(r1!==0){
+    const q=Math.floor(r0/r1), r2=r0-q*r1;
+    const s2=s0-q*s1, t2=t0-q*t1;
+    steps.push({a:r0,b:r1,q,r:r2,s0,s1,t0,t1});
+    r0=r1;r1=r2;s0=s1;s1=s2;t0=t1;t1=t2;
+  }
+  return {g:r0,x:s0,y:t0,steps};
+}
+
+function eucReset(){
+  clearInterval(eucTimer); eucTimer=null;
+  eucAval=parseInt(document.getElementById('eucA').value)||528;
+  eucBval=parseInt(document.getElementById('eucB').value)||1020;
+  const {g,x,y,steps}=gcdExtended(eucAval,eucBval);
+  eucRows=steps; eucIdx=0;
+  window._eucG=g; window._eucX=x; window._eucY=y;
+  document.getElementById('eucSteps').innerHTML='<p class="text-muted small">Kattints "Lépés →"-re vagy ▶ Auto-ra!</p>';
+  document.getElementById('eucBezout').innerHTML='';
+}
+
+function eucStep(){
+  if(eucIdx>=eucRows.length){
+    const {g,x,y}=window;
+    const _g=window._eucG, _x=window._eucX, _y=window._eucY;
+    document.getElementById('eucBezout').innerHTML=`
+      <div class="thm-box mt-2">
+        <strong>lnko(${eucAval},${eucBval}) = ${_g}</strong><br>
+        Bézout: <strong>${eucAval}·(${_x}) + ${eucBval}·(${_y}) = ${_g}</strong><br>
+        Ellenőrzés: ${eucAval*_x+eucBval*_y} = ${_g} ✓
+      </div>`;
+    clearInterval(eucTimer); eucTimer=null;
+    return;
+  }
+  const container=document.getElementById('eucSteps');
+  if(eucIdx===0) container.innerHTML='';
+  const {a,b,q,r}=eucRows[eucIdx];
+  const div=document.createElement('div');
+  div.className='step-row hi';
+  div.innerHTML=`<span style="color:#64748b;width:2rem;">${eucIdx+1}.</span> ${a} = ${b}·${q} + <strong style="color:${r===0?'#34d399':'#fcd34d'}">${r}</strong>`;
+  container.appendChild(div);
+  setTimeout(()=>{div.className='step-row done';},600);
+  eucIdx++;
+}
+
+function eucAuto(){
+  if(eucTimer){clearInterval(eucTimer);eucTimer=null;return;}
+  if(eucIdx===0) eucReset();
+  eucTimer=setInterval(()=>{
+    eucStep();
+    if(eucIdx>eucRows.length){clearInterval(eucTimer);eucTimer=null;}
+  },800);
+}
+
+/* ─── TAB 3: Diofantoszi ─── */
+let _diofG=0,_diofX0=0,_diofY0=0,_diofA=0,_diofB=0,_diofC=0;
+
+function solveDiof(){
+  const a=parseInt(document.getElementById('diofA').value);
+  const b=parseInt(document.getElementById('diofB').value);
+  const c=parseInt(document.getElementById('diofC').value);
+  _diofA=a; _diofB=b; _diofC=c;
+  const el=document.getElementById('diofResult');
+  if(isNaN(a)||isNaN(b)||isNaN(c)){el.innerHTML='<span class="pill pill-no">Érvénytelen</span>';return;}
+  const {g,x,y}=gcdExtended(Math.abs(a),Math.abs(b));
+  _diofG=g;
+  if(c%g!==0){
+    el.innerHTML=`
+      <div class="pill pill-no mb-2">(${a},${b}) = ${g} ∤ ${c} → NEM MEGOLDHATÓ</div>
+      <div class="ex-box small">A feltétel: (a,b)∣c, azaz ${g}∣${c} kell. ${c}/${g}=${(c/g).toFixed(2)}, nem egész.</div>`;
+    return;
+  }
+  const sx = a<0?-x:x, sy = b<0?-y:y;
+  const scale=c/g;
+  _diofX0=sx*scale; _diofY0=sy*scale;
+  const bOverG=b/g, aOverG=a/g;
+  el.innerHTML=`
+    <div class="pill pill-ok mb-2">(${a},${b}) = ${g} | ${c} → MEGOLDHATÓ ✓</div>
+    <div class="ex-box">
+      <strong>lnko(${Math.abs(a)},${Math.abs(b)}) = ${g}</strong><br>
+      Bézout: ${Math.abs(a)}·(${x}) + ${Math.abs(b)}·(${y}) = ${g}<br>
+      Partikuláris: x₀ = ${_diofX0}, y₀ = ${_diofY0}<br>
+      Ellenőrzés: ${a}·(${_diofX0}) + ${b}·(${_diofY0}) = ${a*_diofX0+b*_diofY0} ${a*_diofX0+b*_diofY0===c?'✓':'✗'}<br>
+      <hr style="border-color:#334155;margin:.5rem 0;">
+      <strong>Általános megoldás:</strong><br>
+      x = <strong>${_diofX0} + ${bOverG}·k</strong><br>
+      y = <strong>${_diofY0} − ${aOverG}·k</strong> &nbsp;(k∈ℤ)
+    </div>`;
+}
+
+function evalK(){
+  const k=parseInt(document.getElementById('diofK').value);
+  if(!_diofG||isNaN(k)){document.getElementById('diofKResult').textContent='Először old meg az egyenletet!';return;}
+  const bOverG=_diofB/_diofG, aOverG=_diofA/_diofG;
+  const xk=_diofX0+bOverG*k, yk=_diofY0-aOverG*k;
+  const check=_diofA*xk+_diofB*yk;
+  document.getElementById('diofKResult').innerHTML=
+    `k=${k}: x=${xk}, y=${yk} → ${_diofA}·${xk}+${_diofB}·${yk} = <strong style="color:${check===_diofC?'#34d399':'#ef4444'}">${check}</strong> ${check===_diofC?'✓':'✗'}`;
+}
+
+function setDiof(a,b,c){
+  document.getElementById('diofA').value=a;
+  document.getElementById('diofB').value=b;
+  document.getElementById('diofC').value=c;
+  solveDiof();
+}
+
+/* ─── TAB 4: lkkt & Prímfelbontás ─── */
+function gcd(a,b){while(b){[a,b]=[b,a%b];}return Math.abs(a);}
+
+function calcGcdLcm(){
+  const a=parseInt(document.getElementById('gcdA').value);
+  const b=parseInt(document.getElementById('gcdB').value);
+  const el=document.getElementById('gcdResult');
+  if(isNaN(a)||isNaN(b)||a===0||b===0){el.innerHTML='<span class="pill pill-no">Érvénytelen</span>';return;}
+  const g=gcd(a,b), l=Math.abs(a*b)/g;
+  const fa=factorize(Math.abs(a)), fb=factorize(Math.abs(b));
+  el.innerHTML=`
+    <div class="row g-2">
+      <div class="col-6 text-center"><div class="metric-lbl">lnko(${a},${b})</div><div class="metric-val">${g}</div></div>
+      <div class="col-6 text-center"><div class="metric-lbl">lkkt(${a},${b})</div><div class="metric-val">${l.toLocaleString()}</div></div>
+    </div>
+    <div class="ex-box small mt-2">
+      ${a} = ${formatFactors(fa)}<br>
+      ${b} = ${formatFactors(fb)}<br>
+      lnko = min kitevők, lkkt = max kitevők<br>
+      Ellenőrzés: lnko·lkkt = ${g}·${l} = ${g*l} = |${a}·${b}| = ${Math.abs(a*b)} ✓
+    </div>`;
+}
+
+function factorize(n){
+  const f={};
+  for(let p=2;p*p<=n;p++){while(n%p===0){f[p]=(f[p]||0)+1;n=Math.floor(n/p);}}
+  if(n>1) f[n]=(f[n]||0)+1;
+  return f;
+}
+
+function formatFactors(f){
+  return Object.entries(f).map(([p,e])=>e>1?`${p}^${e}`:p).join('·')||'1';
+}
+
+function primeFactorize(){
+  let n=parseInt(document.getElementById('pfN').value);
+  const orig=n;
+  const el=document.getElementById('pfResult');
+  if(isNaN(n)||n<2){el.innerHTML='<span class="pill pill-no">n ≥ 2 szükséges</span>';return;}
+  const steps=[];
+  for(let p=2;p*p<=n;p++){
+    while(n%p===0){steps.push({n,p,q:Math.floor(n/p)});n=Math.floor(n/p);}
+  }
+  if(n>1) steps.push({n,p:n,q:1,last:true});
+  const html=steps.map((s,i)=>`
+    <div class="step-row ${i===steps.length-1?'done':'grey'}" style="${i===steps.length-1?'':'border-left:2px solid #1e2533;padding-left:.7rem;'}">
+      ${s.n} = ${s.p} × ${s.q===1?s.p:s.q}
+    </div>`).join('');
+  const f=factorize(orig);
+  el.innerHTML=html+`<div class="ex-box small mt-1"><strong>${orig} = ${formatFactors(f)}</strong></div>`;
+}
+
+function pfSet(n){
+  document.getElementById('pfN').value=n;
+  primeFactorize();
+}
+
+/* ─── TAB 5: Eratosztenész ─── */
+let sieveState={cells:[], curPrime:2, phase:'start', primes:[], timer:null};
+
+function sieveReset(){
+  clearInterval(sieveState.timer); sieveState.timer=null;
+  sieveState={cells:Array.from({length:100},(_,i)=>({n:i+1,state:i===0?'one':''})),curPrime:2,phase:'start',primes:[],timer:null};
+  renderSieve();
+  document.getElementById('sieveStatus').textContent='';
+  document.getElementById('sievePrimes').textContent='';
+}
+
+function renderSieve(){
+  const g=document.getElementById('sieveGrid');
+  g.innerHTML='';
+  sieveState.cells.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='sieve-cell '+(c.state||'');
+    d.textContent=c.n;
+    g.appendChild(d);
+  });
+  const primes=sieveState.cells.filter(c=>c.state==='prime').map(c=>c.n);
+  const inProg=sieveState.cells.filter(c=>c.state==='current').map(c=>c.n);
+  document.getElementById('sievePrimes').textContent=
+    primes.length?'Prímek: '+primes.join(', '):'';
+}
+
+function sieveStep(){
+  const s=sieveState;
+  if(s.phase==='done'){document.getElementById('sieveStatus').textContent='Kész!';return;}
+  if(s.phase==='start'){
+    s.cells[s.curPrime-1].state='current';
+    s.phase='mark';
+    renderSieve();
+    document.getElementById('sieveStatus').textContent=`Aktuális prím: ${s.curPrime}`;
+    return;
+  }
+  if(s.phase==='mark'){
+    s.cells[s.curPrime-1].state='prime';
+    for(let m=2*s.curPrime;m<=100;m+=s.curPrime){
+      if(s.cells[m-1].state==='') s.cells[m-1].state='removed';
+    }
+    let next=s.curPrime+1;
+    while(next<=100 && s.cells[next-1].state!=='') next++;
+    if(next>Math.sqrt(100)){
+      s.cells.forEach(c=>{if(c.state==='') c.state='prime';});
+      s.phase='done';
+    } else {
+      s.curPrime=next;
+      s.phase='start';
+    }
+    renderSieve();
+    return;
+  }
+}
+
+function sieveAuto(){
+  if(sieveState.timer){clearInterval(sieveState.timer);sieveState.timer=null;return;}
+  sieveState.timer=setInterval(()=>{
+    sieveStep();
+    if(sieveState.phase==='done'){clearInterval(sieveState.timer);sieveState.timer=null;}
+  },400);
+}
+
+function calcGap(){
+  const k=parseInt(document.getElementById('gapK').value)||4;
+  const fact=(n)=>{let r=1;for(let i=2;i<=n;i++)r*=i;return r;};
+  const base=fact(k+1);
+  const el=document.getElementById('gapResult');
+  let html=`(k+1)! = (${k}+1)! = ${base}<br>`;
+  for(let j=2;j<=k+1;j++){
+    const v=base+j;
+    html+=`${base}+${j} = <strong>${v}</strong> — osztója: <strong>${j}</strong><br>`;
+  }
+  el.innerHTML=html;
+}
+
+/* ─── Init ─── */
+function reRender(el){
+  if(window.renderMathInElement) renderMathInElement(el,{
+    delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},
+                {left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],
+    throwOnError:false
+  });
+}
+function initAll(){
+  reRender(document.body);
+  eucReset();
+  sieveReset();
+  calcGap();
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(initAll,400));
+else setTimeout(initAll,400);
+</script>
+{% endblock %}
