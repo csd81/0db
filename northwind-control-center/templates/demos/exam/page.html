@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Tétel {{ '%02d' % topic.n }} — {{ topic.title }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="window.__renderExamMath && window.__renderExamMath()"></script>
+
+<div class="container-fluid py-3 exam-page" style="max-width:1080px;"
+     data-tetel-n="{{ topic.n }}"
+     data-tetel-path="{{ topic.path }}"
+     data-prev="{{ topic.prev or '' }}"
+     data-next="{{ topic.next or '' }}">
+
+  {# Breadcrumb + path pill #}
+  <nav style="font-size:.75rem;color:#6b7280;margin-bottom:.5rem;">
+    <a href="/demos/learn/tetelsor" style="color:#6b7280;text-decoration:none;">Tételsor</a>
+    &rsaquo;
+    <a href="/demos/dimat/path/{{ topic.path }}" style="color:{{ topic.path_meta.colour }};text-decoration:none;">
+      {{ topic.path_meta.title }}
+    </a>
+    &rsaquo;
+    <span style="color:#9ca3af;">Tétel {{ '%02d' % topic.n }}</span>
+  </nav>
+
+  {# Header #}
+  <header class="exam-header" style="margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+      <span class="tetel-badge" style="background:{{ topic.path_meta.colour }}22;color:{{ topic.path_meta.colour }};
+            border:1px solid {{ topic.path_meta.colour }}55;padding:.25rem .65rem;border-radius:999px;
+            font-weight:700;font-size:.78rem;letter-spacing:.05em;">
+        TÉTEL {{ '%02d' % topic.n }}
+      </span>
+      <span class="path-pill" style="background:#161b22;color:{{ topic.path_meta.colour }};
+            padding:.2rem .6rem;border-radius:.35rem;font-size:.72rem;font-weight:600;">
+        {{ topic.path_meta.title }}
+      </span>
+    </div>
+    <h1 style="font-size:1.85rem;margin:.65rem 0 .35rem 0;color:#e6edf3;font-weight:700;">{{ topic.title }}</h1>
+    {% if topic.glossary %}
+    <p style="color:#9ca3af;font-size:.95rem;margin:0;font-style:italic;">{{ topic.glossary }}</p>
+    {% endif %}
+  </header>
+
+  {# Prev/Next strip #}
+  <div class="exam-nav" style="display:flex;justify-content:space-between;gap:.5rem;
+       margin-bottom:1.25rem;padding:.5rem 0;border-bottom:1px solid #1f2937;">
+    {% if topic.prev %}
+    <a href="/demos/dimat/exam/{{ '%02d' % topic.prev }}" style="color:{{ topic.path_meta.colour }};
+       text-decoration:none;font-size:.85rem;">&larr; Tétel {{ '%02d' % topic.prev }}</a>
+    {% else %}<span></span>{% endif %}
+    {% if topic.next %}
+    <a href="/demos/dimat/exam/{{ '%02d' % topic.next }}" style="color:{{ topic.path_meta.colour }};
+       text-decoration:none;font-size:.85rem;">Tétel {{ '%02d' % topic.next }} &rarr;</a>
+    {% else %}<span></span>{% endif %}
+  </div>
+
+  {# Key formulas card #}
+  {% if topic.formulas %}
+  <div class="exam-formula-card" style="background:#0f1722;border-left:3px solid {{ topic.path_meta.colour }};
+       border-radius:0 8px 8px 0;padding:.85rem 1.1rem;margin-bottom:1.5rem;">
+    <div style="font-size:.65rem;font-weight:700;letter-spacing:.12em;color:{{ topic.path_meta.colour }};
+         text-transform:uppercase;margin-bottom:.5rem;">Kulcsképletek</div>
+    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.4rem;">
+      {% for f in topic.formulas %}
+      <li style="color:#e2e8f0;font-size:1rem;">{{ f|safe }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Body #}
+  <article class="exam-body" style="color:#cbd5e1;line-height:1.65;font-size:.95rem;">
+    {{ topic.body_html|safe }}
+  </article>
+
+  {# Mélyebbre panel #}
+  {% if topic.related_dimat or topic.related_ila or topic.related_exercises %}
+  <section class="exam-deeper" style="margin-top:2rem;background:#0d1117;border:1px solid #1f2937;
+           border-radius:8px;padding:1rem 1.25rem;">
+    <div style="font-size:.65rem;font-weight:700;letter-spacing:.12em;color:#9ca3af;
+         text-transform:uppercase;margin-bottom:.65rem;">Mélyebbre</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+      {% for ch in topic.related_dimat %}
+      <a href="/demos/dimat/{{ ch }}" class="op-btn"
+         style="padding:.4rem .85rem;font-size:.78rem;text-decoration:none;
+                border:1px solid #38bdf855;color:#38bdf8;background:#38bdf811;border-radius:.35rem;">
+        Dimat · {{ ch }}
+      </a>
+      {% endfor %}
+      {% for ch in topic.related_ila %}
+      <a href="/demos/ila/{{ ch }}" class="op-btn"
+         style="padding:.4rem .85rem;font-size:.78rem;text-decoration:none;
+                border:1px solid #a78bfa55;color:#a78bfa;background:#a78bfa11;border-radius:.35rem;">
+        ILA · {{ ch }}
+      </a>
+      {% endfor %}
+      {% for ch in topic.related_exercises %}
+      <a href="/demos/dimat/{{ ch }}#feladatok" class="op-btn"
+         style="padding:.4rem .85rem;font-size:.78rem;text-decoration:none;
+                border:1px solid #10b98155;color:#10b981;background:#10b98111;border-radius:.35rem;">
+        Feladatok · {{ ch }}
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# CTA strip #}
+  <section class="exam-cta" style="margin-top:1.5rem;display:flex;flex-wrap:wrap;gap:.6rem;">
+    {% if topic.related_dimat %}
+    <a class="op-btn" style="padding:.5rem 1rem;font-size:.82rem;text-decoration:none;
+       border:1px solid #38bdf8;color:#38bdf8;background:transparent;border-radius:.35rem;font-weight:600;"
+       href="/demos/dimat/{{ topic.related_dimat[0] }}#kviz">🎯 Kvíz a témáról</a>
+    {% endif %}
+    <button class="op-btn" id="dq-exam-srs-add"
+       style="padding:.5rem 1rem;font-size:.82rem;border:1px solid #a78bfa;color:#a78bfa;
+              background:transparent;border-radius:.35rem;font-weight:600;cursor:pointer;">
+      🔁 Add SRS-be
+    </button>
+    <a class="op-btn" style="padding:.5rem 1rem;font-size:.82rem;text-decoration:none;
+       border:1px solid #6b7280;color:#9ca3af;background:transparent;border-radius:.35rem;font-weight:600;"
+       href="/demos/dimat/path/{{ topic.path }}">&larr; Vissza a {{ topic.path_meta.title|lower }} útvonalhoz</a>
+  </section>
+
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/dimat/exam.js') }}" defer></script>
+{% endblock %}

@@ -3,7 +3,7 @@ demos_bp.py — Visual Demo Lab blueprint.
 """
 import json
 import os
-from flask import Blueprint, render_template, request, jsonify, current_app, Response
+from flask import Blueprint, render_template, request, jsonify, current_app, Response, abort
 from auth import login_required
 import meta_db
 from services import demo_service
@@ -5265,3 +5265,55 @@ def global_infra_route_dynamic():
     if 'error' in result and not result.get('terrestrial'):
         return jsonify(result), 400
     return jsonify(result)
+
+
+# =============================================================================
+# Tételsor — 39-topic exam syllabus overlay
+# =============================================================================
+from services import dimat_exam
+
+
+@demos_bp.route('/dimat/exam/<nn>')
+def dimat_exam_topic(nn):
+    try:
+        n = int(nn)
+    except (TypeError, ValueError):
+        abort(404)
+    if not 1 <= n <= 39:
+        abort(404)
+    topic = dimat_exam.get_topic(n)
+    if topic is None:
+        meta = dimat_exam.PATH_META[dimat_exam.PATH_OF_N[n]]
+        prev_n = n - 1 if n - 1 >= meta['range'][0] else None
+        next_n = n + 1 if n + 1 <= meta['range'][1] else None
+        topic = {
+            'n': n, 'title': f'Tétel {n} (még nincs feltöltve)',
+            'glossary': 'Ez a tétel még nem rendelkezik feltöltött tartalommal.',
+            'path': dimat_exam.PATH_OF_N[n], 'path_meta': meta,
+            'related_dimat': [], 'related_ila': [], 'related_exercises': [],
+            'formulas': [], 'body_html': '<p><em>Hamarosan…</em></p>',
+            'prev': prev_n, 'next': next_n,
+        }
+    return render_template('demos/exam/page.html', topic=topic)
+
+
+@demos_bp.route('/dimat/path/<slug>')
+def dimat_path_index(slug):
+    if slug not in ('combo', 'graph', 'szamelm'):
+        abort(404)
+    topics = dimat_exam.list_topics_in_path(slug)
+    meta = dimat_exam.path_meta(slug)
+    return render_template('demos/exam/path.html', slug=slug, topics=topics, meta=meta)
+
+
+@demos_bp.route('/ila/path/foundations')
+def ila_path_foundations():
+    return render_template('demos/exam/path_foundations.html')
+
+
+@demos_bp.route('/learn/tetelsor')
+def learn_tetelsor():
+    return render_template('learn/tetelsor.html',
+                           combo=dimat_exam.list_topics_in_path('combo'),
+                           graph=dimat_exam.list_topics_in_path('graph'),
+                           szamelm=dimat_exam.list_topics_in_path('szamelm'))
