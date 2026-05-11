@@ -61,33 +61,15 @@
     if (opt.dash) ctx.setLineDash([]);
   };
 
-  Lib.timer = (host, opts, onExpire) => {
+  // Timer removed from games — Lib.timer is a no-op shim that preserves the
+  // .elapsed() / .stop() / .element API so existing callers (ch0, ch10,
+  // questGame, textModeQuiz) keep working without edits. Elapsed time is
+  // still tracked for end-screen stats; no visible countdown, no auto-expire.
+  Lib.timer = (_host, _opts, _onExpire) => {
     const start = Date.now();
-    const limit = opts.limit || 60;
-    const div = document.createElement('div');
-    Object.assign(div.style, {
-      position: 'absolute', right: '.6rem', top: '.5rem',
-      fontFamily: 'monospace', fontSize: '1rem', fontWeight: 700,
-      color: '#fbbf24', background: 'rgba(13,17,23,.85)',
-      padding: '.25rem .65rem', borderRadius: '.3rem',
-      pointerEvents: 'none', zIndex: 5,
-    });
-    host.appendChild(div);
-    let raf;
-    const tick = () => {
-      const elapsed = (Date.now() - start) / 1000;
-      const left = Math.max(0, limit - elapsed);
-      const mm = Math.floor(left / 60);
-      const ss = Math.floor(left % 60);
-      div.textContent = `${mm}:${ss.toString().padStart(2, '0')}`;
-      if (left <= 5) div.style.color = '#ef4444';
-      if (left <= 0) { cancelAnimationFrame(raf); if (onExpire) onExpire(elapsed); return; }
-      raf = requestAnimationFrame(tick);
-    };
-    tick();
     return {
-      element: div,
-      stop() { cancelAnimationFrame(raf); },
+      element: document.createElement('div'),  // detached, never appended
+      stop() {},
       elapsed: () => (Date.now() - start) / 1000,
     };
   };
