@@ -396,15 +396,13 @@
       return;
     }
     const total = qs.length;
-    const timeLimit = difficulty === 'easy' ? 150 : difficulty === 'hard' ? 60 : 90;
     _quizState = {
       qs, idx: 0, answers: {}, t0: Date.now(),
-      timeLeft: timeLimit, difficulty, total,
+      difficulty, total,
     };
     stage.innerHTML = '';
     stage.appendChild(quizUI());
     showCurrent();
-    startTimer();
   }
 
   function quizUI() {
@@ -413,7 +411,6 @@
       el('div', {class: 'dq-quiz-progress-bar', id: 'dq-qprog'})));
     wrap.appendChild(el('div', {class: 'dq-quiz-controls'}, [
       el('div', {id: 'dq-quiz-counter', style: {fontSize: '.78rem', color: '#94a3b8'}}, ''),
-      el('div', {class: 'dq-quiz-timer', id: 'dq-quiz-timer'}, ''),
     ]));
     wrap.appendChild(el('div', {id: 'dq-quiz-q-area'}));
     wrap.appendChild(el('div', {id: 'dq-quiz-actions', style: {marginTop: '.6rem', display: 'flex', gap: '.5rem'}}));
@@ -463,33 +460,9 @@
     }
   }
 
-  function startTimer() {
-    const s = _quizState;
-    if (!s) return;
-    if (s._timerHandle) clearInterval(s._timerHandle);
-    const tick = () => {
-      if (!_quizState || _quizState !== s) { clearInterval(s._timerHandle); return; }
-      s.timeLeft--;
-      const t = document.getElementById('dq-quiz-timer');
-      if (t) {
-        const mm = Math.floor(Math.max(0, s.timeLeft) / 60);
-        const ss = Math.max(0, s.timeLeft) % 60;
-        t.textContent = `${mm}:${ss.toString().padStart(2, '0')}`;
-        if (s.timeLeft <= 10) t.classList.add('warn');
-      }
-      if (s.timeLeft <= 0) {
-        clearInterval(s._timerHandle);
-        submitQuiz();
-      }
-    };
-    tick();
-    s._timerHandle = setInterval(tick, 1000);
-  }
-
   async function submitQuiz() {
     const s = _quizState;
     if (!s) return;
-    if (s._timerHandle) clearInterval(s._timerHandle);
     let score = 0;
     const wrong = [];
     s.qs.forEach(q => {
