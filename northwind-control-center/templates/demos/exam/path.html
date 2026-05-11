@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ meta.title }} útvonal — Tételsor{% endblock %}
+{% block content %}
+<div class="container-fluid py-3" style="max-width:1100px;">
+
+  <nav style="font-size:.75rem;color:#6b7280;margin-bottom:.4rem;">
+    <a href="/demos/learn/tetelsor" style="color:#6b7280;text-decoration:none;">Tételsor</a>
+    &rsaquo;
+    <span style="color:{{ meta.colour }};">{{ meta.title }} útvonal</span>
+  </nav>
+
+  <header style="margin-bottom:1.6rem;">
+    <div style="display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;">
+      <h1 style="font-size:1.95rem;margin:0;color:#e6edf3;font-weight:700;">
+        <span style="color:{{ meta.colour }};">{{ meta.title }}</span> útvonal
+      </h1>
+      <span style="color:#6b7280;font-size:.85rem;">tételek
+        {{ '%02d' % meta.range[0] }}–{{ '%02d' % meta.range[1] }}
+        ({{ topics|length }} db)</span>
+    </div>
+    <p style="color:#9ca3af;margin:.4rem 0 0 0;font-size:.92rem;">
+      {% if slug == 'combo' %}A kombinatorika alapfogalmai a számolási modellektől a partíciós problémákig.
+      {% elif slug == 'graph' %}A gráfelmélet teljes ívű útja: alapfogalmaktól a hálózati eredményekig.
+      {% elif slug == 'szamelm' %}A számelmélet algoritmikus oldala: prímektől az RSA-ig.
+      {% endif %}
+    </p>
+  </header>
+
+  <div class="path-stack" style="display:flex;flex-direction:column;gap:.65rem;">
+    {% for t in topics %}
+    <a href="/demos/dimat/exam/{{ '%02d' % t.n }}"
+       class="exam-card"
+       style="display:block;text-decoration:none;background:#0d1117;border:1px solid #1f2937;
+              border-radius:8px;padding:.85rem 1rem;transition:border-color .15s,transform .1s;">
+      <div style="display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;">
+        <span class="tetel-badge"
+              style="background:{{ meta.colour }}22;color:{{ meta.colour }};
+                     border:1px solid {{ meta.colour }}55;padding:.16rem .55rem;border-radius:999px;
+                     font-weight:700;font-size:.7rem;letter-spacing:.05em;flex-shrink:0;">
+          {{ '%02d' % t.n }}
+        </span>
+        <span style="color:#e6edf3;font-weight:600;font-size:1.02rem;">{{ t.title }}</span>
+        {% if t.missing %}
+        <span style="color:#f59e0b;font-size:.7rem;background:#f59e0b22;padding:.1rem .4rem;border-radius:.25rem;">
+          még nincs feltöltve
+        </span>
+        {% endif %}
+      </div>
+      {% if t.glossary %}
+      <p style="color:#94a3b8;margin:.35rem 0 0 0;font-size:.83rem;line-height:1.45;">{{ t.glossary }}</p>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top:1.5rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+    <a href="/demos/learn/tetelsor"
+       style="padding:.4rem .9rem;font-size:.8rem;color:#9ca3af;text-decoration:none;
+              border:1px solid #374151;border-radius:.35rem;">
+      &larr; Vissza a teljes tételsorhoz
+    </a>
+    {% if slug == 'combo' %}
+    <a href="/demos/dimat/path/graph" style="padding:.4rem .9rem;font-size:.8rem;color:#38bdf8;
+       text-decoration:none;border:1px solid #38bdf855;border-radius:.35rem;">
+      Gráfelmélet útvonal &rarr;
+    </a>
+    {% elif slug == 'graph' %}
+    <a href="/demos/dimat/path/combo" style="padding:.4rem .9rem;font-size:.8rem;color:#f59e0b;
+       text-decoration:none;border:1px solid #f59e0b55;border-radius:.35rem;">
+      &larr; Kombinatorika útvonal
+    </a>
+    <a href="/demos/dimat/path/szamelm" style="padding:.4rem .9rem;font-size:.8rem;color:#a78bfa;
+       text-decoration:none;border:1px solid #a78bfa55;border-radius:.35rem;">
+      Számelmélet útvonal &rarr;
+    </a>
+    {% elif slug == 'szamelm' %}
+    <a href="/demos/dimat/path/graph" style="padding:.4rem .9rem;font-size:.8rem;color:#38bdf8;
+       text-decoration:none;border:1px solid #38bdf855;border-radius:.35rem;">
+      &larr; Gráfelmélet útvonal
+    </a>
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+.exam-card:hover { border-color:{{ meta.colour }}!important; transform:translateY(-1px); }
+</style>
+{% endblock %}

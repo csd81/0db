@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}ILA Alapok útvonal — Tételsor{% endblock %}
+{% block content %}
+{% set found = [
+  (1, 'Halmazelmélet', 'Halmazok, részhalmazok, Boole-algebra, Venn-diagramok'),
+  (2, 'Megfeleltetések és leképezések', 'Függvények: injektív, szürjektív, bijektív, kompozíció'),
+  (3, 'Permutációk', 'Ciklusjelölés, szimmetrikus csoport, paritás'),
+  (4, 'Relációk és gráfok', 'Ekvivalencia, részben rendezés, szomszédsági mátrix'),
+  (5, 'Halmazok számossága', 'Megszámlálhatóság, Cantor-átló, kontinuum'),
+  (6, 'Matematikai logika', 'Igazságtábla, tautológia, DNF / KNF, predikátum logika'),
+  (7, 'Komplex számok', 'De Moivre-formula, Euler-azonosság, gyökök'),
+  (8, 'Absztrakt algebra', 'Csoportok, gyűrűk, testek, Lagrange-tétel'),
+  (9, 'Matematikai bizonyítások', 'Indukció, indirekt bizonyítás, oszthatóság')
+] %}
+
+<div class="container-fluid py-3" style="max-width:1100px;">
+
+  <nav style="font-size:.75rem;color:#6b7280;margin-bottom:.4rem;">
+    <a href="/demos/learn/tetelsor" style="color:#6b7280;text-decoration:none;">Tételsor</a>
+    &rsaquo;
+    <span style="color:#10b981;">ILA Alapok útvonal</span>
+  </nav>
+
+  <header style="margin-bottom:1.6rem;">
+    <h1 style="font-size:1.95rem;margin:0;color:#e6edf3;font-weight:700;">
+      <span style="color:#10b981;">ILA Alapok</span> útvonal
+    </h1>
+    <p style="color:#9ca3af;margin:.5rem 0 0 0;font-size:.92rem;">
+      A 39 vizsgatételen kívüli, alapozó témák — halmazelmélet, leképezések,
+      logika, komplex számok, absztrakt algebra, bizonyítás-technikák. Minden kártya
+      a meglévő ILA fejezet teljes oldalára visz.
+    </p>
+  </header>
+
+  <div class="path-stack" style="display:flex;flex-direction:column;gap:.65rem;">
+    {% for n, title, glossary in found %}
+    <a href="/demos/ila/ch{{ n }}" class="exam-card"
+       style="display:block;text-decoration:none;background:#0d1117;border:1px solid #1f2937;
+              border-radius:8px;padding:.85rem 1rem;transition:border-color .15s,transform .1s;">
+      <div style="display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;">
+        <span class="tetel-badge"
+              style="background:#10b98122;color:#10b981;
+                     border:1px solid #10b98155;padding:.16rem .55rem;border-radius:999px;
+                     font-weight:700;font-size:.7rem;letter-spacing:.05em;flex-shrink:0;">
+          F{{ n }}
+        </span>
+        <span style="color:#e6edf3;font-weight:600;font-size:1.02rem;">{{ title }}</span>
+        <span style="color:#6b7280;font-size:.72rem;margin-left:auto;">ila_ch{{ n }}</span>
+      </div>
+      <p style="color:#94a3b8;margin:.35rem 0 0 0;font-size:.83rem;line-height:1.45;">{{ glossary }}</p>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top:1.5rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+    <a href="/demos/learn/tetelsor"
+       style="padding:.4rem .9rem;font-size:.8rem;color:#9ca3af;text-decoration:none;
+              border:1px solid #374151;border-radius:.35rem;">
+      &larr; Vissza a teljes tételsorhoz
+    </a>
+    <a href="/demos/learn/ila"
+       style="padding:.4rem .9rem;font-size:.8rem;color:#a78bfa;text-decoration:none;
+              border:1px solid #a78bfa55;border-radius:.35rem;">
+      ILA fejezet-index &rarr;
+    </a>
+  </div>
+
+</div>
+
+<style>
+.exam-card:hover { border-color:#10b981!important; transform:translateY(-1px); }
+</style>
+{% endblock %}
