@@ -2469,7 +2469,253 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTERS (7–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 7 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 7 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c7-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c7-crt',this)">7.1 CRT klasszikus</span>
+    <span class="ila-nav-link" onclick="showTab('t-c7-pelda',this)">7.5 Példa</span>
+    <span class="ila-nav-link" onclick="showTab('t-c7-altalanos',this)">7.2 Általános</span>
+    <span class="ila-nav-link" onclick="showTab('t-c7-szorzas',this)">7.3 Párhuzamos szorzás</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c7-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">7. fejezet — Kínai Maradéktétel és nagy számok szorzása</span>
+      <p>
+        A fejezetben ismertetett eredményt <strong>1000 évvel ezelőtt</strong> már ismerték kínai
+        matematikusok — Sun Tzu „<em>Aritmetikai értekezése</em>" (Sūnzǐ Suànjīng, kb. Kr.u. 3–5. század)
+        tartalmazza az első ismert változatát. A modern algoritmikus számelméletben ma is
+        <em>alapműveletként</em> használjuk.
+      </p>
+      <div class="def-box">
+        <strong>7.1 Probléma.</strong> Adott modulusok $m_1, \dots, m_r$ és maradékok $a_1, \dots, a_r$ esetén
+        van-e olyan $x$, hogy
+        $$x \equiv a_i \pmod{m_i}, \quad i = 1, \dots, r.$$
+        Ezt <strong>szimultán kongruenciarendszernek</strong> nevezzük.
+      </div>
+      <p style="color:#94a3b8;font-style:italic;">
+        Sun Tzu eredeti problémája: „Adott egy szám, amely 3-mal osztva 2-t, 5-tel 3-at, 7-tel 2-t ad
+        maradékul. Mi a szám?" Megoldás: $23 + 105k$.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-link-45deg me-1"></i> Modern alkalmazások</h6>
+      <ul>
+        <li><strong>Párhuzamos aritmetika</strong> — nagy számok szorzása kis modulusokon (7.3)</li>
+        <li><strong>RSA dekódolás gyorsítása</strong> — $\bmod\, p$ és $\bmod\, q$ külön, majd CRT-vel egyesítjük (4× gyorsulás)</li>
+        <li><strong>Lagrange-interpoláció</strong> — polinomokkal a CRT polinom-változata</li>
+        <li><strong>Hash-szétosztás</strong> — adatbázisok szétdarabolása</li>
+        <li><strong>Diszkrét Fourier-transzformáció</strong> — Schönhage–Strassen szorzás</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: CRT klasszikus ═══ -->
+  <div id="t-c7-crt" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">7.3 Tétel — Kínai Maradéktétel (CRT)</span>
+      <div class="def-box">
+        Ha az $m_i$ modulusok <strong>páronként relatív prímek</strong>, akkor a (7.1)
+        kongruenciarendszernek <em>bármilyen</em> $a_1, \dots, a_r$ esetén
+        <strong>pontosan egy</strong> $x$ gyöke van $\pmod M$ ahol
+        $$M = \operatorname{lkkt}(m_1, \dots, m_r) = m_1 m_2 \cdots m_r.$$
+      </div>
+
+      <h6>Bizonyítás (egyértelműség)</h6>
+      <p>
+        Ha $x_1, x_2$ mind kielégíti a rendszert, akkor $x_1 \equiv x_2 \pmod{m_i}$ mindegyik $m_i$-re.
+        A 6.14 tétel szerint $x_1 \equiv x_2 \pmod M$.
+      </p>
+
+      <h6>Konstruktív képlet</h6>
+      <p>Először oldjuk meg minden $i$-re:</p>
+      $$y_i \cdot \frac{M}{m_i} \equiv 1 \pmod{m_i}$$
+      <p>
+        (Mindig megoldható, mert $\tfrac{M}{m_i}$ és $m_i$ relatív prímek a páronkénti rel.prímség
+        miatt.) Akkor a megoldás:
+      </p>
+      $$\boxed{\;x \equiv \sum_{i=1}^r a_i \cdot y_i \cdot \frac{M}{m_i} \pmod M\;}$$
+
+      <div class="thm-box">
+        <strong>7.4 Megj.</strong> Az algoritmus <strong>polinomiális</strong> — $\tfrac{M}{m_i}$-k és $y_i$-k kiszámítása
+        Euklideszi algoritmussal. Az $\tfrac{M}{m_i}$ konstansok és $y_i$ értékek <em>előre</em>
+        kiszámíthatók, így ismétlődő szorzásoknál minimális overhead.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: 7.5 Példa ═══ -->
+  <div id="t-c7-pelda" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">7.5 Példa — 4-modulusú rendszer</span>
+      <p>Oldjuk meg:</p>
+      $$\begin{cases}
+        x \equiv 5 \pmod 7 \\
+        x \equiv 2 \pmod{12} \\
+        x \equiv 3 \pmod{25} \\
+        x \equiv 0 \pmod{11}
+      \end{cases}$$
+
+      <h6>Lépés 1 — Ellenőrzés és $M$</h6>
+      <p>$7, 12, 25, 11$ páronként relatív prímek (különböző prímfelbontásokból). Így</p>
+      $$M = 7 \cdot 12 \cdot 25 \cdot 11 = \mathbf{23\,100}.$$
+
+      <h6>Lépés 2 — $M / m_i$ értékek</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>$i$</th><th>$m_i$</th><th>$M / m_i$</th><th>kongruencia</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>7</td><td>3300</td><td>$y_1 \cdot 3300 \equiv 1 \pmod 7$</td></tr>
+          <tr><td>2</td><td>12</td><td>1925</td><td>$y_2 \cdot 1925 \equiv 1 \pmod{12}$</td></tr>
+          <tr><td>3</td><td>25</td><td>924</td><td>$y_3 \cdot 924 \equiv 1 \pmod{25}$</td></tr>
+          <tr><td>4</td><td>11</td><td>2100</td><td>$y_4 \cdot 2100 \equiv 1 \pmod{11}$</td></tr>
+        </tbody>
+      </table>
+
+      <h6>Lépés 3 — $y_i$ inverzek (Euklideszi alg.)</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>$y_i$</th><th>érték</th><th>(pozitívan)</th></tr></thead>
+        <tbody>
+          <tr><td>$y_1$</td><td>$-2$</td><td>$\equiv 5$</td></tr>
+          <tr><td>$y_2$</td><td>$5$</td><td>$5$</td></tr>
+          <tr><td>$y_3$</td><td>$-1$</td><td>$\equiv 24$</td></tr>
+          <tr><td>$y_4$</td><td>$-1$</td><td>$\equiv 10$</td></tr>
+        </tbody>
+      </table>
+
+      <h6>Lépés 4 — Összegzés</h6>
+      $$\begin{aligned}
+        x &\equiv 5 \cdot 5 \cdot 3300 + 2 \cdot 5 \cdot 1925 + 3 \cdot 24 \cdot 924 + 0 \cdot 10 \cdot 2100 \\
+          &= 82\,500 + 19\,250 + 66\,528 + 0 \\
+          &= 168\,278 \\
+          &\equiv \mathbf{6\,578} \pmod{23\,100}
+      \end{aligned}$$
+
+      <div class="def-box">
+        <strong>Ellenőrzés:</strong>
+        $6578 \bmod 7 = 5$ ✓; $\;6578 \bmod 12 = 2$ ✓; $\;6578 \bmod 25 = 3$ ✓; $\;6578 \bmod 11 = 0$ ✓.
+      </div>
+
+      <p style="color:#64748b;font-size:.8rem;">
+        Klasszikus iskolás változata: <em>„Melyik az a legkisebb természetes szám, amely 2-vel osztva 1-et,
+        3-mal 2-t, 4-gyel 3-at és 5-tel 4-et ad maradékul?"</em> — Válasz: $x = -1 \bmod 60 = 59$.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Általános modulusok ═══ -->
+  <div id="t-c7-altalanos" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">7.2 § — Általános (nem-relatív-prím) modulusok</span>
+      <p>Ha a modulusok nem páronként relatív prímek, a feladat <em>nehezebb</em> — de megoldható.</p>
+      <p>
+        <strong>Ötlet:</strong> kettő kongruenciát egyetlenre redukálunk, így $r$ helyett $r-1$
+        kongruenciára csökkenthetjük a rendszert.
+      </p>
+
+      <h6>7.6 Tétel — $r = 2$ általános eset</h6>
+      <p>
+        $\;x \equiv a_1 \pmod{m_1}, \;x \equiv a_2 \pmod{m_2}\;$
+        pontosan akkor oldható meg, ha
+      </p>
+      $$\operatorname{lnko}(m_1, m_2) \mid (a_2 - a_1),$$
+      <p>és a megoldás egyértelmű $\pmod{\operatorname{lkkt}(m_1, m_2)}$.</p>
+      <p>A bizonyítás Diophantoszi egyenletté alakítja: $\;m_1 \ell_1 - m_2 \ell_2 = a_2 - a_1.$</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">7.7 Példa — Nem-relatív-prím $r = 2$ rendszer</span>
+      <p>$\;x \equiv 3 \pmod 6, \;x \equiv 7 \pmod{10}.$ &nbsp;$\operatorname{lnko}(6, 10) = 2$, $7 - 3 = 4$, $2 \mid 4$ ✓.</p>
+      <p>Diophantoszi: $\;6 \ell_1 - 10 \ell_2 = 4$ &nbsp;⟹&nbsp; $\ell_1 = -1 + 5t,\ \ell_2 = 1 + 3t$.</p>
+      <p>$\;x = 6 \cdot (-1) + 30 t + 3 = 27 + 30 t$, vagyis</p>
+      $$x \equiv \mathbf{27} \pmod{30}.$$
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">7.9 Példa — $r = 3$ általános eset</span>
+      <p>$\;x \equiv 5 \pmod 6, \;x \equiv 1 \pmod{10}, \;x \equiv 11 \pmod{15}.$</p>
+
+      <table class="ref-tbl">
+        <thead><tr><th>Lépés</th><th>Egyenlet</th><th>Megoldás</th></tr></thead>
+        <tbody>
+          <tr><td>(1+2)</td><td>$6\ell_1 - 10\ell_2 = -4$</td><td>$\ell_1 = -4 - 5u,\ \ell_2 = -2 - 3u$</td></tr>
+          <tr><td>(redukált+3)</td><td>$15\ell_3 - 30 t = 30$</td><td>$\ell_3 = 2 - 2v,\ t = -v$</td></tr>
+          <tr><td>végső</td><td>$x = 15 \cdot 2 + 30 s + 11$</td><td>$x \equiv \mathbf{11} \pmod{30}$</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: Párhuzamos szorzás ═══ -->
+  <div id="t-c7-szorzas" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">7.3 § — Nagy számok párhuzamos szorzása CRT-vel</span>
+      <p>
+        Bár az 1.2. alfej.-ben láttuk Karacuba és Schönhage–Strassen algoritmusait, a CRT-alapú
+        szorzás <strong>nagyon jól párhuzamosítható</strong> — modern GPU-implementációk alapja.
+      </p>
+
+      <h6>7.10 Algoritmus</h6>
+      <ol>
+        <li>Rögzítsük páronként rel. prím $m_1, \dots, m_r$-eket úgy, hogy $K^2 < M = \prod m_i$ (mert $X, Z < K \Rightarrow XZ < K^2$).</li>
+        <li><strong>Előre kiszámoljuk</strong> a $y_i$ és $y_i \cdot \tfrac{M}{m_i}$ konstansokat.</li>
+        <li>Inputra ($X, Z < K$): $r$ szálon párhuzamosan kiszámoljuk $x_i \equiv X, z_i \equiv Z \pmod{m_i}$ és $a_i \equiv x_i z_i \pmod{m_i}$.</li>
+        <li>CRT-vel összerakjuk: $x \equiv \sum a_i y_i \tfrac{M}{m_i} \pmod M = X \cdot Z$.</li>
+      </ol>
+
+      <div class="thm-box">
+        <strong>7.11 Megj.</strong> Az $y_i$-ket csak <em>egyszer</em> kell kiszámolnunk; minden új
+        szorzáspárra csak $r$ párhuzamos modulszámolás + egyetlen lineáris kombináció kell.
+        Optimális $m_i$-választás: sem túl kicsi, sem túl nagy (GPU-regiszter szélességéhez igazítva,
+        pl. 32-bit vagy 64-bit modulusok).
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">7.12 Példa — Konkrét párhuzamos szorzás</span>
+      <p>Moduluscsalád: $m_1 = 253, m_2 = 200, m_3 = 261, m_4 = 247$, mind páronként rel.prím.</p>
+      $$M = 253 \cdot 200 \cdot 261 \cdot 247 = 3\,262\,030\,200$$
+
+      <h6>Előkészítés — $y_i$ és $y_i \cdot M/m_i$</h6>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.8rem;">
+        <thead><tr><th>$i$</th><th>$y_i$</th><th>$y_i \cdot M / m_i$</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>−18</td><td>−232 081 200</td></tr>
+          <tr><td>2</td><td>−49</td><td>−799 197 399</td></tr>
+          <tr><td>3</td><td>+17</td><td>+212 469 400</td></tr>
+          <tr><td>4</td><td>+62</td><td>+818 809 200</td></tr>
+        </tbody>
+      </table>
+
+      <h6>Szorzás — $X = 56\,079, Z = 58\,144$</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>$i$</th><th>$x_i \equiv X$</th><th>$z_i \equiv Z$</th><th>$a_i = x_i z_i$</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>166</td><td>−46</td><td>−46</td></tr>
+          <tr><td>2</td><td>79</td><td>−56</td><td>−24</td></tr>
+          <tr><td>3</td><td>−44</td><td>−59</td><td>36</td></tr>
+          <tr><td>4</td><td>10</td><td>99</td><td>2</td></tr>
+        </tbody>
+      </table>
+
+      <h6>Összegzés</h6>
+      $$\begin{aligned}
+        X \cdot Z &\equiv \sum y_i \tfrac{M}{m_i} \cdot a_i \\
+          &= (-232\,081\,200)(-46) + (-799\,197\,399)(-24) + 212\,469\,400 \cdot 36 + 818\,809\,200 \cdot 2 \\
+          &= 39\,142\,989\,576 \\
+          &\equiv \mathbf{3\,260\,657\,376} \pmod M
+      \end{aligned}$$
+
+      <div class="def-box">
+        Ellenőrzés: $56\,079 \cdot 58\,144 = 3\,260\,657\,376$ ✓
+        — minden $x_i, z_i, a_i$ pici (< 261), a CRT-rakja össze a 10-jegyű végeredményt.
+      </div>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTERS (8–13) — SECTIONS LIST + STUB ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
