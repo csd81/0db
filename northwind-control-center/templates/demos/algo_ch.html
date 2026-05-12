@@ -1678,7 +1678,301 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTERS (5–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 5 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 5 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c5-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c5-axby',this)">5.1 ax + by = c</span>
+    <span class="ila-nav-link" onclick="showTab('t-c5-pelda',this)">5.6 Példa</span>
+    <span class="ila-nav-link" onclick="showTab('t-c5-general',this)">Általános megoldás</span>
+    <span class="ila-nav-link" onclick="showTab('t-c5-three',this)">5.2 n-változós</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c5-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">5. fejezet — Lineáris Diophantoszi egyenletek</span>
+      <p>
+        <strong>Diophantosz</strong> (Kr.u. ~250) görög matematikus foglalkozott egyenletek
+        <em>egész</em> gyökeivel. Innen ered az elnevezés: minden olyan egyenletet
+        <strong>Diophantoszi-nak</strong> hívunk, amelynek az egész megoldásait keressük.
+      </p>
+
+      <div class="def-box">
+        <strong>5.1 Definíció.</strong> Adottak $a_1, \dots, a_n, c \in \mathbb{Z}$ számok;
+        kerestendők $x_1, \dots, x_n \in \mathbb{Z}$, amelyekre
+        $$a_1 x_1 + a_2 x_2 + \cdots + a_n x_n = c.$$
+        Ezt $n$-változós <strong>lineáris Diophantoszi egyenletnek</strong> hívjuk.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">5.2 Tétel — Megoldhatóság</span>
+      <p>Az egyenlet pontosan akkor oldható meg, ha</p>
+      $$\boxed{\;\operatorname{lnko}(a_1, \dots, a_n) \mid c\;}$$
+
+      <h6>Szükségesség</h6>
+      <p>
+        Ha $d = \operatorname{lnko}(a_1, \dots, a_n)$, akkor $d \mid a_i$ minden $i$-re,
+        így $d \mid (a_1 x_1 + \cdots + a_n x_n) = c$.
+      </p>
+
+      <h6>Elégségesség</h6>
+      <p>
+        A konstruktív bizonyítás a következő alfejezetekben tárgyalt
+        <strong>algoritmus</strong> (kiterjesztett Euklideszi) létezéséből következik.
+        Az algoritmus nem csak léte garantálja a megoldást — <em>valóban megtalálja</em> azt
+        polinomidőben.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: ax + by = c ═══ -->
+  <div id="t-c5-axby" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">5.1 § — A kétismeretlenes eset</span>
+      <p>
+        Megoldjuk az $ax + by = c$ egyenletet, ahol $a, b, c \in \mathbb{Z}$ adott,
+        $\operatorname{lnko}(a, b) \mid c$, és $x, y \in \mathbb{Z}$ keresett.
+      </p>
+      <p>
+        Elegendő először az <em>egyszerűsített</em> egyenletet megoldani:
+      </p>
+      $$a x + b y = \operatorname{lnko}(a, b)$$
+      <p>Mert ha ennek van $(u_0, v_0)$ megoldása, akkor $c$-re átskálázzuk:</p>
+      $$x_0 := u_0 \cdot \frac{c}{\operatorname{lnko}(a, b)}, \qquad y_0 := v_0 \cdot \frac{c}{\operatorname{lnko}(a, b)}.$$
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">5.3 Tétel — Bézout-azonosság</span>
+      <div class="def-box">
+        Minden $a, b \in \mathbb{Z}$-hez léteznek olyan $u_0, v_0 \in \mathbb{Z}$, hogy
+        $$\operatorname{lnko}(a, b) = a \cdot u_0 + b \cdot v_0.$$
+      </div>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Étienne Bézout (1730–1783) francia matematikus után — ő azonban a polinomokra
+        bizonyította; a számelméleti változat már Eulertől származik (1764). A formulát
+        konstruktívan adó algoritmus:
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">5.4 Algoritmus — Kiterjesztett Euklideszi</span>
+      <p>Felhasználjuk a 4.3 algoritmus sorait, alulról felfelé olvasva őket:</p>
+      $$\begin{aligned}
+        a &= b \cdot q_1 + r_1 \\
+        &\vdots \\
+        r_{m-3} &= r_{m-2} \cdot q_{m-1} + r_{m-1} \\
+        r_{m-2} &= r_{m-1} \cdot q_m + r_m \\
+        r_{m-1} &= r_m \cdot q_{m+1} + 0
+      \end{aligned}$$
+
+      <p>Visszaforgatás:</p>
+      $$\begin{aligned}
+        \operatorname{lnko}(a, b) = r_m &= r_{m-2} - r_{m-1} \cdot q_m \\
+          &= r_{m-2} - (r_{m-3} - r_{m-2} \cdot q_{m-1}) \cdot q_m \\
+          &= r_{m-3} \cdot u_{m-2} + r_{m-2} \cdot v_{m-2} \\
+          &\vdots \\
+          &= a \cdot u_0 + b \cdot v_0.
+      \end{aligned}$$
+
+      <div class="thm-box">
+        <strong>5.5 Megjegyzés.</strong> Az $u_i, v_i$ együtthatókat <em>nem kell külön
+        kiszámolnunk</em> — menet közben „automatikusan" megkapjuk őket. A példában látható
+        a részleteket.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: 5.6 példa ═══ -->
+  <div id="t-c5-pelda" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">5.6 Példa — $9867x + 8855y = 759$</span>
+      <p>
+        <strong>Megoldhatóság ellenőrzés.</strong>
+        $\operatorname{lnko}(9867, 8855) = 253$ a 4.6 Példa alapján,
+        és $253 \mid 759$ (mert $759/253 = 3$). ✓
+      </p>
+
+      <h6>1. lépés — Euklideszi algoritmus (a 4.6 példa)</h6>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.84rem;">
+        <thead><tr><th>egyenlet</th><th>maradék</th></tr></thead>
+        <tbody>
+          <tr><td>$\langle 9867 \rangle = \langle 8855 \rangle \cdot 1 + \langle 1012 \rangle$</td><td>1012</td></tr>
+          <tr><td>$\langle 8855 \rangle = \langle 1012 \rangle \cdot 8 + \langle 759 \rangle$</td><td>759</td></tr>
+          <tr><td>$\langle 1012 \rangle = \langle 759 \rangle \cdot 1 + \langle 253 \rangle$</td><td>253</td></tr>
+          <tr><td>$\langle 759 \rangle = \langle 253 \rangle \cdot 3 + \langle 0 \rangle$</td><td>0 (STOP)</td></tr>
+        </tbody>
+      </table>
+
+      <h6>2. lépés — Visszaforgatás $\operatorname{lnko}(9867, 8855) = 253$-ig</h6>
+      $$\begin{aligned}
+        253 &= 1 \cdot \langle 1012 \rangle + (-1) \cdot \langle 759 \rangle \\
+            &= 1 \cdot \langle 1012 \rangle + (-1) \cdot (\langle 8855 \rangle - 8 \cdot \langle 1012 \rangle) \\
+            &= (-1) \cdot \langle 8855 \rangle + 9 \cdot \langle 1012 \rangle \\
+            &= (-1) \cdot \langle 8855 \rangle + 9 \cdot (\langle 9867 \rangle - 1 \cdot \langle 8855 \rangle) \\
+            &= \boxed{9 \cdot \langle 9867 \rangle - 10 \cdot \langle 8855 \rangle}
+      \end{aligned}$$
+
+      <div class="def-box">
+        Tehát $u_0 = 9,\ v_0 = -10$ a Bézout-megoldás:
+        $$9 \cdot 9867 - 10 \cdot 8855 = 88803 - 88550 = 253. \checkmark$$
+      </div>
+
+      <h6>3. lépés — Átskálázás $c = 759$-re</h6>
+      <p>Mivel $759 / 253 = 3$:</p>
+      $$x_0 = 9 \cdot 3 = \mathbf{27}, \qquad y_0 = -10 \cdot 3 = \mathbf{-30}.$$
+      <p>Ellenőrzés: $9867 \cdot 27 + 8855 \cdot (-30) = 266409 - 265650 = 759$. ✓</p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Általános megoldás + 5.11 ═══ -->
+  <div id="t-c5-general" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">5.10 Tétel — Összes megoldás</span>
+      <p>Ha az $ax + by = c$ egyenletnek létezik egy $(x_0, y_0)$ megoldása, akkor az <em>összes</em> gyök:</p>
+      $$x = x_0 + k \cdot \frac{b}{\operatorname{lnko}(a, b)}, \qquad y = y_0 - k \cdot \frac{a}{\operatorname{lnko}(a, b)}, \qquad k \in \mathbb{Z}.$$
+
+      <p>Másképpen $\operatorname{lkkt}$-vel:</p>
+      $$x = x_0 + k \cdot \frac{\operatorname{lkkt}(a, b)}{a}, \qquad y = y_0 - k \cdot \frac{\operatorname{lkkt}(a, b)}{b}.$$
+
+      <h6>Visszamenve az 5.6 példára</h6>
+      <p>$\operatorname{lnko}(9867, 8855) = 253$, tehát $b/d = 8855/253 = 35$, $a/d = 9867/253 = 39$.</p>
+      <p>Az összes megoldás:</p>
+      $$x = 27 + 35 k, \quad y = -30 - 39 k, \quad k \in \mathbb{Z}.$$
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">5.11 Algoritmus — Egyetlen menetes változat</span>
+      <p>
+        Az 5.4 algoritmus baja, hogy mindkét irány során az összes $q_i$ és $r_i$ értéket
+        tárolni kell. <strong>Knuth [KD] 1.köt. 37.old.</strong> egy elegánsabb megoldást ad:
+        a Bézout-együtthatókat <em>menet közben</em> számoljuk.
+      </p>
+
+      <p>Kezdjük: $\xi_{-1} := 1, \zeta_{-1} := 0;\ \xi_0 := 0, \zeta_0 := 1$. Majd minden $r_i$ kiszámításával egyidejűleg:</p>
+      $$\xi_i := \xi_{i-2} - \xi_{i-1} \cdot q_i, \qquad \zeta_i := \zeta_{i-2} - \zeta_{i-1} \cdot q_i.$$
+      <p>Ekkor $\xi_m, \zeta_m$ megadja a Bézout-megoldást.</p>
+
+      <h6>5.12 Példa — $9867x + 8855y = 759$ egyetlen menetben</h6>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.83rem;">
+        <thead><tr><th>i</th><th>$q_i$</th><th>$r_i$</th><th>$\xi_i$</th><th>$\zeta_i$</th></tr></thead>
+        <tbody>
+          <tr><td>−1</td><td>—</td><td>—</td><td>1</td><td>0</td></tr>
+          <tr><td>0</td><td>—</td><td>—</td><td>0</td><td>1</td></tr>
+          <tr><td>1</td><td>1</td><td>1012</td><td>1 − 0·1 = <strong>1</strong></td><td>0 − 1·1 = <strong>−1</strong></td></tr>
+          <tr><td>2</td><td>8</td><td>759</td><td>0 − 1·8 = <strong>−8</strong></td><td>1 − (−1)·8 = <strong>9</strong></td></tr>
+          <tr><td>3</td><td>1</td><td>253</td><td>1 − (−8)·1 = <strong>9</strong></td><td>−1 − 9·1 = <strong>−10</strong></td></tr>
+          <tr><td>4</td><td>3</td><td>0 (STOP)</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <p>Tehát $\xi_3 = 9, \zeta_3 = -10$ megadja $9 \cdot 9867 - 10 \cdot 8855 = 253$ — egyezik az 5.6 példa eredményével.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">5.9 Megjegyzés — Sebesség</span>
+      <p>
+        Lamé 4.8 tétele alapján az 5.4–5.11 algoritmusok mind <strong>lineárisak</strong>
+        — az inputméret függvényében a lehető leggyorsabbak. Az $u, v$ együtthatók egyenkénti
+        kiszámítása csak konstans szorzót ad hozzá.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: 3-változós/n-változós ═══ -->
+  <div id="t-c5-three" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">5.2 § — $a_1 x_1 + \cdots + a_n x_n = c$ egyenletek</span>
+      <p>
+        Az általános esetet $n$-re vonatkozó <strong>teljes indukcióval</strong> oldjuk meg:
+        az Euklideszi algoritmus többszöri alkalmazásával. Ez egyszersmind az 5.2 Tétel
+        <em>elégségességét</em> is bizonyítja.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">5.13 Megjegyzés — A 3-változós eset algoritmusa</span>
+      <p>Megoldjuk $ax + by + cz = m$-et 4 lépésben:</p>
+
+      <table class="ref-tbl">
+        <thead><tr><th>Lépés</th><th>Művelet</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>(0)</strong></td>
+            <td>Megoldhatóság: $\operatorname{lnko}(a, b, c) \mid m$ ?</td>
+          </tr>
+          <tr>
+            <td><strong>(1)</strong></td>
+            <td>$d := \operatorname{lnko}(a, b)$ &nbsp;— Euklidesz</td>
+          </tr>
+          <tr>
+            <td><strong>(2)</strong></td>
+            <td>$ax + by = t d$ általános mo.:
+              $\;x = t x_0 + \tfrac{\operatorname{lkkt}(a, b)}{a} k,\ y = t y_0 + \tfrac{\operatorname{lkkt}(a, b)}{b} k$</td>
+          </tr>
+          <tr>
+            <td><strong>(3)</strong></td>
+            <td>$\delta := \operatorname{lnko}(d, c)$ &nbsp;— Euklidesz</td>
+          </tr>
+          <tr>
+            <td><strong>(4)</strong></td>
+            <td>$d t + c z = m$ megoldása:
+              $\;t = \tfrac{m}{\delta} t_0 + \tfrac{\operatorname{lkkt}(d, c)}{d} \ell,\ z = \tfrac{m}{\delta} z_0 - \tfrac{\operatorname{lkkt}(d, c)}{c} \ell$</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        Két szabad paraméter: $k, \ell \in \mathbb{Z}$. Megoldhatósági feltétel: $\delta \mid m$.
+        Általánosabban $n$-változós Diophantoszi egyenletnek $n - 1$ szabad egész paramétere van.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">5.14 Példa — $12x + 30y + 15z = 18$</span>
+
+      <table class="ref-tbl">
+        <thead><tr><th>Lépés</th><th>Számolás</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>(0)</td>
+            <td>$\operatorname{lnko}(12, 30, 15) = 3$, &nbsp;$3 \mid 18$ ✓ — van megoldás.</td>
+          </tr>
+          <tr>
+            <td>(1)</td>
+            <td>$d = \operatorname{lnko}(12, 30) = 6$ &nbsp;($12 \cdot (-2) + 30 \cdot 1 = 6$)</td>
+          </tr>
+          <tr>
+            <td>(2)</td>
+            <td>$12x + 30y = 6t$ általános mo.: $x = -2t + 5k,\ y = t - 2k$</td>
+          </tr>
+          <tr>
+            <td>(3)</td>
+            <td>$\delta = \operatorname{lnko}(6, 15) = 3$</td>
+          </tr>
+          <tr>
+            <td>(4)</td>
+            <td>$6t + 15z = 18$ általános mo.: $t = -12 + 5\ell,\ z = 6 - 2\ell$</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h6>Behelyettesítve $(2)$-be</h6>
+      $$\begin{aligned}
+        x &= (-12 + 5\ell)(-2) + 5k = -10\ell + 5k + 24 \\
+        y &= (-12 + 5\ell) - 2k = 5\ell - 2k - 12 \\
+        z &= 6 - 2\ell
+      \end{aligned} \qquad k, \ell \in \mathbb{Z}.$$
+
+      <div class="def-box">
+        Ellenőrzés $(k = 0, \ell = 0)$: $x = 24,\ y = -12,\ z = 6$.
+        $12 \cdot 24 + 30 \cdot (-12) + 15 \cdot 6 = 288 - 360 + 90 = 18$. ✓
+      </div>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTERS (6–13) — SECTIONS LIST + STUB ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
