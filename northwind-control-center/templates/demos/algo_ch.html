@@ -4014,7 +4014,314 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTER (13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 13 — TABBED CONTENT (Függelék) ─────────────────────────── #}
+  {% elif ch.n == 13 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c13-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c13-boole',this)">13.1 Boole-algebra</span>
+    <span class="ila-nav-link" onclick="showTab('t-c13-polinom',this)">13.2a Polinomok</span>
+    <span class="ila-nav-link" onclick="showTab('t-c13-eukl',this)">13.2b Euklideszi gyűrűk</span>
+    <span class="ila-nav-link" onclick="showTab('t-c13-tablazat',this)">13.3 Táblázatok</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c13-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">13. fejezet — Függelék</span>
+      <p>
+        Algebrai általánosítások és hivatkozási anyag. Három téma:
+      </p>
+      <ul>
+        <li><strong>13.1 Boole-algebrák</strong> — a könyvben több helyen használt absztrakt struktúra (lnko/lkkt, halmazműveletek, logika).</li>
+        <li><strong>13.2 Polinomok és Euklideszi gyűrűk</strong> — az egész számokra bemutatott módszerek általánosítása.</li>
+        <li><strong>13.3 Táblázatok</strong> — primitív gyökök és diszkrét logaritmusok kis prímmodulusokra.</li>
+      </ul>
+      <div class="def-box">
+        Az itt található általánosítások közös <em>tanulsága</em>: a könyv 4–7. fejezeteinek
+        algoritmusai (Euklidesz, Diophantosz, CRT, Euler-φ, …) <strong>mindegyike érvényes</strong>
+        polinomokra, Gauss-egészekre $\mathbb{Z}[i]$, Euler-egészekre $\mathbb{Z}[\rho]$, és sok
+        más algebrai struktúrában is.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: 13.1 Boole-algebra ═══ -->
+  <div id="t-c13-boole" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">13.1 Definíció — Boole-algebra</span>
+      <p>A struktúra:</p>
+      $$\mathcal{B} = (H, \vee, \wedge, \bar{\cdot}, I, o)$$
+      <p>
+        ahol $H \neq \emptyset$, $\vee, \wedge$ kétváltozós, $\bar{\cdot}$ egyváltozós művelet, $I, o \in H$
+        konstans elemek, és teljesülnek a (BA1)–(BA14) axiómák.
+      </p>
+
+      <h6>A 14 axióma</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Csoport</th><th>Axióma</th></tr></thead>
+        <tbody>
+          <tr><td><strong>BA1–2 kommutativitás</strong></td><td>$A \vee B = B \vee A,\ \;A \wedge B = B \wedge A$</td></tr>
+          <tr><td><strong>BA3–4 asszociativitás</strong></td><td>$A \vee (B \vee C) = (A \vee B) \vee C$, &nbsp;ill. $\wedge$</td></tr>
+          <tr><td><strong>BA5–6 disztributivitás</strong></td><td>$A \vee (B \wedge C) = (A \vee B) \wedge (A \vee C)$, ill. ⇄</td></tr>
+          <tr><td><strong>BA7–8 elnyelés</strong></td><td>$A \vee (A \wedge B) = A,\ \;A \wedge (A \vee B) = A$</td></tr>
+          <tr><td><strong>BA9–10 komplementer</strong></td><td>$A \vee \bar A = I,\ \;A \wedge \bar A = o$</td></tr>
+          <tr><td><strong>BA11–14 nulla/egység</strong></td><td>$A \vee o = A,\ \;A \wedge o = o,\ \;A \vee I = I,\ \;A \wedge I = A$</td></tr>
+        </tbody>
+      </table>
+
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Elnevezések: $\vee$ <em>konjunkció</em>, $\wedge$ <em>diszjunkció</em>, $\bar{\cdot}$ <em>komplementer</em>,
+        $I$ <em>egységelem</em>, $o$ <em>nullelem</em>.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">Boole-algebra-példák</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Példa</th><th>$H$</th><th>$\vee$ / $\wedge$</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Halmazelmélet</strong></td><td>$P(X)$ (hatványhalmaz)</td><td>$\cup$ / $\cap$, &nbsp;$\bar A = X \setminus A$</td></tr>
+          <tr><td><strong>Logika</strong></td><td>$\{0, 1\}$</td><td>$\vee$ / $\wedge$ &nbsp;(boole)</td></tr>
+          <tr><td><strong>Számelmélet</strong></td><td>$D_n$ (négyzetmentes $n$ osztói)</td><td>lkkt / lnko &nbsp;(3.38 tétel)</td></tr>
+          <tr><td><strong>Színkeverés</strong></td><td>elemi színek</td><td>additív (RGB) / szubtraktív (CMY)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        A Boole-algebra <em>univerzális</em> struktúra: bármely 14 axiómát teljesítő rendszer
+        ugyanazokat a tételeket élvezi (De Morgan, kettős negáció, idempotens, stb.).
+        Stone 1936-os reprezentációs tétele szerint minden véges Boole-algebra valamilyen
+        halmaz hatványhalmazával izomorf.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: 13.2a Polinomok ═══ -->
+  <div id="t-c13-polinom" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">13.2 § — Polinom-gyűrűk és algebrai egészek</span>
+
+      <h6>13.2 Def. — Polinom-gyűrűk</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Jelentés</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$\mathbb{Z}[x]$</td><td>egész együtthatós (egyismeretlenes) polinomok</td></tr>
+          <tr><td class="sym-cell">$\mathbb{R}[x]$</td><td>valós együtthatós polinomok</td></tr>
+          <tr><td class="sym-cell">$\mathbb{C}[x]$</td><td>komplex együtthatós polinomok</td></tr>
+        </tbody>
+      </table>
+      <p>
+        <strong>Fokszám</strong> ($\operatorname{gr}(p)$ vagy $d(p)$): az $x$ legmagasabb hatványkitevője.
+        Konvenció: $\operatorname{gr}(\tilde 0) := -\infty$.
+      </p>
+
+      <h6>13.3 Def. — Algebrai egészek és $\mathbb{Z}[\alpha]$</h6>
+      <p>
+        $\alpha \in \mathbb{C}$ <strong>algebrai egész</strong>, ha gyöke egy $\mathbb{Z}[x]$-beli polinomnak.
+        Másodfokú algebrai $\alpha$ esetén:
+      </p>
+      $$\mathbb{Z}[\alpha] := \{a + b\alpha : a, b \in \mathbb{Z}\} \subset \mathbb{C}$$
+
+      <table class="ref-tbl">
+        <thead><tr><th>Gyűrű</th><th>$\alpha$</th><th>Név</th></tr></thead>
+        <tbody>
+          <tr><td>$\mathbb{Z}[i]$</td><td>$i$ ($i^2 = -1$)</td><td>Gauss-egészek</td></tr>
+          <tr><td>$\mathbb{Z}[\rho]$</td><td>$\rho = -\tfrac{1}{2} + \tfrac{\sqrt{3}}{2} i$ (köbgyök 1-ből)</td><td>Euler-egészek</td></tr>
+          <tr><td>$\mathbb{Z}[\sqrt{2}] = H_2$</td><td>$\sqrt 2$</td><td>$H$-egészek</td></tr>
+          <tr><td>$\mathbb{Z}[i\sqrt{5}]$</td><td>$i\sqrt 5$</td><td>L-egészek</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>13.4 Állítás.</strong> $\mathbb{Z}[\alpha]$ zárt $+$ és $\cdot$ alatt. A szorzás:
+        $(a + b\alpha)(c + d\alpha) = (ac - bdq) + (ad + bc - bdp)\alpha$ ahol $\alpha^2 + p\alpha + q = 0$.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">Történelmi alkalmazások — Fermat-sejtés</span>
+      <p>
+        A $\mathbb{Z}[\alpha]$ gyűrűk kulcsszerepet játszottak több klasszikus problémában:
+      </p>
+      <ul>
+        <li><strong>Fermat utolsó tétele $n = 3$ és $n = 4$</strong> — Euler / Fermat (köbgyök-egészek $\mathbb{Z}[\rho]$).</li>
+        <li><strong>Karácsonyi tétel</strong> ($4m + 1 = a^2 + b^2$) — Bolyai János <em>2-soros</em> bizonyítása Gauss-egészekben (3.58 Tétel).</li>
+        <li><strong>Pell-egyenletek</strong> $x^2 - dy^2 = 1$ — $\mathbb{Z}[\sqrt{d}]$ egységeivel.</li>
+        <li><strong>Wiles 1995 — teljes FLT</strong> — moduláris formák és elliptikus görbék (sokkal mélyebb).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: 13.2b Euklideszi gyűrűk ═══ -->
+  <div id="t-c13-eukl" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">13.5–13.12 — Általános oszthatóság</span>
+      <p>
+        $(R, +, \cdot)$ tetszőleges <strong>integritási tartomány</strong> (kommutatív egységelemes gyűrű
+        zérusosztók nélkül).
+      </p>
+
+      <table class="ref-tbl">
+        <thead><tr><th>Fogalom</th><th>Definíció</th></tr></thead>
+        <tbody>
+          <tr><td>$a \mid b$</td><td>$\exists c \in R: b = a \cdot c$</td></tr>
+          <tr><td><strong>egység</strong> $e$</td><td>$e \mid 1$ &nbsp;(invertálható elem; <em>nem</em> egységelem!)</td></tr>
+          <tr><td>$a \sim b$ <strong>asszociáltak</strong></td><td>$a = b \cdot e$ valamely egység $e$-re</td></tr>
+          <tr><td><strong>irreducibilis</strong></td><td>nincs valódi felbontás: $a = bc \Rightarrow b$ vagy $c$ egység</td></tr>
+          <tr><td><strong>prím-elem</strong></td><td>$a \mid bc \Rightarrow a \mid b$ vagy $a \mid c$ &nbsp;(3.5 Tétel általánosítása)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>13.7 Állítás.</strong> Integritási tartományban <em>minden prím-elem irreducibilis</em>.
+        <strong>De fordítva nem</strong> — pl. $\mathbb{Z}[\sqrt{-5}]$-ben $6 = 2 \cdot 3 = (1 + \sqrt{-5})(1 - \sqrt{-5})$
+        két különböző felbontás!
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">13.9–13.11 — Egyértelmű prímfelbontás (EPF)</span>
+      <div class="def-box">
+        $(R, +, \cdot)$-ban <strong>EPF</strong> ⟺ minden elem irreducibilis elemek szorzatára
+        lényegében egyértelműen felbontható.
+      </div>
+
+      <p><strong>13.11 Tétel.</strong> Integritási tartományban: EPF $\iff$ minden irreducibilis prím-tulajdonságú.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">13.12–13.13 — Euklideszi gyűrűk</span>
+      <div class="def-box">
+        $(R, +, \cdot)$ <strong>Euklideszi gyűrű</strong>, ha létezik $\varphi: R \to \mathbb{N}$ („norma")
+        függvény: bármely $a, b \in R$, $\varphi(b) \neq 0$ esetén léteznek $q, r$ úgy, hogy
+        $$a = bq + r, \qquad \varphi(r) < \varphi(b).$$
+      </div>
+
+      <div class="thm-box">
+        <strong>13.13 Tétel.</strong> <em>Minden Euklideszi gyűrűben teljesül az EPF.</em>
+        Az Algebra Alaptételének és a Számelmélet Alaptételének közös általánosítása.
+      </div>
+
+      <h6>Példák Euklideszi gyűrűkre (mind EPF)</h6>
+      <p>$\mathbb{Z}, \mathbb{Q}[x], \mathbb{R}[x], \mathbb{Z}[i], \mathbb{Z}[i\sqrt{2}], \mathbb{Z}[\rho], \mathbb{Z}[\sqrt{2}], \mathbb{Z}[\sqrt{3}], \mathbb{Z}[\sqrt{6}], \mathbb{Z}[\sqrt{7}], \mathbb{Z}[\sqrt{11}], \mathbb{Z}[\sqrt{19}]$</p>
+
+      <h6>EPF-tartomány, ami <em>nem</em> Euklideszi</h6>
+      <p>
+        $\mathbb{Z}[x], \mathbb{Z}[\sqrt{23}], \mathbb{Z}[i\sqrt{3}], \mathbb{Z}[i\sqrt{19}], \mathbb{Z}[i\sqrt{43}],
+        \mathbb{Z}[i\sqrt{67}], \mathbb{Z}[i\sqrt{163}]$ — ezeknél EPF teljesül, de nincs norma-függvény.
+      </p>
+
+      <div class="warn-box">
+        <strong>13.16 Probléma (nyitott).</strong> Mely $m \in \mathbb{Z}$ (nem négyzetszám) egészekre
+        teljesül az EPF $\mathbb{Z}[\sqrt m]$-ben? Negatív $m$-re ismert (csak 9 ilyen érték, 1970 óta);
+        <em>pozitív $m$-re máig nem teljes osztályozás</em>.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">13.17 Megj. — Mely könyvfejezetek érvényesek általánosan?</span>
+      <p>A 3–7. fejezetek <strong>minden</strong> Euklideszi gyűrűben (vagy EPF-tartományban) érvényesek:</p>
+      <ul>
+        <li>$\operatorname{lnko}, \operatorname{lkkt}$ fogalma és összefüggései</li>
+        <li>Euklidesz-algoritmus lnko-ra</li>
+        <li>Lineáris Diophantoszi egyenletek</li>
+        <li>Kínai Maradéktétel</li>
+        <li>Kongruenciák, $\mathbb{Z}_n$-szerű maradékosztály-gyűrű</li>
+      </ul>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        A mellékelt <code>Poliosz5.exe</code> a fenti módszereket konkrétan a polinom-gyűrűre ($\mathbb{Z}[x]$,
+        $\mathbb{Q}[x]$) implementálja — Euklideszi algoritmus polinomokra, lnko keresés, stb.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: 13.3 Táblázatok ═══ -->
+  <div id="t-c13-tablazat" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">13.3 § — Hivatkozási táblázatok</span>
+      <p>
+        Az alábbi tábla a 6.7 alfejezet diszkrét logaritmus / index-számolásához használható.
+        Minden $p \in \mathbb{P}$, $p \leq 1009$ prímre megadja a legkisebb pozitív
+        <strong>primitív gyököt</strong> $g$.
+      </p>
+
+      <h6>Primitív gyökök (kivonat)</h6>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.82rem;">
+        <thead><tr><th>$p$</th><th>$g$</th><th></th><th>$p$</th><th>$g$</th><th></th><th>$p$</th><th>$g$</th><th></th><th>$p$</th><th>$g$</th></tr></thead>
+        <tbody>
+          <tr><td>3</td><td>2</td><td></td><td>53</td><td>2</td><td></td><td>127</td><td>3</td><td></td><td>199</td><td>3</td></tr>
+          <tr><td>5</td><td>2</td><td></td><td>59</td><td>2</td><td></td><td>131</td><td>2</td><td></td><td>211</td><td>2</td></tr>
+          <tr><td>7</td><td>3</td><td></td><td>61</td><td>2</td><td></td><td>137</td><td>3</td><td></td><td>223</td><td>3</td></tr>
+          <tr><td>11</td><td>2</td><td></td><td>67</td><td>2</td><td></td><td>139</td><td>2</td><td></td><td>227</td><td>2</td></tr>
+          <tr><td>13</td><td>2</td><td></td><td>71</td><td>7</td><td></td><td>149</td><td>2</td><td></td><td>229</td><td>6</td></tr>
+          <tr><td>17</td><td>3</td><td></td><td>73</td><td>5</td><td></td><td>151</td><td>6</td><td></td><td>233</td><td>3</td></tr>
+          <tr><td>19</td><td>2</td><td></td><td>79</td><td>3</td><td></td><td>157</td><td>5</td><td></td><td>239</td><td>7</td></tr>
+          <tr><td>23</td><td>5</td><td></td><td>83</td><td>2</td><td></td><td>163</td><td>2</td><td></td><td>241</td><td>7</td></tr>
+          <tr><td>29</td><td>2</td><td></td><td>89</td><td>3</td><td></td><td>167</td><td>5</td><td></td><td>251</td><td>6</td></tr>
+          <tr><td>31</td><td>3</td><td></td><td>97</td><td>5</td><td></td><td>173</td><td>2</td><td></td><td>257</td><td>3</td></tr>
+          <tr><td>37</td><td>2</td><td></td><td>101</td><td>2</td><td></td><td>179</td><td>2</td><td></td><td>263</td><td>5</td></tr>
+          <tr><td>41</td><td>6</td><td></td><td>103</td><td>5</td><td></td><td>181</td><td>2</td><td></td><td>269</td><td>2</td></tr>
+          <tr><td>43</td><td>3</td><td></td><td>107</td><td>2</td><td></td><td>191</td><td>19</td><td></td><td>271</td><td>6</td></tr>
+          <tr><td>47</td><td>5</td><td></td><td>109</td><td>6</td><td></td><td>193</td><td>5</td><td></td><td>277</td><td>5</td></tr>
+        </tbody>
+      </table>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Megfigyelés: $g$ általában <em>kicsi</em> — sokszor $2, 3, 5$. A legnagyobb a táblázatból:
+        $g = 21$ a $p = 409$ prímhez. <em>Bizonyítatlan sejtés (Artin):</em> bármely nem-négyzet $g$
+        primitív gyök végtelen sok prímhez.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">Diszkrét logaritmus-táblák — Minta $p = 23, g = 5$</span>
+
+      <h6>$g$ hatványai $\bmod\, 23$</h6>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.82rem;">
+        <thead><tr><th>$k$</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr></thead>
+        <tbody>
+          <tr><td>0+</td><td>1</td><td>5</td><td>2</td><td>10</td><td>4</td><td>20</td><td>8</td><td>17</td><td>16</td><td>11</td></tr>
+          <tr><td>10+</td><td>9</td><td>22</td><td>18</td><td>21</td><td>13</td><td>19</td><td>3</td><td>15</td><td>6</td><td>7</td></tr>
+          <tr><td>20+</td><td>12</td><td>14</td><td>1</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <h6>$\log_5$ ($x$) tábla $\bmod\, 23$</h6>
+      <p>$\log_5(2) = 2, \;\log_5(7) = 19, \;\log_5(11) = 9, \;\dots$</p>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        A 23 prímhez 22 érték — minden $\mathbb{Z}_{23}^*$-beli szám pontosan egy hatványkitevőhöz tartozik.
+      </p>
+
+      <div class="thm-box">
+        Ez a táblázat lehet a 6.71 példa „könyvi" tábla, amellyel a $\bmod p$ szorzást
+        $\bmod (p-1)$ <strong>összeadásra</strong> redukáljuk — a hagyományos logaritmus-táblák
+        analógiájára (Napier 1614).
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">További (online) hivatkozások</span>
+      <ul>
+        <li>30 000 alatti számok prímfelbontása: <strong>[SzI1] Feladatgyűjtemény Függeléke</strong></li>
+        <li>Első 50 millió prím listája: <a href="https://primes.utm.edu/lists/small/millions/" style="color:var(--acc);">primes.utm.edu</a></li>
+        <li>OEIS — Online Encyclopedia of Integer Sequences: <a href="https://oeis.org" style="color:var(--acc);">oeis.org</a> (Sloane)</li>
+        <li>Mersenne primes: <a href="https://www.mersenne.org" style="color:var(--acc);">mersenne.org</a></li>
+      </ul>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-flag-fill me-1"></i> Befejezés</h6>
+      <p style="font-style:italic;color:#cbd5e1;">
+        „Ezzel zárul az <em>Algoritmikus számelmélet</em> könyv. A téma kimeríthetetlen — a függeléken
+        kívül a Knuth [KD], Koblitz [KN], Cormen-Leiserson-Rivest [CLR] és Lovász-Gács [LG] művek
+        adnak további mélységet. A gyors számelmélet, kriptográfia és kvantumkomputerek
+        kapcsolatának vizsgálata <strong>élő kutatási terület</strong> — ennek aktív részese
+        lehet az Olvasó is."
+      </p>
+      <p style="color:#94a3b8;text-align:right;font-size:.85rem;">— Szalkai István &amp; Dósa György, Pannon Egyetem 2011</p>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC FALLBACK (won't trigger) ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
