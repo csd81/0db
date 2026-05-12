@@ -1972,7 +1972,504 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTERS (6–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 6 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 6 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c6-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c6-muvelet',this)">6.1 Műveletek</span>
+    <span class="ila-nav-link" onclick="showTab('t-c6-zn',this)">6.2 $\mathbb{Z}_n$ gyűrű</span>
+    <span class="ila-nav-link" onclick="showTab('t-c6-linkong',this)">6.3 Lineáris kongr.</span>
+    <span class="ila-nav-link" onclick="showTab('t-c6-phi',this)">6.4–5 $\varphi$ + tételek</span>
+    <span class="ila-nav-link" onclick="showTab('t-c6-hatv',this)">6.6 Nagy hatványozás</span>
+    <span class="ila-nav-link" onclick="showTab('t-c6-kvad',this)">6.7–8 Primitív gyök &amp; kvadr.</span>
+  </div>
+
+  <!-- ═══ TAB 1: Áttekintés ═══ -->
+  <div id="t-c6-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">6. fejezet — Kongruenciák és maradékosztályok</span>
+      <p>
+        A periodikus jelenségeknél nem az ismétlések száma, hanem a <strong>maradék</strong> a lényeges:
+        hét napjai, körforgalom, csomagolás utáni maradék, egy szám utolsó néhány jegye,
+        számítógépes túlcsordulás, „mindenkinek van-e párja a tánciskolában?"
+      </p>
+      <div class="def-box">
+        Latin <em>kongruencia</em> = <em>megegyezés, megfelelés, egybevágóság</em>.
+        Itt: két szám ugyanazt a maradékot adja $m$-mel.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">6.1 Definíció — A kongruencia-jelölés</span>
+      <p>Tetszőleges $a, b, m \in \mathbb{Z}$, $m \neq 0$ esetén:</p>
+      $$a \equiv_m b \quad \text{vagy} \quad a \equiv b \pmod{m}$$
+      <p>(„$a$ kongruens $b$-vel modulo $m$") pontosan akkor, ha</p>
+      $$m \mid (a - b),$$
+      <p>vagyis $a$ és $b$ ugyanazt a maradékot adják $m$-mel elosztva.</p>
+
+      <div class="thm-box">
+        <strong>6.4 Állítás.</strong> $m \mid n$ esetén $a \equiv_n b \Rightarrow a \equiv_m b$,
+        de fordítva általában nem. Algebrai nyelven: $\equiv_n$ <em>finomabb</em> osztályozás
+        mint $\equiv_m$. Speciálisan $\equiv_{\pm 1}$ a legdurvább (mindent összemos), $=$ a legfinomabb.
+      </div>
+
+      <h6>6.6 Definíció — $\bmod$ vs $\operatorname{MOD}$</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Tartomány</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$a \bmod m$</td><td>nemnegatív maradék: $0 \leq b < m$</td></tr>
+          <tr><td class="sym-cell">$a \operatorname{MOD} m$</td><td>legkisebb abszolút értékű maradék: $-\tfrac{m}{2} < b \leq \tfrac{m}{2}$</td></tr>
+        </tbody>
+      </table>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Nagy $m$ modulusoknál $b$ is nagy lehet, ezért érdemes negatív maradékokra is gondolni
+        (mert ekkor $m - b$ kicsi).
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: 6.1 Műveletek ═══ -->
+  <div id="t-c6-muvelet" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">6.9 Tétel — A kongruencia művelettartó</span>
+      <p>Bármely $a, b, c, d \in \mathbb{Z}$ és rögzített $m \neq 0$ esetén:</p>
+      <div class="def-box">
+        Ha $\;a \equiv_m b\;$ és $\;c \equiv_m d$, akkor
+        $$a \pm c \equiv_m b \pm d \qquad \text{és} \qquad a \cdot c \equiv_m b \cdot d.$$
+      </div>
+      <p>
+        Ez teszi $\equiv_m$-et valódi <em>kongruenciává</em> az absztrakt algebra értelmében
+        (művelettartó ekvivalencia-reláció).
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">6.10 Megj. — A 11-gyel oszthatóság szabálya</span>
+      <p>Mivel $10 \equiv -1 \pmod{11}$, ezért $10^j \equiv (-1)^j \pmod{11}$, és így:</p>
+      $$n = \sum_{j=0}^k a_j \cdot 10^j \equiv \sum_{j=0}^k (-1)^j a_j \pmod{11}.$$
+      <div class="thm-box">
+        <strong>Szabály.</strong> Egy tízes számrendszerben felírt szám pontosan akkor osztható 11-gyel,
+        ha a számjegyeit <em>váltakozó előjellel</em> összeadva a kapott összeg osztható 11-gyel.
+      </div>
+      <p>
+        Pl. $n = 1\,032\,002 \to 1 - 0 + 3 - 2 + 0 - 0 + 2 = 4 \pmod{11}$.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.11 Megj. — Moduláris aritmetika</span>
+      <div class="def-box">
+        Ha egy nagy kifejezésnek csak a $\bmod\, m$ maradéka érdekel, akkor minden részeredménynél
+        vehetjük a maradékot — nincs szükség nagy számokkal való számolásra.
+      </div>
+
+      <h6>6.12 Példa — $132\,465 + 46\,587 \cdot 83\,152 \cdot 731\,052 - 2\,086\,455 \pmod{753}$</h6>
+      $$\begin{aligned}
+        &\equiv 690 + 654 \cdot 322 \cdot 642 - 645 \\
+        &\equiv 690 + 654 \cdot 206\,724 - 642 \cdot 643 \\
+        &\equiv 690 + 654 \cdot 402 - 331 \cdot 100 \\
+        &\equiv 230\,498 \equiv \mathbf{80} \pmod{753}
+      \end{aligned}$$
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Egyetlen lépésben sem mentünk 1 millió fölé — minden részeredmény a $[0, 753^2)$ tartományon belül.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.13 Megj. — Páros/páratlan ⊕ csak prím modulusra triviális</span>
+      <p>
+        Páratlan modulusra <strong>nem</strong> igazak a megszokott szabályok!
+        Például $\pmod{9}$:
+      </p>
+      $$6 + 4 \equiv 1 \pmod 9, \qquad 6 \cdot 2 \equiv 3 \pmod 9, \qquad 6 \cdot 4 \equiv 6 \pmod 9.$$
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: 6.2 Z_n ═══ -->
+  <div id="t-c6-zn" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">6.15 Jelölés — $\mathbb{Z}_n$ maradékhalmaz</span>
+      $$\mathbb{Z}_n := \{0, 1, 2, \dots, n-1\}$$
+      <p>Algebrai jelölésekben gyakran $\mathbb{Z}/n\mathbb{Z}$.</p>
+      <p>A $\oplus$ és $\odot$ műveletek $\mathbb{Z}_n$-en a $\bmod\, n$ szerinti összeadás és szorzás
+      (6.19 Def.). Az asszociativitás, kommutativitás, disztributivitás öröklődik $\mathbb{Z}$-ből.</p>
+
+      <div class="thm-box">
+        $(\mathbb{Z}_n, +, \cdot)$ <strong>kommutatív egységelemes gyűrű</strong> minden $n \geq 1$-re.
+        Az $(\mathbb{Z}_n, +)$ Abel-csoport, $(\mathbb{Z}_n, \cdot)$ kommutatív félcsoport.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.21–6.27 — Inverz és nullosztó</span>
+      <p>
+        Az additív inverz triviális: $a + (n-a) \equiv 0$. A <strong>multiplikatív inverz</strong> azonban nem mindig létezik!
+      </p>
+      <p>Pl. $\pmod 6$:</p>
+      $$2 \cdot 3 \equiv 0 \pmod 6 \;\Rightarrow\; \text{a } 2x \equiv 1 \pmod 6 \text{-nak nincs megoldása.}$$
+
+      <table class="ref-tbl">
+        <thead><tr><th>Fogalom</th><th>Definíció</th></tr></thead>
+        <tbody>
+          <tr><td><strong>multiplikatív inverz</strong> $a^{-1}$</td><td>$a \cdot a^{-1} \equiv 1 \pmod n$</td></tr>
+          <tr><td><strong>nullosztó</strong> $a \neq 0$</td><td>$\exists b \neq 0: a \cdot b \equiv 0 \pmod n$</td></tr>
+          <tr><td><strong>test</strong></td><td>minden $a \neq 0$-nak van mult. inverze</td></tr>
+        </tbody>
+      </table>
+
+      <div class="def-box">
+        <strong>6.24 Állítás.</strong> $a \in \mathbb{Z}_n$ pontosan akkor nullosztó, ha
+        <em>nem relatív prím</em> $n$-hez.
+      </div>
+
+      <div class="thm-box">
+        <strong>6.28 Tétel.</strong> Véges, nullosztómentes gyűrűben minden elemnek van inverze
+        — vagyis $(R, +, \cdot)$ <strong>test</strong>.
+        <br><br>
+        <strong>6.29 Következmény.</strong> $\mathbb{Z}_p$ test pontosan akkor, ha $p \in \mathbb{P}$ prím.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">6.30–6.31 — Redukált maradékrendszer $\mathbb{Z}_n^*$</span>
+      <p>$\mathbb{Z}_n^* := \{a \in \mathbb{Z}_n : \operatorname{lnko}(a, n) = 1\}$ — az $n$-hez relatív prím elemek halmaza.</p>
+
+      <div class="def-box">
+        <strong>6.31 Def.</strong> Az <strong>Euler-féle $\varphi$ függvény</strong>:
+        $$\varphi(n) := |\mathbb{Z}_n^*| = |\{1 \leq a \leq n : \operatorname{lnko}(a, n) = 1\}|.$$
+      </div>
+
+      <p>Pl. $\varphi(15) = 9$: a 15-höz rel. prím számok $1, 2, 4, 7, 8, 10, 11, 13, 14$.</p>
+
+      <div class="thm-box">
+        <strong>6.33 Tétel.</strong> $(\mathbb{Z}_n^*, \cdot)$ <strong>kommutatív (Abel-)csoport</strong>:
+        zárt a szorzásra, és minden elemének van multiplikatív inverze.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: 6.3 Lineáris kongruencia ═══ -->
+  <div id="t-c6-linkong" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">6.35 Def. — Lineáris kongruencia</span>
+      <p>$a, b, m$ adottak, $x$ keresett:</p>
+      $$ax \equiv b \pmod m$$
+
+      <p>Ez ekvivalens a $\;ax - my = b$ Diophantoszi egyenlettel, amit Euklidesz algoritmusával megoldhatunk.</p>
+
+      <div class="def-box">
+        <strong>6.36 Tétel.</strong> A megoldhatóság feltétele:
+        $$\operatorname{lnko}(a, m) \mid b.$$
+        Ekkor a megoldást az 5.4 kiterjesztett Euklideszi algoritmus megadja.
+      </div>
+
+      <div class="thm-box">
+        <strong>6.37 Állítás.</strong> Az összes megoldás $\pmod m$:
+        $$x_i = x_0 + i \cdot \frac{m}{\operatorname{lnko}(a, m)}, \quad i = 0, 1, \dots, L-1$$
+        ahol $L = \operatorname{lnko}(a, m)$ — a megoldások száma.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">6.39–6.40 — Multiplikatív inverz $\pmod m$</span>
+      <p>$a^{-1} \pmod m$ a $\;ax \equiv 1 \pmod m\;$ kongruencia megoldása.</p>
+      <div class="def-box">
+        <strong>6.40 Tétel.</strong> $a^{-1} \pmod m$ pontosan akkor létezik, ha
+        $\operatorname{lnko}(a, m) = 1$ — vagyis $a \in \mathbb{Z}_m^*$.
+      </div>
+
+      <h6>Stratégia nagy modulusoknál (6.41 Megj.)</h6>
+      <p>Ha már megtaláltuk $a^{-1}$-t, akkor <em>bármely</em> $b$ esetén:</p>
+      $$x \equiv b \cdot a^{-1} \pmod m \quad \text{— egyetlen szorzás!}$$
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Lineáris algebrai analógia: ha $A^{-1}$ ismert, akkor $Ax = b$ megoldása $x = A^{-1} b$.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.42 Példa — 18 multiplikatív inverze $\pmod{175}$</span>
+      <p>Megoldjuk $\;18x - 175y = 1\;$ Bézout-egyenletet:</p>
+
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.82rem;">
+        <thead><tr><th>Lépés</th></tr></thead>
+        <tbody>
+          <tr><td>$\langle 18 \rangle = \langle -175 \rangle \cdot 0 + \langle 18 \rangle$</td></tr>
+          <tr><td>$\langle -175 \rangle = \langle 18 \rangle \cdot (-9) + \langle -13 \rangle$</td></tr>
+          <tr><td>$\langle 18 \rangle = \langle -13 \rangle \cdot (-1) + \langle 5 \rangle$</td></tr>
+          <tr><td>$\langle -13 \rangle = \langle 5 \rangle \cdot (-2) + \langle -3 \rangle$</td></tr>
+          <tr><td>$\langle 5 \rangle = \langle -3 \rangle \cdot (-1) + \langle 2 \rangle$</td></tr>
+          <tr><td>$\langle -3 \rangle = \langle 2 \rangle \cdot (-1) + \langle -1 \rangle$</td></tr>
+          <tr><td>$\langle 2 \rangle = \langle -1 \rangle \cdot (-2) + \langle 0 \rangle$</td></tr>
+        </tbody>
+      </table>
+
+      <p>Visszaforgatással: $\;-1 = 68 \cdot 18 + 7 \cdot (-175)$, így $x_0 = -68$.</p>
+      $$18^{-1} \equiv -68 \equiv \mathbf{107} \pmod{175}$$
+      <p>Ellenőrzés: $18 \cdot 107 = 1926 = 11 \cdot 175 + 1 \equiv 1 \pmod{175}$. ✓</p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: 6.4-6.5 phi + tételek ═══ -->
+  <div id="t-c6-phi" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">6.43 Def. — Euler-féle $\varphi(n)$ függvény</span>
+      $$\varphi(n) := |\{a < n : \operatorname{lnko}(a, n) = 1\}|$$
+      <p style="color:#64748b;font-size:.8rem;">
+        Leonhard Euler (1707–1783) svájci matematikus. Angolul néha „totient function".
+      </p>
+
+      <h6>6.46 Tétel — Szorzat-képlet</h6>
+      <p>Ha $n = p_1^{\alpha_1} \cdots p_r^{\alpha_r}$, akkor:</p>
+      $$\varphi(n) = n \cdot \prod_{i=1}^r \left(1 - \frac{1}{p_i}\right).$$
+
+      <h6>6.48 Példa — Speciális esetek</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>$n$</th><th>$\varphi(n)$</th></tr></thead>
+        <tbody>
+          <tr><td>$p$ prím</td><td>$p - 1$</td></tr>
+          <tr><td>$p \cdot q$ (két különböző prím)</td><td>$(p-1)(q-1)$ &nbsp;— <strong>RSA-kulcsgenerálás alapja</strong></td></tr>
+          <tr><td>$p^t$</td><td>$p^t - p^{t-1} = p^{t-1}(p - 1)$</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>6.50 Állítás — $\varphi$ gyengén multiplikatív.</strong>
+        Relatív prím $m, n$-re: $\;\varphi(mn) = \varphi(m) \cdot \varphi(n).$
+        <br>
+        <em>De totálisan nem!</em> Pl. $\varphi(4) = 2$, $\varphi(2) = 1$, $\varphi(2) \cdot \varphi(2) = 1 \neq 2$.
+      </div>
+
+      <div class="warn-box">
+        <strong>Kulcsmegjegyzés.</strong> A $\varphi(n)$ értékét általában <em>csak</em> a prímfelbontás
+        ismeretében tudjuk gyorsan kiszámolni. Ezért $\varphi(n)$ titokban marad nyilvános $n$ esetén —
+        ez az RSA-titkosítás biztonságának egyik pillére!
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.52 Tétel (Lagrange)</span>
+      <p>Véges csoport $G$, részcsoport $H$ esetén: $|H| \mid |G|$.</p>
+      <p style="color:#64748b;font-size:.8rem;">
+        Joseph Louis Lagrange (1736–1813) francia matematikus. Ez egyszerű és rövid algebrai tétel,
+        amelyből a 6.53 és 6.54 tételek <em>egyetlen sorban</em> következnek.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.53 Tétel — Euler „számelméleti" tétele</span>
+      <div class="def-box">
+        Ha $\operatorname{lnko}(a, m) = 1$, akkor
+        $$a^{\varphi(m)} \equiv 1 \pmod m.$$
+      </div>
+      <p>Bizonyítás: $\mathbb{Z}_m^*$ Abel-csoport, $\varphi(m) = |\mathbb{Z}_m^*|$ rendje. Lagrange szerint $a$ rendje osztja $|\mathbb{Z}_m^*|$-t.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.54 Tétel — „kis" Fermat-tétel</span>
+      <p>$p$ prím, $p \nmid a$ esetén:</p>
+      $$a^{p-1} \equiv 1 \pmod p$$
+      <p>vagy ekvivalensen ($p \mid a$-ra is): $\;a^p \equiv a \pmod p.$</p>
+      <p style="color:#64748b;font-size:.8rem;">
+        Pierre Fermat (1601–1665) francia jogász és matematikus. Az „őrültek tételét" 1640-ben
+        levélben közölte. Modern alkalmazás: <strong>Fermat-féle prímteszt</strong> (lásd 8. fejezet).
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.55 Tétel — Bolyai János prímteszt-előzménye</span>
+      <p>
+        Ha $p, q$ különböző prímek, $a \nmid p, a \nmid q$, és
+      </p>
+      $$a^{p-1} \equiv 1 \pmod q \quad \text{és} \quad a^{q-1} \equiv 1 \pmod p$$
+      <p>teljesül, akkor</p>
+      $$a^{pq - 1} \equiv 1 \pmod{pq}.$$
+
+      <div class="thm-box">
+        Bolyai János (1802–1860) — kéziratai csak <strong>2000 körül</strong> kerültek elő.
+        Ezzel <em>40+ évvel megelőzte Jeans</em> (1877–1946) angol matematikus 1898-as
+        publikációját. Kiss Elemér [KE1] feltárása. A módszer alapja a 8.3 „Álprímek" alfej.
+        modern prímtesztjeinek.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.58 Tétel — Wilson</span>
+      <p>$n \in \mathbb{N}$ akkor és csak akkor prím, ha</p>
+      $$(n - 1)! \equiv -1 \pmod n.$$
+      <p style="color:#64748b;font-size:.8rem;">
+        John Wilson (1741–1793). Elméletileg gyönyörű ↔ <em>gyakorlatilag használhatatlan</em>
+        prímteszt: $(n-1)!$ óriási (Stirling-formula szerint $\sim (n/e)^n$).
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 6: 6.6 Nagy kitevőjű hatványozás ═══ -->
+  <div id="t-c6-hatv" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">6.59 Algoritmus — $u^k \bmod m$ gyorshatványozás</span>
+      <p>
+        Adottak nagy ($\sim$ száz/ezer jegyű) $u, k, m$. Meghatározandó: $\;x \equiv u^k \pmod m$.
+      </p>
+      <p>
+        Az $u^k$ hatvány önmaga kb. $10^{100}$ jegyű — sosem számoljuk ki. Minden részeredménynél
+        $\bmod\, m$-et veszünk. De $k \approx 10^{100}$ szorzás is sokáig tartana — ezért
+        <strong>négyzetre emelünk</strong>:
+      </p>
+      $$u_0 := u, \quad u_1 := u_0^2 \equiv u^2, \quad u_2 := u_1^2 \equiv u^4, \quad \dots, \quad u_i \equiv u^{2^i} \pmod m.$$
+
+      <p>A kitevők <em>exponenciálisan</em> nőnek: $t = \lceil \log_2 k \rceil$ lépés után $2^t \geq k$.</p>
+
+      <div class="def-box">
+        Írjuk fel $k$-t bináris alakban: $\;k = \sum_{j=0}^t i_j \cdot 2^j$ ahol $i_j \in \{0, 1\}$.
+        Ekkor
+        $$u^k = u^{\sum i_j 2^j} = \prod_{j : i_j = 1} u_j \pmod m.$$
+        Vagyis <strong>azon $u_j$-ket szorozzuk össze (mod $m$), amelyek helyén $k$-ban 1-es áll</strong>.
+      </div>
+
+      <div class="thm-box">
+        <strong>6.62 Megj.</strong> Lépésszám: $2t = 2 \lceil \log_2 k \rceil$ szorzás —
+        <strong>lineáris</strong> a kitevő bitméretében. Memória: csak $u_j$-k tárolása ($t$ db szám).
+        Az algoritmus <em>könyvünk egyik leggyakrabban használt eszköze</em> — RSA, Fermat-teszt,
+        Miller–Rabin, prímgenerálás mind erre épül.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.61 Példa — $6456^{4652} \pmod{9786}$</span>
+      <p>$k = 4652 = 1001000101100_{(2)}$, vagyis a 2², 2³, 2⁵, 2⁹, 2¹² helyiértékek.</p>
+
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.82rem;">
+        <thead><tr><th>$j$</th><th>$u_j \equiv u^{2^j} \pmod{9786}$</th><th>$k$ bitje</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>$u_0 = 6456$</td><td>0</td></tr>
+          <tr><td>1</td><td>$u_1 = 6456^2 \bmod 9786 = 1362$</td><td>0</td></tr>
+          <tr style="background:var(--acc-bg);"><td>2</td><td>$u_2 = 1362^2 \bmod 9786 = \mathbf{5490}$</td><td><strong>1</strong></td></tr>
+          <tr style="background:var(--acc-bg);"><td>3</td><td>$u_3 = 5490^2 \bmod 9786 = \mathbf{9006}$</td><td><strong>1</strong></td></tr>
+          <tr><td>4</td><td>$u_4 = 9006^2 \bmod 9786 = 1668$</td><td>0</td></tr>
+          <tr style="background:var(--acc-bg);"><td>5</td><td>$u_5 = 1668^2 \bmod 9786 = \mathbf{3000}$</td><td><strong>1</strong></td></tr>
+          <tr><td>6</td><td>$u_6 = 3000^2 \bmod 9786 = 6666$</td><td>0</td></tr>
+          <tr><td>7</td><td>$u_7 = 6666^2 \bmod 9786 = 7116$</td><td>0</td></tr>
+          <tr><td>8</td><td>$u_8 = 7116^2 \bmod 9786 = 4692$</td><td>0</td></tr>
+          <tr style="background:var(--acc-bg);"><td>9</td><td>$u_9 = 4692^2 \bmod 9786 = \mathbf{6150}$</td><td><strong>1</strong></td></tr>
+          <tr><td>10</td><td>$u_{10} = 6150^2 \bmod 9786 = 9396$</td><td>0</td></tr>
+          <tr><td>11</td><td>$u_{11} = 9396^2 \bmod 9786 = 5310$</td><td>0</td></tr>
+          <tr style="background:var(--acc-bg);"><td>12</td><td>$u_{12} = 5310^2 \bmod 9786 = \mathbf{2634}$</td><td><strong>1</strong></td></tr>
+        </tbody>
+      </table>
+
+      <h6>Végszorzás</h6>
+      $$\begin{aligned}
+        u^k &\equiv 5490 \cdot 9006 \cdot 3000 \cdot 6150 \cdot 2634 \\
+            &\equiv 4068 \cdot 3000 \cdot 6150 \cdot 2634 \\
+            &\equiv 858 \cdot 6150 \cdot 2634 \\
+            &\equiv 2046 \cdot 2634 \\
+            &\equiv \mathbf{6864} \pmod{9786}
+      \end{aligned}$$
+
+      <div class="def-box">
+        <strong>Eredmény:</strong> $6456^{4652} \equiv 6864 \pmod{9786}$. &nbsp;
+        Csak 13 négyzetreemelés + 4 szorzás — szemben az „eredeti" 4652 szorzással!
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 7: 6.7-8 Primitív gyök & kvadratikus ═══ -->
+  <div id="t-c6-kvad" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">6.7 § — Primitív gyökök és diszkrét logaritmus</span>
+
+      <h6>6.65 Def. — Elem rendje és primitív gyök</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Fogalom</th><th>Definíció</th></tr></thead>
+        <tbody>
+          <tr><td><strong>$o(a)$ — $a$ rendje</strong></td><td>legkisebb $d > 0$, amelyre $a^d \equiv 1 \pmod m$</td></tr>
+          <tr><td><strong>$d$-edik egységgyök</strong></td><td>$a^d \equiv 1$, vagyis $a$ rendje osztja $d$-t</td></tr>
+          <tr><td><strong>primitív gyök</strong> $g$</td><td>$o(g) = \varphi(m)$ — $g$ hatványai kiadják $\mathbb{Z}_m^*$ <em>összes</em> elemét</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>6.67 Tétel.</strong> $\mathbb{Z}_m^*$-ban pontosan akkor van primitív gyök, ha
+        $m = 2$, $m = 4$, $m = p^\alpha$, vagy $m = 2p^\alpha$ &nbsp;(ahol $p$ páratlan prím).
+      </div>
+
+      <h6>6.70 Def. — Diszkrét logaritmus</h6>
+      <p>Ha $g$ primitív gyök $\pmod m$ és $a = g^k$, akkor</p>
+      $$k = \log_g(a) = \operatorname{ind}_g(a) \pmod{\varphi(m)}$$
+      <p>az $a$ <strong>(g-alapú) diszkrét logaritmusa</strong> / <strong>indexe</strong>.</p>
+
+      <div class="warn-box">
+        A diszkrét logaritmus kiszámítása nagy $p$-re <strong>nehéz probléma</strong> (DLP) —
+        a Diffie–Hellman kulcscsere és ElGamal-aláírás erre épül. Nem ismert polinomidejű
+        klasszikus algoritmus, de Shor 1994-es <em>kvantumalgoritmusa</em> megoldaná.
+      </div>
+
+      <h6>6.71 Példa — $p = 47, g = 5$</h6>
+      <p>$\log_5(26) = 29, \;\log_5(37) = 42$ (a könyv 116. old. táblázata).</p>
+      <p>Szorzás logaritmussal: $\log_5(26 \cdot 37) = 29 + 42 = 71 \equiv 25 \pmod{46}$, így $26 \cdot 37 \equiv 5^{25} = 22 \pmod{47}$.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">6.8 § — Magasabbfokú kongruenciák</span>
+      <p>$x^k \equiv a \pmod m$. Speciálisan $k = 2$:</p>
+      <div class="def-box">
+        <strong>6.77 Def.</strong> Az $a \in \mathbb{Z}_m$ szám <strong>négyzetes (kvadratikus) maradék</strong> $\pmod m$,
+        ha $x^2 \equiv a \pmod m$-nek van megoldása. Egyébként <strong>négyzetes nemmaradék</strong>.
+      </div>
+
+      <h6>6.79 Állítás — Hányan vannak?</h6>
+      <p>Prím $p$ modulusra: $\mathbb{Z}_p \setminus \{0\}$ elemeinek <strong>pontosan a fele</strong> (= $\tfrac{p-1}{2}$) négyzetes maradék.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.82 Tétel — Euler-lemma (kvadratikus maradék-teszt)</span>
+      <p>$p \in \mathbb{P}$, $p \nmid a$ esetén $a$ akkor és csak akkor négyzetes maradék $\pmod p$, ha</p>
+      $$a^{(p-1)/2} \equiv 1 \pmod p.$$
+      <p>(Ha $-1$-et kapunk, akkor $a$ négyzetes nemmaradék.)</p>
+
+      <div class="thm-box">
+        Az Euler-lemma a 6.6 alfej. gyorshatványozással <strong>polinomidőben</strong> ellenőrzi
+        a kvadratikus maradék-tulajdonságot — még akkor is, ha $a$ <em>négyzetgyökét</em> nem tudjuk
+        megtalálni! Erre épül több titkosírás (Goldwasser–Micali szemantikus biztonság).
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">6.84 Def. — Legendre-szimbólum</span>
+      <p>$p > 2$ prím, $a \in \mathbb{Z}$ esetén:</p>
+      $$\left(\frac{a}{p}\right) := \begin{cases} 0 & p \mid a \\ +1 & a \text{ négyzetes maradék} \\ -1 & a \text{ négyzetes nemmaradék} \end{cases}$$
+      <p>Euler-lemma alapján: $\;\left(\tfrac{a}{p}\right) \equiv a^{(p-1)/2} \pmod p.$</p>
+
+      <h6>6.88 Tulajdonságok</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Tulajdonság</th><th>Képlet</th></tr></thead>
+        <tbody>
+          <tr><td>multiplikativitás</td><td>$\left(\frac{ab}{p}\right) = \left(\frac{a}{p}\right) \cdot \left(\frac{b}{p}\right)$</td></tr>
+          <tr><td>$-1$ esete</td><td>$\left(\frac{-1}{p}\right) = +1 \iff p \equiv 1 \pmod 4$</td></tr>
+          <tr><td>$2$ esete</td><td>$\left(\frac{2}{p}\right) = +1 \iff p \equiv \pm 1 \pmod 8$</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">6.89 Tétel — Kvadratikus reciprocitás (Gauss „aranyfia")</span>
+      <p>Tetszőleges $m, n$ páratlan prímre:</p>
+      $$\left(\frac{n}{m}\right) = \begin{cases} -\left(\frac{m}{n}\right) & \text{ha } n \equiv m \equiv 3 \pmod 4 \\ +\left(\frac{m}{n}\right) & \text{máskor} \end{cases}$$
+      <p style="color:#64748b;font-size:.8rem;">
+        Gauss <strong>nyolc</strong> különböző bizonyítást adott rá, „aranyfiamnak" (theorema aureum)
+        nevezte. A számelmélet egyik legmélyebb és legszebb tétele. Modernebb általánosítások:
+        Artin-reciprocitás, Langlands-program.
+      </p>
+
+      <div class="thm-box">
+        Algoritmikus haszna: a kvadratikus reciprocitás + 6.88 tulajdonságok együtt kb.
+        <strong>Euklidesz-sebességgel</strong> kiszámítják $\left(\tfrac{a}{p}\right)$-t —
+        $O(\log^2 p)$ lépésben. Ezzel az RSA-kulcsgenerálás és sok prímteszt működik.
+      </div>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTERS (7–13) — SECTIONS LIST + STUB ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
