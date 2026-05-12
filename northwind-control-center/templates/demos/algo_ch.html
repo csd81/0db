@@ -2715,7 +2715,379 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTERS (8–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 8 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 8 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c8-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c8-eraf',this)">8.1–2 Eratoszthenész &amp; Fermat</span>
+    <span class="ila-nav-link" onclick="showTab('t-c8-alprim',this)">8.3 Álprímek &amp; Bolyai</span>
+    <span class="ila-nav-link" onclick="showTab('t-c8-mr',this)">8.4 Miller–Rabin</span>
+    <span class="ila-nav-link" onclick="showTab('t-c8-pollard',this)">8.5 Pollard ρ</span>
+    <span class="ila-nav-link" onclick="showTab('t-c8-aks',this)">8.6 AKS</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c8-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">8. fejezet — Prímtesztelés és számok felbontása</span>
+      <p>
+        A 3.2 alfejezet 3.16 problémájában láttuk, hogy a <strong>prímfelbontás</strong> és a
+        <strong>prímtesztelés</strong> messze nem azonos — különösen 2002 (AKS) óta. A klasszikus
+        algoritmusok azonban hasonló módszereket használnak.
+      </p>
+      <div class="warn-box">
+        <strong>Minden prímfelbontó módszer $O(2^n)$ exponenciálisan lassú</strong> — csak 100–200
+        jegyű számokra használhatók. A konstansok különbsége miatt egyik módszer évmilliárdokig,
+        a másik „csak" évmilliókig fut ugyanazon adatra.
+      </div>
+      <div class="def-box">
+        <strong>2002 áttörés — AKS.</strong> Agrawal, Kayal és Saxena algoritmusa polinomiálisan
+        gyors, 100% biztonságos, determinisztikus algoritmus a <em>prímtesztelés</em> problémára.
+        A gyors <em>prímfelbontás</em> máig megoldatlan.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6>Algoritmus-választás stratégia</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Cél</th><th>Algoritmus</th><th>Mikor használjuk?</th></tr></thead>
+        <tbody>
+          <tr><td>Felbontás &lt; 10⁶</td><td>Eratoszthenész</td><td>oktatás, kis számok</td></tr>
+          <tr><td>Felbontás közeli prímek</td><td>Fermat</td><td>$n = pq$, $|p-q|$ kicsi</td></tr>
+          <tr><td>Felbontás ált.</td><td>Pollard ρ</td><td>~10–25 jegyű számokra</td></tr>
+          <tr><td>Felbontás &gt; 50 jegyű</td><td>GNFS (nincs könyvben)</td><td>RSA-feltörés</td></tr>
+          <tr><td>Tesztelés gyorsan</td><td>Miller–Rabin</td><td>RSA-kulcsgenerálás</td></tr>
+          <tr><td>Tesztelés determinisztikus</td><td>AKS</td><td>matematikai biztonság</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: Eratoszthenész + Fermat ═══ -->
+  <div id="t-c8-eraf" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">8.1 Algoritmus — Eratoszthenész</span>
+      <p>
+        Osszuk el $n$-et 2-vel és az $\sqrt{n}$-nél kisebb páratlan számokkal. Ha valamelyik osztás
+        nem ad maradékot, $n$ összetett. Egyébként prím.
+      </p>
+      <div class="warn-box">
+        Lépésszám $\sqrt{n}/2 \approx 10^{k/2}$. <strong>Exponenciális</strong> az input méretében
+        ($k$ jegy). Lásd a 3.21 példa kozmikus időadatait.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">8.2 § — Fermat algoritmusa</span>
+      <p>
+        Pierre Fermat (1601–1665). Ma is hatékony pár-száz-jegyű számokra,
+        <strong>különösen ha $n = pq$ két közeli prím szorzata</strong> —
+        <em>ezért nem szabad ilyen RSA-kulcsot választani!</em>
+      </p>
+
+      <h6>Első ötlet — Két közeli osztó</h6>
+      <p>Ha $n = ab$ és $a > b$ közel egymáshoz, akkor $x = \tfrac{a+b}{2}$, $y = \tfrac{a-b}{2}$ esetén:</p>
+      $$n = x^2 - y^2 \;\Longleftrightarrow\; n + y^2 = x^2$$
+      <p>
+        $x \approx \sqrt{n}$-tól indítva $x$-et egyesével növeljük; minden lépésben ellenőrizzük,
+        hogy $x^2 - n$ négyzetszám-e.
+      </p>
+
+      <h6>Második ötlet — Modulus-szita</h6>
+      <p>
+        $y^2$ utolsó két jegye csak $00, e1, e4, 25, o6, e9$ lehet ($e$=páros, $o$=páratlan).
+        Ezért $x^2 - n$ utolsó két jegye is csak ezen 6 minta egyike — <strong>78% kizárható</strong>
+        négyzetreemelés előtt. Több $m_i$ modulus szitálással még gyorsabb.
+      </p>
+
+      <h6>8.5 Tétel — Mikor van $n = x^2 - y^2$ megoldás?</h6>
+      <div class="def-box">
+        $n = x^2 - y^2$ pontosan akkor oldható meg, ha $\;n \neq 4k + 2$.
+      </div>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Mivel $(x+y)$ és $(x-y)$ paritása mindig megegyezik, szorzatuk vagy páratlan vagy 4-gyel osztható.
+        $4k+2$ alakú számok kimaradnak — de azok már páros összetettek, könnyen szétbonthatók.
+      </p>
+
+      <h6>8.6 Algoritmus — Legendre–Kraitchik (vázlat)</h6>
+      <p>
+        Az $x^2 - y^2 = n$ helyett keressünk olyan $x, y$-t ahol
+      </p>
+      $$x^2 - y^2 \equiv 0 \pmod n, \quad x \not\equiv \pm y.$$
+      <p>
+        Ekkor $\operatorname{lnko}(n, x + y)$ vagy $\operatorname{lnko}(n, x - y)$ valódi osztó.
+        <strong>Faktorbázis-trükk:</strong> $x, y$-t kis prímek $B = \{p_1, \dots, p_h\}$ szorzataként
+        keressük, lineáris algebrával. Ez vezet az általános számtest-szitához (GNFS).
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Álprímek & Bolyai ═══ -->
+  <div id="t-c8-alprim" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">8.3 § — Álprímek és Bolyai János</span>
+      <p>
+        Apjának (Bolyai Farkas) bíztatására Bolyai János megpróbálta bebizonyítani a <strong>kis Fermat
+        tétel megfordítását</strong>:
+      </p>
+      <div class="def-box">
+        <strong>8.7 Probléma.</strong> Igaz-e, hogy ha $n$ teljesíti
+        $$b^{n-1} \equiv 1 \pmod n \quad \text{minden } 1 < b < n, \;\operatorname{lnko}(b,n) = 1\text{-re,}$$
+        akkor $n$ prímszám?
+      </div>
+      <p>
+        Bolyai János a kéziratai szerint több <em>ellenpéldát</em> talált — pl.
+      </p>
+      $$2^{340} \equiv 1 \pmod{341}, \qquad 4^{14} \equiv 1 \pmod{15}$$
+      <p>pedig $341 = 11 \cdot 31$ és $15 = 3 \cdot 5$. Bolyai felfedezései csak <strong>2000 körül</strong> kerültek elő.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">8.11 Definíció — Álprím és Carmichael-szám</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Fogalom</th><th>Definíció</th></tr></thead>
+        <tbody>
+          <tr><td><strong>álprím</strong> $b$ bázisra</td><td>$n$ páratlan összetett, $\operatorname{lnko}(b,n) = 1$, $b^{n-1} \equiv 1 \pmod n$</td></tr>
+          <tr><td><strong>$b$ árulója $n$-nek</strong></td><td>$\operatorname{lnko}(b,n)=1$, $b^{n-1} \not\equiv 1 \pmod n$ (= bizonyítja, hogy $n$ összetett)</td></tr>
+          <tr><td><strong>Carmichael-szám</strong></td><td>$n$ összetett, álprím <em>minden</em> $b$-re ⟹ <em>nincs árulója</em>!</td></tr>
+        </tbody>
+      </table>
+
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Robert Daniel Carmichael (1879–1967). Első Carmichael-számok: $561, 1105, 1729, 2465, 2821,
+        6601, 8911, 10\,585, \dots$ &nbsp;Ramanujan-szám ($1729 = 1^3 + 12^3 = 9^3 + 10^3$) is benne van!
+      </p>
+
+      <div class="thm-box">
+        <strong>Erdős Pál ötletével Alford, Granville, Pomerance (1994) bizonyította:</strong>
+        végtelen sok Carmichael-szám létezik. Ezért a Fermat/Bolyai-teszt
+        <em>nem 100% biztos</em>.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">8.15 Tétel — Korselt (1899) — Carmichael-számok jellemzése</span>
+      <p>$n$ páratlan, négyzetmentes összetett szám akkor és csak akkor Carmichael, ha</p>
+      $$p - 1 \mid n - 1 \quad \text{minden } p \mid n \text{ prímosztóra.}$$
+
+      <h6>Konkrét példa — Miért Carmichael 561?</h6>
+      <p>$561 = 3 \cdot 11 \cdot 17$, $n - 1 = 560$:</p>
+      $$3 - 1 = 2 \mid 560\ ✓ \quad 11 - 1 = 10 \mid 560\ ✓ \quad 17 - 1 = 16 \mid 560\ ✓$$
+
+      <div class="thm-box">
+        <strong>Következmény.</strong> Minden Carmichael-szám <em>legalább 3 különböző prím</em>
+        szorzata. (Ha $n = pq$, $p<q$, akkor $q-1 \mid pq - 1 = p(q-1) + (p-1)$, így $q-1 \mid p-1$
+        — ellentmondás.)
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">8.12 Tétel — Áruló-arány</span>
+      <p>Ha $n$ <em>nem</em> Carmichael (legalább egy árulóval), akkor a $\mathbb{Z}_n^*$ elemeinek <strong>legalább a fele</strong> áruló.</p>
+      <div class="def-box">
+        <strong>Következmény.</strong> $k$ véletlen $b$ próbálkozás után, ha mind „sikertelen",
+        $n$ legfeljebb $2^{-k}$ eséllyel prím — kivéve ha Carmichael. <strong>Miller–Rabin</strong>
+        ezt erősíti tovább.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Miller-Rabin ═══ -->
+  <div id="t-c8-mr" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">8.4 § — Miller–Rabin teszt</span>
+      <p>
+        Ötlet: <strong>ha $n$ prím</strong> (lenne), akkor $x^2 \equiv 1 \pmod n$ egyenlet
+        megoldásai csak $x \equiv \pm 1$ ($\mathbb{Z}_p$ test, 6.79). Ezzel a Bolyai-teszt
+        <em>továbbfinomítható</em>: a Carmichael-számokat is kiszűri.
+      </p>
+
+      <h6>8.17 Algoritmus — Miller–Rabin</h6>
+      <ol>
+        <li>Bontsuk fel $\;n - 1 = 2^s \cdot t\;$ ahol $t$ páratlan.</li>
+        <li>Válasszunk véletlen $b$-t, $\operatorname{lnko}(b, n) = 1$.</li>
+        <li>Számoljuk ki $b^t, b^{2t}, b^{4t}, \dots, b^{2^s t} = b^{n-1} \pmod n$ — minden lépésben négyzetreemelés.</li>
+        <li>Amikor <strong>először 1-et</strong> kapunk: az előző elemnek $-1$-nek kell lennie, különben $n$ összetett.</li>
+      </ol>
+
+      <div class="def-box">
+        <strong>8.18 Def — Erős álprím.</strong> $n$ <em>erős álprím</em> a $b$ bázisra, ha
+        vagy $b^t \equiv 1$, vagy létezik $0 \leq r < s$, hogy $b^{2^r t} \equiv -1 \pmod n$.
+      </div>
+
+      <div class="thm-box">
+        <strong>Megbízhatóság.</strong> Egyetlen $b$-re tévedés esélye <em>kevesebb mint $1/4$</em>
+        (nincs „Carmichael-szerű" kivétel). $k$ független próba után tévedés esélye $\leq 4^{-k}$.
+        Pl. $k = 40$ teszt $\Rightarrow$ $4^{-40} < 10^{-24}$ — gyakorlatilag biztos!
+        Ez az <strong>OpenSSL és más kriptokönyvtárak alapértelmezett prímtesztje</strong>.
+      </div>
+
+      <h6>8.19 Példa — 91 erős álprím $b = 10$-re</h6>
+      <p>$91 = 7 \cdot 13$, $n - 1 = 90 = 2 \cdot 45$, így $s = 1$, $t = 45$.</p>
+      <p>$10^3 = 1001 \equiv -1 \pmod{91}$ ⟹ $\;10^{45} \equiv (-1)^{15} \equiv -1 \pmod{91}$.</p>
+      <p>Tehát $b^t \equiv -1$ már — $r = 0$-ra $b^{2^r t} \equiv -1$ teljesül, $91$ átmegy a teszten. <em>De $91$ valójában összetett!</em> Több bázis vizsgálatával kiszűrhető.</p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: Pollard ρ ═══ -->
+  <div id="t-c8-pollard" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">8.5 § — Pollard ρ-módszere (1975)</span>
+      <p>
+        John Pollard 1975-es cikke. <strong>Valódi osztót</strong> ad — az Eratoszthenészi
+        próbaosztásnál lényegesen gyorsabb. Komplexitása heurisztikusan $O(n^{1/4})$ —
+        szubexponenciális.
+      </p>
+      <p style="color:#64748b;font-size:.8rem;">
+        Az elnevezés: ha az $x_k$ sorozatot ábrázoljuk, a $\rho$ görög betűhöz hasonlít — egy egyenes
+        szakasz vezet egy ciklusba. A „Monte Carlo" elnevezés a véletlenszerű $f$ polinom-választáshoz
+        utal.
+      </p>
+
+      <h6>8.20 Algoritmus — Alapötlet</h6>
+      <p>Legyen $f(x) = x^2 + 1$ (vagy hasonló nemlineáris polinom). Indítsunk $x_0$-t, és számoljuk:</p>
+      $$x_k = f(x_{k-1}) \bmod n$$
+      <p>Ha valamely $j < k$-ra $\operatorname{lnko}(x_k - x_j, n) = r > 1$, akkor $r$ valódi osztó!</p>
+
+      <div class="def-box">
+        <strong>Miért működik?</strong> Ha $r \mid n$, akkor $f$ ciklikus $\bmod\, r$ (kis modulus,
+        kevés állapot). Születésnap-paradoxonnal $O(\sqrt r) = O(n^{1/4})$ lépés után már
+        ütközünk $\pmod r$-ben — anélkül, hogy $r$-t ismernénk!
+      </div>
+
+      <h6>8.24 Algoritmus — Floyd-féle gyorsítás</h6>
+      <p>Ne nézzük az <em>összes</em> $j < k$ párt — csak $j = 2^h - 1$-et, ahol $2^h \leq k < 2^{h+1}$. Négyzetes gyorsítás.</p>
+
+      <h6>8.31 Algoritmus — „Kétszeres sebesség" (Brent)</h6>
+      <p>Egyszerre két iteráció: lassú és gyors „kettős léptetés":</p>
+      $$x_{k+1} = f(x_k), \qquad x_{2k} = f(f(x_{2k-1}))$$
+      <p>Minden lépésben $\operatorname{lnko}(n, x_{2k} - x_k)$ vizsgálata.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">8.27 Példa — $n = 4087$, $f(x) = x^2 + x + 1$, $x_0 = 2$</span>
+
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.85rem;">
+        <thead><tr><th>$k$</th><th>$x_k$</th><th>$j = 2^h-1$</th><th>$\operatorname{lnko}(x_k - x_j, n)$</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>7</td><td>0</td><td>1</td></tr>
+          <tr><td>2</td><td>57</td><td>1</td><td>1</td></tr>
+          <tr><td>3</td><td>3307</td><td>1</td><td>1</td></tr>
+          <tr><td>4</td><td>2745</td><td>3</td><td>1</td></tr>
+          <tr><td>5</td><td>1343</td><td>3</td><td>1</td></tr>
+          <tr><td>6</td><td>2626</td><td>3</td><td>1</td></tr>
+          <tr style="background:var(--acc-bg);"><td>7</td><td>3734</td><td>3</td><td><strong>61</strong></td></tr>
+        </tbody>
+      </table>
+
+      <div class="def-box">
+        $4087 = 61 \cdot 67$. Csak <strong>7 iteráció</strong> — az Eratoszthenészi szita
+        $\sqrt{4087} \approx 64$ próbaosztást igényelne (összemérhető, de Pollard <em>nagyobb</em>
+        $n$-re drámaian jobb).
+      </div>
+
+      <h6>8.32 Példa — Brent kettős léptetés ($n = 246\,733$)</h6>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.84rem;">
+        <thead><tr><th>$k$</th><th>$x_k$</th><th>$x_{2k}$</th><th>$\operatorname{lnko}(n, x_{2k} - x_k)$</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>2</td><td>2</td><td>—</td></tr>
+          <tr><td>1</td><td>5</td><td>26</td><td>1</td></tr>
+          <tr><td>2</td><td>26</td><td>211 597</td><td>1</td></tr>
+          <tr><td>3</td><td>677</td><td>126 543</td><td>1</td></tr>
+          <tr><td>4</td><td>211 597</td><td>99 653</td><td>1</td></tr>
+          <tr><td>5</td><td>133 298</td><td>225 011</td><td>1</td></tr>
+          <tr><td>6</td><td>126 543</td><td>28 771</td><td>1</td></tr>
+          <tr><td>7</td><td>159 150</td><td>90 806</td><td>1</td></tr>
+          <tr><td>8</td><td>99 653</td><td>86 408</td><td>1</td></tr>
+          <tr style="background:var(--acc-bg);"><td>9</td><td>210 626</td><td>222 422</td><td><strong>983</strong></td></tr>
+        </tbody>
+      </table>
+      <p>$246\,733 = 983 \cdot 251$ ✓</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">8.30 Megj. — Polinom-választás</span>
+      <ul>
+        <li><strong>Jó:</strong> $f(x) = x^2 + 1$ (default), $x^2 + c$ általában</li>
+        <li><strong>Tilos:</strong> $f(x) = ax + b$ (lineáris) — periódusa kicsi, nem talál ütközést</li>
+        <li><strong>Tilos:</strong> $f(x) = x^2$ — tiszta négyzet, korai degenerált ciklus</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 6: AKS ═══ -->
+  <div id="t-c8-aks" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">8.6 § — AKS algoritmus (Agrawal–Kayal–Saxena, 2002)</span>
+      <p>
+        Manindra <strong>Agrawal</strong> és tanítványai <strong>Neeraj Kayal</strong> és
+        <strong>Nitin Saxena</strong> 2002-es áttörése: <em>az első</em> ismert
+        <strong>polinomidejű, determinisztikus, feltétel nélküli</strong> prímteszt.
+      </p>
+
+      <div class="def-box">
+        Az algoritmus megválaszolta az 1970-es évek óta nyitva álló kérdést:
+        <em>„van-e a prímtesztelésre P-beli algoritmus?"</em> &nbsp;
+        <strong>Igen!</strong> &nbsp;Komplexitás: $\tilde{O}(\log^{10.5} n)$ az eredeti cikkben,
+        később $\tilde{O}(\log^6 n)$.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">Alapötlet — Polinomok használata</span>
+      <p>$n$ prím $\iff$ a binomiális tétel alapján:</p>
+      $$(x - a)^n \equiv x^n - a \pmod n$$
+      <p>
+        ami egy <em>polinomidentitás</em> $\pmod n$. (Ha $n$ prím, a binomiális együtthatók
+        $\binom{n}{k}$ mind $n$-nel oszthatók kivéve $k = 0, n$-re; ha $n$ összetett, valamelyik
+        együttható nem osztható $n$-nel.)
+      </p>
+
+      <h6>Komplexitás-trükk</h6>
+      <p>
+        Az identitás közvetlen ellenőrzése $n + 1$ együttható összehasonlítása — túl lassú.
+        <strong>AKS-trükk:</strong> mindkét oldalt egy alkalmas $(x^r - 1)$ polinommal vett
+        maradékon vizsgáljuk, ahol $r \approx \log^6 n$ kicsi prím.
+      </p>
+      <p>
+        Ha a két polinom valóban egyenlő, akkor minden polinom-szerinti maradékuk is. Fordítva:
+        ha $(x^r - 1)$-szerinti maradékok megegyeznek <em>néhány száz $a$</em>-ra, akkor $n$ <strong>biztosan prím</strong>.
+      </p>
+
+      <div class="thm-box">
+        <strong>Az AKS algoritmus 4 fő lépésben:</strong>
+        <ol>
+          <li>$n = m^k$ formájú? (perfect power test)</li>
+          <li>$r$ alkalmas prím keresése $r \leq \log^6 n$-ig</li>
+          <li>$\operatorname{lnko}(a, n) = 1$ ellenőrzése $a \leq r$-re</li>
+          <li>A polinomidentitás $(x - a)^n \equiv x^n - a \pmod{x^r - 1, n}$ ellenőrzése $a \leq 2\sqrt{r} \log n$-ig</li>
+        </ol>
+        Ha mindegyik lépés átmegy ⟹ $n$ prím. Bármelyik buktató ⟹ $n$ összetett.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">Gyakorlati helyzet</span>
+      <p>
+        Bár AKS elméletileg gyönyörű, <strong>gyakorlatban nem versenyez Miller–Rabin-nal</strong>:
+        a polinomszámítások konstansai magasak. Modern változatok (Lenstra, Pomerance, Bernstein,
+        Crandall) jelentősen egyszerűsítették.
+      </p>
+      <p>
+        Hivatalos kriptokönyvtárakban: <strong>Miller–Rabin + Baillie–PSW kombináció</strong> az
+        ipari sztenderd. AKS főleg <em>elméleti</em> garancia.
+      </p>
+
+      <h6>Hivatkozások</h6>
+      <ul>
+        <li>Agrawal, Kayal, Saxena: <em>PRIMES is in P</em>, Annals of Mathematics 160 (2004), 781–793</li>
+        <li>MathWorld: <a href="https://mathworld.wolfram.com/AKSPrimalityTest.html" style="color:var(--acc);">AKS Primality Test</a></li>
+        <li>AMS Bulletin (2005): <em>A polynomial time algorithm for primes</em></li>
+      </ul>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTERS (9–13) — SECTIONS LIST + STUB ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
