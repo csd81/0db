@@ -1,0 +1,268 @@
+# Exercise - Express ⊤ and ⊥ in Minterm/Maxterm Form
+
+## Problem Statement
+
+From Section 1.3, after Proposition 1.17:
+> "No jó, még ⊤-t és ⊥-t is elő kell állítanunk (1.2) alakú kifejezésként, de ez már semmiség az előző házifeladatokhoz képest ..."
+
+**Task:** Express the top (⊤) and bottom (⊥) elements in Disjunctive Normal Form (DNF) using minterms.
+
+---
+
+## Background
+
+### Minterm Definition (1.4)
+
+For generators {a₁, ..., aₘ}, a **minterm** is:
+
+```
+m_ε = a₁^ε₁ ∧ a₂^ε₂ ∧ ... ∧ aₘ^εₘ
+```
+
+where ε = (ε₁, ..., εₘ) ∈ {+1, -1}ᵐ and:
+- a⁺¹ = a
+- a⁻¹ = ¬a
+
+### DNF Formula (1.2)
+
+Any element x ∈ B can be written as:
+
+```
+x = ⋁_{ε ∈ S_x} m_ε
+```
+
+where S_x ⊆ {+1, -1}ᵐ is a subset of indices.
+
+---
+
+## Solution for ⊥ (Bottom/Zero Element)
+
+### Claim:
+```
+⊥ = ⋁_{ε ∈ ∅} m_ε
+```
+
+That is, **⊥ is the empty disjunction** (S_⊥ = ∅).
+
+### Verification:
+
+In Boolean algebra, the empty disjunction is defined as ⊥ (just as empty sum = 0 in arithmetic).
+
+**Proof:** For any x ∈ B:
+```
+x ∨ ⊥ = x  (identity law)
+```
+
+If ⊥ = ⋁_{ε ∈ ∅} m_ε, then for any DNF expression D:
+```
+D ∨ (⋁_{ε ∈ ∅} m_ε) = D ∨ ⊥ = D
+```
+
+This is consistent with the DNF representation. ✓
+
+### Alternative View:
+
+Since minterms are **pairwise disjoint**:
+```
+m_ε ∧ m_δ = ⊥  when ε ≠ δ
+```
+
+The empty join (no minterms selected) naturally gives ⊥.
+
+---
+
+## Solution for ⊤ (Top/One Element)
+
+### Claim:
+```
+⊤ = ⋁_{ε ∈ {+1,-1}^m} m_ε
+```
+
+That is, **⊤ is the disjunction of ALL 2^m minterms** (S_⊤ = {+1, -1}ᵐ).
+
+### Proof:
+
+**Step 1:** Show that the minterms partition the algebra.
+
+For any element x ∈ B, exactly one of the following holds for each generator aᵢ:
+- x ≤ aᵢ  (x is "in" aᵢ)
+- x ≤ ¬aᵢ  (x is "in" the complement)
+
+Therefore, every non-zero element has a non-zero meet with exactly one minterm.
+
+**Step 2:** The join of all minterms equals ⊤.
+
+Let T = ⋁_{all ε} m_ε
+
+We need to show T = ⊤, i.e., ¬T = ⊥.
+
+```
+¬T = ¬(⋁_{ε} m_ε)
+   = ⋀_{ε} ¬m_ε              (De Morgan's law)
+   = ⋀_{ε} ¬(a₁^ε₁ ∧ ... ∧ aₘ^εₘ)
+   = ⋀_{ε} (¬a₁^ε₁ ∨ ... ∨ ¬aₘ^εₘ)
+   = ⋀_{ε} (a₁^(-ε₁) ∨ ... ∨ aₘ^(-εₘ))
+```
+
+For each ε, the term (a₁^(-ε₁) ∨ ... ∨ aₘ^(-εₘ)) contains at least one literal.
+
+Taking the conjunction over ALL ε means every possible combination of literals appears, and their conjunction is ⊥.
+
+Therefore: ¬T = ⊥, which means T = ⊤. ✓
+
+---
+
+## Explicit Examples
+
+### Example 1: m = 1 (One Generator)
+
+Generators: {a}
+
+Minterms:
+```
+m_(+1) = a
+m_(-1) = ¬a
+```
+
+**⊥ in DNF:**
+```
+⊥ = ⋁_{ε ∈ ∅} m_ε = (empty disjunction)
+```
+
+**⊤ in DNF:**
+```
+⊤ = m_(+1) ∨ m_(-1) = a ∨ ¬a  ✓ (law of excluded middle)
+```
+
+### Example 2: m = 2 (Two Generators)
+
+Generators: {a, b}
+
+Minterms:
+```
+m_(+,+) = a ∧ b
+m_(+,-) = a ∧ ¬b
+m_(-,+) = ¬a ∧ b
+m_(-,-) = ¬a ∧ ¬b
+```
+
+**⊥ in DNF:**
+```
+⊥ = (empty disjunction)
+```
+
+**⊤ in DNF:**
+```
+⊤ = (a ∧ b) ∨ (a ∧ ¬b) ∨ (¬a ∧ b) ∨ (¬a ∧ ¬b)
+```
+
+**Verification:**
+```
+(a ∧ b) ∨ (a ∧ ¬b) = a ∧ (b ∨ ¬b) = a ∧ ⊤ = a
+(¬a ∧ b) ∨ (¬a ∧ ¬b) = ¬a ∧ (b ∨ ¬b) = ¬a ∧ ⊤ = ¬a
+
+Therefore: a ∨ ¬a = ⊤  ✓
+```
+
+### Example 3: m = 3 (Three Generators)
+
+Generators: {a, b, c}
+
+**⊤ in DNF:**
+```
+⊤ = (a∧b∧c) ∨ (a∧b∧¬c) ∨ (a∧¬b∧c) ∨ (a∧¬b∧¬c) 
+  ∨ (¬a∧b∧c) ∨ (¬a∧b∧¬c) ∨ (¬a∧¬b∧c) ∨ (¬a∧¬b∧¬c)
+```
+
+All 2³ = 8 minterms disjoined.
+
+---
+
+## CNF (Conjunctive Normal Form) Representation
+
+By duality, we can also express ⊤ and ⊥ in CNF using **maxterms**.
+
+### Maxterm Definition:
+```
+M_ε = a₁^ε₁ ∨ a₂^ε₂ ∨ ... ∨ aₘ^εₘ
+```
+
+### ⊤ in CNF:
+```
+⊤ = ⋀_{ε ∈ ∅} M_ε  (empty conjunction)
+```
+
+### ⊥ in CNF:
+```
+⊥ = ⋀_{ε ∈ {+1,-1}^m} M_ε
+```
+
+**Example (m = 2):**
+```
+⊥ = (a ∨ b) ∧ (a ∨ ¬b) ∧ (¬a ∨ b) ∧ (¬a ∨ ¬b)
+```
+
+**Verification:**
+```
+(a ∨ b) ∧ (a ∨ ¬b) = a ∨ (b ∧ ¬b) = a ∨ ⊥ = a
+(¬a ∨ b) ∧ (¬a ∨ ¬b) = ¬a ∨ (b ∧ ¬b) = ¬a ∨ ⊥ = ¬a
+
+Therefore: a ∧ ¬a = ⊥  ✓
+```
+
+---
+
+## Summary Table
+
+| Element | DNF (using minterms) | CNF (using maxterms) |
+|---------|---------------------|---------------------|
+| **⊥** (bottom) | ⋁_{ε ∈ ∅} m_ε (empty) | ⋀_{all ε} M_ε |
+| **⊤** (top) | ⋁_{all ε} m_ε | ⋀_{ε ∈ ∅} M_ε (empty) |
+
+### Number of Terms
+
+| Element | DNF Terms | CNF Terms |
+|---------|-----------|-----------|
+| ⊥ | 0 | 2^m |
+| ⊤ | 2^m | 0 |
+
+---
+
+## Key Insights
+
+1. **Empty operations:**
+   - Empty disjunction (∨) = ⊥ (like empty sum = 0)
+   - Empty conjunction (∧) = ⊤ (like empty product = 1)
+
+2. **Partition property:** Minterms form a partition of ⊤:
+   - They are pairwise disjoint: m_ε ∧ m_δ = ⊥ for ε ≠ δ
+   - Their join is ⊤: ⋁_{all ε} m_ε = ⊤
+
+3. **Uniqueness:** Every element has a **unique** DNF representation (up to reordering) when generators are qualitatively independent.
+
+4. **Duality:** DNF for ⊤ ↔ CNF for ⊥ (and vice versa) by the Duality Principle.
+
+---
+
+## Application: Corollary 1.20
+
+This exercise completes the proof of Corollary 1.20:
+
+> If B is generated by m elements, then |B| ≤ 2^(2^m).
+
+**Reason:** Every element is a DNF of the form ⋁_{ε ∈ S} m_ε where S ⊆ {+1, -1}ᵐ.
+
+- There are 2^m possible minterms
+- There are 2^(2^m) possible subsets S
+- Therefore at most 2^(2^m) distinct elements
+
+The bounds are achieved when generators are qualitatively independent. ✓
+
+---
+
+## References
+
+- Section 1.3 - DNF/CNF definitions
+- Definition 1.19 - Normal forms
+- Proposition 1.17 - Structure of generated algebras
+- Corollary 1.20 - Size bounds

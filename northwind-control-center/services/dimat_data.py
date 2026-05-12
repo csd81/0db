@@ -1,12 +1,16 @@
 """
-dimat_data.py — Parses 0dimat_feladatok/ markdown into structured exercise data.
+dimat_data.py — Parses dimat markdown into structured exercise data.
 
-Source-of-truth files live OUTSIDE this app at:
-  /home/csd81/Desktop/0db/0dimat_feladatok/{NN}_{slug}/
+Source-of-truth files (since 2026 migration) live INSIDE the app at:
+  northwind-control-center/content/dimat/{NN}_{slug}/
     ├── README.md
     ├── exercise_checklist.md
     ├── solutions.md
-    └── (chapter 1 also has) quiz.md
+    ├── quiz.md (chapter 1 only — historical)
+    └── exercises/*.md  (chapters 1–7 have per-problem detail files)
+
+Prior to migration they lived at 0db/0dimat_feladatok/ — a separate GitHub
+repo (csd81/dimat). The PDFs remain there; only the MD content moved.
 
 Web is a *view*; parsed dicts are cached in memory at startup. A reload()
 function is exposed for hot-rebuild during development.
@@ -23,9 +27,8 @@ import re
 import threading
 from pathlib import Path
 
-# Repo root → /home/csd81/Desktop/0db   (parent of northwind-control-center/)
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-_FELADATOK_DIR = _REPO_ROOT / '0dimat_feladatok'
+# Content dir → northwind-control-center/content/dimat/
+_FELADATOK_DIR = Path(__file__).resolve().parents[1] / 'content' / 'dimat'
 
 # Chapter-number ↔ folder slug map. ch0 has no exercise folder (intro only).
 # ch19–ch23 + appendix have no folders yet; they fall back to []
