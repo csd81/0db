@@ -3820,7 +3820,201 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTERS (12–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 12 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 12 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c12-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c12-bundled',this)">A 5 mellékelt program</span>
+    <span class="ila-nav-link" onclick="showTab('t-c12-tools',this)">Külső eszközök</span>
+    <span class="ila-nav-link" onclick="showTab('t-c12-perf',this)">Teljesítmény-mérések</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c12-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">12. fejezet — Számítógépes megvalósítások</span>
+      <p>
+        A XXI. században a számítógépeken és az interneten <strong>rengeteg segédeszköz</strong>
+        áll rendelkezésünkre prímtesztelés és faktorizáció témában — naponta bővülő kínálatban.
+        A fejezet pragmatikus áttekintést ad arról, <em>mit, mivel, milyen sebességgel</em>
+        tudunk megcsinálni.
+      </p>
+      <div class="def-box">
+        Ez a fejezet a könyv legrövidebb — az 1.1 fejezet 5 programjának (<code>Prim1d.exe</code>,
+        stb.) konkrét leírása a könyv mellékelt CD-jén szerepel; itt csak az általános
+        ökosystem leírása található.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-info-circle me-1"></i> Elméleti olvasnivalók</h6>
+      <ul>
+        <li><strong>[MGy]</strong> Maróti György jegyzetei a Pannon Egyetemen</li>
+        <li><strong>[JA]</strong> Járai Antal — rekord-prím-keresés</li>
+        <li><strong>[W]</strong> WolframAlpha</li>
+        <li><strong>[TV]</strong> Tivolt Viktor TDK 2005</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: 5 program ═══ -->
+  <div id="t-c12-bundled" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">A könyvhöz mellékelt öt program</span>
+      <p>Magyar nyelvű, oktatási célú, <strong>lépésenkénti</strong> bemutatás. Egyszerűek (DOS-szerű
+      input), de pontosan ahhoz illenek, amit a könyv tárgyal. <em>Csak magáncélra</em>.</p>
+
+      <div class="prog-grid">
+        <div class="prog-card">
+          <code>Prim1d.exe</code>
+          <div class="desc">Prímtesztelés és faktorizáció: $\sqrt{n}$-ig próbaosztás, Fermat-teszt,
+          Miller–Rabin, Pollard $\rho$. Lépésenkénti kimenet.</div>
+        </div>
+        <div class="prog-card">
+          <code>EuklDio2D.exe</code>
+          <div class="desc">Euklideszi algoritmus + kibővített változat. Lineáris Diophantoszi
+          $ax + by = c$ megoldása Bézout-együtthatókkal.</div>
+        </div>
+        <div class="prog-card">
+          <code>HatvModDD.exe</code>
+          <div class="desc">Nagy kitevőjű hatványozás $\bmod\, m$. Binárás kitevő felbontás +
+          ismételt négyzetreemelés. Korlát: $m &lt; 2^{30}$.</div>
+        </div>
+        <div class="prog-card">
+          <code>Kinai3D.exe</code>
+          <div class="desc">CRT megoldó — 2–6 kongruenciás rendszer. Páronkénti rel.prím
+          előfeltétellel.</div>
+        </div>
+        <div class="prog-card">
+          <code>Poliosz5.exe</code>
+          <div class="desc">Polinomok kongruencia-osztása $\bmod\, p$. Magasabbfokú kongruenciák
+          gyökeinek keresése.</div>
+        </div>
+      </div>
+
+      <div class="warn-box">
+        <strong>⚠ A programok kizárólag magáncélra használhatók</strong>, bárminemű üzleti
+        alkalmazás szigorúan tilos!
+      </div>
+
+      <h6>Mit nem nyújtanak?</h6>
+      <ul>
+        <li>Modern szabványos formátum: nincs JSON/REST API, nem könyvtár.</li>
+        <li>Nagy számok: $m &lt; 2^{30}$ korlát; valódi RSA-méretekhez (1024+ bit) nem alkalmasak.</li>
+        <li>Párhuzamosság: egyszálú DOS-program.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Külső eszközök ═══ -->
+  <div id="t-c12-tools" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">Profi matematikai programok</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Program</th><th>Készítő</th><th>Megjegyzés</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Derive</strong></td><td>Texas Instruments (megszűnt 2007)</td><td>Pannon Egy. kedvelt taneszköz; CRT beépített függvény</td></tr>
+          <tr><td><strong>Maple</strong></td><td>Maplesoft</td><td>$20$-jegyű faktorizáció &lt; 10 mp <code>ifactor()</code> paranccsal</td></tr>
+          <tr><td><strong>Mathematica</strong></td><td>Wolfram Research</td><td><code>FactorInteger[]</code> — szimbolikus is</td></tr>
+          <tr><td><strong>SageMath</strong></td><td>nyílt forrású</td><td>ingyenes alternatíva; PARI/GP, Pollard $\rho$, ECM, GNFS modulok</td></tr>
+          <tr><td><strong>PARI/GP</strong></td><td>Henri Cohen</td><td>komandsoros, gyors számelméleti C-könyvtár</td></tr>
+        </tbody>
+      </table>
+
+      <p style="color:#94a3b8;font-style:italic;font-size:.85rem;">
+        <strong>Megfigyelés (Szalkai):</strong> a profi programok módszereikről „vajmi keveset
+        árulnak el" — fekete-doboz használat. Tanulási célokra a könyv saját programjai
+        jobbak, ipari használatra a profi szoftverek.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">Online eszközök</span>
+      <table class="ref-tbl">
+        <thead><tr><th>URL</th><th>Funkció</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><a href="https://www.wolframalpha.com/input?i=factor" style="color:var(--acc);">wolframalpha.com</a></td>
+            <td>129-jegyű számokat is felbont — módszer nem nyilvános</td>
+          </tr>
+          <tr>
+            <td><a href="https://primes.utm.edu/lists/small/millions/" style="color:var(--acc);">primes.utm.edu</a></td>
+            <td>Az első néhány millió prím listája CSV-ben</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.mersenne.org" style="color:var(--acc);">mersenne.org</a> (GIMPS)</td>
+            <td>Mersenne-prím elosztott keresés; több ezer USD jutalom</td>
+          </tr>
+          <tr>
+            <td><span style="color:#64748b;">www.rsasecurity.com (megszűnt)</span></td>
+            <td>RSA Factoring Challenges (1991–2007) — RSA-576 stb.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Performance ═══ -->
+  <div id="t-c12-perf" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">Konkrét mérések — egyetemi hallgatói feladat</span>
+      <p>
+        <strong>Szalkai István házifeladat</strong> (Pannon Egyetem, kb. 2005): 8–20 jegyű
+        számok faktorizációja 3 hónap alatt, bármilyen segédeszközzel.
+      </p>
+
+      <table class="ref-tbl">
+        <thead><tr><th>Eszköz</th><th>Input méret</th><th>Idő</th></tr></thead>
+        <tbody>
+          <tr><td>Saját C/Pascal program</td><td>8 jegy</td><td>$\sim$ 1 perc</td></tr>
+          <tr><td>Maple V <code>ifactor()</code></td><td>20 jegy</td><td>&lt; 10 másodperc</td></tr>
+          <tr><td>WolframAlpha (online)</td><td>129 jegyű RSA-129</td><td>perceken belül (2005+)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        Megdöbbentő történeti ív: 1977-ben az RSA-129 feltörése „40 quadrillió év" jóslat volt;
+        1994-ben 600 önkéntes 8 hónap alatt feltörte; 2005-re egy webform néhány perc alatt
+        elvégzi. A „gyakorlatban biztonságos" határ folyamatosan tolódik felfelé.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">Tivolt Viktor [TV] — Párhuzamos faktorizáció 2005</span>
+      <p>
+        Pannon Egyetem TDK-dolgozat. 2–16 gépre szétosztott faktorizáció tanulmányozása.
+      </p>
+
+      <h6>Főbb megállapítások</h6>
+      <ul>
+        <li>2–16 kliensre szétosztva a megoldható feladatok mérete <strong>jelentősen javul</strong>.</li>
+        <li>Kétszer annyi kliens viszont <strong>nem feltétlenül kétszeres sebesség</strong> — Amdahl-féle törvény.</li>
+        <li>Kommunikációs overhead nagy számoknál is megjelenik; a CRT-trükk (7.3) ott jól skálázódik.</li>
+      </ul>
+
+      <div class="thm-box">
+        A mai modern alternatívák: GPU-kon CUDA, MPI-cluster, vagy felhő-szolgáltatások (AWS Batch).
+        A faktorizáció <em>általában nehezen</em> párhuzamosítható — a GNFS-féle szuper-szita
+        algoritmus is csak korlátozottan, mert a mátrixfázis közbeeső szinkronpontokon múlik.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">2025-ös helyzetkép</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Méret</th><th>Idő (egy modern GPU)</th><th>Megjegyzés</th></tr></thead>
+        <tbody>
+          <tr><td>$&lt; 60$ jegy</td><td>perc</td><td>Pollard $\rho$, ECM</td></tr>
+          <tr><td>$60–100$ jegy</td><td>óra-nap</td><td>kvadratikus szita (QS)</td></tr>
+          <tr><td>$100–200$ jegy</td><td>hét-hónap</td><td>GNFS, párhuzamos cluster</td></tr>
+          <tr><td>$&gt; 250$ jegy</td><td>$&gt;$ év</td><td>jelenlegi határ; RSA-250 = 829 bit 2020-ban</td></tr>
+          <tr><td>RSA-2048 (617 jegy)</td><td>jelenleg $\sim$ 100+ év</td><td>iparági szabvány — kvantumig biztonságos</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTER (13) — SECTIONS LIST + STUB ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
