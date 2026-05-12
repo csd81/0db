@@ -3087,7 +3087,220 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTERS (9–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 9 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 9 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c9-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c9-mersenne',this)">9.1 Mersenne</span>
+    <span class="ila-nav-link" onclick="showTab('t-c9-lucas',this)">Lucas–Lehmer teszt</span>
+    <span class="ila-nav-link" onclick="showTab('t-c9-fermat',this)">9.2 Fermat-prímek</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c9-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">9. fejezet — Prímkeresés</span>
+      <p>
+        Évszázadok óta minden matematikus „prímképletet" keresett — egy formulát, amellyel
+        prímeket generálhatunk. Nagyméretű prímek megtalálása nem véletlenszerű bepötyögetéssel,
+        hanem <em>speciális alakú</em> számokon teszteléssel hatékonyabb.
+      </p>
+      <div class="thm-box">
+        <strong>Két fő prímcsalád:</strong> Mersenne $M_p = 2^p - 1$ és Fermat $F_n = 2^{2^n} + 1$.
+        Mersenne-prímek a mai prímrekordok: <strong>multimillió jegyű prímeket</strong> találnak velük.
+        Fermat-prímek viszont $n \leq 4$ óta egy sem ismert.
+      </div>
+
+      <h6>Hivatkozások</h6>
+      <ul>
+        <li><a href="https://www.mersenne.org" style="color:var(--acc);">mersenne.org</a> — GIMPS elosztott Mersenne-keresés (jutalmazási rendszerrel)</li>
+        <li><a href="https://primes.utm.edu" style="color:var(--acc);">primes.utm.edu</a> — Top-5000 ismert prímek</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: Mersenne ═══ -->
+  <div id="t-c9-mersenne" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">9.1 Definíció — Mersenne-számok</span>
+      <p>
+        Marin <strong>Mersenne</strong> (1588–1648), francia szerzetes-matematikus.
+      </p>
+      <table class="ref-tbl">
+        <thead><tr><th>Fogalom</th><th>Definíció</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Mersenne-szám</strong></td><td>$M_p := 2^p - 1$ &nbsp;($p \in \mathbb{P}$ prím — akár $M_p$ összetett is lehet)</td></tr>
+          <tr><td><strong>Mersenne-prím</strong></td><td>$M_p \in \mathbb{P}$ — pl. $M_2 = 3, M_3 = 7, M_5 = 31, M_7 = 127, \dots$</td></tr>
+        </tbody>
+      </table>
+
+      <h6>9.2 Megj. — Miért csak prím $p$?</h6>
+      <p>Az $a^u - b^u = (a-b)(a^{u-1} + a^{u-2}b + \cdots + b^{u-1})$ azonosság miatt $k = uv$ ($u \geq 3$) esetén:</p>
+      $$2^{uv} - 1 = (2^v - 1)\bigl((2^v)^{u-1} + \cdots + 1\bigr)$$
+      <p>tehát ha $k$ összetett, $M_k$ is összetett. Szükséges feltétel: $p$ prím legyen.</p>
+      <p style="color:#94a3b8;font-size:.8rem;font-style:italic;">
+        De nem elégséges! $M_{11} = 2047 = 23 \cdot 89$ — Mersenne maga is tévedett, $M_{67}$-et prímnek hitte
+        (Cole 1903 megmutatta: $193\,707\,721 \times 761\,838\,257\,287$).
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">Ismert Mersenne-prímek a történelem során</span>
+      <table class="ref-tbl">
+        <thead><tr><th>$p$</th><th>$M_p$ jegyek</th><th>Felfedezés</th></tr></thead>
+        <tbody>
+          <tr><td>$2, 3, 5, 7$</td><td>1–3</td><td>antikum</td></tr>
+          <tr><td>$13$</td><td>4</td><td>1456 (név. ismeretlen)</td></tr>
+          <tr><td>$127$</td><td>39</td><td>Lucas 1876 — 75 évig rekord!</td></tr>
+          <tr><td>$521 - 2281$</td><td>157–687</td><td>Robinson 1952 — első számítógépes</td></tr>
+          <tr><td>$6\,972\,593$ (M38)</td><td>2 098 960</td><td>1999 — első millió-jegyű</td></tr>
+          <tr><td>$43\,112\,609$ (M47)</td><td>12 978 189</td><td>2008 — Smith, UCLA $100\,000 jutalom</td></tr>
+          <tr><td>$82\,589\,933$ (M51)</td><td>24 862 048</td><td>2018 — GIMPS, jelenlegi rekord</td></tr>
+        </tbody>
+      </table>
+      <div class="thm-box">
+        <strong>9.5 Probléma (nyitott).</strong> Végtelen sok Mersenne-prím létezik-e? Nem tudjuk.
+        Az is nyitott, hogy végtelen sok összetett $M_p$ van-e (sejtjük: igen).
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">9.6–9.7 — Tökéletes számok</span>
+      <div class="def-box">
+        $n$ <strong>tökéletes szám</strong>, ha $n$ megegyezik <em>valódi</em> osztói (1 + … + $n/2$) összegével.
+        Pl. $6 = 1 + 2 + 3, \;28 = 1 + 2 + 4 + 7 + 14, \;496, 8128, \dots$
+      </div>
+      <p><strong>9.7 Tétel (Euklidesz).</strong> Ha $2^m - 1$ prím, akkor</p>
+      $$2^{m-1} \cdot (2^m - 1) \text{ tökéletes szám.}$$
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Euler 2000 évvel később bizonyította a fordítottját: <em>minden páros tökéletes szám</em> ilyen alakú.
+        <strong>Páratlan tökéletes szám létezése — máig megoldatlan.</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Lucas-Lehmer ═══ -->
+  <div id="t-c9-lucas" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">9.3 Tétel — Lucas–Lehmer prímteszt</span>
+      <p>
+        Legyen $p > 2$ prím, $M_p = 2^p - 1$. Definiáljuk:
+      </p>
+      $$a_1 := 4, \qquad a_{n+1} \equiv a_n^2 - 2 \pmod{M_p}.$$
+
+      <div class="def-box">
+        $M_p$ pontosan akkor prím, ha
+        $$a_{p-1} \equiv 0 \pmod{M_p}.$$
+      </div>
+
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Édouard Lucas (1842–1891) sejtette 1870-ben, Derrick Henry Lehmer (1905–1991) bizonyította
+        1930 körül. A bizonyítás egyik elegáns útja a $\mathbb{Z}[\sqrt{3}]$ gyűrűt használja
+        (lásd Bruce: <em>„A Really Trivial Proof of the Lucas–Lehmer Test"</em>, Amer. Math. Monthly 1993).
+      </p>
+
+      <h6>9.4 Megj. — Miért hatékony?</h6>
+      <ul>
+        <li>A teszt <em>egyetlen</em> Mersenne-számra fókuszál — $p$ prím jegyei szerint <strong>polinomidejű</strong>.</li>
+        <li>$a_n$ mindvégig $\bmod\, M_p$ marad — mérete $O(p)$ bit.</li>
+        <li>$p - 1$ négyzetreemelés szükséges $\bmod\, M_p$. Szorzás $\bmod\, M_p$ kifejezetten gyors:
+            $M_p = 2^p - 1 \Rightarrow$ a $\bmod$ csak <em>bit-rotáció</em>!</li>
+      </ul>
+
+      <div class="thm-box">
+        Ezen tulajdonságok miatt indult útjára a <strong>GIMPS</strong> (Great Internet Mersenne Prime Search,
+        1996-tól) — globális elosztott számítás Lucas–Lehmer teszttel. A „szervezett" többezer dollár
+        jutalomrendszer eredménye: minden új Mersenne-prímet GIMPS talált 1996 óta.
+      </div>
+
+      <h6>Pseudokód</h6>
+<pre><code>def lucas_lehmer(p):
+    Mp = (1 &lt;&lt; p) - 1       # 2^p - 1
+    s = 4
+    for _ in range(p - 2):  # p-1 lépés, az utolsó index p-1
+        s = (s * s - 2) % Mp
+    return s == 0           # True ⟺ Mp prím</code></pre>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Fermat-prímek ═══ -->
+  <div id="t-c9-fermat" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">9.8 Definíció — Fermat-számok</span>
+      $$F_n := 2^{2^n} + 1, \qquad n \in \mathbb{N}.$$
+
+      <h6>9.9 Megj. — Miért $2^n$ a kitevő?</h6>
+      <p>Az $a^{2\ell + 1} + b^{2\ell+1} = (a + b)(\dots)$ azonosság miatt csak $k = 2^n$ alakú kitevőkre lehet $2^k + 1$ prím:</p>
+      $$2^{2\ell + 1} + 1 = 3 \cdot (\dots) \text{ — osztható 3-mal.}$$
+
+      <h6>Ismert Fermat-számok</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>$n$</th><th>$F_n$</th><th>Prím?</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>3</td><td>✓</td></tr>
+          <tr><td>1</td><td>5</td><td>✓</td></tr>
+          <tr><td>2</td><td>17</td><td>✓</td></tr>
+          <tr><td>3</td><td>257</td><td>✓</td></tr>
+          <tr><td>4</td><td>65 537</td><td>✓ &nbsp;<em>(eddigi legnagyobb ismert Fermat-prím!)</em></td></tr>
+          <tr><td>5</td><td>4 294 967 297</td><td>= 641 × 6 700 417 &nbsp;<strong style="color:#ef4444;">Euler 1732</strong></td></tr>
+          <tr><td>6–32</td><td>—</td><td>mind összetett (vizsgált)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        Fermat 1650-ben azt sejtette, hogy <em>minden</em> $F_n$ prím. Euler 82 év múlva (1732)
+        cáfolta — $F_5$-ben megtalálta a $641$ osztót. Azóta <strong>egyetlen új Fermat-prímet sem találtak</strong>.
+      </div>
+
+      <div class="def-box">
+        <strong>9.10 Probléma (nyitott).</strong> Van-e végtelen sok Fermat-prím? És összetett?
+        Mai sejtés: $n \geq 5$-re mind összetett — de bizonyítatlan.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">9.11 Tétel — Gauss (1796) szabályos sokszög-szerkesztés</span>
+      <p>
+        $n$-oldalú szabályos sokszög akkor és csak akkor szerkeszthető <strong>körzővel és vonalzóval</strong>, ha
+      </p>
+      $$n = 2^s \quad \text{vagy} \quad n = 2^s \cdot q_1 \cdots q_r$$
+      <p>ahol $q_i$ <strong>különböző Fermat-prímek</strong>.</p>
+
+      <div class="thm-box">
+        Gauss 19 évesen (1796) fedezte fel — ezzel a felfedezéssel döntötte el, hogy matematikus
+        lesz, nem filológus! Megszerkesztette a <strong>17-oldalú</strong> szabályos sokszöget,
+        ami 2000 évig nyitott probléma volt. Sírján is ez található.
+      </div>
+
+      <h6>Szerkeszthető sokszögek $n \leq 30$</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Szerkeszthető</th><th>Nem szerkeszthető</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="color:#10b981;">$3, 4, 5, 6, 8, 10, 12, 15, 16, 17, 20, 24, 30$</td>
+            <td style="color:#f59e0b;">$7, 9, 11, 13, 14, 18, 19, 21, 22, 23, 25, 26, 27, 28, 29$</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        $n = 257$ (Hermes 1894, 10 év munka) és $n = 65\,537$ (Gauss-jelentés szerint elvileg szerkeszthető,
+        de senki sem kísérelte meg) — a 4 ismert Fermat-prímmel együtt elméleti határ.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">9.12 Állítás — Tizedestört-jellemzés</span>
+      <p>
+        $F_n$ akkor és csak akkor prím, ha az $\tfrac{1}{F_n}$ szakaszos tizedes tört
+        periódusának hossza pontosan $2^{2^n}$.
+      </p>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Pl. $\tfrac{1}{17} = 0{,}\overline{0588235294117647}$ — periódus 16 = $2^4$ ✓
+      </p>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTERS (10–13) — SECTIONS LIST + STUB ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
