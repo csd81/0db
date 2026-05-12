@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(16,185,129,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(16,185,129,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box  { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(16,185,129,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+table.res-tbl { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.res-tbl th { background:#1a1f2e; color:#64748b; padding:.4rem .7rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.73rem; text-transform:uppercase; letter-spacing:.06em; }
+table.res-tbl td { padding:.4rem .7rem; border-bottom:1px solid #161b28; vertical-align:middle; }
+input[type=number],select { background:#0e1117; border:1px solid #334155; border-radius:6px; color:#e2e8f0; padding:.3rem .6rem; font-size:.83rem; }
+input[type=number]:focus,select:focus { outline:none; border-color:var(--acc); }
+.val-big { font-size:1.05rem; font-weight:700; color:var(--acc2); font-family:monospace; }
+.derng-row { display:flex; gap:.3rem; flex-wrap:wrap; margin:.4rem 0; }
+.perm-chip { background:#1a2535; border:1px solid #334155; border-radius:5px; padding:.15rem .45rem; font-size:.78rem; font-family:monospace; color:#94a3b8; }
+.perm-chip.ok { border-color:var(--acc); color:var(--acc2); background:rgba(16,185,129,.1); }
+.elem-badge { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; font-size:.72rem; font-weight:700; border:2px solid #334155; cursor:pointer; user-select:none; transition:all .2s; }
+.elem-badge.in-a { border-color:#38bdf8; background:rgba(56,189,248,.15); color:#38bdf8; }
+.elem-badge.in-b { border-color:#f59e0b; background:rgba(245,158,11,.12); color:#f59e0b; }
+.elem-badge.in-ab { border-color:var(--acc); background:rgba(16,185,129,.2); color:var(--acc2); }
+.set-row { display:flex; gap:.3rem; flex-wrap:wrap; align-items:center; margin:.3rem 0; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-funnel" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">I.4. fejezet — A logikai szitaformula</h4>
+      <small class="text-muted">Befoglalás-kizárás · Derangements · Additív halmazfüggvények · Euler-φ</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-sita',this)">Szitaformula</span>
+    <span class="ila-nav-link" onclick="showTab('t-dng',this)">Elcserélt levelek</span>
+    <span class="ila-nav-link" onclick="showTab('t-meas',this)">Additív halmazfv.</span>
+    <span class="ila-nav-link" onclick="showTab('t-phi',this)">Euler-φ függvény</span>
+    <span class="ila-nav-link" onclick="showTab('t-surj',this)">Szürjektív függvények</span>
+  </div>
+
+  <!-- ═══ TAB 1: Szitaformula ═══ -->
+  <div id="t-sita" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Befoglalás-kizárás elve</div>
+          <div class="thm-box">
+            <strong>2 halmazra:</strong><br>
+            \(|A\cup B| = |A|+|B|-|A\cap B|\)<br><br>
+            <strong>3 halmazra:</strong><br>
+            \(|A\cup B\cup C| = |A|+|B|+|C|\)<br>
+            \(-|A\cap B|-|A\cap C|-|B\cap C|\)<br>
+            \(+|A\cap B\cap C|\)<br><br>
+            <strong>Általánosan:</strong><br>
+            \(\left|\bigcup_{i=1}^{n} A_i\right| = \sum_{k=1}^{n}(-1)^{k-1}\!\!\!\sum_{1\le i_1<\cdots<i_k\le n}\!\!\!\left|A_{i_1}\cap\cdots\cap A_{i_k}\right|\)
+          </div>
+          <div class="ex-box" style="font-size:.83rem;">
+            <strong>Osztály példa:</strong> 30 tanuló, 18 tanul franciát, 15 németet, 10 mindkettőt.<br>
+            Legalább egyet tanul: \(18+15-10=23\).
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc">2 halmazos számológép</div>
+          <div class="d-flex gap-3 flex-wrap mb-2">
+            <label style="font-size:.83rem;color:#94a3b8;">|A| = <input type="number" id="s2-a" value="18" min="0" max="100" style="width:65px" oninput="calcSita2()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">|B| = <input type="number" id="s2-b" value="15" min="0" max="100" style="width:65px" oninput="calcSita2()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">|A∩B| = <input type="number" id="s2-ab" value="10" min="0" max="100" style="width:65px" oninput="calcSita2()"></label>
+          </div>
+          <div id="s2-result" class="def-box" style="font-size:.83rem;"></div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc">3 halmazos számológép</div>
+          <div class="d-flex gap-2 flex-wrap mb-2">
+            <label style="font-size:.83rem;color:#94a3b8;">|A| <input type="number" id="s3-a" value="20" min="0" max="200" style="width:55px" oninput="calcSita3()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">|B| <input type="number" id="s3-b" value="25" min="0" max="200" style="width:55px" oninput="calcSita3()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">|C| <input type="number" id="s3-c" value="15" min="0" max="200" style="width:55px" oninput="calcSita3()"></label>
+          </div>
+          <div class="d-flex gap-2 flex-wrap mb-2">
+            <label style="font-size:.83rem;color:#94a3b8;">|A∩B| <input type="number" id="s3-ab" value="8" min="0" max="200" style="width:55px" oninput="calcSita3()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">|A∩C| <input type="number" id="s3-ac" value="5" min="0" max="200" style="width:55px" oninput="calcSita3()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">|B∩C| <input type="number" id="s3-bc" value="7" min="0" max="200" style="width:55px" oninput="calcSita3()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">|A∩B∩C| <input type="number" id="s3-abc" value="3" min="0" max="200" style="width:55px" oninput="calcSita3()"></label>
+          </div>
+          <div id="s3-result" class="def-box" style="font-size:.83rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: Derangements ═══ -->
+  <div id="t-dng" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Szubfaktoriális — elrendezések fixpont nélkül</div>
+          <div class="thm-box">
+            \[D_n = n!\sum_{i=0}^{n}\frac{(-1)^i}{i!}\]
+            Rekurzió: \(D_n = (n-1)(D_{n-1}+D_{n-2})\), \(D_1=0\), \(D_2=1\).
+          </div>
+          <div class="thm-box">Valószínűség: \(P(D_n) = D_n/n! \to 1/e \approx 0.3679\)</div>
+          <div class="d-flex gap-2 align-items-center mb-2">
+            <span style="font-size:.83rem;color:#94a3b8;">n =</span>
+            <input type="number" id="dng-n" value="5" min="1" max="12" style="width:65px" oninput="updateDng()">
+          </div>
+          <div id="dng-single" class="def-box" style="font-size:.83rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc">Táblázat D_1 … D_10</div>
+          <table class="res-tbl" id="dng-table">
+            <thead><tr><th>n</th><th>n!</th><th>D_n</th><th>P(elcserélés)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="card-dark" id="dng-list-box" style="display:none;">
+          <div class="badge-acc">Összes derangement (n ≤ 4)</div>
+          <div id="dng-list" class="derng-row"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Additív halmazfüggvények ═══ -->
+  <div id="t-meas" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Definíció</div>
+          <div class="def-box">
+            Egy \(\mu: 2^X \to \mathbb{R}_{\ge 0}\) függvény <em>additív halmazfüggvény</em> (mérték), ha:<br>
+            (1) \(\mu(\emptyset)=0\)<br>
+            (2) Ha \(A \cap B = \emptyset\), akkor \(\mu(A\cup B)=\mu(A)+\mu(B)\)
+          </div>
+          <div class="thm-box" style="font-size:.83rem;">
+            <strong>Példák:</strong><br>
+            — Kardinalitás: \(\mu(A)=|A|\)<br>
+            — Valószínűség: \(\mu(A)=P(A)\)<br>
+            — Terület, súly, időtartam<br><br>
+            A szitaformula tetszőleges mértékre általánosítható:<br>
+            \(\mu(A\cup B)=\mu(A)+\mu(B)-\mu(A\cap B)\)
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Interaktív mértékszámítás (X = {1,…,8})</div>
+          <p style="font-size:.82rem;color:#64748b;">Rendelj súlyt az elemekhez, majd jelöld ki az A és B halmazokat.</p>
+          <div id="meas-elems" class="set-row mb-2"></div>
+          <div class="d-flex gap-3 flex-wrap mb-2">
+            <div>
+              <div style="font-size:.78rem;color:#38bdf8;margin-bottom:.3rem;">A halmaz (kék):</div>
+              <div id="meas-set-a" class="set-row"></div>
+            </div>
+            <div>
+              <div style="font-size:.78rem;color:#f59e0b;margin-bottom:.3rem;">B halmaz (narancs):</div>
+              <div id="meas-set-b" class="set-row"></div>
+            </div>
+          </div>
+          <div id="meas-result" class="def-box" style="font-size:.83rem;"></div>
+          <p style="font-size:.78rem;color:#64748b;margin-top:.5rem;">Kattints egy elemre A-hoz, jobbklikk B-hez adja hozzá.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Euler-φ ═══ -->
+  <div id="t-phi" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Euler-féle φ (fi) függvény</div>
+          <div class="thm-box">
+            \[\varphi(n) = \left|\{k \in \{1,\ldots,n\} : \gcd(k,n)=1\}\right|\]
+            Prímfaktorizáción át:<br>
+            \[\varphi(n) = n \prod_{p \mid n} \left(1-\frac{1}{p}\right)\]
+          </div>
+          <div class="thm-box" style="font-size:.83rem;">
+            <strong>Főbb tulajdonságok:</strong><br>
+            — Ha \(p\) prím: \(\varphi(p)=p-1\)<br>
+            — \(\sum_{d \mid n} \varphi(d) = n\)<br>
+            — Multiplikativitás: \(\gcd(a,b)=1 \Rightarrow \varphi(ab)=\varphi(a)\varphi(b)\)
+          </div>
+          <div class="d-flex gap-2 align-items-center mb-2">
+            <span style="font-size:.83rem;color:#94a3b8;">n =</span>
+            <input type="number" id="phi-n" value="12" min="1" max="1000" style="width:80px" oninput="updatePhi()">
+          </div>
+          <div id="phi-single" class="def-box" style="font-size:.83rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc">φ(1)…φ(20) táblázat</div>
+          <table class="res-tbl" id="phi-table">
+            <thead><tr><th>n</th><th>φ(n)</th><th>Prímtényezők</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc">k értékek, ahol gcd(k,n)=1</div>
+          <div id="phi-coprimes" class="set-row" style="font-size:.8rem;font-family:monospace;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: Szürjektív függvények ═══ -->
+  <div id="t-surj" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Szürjekciók számlálása</div>
+          <div class="thm-box">
+            Szürjektív \(f:\{1,\ldots,n\}\to\{1,\ldots,m\}\) függvények száma:<br>
+            \[\sum_{k=0}^{m}(-1)^k\binom{m}{k}(m-k)^n\]
+            A befoglalás-kizárás elvével: kivonjuk az összes olyan függvényt, amely kihagyja legalább egy képelemet.
+          </div>
+          <div class="ex-box" style="font-size:.83rem;">
+            <strong>Alkalmazás:</strong> hányféleképpen osztható el \(n\) különböző golyó \(m\) különböző urnában úgy, hogy minden urna kapjon legalább egyet?
+          </div>
+          <div class="d-flex gap-3 flex-wrap mb-2 mt-2">
+            <label style="font-size:.83rem;color:#94a3b8;">n (domain) = <input type="number" id="surj-n" value="5" min="1" max="10" style="width:60px" oninput="updateSurj()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">m (kodomain) = <input type="number" id="surj-m" value="3" min="1" max="8" style="width:60px" oninput="updateSurj()"></label>
+          </div>
+          <div id="surj-result" class="def-box" style="font-size:.83rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Összehasonlítás: összes vs. szürjektív</div>
+          <table class="res-tbl" id="surj-table">
+            <thead><tr><th>n</th><th>m</th><th>Összes (mⁿ)</th><th>Szürjektív</th><th>Arány %</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="ex-box mt-3" style="font-size:.83rem;">
+            <strong>Stirling 2. számok kapcsolata:</strong><br>
+            A szürjekciók száma = \(m! \cdot S(n,m)\), ahol \(S(n,m)\) a Stirling 2. fajú száma.<br>
+            Pl. \(S(4,2)=7\), szürjekciók: \(2!\cdot7=14\).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Math helpers ──
+function gcd(a,b){ while(b){let t=b;b=a%b;a=t;}return a; }
+function factorial(n){let r=BigInt(1);for(let i=2;i<=n;i++)r*=BigInt(i);return r;}
+function C(n,k){
+  if(k<0||k>n) return BigInt(0);
+  k=Math.min(k,n-k);
+  let r=BigInt(1);
+  for(let i=0;i<k;i++) r=r*BigInt(n-i)/BigInt(i+1);
+  return r;
+}
+function Cn(n,k){return Number(C(n,k));}
+
+// ── Tab 1: Szitaformula ──
+function calcSita2(){
+  const a=parseInt(document.getElementById('s2-a').value)||0;
+  const b=parseInt(document.getElementById('s2-b').value)||0;
+  const ab=parseInt(document.getElementById('s2-ab').value)||0;
+  const union=a+b-ab;
+  document.getElementById('s2-result').innerHTML=
+    `|A∪B| = ${a} + ${b} − ${ab} = <span class="val-big">${union}</span>`;
+}
+function calcSita3(){
+  const a=parseInt(document.getElementById('s3-a').value)||0;
+  const b=parseInt(document.getElementById('s3-b').value)||0;
+  const c=parseInt(document.getElementById('s3-c').value)||0;
+  const ab=parseInt(document.getElementById('s3-ab').value)||0;
+  const ac=parseInt(document.getElementById('s3-ac').value)||0;
+  const bc=parseInt(document.getElementById('s3-bc').value)||0;
+  const abc=parseInt(document.getElementById('s3-abc').value)||0;
+  const union=a+b+c-ab-ac-bc+abc;
+  document.getElementById('s3-result').innerHTML=
+    `|A∪B∪C| = ${a}+${b}+${c} − ${ab} − ${ac} − ${bc} + ${abc} = <span class="val-big">${union}</span>`;
+}
+
+// ── Tab 2: Derangements ──
+function derangement(n){
+  if(n===0) return BigInt(1);
+  if(n===1) return BigInt(0);
+  let prev2=BigInt(1), prev1=BigInt(0);
+  for(let i=2;i<=n;i++){
+    const cur=BigInt(i-1)*(prev1+prev2);
+    prev2=prev1; prev1=cur;
+  }
+  return prev1;
+}
+function updateDng(){
+  const n=parseInt(document.getElementById('dng-n').value)||5;
+  const dn=derangement(n);
+  const fn=factorial(n);
+  const prob=(Number(dn)/Number(fn)*100).toFixed(4);
+  document.getElementById('dng-single').innerHTML=
+    `<strong>n = ${n}</strong><br>D_${n} = <span class="val-big">${dn.toLocaleString()}</span><br>${n}! = ${fn.toLocaleString()}<br>Valószínűség: <span style="color:#f59e0b">${prob}%</span> (határérték: 36.79%)`;
+  buildDngTable();
+  if(n<=4) showDngList(n); else document.getElementById('dng-list-box').style.display='none';
+}
+function buildDngTable(){
+  const tbody=document.querySelector('#dng-table tbody');
+  tbody.innerHTML='';
+  for(let n=1;n<=10;n++){
+    const dn=derangement(n);
+    const fn=factorial(n);
+    const p=(Number(dn)/Number(fn)*100).toFixed(4);
+    tbody.innerHTML+=`<tr><td>${n}</td><td>${fn.toLocaleString()}</td><td style="color:var(--acc2);font-family:monospace;">${dn.toLocaleString()}</td><td style="color:#f59e0b">${p}%</td></tr>`;
+  }
+}
+function showDngList(n){
+  const box=document.getElementById('dng-list-box');
+  const list=document.getElementById('dng-list');
+  box.style.display='block';
+  list.innerHTML='';
+  // generate all permutations and filter derangements
+  const elems=[...Array(n)].map((_,i)=>i+1);
+  const perms=[];
+  function permute(arr,cur){
+    if(cur.length===n){perms.push([...cur]);return;}
+    arr.forEach((v,i)=>{
+      const rest=[...arr];rest.splice(i,1);
+      permute(rest,[...cur,v]);
+    });
+  }
+  permute(elems,[]);
+  perms.forEach(p=>{
+    const isDer=p.every((v,i)=>v!==i+1);
+    if(isDer){
+      const chip=document.createElement('span');
+      chip.className='perm-chip ok';
+      chip.textContent='('+p.join('')+')';
+      list.appendChild(chip);
+    }
+  });
+}
+
+// ── Tab 3: Additív halmazfüggvények ──
+const WEIGHTS=[3,1,4,1,5,9,2,6];
+const setA=new Set(), setB=new Set();
+function buildMeasElems(){
+  const box=document.getElementById('meas-elems');
+  box.innerHTML='<span style="font-size:.78rem;color:#64748b;">Elemek (súlyokkal):</span>';
+  for(let i=1;i<=8;i++){
+    const btn=document.createElement('div');
+    btn.className='elem-badge';
+    btn.id=`meb-${i}`;
+    btn.textContent=i;
+    btn.title=`Súly: ${WEIGHTS[i-1]}`;
+    btn.onclick=()=>toggleSet(i,'A');
+    btn.oncontextmenu=(e)=>{e.preventDefault();toggleSet(i,'B');};
+    box.appendChild(btn);
+  }
+  const wbox=document.createElement('span');
+  wbox.style.cssText='font-size:.75rem;color:#64748b;margin-left:.5rem;';
+  wbox.textContent='súlyok: '+WEIGHTS.join(', ');
+  box.appendChild(wbox);
+}
+function toggleSet(i,set){
+  if(set==='A'){
+    if(setA.has(i)) setA.delete(i); else setA.add(i);
+  } else {
+    if(setB.has(i)) setB.delete(i); else setB.add(i);
+  }
+  updateMeasUI();
+}
+function updateMeasUI(){
+  for(let i=1;i<=8;i++){
+    const btn=document.getElementById(`meb-${i}`);
+    btn.classList.remove('in-a','in-b','in-ab');
+    if(setA.has(i)&&setB.has(i)) btn.classList.add('in-ab');
+    else if(setA.has(i)) btn.classList.add('in-a');
+    else if(setB.has(i)) btn.classList.add('in-b');
+  }
+  const mu=arr=>[...arr].reduce((s,i)=>s+WEIGHTS[i-1],0);
+  const muA=mu(setA), muB=mu(setB);
+  const AB=new Set([...setA].filter(x=>setB.has(x)));
+  const AuB=new Set([...setA,...setB]);
+  const muAB=mu(AB), muAuB=mu(AuB);
+  const boxA=document.getElementById('meas-set-a');
+  const boxB=document.getElementById('meas-set-b');
+  boxA.innerHTML='A = {'+[...setA].sort((a,b)=>a-b).join(',')+'}';
+  boxB.innerHTML='B = {'+[...setB].sort((a,b)=>a-b).join(',')+'}';
+  document.getElementById('meas-result').innerHTML=
+    `μ(A) = ${muA}, μ(B) = ${muB}, μ(A∩B) = ${muAB}<br>
+     μ(A∪B) = μ(A)+μ(B)−μ(A∩B) = ${muA}+${muB}−${muAB} = <span class="val-big">${muA+muB-muAB}</span><br>
+     Közvetlen: μ({${[...AuB].sort((a,b)=>a-b).join(',')}}) = <span class="val-big">${muAuB}</span>
+     <span style="color:${muA+muB-muAB===muAuB?'#34d399':'#ef4444'}">${muA+muB-muAB===muAuB?'✓ Egyezik':'✗ Nem egyezik'}</span>`;
+}
+
+// ── Tab 4: Euler-φ ──
+function primeFactors(n){
+  const f=new Map();
+  for(let p=2;p*p<=n;p++){
+    while(n%p===0){f.set(p,(f.get(p)||0)+1);n=Math.floor(n/p);}
+  }
+  if(n>1) f.set(n,(f.get(n)||0)+1);
+  return f;
+}
+function eulerPhi(n){
+  const f=primeFactors(n);
+  let r=n;
+  f.forEach((_,p)=>{ r=r/p*(p-1); });
+  return Math.round(r);
+}
+function updatePhi(){
+  const n=parseInt(document.getElementById('phi-n').value)||12;
+  const phi=eulerPhi(n);
+  const f=primeFactors(n);
+  const factStr=[...f.entries()].map(([p,e])=>e===1?p:`${p}^${e}`).join('·');
+  const prodStr=[...f.keys()].map(p=>`(1−1/${p})`).join('·');
+  document.getElementById('phi-single').innerHTML=
+    `<strong>n = ${n}</strong>, φ(${n}) = <span class="val-big">${phi}</span><br>
+     Faktorizáció: ${factStr||n}<br>
+     Képlet: ${n} · ${prodStr} = ${phi}`;
+  buildPhiTable();
+  showCoprimes(n);
+}
+function buildPhiTable(){
+  const tbody=document.querySelector('#phi-table tbody');
+  tbody.innerHTML='';
+  for(let n=1;n<=20;n++){
+    const phi=eulerPhi(n);
+    const f=primeFactors(n);
+    const factStr=[...f.keys()].join(', ')||'—';
+    tbody.innerHTML+=`<tr><td>${n}</td><td style="color:var(--acc2);font-family:monospace;">${phi}</td><td style="color:#64748b;font-size:.78rem;">${factStr}</td></tr>`;
+  }
+}
+function showCoprimes(n){
+  const box=document.getElementById('phi-coprimes');
+  box.innerHTML='';
+  for(let k=1;k<=n;k++){
+    const g=gcd(k,n);
+    const chip=document.createElement('span');
+    chip.className='perm-chip'+(g===1?' ok':'');
+    chip.textContent=k;
+    chip.title=`gcd(${k},${n})=${g}`;
+    box.appendChild(chip);
+  }
+}
+
+// ── Tab 5: Szürjektív függvények ──
+function surjections(n,m){
+  let s=0;
+  for(let k=0;k<=m;k++){
+    const term=Cn(m,k)*Math.pow(m-k,n);
+    s+=(k%2===0?1:-1)*term;
+  }
+  return Math.round(s);
+}
+function updateSurj(){
+  const n=parseInt(document.getElementById('surj-n').value)||5;
+  const m=parseInt(document.getElementById('surj-m').value)||3;
+  const total=Math.pow(m,n);
+  const surj=n>=m?surjections(n,m):0;
+  const pct=total>0?(surj/total*100).toFixed(2):0;
+  document.getElementById('surj-result').innerHTML=
+    `Összes függvény: <span class="val-big">${total.toLocaleString()}</span><br>
+     Szürjektív: <span class="val-big">${surj.toLocaleString()}</span><br>
+     Arány: <span style="color:#f59e0b">${pct}%</span>`;
+  buildSurjTable(n);
+}
+function buildSurjTable(baseN){
+  const tbody=document.querySelector('#surj-table tbody');
+  tbody.innerHTML='';
+  const cases=[[3,2],[4,2],[4,3],[5,3],[5,4],[6,3],[6,4],[7,3]];
+  cases.forEach(([n,m])=>{
+    const total=Math.pow(m,n);
+    const surj=surjections(n,m);
+    const pct=(surj/total*100).toFixed(2);
+    tbody.innerHTML+=`<tr><td>${n}</td><td>${m}</td><td>${total.toLocaleString()}</td><td style="color:var(--acc2);font-family:monospace;">${surj.toLocaleString()}</td><td style="color:#f59e0b">${pct}%</td></tr>`;
+  });
+}
+
+function initAll(){
+  calcSita2(); calcSita3();
+  buildDngTable(); updateDng();
+  buildMeasElems(); updateMeasUI();
+  updatePhi();
+  updateSurj();
+}
+</script>
+{% endblock %}

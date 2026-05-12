@@ -1,0 +1,873 @@
+{% extends "base.html" %}
+{% block title %}15. fejezet – Feszítőfák{% endblock %}
+{% block content %}
+<style>
+:root { --acc:#38bdf8; --acc2:#0ea5e9; --bg:#0e1014; --card:#151920; --border:#1e2a38; }
+.ila-wrap { max-width:1100px; margin:0 auto; padding:2rem 1rem 4rem; }
+.ila-back { color:var(--acc); text-decoration:none; font-size:.85rem; opacity:.8; }
+.ila-back:hover { opacity:1; color:var(--acc); }
+.ila-hero { text-align:center; margin:1.5rem 0 2rem; }
+.ila-hero h1 { font-size:2rem; font-weight:700; color:#fff; }
+.ila-hero p { color:#8ba3bc; max-width:620px; margin:.5rem auto 0; font-size:.95rem; }
+.ila-nav { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.ila-nav-link { background:#151920; border:1px solid #1e2a38; color:#8ba3bc; padding:.45rem 1rem;
+  border-radius:6px; cursor:pointer; font-size:.85rem; transition:all .2s; }
+.ila-nav-link.active, .ila-nav-link:hover { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.ila-card { background:#151920; border:1px solid #1e2a38; border-radius:10px; padding:1.2rem; margin-bottom:1rem; }
+.ila-card h5 { color:var(--acc); font-size:.9rem; font-weight:700; margin-bottom:.7rem; text-transform:uppercase; letter-spacing:.05em; }
+canvas { border-radius:8px; background:#0a0f14; display:block; }
+.btn-acc { background:var(--acc); color:#000; border:none; font-weight:600; border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-acc:hover { background:var(--acc2); }
+.btn-out { background:transparent; color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-out:hover { background:var(--acc); color:#000; }
+.btn-sm2 { padding:.25rem .65rem; font-size:.78rem; border-radius:5px; }
+.preset-row { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.7rem; }
+.preset-btn { background:#1a2233; border:1px solid #2a3a50; color:#8ba3bc; padding:.3rem .7rem; border-radius:5px; cursor:pointer; font-size:.78rem; }
+.preset-btn:hover,.preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.log-box { background:#0a0f14; border:1px solid #1e2a38; border-radius:6px; padding:.7rem; font-size:.75rem; font-family:monospace; color:#8ba3bc; height:110px; overflow-y:auto; }
+.log-box .log-line { margin-bottom:2px; }
+.log-box .log-line.hi { color:#38bdf8; }
+.log-box .log-line.ok { color:#4ade80; }
+.log-box .log-line.skip { color:#f97316; }
+.legend-row { display:flex; gap:1rem; flex-wrap:wrap; font-size:.78rem; color:#8ba3bc; margin-top:.5rem; }
+.legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; }
+.tbl-alg { width:100%; border-collapse:collapse; font-size:.82rem; }
+.tbl-alg th { background:#1a2233; color:var(--acc); padding:.5rem .7rem; text-align:left; font-weight:600; }
+.tbl-alg td { padding:.45rem .7rem; border-top:1px solid #1e2a38; color:#c8d8e8; }
+.metric-card { background:#0a0f14; border:1px solid #1e2a38; border-radius:8px; padding:.7rem 1rem; text-align:center; }
+.metric-val { font-size:1.5rem; font-weight:700; color:var(--acc); }
+.metric-label { font-size:.72rem; color:#8ba3bc; }
+.edge-chip { display:inline-block; background:#0a1520; border:1px solid #1e2a38; border-radius:5px;
+  padding:.2rem .5rem; font-size:.75rem; font-family:monospace; color:#8ba3bc; margin:.1rem; }
+.edge-chip.selected { border-color:#4ade80; color:#4ade80; background:#0a1f10; }
+.edge-chip.rejected { border-color:#ef4444; color:#ef4444; background:#1f0a0a; }
+.edge-chip.current { border-color:#f97316; color:#f97316; background:#1f0f0a; }
+.slider-row { display:flex; align-items:center; gap:.6rem; font-size:.82rem; color:#8ba3bc; }
+.slider-row input[type=range] { flex:1; accent-color:var(--acc); }
+</style>
+
+<div class="ila-wrap">
+  <a href="{{ url_for('demos.learn_dimat') }}" class="ila-back">← Vissza a tananyaghoz</a>
+
+  <div class="ila-hero">
+    <h1>15. fejezet — Feszítőfák</h1>
+    <p>Minimális feszítőfa: Kruskal és Prim algoritmusai. TSP 2-közelítés. A feszítőfák száma.</p>
+  </div>
+
+  <div class="ila-nav">
+    <div class="ila-nav-link active" onclick="showTab('tab-mst',this)">Feszítőfák</div>
+    <div class="ila-nav-link" onclick="showTab('tab-kruskal',this)">Kruskal</div>
+    <div class="ila-nav-link" onclick="showTab('tab-prim',this)">Prim</div>
+    <div class="ila-nav-link" onclick="showTab('tab-tsp',this)">TSP közelítés</div>
+    <div class="ila-nav-link" onclick="showTab('tab-count',this)">Feszítőfák száma</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 1: FESZÍTŐFÁK -->
+  <div id="tab-mst" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Feszítőfa — mi ez, és miért fontos?</h5>
+          <div class="preset-row" id="span-presets">
+            <div class="preset-btn active" onclick="spanLoadPreset('k4')">K₄ teljes gráf</div>
+            <div class="preset-btn" onclick="spanLoadPreset('wheel')">Kerék W₅</div>
+            <div class="preset-btn" onclick="spanLoadPreset('grid')">Rács 3×3</div>
+            <div class="preset-btn" onclick="spanLoadPreset('random7')">Véletlen (7)</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="span-canvas" width="480" height="300"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#2a3a50"></span>Nem feszítőfa-él</span>
+                <span><span class="legend-dot" style="background:#4ade80"></span>Feszítőfa élei</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="spanRandomTree()">Véletlen feszítőfa</button>
+                <button class="btn-acc btn-sm2" onclick="spanMSTTree()">MST megmutatása</button>
+              </div>
+              <div id="span-stats" class="mt-2" style="font-size:.83rem;color:#c8d8e8;line-height:1.8">—</div>
+              <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75;margin-top:.7rem">
+                <b style="color:var(--acc)">Feszítőfa:</b> tartalmazza az összes csúcsot, összefüggő, körmentes.<br>
+                \(n\) csúcsú összefüggő gráfnak pontosan \(n-1\) élű feszítőfái vannak.<br>
+                <b style="color:var(--acc)">MST:</b> minimális összsúlyú feszítőfa.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Alkalmazások</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:var(--acc)">Hálózattervezés:</b> villany-, gáz-, internet-hálózat minimális kiépítési költsége<br>
+            <b style="color:var(--acc)">Klaszterezés:</b> MST-él törlése → 2 klaszter (single-linkage clustering)<br>
+            <b style="color:var(--acc)">TSP közelítés:</b> MST alapú 2-approximáció (következő tab)<br>
+            <b style="color:var(--acc)">Képfeldolgozás:</b> minimális feszítőfa szegmentáció
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Vágási tulajdonság (Cut property)</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            Bármely G vágásban (csúcshalmaz kettéosztása \(S\) és \(V\setminus S\)) a <b>legkisebb súlyú keresztező él</b> biztosan benne van valamelyik MST-ben.<br><br>
+            Ebből következik mind a Kruskal, mind a Prim algoritmus helyessége.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 2: KRUSKAL -->
+  <div id="tab-kruskal" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Kruskal algoritmusa — élek rendezése, Union-Find</h5>
+          <div class="preset-row" id="kruskal-presets">
+            <div class="preset-btn active" onclick="kruskalLoadPreset('classic')">Klasszikus (7 csúcs)</div>
+            <div class="preset-btn" onclick="kruskalLoadPreset('k5')">K₅ teljes</div>
+            <div class="preset-btn" onclick="kruskalLoadPreset('grid4')">Rács 2×4</div>
+            <div class="preset-btn" onclick="kruskalLoadPreset('sparse')">Ritka</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="kruskal-canvas" width="480" height="300"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#4ade80"></span>MST-él (elfogadva)</span>
+                <span><span class="legend-dot" style="background:#ef4444"></span>Kör → elvetve</span>
+                <span><span class="legend-dot" style="background:#f97316"></span>Aktuális vizsgált él</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="kruskalReset()">↺ Újra</button>
+                <button class="btn-out btn-sm2" onclick="kruskalStep()">Lépés →</button>
+                <button class="btn-out btn-sm2" id="kruskal-auto-btn" onclick="kruskalToggleAuto()">▶ Auto</button>
+                <button class="btn-out btn-sm2" onclick="kruskalFinish()">⏩ Kész</button>
+              </div>
+              <div id="kruskal-status" style="font-size:.8rem;color:#8ba3bc;margin-bottom:.3rem">Kattints Lépés-re.</div>
+              <div style="font-size:.75rem;color:#8ba3bc;font-weight:600;margin-bottom:.2rem">Élek sorrendben:</div>
+              <div id="kruskal-edge-list" style="margin-bottom:.5rem"></div>
+              <div class="log-box" id="kruskal-log"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Komponensek (Union-Find)</h5>
+          <div id="kruskal-uf" style="font-size:.8rem;font-family:monospace;color:#c8d8e8;line-height:1.7">—</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Az algoritmus</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75">
+            1. Rendezd az összes élt növekvő súly szerint.<br>
+            2. Vedd sorban az éleket: ha nem keletkezik kör, add az MST-hez.<br>
+            3. Megáll, ha \(n-1\) élt vettünk fel.<br><br>
+            <b style="color:var(--acc)">Kördetekció:</b> Union-Find (diszjunkt halmaz) adatszerkezet.<br>
+            Futásidő: \(\mathcal{O}(m\log m)\) (rendezés dominál).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 3: PRIM -->
+  <div id="tab-prim" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Prim algoritmusa — csúcsok hozzáadása</h5>
+          <div class="preset-row" id="prim-presets">
+            <div class="preset-btn active" onclick="primLoadPreset('classic')">Klasszikus (7 csúcs)</div>
+            <div class="preset-btn" onclick="primLoadPreset('k5')">K₅ teljes</div>
+            <div class="preset-btn" onclick="primLoadPreset('grid4')">Rács 2×4</div>
+            <div class="preset-btn" onclick="primLoadPreset('dense8')">Sűrű (8 csúcs)</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="prim-canvas" width="480" height="300"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#4ade80"></span>MST-csúcs</span>
+                <span><span class="legend-dot" style="background:#f97316"></span>Legolcsóbb él jelölt</span>
+                <span><span class="legend-dot" style="background:#1e3a5f"></span>Még nem érintett</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+                <label class="text-muted" style="font-size:.82rem">Forrás:</label>
+                <select id="prim-src" class="form-select form-select-sm" style="width:80px;background:#0a0f14;color:#fff;border-color:#1e2a38"></select>
+              </div>
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="primReset()">↺ Újra</button>
+                <button class="btn-out btn-sm2" onclick="primStep()">Lépés →</button>
+                <button class="btn-out btn-sm2" id="prim-auto-btn" onclick="primToggleAuto()">▶ Auto</button>
+                <button class="btn-out btn-sm2" onclick="primFinish()">⏩ Kész</button>
+              </div>
+              <div id="prim-status" style="font-size:.8rem;color:#8ba3bc;margin-bottom:.3rem">Kattints Lépés-re.</div>
+              <div style="font-size:.75rem;color:#8ba3bc;font-weight:600;margin-bottom:.2rem">key[] — legkisebb él a fához:</div>
+              <div id="prim-key-chips" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.5rem"></div>
+              <div class="log-box" id="prim-log"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Kruskal vs Prim</h5>
+          <table class="tbl-alg">
+            <thead><tr><th></th><th>Kruskal</th><th>Prim</th></tr></thead>
+            <tbody>
+              <tr><td>Stratégia</td><td>Él-alapú (rendezés)</td><td>Csúcs-alapú (növekvő fa)</td></tr>
+              <tr><td>Adatszerkezet</td><td>Union-Find</td><td>Prioritássor</td></tr>
+              <tr><td>Futásidő</td><td>\(\mathcal{O}(m\log m)\)</td><td>\(\mathcal{O}((n+m)\log n)\)</td></tr>
+              <tr><td>Jobb ha</td><td>Ritka gráf</td><td>Sűrű gráf</td></tr>
+              <tr><td>MST egyediség</td><td colspan="2">Ha összes él-súly különböző → egyedi MST</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Az algoritmus</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75">
+            1. Indíts egy tetszőleges csúcsból (fa \(= \{s\}\)).<br>
+            2. A fa és a többi csúcs közötti legkisebb súlyú élt vedd fel.<br>
+            3. A hozzáadott csúcs szomszédainak frissítsd a \(\text{key}[v]\) értékét.<br>
+            4. Ismételd, míg minden csúcs a fában van.<br><br>
+            Segédoszlop: \(\text{key}[v]\) = legkisebb él-súly \(v\)-ből a fához.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 4: TSP -->
+  <div id="tab-tsp" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>TSP 2-közelítés — MST alapú Hamilton-kör</h5>
+          <div class="preset-row" id="tsp-presets">
+            <div class="preset-btn active" onclick="tspLoadPreset('cities6')">6 város</div>
+            <div class="preset-btn" onclick="tspLoadPreset('cities8')">8 város</div>
+            <div class="preset-btn" onclick="tspLoadPreset('cities10')">10 város</div>
+            <div class="preset-btn" onclick="tspLoadPreset('random8')">Véletlen (8)</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="tsp-canvas" width="480" height="300"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#4ade80"></span>MST</span>
+                <span><span class="legend-dot" style="background:#f97316"></span>MST-alapú Hamilton-kör (közelítő)</span>
+                <span><span class="legend-dot" style="background:#a78bfa"></span>Optimális (brute-force, kis n)</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="tspRun()">▶ Futtatás</button>
+                <button class="btn-out btn-sm2" onclick="tspShowMST()">MST megmutat.</button>
+                <button class="btn-out btn-sm2" onclick="tspShowApprox()">Közelítő kör</button>
+                <button class="btn-out btn-sm2" onclick="tspShowOptimal()">Optimális (≤8)</button>
+              </div>
+              <div id="tsp-status" style="font-size:.8rem;color:#8ba3bc;margin-bottom:.5rem">Kattints ▶ Futtatás-ra.</div>
+              <div class="row g-2" id="tsp-metrics">
+                <div class="col-6"><div class="metric-card"><div class="metric-val" id="tsp-mst-w">—</div><div class="metric-label">MST súly</div></div></div>
+                <div class="col-6"><div class="metric-card"><div class="metric-val" id="tsp-approx-w">—</div><div class="metric-label">Közelítő kör</div></div></div>
+                <div class="col-6"><div class="metric-card"><div class="metric-val" id="tsp-opt-w">—</div><div class="metric-label">Optimális</div></div></div>
+                <div class="col-6"><div class="metric-card"><div class="metric-val" id="tsp-ratio">—</div><div class="metric-label">Közelítési arány</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Az algoritmus lépései</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:var(--acc)">1.</b> Számíts MST-t (Kruskal/Prim)<br>
+            <b style="color:var(--acc)">2.</b> Járd körbe a fát DFS-sorrendben (preorder bejárás)<br>
+            <b style="color:var(--acc)">3.</b> Már látott csúcsokat ugord át (rövidítés)<br>
+            <b style="color:var(--acc)">4.</b> Visszatérés a kiindulópontra → Hamilton-kör<br><br>
+            <b style="color:var(--acc)">Garantált:</b> \(w(H_{\text{közelítő}}) \leq 2 \cdot w(\text{MST}) \leq 2 \cdot w(H_{\text{optimális}})\)
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Miért legfeljebb kétszeres?</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            Az MST körbekerülésekor minden élt kétszer járunk be → súly = \(2w(T)\).<br>
+            A háromszög-egyenlőtlenség miatt a rövidítések (ugrások) csak csökkentik az utat.<br>
+            Tehát: \(w(H) \leq 2w(T) \leq 2w(H_0)\).<br><br>
+            <b style="color:var(--acc)">Christofides (1976):</b> jobb algoritmus, \(w(H)\leq\frac{3}{2}w(H_0)\).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 5: FESZÍTŐFÁK SZÁMA -->
+  <div id="tab-count" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Kirchhoff Fa-Mátrix Tétele — feszítőfák száma</h5>
+          <div class="preset-row" id="count-presets">
+            <div class="preset-btn active" onclick="countLoadPreset('k4')">K₄ (=16)</div>
+            <div class="preset-btn" onclick="countLoadPreset('k3')">K₃ (=3)</div>
+            <div class="preset-btn" onclick="countLoadPreset('cycle5')">C₅ (=5)</div>
+            <div class="preset-btn" onclick="countLoadPreset('custom')">Egyedi</div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-5">
+              <canvas id="count-canvas" width="280" height="240"></canvas>
+              <div style="font-size:2rem;font-weight:700;color:#38bdf8;text-align:center;margin:.5rem 0" id="count-result">—</div>
+              <div style="font-size:.78rem;color:#8ba3bc;text-align:center">feszítőfa</div>
+            </div>
+            <div class="col-md-7">
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">Laplace-mátrix \(L = D - A\):</div>
+              <div id="count-laplace" class="mb-2" style="overflow-x:auto"></div>
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">Kofaktor (törölt 1. sor és oszlop, \(\det(L_{11})\)):</div>
+              <div id="count-cofactor" style="font-family:monospace;font-size:.85rem;color:#4ade80;background:#0a0f14;border:1px solid #1e2a38;border-radius:5px;padding:.5rem"></div>
+              <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75;margin-top:.7rem">
+                <b style="color:var(--acc)">Kirchhoff-tétel (1847):</b><br>
+                A feszítőfák száma egyenlő a gráf Laplace-mátrixának bármely kofaktorával:<br>
+                \[\tau(G) = \det(L_{ii})\]
+                ahol \(L_{ii}\) a \(L\) mátrix \(i\)-edik sorának és oszlopának törlésével kapott almátrix.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Ismert eredmények</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Gráf</th><th>Feszítőfák száma \(\tau(G)\)</th></tr></thead>
+            <tbody>
+              <tr><td>\(K_n\) (teljes)</td><td>\(n^{n-2}\) (Cayley)</td></tr>
+              <tr><td>\(C_n\) (körút)</td><td>\(n\)</td></tr>
+              <tr><td>\(K_{m,n}\) (teljes kétoldalú)</td><td>\(m^{n-1} \cdot n^{m-1}\)</td></tr>
+              <tr><td>\(P_n\) (út)</td><td>\(1\)</td></tr>
+              <tr><td>\(W_n\) (kerék, \(n\) küllő)</td><td>\((\frac{3+\sqrt{5}}{2})^n + (\frac{3-\sqrt{5}}{2})^n - 2\)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Saját gráf ellenőrzése</h5>
+          <div style="font-size:.8rem;color:#8ba3bc;margin-bottom:.4rem">Adj meg éleket (1-alapú): "1-2 2-3 3-4 4-1 2-4"</div>
+          <textarea id="count-custom-edges" class="form-control form-control-sm"
+            style="background:#0a0f14;color:#fff;border-color:#1e2a38;font-family:monospace;resize:none;height:55px"
+            placeholder="pl. 1-2 2-3 3-1">1-2 2-3 3-4 4-1 2-4</textarea>
+          <button class="btn-acc mt-2 btn-sm2" onclick="countCheckCustom()">Kirchhoff kiszámít.</button>
+          <div id="count-custom-result" style="font-size:.85rem;margin-top:.5rem;color:#4ade80;font-family:monospace"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+});
+</script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function setActivePreset(rowEl,btn){
+  rowEl.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+const NODE_R=15;
+
+// ─────────────────────────────────────────────────────────────────
+// GRAPH PRESETS
+const PRESETS = {
+  // spanning tree / kruskal / prim
+  classic:{
+    nodes:[{x:80,y:150,l:'A'},{x:200,y:60,l:'B'},{x:200,y:250,l:'C'},{x:340,y:60,l:'D'},{x:340,y:250,l:'E'},{x:460,y:150,l:'F'},{x:240,y:160,l:'G'}],
+    edges:[{u:0,v:1,w:7},{u:0,v:2,w:5},{u:1,v:2,w:9},{u:1,v:3,w:7},{u:2,v:4,w:8},{u:3,v:4,w:5},{u:3,v:5,w:8},{u:4,v:5,w:9},{u:2,v:6,w:6},{u:1,v:6,w:4},{u:4,v:6,w:4}]
+  },
+  k5:{
+    nodes:[{x:240,y:50,l:'A'},{x:390,y:155,l:'B'},{x:330,y:300,l:'C'},{x:150,y:300,l:'D'},{x:90,y:155,l:'E'}],
+    edges:[{u:0,v:1,w:2},{u:0,v:2,w:3},{u:0,v:3,w:6},{u:0,v:4,w:5},{u:1,v:2,w:4},{u:1,v:3,w:7},{u:1,v:4,w:8},{u:2,v:3,w:3},{u:2,v:4,w:5},{u:3,v:4,w:2}]
+  },
+  grid4:{
+    nodes:[{x:80,y:80,l:'A'},{x:180,y:80,l:'B'},{x:280,y:80,l:'C'},{x:380,y:80,l:'D'},
+           {x:80,y:220,l:'E'},{x:180,y:220,l:'F'},{x:280,y:220,l:'G'},{x:380,y:220,l:'H'}],
+    edges:[{u:0,v:1,w:3},{u:1,v:2,w:1},{u:2,v:3,w:4},{u:4,v:5,w:2},{u:5,v:6,w:5},{u:6,v:7,w:3},
+           {u:0,v:4,w:2},{u:1,v:5,w:3},{u:2,v:6,w:1},{u:3,v:7,w:4},{u:0,v:5,w:5},{u:1,v:6,w:6}]
+  },
+  sparse:{
+    nodes:[{x:80,y:160,l:'A'},{x:200,y:70,l:'B'},{x:200,y:260,l:'C'},{x:350,y:70,l:'D'},{x:350,y:260,l:'E'},{x:460,y:160,l:'F'}],
+    edges:[{u:0,v:1,w:6},{u:0,v:2,w:1},{u:1,v:3,w:5},{u:2,v:4,w:4},{u:3,v:4,w:2},{u:3,v:5,w:3},{u:4,v:5,w:7},{u:1,v:2,w:9}]
+  },
+  // dense for prim
+  dense8:{
+    nodes:[{x:240,y:40,l:'A'},{x:380,y:110,l:'B'},{x:430,y:220,l:'C'},{x:360,y:310,l:'D'},
+           {x:200,y:320,l:'E'},{x:80,y:260,l:'F'},{x:60,y:150,l:'G'},{x:140,y:60,l:'H'}],
+    edges:[{u:0,v:1,w:4},{u:0,v:7,w:8},{u:1,v:2,w:8},{u:1,v:7,w:11},{u:2,v:3,w:7},{u:2,v:5,w:4},{u:2,v:8||6,w:2},{u:3,v:4,w:9},{u:3,v:5,w:14},{u:4,v:5,w:10},{u:5,v:6,w:2},{u:6,v:7,w:1},{u:6,v:2,w:6}].filter(e=>e.u<8&&e.v<8)
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────
+// DRAWING
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function drawGraph(canvas,nodes,edges,nodeColors,edgeColors,directed,showWeights){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  edges.forEach((e,i)=>{
+    const a=nodes[e.u],b=nodes[e.v];
+    const col=edgeColors&&edgeColors[i]?edgeColors[i]:'#2a3a50';
+    const lw=edgeColors&&edgeColors[i]&&edgeColors[i]!=='#2a3a50'?2.5:1.5;
+    ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    if(showWeights!==false&&e.w!==undefined){
+      const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+      ctx.fillStyle='#f97316';ctx.font='bold 11px monospace';ctx.textAlign='center';
+      ctx.fillText(e.w,mx,my-5);
+    }
+  });
+  nodes.forEach((n,i)=>{
+    const col=nodeColors&&nodeColors[i]?nodeColors[i]:'#1e3a5f';
+    ctx.beginPath();ctx.arc(n.x,n.y,NODE_R,0,2*Math.PI);
+    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(n.l||i,n.x,n.y);
+  });
+}
+function buildAdj(n,edges){
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach((e,i)=>{adj[e.u].push({v:e.v,w:e.w,i});adj[e.v].push({v:e.u,w:e.w,i});});
+  return adj;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// UNION-FIND
+function makeUF(n){return {parent:Array.from({length:n},(_,i)=>i),rank:Array(n).fill(0)};}
+function find(uf,x){if(uf.parent[x]!==x)uf.parent[x]=find(uf,uf.parent[x]);return uf.parent[x];}
+function union(uf,a,b){const ra=find(uf,a),rb=find(uf,b);if(ra===rb)return false;if(uf.rank[ra]<uf.rank[rb])uf.parent[ra]=rb;else if(uf.rank[ra]>uf.rank[rb])uf.parent[rb]=ra;else{uf.parent[rb]=ra;uf.rank[ra]++;}return true;}
+
+// KRUSKAL full solve
+function kruskalSolve(nodes,edges){
+  const sorted=[...edges].map((e,i)=>({...e,i})).sort((a,b)=>a.w-b.w);
+  const uf=makeUF(nodes.length);const mstEdges=[];let w=0;
+  for(const e of sorted){if(union(uf,e.u,e.v)){mstEdges.push(e.i);w+=e.w;}}
+  return {mstEdges,w};
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 1: SPANNING TREE VISUALIZER
+let spanData=null;
+const SPAN_PRESETS={
+  k4:{nodes:[{x:200,y:60,l:'A'},{x:360,y:60,l:'B'},{x:360,y:240,l:'C'},{x:200,y:240,l:'D'}],
+    edges:[{u:0,v:1,w:1},{u:1,v:2,w:2},{u:2,v:3,w:3},{u:3,v:0,w:4},{u:0,v:2,w:5},{u:1,v:3,w:6}]},
+  wheel:{nodes:[{x:240,y:150,l:'C'},{x:240,y:50,l:'A'},{x:370,y:110,l:'B'},{x:370,y:210,l:'D'},{x:240,y:270,l:'E'},{x:110,y:210,l:'F'},{x:110,y:110,l:'G'}],
+    edges:[{u:0,v:1,w:3},{u:0,v:2,w:2},{u:0,v:3,w:4},{u:0,v:4,w:1},{u:0,v:5,w:5},{u:0,v:6,w:3},{u:1,v:2,w:6},{u:2,v:3,w:2},{u:3,v:4,w:5},{u:4,v:5,w:4},{u:5,v:6,w:3},{u:6,v:1,w:7}]},
+  grid:{nodes:[{x:80,y:80,l:'A'},{x:220,y:80,l:'B'},{x:360,y:80,l:'C'},{x:80,y:210,l:'D'},{x:220,y:210,l:'E'},{x:360,y:210,l:'F'},{x:80,y:300,l:'G'},{x:220,y:300,l:'H'},{x:360,y:300,l:'I'}],
+    edges:[{u:0,v:1,w:4},{u:1,v:2,w:2},{u:3,v:4,w:3},{u:4,v:5,w:5},{u:6,v:7,w:1},{u:7,v:8,w:6},{u:0,v:3,w:2},{u:1,v:4,w:7},{u:2,v:5,w:3},{u:3,v:6,w:4},{u:4,v:7,w:2},{u:5,v:8,w:5}]},
+  random7:{nodes:[{x:80,y:150,l:'A'},{x:200,y:60,l:'B'},{x:320,y:80,l:'C'},{x:440,y:150,l:'D'},{x:380,y:270,l:'E'},{x:200,y:280,l:'F'},{x:280,y:170,l:'G'}],
+    edges:[{u:0,v:1,w:3},{u:1,v:2,w:1},{u:2,v:3,w:4},{u:3,v:4,w:2},{u:4,v:5,w:5},{u:5,v:0,w:6},{u:1,v:6,w:2},{u:2,v:6,w:7},{u:4,v:6,w:3},{u:0,v:6,w:8}]}
+};
+function spanLoadPreset(name){
+  spanData=JSON.parse(JSON.stringify(SPAN_PRESETS[name]));
+  setActivePreset(document.getElementById('span-presets'),event.target);
+  drawGraph(document.getElementById('span-canvas'),spanData.nodes,spanData.edges,null,null,false,true);
+  document.getElementById('span-stats').innerHTML='Válassz nézetet fentről.';
+}
+function spanRandomTree(){
+  if(!spanData) return;
+  const {nodes,edges}=spanData; const n=nodes.length;
+  // Random spanning tree by Kruskal on shuffled edges
+  const shuffled=[...edges].sort(()=>Math.random()-.5);
+  const uf=makeUF(n); const mst=[];
+  for(const e of shuffled){if(union(uf,e.u,e.v))mst.push(edges.indexOf(e));}
+  const edgeColors=edges.map((_,i)=>mst.includes(i)?'#4ade80':'#2a3a50');
+  drawGraph(document.getElementById('span-canvas'),nodes,edges,null,edgeColors,false,true);
+  const w=mst.reduce((s,i)=>s+edges[i].w,0);
+  document.getElementById('span-stats').innerHTML=`Feszítőfa: <b style="color:#4ade80">${mst.length} él</b><br>Összsúly: <b style="color:#38bdf8">${w}</b><br>(Nem feltétlenül minimális)`;
+}
+function spanMSTTree(){
+  if(!spanData) return;
+  const {nodes,edges}=spanData;
+  const {mstEdges,w}=kruskalSolve(nodes,edges);
+  const edgeColors=edges.map((_,i)=>mstEdges.includes(i)?'#4ade80':'#2a3a50');
+  drawGraph(document.getElementById('span-canvas'),nodes,edges,null,edgeColors,false,true);
+  document.getElementById('span-stats').innerHTML=`MST: <b style="color:#4ade80">${mstEdges.length} él</b><br>Minimum összsúly: <b style="color:#38bdf8">${w}</b>`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 2: KRUSKAL STEP-BY-STEP
+let kruskalData=null, kruskalState=null, kruskalAutoTimer=null;
+function kruskalLoadPreset(name){
+  kruskalData=JSON.parse(JSON.stringify(PRESETS[name]||SPAN_PRESETS[name]||PRESETS.classic));
+  setActivePreset(document.getElementById('kruskal-presets'),event.target);
+  kruskalReset();
+}
+function kruskalReset(){
+  if(kruskalAutoTimer){clearInterval(kruskalAutoTimer);kruskalAutoTimer=null;document.getElementById('kruskal-auto-btn').textContent='▶ Auto';}
+  if(!kruskalData) return;
+  const edges=[...kruskalData.edges].map((e,i)=>({...e,orig:i})).sort((a,b)=>a.w-b.w);
+  kruskalState={sorted:edges,idx:0,uf:makeUF(kruskalData.nodes.length),mst:[],rejected:[],done:false};
+  kruskalRender(); kruskalUpdateUF(); kruskalUpdateEdgeList();
+  document.getElementById('kruskal-log').innerHTML='';
+  document.getElementById('kruskal-status').textContent='Kattints Lépés-re.';
+}
+function kruskalStep(){
+  if(!kruskalState||kruskalState.done) return;
+  const {sorted,idx,uf,mst,rejected}=kruskalState;
+  if(idx>=sorted.length||mst.length>=kruskalData.nodes.length-1){kruskalState.done=true;kruskalDone();return;}
+  const e=sorted[idx];kruskalState.current=e.orig;
+  const accepted=union(uf,e.u,e.v);
+  if(accepted){mst.push(e.orig);kruskalLog(`✓ Felvéve: ${kruskalData.nodes[e.u].l||e.u}—${kruskalData.nodes[e.v].l||e.v} (w=${e.w})`,'ok');}
+  else{rejected.push(e.orig);kruskalLog(`✗ Elvetve (kör): ${kruskalData.nodes[e.u].l||e.u}—${kruskalData.nodes[e.v].l||e.v} (w=${e.w})`,'skip');}
+  kruskalState.idx++;
+  kruskalRender(); kruskalUpdateUF(); kruskalUpdateEdgeList();
+  if(mst.length>=kruskalData.nodes.length-1){kruskalState.done=true;kruskalDone();}
+}
+function kruskalDone(){
+  if(kruskalAutoTimer){clearInterval(kruskalAutoTimer);kruskalAutoTimer=null;document.getElementById('kruskal-auto-btn').textContent='▶ Auto';}
+  const w=kruskalState.mst.reduce((s,i)=>s+kruskalData.edges[i].w,0);
+  kruskalLog(`MST kész! Összsúly = ${w}`,'hi');
+  document.getElementById('kruskal-status').textContent=`Kész! MST összsúly = ${w}`;
+  kruskalState.current=-1; kruskalRender();
+}
+function kruskalFinish(){while(!kruskalState.done)kruskalStep();}
+function kruskalToggleAuto(){
+  if(kruskalAutoTimer){clearInterval(kruskalAutoTimer);kruskalAutoTimer=null;document.getElementById('kruskal-auto-btn').textContent='▶ Auto';}
+  else{kruskalAutoTimer=setInterval(()=>{kruskalStep();if(kruskalState.done){clearInterval(kruskalAutoTimer);kruskalAutoTimer=null;document.getElementById('kruskal-auto-btn').textContent='▶ Auto';}},700);document.getElementById('kruskal-auto-btn').textContent='⏸ Stop';}
+}
+function kruskalLog(msg,cls=''){const lb=document.getElementById('kruskal-log');lb.innerHTML+=`<div class="log-line ${cls}">${msg}</div>`;lb.scrollTop=lb.scrollHeight;}
+function kruskalRender(){
+  if(!kruskalData||!kruskalState) return;
+  const {mst,rejected,current}=kruskalState;
+  const edgeColors=kruskalData.edges.map((_,i)=>{
+    if(i===current) return '#f97316';
+    if(mst.includes(i)) return '#4ade80';
+    if(rejected.includes(i)) return '#ef4444';
+    return '#2a3a50';
+  });
+  drawGraph(document.getElementById('kruskal-canvas'),kruskalData.nodes,kruskalData.edges,null,edgeColors,false,true);
+}
+function kruskalUpdateUF(){
+  if(!kruskalState) return;
+  const {uf}=kruskalState; const n=kruskalData.nodes.length;
+  const comps={};
+  for(let i=0;i<n;i++){const r=find(uf,i);(comps[r]=comps[r]||[]).push(kruskalData.nodes[i].l||i);}
+  document.getElementById('kruskal-uf').innerHTML=Object.values(comps).map(c=>`{${c.join(',')}}`).join('  ');
+}
+function kruskalUpdateEdgeList(){
+  if(!kruskalState) return;
+  const {sorted,idx,mst,rejected,current}=kruskalState;
+  document.getElementById('kruskal-edge-list').innerHTML=sorted.map((e,i)=>{
+    let cls='';
+    if(mst.includes(e.orig)) cls='selected';
+    else if(rejected.includes(e.orig)) cls='rejected';
+    else if(i===idx) cls='current';
+    return `<span class="edge-chip ${cls}">${kruskalData.nodes[e.u].l||e.u}—${kruskalData.nodes[e.v].l||e.v}:${e.w}</span>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 3: PRIM STEP-BY-STEP
+let primData=null, primState=null, primAutoTimer=null;
+function primLoadPreset(name){
+  primData=JSON.parse(JSON.stringify(PRESETS[name]||SPAN_PRESETS[name]||PRESETS.classic));
+  setActivePreset(document.getElementById('prim-presets'),event.target);
+  const sel=document.getElementById('prim-src');sel.innerHTML='';
+  primData.nodes.forEach((n,i)=>{sel.innerHTML+=`<option value="${i}">${n.l||i}</option>`;});
+  primReset();
+}
+function primReset(){
+  if(primAutoTimer){clearInterval(primAutoTimer);primAutoTimer=null;document.getElementById('prim-auto-btn').textContent='▶ Auto';}
+  if(!primData) return;
+  const n=primData.nodes.length, src=parseInt(document.getElementById('prim-src').value);
+  const INF=1e9;
+  primState={inMST:Array(n).fill(false),key:Array(n).fill(INF),parent:Array(n).fill(-1),
+    mstEdges:[],src,done:false,step:0};
+  primState.key[src]=0;
+  primRender(); primUpdateChips();
+  document.getElementById('prim-log').innerHTML='';
+  document.getElementById('prim-status').textContent='Kattints Lépés-re.';
+}
+function primStep(){
+  if(!primState||primState.done) return;
+  const {inMST,key,parent,mstEdges}=primState;
+  const n=primData.nodes.length, INF=1e9;
+  // pick min key not in MST
+  let u=-1,best=INF;
+  key.forEach((k,i)=>{if(!inMST[i]&&k<best){best=k;u=i;}});
+  if(u===-1){primState.done=true;primDone();return;}
+  inMST[u]=true;
+  if(parent[u]!==-1){
+    // find edge index
+    const ei=primData.edges.findIndex(e=>(e.u===u&&e.v===parent[u])||(e.v===u&&e.u===parent[u]));
+    if(ei!==-1) mstEdges.push(ei);
+  }
+  primLog(`Hozzáadva: ${primData.nodes[u].l||u} (key=${best})`,'hi');
+  const adj=buildAdj(n,primData.edges);
+  adj[u].forEach(({v,w})=>{
+    if(!inMST[v]&&w<key[v]){key[v]=w;parent[v]=u;primLog(`  Frissítve: key[${primData.nodes[v].l||v}] = ${w}`);}
+  });
+  primState.step++;
+  primRender(); primUpdateChips();
+  if(mstEdges.length>=n-1){primState.done=true;primDone();}
+}
+function primDone(){
+  if(primAutoTimer){clearInterval(primAutoTimer);primAutoTimer=null;document.getElementById('prim-auto-btn').textContent='▶ Auto';}
+  const w=primState.mstEdges.reduce((s,i)=>s+primData.edges[i].w,0);
+  primLog(`MST kész! Összsúly = ${w}`,'hi');
+  document.getElementById('prim-status').textContent=`Kész! MST összsúly = ${w}`;
+  primRender();
+}
+function primFinish(){while(!primState.done)primStep();}
+function primToggleAuto(){
+  if(primAutoTimer){clearInterval(primAutoTimer);primAutoTimer=null;document.getElementById('prim-auto-btn').textContent='▶ Auto';}
+  else{primAutoTimer=setInterval(()=>{primStep();if(primState.done){clearInterval(primAutoTimer);primAutoTimer=null;document.getElementById('prim-auto-btn').textContent='▶ Auto';}},700);document.getElementById('prim-auto-btn').textContent='⏸ Stop';}
+}
+function primLog(msg,cls=''){const lb=document.getElementById('prim-log');lb.innerHTML+=`<div class="log-line ${cls}">${msg}</div>`;lb.scrollTop=lb.scrollHeight;}
+function primRender(){
+  if(!primData||!primState) return;
+  const {inMST,mstEdges}=primState;
+  const nodeColors=primData.nodes.map((_,i)=>inMST[i]?'#166534':'#1e3a5f');
+  const edgeColors=primData.edges.map((_,i)=>mstEdges.includes(i)?'#4ade80':'#2a3a50');
+  drawGraph(document.getElementById('prim-canvas'),primData.nodes,primData.edges,nodeColors,edgeColors,false,true);
+}
+function primUpdateChips(){
+  if(!primState) return;
+  const INF=1e9;
+  document.getElementById('prim-key-chips').innerHTML=primData.nodes.map((n,i)=>{
+    const k=primState.key[i];
+    const cls=primState.inMST[i]?'selected':'';
+    return `<span class="edge-chip ${cls}"><b>${n.l||i}</b>:${k>=INF?'∞':k}</span>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 4: TSP
+const TSP_CITIES = {
+  cities6:{nodes:[{x:120,y:80,l:'A'},{x:300,y:50,l:'B'},{x:430,y:140,l:'C'},{x:400,y:270,l:'D'},{x:200,y:280,l:'E'},{x:80,y:200,l:'F'}]},
+  cities8:{nodes:[{x:100,y:80,l:'A'},{x:250,y:40,l:'B'},{x:400,y:70,l:'C'},{x:460,y:190,l:'D'},{x:420,y:280,l:'E'},{x:280,y:310,l:'F'},{x:120,y:290,l:'G'},{x:60,y:180,l:'H'}]},
+  cities10:{nodes:[{x:200,y:50,l:'A'},{x:340,y:50,l:'B'},{x:440,y:120,l:'C'},{x:450,y:230,l:'D'},{x:380,y:300,l:'E'},{x:260,y:310,l:'F'},{x:130,y:290,l:'G'},{x:60,y:200,l:'H'},{x:80,y:110,l:'I'},{x:230,y:170,l:'J'}]},
+  random8:null
+};
+let tspData=null;
+function tspLoadPreset(name){
+  if(name==='random8'){
+    const nodes=Array.from({length:8},(_,i)=>({x:60+Math.random()*380,y:50+Math.random()*230,l:String.fromCharCode(65+i)}));
+    tspData={nodes};
+  } else {
+    tspData=JSON.parse(JSON.stringify(TSP_CITIES[name]));
+  }
+  setActivePreset(document.getElementById('tsp-presets'),event.target);
+  // Build complete graph (Euclidean distances)
+  tspBuildEdges();
+  tspDraw(null,null,null);
+  document.getElementById('tsp-status').textContent='Kattints ▶ Futtatás-ra.';
+  ['tsp-mst-w','tsp-approx-w','tsp-opt-w','tsp-ratio'].forEach(id=>document.getElementById(id).textContent='—');
+}
+function tspBuildEdges(){
+  if(!tspData) return;
+  const {nodes}=tspData;
+  const edges=[];
+  for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+    const w=Math.round(Math.hypot(nodes[i].x-nodes[j].x,nodes[i].y-nodes[j].y));
+    edges.push({u:i,v:j,w});
+  }
+  tspData.edges=edges;
+}
+function tspDraw(mstEdges,approxTour,optTour){
+  const cv=document.getElementById('tsp-canvas');
+  const ctx=cv.getContext('2d'); const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const {nodes,edges}=tspData;
+  // draw all edges faintly
+  edges.forEach(e=>{
+    ctx.strokeStyle='#1a2a3a';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(nodes[e.u].x,nodes[e.u].y);ctx.lineTo(nodes[e.v].x,nodes[e.v].y);ctx.stroke();
+  });
+  // mst
+  if(mstEdges){mstEdges.forEach(i=>{const e=edges[i];ctx.strokeStyle='#4ade80';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(nodes[e.u].x,nodes[e.u].y);ctx.lineTo(nodes[e.v].x,nodes[e.v].y);ctx.stroke();ctx.setLineDash([]);});}
+  // approx tour
+  if(approxTour){
+    ctx.strokeStyle='#f97316';ctx.lineWidth=2.5;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(nodes[approxTour[0]].x,nodes[approxTour[0]].y);
+    approxTour.slice(1).forEach(i=>ctx.lineTo(nodes[i].x,nodes[i].y));
+    ctx.closePath();ctx.stroke();
+  }
+  // opt tour
+  if(optTour){
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;ctx.setLineDash([6,3]);
+    ctx.beginPath();ctx.moveTo(nodes[optTour[0]].x,nodes[optTour[0]].y);
+    optTour.slice(1).forEach(i=>ctx.lineTo(nodes[i].x,nodes[i].y));
+    ctx.closePath();ctx.stroke();ctx.setLineDash([]);
+  }
+  // nodes
+  nodes.forEach((n,i)=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,NODE_R,0,2*Math.PI);ctx.fillStyle='#1e3a5f';ctx.fill();ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.l||i,n.x,n.y);
+  });
+}
+function tourCost(tour,nodes){
+  let w=0;
+  for(let i=0;i<tour.length;i++) w+=Math.round(Math.hypot(nodes[tour[i]].x-nodes[tour[(i+1)%tour.length]].x,nodes[tour[i]].y-nodes[tour[(i+1)%tour.length]].y));
+  return w;
+}
+function mstTour(nodes,mstEdges,edges){
+  // DFS preorder on MST
+  const n=nodes.length;
+  const adj=Array.from({length:n},()=>[]);
+  mstEdges.forEach(i=>{adj[edges[i].u].push(edges[i].v);adj[edges[i].v].push(edges[i].u);});
+  const visited=Array(n).fill(false),order=[];
+  function dfs(u){visited[u]=true;order.push(u);adj[u].forEach(v=>{if(!visited[v])dfs(v);});}
+  dfs(0);return order;
+}
+function bruteForceTSP(nodes){
+  if(nodes.length>10) return null;
+  const n=nodes.length;
+  let best=Infinity,bestTour=null;
+  const perm=[];
+  for(let i=1;i<n;i++) perm.push(i);
+  function permute(arr,l){
+    if(l===arr.length-1){const tour=[0,...arr];const c=tourCost(tour,nodes);if(c<best){best=c;bestTour=[...tour];}return;}
+    for(let i=l;i<arr.length;i++){[arr[l],arr[i]]=[arr[i],arr[l]];permute(arr,l+1);[arr[l],arr[i]]=[arr[i],arr[l]];}}
+  permute(perm,0);
+  return {tour:bestTour,cost:best};
+}
+let tspResult=null;
+function tspRun(){
+  if(!tspData) return;
+  const {nodes,edges}=tspData;
+  const {mstEdges,w:mstW}=kruskalSolve(nodes,edges);
+  const approxTour=mstTour(nodes,mstEdges,edges);
+  const approxW=tourCost(approxTour,nodes);
+  const opt=nodes.length<=8?bruteForceTSP(nodes):null;
+  tspResult={mstEdges,approxTour,approxW,mstW,opt};
+  document.getElementById('tsp-mst-w').textContent=mstW;
+  document.getElementById('tsp-approx-w').textContent=approxW;
+  document.getElementById('tsp-opt-w').textContent=opt?opt.cost:'n/a (n>8)';
+  document.getElementById('tsp-ratio').textContent=opt?(approxW/opt.cost).toFixed(2)+'×':'—';
+  document.getElementById('tsp-status').textContent=`Közelítő arány: approx/MST = ${(approxW/mstW).toFixed(2)}`;
+  tspDraw(mstEdges,approxTour,opt?opt.tour:null);
+}
+function tspShowMST(){if(tspResult)tspDraw(tspResult.mstEdges,null,null);}
+function tspShowApprox(){if(tspResult)tspDraw(null,tspResult.approxTour,null);}
+function tspShowOptimal(){if(tspResult&&tspResult.opt)tspDraw(null,null,tspResult.opt.tour);}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 5: KIRCHHOFF / SPANNING TREE COUNT
+const COUNT_PRESETS = {
+  k4:{nodes:[{x:160,y:60,l:'1'},{x:300,y:60,l:'2'},{x:300,y:200,l:'3'},{x:160,y:200,l:'4'}],
+    edges:[{u:0,v:1},{u:1,v:2},{u:2,v:3},{u:3,v:0},{u:0,v:2},{u:1,v:3}]},
+  k3:{nodes:[{x:200,y:60,l:'1'},{x:100,y:200,l:'2'},{x:300,y:200,l:'3'}],
+    edges:[{u:0,v:1},{u:1,v:2},{u:2,v:0}]},
+  cycle5:{nodes:[{x:200,y:50,l:'1'},{x:330,y:140,l:'2'},{x:290,y:260,l:'3'},{x:110,y:260,l:'4'},{x:70,y:140,l:'5'}],
+    edges:[{u:0,v:1},{u:1,v:2},{u:2,v:3},{u:3,v:4},{u:4,v:0}]},
+  custom:null
+};
+let countData=null;
+function countLoadPreset(name){
+  if(name==='custom') return;
+  countData=JSON.parse(JSON.stringify(COUNT_PRESETS[name]));
+  setActivePreset(document.getElementById('count-presets'),event.target);
+  countCompute();
+}
+function countCompute(){
+  if(!countData) return;
+  const {nodes,edges}=countData;
+  const n=nodes.length;
+  // Build Laplace
+  const L=Array.from({length:n},()=>Array(n).fill(0));
+  const deg=Array(n).fill(0);
+  edges.forEach(e=>{L[e.u][e.v]--;L[e.v][e.u]--;deg[e.u]++;deg[e.v]++;});
+  for(let i=0;i<n;i++) L[i][i]=deg[i];
+  // Show Laplace
+  const tbl=document.createElement('table');tbl.className='matrix-tbl';
+  tbl.style.cssText='border-collapse:collapse;font-size:.76rem;font-family:monospace';
+  const hdr=document.createElement('thead');
+  hdr.innerHTML='<tr><th></th>'+nodes.map(nd=>`<th style="background:#1a2233;color:#38bdf8;padding:.25rem .4rem;border:1px solid #1e2a38;min-width:30px">${nd.l}</th>`).join('')+'</tr>';
+  const bdy=document.createElement('tbody');
+  for(let i=0;i<n;i++){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<th style="background:#1a2233;color:#38bdf8;padding:.25rem .4rem;border:1px solid #1e2a38">${nodes[i].l}</th>`+
+      L[i].map((v,j)=>{
+        const cls=i===j?'color:#38bdf8':v<0?'color:#ef4444':'color:#c8d8e8';
+        return `<td style="padding:.25rem .4rem;border:1px solid #1e2a38;text-align:center;${cls}">${v}</td>`;
+      }).join('');
+    bdy.appendChild(tr);
+  }
+  tbl.appendChild(hdr);tbl.appendChild(bdy);
+  document.getElementById('count-laplace').innerHTML='';
+  document.getElementById('count-laplace').appendChild(tbl);
+  // Cofactor: delete row 0 col 0
+  const M=L.slice(1).map(row=>row.slice(1));
+  const result=Math.round(det(M));
+  document.getElementById('count-cofactor').textContent=`det(L₁₁) = ${result}`;
+  document.getElementById('count-result').textContent=result;
+  // Draw graph
+  drawGraph(document.getElementById('count-canvas'),nodes,edges,null,null,false,false);
+}
+function det(M){
+  const n=M.length;
+  if(n===0) return 1;
+  if(n===1) return M[0][0];
+  if(n===2) return M[0][0]*M[1][1]-M[0][1]*M[1][0];
+  let d=0;
+  for(let j=0;j<n;j++){
+    const sub=M.slice(1).map(r=>r.filter((_,c)=>c!==j));
+    d+=Math.pow(-1,j)*M[0][j]*det(sub);
+  }
+  return d;
+}
+function countCheckCustom(){
+  const txt=document.getElementById('count-custom-edges').value.trim();
+  const pairs=txt.split(/\s+/).filter(Boolean);
+  const nodeSet=new Set(); const edges=[];
+  for(const p of pairs){
+    const m=p.match(/^(\d+)-(\d+)$/);
+    if(!m){document.getElementById('count-custom-result').innerHTML='<span style="color:#ef4444">Hibás: '+p+'</span>';return;}
+    const a=parseInt(m[1])-1,b=parseInt(m[2])-1;
+    nodeSet.add(a);nodeSet.add(b);edges.push({u:a,v:b});
+  }
+  const n=Math.max(...[...nodeSet])+1;
+  const L=Array.from({length:n},()=>Array(n).fill(0));
+  const deg=Array(n).fill(0);
+  edges.forEach(e=>{L[e.u][e.v]--;L[e.v][e.u]--;deg[e.u]++;deg[e.v]++;});
+  for(let i=0;i<n;i++) L[i][i]=deg[i];
+  const M=L.slice(1).map(r=>r.slice(1));
+  const result=Math.round(det(M));
+  document.getElementById('count-custom-result').innerHTML=`τ(G) = det(L₁₁) = <b style="color:#38bdf8">${result}</b> feszítőfa`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// INIT
+window.addEventListener('DOMContentLoaded',()=>{
+  spanLoadPreset('k4');
+  kruskalLoadPreset('classic');
+  primLoadPreset('classic');
+  tspLoadPreset('cities6');
+  countLoadPreset('k4');
+});
+</script>
+{% endblock %}

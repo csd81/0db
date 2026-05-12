@@ -1,0 +1,787 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #38bdf8; --acc2: #7dd3fc; --acc3: #0ea5e9; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.12); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #10b981; background:rgba(16,185,129,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box  { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(56,189,248,.12); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.btn-graph { background:#1a2535; color:var(--acc2); border:1px solid rgba(56,189,248,.25); border-radius:6px; padding:.3rem .8rem; font-size:.8rem; cursor:pointer; transition:background .15s; margin:.15rem; }
+.btn-graph:hover, .btn-graph.active { background:rgba(56,189,248,.18); border-color:var(--acc); color:var(--acc); }
+input[type=number], select { background:#0e1117; border:1px solid #334155; border-radius:6px; color:#e2e8f0; padding:.3rem .6rem; font-size:.83rem; }
+input:focus, select:focus { outline:none; border-color:var(--acc); }
+.val-big { font-size:1.1rem; font-weight:700; color:var(--acc2); font-family:monospace; }
+canvas.graph-canvas { background:#0a0d14; border-radius:10px; border:1px solid #1e2533; display:block; cursor:pointer; }
+.node-legend { display:inline-flex; align-items:center; gap:.4rem; font-size:.79rem; color:#94a3b8; margin-right:1rem; }
+.node-legend .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+table.res-tbl { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.res-tbl th { background:#1a1f2e; color:#64748b; padding:.4rem .7rem; text-align:center; border-bottom:1px solid #1e2533; font-size:.73rem; text-transform:uppercase; letter-spacing:.06em; }
+table.res-tbl td { padding:.4rem .7rem; border-bottom:1px solid #161b28; text-align:center; }
+.chip { display:inline-block; background:#1a2535; border:1px solid #334155; border-radius:5px; padding:.12rem .5rem; font-size:.78rem; font-family:monospace; color:#7dd3fc; margin:.1rem; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1020px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.15);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-diagram-2-fill" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">II.1. fejezet — Gráf alapfogalmak</h4>
+      <small class="text-muted">Königsberg · Definíciók · Nevezetes gráfok · Kézfogási tétel · Összefüggőség</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-def',this)">Alapfogalmak</span>
+    <span class="ila-nav-link" onclick="showTab('t-named',this)">Nevezetes gráfok</span>
+    <span class="ila-nav-link" onclick="showTab('t-degree',this)">Fokszámok</span>
+    <span class="ila-nav-link" onclick="showTab('t-conn',this)">Összefüggőség</span>
+    <span class="ila-nav-link" onclick="showTab('t-koenig',this)">Königsberg</span>
+  </div>
+
+  <!-- TAB: Alapfogalmak -->
+  <div id="t-def" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark h-100">
+          <span class="badge-acc">Definíciók</span>
+          <div class="def-box">
+            <strong>Gráf:</strong> \(G=(V,E)\), ahol \(V\) a csúcsok és \(E\) az élek halmaza.
+          </div>
+          <div class="def-box">
+            <strong>Egyszerű gráf:</strong> nincs hurokél (\(e=\{v,v\}\)) és nincs többszörös él.
+          </div>
+          <div class="def-box">
+            <strong>Irányított gráf (digráf):</strong> az élek rendezett \((u,v)\) párok.
+          </div>
+          <div class="def-box">
+            <strong>Hipergráf:</strong> egy hiperél \(\ge 2\) csúcsot köthet össze.
+          </div>
+          <div class="ex-box">
+            <strong>Farkas-kecske-káposzta:</strong> 4 csúcs (Farkas, Kecske, Káposzta, Révész), az élek jelölik a lehetséges átkeléseket — a gráfelméleti modell azonnal megmutatja a megoldást.
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <span class="badge-acc">Gráftípus vizualizáló</span>
+          <div class="d-flex gap-1 flex-wrap mb-2 mt-1">
+            <button class="btn-graph active" id="btn-simple" onclick="setGraphType('simple',this)">Egyszerű</button>
+            <button class="btn-graph" id="btn-directed" onclick="setGraphType('directed',this)">Irányított</button>
+            <button class="btn-graph" id="btn-multi" onclick="setGraphType('multi',this)">Többszörös él</button>
+            <button class="btn-graph" id="btn-loop" onclick="setGraphType('loop',this)">Hurokél</button>
+          </div>
+          <canvas id="def-canvas" class="graph-canvas" width="480" height="260"></canvas>
+          <div id="def-info" class="mt-2" style="font-size:.8rem;color:#94a3b8;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Nevezetes gráfok -->
+  <div id="t-named" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Gráf választó</span>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-graph active" onclick="selectNamedGraph('Kn',this)">Teljes K<sub>n</sub></button>
+            <button class="btn-graph" onclick="selectNamedGraph('Cn',this)">Kör C<sub>n</sub></button>
+            <button class="btn-graph" onclick="selectNamedGraph('Pn',this)">Út P<sub>n</sub></button>
+            <button class="btn-graph" onclick="selectNamedGraph('Kmn',this)">Páros K<sub>m,n</sub></button>
+            <button class="btn-graph" onclick="selectNamedGraph('Star',this)">Csillag S<sub>n</sub></button>
+            <button class="btn-graph" onclick="selectNamedGraph('Petersen',this)">Petersen</button>
+            <button class="btn-graph" onclick="selectNamedGraph('Wheel',this)">Szélkerék W<sub>n</sub></button>
+          </div>
+          <div class="mt-3 d-flex gap-2 align-items-center" id="named-param-row">
+            <label class="text-muted" style="font-size:.78rem;" id="named-label">n =</label>
+            <input type="number" id="named-n" value="5" min="3" max="10" style="width:64px;" oninput="redrawNamed()">
+            <span id="named-label2" style="display:none;font-size:.78rem;color:#94a3b8;">m =</span>
+            <input type="number" id="named-m" value="3" min="1" max="8" style="width:64px;display:none;" oninput="redrawNamed()">
+          </div>
+          <div id="named-stats" class="mt-3"></div>
+        </div>
+        <div class="card-dark mt-3">
+          <span class="badge-acc">Definíció</span>
+          <div id="named-def" style="font-size:.83rem;color:#94a3b8;line-height:1.6;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <canvas id="named-canvas" class="graph-canvas" width="480" height="340"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Fokszámok -->
+  <div id="t-degree" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Kézfogási tétel</span>
+          <div class="thm-box">
+            \[\sum_{v\in V}\delta(v) = 2|E|\]
+            Következmény: minden gráfban a <strong>páratlan fokszámú csúcsok száma páros</strong>.
+          </div>
+          <div class="def-box">
+            <strong>Fokszám \(\delta(v)\):</strong> a \(v\) csúcsra illeszkedő élek száma (hurokél kétszer számít).
+          </div>
+          <div class="ex-box">
+            Kémiai alkalmazás: az atom vegyértéke = fokszám. A kézfogási tétel indokolja, miért kell a vegyületek képletének teljesítenie a vegyérték-szabályt.
+          </div>
+          <div id="handshake-stats" class="mt-3 card-dark" style="font-size:.85rem;"></div>
+        </div>
+        <div class="card-dark mt-3">
+          <span class="badge-acc">Foksorozat</span>
+          <div id="deg-seq-out" style="font-size:.82rem;font-family:monospace;color:#7dd3fc;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <p style="font-size:.82rem;color:#94a3b8;margin-bottom:.5rem;">Kattints két csúcsra egy él hozzáadásához / eltávolításához. Húzd a csúcsokat!</p>
+          <canvas id="deg-canvas" class="graph-canvas" width="480" height="320"></canvas>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn-acc" onclick="resetDegGraph()">Visszaállít</button>
+            <button class="btn-sec" onclick="addRandEdge()">Véletlen él +</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Összefüggőség -->
+  <div id="t-conn" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Összefüggőség és távolság</span>
+          <div class="def-box">
+            <strong>Összefüggő gráf:</strong> bármely két csúcs között vezet út.
+          </div>
+          <div class="def-box">
+            <strong>Komponens:</strong> maximális összefüggő részgráf.
+          </div>
+          <div class="def-box">
+            <strong>Távolság \(d(x,y)\):</strong> a legrövidebb út hossza (súlyozatlan gráfban). Teljesíti a metrika-axiómákat.
+          </div>
+          <div class="def-box">
+            <strong>Elvágó csúcs/él:</strong> elhagyásával az összefüggő gráf szétesik.
+          </div>
+          <div id="conn-stats" class="mt-3" style="font-size:.84rem;"></div>
+        </div>
+        <div class="card-dark mt-3">
+          <span class="badge-acc">Távolságmátrix (BFS)</span>
+          <div id="dist-matrix" style="font-size:.78rem;font-family:monospace;overflow-x:auto;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <p style="font-size:.82rem;color:#94a3b8;margin-bottom:.5rem;">Kattints egy csúcsra az eltávolításához. Kattints két csúcsra egy él ki-/bekapcsolásához.</p>
+          <canvas id="conn-canvas" class="graph-canvas" width="480" height="320"></canvas>
+          <div class="d-flex gap-2 mt-2 flex-wrap">
+            <button class="btn-acc" onclick="resetConnGraph()">Visszaállít</button>
+            <button class="btn-sec" id="conn-mode-btn" onclick="toggleConnMode()">Mód: él</button>
+            <span id="conn-hint" style="font-size:.79rem;color:#94a3b8;align-self:center;"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Königsberg -->
+  <div id="t-koenig" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Königsbergi hidak (1736)</span>
+          <div class="def-box">
+            Euler kérdése: bejárható-e Königsberg úgy, hogy minden hidat <strong>pontosan egyszer</strong> kereszteljünk át?
+          </div>
+          <div class="thm-box">
+            <strong>Euler tétele:</strong> Egy összefüggő gráfban létezik Euler-körút (minden élt pontosan egyszer bejáró zárt séta) akkor és csak akkor, ha minden csúcs fokszáma páros.<br><br>
+            Königsbergben mind a 4 csomópont <strong>páratlan fokszámú</strong> → nincs Euler-körút!
+          </div>
+          <div id="kb-nodes" class="mt-3" style="font-size:.83rem;"></div>
+        </div>
+        <div class="card-dark mt-3">
+          <span class="badge-acc">Élbejárási kísérlet</span>
+          <p style="font-size:.82rem;color:#94a3b8;">Próbálj meg minden hidat pontosan egyszer bejárni! Kattints a hidakra sorban.</p>
+          <div id="kb-trail" style="font-family:monospace;font-size:.82rem;color:#7dd3fc;min-height:1.5rem;"></div>
+          <div id="kb-verdict" class="mt-2" style="font-size:.84rem;font-weight:600;"></div>
+          <button class="btn-sec mt-2" onclick="resetKb()">Újrakezdés</button>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <canvas id="kb-canvas" class="graph-canvas" width="480" height="340"></canvas>
+          <div class="mt-2 d-flex gap-3 flex-wrap">
+            <span class="node-legend"><span class="dot" style="background:#f97316"></span>Szárazföld (A)</span>
+            <span class="node-legend"><span class="dot" style="background:#38bdf8"></span>Északi sziget (B)</span>
+            <span class="node-legend"><span class="dot" style="background:#10b981"></span>Déli sziget (C)</span>
+            <span class="node-legend"><span class="dot" style="background:#a78bfa"></span>Keleti part (D)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+// ─── Utility ──────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.ila-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  renderMathInElement(document.getElementById(id), {
+    delimiters: [{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+}
+
+const COLORS = {
+  node: '#38bdf8', nodeStroke: '#0ea5e9', edge: '#334155',
+  nodeHL: '#7dd3fc', edgeHL: '#f97316', nodeSel: '#fbbf24',
+  cut: '#ef4444', odd: '#f59e0b',
+};
+
+function drawArrow(ctx, x1, y1, x2, y2, color, width) {
+  const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+  if(len<1) return;
+  const ux=dx/len, uy=dy/len;
+  const r=14, hx=x2-ux*r, hy=y2-uy*r;
+  ctx.beginPath(); ctx.moveTo(x1+ux*r, y1+uy*r); ctx.lineTo(hx, hy);
+  ctx.strokeStyle=color; ctx.lineWidth=width; ctx.stroke();
+  // arrowhead
+  const ax=-uy*5, ay=ux*5;
+  ctx.beginPath(); ctx.moveTo(hx+ux*10, hy+uy*10); ctx.lineTo(hx+ax, hy+ay); ctx.lineTo(hx-ax, hy-ay); ctx.closePath();
+  ctx.fillStyle=color; ctx.fill();
+}
+
+// ─── TAB 1: DEF CANVAS ────────────────────────────────────────────────────────
+const DEF_GRAPHS = {
+  simple: {
+    nodes: [{x:100,y:80},{x:240,y:50},{x:360,y:100},{x:380,y:200},{x:200,y:220},{x:80,y:180}],
+    edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[1,4],[0,3]],
+    type:'simple', info:'Egyszerű gráf: nincs hurokél, nincs többszörös él. |V|=6, |E|=8.'
+  },
+  directed: {
+    nodes: [{x:100,y:130},{x:240,y:60},{x:380,y:130},{x:240,y:220}],
+    edges: [[0,1],[1,2],[2,3],[3,0],[0,2],[1,3]],
+    type:'directed', info:'Irányított gráf: az élek nyilakkal jelzett iránnyal bírnak. Pl. weblapok között linkhálózat.'
+  },
+  multi: {
+    nodes: [{x:120,y:130},{x:360,y:130},{x:240,y:220}],
+    edges: [[0,1],[0,1],[1,2],[2,0]],
+    type:'multi', info:'Multigráf: két csúcs között több (párhuzamos) él is futhat. Nem egyszerű gráf.'
+  },
+  loop: {
+    nodes: [{x:140,y:120},{x:340,y:120},{x:240,y:230}],
+    edges: [[0,0],[0,1],[1,2],[2,0]],
+    type:'loop', info:'Pszeudigráf: a hurokél ugyanazon csúcsot köti önmagához. A fokszámhoz 2-vel járul hozzá.'
+  }
+};
+
+let currentDefType = 'simple';
+function setGraphType(type, btn) {
+  currentDefType = type;
+  document.querySelectorAll('[id^=btn-]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawDefGraph();
+}
+function drawDefGraph() {
+  const G = DEF_GRAPHS[currentDefType];
+  const canvas = document.getElementById('def-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw edges
+  G.edges.forEach(([a,b]) => {
+    const na = G.nodes[a], nb = G.nodes[b];
+    if(a === b) {
+      // Loop
+      ctx.beginPath();
+      ctx.arc(na.x + 18, na.y - 18, 18, 0, Math.PI*2);
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.stroke();
+    } else if(G.type === 'directed') {
+      drawArrow(ctx, na.x, na.y, nb.x, nb.y, '#334155', 2);
+    } else if(G.type === 'multi') {
+      // Check if this edge has a parallel
+      const key = Math.min(a,b)+','+Math.max(a,b);
+      const count = G.edges.filter(([x,y]) => Math.min(x,y)+','+Math.max(x,y) === key);
+      const idx = count.indexOf(G.edges.find(([x,y]) => x===a && y===b));
+      const offset = idx === 0 ? -12 : 12;
+      const dx = nb.x - na.x, dy = nb.y - na.y;
+      const len = Math.sqrt(dx*dx+dy*dy);
+      const nx = -dy/len * offset, ny = dx/len * offset;
+      ctx.beginPath();
+      ctx.moveTo(na.x+nx, na.y+ny);
+      ctx.quadraticCurveTo((na.x+nb.x)/2+nx*2, (na.y+nb.y)/2+ny*2, nb.x+nx, nb.y+ny);
+      ctx.strokeStyle = count.length > 1 ? '#f97316' : COLORS.edge;
+      ctx.lineWidth = 2; ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(na.x, na.y); ctx.lineTo(nb.x, nb.y);
+      ctx.strokeStyle = COLORS.edge; ctx.lineWidth = 2; ctx.stroke();
+    }
+  });
+
+  // Draw nodes
+  G.nodes.forEach((n, i) => {
+    ctx.beginPath(); ctx.arc(n.x, n.y, 14, 0, Math.PI*2);
+    ctx.fillStyle = '#12161f'; ctx.fill();
+    ctx.strokeStyle = COLORS.nodeStroke; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = COLORS.node; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String.fromCharCode(65+i), n.x, n.y);
+  });
+
+  document.getElementById('def-info').textContent = G.info;
+}
+
+// ─── TAB 2: NAMED GRAPHS ──────────────────────────────────────────────────────
+let currentNamed = 'Kn';
+const NAMED_DEFS = {
+  Kn: n => ({ title:`Teljes gráf K_${n}`, desc:`Minden csúcspár össze van kötve. |V|=${n}, |E|=${n*(n-1)/2}. Fokszám: ${n-1} (reguláris).`, nodes: circleNodes(n,160,160,130), edges: allEdges(n) }),
+  Cn: n => ({ title:`Kör C_${n}`, desc:`${n} csúcs körbe kötve. |V|=${n}, |E|=${n}. Minden csúcs foka 2.`, nodes: circleNodes(n,160,160,130), edges: cycleEdges(n) }),
+  Pn: n => ({ title:`Út P_${n}`, desc:`${n} csúcs lánca. |V|=${n}, |E|=${n-1}. Végpontok foka 1, belső foka 2.`, nodes: lineNodes(n,480,200), edges: pathEdges(n) }),
+  Kmn: (n,m) => ({ title:`Teljes páros gráf K_${m},${n}`, desc:`Két ${m} és ${n} csúcsú osztály, minden lehetséges él közöttük. |E|=${m*n}.`, nodes: bipartiteNodes(m,n,480,340), edges: bipartiteEdges(m,n) }),
+  Star: n => ({ title:`Csillaggráf S_${n}`, desc:`Egy középső csúcs, hozzá csatlakozó ${n} levél. |V|=${n+1}, |E|=${n}.`, nodes: starNodes(n,160,160,130), edges: starEdges(n) }),
+  Petersen: () => ({ title:'Petersen-gráf', desc:'10 csúcs, 15 él, 3-reguláris. Nem Hamilton, nem 3-élszínezhető. Sok extremális tulajdonság ellenpéldája.', nodes: petersenNodes(160,165,120,55), edges: petersenEdges() }),
+  Wheel: n => ({ title:`Szélkerék W_${n}`, desc:`Egy középpont + ${n} csúcsú kör. |V|=${n+1}, |E|=${2*n}. Középpont foka ${n}.`, nodes: wheelNodes(n,160,160,120), edges: wheelEdges(n) }),
+};
+
+function circleNodes(n,cx,cy,r){ return Array.from({length:n},(_,i)=>({x:cx+r*Math.cos(2*Math.PI*i/n-Math.PI/2),y:cy+r*Math.sin(2*Math.PI*i/n-Math.PI/2)})); }
+function allEdges(n){ const e=[]; for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) e.push([i,j]); return e; }
+function cycleEdges(n){ return Array.from({length:n},(_,i)=>[i,(i+1)%n]); }
+function pathEdges(n){ return Array.from({length:n-1},(_,i)=>[i,i+1]); }
+function lineNodes(n,W,H){ return Array.from({length:n},(_,i)=>({x:40+i*(W-80)/(n-1),y:H/2})); }
+function bipartiteNodes(m,n,W,H){ const ns=[]; const yA=H*0.25,yB=H*0.75; for(let i=0;i<m;i++) ns.push({x:40+i*(W-80)/(m-1||1),y:yA,side:0}); for(let i=0;i<n;i++) ns.push({x:40+i*(W-80)/(n-1||1),y:yB,side:1}); return ns; }
+function bipartiteEdges(m,n){ const e=[]; for(let i=0;i<m;i++) for(let j=0;j<n;j++) e.push([i,m+j]); return e; }
+function starNodes(n,cx,cy,r){ const ns=[{x:cx,y:cy}]; for(let i=0;i<n;i++) ns.push({x:cx+r*Math.cos(2*Math.PI*i/n-Math.PI/2),y:cy+r*Math.sin(2*Math.PI*i/n-Math.PI/2)}); return ns; }
+function starEdges(n){ return Array.from({length:n},(_,i)=>[0,i+1]); }
+function petersenNodes(cx,cy,R,r){ const ns=[]; for(let i=0;i<5;i++) ns.push({x:cx+R*Math.cos(2*Math.PI*i/5-Math.PI/2),y:cy+R*Math.sin(2*Math.PI*i/5-Math.PI/2)}); for(let i=0;i<5;i++) ns.push({x:cx+r*Math.cos(2*Math.PI*i/5-Math.PI/2),y:cy+r*Math.sin(2*Math.PI*i/5-Math.PI/2)}); return ns; }
+function petersenEdges(){ const e=[]; for(let i=0;i<5;i++){e.push([i,(i+1)%5]);e.push([i,i+5]);e.push([i+5,(i+2)%5+5]);} return e; }
+function wheelNodes(n,cx,cy,r){ const ns=[{x:cx,y:cy},...circleNodes(n,cx,cy,r)]; return ns; }
+function wheelEdges(n){ const e=[]; for(let i=0;i<n;i++){e.push([0,i+1]);e.push([i+1,(i%n)+1]);} return e; }
+
+function selectNamedGraph(type, btn) {
+  currentNamed = type;
+  document.querySelectorAll('#t-named .btn-graph').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const needsM = type === 'Kmn';
+  document.getElementById('named-label2').style.display = needsM ? 'inline' : 'none';
+  document.getElementById('named-m').style.display = needsM ? 'inline-block' : 'none';
+  document.getElementById('named-label').textContent = needsM ? 'n =' : 'n =';
+  if(type === 'Petersen') {
+    document.getElementById('named-param-row').style.opacity = '0.3';
+  } else {
+    document.getElementById('named-param-row').style.opacity = '1';
+  }
+  redrawNamed();
+}
+
+function redrawNamed() {
+  const n = parseInt(document.getElementById('named-n').value) || 5;
+  const m = parseInt(document.getElementById('named-m').value) || 3;
+  const fn = NAMED_DEFS[currentNamed];
+  let G;
+  if(currentNamed === 'Kmn') G = fn(n, m);
+  else if(currentNamed === 'Petersen') G = fn();
+  else G = fn(n);
+
+  const canvas = document.getElementById('named-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const scale = currentNamed === 'Pn' ? 0.95 : (currentNamed === 'Kmn' ? 0.95 : 0.85);
+  const offX = (W - 320*scale) / 2 - 10;
+  const offY = (H - 320*scale) / 2;
+
+  function tx(x){ return offX + x * scale; }
+  function ty(y){ return offY + y * scale; }
+
+  G.edges.forEach(([a,b]) => {
+    const na = G.nodes[a], nb = G.nodes[b];
+    ctx.beginPath(); ctx.moveTo(tx(na.x), ty(na.y)); ctx.lineTo(tx(nb.x), ty(nb.y));
+    ctx.strokeStyle = COLORS.edge; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+
+  G.nodes.forEach((n, i) => {
+    const colors = ['#38bdf8','#10b981','#f97316','#a78bfa','#f43f5e','#fbbf24','#34d399','#60a5fa','#fb923c','#c084fc'];
+    ctx.beginPath(); ctx.arc(tx(n.x), ty(n.y), 12, 0, Math.PI*2);
+    ctx.fillStyle = '#12161f'; ctx.fill();
+    ctx.strokeStyle = n.side === 1 ? '#10b981' : COLORS.nodeStroke; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = n.side === 1 ? '#10b981' : COLORS.node;
+    ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(i, tx(n.x), ty(n.y));
+  });
+
+  document.getElementById('named-def').textContent = G.desc;
+  document.getElementById('named-stats').innerHTML =
+    `<span class="chip">|V| = ${G.nodes.length}</span><span class="chip">|E| = ${G.edges.length}</span>`;
+}
+
+// ─── TAB 3: DEGREE / HANDSHAKING ──────────────────────────────────────────────
+let degNodes, degAdj, degDrag = null, degSel = null;
+
+function buildDegGraph() {
+  const W=480, H=320;
+  degNodes = [
+    {x:80, y:80},{x:240,y:50},{x:400,y:80},
+    {x:400,y:240},{x:240,y:270},{x:80,y:240},{x:240,y:160}
+  ];
+  degAdj = new Set(['0,1','1,2','2,3','3,4','4,5','5,0','0,6','1,6','2,6']);
+}
+function resetDegGraph(){ buildDegGraph(); redrawDeg(); }
+function edgeKey(a,b){ return Math.min(a,b)+','+Math.max(a,b); }
+function addRandEdge(){
+  const n=degNodes.length;
+  for(let t=0;t<20;t++){
+    const a=Math.floor(Math.random()*n), b=Math.floor(Math.random()*n);
+    if(a!==b&&!degAdj.has(edgeKey(a,b))){ degAdj.add(edgeKey(a,b)); break; }
+  }
+  redrawDeg();
+}
+
+function redrawDeg() {
+  const canvas = document.getElementById('deg-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const degrees = degNodes.map((_,i) => [...degAdj].filter(k => k.split(',').map(Number).includes(i)).length);
+
+  degAdj.forEach(k => {
+    const [a,b] = k.split(',').map(Number);
+    ctx.beginPath(); ctx.moveTo(degNodes[a].x, degNodes[a].y); ctx.lineTo(degNodes[b].x, degNodes[b].y);
+    ctx.strokeStyle = COLORS.edge; ctx.lineWidth = 2; ctx.stroke();
+  });
+
+  degNodes.forEach((n, i) => {
+    const odd = degrees[i] % 2 !== 0;
+    ctx.beginPath(); ctx.arc(n.x, n.y, 16, 0, Math.PI*2);
+    ctx.fillStyle = '#12161f'; ctx.fill();
+    ctx.strokeStyle = odd ? COLORS.odd : COLORS.nodeStroke; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = odd ? '#fbbf24' : COLORS.node;
+    ctx.font = 'bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(degrees[i], n.x, n.y);
+  });
+
+  const totalDeg = degrees.reduce((a,b)=>a+b,0);
+  const edges = degAdj.size;
+  const oddCount = degrees.filter(d=>d%2!==0).length;
+  document.getElementById('handshake-stats').innerHTML =
+    `<div>Fokszámok összege: <strong style="color:var(--acc2)">${totalDeg}</strong> = 2 × <strong style="color:var(--acc2)">${edges}</strong> él <span style="color:${totalDeg===2*edges?'#10b981':'#ef4444'}">${totalDeg===2*edges?'✓':'✗'}</span></div>
+     <div style="margin-top:.4rem;">Páratlan fokú csúcsok: <strong style="color:${oddCount%2===0?'#10b981':'#ef4444'}">${oddCount}</strong> (${oddCount%2===0?'páros ✓':'páratlan — nem lehetséges!'})</div>`;
+  document.getElementById('deg-seq-out').textContent =
+    'Foksorozat: [' + [...degrees].sort((a,b)=>b-a).join(', ') + ']';
+}
+
+function degCanvasClick(e) {
+  const rect = e.target.getBoundingClientRect();
+  const mx = e.clientX-rect.left, my = e.clientY-rect.top;
+  const hit = degNodes.findIndex(n => Math.hypot(n.x-mx, n.y-my) < 18);
+  if(hit < 0) return;
+  if(degSel === null) { degSel = hit; }
+  else if(degSel === hit) { degSel = null; }
+  else {
+    const k = edgeKey(degSel, hit);
+    if(degAdj.has(k)) degAdj.delete(k); else degAdj.add(k);
+    degSel = null;
+  }
+  redrawDeg();
+}
+
+// Drag
+let degDragNode = null, degDragOff = {x:0,y:0};
+function degMouseDown(e){
+  const rect=e.target.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=degNodes.findIndex(n=>Math.hypot(n.x-mx,n.y-my)<18);
+  if(hit>=0){degDragNode=hit;degDragOff={x:mx-degNodes[hit].x,y:my-degNodes[hit].y};}
+}
+function degMouseMove(e){
+  if(degDragNode===null) return;
+  const rect=e.target.getBoundingClientRect();
+  degNodes[degDragNode].x=e.clientX-rect.left-degDragOff.x;
+  degNodes[degDragNode].y=e.clientY-rect.top-degDragOff.y;
+  redrawDeg();
+}
+function degMouseUp(){ degDragNode=null; }
+
+// ─── TAB 4: CONNECTIVITY ──────────────────────────────────────────────────────
+let connNodes, connAdj, connMode = 'edge', connSel = null, connRemoved = new Set();
+
+function buildConnGraph(){
+  connNodes=[
+    {x:80,y:80},{x:240,y:50},{x:400,y:80},{x:400,y:240},
+    {x:240,y:270},{x:80,y:240},{x:240,y:160},{x:340,y:160}
+  ];
+  connAdj=new Set(['0,1','1,2','2,3','3,4','4,5','5,0','1,6','6,3','6,7','7,3']);
+  connRemoved=new Set(); connSel=null;
+}
+function resetConnGraph(){ buildConnGraph(); redrawConn(); }
+function toggleConnMode(){
+  connMode=connMode==='edge'?'node':'edge';
+  document.getElementById('conn-mode-btn').textContent='Mód: '+connMode;
+  connSel=null; redrawConn();
+}
+
+function bfsAll(nodes, adj, removed){
+  const n=nodes.length;
+  const active=[...Array(n).keys()].filter(i=>!removed.has(i));
+  const comp=[]; const visited=new Set();
+  active.forEach(start=>{
+    if(visited.has(start)) return;
+    const c=[]; const q=[start]; visited.add(start);
+    while(q.length){ const v=q.shift(); c.push(v); [...adj].forEach(k=>{const [a,b]=k.split(',').map(Number); if(a===v&&!visited.has(b)&&!removed.has(b)){visited.add(b);q.push(b);} if(b===v&&!visited.has(a)&&!removed.has(a)){visited.add(a);q.push(a);} }); }
+    comp.push(c);
+  });
+  return comp;
+}
+
+function bfsDist(start, nodes, adj, removed){
+  const n=nodes.length;
+  const dist=new Array(n).fill(-1);
+  if(removed.has(start)) return dist;
+  dist[start]=0; const q=[start];
+  while(q.length){ const v=q.shift(); [...adj].forEach(k=>{const [a,b]=k.split(',').map(Number); if(a===v&&dist[b]===-1&&!removed.has(b)){dist[b]=dist[v]+1;q.push(b);} if(b===v&&dist[a]===-1&&!removed.has(a)){dist[a]=dist[v]+1;q.push(a);} }); }
+  return dist;
+}
+
+function redrawConn(){
+  const canvas=document.getElementById('conn-canvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const comps=bfsAll(connNodes, connAdj, connRemoved);
+  const compOf=new Array(connNodes.length).fill(-1);
+  comps.forEach((c,ci)=>c.forEach(v=>compOf[v]=ci));
+  const compColors=['#38bdf8','#10b981','#f97316','#a78bfa','#f43f5e'];
+
+  [...connAdj].forEach(k=>{
+    const [a,b]=k.split(',').map(Number);
+    if(connRemoved.has(a)||connRemoved.has(b)) return;
+    const sameComp=compOf[a]===compOf[b]&&compOf[a]>=0;
+    ctx.beginPath(); ctx.moveTo(connNodes[a].x,connNodes[a].y); ctx.lineTo(connNodes[b].x,connNodes[b].y);
+    ctx.strokeStyle=sameComp?(compColors[compOf[a]%compColors.length]+'88'):COLORS.edge;
+    ctx.lineWidth=2; ctx.stroke();
+  });
+
+  connNodes.forEach((n,i)=>{
+    if(connRemoved.has(i)) return;
+    const ci=compOf[i]; const col=ci>=0?compColors[ci%compColors.length]:COLORS.edge;
+    ctx.beginPath(); ctx.arc(n.x,n.y,16,0,Math.PI*2);
+    ctx.fillStyle='#12161f'; ctx.fill();
+    ctx.strokeStyle=i===connSel?COLORS.nodeSel:col; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.fillStyle=i===connSel?COLORS.nodeSel:col;
+    ctx.font='bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(i,n.x,n.y);
+  });
+
+  // Stats
+  const connected=comps.length<=1;
+  const nActive=connNodes.length-connRemoved.size;
+  document.getElementById('conn-stats').innerHTML=
+    `<div>Csúcsok: <strong style="color:var(--acc2)">${nActive}</strong> (${connRemoved.size} eltávolítva)</div>
+     <div>Komponensek: <strong style="color:${comps.length===1?'#10b981':'#f97316'}">${comps.length}</strong></div>
+     <div>Összefüggő: <strong style="color:${connected?'#10b981':'#ef4444'}">${connected?'Igen ✓':'Nem ✗'}</strong></div>`;
+
+  // Distance matrix (BFS from 0)
+  const dists=connNodes.map((_,i)=>removed=>bfsDist(i,connNodes,connAdj,connRemoved));
+  const active=[...Array(connNodes.length).keys()].filter(i=>!connRemoved.has(i)).slice(0,6);
+  let table='<table style="border-collapse:collapse;font-size:.72rem;"><tr><td></td>';
+  active.forEach(j=>{ table+=`<td style="padding:2px 6px;color:#64748b;text-align:center;">${j}</td>`; });
+  table+='</tr>';
+  active.forEach(i=>{
+    const d=bfsDist(i,connNodes,connAdj,connRemoved);
+    table+=`<tr><td style="padding:2px 6px;color:#64748b;">${i}</td>`;
+    active.forEach(j=>{ table+=`<td style="padding:2px 6px;color:${d[j]<0?'#334155':'#7dd3fc'};text-align:center;">${d[j]<0?'∞':d[j]}</td>`; });
+    table+='</tr>';
+  });
+  table+='</table>';
+  document.getElementById('dist-matrix').innerHTML=table;
+}
+
+function connCanvasClick(e){
+  const rect=e.target.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=connNodes.findIndex((n,i)=>!connRemoved.has(i)&&Math.hypot(n.x-mx,n.y-my)<18);
+  if(connMode==='node'){
+    if(hit>=0){ connRemoved.has(hit)?connRemoved.delete(hit):connRemoved.add(hit); }
+  } else {
+    if(hit<0){connSel=null;}
+    else if(connSel===null){connSel=hit;}
+    else if(connSel===hit){connSel=null;}
+    else{ const k=edgeKey(connSel,hit); connAdj.has(k)?connAdj.delete(k):connAdj.add(k); connSel=null; }
+  }
+  redrawConn();
+}
+
+// ─── TAB 5: KÖNIGSBERG ─────────────────────────────────────────────────────────
+// Nodes: A=Mainland(land), B=N-island, C=S-island, D=E-bank
+// Original 7 bridges
+const KB_NODES = [
+  {x:90,  y:170, label:'A', color:'#f97316', name:'Szárazföld (A)'},
+  {x:240, y:90,  label:'B', color:'#38bdf8', name:'Északi sziget (B)'},
+  {x:240, y:250, label:'C', color:'#10b981', name:'Déli sziget (C)'},
+  {x:390, y:170, label:'D', color:'#a78bfa', name:'Keleti part (D)'},
+];
+// 7 bridges (edges, possibly multi)
+const KB_EDGES = [
+  {a:0,b:1,name:'1. híd'},
+  {a:0,b:1,name:'2. híd'},
+  {a:0,b:2,name:'3. híd'},
+  {a:0,b:2,name:'4. híd'},
+  {a:1,b:3,name:'5. híd'},
+  {a:2,b:3,name:'6. híd'},
+  {a:1,b:2,name:'7. híd'},
+];
+let kbUsed = new Set();
+let kbCurrent = null;
+
+function resetKb(){ kbUsed=new Set(); kbCurrent=null; document.getElementById('kb-trail').textContent=''; document.getElementById('kb-verdict').textContent=''; drawKb(); }
+
+function drawKb(){
+  const canvas=document.getElementById('kb-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Draw multi edges with offsets
+  const edgeCount={};
+  KB_EDGES.forEach((e,i)=>{
+    const k=Math.min(e.a,e.b)+','+Math.max(e.a,e.b);
+    edgeCount[k]=(edgeCount[k]||0)+1;
+  });
+  const edgeIdx={};
+  KB_EDGES.forEach((e,i)=>{
+    const k=Math.min(e.a,e.b)+','+Math.max(e.a,e.b);
+    edgeIdx[k]=(edgeIdx[k]||0);
+    const total=edgeCount[k];
+    const idx=edgeIdx[k]; edgeIdx[k]++;
+    const na=KB_NODES[e.a], nb=KB_NODES[e.b];
+    const dx=nb.x-na.x, dy=nb.y-na.y, len=Math.sqrt(dx*dx+dy*dy);
+    const offset=(idx-(total-1)/2)*20;
+    const nx=-dy/len*offset, ny=dx/len*offset;
+    const used=kbUsed.has(i);
+    ctx.beginPath();
+    ctx.moveTo(na.x+nx, na.y+ny);
+    ctx.quadraticCurveTo((na.x+nb.x)/2+nx*1.2,(na.y+nb.y)/2+ny*1.2, nb.x+nx,nb.y+ny);
+    ctx.strokeStyle=used?'#334155':(kbCurrent!==null&&kbCurrent===e.a||kbCurrent===e.b?'#fbbf24':'#64748b');
+    ctx.lineWidth=used?1.5:3; ctx.setLineDash(used?[4,4]:[]);
+    ctx.stroke(); ctx.setLineDash([]);
+    // Label
+    ctx.fillStyle=used?'#334155':'#94a3b8'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(e.name,(na.x+nb.x)/2+nx*0.6+nx*0.4,(na.y+nb.y)/2+ny*0.6+ny*0.4-4);
+  });
+
+  // Nodes
+  KB_NODES.forEach((n,i)=>{
+    const deg=KB_EDGES.filter((e,ei)=>!kbUsed.has(ei)&&(e.a===i||e.b===i)).length;
+    ctx.beginPath(); ctx.arc(n.x,n.y,22,0,Math.PI*2);
+    ctx.fillStyle='#12161f'; ctx.fill();
+    ctx.strokeStyle=n===kbCurrent?'#fbbf24':n.color; ctx.lineWidth=3; ctx.stroke();
+    ctx.fillStyle=n.color; ctx.font='bold 13px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(n.label,n.x,n.y);
+    ctx.fillStyle='#64748b'; ctx.font='10px sans-serif';
+    ctx.fillText(`fok:${deg}`,n.x,n.y+30);
+  });
+
+  // Degrees info
+  const info=KB_NODES.map((n,i)=>{
+    const deg=KB_EDGES.filter(e=>e.a===i||e.b===i).length;
+    return `<span class="chip" style="color:${deg%2!==0?'#f59e0b':'#94a3b8'}">${n.label}:${deg}${deg%2!==0?'★':''}</span>`;
+  }).join('');
+  document.getElementById('kb-nodes').innerHTML='Fokszámok: '+info+'<br><span style="font-size:.79rem;color:#94a3b8;">★ = páratlan fokszámú → nincs Euler-körút!</span>';
+}
+
+function kbCanvasClick(e){
+  const rect=e.target.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  // Click on a bridge (edge midpoint)?
+  let hitEdge=-1;
+  const edgeIdx2={};
+  const edgeCount2={};
+  KB_EDGES.forEach((e,i)=>{const k=Math.min(e.a,e.b)+','+Math.max(e.a,e.b);edgeCount2[k]=(edgeCount2[k]||0)+1;});
+  KB_EDGES.forEach((e,i)=>{
+    if(kbUsed.has(i)) return;
+    const k=Math.min(e.a,e.b)+','+Math.max(e.a,e.b);
+    edgeIdx2[k]=(edgeIdx2[k]||0);
+    const total=edgeCount2[k],idx=edgeIdx2[k]; edgeIdx2[k]++;
+    const na=KB_NODES[e.a],nb=KB_NODES[e.b];
+    const dx=nb.x-na.x,dy=nb.y-na.y,len=Math.sqrt(dx*dx+dy*dy);
+    const offset=(idx-(total-1)/2)*20;
+    const nx=-dy/len*offset,ny=dx/len*offset;
+    const midx=(na.x+nb.x)/2+nx*0.6,midy=(na.y+nb.y)/2+ny*0.6;
+    if(Math.hypot(mx-midx,my-midy)<20) hitEdge=i;
+  });
+  if(hitEdge>=0){
+    const e=KB_EDGES[hitEdge];
+    if(kbCurrent!==null&&kbCurrent!==e.a&&kbCurrent!==e.b){
+      document.getElementById('kb-verdict').innerHTML='<span style="color:#ef4444">Érvénytelen! Nem érintkezel ezzel a híddal.</span>';
+      return;
+    }
+    kbUsed.add(hitEdge);
+    kbCurrent=kbCurrent===e.a?e.b:e.a;
+    document.getElementById('kb-trail').textContent=[...kbUsed].map(i=>KB_EDGES[i].name).join(' → ');
+    if(kbUsed.size===KB_EDGES.length){
+      document.getElementById('kb-verdict').innerHTML='<span style="color:#10b981">🎉 Sikerült! Minden hidat pontosan egyszer jártál be!</span>';
+    } else {
+      // Check if stuck
+      const reachable=KB_EDGES.some((edge,ei)=>!kbUsed.has(ei)&&(edge.a===kbCurrent||edge.b===kbCurrent));
+      if(!reachable&&kbUsed.size<KB_EDGES.length){
+        document.getElementById('kb-verdict').innerHTML='<span style="color:#ef4444">Elakadtál! Nem tudsz tovább menni. (Euler: 4 páratlan csúcs → lehetetlen.)</span>';
+      } else {
+        document.getElementById('kb-verdict').textContent='';
+      }
+    }
+    drawKb();
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Tab 1
+  drawDefGraph();
+
+  // Tab 2
+  redrawNamed();
+
+  // Tab 3
+  buildDegGraph(); redrawDeg();
+  const dc = document.getElementById('deg-canvas');
+  dc.addEventListener('click', degCanvasClick);
+  dc.addEventListener('mousedown', degMouseDown);
+  dc.addEventListener('mousemove', degMouseMove);
+  dc.addEventListener('mouseup', degMouseUp);
+
+  // Tab 4
+  buildConnGraph(); redrawConn();
+  document.getElementById('conn-canvas').addEventListener('click', connCanvasClick);
+
+  // Tab 5
+  document.getElementById('kb-canvas').addEventListener('click', kbCanvasClick);
+  drawKb();
+
+  renderMathInElement(document.body, {
+    delimiters: [{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+});
+</script>
+{% endblock %}

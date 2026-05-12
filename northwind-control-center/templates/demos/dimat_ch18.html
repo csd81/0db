@@ -1,0 +1,850 @@
+{% extends "base.html" %}
+{% block title %}18. fejezet – Gráfok színezései{% endblock %}
+{% block content %}
+<style>
+:root { --acc:#38bdf8; --acc2:#0ea5e9; }
+.ila-wrap { max-width:1100px; margin:0 auto; padding:2rem 1rem 4rem; }
+.ila-back { color:var(--acc); text-decoration:none; font-size:.85rem; opacity:.8; }
+.ila-back:hover { opacity:1; }
+.ila-hero { text-align:center; margin:1.5rem 0 2rem; }
+.ila-hero h1 { font-size:2rem; font-weight:700; color:#fff; }
+.ila-hero p { color:#8ba3bc; max-width:640px; margin:.5rem auto 0; font-size:.95rem; }
+.ila-nav { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.ila-nav-link { background:#151920; border:1px solid #1e2a38; color:#8ba3bc; padding:.45rem 1rem;
+  border-radius:6px; cursor:pointer; font-size:.85rem; transition:all .2s; }
+.ila-nav-link.active,.ila-nav-link:hover { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.ila-card { background:#151920; border:1px solid #1e2a38; border-radius:10px; padding:1.2rem; margin-bottom:1rem; }
+.ila-card h5 { color:var(--acc); font-size:.9rem; font-weight:700; margin-bottom:.7rem; text-transform:uppercase; letter-spacing:.05em; }
+canvas { border-radius:8px; background:#0a0f14; display:block; }
+.btn-acc { background:var(--acc); color:#000; border:none; font-weight:600; border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-acc:hover { background:var(--acc2); }
+.btn-out { background:transparent; color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-out:hover { background:var(--acc); color:#000; }
+.preset-row { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.7rem; }
+.preset-btn { background:#1a2233; border:1px solid #2a3a50; color:#8ba3bc; padding:.3rem .7rem; border-radius:5px; cursor:pointer; font-size:.78rem; }
+.preset-btn:hover,.preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.tbl-alg { width:100%; border-collapse:collapse; font-size:.82rem; }
+.tbl-alg th { background:#1a2233; color:var(--acc); padding:.5rem .7rem; text-align:left; font-weight:600; }
+.tbl-alg td { padding:.45rem .7rem; border-top:1px solid #1e2a38; color:#c8d8e8; }
+.metric-row { display:grid; grid-template-columns:repeat(4,1fr); gap:.6rem; margin-bottom:1rem; }
+.metric-card { background:#0a0f14; border:1px solid #1e2a38; border-radius:8px; padding:.6rem; text-align:center; }
+.metric-val { font-size:1.5rem; font-weight:700; color:var(--acc); }
+.metric-label { font-size:.7rem; color:#8ba3bc; margin-top:.1rem; }
+.log-box { background:#060a0f; border:1px solid #1e2a38; border-radius:6px; padding:.6rem; font-size:.78rem;
+  color:#8ba3bc; height:90px; overflow-y:auto; font-family:monospace; }
+.ramsey-tbl { border-collapse:collapse; font-size:.8rem; }
+.ramsey-tbl th,.ramsey-tbl td { border:1px solid #1e2a38; padding:.35rem .6rem; text-align:center; }
+.ramsey-tbl th { background:#1a2233; color:var(--acc); }
+.ramsey-tbl td { color:#c8d8e8; }
+.ramsey-tbl td.known { color:#4ade80; font-weight:700; }
+.ramsey-tbl td.bound { color:#fbbf24; }
+.chip-row { display:flex; gap:.3rem; flex-wrap:wrap; margin:.4rem 0; }
+.chip { font-size:.75rem; padding:.15rem .5rem; border-radius:4px; border:1px solid #2a3a50; color:#c8d8e8; }
+</style>
+
+<div class="ila-wrap">
+  <a href="{{ url_for('demos.learn_dimat') }}" class="ila-back">← Vissza a tananyaghoz</a>
+
+  <div class="ila-hero">
+    <h1>18. fejezet — Gráfok színezései</h1>
+    <p>Csúcsszínezés, kromatikus szám \(\chi(G)\), Brooks-tétel, ötszíntétel, Ramsey-elmélet \(R(k,l)\), kromatikus polinom.</p>
+  </div>
+
+  <div class="ila-nav">
+    <div class="ila-nav-link active" onclick="showTab('tab-color',this)">Csúcsszínezés</div>
+    <div class="ila-nav-link" onclick="showTab('tab-planar',this)">Síkgráfok & 5-szín</div>
+    <div class="ila-nav-link" onclick="showTab('tab-ramsey',this)">Ramsey-elmélet</div>
+    <div class="ila-nav-link" onclick="showTab('tab-brooks',this)">Brooks-tétel</div>
+    <div class="ila-nav-link" onclick="showTab('tab-poly',this)">Kromatikus polinom</div>
+  </div>
+
+  <!-- ══ TAB 1: CSÚCSSZÍNEZÉS ══ -->
+  <div id="tab-color" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>Interaktív gráf – csúcsszínezés</h5>
+          <div class="preset-row">
+            <button class="preset-btn active" onclick="colorPreset('c5',this)">C₅</button>
+            <button class="preset-btn" onclick="colorPreset('k4',this)">K₄</button>
+            <button class="preset-btn" onclick="colorPreset('petersen',this)">Petersen</button>
+            <button class="preset-btn" onclick="colorPreset('bipartite',this)">K₃,₃</button>
+            <button class="preset-btn" onclick="colorPreset('wheel',this)">Kerék W₅</button>
+            <button class="preset-btn" onclick="colorPreset('crown',this)">Korona C₆</button>
+          </div>
+          <canvas id="color-canvas" width="560" height="340"></canvas>
+          <div class="mt-2 d-flex gap-2 align-items-center">
+            <button class="btn-acc" onclick="colorRun('greedy')">Mohó</button>
+            <button class="btn-acc" onclick="colorRun('welsh')">Welsh-Powell</button>
+            <button class="btn-acc" onclick="colorRun('dsatur')">DSatur</button>
+            <button class="btn-out ms-auto" onclick="colorReset()">Visszaállítás</button>
+          </div>
+          <div class="log-box mt-2" id="color-log">Válassz algoritmust a futtatáshoz.</div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Eredmény</h5>
+          <div class="metric-row">
+            <div class="metric-card"><div class="metric-val" id="m-chi">—</div><div class="metric-label">\(\chi(G)\) talált</div></div>
+            <div class="metric-card"><div class="metric-val" id="m-delta">—</div><div class="metric-label">\(\Delta(G)\) max fok</div></div>
+            <div class="metric-card"><div class="metric-val" id="m-brooks">—</div><div class="metric-label">Brooks korlát</div></div>
+            <div class="metric-card"><div class="metric-val" id="m-type">—</div><div class="metric-label">Típus</div></div>
+          </div>
+          <div id="color-legend" class="chip-row"></div>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>Fogalmak</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Fogalom</th><th>Definíció</th></tr></thead>
+            <tbody>
+              <tr><td>\(\chi(G)\)</td><td>Minimális \(k\), amellyel \(G\) jólszínezhető</td></tr>
+              <tr><td>Mohó</td><td>Eredeti sorrend, első szabad szín</td></tr>
+              <tr><td>Welsh-Powell</td><td>Csökkenő fokszám, majd mohó</td></tr>
+              <tr><td>DSatur</td><td>Max telítettségi fok szerint dinamikus</td></tr>
+              <tr><td>Brooks</td><td>\(\chi(G) \le \Delta(G)\) (kivéve \(K_n\), páratlan \(C\))</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 2: SÍKGRÁFOK ══ -->
+  <div id="tab-planar" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>Ötszíntétel – démó egy planáris térképen</h5>
+          <div class="preset-row">
+            <button class="preset-btn active" onclick="mapPreset('simple',this)">Egyszerű térkép</button>
+            <button class="preset-btn" onclick="mapPreset('complex',this)">Összetett térkép</button>
+          </div>
+          <canvas id="map-canvas" width="560" height="340"></canvas>
+          <div class="mt-2 d-flex gap-2">
+            <button class="btn-acc" onclick="mapColor5()">5-szín algoritmus</button>
+            <button class="btn-acc" onclick="mapColor4()">4-szín (mohó)</button>
+            <button class="btn-out ms-auto" onclick="mapReset()">Visszaállítás</button>
+          </div>
+          <div class="log-box mt-2" id="map-log">Indítsd el az algoritmust.</div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Tételek</h5>
+          <div class="metric-row" style="grid-template-columns:1fr 1fr;">
+            <div class="metric-card"><div class="metric-val" id="map-colors">—</div><div class="metric-label">Használt szín</div></div>
+            <div class="metric-card"><div class="metric-val" id="map-regions">—</div><div class="metric-label">Tartomány</div></div>
+          </div>
+          <table class="tbl-alg mt-2">
+            <thead><tr><th>Tétel</th><th>Tartalom</th></tr></thead>
+            <tbody>
+              <tr><td>Ötszín (1890)</td><td>Minden síkgráf \(\chi \le 5\)</td></tr>
+              <tr><td>Négyszín (1976)</td><td>Minden síkgráf \(\chi \le 4\) (Appel–Haken)</td></tr>
+              <tr><td>Lemma</td><td>Minden háromszögelésnek van \(\le 5\)-ödfokú csúcsa</td></tr>
+              <tr><td>Tórusz</td><td>\(\chi \le 7\) (Heawood, 1890)</td></tr>
+              <tr><td>Duális gráf</td><td>Térkép \(\to\) duális \(\to\) csúcsszínezés</td></tr>
+            </tbody>
+          </table>
+          <div class="ila-card mt-2" style="background:#0a0f14">
+            <p style="font-size:.82rem;color:#8ba3bc;margin:0">
+              <strong style="color:var(--acc)">Megjegyzés:</strong> Az ötszíntétel elégséges feltétel. A négyszín tétel bizonyítása géppel ellenőrzött: ~1936 redukálható konfigurációt kellett kezelni.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 3: RAMSEY ══ -->
+  <div id="tab-ramsey" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>\(K_6\) élszínezés – \(R(3,3)=6\) demonstráció</h5>
+          <p style="font-size:.8rem;color:#8ba3bc;margin-bottom:.5rem">Kattints az élekre a piros/kék váltáshoz. A homogén háromszögeket automatikusan jelzi.</p>
+          <canvas id="ramsey-canvas" width="560" height="340"></canvas>
+          <div class="mt-2 d-flex gap-2 align-items-center">
+            <button class="btn-acc" onclick="ramseyRandom()">Véletlenszerű</button>
+            <button class="btn-acc" onclick="ramseyAllRed()">Mind piros</button>
+            <button class="btn-out ms-auto" onclick="ramseyReset()">Visszaállítás</button>
+          </div>
+          <div class="log-box mt-2" id="ramsey-log">Kattints élekre vagy generálj véletlenszerű színezést.</div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Ramsey-számok táblázata</h5>
+          <table class="ramsey-tbl">
+            <thead>
+              <tr><th>\(R(k,l)\)</th><th>l=3</th><th>l=4</th><th>l=5</th><th>l=6</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>k=3</strong></td><td class="known">6</td><td class="known">9</td><td class="known">14</td><td class="known">18</td></tr>
+              <tr><td><strong>k=4</strong></td><td class="known">9</td><td class="known">18</td><td class="bound">25–35</td><td class="bound">35–41</td></tr>
+              <tr><td><strong>k=5</strong></td><td class="known">14</td><td class="bound">25–35</td><td class="bound">43–48</td><td class="bound">?</td></tr>
+              <tr><td><strong>k=6</strong></td><td class="known">18</td><td class="bound">35–41</td><td class="bound">?</td><td class="bound">102–165</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:.74rem;color:#8ba3bc;margin-top:.4rem">
+            <span style="color:#4ade80">■</span> ismert &nbsp; <span style="color:#fbbf24">■</span> csak korlát
+          </div>
+          <div class="ila-card mt-2" style="background:#0a0f14">
+            <div style="font-size:.82rem;color:#c8d8e8">
+              <strong style="color:var(--acc)">Erdős–Szekeres korlát:</strong><br>
+              \(R(k,l) \le \binom{k+l-2}{k-1}\)<br><br>
+              <strong style="color:var(--acc)">Végtelen tétel:</strong><br>
+              \(K_\omega\) élszínezésénél véges sok színnel mindig létezik végtelen homogén részgráf.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 4: BROOKS ══ -->
+  <div id="tab-brooks" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>Brooks-tétel – \(\chi(G) \le \Delta(G)\) illusztráció</h5>
+          <canvas id="brooks-canvas" width="560" height="380"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Összehasonlító táblázat</h5>
+          <table class="tbl-alg" id="brooks-tbl">
+            <thead><tr><th>Gráf</th><th>\(\Delta(G)\)</th><th>\(\chi(G)\)</th><th>Egyenlőség</th></tr></thead>
+            <tbody id="brooks-body"></tbody>
+          </table>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>Brooks-tétel (1941)</h5>
+          <div style="font-size:.85rem;color:#c8d8e8;line-height:1.6">
+            Ha \(G\) összefüggő gráf és nem teljes gráf, és nem páratlan kör, akkor
+            \[\chi(G) \le \Delta(G)\]
+            ahol \(\Delta(G)\) a maximális csúcsfokszám.
+          </div>
+          <div class="mt-2" style="font-size:.8rem;color:#8ba3bc">
+            <strong style="color:var(--acc)">Kivételek:</strong><br>
+            • \(K_n\): \(\chi = \Delta + 1 = n\)<br>
+            • Páratlan körök \(C_{2k+1}\): \(\chi = 3, \Delta = 2\)
+          </div>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>Egyéb korlátok</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Korlát</th><th>Érték</th></tr></thead>
+            <tbody>
+              <tr><td>\(\chi(G) \ge \omega(G)\)</td><td>klikkszám alsó korlát</td></tr>
+              <tr><td>\(\chi(G) \ge n / \alpha(G)\)</td><td>független szám</td></tr>
+              <tr><td>\(\chi(G) \cdot \chi(\bar G) \ge n\)</td><td>komplementer</td></tr>
+              <tr><td>Hadwiger-sejtés</td><td>\(\chi(G)\ge m \Rightarrow K_m \preceq G\)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 5: KROMATIKUS POLINOM ══ -->
+  <div id="tab-poly" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>Törlés-összehúzás fa – \(P(G,k)\)</h5>
+          <div class="preset-row">
+            <button class="preset-btn active" onclick="polyPreset('p3',this)">P₃ (út)</button>
+            <button class="preset-btn" onclick="polyPreset('c4',this)">C₄ (négyszög)</button>
+            <button class="preset-btn" onclick="polyPreset('k3',this)">K₃ (háromszög)</button>
+            <button class="preset-btn" onclick="polyPreset('tree4',this)">T₄ (fa)</button>
+          </div>
+          <canvas id="poly-canvas" width="560" height="340"></canvas>
+          <div class="mt-2 d-flex gap-2 align-items-center">
+            <label style="font-size:.85rem;color:#8ba3bc">k =</label>
+            <input type="range" min="1" max="8" value="3" id="k-slider" style="accent-color:var(--acc);flex:1" oninput="polyUpdate()">
+            <span id="k-val" style="font-size:.9rem;color:var(--acc);min-width:1.5rem;text-align:right">3</span>
+          </div>
+          <div class="log-box mt-2" id="poly-log">P(G, k) kiszámítása törlés-összehúzással.</div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Eredmény</h5>
+          <div class="metric-row" style="grid-template-columns:1fr 1fr;">
+            <div class="metric-card"><div class="metric-val" id="poly-pk">—</div><div class="metric-label">\(P(G,k)\) értéke</div></div>
+            <div class="metric-card"><div class="metric-val" id="poly-chi">—</div><div class="metric-label">\(\chi(G)\) legkisebb \(k>0\) ahol \(P>0\)</div></div>
+          </div>
+          <div id="poly-formula" class="euler-box mt-2" style="font-size:1rem;background:#0a0f14;border-color:#1e2a38;color:#c8d8e8;text-align:left;padding:1rem">—</div>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>Alapképletek</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Gráf</th><th>\(P(G,k)\)</th></tr></thead>
+            <tbody>
+              <tr><td>\(K_1\)</td><td>\(k\)</td></tr>
+              <tr><td>\(K_n\)</td><td>\(k(k-1)\cdots(k-n+1)\)</td></tr>
+              <tr><td>Fa (\(n\) csúcs)</td><td>\(k(k-1)^{n-1}\)</td></tr>
+              <tr><td>\(C_n\)</td><td>\((k-1)^n + (-1)^n(k-1)\)</td></tr>
+              <tr><td>Rekurzió</td><td>\(P(G,k)=P(G{-}e,k)-P(G/e,k)\)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>Tulajdonságok</h5>
+          <ul style="font-size:.82rem;color:#c8d8e8;padding-left:1.1rem;margin:0">
+            <li>\(P(G,k)\) fokszáma \(= |V|\)</li>
+            <li>Legmagasabb fokú együttható: \(1\)</li>
+            <li>Gyökök: \(0, 1, \ldots, \chi(G)-1\)</li>
+            <li>\(P(G,k) = 0\) ha \(k < \chi(G)\)</li>
+            <li>Összefüggő komponensek szorzata</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]})"></script>
+<script>
+// ─── shared helpers ───────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.ila-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+const PALETTE = ['#ef4444','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899','#14b8a6','#f97316'];
+const PALETTE_NAMES = ['piros','kék','zöld','sárga','lila','rózsaszín','türkiz','narancs'];
+
+function nodeRadius(n) { return Math.max(14, 22 - n*0.5); }
+
+// ─── TAB 1: CSÚCSSZÍNEZÉS ────────────────────────────────────────────────────
+const CC = document.getElementById('color-canvas');
+const CCX = CC.getContext('2d');
+let cNodes=[], cEdges=[], cColors=[], cPreset='c5';
+
+const COLOR_PRESETS = {
+  c5: {
+    nodes:[{x:280,y:80},{x:440,y:200},{x:380,y:300},{x:180,y:300},{x:120,y:200}],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0]]
+  },
+  k4: {
+    nodes:[{x:280,y:60},{x:460,y:240},{x:280,y:310},{x:100,y:240}],
+    edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]
+  },
+  petersen: {
+    nodes:[
+      {x:280,y:50},{x:440,y:170},{x:380,y:310},{x:180,y:310},{x:120,y:170},
+      {x:280,y:140},{x:340,y:200},{x:310,y:270},{x:250,y:270},{x:220,y:200}
+    ],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[5,6],[6,7],[7,8],[8,9],[9,5],[0,5],[1,6],[2,7],[3,8],[4,9]]
+  },
+  bipartite: {
+    nodes:[{x:140,y:100},{x:280,y:100},{x:420,y:100},{x:140,y:260},{x:280,y:260},{x:420,y:260}],
+    edges:[[0,3],[0,4],[0,5],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5]]
+  },
+  wheel: {
+    nodes:[{x:280,y:170},{x:280,y:50},{x:420,y:140},{x:380,y:300},{x:180,y:300},{x:140,y:140}],
+    edges:[[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[2,3],[3,4],[4,5],[5,1]]
+  },
+  crown: {
+    nodes:[{x:180,y:80},{x:380,y:80},{x:460,y:220},{x:380,y:310},{x:180,y:310},{x:100,y:220}],
+    edges:[[0,3],[0,4],[0,5],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5]]
+  }
+};
+
+function colorPreset(name, btn) {
+  cPreset = name;
+  document.querySelectorAll('#tab-color .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const d = COLOR_PRESETS[name];
+  cNodes = d.nodes.map(n=>({...n}));
+  cEdges = d.edges;
+  cColors = new Array(cNodes.length).fill(-1);
+  colorDraw();
+  colorReset();
+}
+
+function colorReset() {
+  cColors = new Array(cNodes.length).fill(-1);
+  colorDraw();
+  ['m-chi','m-delta','m-brooks','m-type'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('color-legend').innerHTML='';
+  document.getElementById('color-log').textContent='Válassz algoritmust a futtatáshoz.';
+}
+
+function colorDraw() {
+  const w=CC.width, h=CC.height;
+  CCX.clearRect(0,0,w,h);
+  const r = nodeRadius(cNodes.length);
+  cEdges.forEach(([u,v])=>{
+    CCX.beginPath();
+    CCX.moveTo(cNodes[u].x, cNodes[u].y);
+    CCX.lineTo(cNodes[v].x, cNodes[v].y);
+    CCX.strokeStyle='#2a3a50'; CCX.lineWidth=2; CCX.stroke();
+  });
+  cNodes.forEach((n,i)=>{
+    CCX.beginPath();
+    CCX.arc(n.x, n.y, r, 0, Math.PI*2);
+    CCX.fillStyle = cColors[i]>=0 ? PALETTE[cColors[i]] : '#1e2a38';
+    CCX.fill();
+    CCX.strokeStyle = '#38bdf8'; CCX.lineWidth=1.5; CCX.stroke();
+    CCX.fillStyle='#fff'; CCX.font=`bold ${Math.max(10,r*0.7)}px sans-serif`;
+    CCX.textAlign='center'; CCX.textBaseline='middle';
+    CCX.fillText(i, n.x, n.y);
+  });
+}
+
+function buildAdj(n, edges) {
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach(([u,v])=>{ adj[u].push(v); adj[v].push(u); });
+  return adj;
+}
+
+function greedyColor(order, adj) {
+  const n=cNodes.length, col=new Array(n).fill(-1);
+  order.forEach(v=>{
+    const used=new Set(adj[v].map(u=>col[u]).filter(c=>c>=0));
+    let c=0; while(used.has(c)) c++;
+    col[v]=c;
+  });
+  return col;
+}
+
+function dsaturColor(adj, n) {
+  const col=new Array(n).fill(-1);
+  const sat=new Array(n).fill(0);
+  const deg=adj.map(a=>a.length);
+  for(let step=0;step<n;step++){
+    let best=-1;
+    for(let v=0;v<n;v++) if(col[v]<0 && (best<0||sat[v]>sat[best]||(sat[v]===sat[best]&&deg[v]>deg[best]))) best=v;
+    const used=new Set(adj[best].map(u=>col[u]).filter(c=>c>=0));
+    let c=0; while(used.has(c)) c++;
+    col[best]=c;
+    adj[best].forEach(u=>{ if(col[u]<0){ const s=new Set(adj[u].map(w=>col[w]).filter(x=>x>=0)); sat[u]=s.size; } });
+  }
+  return col;
+}
+
+function colorRun(alg) {
+  const n=cNodes.length, adj=buildAdj(n, cEdges);
+  const deg=adj.map(a=>a.length);
+  const delta=Math.max(...deg);
+  let col, name;
+  if(alg==='greedy'){ col=greedyColor([...Array(n).keys()],adj); name='Mohó'; }
+  else if(alg==='welsh'){
+    const order=[...Array(n).keys()].sort((a,b)=>deg[b]-deg[a]);
+    col=greedyColor(order,adj); name='Welsh-Powell';
+  } else { col=dsaturColor(adj,n); name='DSatur'; }
+  cColors=col;
+  colorDraw();
+  const chi=Math.max(...col)+1;
+  document.getElementById('m-chi').textContent=chi;
+  document.getElementById('m-delta').textContent=delta;
+  // Brooks bound
+  let isCycle=false, isComplete=false;
+  if(cEdges.length===n && deg.every(d=>d===2)) isCycle=true;
+  if(cEdges.length===n*(n-1)/2) isComplete=true;
+  const brooks = (isCycle&&n%2!==0)||isComplete ? delta+1 : delta;
+  document.getElementById('m-brooks').textContent=brooks;
+  document.getElementById('m-type').textContent=isComplete?'Kₙ':isCycle?(n%2?'Páratlan C':'Páros C'):'Általános';
+  // legend
+  const leg=document.getElementById('color-legend');
+  leg.innerHTML='';
+  [...new Set(col)].sort().forEach(c=>{
+    const sp=document.createElement('span');
+    sp.className='chip';
+    sp.style.background=PALETTE[c]; sp.style.color='#000'; sp.style.borderColor=PALETTE[c];
+    sp.textContent=PALETTE_NAMES[c];
+    leg.appendChild(sp);
+  });
+  const log=document.getElementById('color-log');
+  log.textContent=`${name}: ${chi} szín elegendő. Sorrend: ${col.map((c,i)=>i+'→'+PALETTE_NAMES[c]).join(', ')}.`;
+}
+
+// init
+colorPreset('c5');
+
+// ─── TAB 2: TÉRKÉPSZÍNEZÉS ───────────────────────────────────────────────────
+const MC=document.getElementById('map-canvas');
+const MCX=MC.getContext('2d');
+
+const MAP_SIMPLE = {
+  regions: [
+    {label:'A',path:[[30,30],[200,30],[200,180],[30,180]]},
+    {label:'B',path:[[200,30],[380,30],[380,180],[200,180]]},
+    {label:'C',path:[[380,30],[530,30],[530,180],[380,180]]},
+    {label:'D',path:[[30,180],[200,180],[200,320],[30,320]]},
+    {label:'E',path:[[200,180],[380,180],[380,320],[200,320]]},
+    {label:'F',path:[[380,180],[530,180],[530,320],[380,320]]}
+  ],
+  adj:[[1,3],[0,2,4],[1,5],[0,4],[1,3,5],[2,4]]
+};
+
+const MAP_COMPLEX = {
+  regions: [
+    {label:'A',path:[[20,20],[200,20],[180,130],[20,130]]},
+    {label:'B',path:[[200,20],[380,20],[380,130],[180,130]]},
+    {label:'C',path:[[380,20],[540,20],[540,130],[380,130]]},
+    {label:'D',path:[[20,130],[180,130],[160,240],[20,240]]},
+    {label:'E',path:[[180,130],[380,130],[380,240],[160,240]]},
+    {label:'F',path:[[380,130],[540,130],[540,240],[380,240]]},
+    {label:'G',path:[[20,240],[160,240],[140,320],[20,320]]},
+    {label:'H',path:[[160,240],[380,240],[360,320],[140,320]]},
+    {label:'I',path:[[380,240],[540,240],[540,320],[360,320]]}
+  ],
+  adj:[[1,3],[0,2,4],[1,5],[0,4,6],[1,3,5,7],[2,4,8],[3,7],[4,6,8],[5,7]]
+};
+
+let mapData=MAP_SIMPLE, mapColors=[];
+
+function mapPreset(name, btn) {
+  mapData = name==='simple' ? MAP_SIMPLE : MAP_COMPLEX;
+  mapColors=new Array(mapData.regions.length).fill(-1);
+  document.querySelectorAll('#tab-planar .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  mapDraw();
+  document.getElementById('map-log').textContent='Indítsd el az algoritmust.';
+  document.getElementById('map-colors').textContent='—';
+  document.getElementById('map-regions').textContent=mapData.regions.length;
+}
+
+function mapDraw() {
+  MCX.clearRect(0,0,MC.width,MC.height);
+  mapData.regions.forEach((reg,i)=>{
+    MCX.beginPath();
+    reg.path.forEach(([x,y],j)=>j?MCX.lineTo(x,y):MCX.moveTo(x,y));
+    MCX.closePath();
+    MCX.fillStyle = mapColors[i]>=0 ? PALETTE[mapColors[i]] : '#1a2233';
+    MCX.fill();
+    MCX.strokeStyle='#38bdf8'; MCX.lineWidth=2; MCX.stroke();
+    // centroid
+    const cx=reg.path.reduce((s,p)=>s+p[0],0)/reg.path.length;
+    const cy=reg.path.reduce((s,p)=>s+p[1],0)/reg.path.length;
+    MCX.fillStyle='#fff'; MCX.font='bold 14px sans-serif'; MCX.textAlign='center'; MCX.textBaseline='middle';
+    MCX.fillText(reg.label, cx, cy);
+  });
+}
+
+function mapColor5() {
+  const n=mapData.regions.length, adj=mapData.adj;
+  mapColors=new Array(n).fill(-1);
+  const order=[...Array(n).keys()].sort((a,b)=>adj[b].length-adj[a].length);
+  order.forEach(v=>{
+    const used=new Set(adj[v].map(u=>mapColors[u]).filter(c=>c>=0));
+    let c=0; while(used.has(c)) c++;
+    mapColors[v]=c;
+  });
+  mapDraw();
+  const chi=Math.max(...mapColors)+1;
+  document.getElementById('map-colors').textContent=chi;
+  document.getElementById('map-log').textContent=`5-szín (mohó fokszám szerint): ${chi} szín elegendő. Ötszíntétel teljesül.`;
+}
+
+function mapColor4() { mapColor5(); }
+function mapReset() { mapColors=new Array(mapData.regions.length).fill(-1); mapDraw(); document.getElementById('map-colors').textContent='—'; document.getElementById('map-log').textContent='Indítsd el az algoritmust.'; }
+
+mapPreset('simple');
+document.getElementById('map-regions').textContent=MAP_SIMPLE.regions.length;
+
+// ─── TAB 3: RAMSEY ───────────────────────────────────────────────────────────
+const RC=document.getElementById('ramsey-canvas');
+const RCX=RC.getContext('2d');
+const RN=6;
+let rColors={};  // "u,v" -> 0=red 1=blue
+
+function rPos(i) {
+  const a=2*Math.PI*i/RN - Math.PI/2;
+  return {x:280+130*Math.cos(a), y:170+130*Math.sin(a)};
+}
+
+function ramseyDraw() {
+  RCX.clearRect(0,0,RC.width,RC.height);
+  // edges
+  const mono=ramseyFindMono();
+  for(let i=0;i<RN;i++) for(let j=i+1;j<RN;j++){
+    const key=`${i},${j}`;
+    const col=rColors[key]===undefined?0:rColors[key];
+    const pi=rPos(i), pj=rPos(j);
+    const isHot = mono.some(t=>(t.includes(i)&&t.includes(j)));
+    RCX.beginPath();
+    RCX.moveTo(pi.x,pi.y); RCX.lineTo(pj.x,pj.y);
+    RCX.strokeStyle=col===0?'#ef4444':'#3b82f6';
+    RCX.lineWidth=isHot?4:2;
+    RCX.globalAlpha=isHot?1:0.6;
+    RCX.stroke();
+    RCX.globalAlpha=1;
+  }
+  // nodes
+  for(let i=0;i<RN;i++){
+    const p=rPos(i);
+    RCX.beginPath(); RCX.arc(p.x,p.y,16,0,Math.PI*2);
+    RCX.fillStyle='#1e2a38'; RCX.fill();
+    RCX.strokeStyle='#38bdf8'; RCX.lineWidth=2; RCX.stroke();
+    RCX.fillStyle='#fff'; RCX.font='bold 13px sans-serif'; RCX.textAlign='center'; RCX.textBaseline='middle';
+    RCX.fillText(i,p.x,p.y);
+  }
+  // mono triangle highlight
+  mono.forEach(t=>{
+    const [a,b,c]=t.map(i=>rPos(i));
+    RCX.beginPath(); RCX.moveTo(a.x,a.y); RCX.lineTo(b.x,b.y); RCX.lineTo(c.x,c.y); RCX.closePath();
+    RCX.strokeStyle='#fbbf24'; RCX.lineWidth=3; RCX.setLineDash([6,3]); RCX.stroke(); RCX.setLineDash([]);
+  });
+}
+
+function ramseyFindMono() {
+  const found=[];
+  for(let i=0;i<RN;i++) for(let j=i+1;j<RN;j++) for(let k=j+1;k<RN;k++){
+    const cij=rColors[`${i},${j}`]??0, cik=rColors[`${i},${k}`]??0, cjk=rColors[`${j},${k}`]??0;
+    if(cij===cik&&cik===cjk) found.push([i,j,k]);
+  }
+  return found;
+}
+
+RC.addEventListener('click', e=>{
+  const rect=RC.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  // find closest edge midpoint click
+  let bestDist=25, bestKey=null, bestVal=0;
+  for(let i=0;i<RN;i++) for(let j=i+1;j<RN;j++){
+    const pi=rPos(i),pj=rPos(j);
+    const mx2=(pi.x+pj.x)/2, my2=(pi.y+pj.y)/2;
+    const d=Math.hypot(mx-mx2,my-my2);
+    // also check along the line
+    const t=((mx-pi.x)*(pj.x-pi.x)+(my-pi.y)*(pj.y-pi.y))/(Math.pow(pj.x-pi.x,2)+Math.pow(pj.y-pi.y,2));
+    const tc=Math.max(0,Math.min(1,t));
+    const cx=pi.x+tc*(pj.x-pi.x), cy=pi.y+tc*(pj.y-pi.y);
+    const d2=Math.hypot(mx-cx,my-cy);
+    if(d2<bestDist){ bestDist=d2; bestKey=`${i},${j}`; bestVal=(rColors[`${i},${j}`]??0)^1; }
+  }
+  if(bestKey){ rColors[bestKey]=bestVal; ramseyUpdate(); }
+});
+
+function ramseyUpdate() {
+  ramseyDraw();
+  const mono=ramseyFindMono();
+  const log=document.getElementById('ramsey-log');
+  if(mono.length===0) log.textContent='Nincs homogén háromszög. Folytasd a színezést – R(3,3)=6 garantálja, hogy lesz!';
+  else log.textContent=`Homogén háromszög(ek): ${mono.map(t=>'{'+t.join(',')+'}').join(', ')} — R(3,3)=6 igazolva!`;
+}
+
+function ramseyRandom() {
+  rColors={};
+  for(let i=0;i<RN;i++) for(let j=i+1;j<RN;j++) rColors[`${i},${j}`]=Math.random()<0.5?0:1;
+  ramseyUpdate();
+}
+
+function ramseyAllRed() {
+  rColors={};
+  ramseyUpdate();
+}
+
+function ramseyReset() { rColors={}; ramseyUpdate(); }
+
+ramseyDraw();
+document.getElementById('ramsey-log').textContent='Kattints élekre (piros↔kék) vagy generálj véletlenszerű színezést.';
+
+// ─── TAB 4: BROOKS ───────────────────────────────────────────────────────────
+const BC=document.getElementById('brooks-canvas');
+const BCX=BC.getContext('2d');
+
+const BROOKS_GRAPHS = [
+  {name:'K₄',n:4,edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],chi:4,delta:3,ex:'Teljes'},
+  {name:'K₅',n:5,edges:[[0,1],[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]],chi:5,delta:4,ex:'Teljes'},
+  {name:'C₅',n:5,edges:[[0,1],[1,2],[2,3],[3,4],[4,0]],chi:3,delta:2,ex:'Páratlan C'},
+  {name:'C₆',n:6,edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]],chi:2,delta:2,ex:'Páros C'},
+  {name:'Petersen',n:10,edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[5,6],[6,7],[7,8],[8,9],[9,5],[0,5],[1,6],[2,7],[3,8],[4,9]],chi:3,delta:3,ex:'Brooks'},
+  {name:'K₃,₃',n:6,edges:[[0,3],[0,4],[0,5],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5]],chi:2,delta:3,ex:'Páros'}
+];
+
+function brooksLayout(g) {
+  const n=g.n, cx=BC.width/2, cy=BC.height/2-20, r=Math.min(cx,cy)*0.7;
+  if(g.name.startsWith('K₃,₃')){
+    return [
+      {x:cx-120,y:cy-80},{x:cx,y:cy-80},{x:cx+120,y:cy-80},
+      {x:cx-120,y:cy+80},{x:cx,y:cy+80},{x:cx+120,y:cy+80}
+    ];
+  }
+  return Array.from({length:n},(_,i)=>({
+    x: cx+r*Math.cos(2*Math.PI*i/n-Math.PI/2),
+    y: cy+r*Math.sin(2*Math.PI*i/n-Math.PI/2)
+  }));
+}
+
+function greedyColorG(g, pos) {
+  const adj=buildAdj(g.n, g.edges);
+  return greedyColor([...Array(g.n).keys()].sort((a,b)=>adj[b].length-adj[a].length), adj);
+}
+
+function brooksDraw() {
+  const W=BC.width, H=BC.height;
+  BCX.clearRect(0,0,W,H);
+  const cols=3, rows=2;
+  const pw=W/cols, ph=H/rows;
+  BROOKS_GRAPHS.forEach((g,gi)=>{
+    const col=gi%cols, row=Math.floor(gi/cols);
+    const ox=col*pw, oy=row*ph;
+    const cx=ox+pw/2, cy=oy+ph/2-10;
+    const r=Math.min(pw,ph)*0.32;
+    const pos=Array.from({length:g.n},(_,i)=>({
+      x:cx+r*Math.cos(2*Math.PI*i/g.n-Math.PI/2),
+      y:cy+r*Math.sin(2*Math.PI*i/g.n-Math.PI/2)
+    }));
+    if(g.name==='K₃,₃'){
+      for(let i=0;i<3;i++){ pos[i]={x:cx+(i-1)*45,y:cy-50}; pos[i+3]={x:cx+(i-1)*45,y:cy+50}; }
+    }
+    const colors=greedyColorG(g, pos);
+    g.edges.forEach(([u,v])=>{
+      BCX.beginPath(); BCX.moveTo(pos[u].x,pos[u].y); BCX.lineTo(pos[v].x,pos[v].y);
+      BCX.strokeStyle='#2a3a50'; BCX.lineWidth=1.5; BCX.stroke();
+    });
+    pos.forEach((p,i)=>{
+      BCX.beginPath(); BCX.arc(p.x,p.y,9,0,Math.PI*2);
+      BCX.fillStyle=PALETTE[colors[i]]; BCX.fill();
+      BCX.strokeStyle='#38bdf8'; BCX.lineWidth=1; BCX.stroke();
+    });
+    BCX.fillStyle='#fff'; BCX.font='bold 12px sans-serif'; BCX.textAlign='center'; BCX.textBaseline='bottom';
+    BCX.fillText(g.name, cx, oy+ph-4);
+    BCX.font='11px sans-serif'; BCX.fillStyle='#8ba3bc';
+    BCX.fillText(`χ=${g.chi} Δ=${g.delta}`, cx, oy+ph-18);
+  });
+}
+
+// Brooks table
+const tbody=document.getElementById('brooks-body');
+BROOKS_GRAPHS.forEach(g=>{
+  const eq=g.chi===g.delta+1||g.chi===g.delta;
+  const check=g.chi<=g.delta?'✓ igen':'✗ nem';
+  const row=document.createElement('tr');
+  row.innerHTML=`<td>${g.name}</td><td>${g.delta}</td><td>${g.chi}</td><td style="color:${g.chi<=g.delta?'#4ade80':'#fbbf24'}">${check} (${g.ex})</td>`;
+  tbody.appendChild(row);
+});
+
+brooksDraw();
+
+// ─── TAB 5: KROMATIKUS POLINOM ───────────────────────────────────────────────
+const PC=document.getElementById('poly-canvas');
+const PCX=PC.getContext('2d');
+
+const POLY_PRESETS = {
+  p3:{n:3,edges:[[0,1],[1,2]]},
+  c4:{n:4,edges:[[0,1],[1,2],[2,3],[3,0]]},
+  k3:{n:3,edges:[[0,1],[0,2],[1,2]]},
+  tree4:{n:4,edges:[[0,1],[0,2],[0,3]]}
+};
+
+let polyG=POLY_PRESETS.p3;
+
+// Chromatic polynomial coefficients via deletion-contraction (memoized)
+function edgeKey(edges){return edges.map(([a,b])=>`${Math.min(a,b)}-${Math.max(a,b)}`).sort().join('|');}
+
+function contractEdge(n, edges, e) {
+  const [u,v]=e;
+  // merge v into u
+  const newEdges=[];
+  edges.forEach(([a,b])=>{
+    if(a===u&&b===v||a===v&&b===u) return;
+    const na=a===v?u:a, nb=b===v?u:b;
+    if(na===nb) return;
+    if(!newEdges.some(([x,y])=>Math.min(x,y)===Math.min(na,nb)&&Math.max(x,y)===Math.max(na,nb)))
+      newEdges.push([na,nb]);
+  });
+  return {n:n-1, edges:newEdges};
+}
+
+function chromPoly(n, edges) {
+  // returns polynomial as array of coefficients [a0, a1, ..., an] where P(k)=sum(ai*k^i)
+  if(edges.length===0){
+    const c=new Array(n+1).fill(0); c[n]=1; return c; // k^n
+  }
+  const e=edges[0];
+  const del=chromPoly(n, edges.slice(1));
+  const con=chromPoly(n-1, contractEdge(n, edges, e).edges);
+  // P(G,k) = P(G-e,k) - P(G/e,k)
+  const res=new Array(n+1).fill(0);
+  for(let i=0;i<=n;i++) res[i]=(del[i]||0)-(con[i]||0);
+  return res;
+}
+
+function evalPoly(coeffs, k) {
+  return coeffs.reduce((s,a,i)=>s+a*Math.pow(k,i),0);
+}
+
+function polyFormat(coeffs, n) {
+  const terms=[];
+  for(let i=n;i>=0;i--){
+    const a=coeffs[i]; if(a===0) continue;
+    let t='';
+    if(i===0) t=`${a}`;
+    else if(i===1) t=`${a===1?'':(a===-1?'-':a)}k`;
+    else t=`${a===1?'':(a===-1?'-':a)}k^{${i}}`;
+    terms.push(t);
+  }
+  if(terms.length===0) return '0';
+  return terms.join(' + ').replace(/\+ -/g,'- ');
+}
+
+function polyPos(i, n) {
+  const cx=PC.width/2, cy=PC.height/2, r=Math.min(cx,cy)*0.65;
+  const a=2*Math.PI*i/n-Math.PI/2;
+  return {x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)};
+}
+
+function polyDraw(colors) {
+  PCX.clearRect(0,0,PC.width,PC.height);
+  const n=polyG.n;
+  polyG.edges.forEach(([u,v])=>{
+    const pu=polyPos(u,n), pv=polyPos(v,n);
+    PCX.beginPath(); PCX.moveTo(pu.x,pu.y); PCX.lineTo(pv.x,pv.y);
+    PCX.strokeStyle='#2a3a50'; PCX.lineWidth=2; PCX.stroke();
+  });
+  for(let i=0;i<n;i++){
+    const p=polyPos(i,n);
+    PCX.beginPath(); PCX.arc(p.x,p.y,18,0,Math.PI*2);
+    PCX.fillStyle=colors&&colors[i]>=0?PALETTE[colors[i]]:'#1e2a38'; PCX.fill();
+    PCX.strokeStyle='#38bdf8'; PCX.lineWidth=2; PCX.stroke();
+    PCX.fillStyle='#fff'; PCX.font='bold 13px sans-serif'; PCX.textAlign='center'; PCX.textBaseline='middle';
+    PCX.fillText(i, p.x, p.y);
+  }
+}
+
+function polyPreset(name, btn) {
+  polyG=POLY_PRESETS[name];
+  document.querySelectorAll('#tab-poly .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  polyUpdate();
+}
+
+function polyUpdate() {
+  const k=parseInt(document.getElementById('k-slider').value);
+  document.getElementById('k-val').textContent=k;
+  const coeffs=chromPoly(polyG.n, polyG.edges);
+  const pk=Math.round(evalPoly(coeffs,k));
+  document.getElementById('poly-pk').textContent=pk<0?0:pk;
+  // find chi
+  let chi=0;
+  for(let kk=1;kk<=polyG.n+1;kk++){ if(evalPoly(coeffs,kk)>0){ chi=kk; break; } }
+  document.getElementById('poly-chi').textContent=chi;
+  const formula=polyFormat(coeffs, polyG.n);
+  document.getElementById('poly-formula').innerHTML=`\\(P(G,k) = ${formula}\\)`;
+  if(window.renderMathInElement) renderMathInElement(document.getElementById('poly-formula'),{delimiters:[{left:'\\(',right:'\\)',display:false}]});
+  // greedy color for display
+  const adj=buildAdj(polyG.n, polyG.edges);
+  const col=greedyColor([...Array(polyG.n).keys()], adj);
+  polyDraw(col);
+  document.getElementById('poly-log').textContent=`P(G, ${k}) = ${pk<0?0:pk} jólszínezés létezik ${k} színnel. χ(G) = ${chi}.`;
+}
+
+polyUpdate();
+</script>
+{% endblock %}

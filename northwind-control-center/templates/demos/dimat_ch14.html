@@ -1,0 +1,899 @@
+{% extends "base.html" %}
+{% block title %}14. fejezet – Fák{% endblock %}
+{% block content %}
+<style>
+:root { --acc:#38bdf8; --acc2:#0ea5e9; --bg:#0e1014; --card:#151920; --border:#1e2a38; }
+.ila-wrap { max-width:1100px; margin:0 auto; padding:2rem 1rem 4rem; }
+.ila-back { color:var(--acc); text-decoration:none; font-size:.85rem; opacity:.8; }
+.ila-back:hover { opacity:1; color:var(--acc); }
+.ila-hero { text-align:center; margin:1.5rem 0 2rem; }
+.ila-hero h1 { font-size:2rem; font-weight:700; color:#fff; }
+.ila-hero p { color:#8ba3bc; max-width:600px; margin:.5rem auto 0; font-size:.95rem; }
+.ila-nav { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.ila-nav-link { background:#151920; border:1px solid #1e2a38; color:#8ba3bc; padding:.45rem 1rem;
+  border-radius:6px; cursor:pointer; font-size:.85rem; transition:all .2s; }
+.ila-nav-link.active, .ila-nav-link:hover { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.ila-card { background:#151920; border:1px solid #1e2a38; border-radius:10px; padding:1.2rem; margin-bottom:1rem; }
+.ila-card h5 { color:var(--acc); font-size:.9rem; font-weight:700; margin-bottom:.7rem; text-transform:uppercase; letter-spacing:.05em; }
+canvas { border-radius:8px; background:#0a0f14; display:block; }
+.btn-acc { background:var(--acc); color:#000; border:none; font-weight:600; border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-acc:hover { background:var(--acc2); }
+.btn-out { background:transparent; color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-out:hover { background:var(--acc); color:#000; }
+.btn-sm2 { padding:.25rem .65rem; font-size:.78rem; border-radius:5px; }
+.preset-row { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.7rem; }
+.preset-btn { background:#1a2233; border:1px solid #2a3a50; color:#8ba3bc; padding:.3rem .7rem; border-radius:5px; cursor:pointer; font-size:.78rem; }
+.preset-btn:hover, .preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.code-panel { background:#0a0f14; border:1px solid #1e2a38; border-radius:6px; padding:.7rem; font-size:.8rem; font-family:monospace; color:#8ba3bc; }
+.code-panel .hi { color:#38bdf8; }
+.code-panel .num { color:#f97316; }
+.prufer-cell { display:inline-block; background:#0a1520; border:1px solid #1e2a38; border-radius:4px; padding:.25rem .5rem; margin:.15rem; font-family:monospace; font-size:.9rem; color:#fff; min-width:2rem; text-align:center; }
+.prufer-cell.active { background:#0a2a3a; border-color:#38bdf8; color:#38bdf8; }
+.prufer-cell.done { background:#0a1f10; border-color:#4ade80; color:#4ade80; }
+.legend-row { display:flex; gap:1rem; flex-wrap:wrap; font-size:.78rem; color:#8ba3bc; margin-top:.5rem; }
+.legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; }
+.log-box { background:#0a0f14; border:1px solid #1e2a38; border-radius:6px; padding:.7rem; font-size:.75rem; font-family:monospace; color:#8ba3bc; height:100px; overflow-y:auto; }
+.log-box .log-line { margin-bottom:2px; }
+.log-box .log-line.hi { color:#38bdf8; }
+.tbl-alg { width:100%; border-collapse:collapse; font-size:.82rem; }
+.tbl-alg th { background:#1a2233; color:var(--acc); padding:.5rem .7rem; text-align:left; font-weight:600; }
+.tbl-alg td { padding:.45rem .7rem; border-top:1px solid #1e2a38; color:#c8d8e8; }
+.slider-row { display:flex; align-items:center; gap:.6rem; font-size:.82rem; color:#8ba3bc; }
+.slider-row input[type=range] { flex:1; accent-color:var(--acc); }
+input.node-input { background:#0a0f14; border:1px solid #1e2a38; border-radius:5px; color:#fff; padding:.3rem .6rem; font-size:.82rem; width:70px; font-family:monospace; }
+</style>
+
+<div class="ila-wrap">
+  <a href="{{ url_for('demos.learn_dimat') }}" class="ila-back">← Vissza a tananyaghoz</a>
+
+  <div class="ila-hero">
+    <h1>14. fejezet — Fák</h1>
+    <p>Fák és erdők, Cayley tétele, Prüfer-kód, fák közepe, bináris keresőfa és rendezési korlát.</p>
+  </div>
+
+  <div class="ila-nav">
+    <div class="ila-nav-link active" onclick="showTab('tab-alapok',this)">Fák alapjai</div>
+    <div class="ila-nav-link" onclick="showTab('tab-prufer',this)">Prüfer-kód</div>
+    <div class="ila-nav-link" onclick="showTab('tab-kozep',this)">Fa közepe</div>
+    <div class="ila-nav-link" onclick="showTab('tab-bst',this)">Bináris keresőfa</div>
+    <div class="ila-nav-link" onclick="showTab('tab-cayley',this)">Cayley & Erdők</div>
+  </div>
+
+  <!-- ══════════════════════════════════ TAB 1: FÁK ALAPJAI -->
+  <div id="tab-alapok" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Fa vs. Erdő — interaktív vizsgáló</h5>
+          <div class="preset-row" id="tree-presets">
+            <div class="preset-btn active" onclick="treeLoadPreset('tree7')">7-csúcsú fa</div>
+            <div class="preset-btn" onclick="treeLoadPreset('forest')">Erdő (3 fa)</div>
+            <div class="preset-btn" onclick="treeLoadPreset('cycle')">Ciklusos (nem fa)</div>
+            <div class="preset-btn" onclick="treeLoadPreset('path')">Út-gráf P₈</div>
+            <div class="preset-btn" onclick="treeLoadPreset('star')">Csillag K₁,₆</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="tree-canvas" width="480" height="300"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#4ade80"></span>Levél (δ=1)</span>
+                <span><span class="legend-dot" style="background:#38bdf8"></span>Belső csúcs</span>
+                <span><span class="legend-dot" style="background:#ef4444"></span>Kör van!</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="code-panel" id="tree-stats" style="font-size:.85rem;line-height:1.9">
+                Töltés...
+              </div>
+              <div class="mt-3" style="font-size:.83rem;color:#c8d8e8;line-height:1.75">
+                <b style="color:var(--acc)">Alaptétel:</b> G fa ⟺ az alábbi <em>kettő</em> igaz:<br>
+                (1) G összefüggő &nbsp;(2) G körmentes<br>
+                (3) \(|E| = |V| - 1\)<br>
+                <br>
+                <b style="color:var(--acc)">Levelek:</b> Körmentes gráfban mindig van ≥2 levél (ha \(|V|\geq 2\)).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Saját gráf — fa-e?</h5>
+          <div style="font-size:.8rem;color:#8ba3bc;margin-bottom:.5rem">Éleket add meg: "1-2 2-3 3-4" formában, majd ellenőrizd.</div>
+          <textarea id="tree-custom-edges" class="form-control form-control-sm" style="background:#0a0f14;color:#fff;border-color:#1e2a38;font-family:monospace;resize:none;height:60px" placeholder="pl. 1-2 2-3 3-4 4-5 2-5">1-2 2-3 3-4 4-5</textarea>
+          <button class="btn-acc mt-2" onclick="treeCheckCustom()">Ellenőrzés</button>
+          <div id="tree-custom-result" class="mt-2" style="font-size:.83rem;color:#8ba3bc"></div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Alkan-formula (\(C_n H_{2n+2}\))</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.7">
+            Az alkánok szénláncgráfja fa: \(n\) széncsúcs + \(2n{+}2\) hidrogénlevél, összesen \(3n{+}2\) csúcs és \(3n{+}1\) él. Mivel \(|E|=|V|-1\) és összefüggő → fa, tehát <b>nincs gyűrű</b>.
+          </div>
+          <div class="slider-row mt-2">
+            <label>n =</label>
+            <input type="range" min="1" max="8" value="3" id="alkane-n" oninput="drawAlkane(this.value)">
+            <span id="alkane-label">n=3 (propán)</span>
+          </div>
+          <canvas id="alkane-canvas" width="380" height="150" style="margin-top:.5rem"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════ TAB 2: PRÜFER-KÓD -->
+  <div id="tab-prufer" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Prüfer-kód — kódolás és dekódolás</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div style="font-size:.8rem;color:#8ba3bc;margin-bottom:.4rem">Csúcsszám \(n\):</div>
+              <div class="slider-row mb-3">
+                <input type="range" min="4" max="10" value="6" id="prufer-n" oninput="pruferSetN(this.value)">
+                <span id="prufer-n-label">n = 6</span>
+              </div>
+              <canvas id="prufer-canvas" width="380" height="240"></canvas>
+              <div class="d-flex gap-2 mt-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="pruferNewTree()">Új véletlen fa</button>
+                <button class="btn-out btn-sm2" onclick="pruferStep()">Kódolás lépés →</button>
+                <button class="btn-out btn-sm2" onclick="pruferStepAll()">Teljes kódolás</button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">Prüfer-kód (<span id="prufer-n2">6</span>-2=4 szám):</div>
+              <div id="prufer-code-display" style="margin-bottom:.8rem">—</div>
+              <div class="log-box" id="prufer-log"></div>
+              <div style="font-size:.78rem;color:#8ba3bc;margin-top:.6rem;line-height:1.6">
+                <b style="color:var(--acc)">Algoritmus:</b><br>
+                Ismételten töröljük a legkisebb levelét → jegyezzük a szomszédját → kód hossza \(n-2\).<br><br>
+                <b style="color:var(--acc)">Cayley-tétel:</b> \(n\) számozott csúcsú fa pontosan \(n^{n-2}\) féle van.
+              </div>
+            </div>
+          </div>
+          <hr style="border-color:#1e2a38;margin:1rem 0">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">Dekódolás — kézi Prüfer-kód:</div>
+              <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+                <input id="prufer-decode-input" class="node-input" style="width:200px" placeholder="pl. 4 2 1 3">
+                <button class="btn-acc btn-sm2" onclick="pruferDecode()">Dekódolás</button>
+              </div>
+              <canvas id="prufer-decode-canvas" width="380" height="220"></canvas>
+            </div>
+            <div class="col-md-6">
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">Dekódolás lépései:</div>
+              <div class="log-box" id="prufer-decode-log" style="height:200px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════ TAB 3: FA KÖZEPE -->
+  <div id="tab-kozep" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Fa közepe — iteratív levél-eltávolítás</h5>
+          <div class="preset-row" id="center-presets">
+            <div class="preset-btn active" onclick="centerLoadPreset('path8')">Út P₈ (bicenter)</div>
+            <div class="preset-btn" onclick="centerLoadPreset('star7')">Csillag (center)</div>
+            <div class="preset-btn" onclick="centerLoadPreset('caterpillar')">Hernyófa</div>
+            <div class="preset-btn" onclick="centerLoadPreset('balanced')">Kiegyensúlyozott</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="center-canvas" width="480" height="300"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#1e3a5f"></span>Eltávolítandó levél</span>
+                <span><span class="legend-dot" style="background:#38bdf8"></span>Aktív csúcsok</span>
+                <span><span class="legend-dot" style="background:#f97316"></span>Közép (center)</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="centerReset()">↺ Újra</button>
+                <button class="btn-out btn-sm2" onclick="centerStep()">Levél-réteg eltávolítása →</button>
+                <button class="btn-out btn-sm2" id="center-auto-btn" onclick="centerToggleAuto()">▶ Auto</button>
+              </div>
+              <div id="center-status" style="font-size:.8rem;color:#8ba3bc;margin-bottom:.4rem">Kattints Lépés-re.</div>
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">Iteráció: <span id="center-iter">0</span></div>
+              <div class="log-box" id="center-log"></div>
+              <div style="font-size:.83rem;color:#c8d8e8;margin-top:.7rem;line-height:1.65">
+                <b style="color:var(--acc)">Tétel:</b> Ismételten elhagyva a leveleket, minden fából végül 1 vagy 2 csúcs marad — ezek a fa <em>közepe</em>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════ TAB 4: BINÁRIS KERESŐFA -->
+  <div id="tab-bst" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Bináris keresőfa (BST) — beszúrás, keresés, bejárás</h5>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="bst-canvas" width="480" height="320"></canvas>
+            </div>
+            <div class="col-md-5">
+              <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+                <input id="bst-val" class="node-input" placeholder="érték" type="number" min="1" max="99">
+                <button class="btn-acc btn-sm2" onclick="bstInsert()">Beszúr</button>
+                <button class="btn-out btn-sm2" onclick="bstSearch()">Keres</button>
+                <button class="btn-out btn-sm2" onclick="bstDelete()">Töröl</button>
+              </div>
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-out btn-sm2" onclick="bstLoadPreset([5,3,7,2,4,6,8])">Teljes fa</button>
+                <button class="btn-out btn-sm2" onclick="bstLoadPreset([10,5,15,3,7,12,20,1,4])">Nagyobb</button>
+                <button class="btn-out btn-sm2" onclick="bstClear()">Töröl mindent</button>
+              </div>
+              <div id="bst-status" style="font-size:.8rem;color:#8ba3bc;margin-bottom:.4rem">Szúrj be értékeket.</div>
+              <div class="d-flex gap-2 mb-1 flex-wrap">
+                <button class="btn-out btn-sm2" onclick="bstTraverse('inorder')">Inorder (rendezett)</button>
+                <button class="btn-out btn-sm2" onclick="bstTraverse('preorder')">Preorder</button>
+                <button class="btn-out btn-sm2" onclick="bstTraverse('postorder')">Postorder</button>
+              </div>
+              <div id="bst-traverse" style="font-family:monospace;font-size:.8rem;color:#4ade80;background:#0a0f14;border:1px solid #1e2a38;border-radius:6px;padding:.4rem .6rem;min-height:1.8rem;margin-top:.3rem"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Rendezési algoritmusok korlátja</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75">
+            \(n\) elem rendezésekor az összehasonlításos döntési fa magassága:<br>
+            \[h \geq \lceil\log_2(n!)\rceil \approx n\log_2 n\]
+            Tehát <b>minden összehasonlításos rendező</b> \(\mathcal{O}(n\log n)\)-nél nem lehet gyorsabb.<br><br>
+            <b style="color:var(--acc)">Inorder bejárás</b> = rendezett lista → a BST implicit rendező!<br>
+            Átlagos keresés/beszúrás: \(\mathcal{O}(\log n)\), legrosszabb: \(\mathcal{O}(n)\) (elfajuló fa).
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Elfajuló vs. kiegyensúlyozott BST</h5>
+          <div class="d-flex gap-2 mb-2">
+            <button class="btn-out btn-sm2" onclick="bstLoadPreset([1,2,3,4,5,6,7])">Elfajuló (1,2,3...)</button>
+            <button class="btn-out btn-sm2" onclick="bstLoadPreset([4,2,6,1,3,5,7])">Kiegyensúlyozott</button>
+          </div>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.7">
+            Sorban rendezett elemek beszúrásakor a fa egy lánccá válik: magassága \(n-1\) → lineáris keresés.<br>
+            AVL/Piros-Fekete fák garantálják az \(\mathcal{O}(\log n)\) magasságot.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════ TAB 5: CAYLEY & ERDŐK -->
+  <div id="tab-cayley" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Cayley tétele — \(n^{n-2}\) számozott fa</h5>
+          <div class="row g-3">
+            <div class="col-md-5">
+              <div class="slider-row mb-3">
+                <label>n =</label>
+                <input type="range" min="2" max="7" value="4" id="cayley-n" oninput="cayleyUpdate(this.value)">
+                <span id="cayley-n-label">n = 4</span>
+              </div>
+              <div style="font-size:1.5rem;font-weight:700;color:#38bdf8;text-align:center;margin:.5rem 0" id="cayley-count">4² = 16</div>
+              <div style="font-size:.83rem;color:#c8d8e8;line-height:1.65;margin-bottom:.7rem" id="cayley-expl">
+                n=4 csúcsú számozott fa: 4^(4-2) = 16 db.
+              </div>
+              <canvas id="cayley-canvas" width="320" height="220"></canvas>
+              <div class="d-flex gap-2 mt-2">
+                <button class="btn-acc btn-sm2" onclick="cayleyRandomTree()">Véletlen fa mutatása</button>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="ila-card" style="margin:0">
+                <h5>n=4 összes fája</h5>
+                <canvas id="cayley-all-canvas" width="420" height="330"></canvas>
+                <div style="font-size:.75rem;color:#8ba3bc;margin-top:.4rem">16 különböző számozott fa 4 csúcson (Prüfer-kódok: 00..33)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Erdők és komponensek</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75">
+            <b style="color:var(--acc)">Erdő:</b> körmentes gráf (komponensei fák).<br>
+            \(k\) komponensű erdőre: \(|E| = |V| - k\)<br><br>
+            <b style="color:var(--acc)">Feszítőfa:</b> összefüggő G gráf feszítőfája egy G-beli fa, amely G összes csúcsát tartalmazza.<br>
+            Minden összefüggő gráfnak van feszítőfája (BFS/DFS fa).
+          </div>
+          <canvas id="forest-canvas" width="300" height="160" style="margin-top:.7rem"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Összefoglalás</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Fogalom</th><th>Definíció</th></tr></thead>
+            <tbody>
+              <tr><td>Fa</td><td>Összefüggő, körmentes gráf</td></tr>
+              <tr><td>Erdő</td><td>Körmentes gráf (több fa)</td></tr>
+              <tr><td>Levél</td><td>Fokszám = 1 csúcs</td></tr>
+              <tr><td>Fák száma</td><td>\(n^{n-2}\) (Cayley, 1889)</td></tr>
+              <tr><td>Prüfer-kód</td><td>Bijekció fák ↔ \((n-2)\)-sorozatok</td></tr>
+              <tr><td>Közép</td><td>1 vagy 2 csúcs (iteratív levél-törlés)</td></tr>
+              <tr><td>BST keresés</td><td>\(\mathcal{O}(\log n)\) átlag, \(\mathcal{O}(n)\) legrosszabb</td></tr>
+              <tr><td>Rendezési korlát</td><td>\(\Omega(n\log n)\) összehasonlításos rendezők</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+});
+</script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+function showTab(id, btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(()=>{ refreshAllCanvases(); },50);
+}
+function setActivePreset(rowEl, btn){
+  rowEl.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// DRAWING UTILITIES
+const NODE_R = 14;
+function drawTree(canvas, nodes, edges, nodeColors, edgeHighlight, labels){
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#0a0f14'; ctx.fillRect(0,0,W,H);
+  edges.forEach((e,i)=>{
+    const a=nodes[e[0]], b=nodes[e[1]];
+    ctx.strokeStyle = edgeHighlight&&edgeHighlight[i] ? edgeHighlight[i] : '#2a3a50';
+    ctx.lineWidth = edgeHighlight&&edgeHighlight[i] ? 2.5 : 1.5;
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  });
+  nodes.forEach((n,i)=>{
+    const col = nodeColors&&nodeColors[i] ? nodeColors[i] : '#1e4a6f';
+    ctx.beginPath(); ctx.arc(n.x,n.y,NODE_R,0,2*Math.PI);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.strokeStyle='#38bdf8'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(labels?labels[i]:n.l||i+1, n.x, n.y);
+  });
+}
+
+// Build adjacency list (undirected)
+function buildAdj(n, edges){
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  return adj;
+}
+
+// BFS connectivity check
+function isConnected(n, edges){
+  if(n===0) return true;
+  const adj=buildAdj(n,edges), vis=Array(n).fill(false), q=[0]; vis[0]=true; let cnt=1;
+  while(q.length){const u=q.shift();adj[u].forEach(v=>{if(!vis[v]){vis[v]=true;cnt++;q.push(v);}});}
+  return cnt===n;
+}
+// Cycle detection (DFS)
+function hasCycle(n, edges){
+  const adj=buildAdj(n,edges), vis=Array(n).fill(false);
+  function dfs(u,par){ vis[u]=true; for(const v of adj[u]){if(!vis[v]){if(dfs(v,u))return true;}else if(v!==par)return true;} return false;}
+  for(let i=0;i<n;i++) if(!vis[i]&&dfs(i,-1)) return true;
+  return false;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 1: TREE BASICS
+const TREE_PRESETS = {
+  tree7:{
+    nodes:[{x:240,y:40},{x:120,y:110},{x:360,y:110},{x:60,y:200},{x:180,y:200},{x:300,y:200},{x:420,y:200}],
+    edges:[[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]]
+  },
+  forest:{
+    nodes:[{x:80,y:100},{x:160,y:60},{x:160,y:150},{x:280,y:80},{x:360,y:80},{x:320,y:160},{x:430,y:120},{x:430,y:220}],
+    edges:[[0,1],[0,2],[3,4],[3,5],[6,7]]
+  },
+  cycle:{
+    nodes:[{x:240,y:50},{x:380,y:160},{x:300,y:280},{x:180,y:280},{x:100,y:160},{x:240,y:170}],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[2,5]]
+  },
+  path:{
+    nodes:[{x:50,y:150},{x:110,y:150},{x:170,y:150},{x:230,y:150},{x:290,y:150},{x:350,y:150},{x:410,y:150},{x:460,y:150}],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
+  },
+  star:{
+    nodes:[{x:240,y:150},{x:240,y:50},{x:370,y:100},{x:420,y:230},{x:320,y:300},{x:160,y:300},{x:60,y:230},{x:110,y:100}],
+    edges:[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7]]
+  }
+};
+
+let treeData=null;
+function treeLoadPreset(name){
+  treeData=JSON.parse(JSON.stringify(TREE_PRESETS[name]));
+  setActivePreset(document.getElementById('tree-presets'),event.target);
+  treeRender();
+}
+function treeRender(){
+  if(!treeData) return;
+  const {nodes,edges}=treeData;
+  const n=nodes.length;
+  const adj=buildAdj(n,edges);
+  const cycle=hasCycle(n,edges);
+  const conn=isConnected(n,edges);
+  const leaves=nodes.map((_,i)=>adj[i].length===1);
+  const colors=nodes.map((_,i)=>cycle?'#7f1d1d':leaves[i]?'#166534':'#1e4a6f');
+  drawTree(document.getElementById('tree-canvas'),nodes,edges,colors,null,nodes.map((_,i)=>i+1));
+  const isFa=!cycle&&conn;
+  const isErdo=!cycle&&!conn;
+  document.getElementById('tree-stats').innerHTML=
+    `<span class="hi">Csúcsok |V|:</span> <span class="num">${n}</span><br>`+
+    `<span class="hi">Élek |E|:</span> <span class="num">${edges.length}</span><br>`+
+    `<span class="hi">|V|-1:</span> <span class="num">${n-1}</span><br>`+
+    `<span class="hi">|E|=|V|-1:</span> <span class="num">${edges.length===n-1?'✓ igen':'✗ nem'}</span><br>`+
+    `<span class="hi">Összefüggő:</span> <span class="num">${conn?'✓ igen':'✗ nem'}</span><br>`+
+    `<span class="hi">Körmentes:</span> <span class="num">${!cycle?'✓ igen':'✗ nem'}</span><br>`+
+    `<span class="hi">Levelek:</span> <span class="num">${nodes.filter((_,i)=>adj[i].length===1).length}</span><br>`+
+    `<b style="color:${isFa?'#4ade80':isErdo?'#38bdf8':'#ef4444'};font-size:1rem">${isFa?'✓ Fa!':isErdo?'✓ Erdő':cycle?'✗ Van kör!':'✗ Nem összefüggő'}</b>`;
+}
+function treeCheckCustom(){
+  const txt=document.getElementById('tree-custom-edges').value.trim();
+  const pairs=txt.split(/\s+/).filter(Boolean);
+  const nodeSet=new Set(); const edges=[];
+  for(const p of pairs){
+    const m=p.match(/^(\d+)-(\d+)$/);
+    if(!m){document.getElementById('tree-custom-result').innerHTML='<span style="color:#ef4444">Hibás formátum: '+p+'</span>';return;}
+    const a=parseInt(m[1])-1, b=parseInt(m[2])-1;
+    nodeSet.add(a);nodeSet.add(b);edges.push([a,b]);
+  }
+  const n=Math.max(...[...nodeSet])+1;
+  const cycle=hasCycle(n,edges), conn=isConnected(n,edges);
+  const isFa=!cycle&&conn;
+  document.getElementById('tree-custom-result').innerHTML=
+    `Csúcsok: ${n}, Élek: ${edges.length}, |V|-1: ${n-1}<br>`+
+    `Körmentes: ${!cycle?'igen':'nem'}, Összefüggő: ${conn?'igen':'nem'}<br>`+
+    `<b style="color:${isFa?'#4ade80':'#ef4444'}">${isFa?'✓ Fa!':'✗ Nem fa.'}</b>`;
+}
+
+// Alkane drawing
+const ALKANE_NAMES=['—','metán','etán','propán','bután','pentán','hexán','heptán','oktán'];
+function drawAlkane(n){
+  n=parseInt(n); document.getElementById('alkane-label').textContent=`n=${n} (${ALKANE_NAMES[n]||'C'+n+'H'+(2*n+2)})`;
+  const cv=document.getElementById('alkane-canvas');
+  const ctx=cv.getContext('2d'); const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#0a0f14'; ctx.fillRect(0,0,W,H);
+  const totalC=n, hPerC=new Array(n).fill(2); hPerC[0]++; hPerC[n-1]++;
+  const cW=Math.min(50,W/(n+2)); const startX=W/2-(n-1)*cW/2; const cY=H/2;
+  // draw C chain
+  for(let i=0;i<n;i++){
+    const cx=startX+i*cW;
+    if(i>0){ctx.strokeStyle='#38bdf8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(startX+(i-1)*cW,cY);ctx.lineTo(cx,cY);ctx.stroke();}
+    ctx.beginPath();ctx.arc(cx,cY,10,0,2*Math.PI);ctx.fillStyle='#1e3a5f';ctx.fill();ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('C',cx,cY);
+    // H atoms
+    const numH=hPerC[i];
+    const hOffs=numH===2?[[-1],[1]]:numH===3?[[-1],[1],[0]]:[[-1],[1],[0],[0]];
+    const dirs=numH===2?[[0,-1],[0,1]]:numH===3?[[0,-1],[0,1],[-1,0]]:[[0,-1],[0,1],[-1,0],[1,0]];
+    dirs.slice(0,numH).forEach(([dx,dy])=>{
+      const hx=cx+dx*18, hy=cY+dy*20;
+      ctx.strokeStyle='#4a5a6a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cY);ctx.lineTo(hx,hy);ctx.stroke();
+      ctx.beginPath();ctx.arc(hx,hy,6,0,2*Math.PI);ctx.fillStyle='#2a3a4a';ctx.fill();ctx.strokeStyle='#6a7a8a';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='#8ba3bc';ctx.font='8px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('H',hx,hy);
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 2: PRÜFER CODE
+let pruferN=6, pruferTree=null, pruferState=null;
+
+function pruferSetN(n){
+  pruferN=parseInt(n);
+  document.getElementById('prufer-n-label').textContent='n = '+n;
+  document.getElementById('prufer-n2').textContent=n;
+  pruferNewTree();
+}
+function pruferNewTree(){
+  // Generate random labeled tree using random Prüfer sequence then decode
+  const n=pruferN;
+  if(n<4){pruferN=4;n=4;}
+  const seq=Array.from({length:n-2},()=>Math.floor(Math.random()*n)+1);
+  const {nodes:tnodes, edges:tedges}=pruferDecodeSeq(seq,n);
+  pruferTree={nodes:pruferLayout(n), edges:tedges, labels:Array.from({length:n},(_,i)=>i+1)};
+  pruferState={seq:[],step:0,done:false,remaining:[...Array(n).keys()].map(i=>i+1),edges:[...tedges]};
+  pruferRender();
+  document.getElementById('prufer-code-display').innerHTML='—';
+  document.getElementById('prufer-log').innerHTML='';
+}
+function pruferLayout(n){
+  // Simple circular layout
+  const cx=190,cy=120,r=90;
+  return Array.from({length:n},(_,i)=>({x:cx+r*Math.cos(2*Math.PI*i/n-Math.PI/2),y:cy+r*Math.sin(2*Math.PI*i/n-Math.PI/2)}));
+}
+function pruferDecodeSeq(seq,n){
+  const deg=Array(n+1).fill(1); // 1-indexed
+  seq.forEach(v=>deg[v]++);
+  const edges=[];
+  const remaining=new Set(Array.from({length:n},(_,i)=>i+1));
+  for(const v of seq){
+    for(let u=1;u<=n;u++){
+      if(remaining.has(u)&&deg[u]===1){
+        edges.push([u-1,v-1]); deg[u]--; deg[v]--; remaining.delete(u); break;
+      }
+    }
+  }
+  const last=[...remaining];
+  if(last.length===2) edges.push([last[0]-1,last[1]-1]);
+  return {nodes:null,edges};
+}
+function pruferStep(){
+  if(!pruferTree||pruferState.done) return;
+  const edges=pruferState.edges.map(e=>[...e]);
+  const n=pruferN;
+  // Find smallest leaf among remaining
+  const deg=Array(n+1).fill(0);
+  edges.forEach(([a,b])=>{deg[a+1]++;deg[b+1]++;});
+  let minLeaf=-1;
+  for(let v=1;v<=n;v++) if(deg[v]===1&&pruferState.remaining.includes(v)){minLeaf=v;break;}
+  if(minLeaf===-1){pruferState.done=true;pruferDone();return;}
+  // Find its neighbor
+  let neighbor=-1;
+  for(const [a,b] of edges){
+    if(a+1===minLeaf){neighbor=b+1;break;}
+    if(b+1===minLeaf){neighbor=a+1;break;}
+  }
+  pruferState.seq.push(neighbor);
+  pruferState.remaining=pruferState.remaining.filter(v=>v!==minLeaf);
+  // Remove edge
+  const idx=pruferState.edges.findIndex(([a,b])=>a+1===minLeaf||b+1===minLeaf);
+  if(idx!==-1) pruferState.edges.splice(idx,1);
+  pruferLog(`Legkisebb levél: ${minLeaf} → szomszéd: ${neighbor}`,'hi');
+  pruferState.step++;
+  if(pruferState.remaining.length<=2){pruferState.done=true;pruferDone();return;}
+  pruferRender();
+  pruferUpdateCodeDisplay();
+}
+function pruferStepAll(){ while(!pruferState.done) pruferStep(); }
+function pruferDone(){
+  pruferLog(`Prüfer-kód: [ ${pruferState.seq.join(', ')} ]`,'hi');
+  pruferRender();pruferUpdateCodeDisplay();
+}
+function pruferUpdateCodeDisplay(){
+  const cells=pruferState.seq.map(v=>`<span class="prufer-cell done">${v}</span>`).join('');
+  document.getElementById('prufer-code-display').innerHTML=cells||'—';
+}
+function pruferLog(msg,cls=''){const lb=document.getElementById('prufer-log');lb.innerHTML+=`<div class="log-line ${cls}">${msg}</div>`;lb.scrollTop=lb.scrollHeight;}
+function pruferRender(){
+  if(!pruferTree) return;
+  const remaining=new Set(pruferState.remaining.map(v=>v-1));
+  const colors=pruferTree.nodes.map((_,i)=>remaining.has(i)?'#1e4a6f':'#4a1a1a');
+  drawTree(document.getElementById('prufer-canvas'),pruferTree.nodes,pruferState.edges,colors,null,pruferTree.labels);
+}
+
+// Decoding
+function pruferDecode(){
+  const inp=document.getElementById('prufer-decode-input').value.trim();
+  const seq=inp.split(/\s+/).filter(Boolean).map(Number);
+  if(seq.some(isNaN)||seq.length<2){
+    document.getElementById('prufer-decode-log').innerHTML='<div class="log-line" style="color:#ef4444">Érvényes számsorozatot adj meg (pl. 4 2 1 3).</div>';return;
+  }
+  const n=seq.length+2;
+  const lb=document.getElementById('prufer-decode-log');
+  lb.innerHTML='';
+  const deg=Array(n+1).fill(1);
+  seq.forEach(v=>{if(v>=1&&v<=n)deg[v]++;});
+  const edges=[];
+  const logLines=[];
+  const remaining=new Set(Array.from({length:n},(_,i)=>i+1));
+  for(const v of seq){
+    for(let u=1;u<=n;u++){
+      if(remaining.has(u)&&deg[u]===1){
+        edges.push([u-1,v-1]);
+        logLines.push(`Él: ${u}—${v} (kód: ${v})`);
+        deg[u]--; deg[v]--; remaining.delete(u); break;
+      }
+    }
+  }
+  const last=[...remaining];
+  if(last.length===2){edges.push([last[0]-1,last[1]-1]);logLines.push(`Utolsó él: ${last[0]}—${last[1]}`);}
+  logLines.forEach(l=>{ lb.innerHTML+=`<div class="log-line hi">${l}</div>`; });
+  lb.innerHTML+=`<div class="log-line" style="color:#4ade80">Fa kész! ${n} csúcs, ${edges.length} él</div>`;
+  lb.scrollTop=lb.scrollHeight;
+  // Draw
+  const nodes=pruferLayout(n);
+  drawTree(document.getElementById('prufer-decode-canvas'),nodes,edges,null,null,Array.from({length:n},(_,i)=>i+1));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 3: CENTER
+const CENTER_PRESETS = {
+  path8:{
+    nodes:[{x:40,y:150},{x:100,y:150},{x:160,y:150},{x:220,y:150},{x:280,y:150},{x:340,y:150},{x:400,y:150},{x:460,y:150}],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
+  },
+  star7:{
+    nodes:[{x:240,y:150},{x:240,y:50},{x:370,y:100},{x:420,y:230},{x:320,y:300},{x:160,y:300},{x:60,y:230}],
+    edges:[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]
+  },
+  caterpillar:{
+    nodes:[{x:60,y:160},{x:130,y:100},{x:200,y:160},{x:270,y:160},{x:340,y:160},{x:410,y:100},{x:410,y:220},{x:470,y:160},
+           {x:60,y:220},{x:200,y:220}],
+    edges:[[0,1],[0,2],[2,3],[3,4],[4,5],[4,6],[4,7],[0,8],[2,9]]
+  },
+  balanced:{
+    nodes:[{x:240,y:40},{x:120,y:110},{x:360,y:110},{x:60,y:200},{x:180,y:200},{x:300,y:200},{x:420,y:200},
+           {x:30,y:280},{x:90,y:280},{x:150,y:280},{x:210,y:280},{x:270,y:280},{x:330,y:280},{x:390,y:280},{x:450,y:280}],
+    edges:[[0,1],[0,2],[1,3],[1,4],[2,5],[2,6],[3,7],[3,8],[4,9],[4,10],[5,11],[5,12],[6,13],[6,14]]
+  }
+};
+
+let centerData=null, centerState=null, centerAutoTimer=null;
+function centerLoadPreset(name){
+  centerData=JSON.parse(JSON.stringify(CENTER_PRESETS[name]));
+  setActivePreset(document.getElementById('center-presets'),event.target);
+  centerReset();
+}
+function centerReset(){
+  if(centerAutoTimer){clearInterval(centerAutoTimer);centerAutoTimer=null;document.getElementById('center-auto-btn').textContent='▶ Auto';}
+  if(!centerData) return;
+  const n=centerData.nodes.length;
+  centerState={alive:Array(n).fill(true),iter:0,done:false,center:[]};
+  centerLog('Iteráció kezdete.','hi');
+  centerRender(); document.getElementById('center-iter').textContent=0;
+  document.getElementById('center-status').textContent='Kattints Lépés-re.';
+  document.getElementById('center-log').innerHTML='';
+}
+function centerStep(){
+  if(!centerData||centerState.done) return;
+  const {alive}=centerState;
+  const aliveSet=alive.map((_,i)=>i).filter(i=>alive[i]);
+  const n=centerData.nodes.length;
+  const adj=buildAdj(n,centerData.edges);
+  // degree within alive subgraph
+  const deg=Array(n).fill(0);
+  aliveSet.forEach(u=>{ adj[u].forEach(v=>{if(alive[v]) deg[u]++;});});
+  const leaves=aliveSet.filter(i=>deg[i]===1);
+  const isolated=aliveSet.filter(i=>deg[i]===0);
+  if(aliveSet.length<=2){
+    centerState.done=true; centerState.center=aliveSet;
+    centerLog(`Közép: {${aliveSet.map(i=>i+1).join(', ')}} — ${aliveSet.length===1?'center':'bicenter'}!`,'hi');
+    document.getElementById('center-status').textContent=aliveSet.length===1?`Egyközéppontos: ${aliveSet[0]+1}`:`Kétközéppontos: ${aliveSet.map(i=>i+1).join(', ')}`;
+    centerRender(); return;
+  }
+  if(leaves.length===0){centerState.done=true;centerRender();return;}
+  leaves.forEach(i=>alive[i]=false);
+  isolated.forEach(i=>alive[i]=false);
+  centerState.iter++;
+  document.getElementById('center-iter').textContent=centerState.iter;
+  centerLog(`${centerState.iter}. lépés: eltávolítva ${leaves.length} levél (${leaves.map(i=>i+1).join(',')})`,'hi');
+  centerRender();
+  const newAlive=alive.filter(Boolean).length;
+  if(newAlive<=2){centerStep();}
+}
+function centerToggleAuto(){
+  if(centerAutoTimer){clearInterval(centerAutoTimer);centerAutoTimer=null;document.getElementById('center-auto-btn').textContent='▶ Auto';}
+  else{centerAutoTimer=setInterval(()=>{centerStep();if(centerState.done){clearInterval(centerAutoTimer);centerAutoTimer=null;document.getElementById('center-auto-btn').textContent='▶ Auto';}},700);document.getElementById('center-auto-btn').textContent='⏸ Stop';}
+}
+function centerLog(msg,cls=''){const lb=document.getElementById('center-log');lb.innerHTML+=`<div class="log-line ${cls}">${msg}</div>`;lb.scrollTop=lb.scrollHeight;}
+function centerRender(){
+  if(!centerData||!centerState) return;
+  const {alive,center,done}=centerState;
+  const colors=centerData.nodes.map((_,i)=>{
+    if(done&&center.includes(i)) return '#f97316';
+    if(!alive[i]) return '#1a1a1a';
+    return '#1e4a6f';
+  });
+  const edgeH=centerData.edges.map(([a,b])=>alive[a]&&alive[b]?null:'#1a1a1a');
+  drawTree(document.getElementById('center-canvas'),centerData.nodes,centerData.edges,colors,edgeH,centerData.nodes.map((_,i)=>i+1));
+  // Draw removed nodes faintly
+  const ctx=document.getElementById('center-canvas').getContext('2d');
+  centerData.nodes.forEach((n,i)=>{
+    if(!alive[i]){
+      ctx.beginPath();ctx.arc(n.x,n.y,NODE_R,0,2*Math.PI);
+      ctx.fillStyle='#1a1a1a';ctx.fill();ctx.strokeStyle='#2a2a2a';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='#2a2a2a';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(i+1,n.x,n.y);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 4: BST
+let bstRoot=null;
+function bstNode(val){return {val,left:null,right:null,x:0,y:0};}
+function bstInsertNode(root,val){
+  if(!root) return bstNode(val);
+  if(val<root.val) root.left=bstInsertNode(root.left,val);
+  else if(val>root.val) root.right=bstInsertNode(root.right,val);
+  return root;
+}
+function bstDeleteNode(root,val){
+  if(!root) return null;
+  if(val<root.val){root.left=bstDeleteNode(root.left,val);return root;}
+  if(val>root.val){root.right=bstDeleteNode(root.right,val);return root;}
+  if(!root.left) return root.right;
+  if(!root.right) return root.left;
+  let succ=root.right; while(succ.left) succ=succ.left;
+  root.val=succ.val; root.right=bstDeleteNode(root.right,succ.val); return root;
+}
+function bstLayout(root,x,y,spread){
+  if(!root) return;
+  root.x=x; root.y=y;
+  if(root.left) bstLayout(root.left,x-spread,y+55,spread/2);
+  if(root.right) bstLayout(root.right,x+spread,y+55,spread/2);
+}
+function bstDrawNode(ctx,root,highlight){
+  if(!root) return;
+  ctx.strokeStyle=highlight&&highlight===root.val?'#f97316':'#38bdf8';
+  ctx.lineWidth=2;
+  if(root.left){ctx.beginPath();ctx.moveTo(root.x,root.y);ctx.lineTo(root.left.x,root.left.y);ctx.strokeStyle='#2a3a50';ctx.lineWidth=1.5;ctx.stroke();}
+  if(root.right){ctx.beginPath();ctx.moveTo(root.x,root.y);ctx.lineTo(root.right.x,root.right.y);ctx.strokeStyle='#2a3a50';ctx.lineWidth=1.5;ctx.stroke();}
+  const col=highlight&&highlight===root.val?'#7c2d12':'#1e3a5f';
+  ctx.beginPath();ctx.arc(root.x,root.y,NODE_R,0,2*Math.PI);ctx.fillStyle=col;ctx.fill();
+  ctx.strokeStyle=highlight&&highlight===root.val?'#f97316':'#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(root.val,root.x,root.y);
+  bstDrawNode(ctx,root.left,highlight);bstDrawNode(ctx,root.right,highlight);
+}
+function bstRender(highlight){
+  const cv=document.getElementById('bst-canvas');
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,cv.width,cv.height);
+  if(!bstRoot) return;
+  bstLayout(bstRoot,cv.width/2,30,cv.width/4);
+  bstDrawNode(ctx,bstRoot,highlight);
+}
+function bstInsert(){
+  const v=parseInt(document.getElementById('bst-val').value);
+  if(isNaN(v)||v<1||v>999) return;
+  bstRoot=bstInsertNode(bstRoot,v);
+  bstRender(v);document.getElementById('bst-val').value='';
+  document.getElementById('bst-status').textContent=`${v} beszúrva.`;
+}
+function bstSearch(){
+  const v=parseInt(document.getElementById('bst-val').value);
+  if(isNaN(v)) return;
+  let cur=bstRoot, found=false;
+  while(cur){if(cur.val===v){found=true;break;}cur=v<cur.val?cur.left:cur.right;}
+  bstRender(v); document.getElementById('bst-status').textContent=found?`${v} megtalálva!`:`${v} nincs a fában.`;
+}
+function bstDelete(){
+  const v=parseInt(document.getElementById('bst-val').value);
+  if(isNaN(v)) return;
+  bstRoot=bstDeleteNode(bstRoot,v);bstRender();
+  document.getElementById('bst-status').textContent=`${v} törölve.`;
+}
+function bstClear(){bstRoot=null;bstRender();document.getElementById('bst-status').textContent='Fa törölve.';}
+function bstLoadPreset(vals){bstRoot=null;vals.forEach(v=>{bstRoot=bstInsertNode(bstRoot,v);});bstRender();document.getElementById('bst-status').textContent='Betöltve.';}
+function bstTraverse(order){
+  const result=[];
+  function inorder(n){if(!n)return;inorder(n.left);result.push(n.val);inorder(n.right);}
+  function preorder(n){if(!n)return;result.push(n.val);preorder(n.left);preorder(n.right);}
+  function postorder(n){if(!n)return;postorder(n.left);postorder(n.right);result.push(n.val);}
+  if(order==='inorder') inorder(bstRoot);
+  else if(order==='preorder') preorder(bstRoot);
+  else postorder(bstRoot);
+  document.getElementById('bst-traverse').textContent=result.join(' → ');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 5: CAYLEY
+function cayleyUpdate(n){
+  n=parseInt(n);
+  document.getElementById('cayley-n-label').textContent='n = '+n;
+  const count=Math.pow(n,n-2);
+  document.getElementById('cayley-count').textContent=`${n}^{${n}-2} = ${count}`;
+  document.getElementById('cayley-expl').textContent=`n=${n} csúcsú számozott fák száma: ${n}^${n-2} = ${count} db.`;
+  cayleyRandomTree(n);
+  if(n===4) cayleyDrawAll();
+  else{const cv=document.getElementById('cayley-all-canvas');const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,cv.width,cv.height);ctx.fillStyle='#8ba3bc';ctx.font='12px monospace';ctx.textAlign='center';ctx.fillText('n=4 esetén láthatók az összes fa',cv.width/2,cv.height/2);}
+}
+function cayleyRandomTree(n){
+  n=n||parseInt(document.getElementById('cayley-n').value);
+  if(n<2){return;}
+  const seq=Array.from({length:n-2},()=>Math.floor(Math.random()*n)+1);
+  const {edges}=pruferDecodeSeq(seq,n);
+  const nodes=pruferLayout(n);
+  drawTree(document.getElementById('cayley-canvas'),nodes,edges,null,null,Array.from({length:n},(_,i)=>i+1));
+}
+function cayleyDrawAll(){
+  // Draw all 16 labeled trees on 4 nodes
+  const cv=document.getElementById('cayley-all-canvas');
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#0a0f14'; ctx.fillRect(0,0,cv.width,cv.height);
+  const trees=[];
+  for(let a=1;a<=4;a++) for(let b=1;b<=4;b++){
+    const seq=[a,b]; const {edges}=pruferDecodeSeq(seq,4); trees.push(edges);
+  }
+  const cols=4, rows=4, cellW=cv.width/cols, cellH=cv.height/rows;
+  trees.forEach((edges,idx)=>{
+    const col=idx%cols, row=Math.floor(idx/cols);
+    const ox=col*cellW, oy=row*cellH;
+    const cx=ox+cellW/2, cy=oy+cellH/2;
+    const r=28;
+    const nodes=[{x:cx,y:cy-r},{x:cx+r,y:cy},{x:cx,y:cy+r},{x:cx-r,y:cy}];
+    edges.forEach(([a,b])=>{
+      ctx.strokeStyle='#2a4a6a';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(nodes[a].x,nodes[a].y);ctx.lineTo(nodes[b].x,nodes[b].y);ctx.stroke();
+    });
+    nodes.forEach((n,i)=>{
+      ctx.beginPath();ctx.arc(n.x,n.y,8,0,2*Math.PI);ctx.fillStyle='#1e3a5f';ctx.fill();
+      ctx.strokeStyle='#38bdf8';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,n.x,n.y);
+    });
+    ctx.fillStyle='#4a5a6a';ctx.font='7px monospace';ctx.textAlign='left';
+    ctx.fillText(`[${trees[idx].map(e=>e.map(x=>x+1).join('-')).join(',')}]`,ox+2,oy+cellH-4);
+  });
+}
+
+// Forest canvas
+function drawForest(){
+  const cv=document.getElementById('forest-canvas');
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,cv.width,cv.height);
+  const trees=[
+    {nodes:[{x:50,y:60},{x:30,y:120},{x:70,y:120}],edges:[[0,1],[0,2]]},
+    {nodes:[{x:150,y:50},{x:120,y:110},{x:150,y:110},{x:180,y:110},{x:150,y:150}],edges:[[0,1],[0,2],[0,3],[2,4]]},
+    {nodes:[{x:250,y:80},{x:250,y:140}],edges:[[0,1]]}
+  ];
+  trees.forEach(t=>{
+    t.edges.forEach(([a,b])=>{
+      ctx.strokeStyle='#2a4a6a';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(t.nodes[a].x,t.nodes[a].y);ctx.lineTo(t.nodes[b].x,t.nodes[b].y);ctx.stroke();
+    });
+    t.nodes.forEach((n,i)=>{
+      ctx.beginPath();ctx.arc(n.x,n.y,9,0,2*Math.PI);ctx.fillStyle='#1e3a5f';ctx.fill();ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.2;ctx.stroke();
+    });
+  });
+  ctx.fillStyle='#38bdf8';ctx.font='10px monospace';ctx.textAlign='center';
+  ctx.fillText('Erdő: 3 fa komponens, |E|=|V|-3',150,cv.height-8);
+}
+
+// ─────────────────────────────────────────────────────────────────
+function refreshAllCanvases(){
+  if(treeData) treeRender();
+  if(pruferTree) pruferRender();
+  if(centerData&&centerState) centerRender();
+  bstRender();
+  cayleyDrawAll();
+  drawForest();
+  drawAlkane(document.getElementById('alkane-n').value);
+}
+
+// INIT
+window.addEventListener('DOMContentLoaded',()=>{
+  treeLoadPreset('tree7');
+  pruferSetN(6);
+  centerLoadPreset('path8');
+  bstLoadPreset([5,3,7,2,4,6,8]);
+  cayleyUpdate(4);
+  drawForest();
+  drawAlkane(3);
+});
+</script>
+{% endblock %}

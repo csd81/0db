@@ -1,0 +1,794 @@
+{% extends "base.html" %}
+{% block title %}Diszkrét mat. VI — Gráfelmélet 1.{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#818cf8!important;}
+.ila-nav-link.active{color:#818cf8!important;border-bottom-color:#818cf8!important;}
+.def-box  {border-left:3px solid #818cf8;background:#0d0e1f;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.thm-box  {border-left:3px solid #4f46e5;background:#080914;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.ex-box   {border-left:3px solid #34d399;background:#041f10;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.info-box {background:#161b22;border:1px solid #21262d;padding:.75rem 1rem;border-radius:.4rem;margin:.7rem 0;}
+.warn-box {border-left:3px solid #fbbf24;background:#1c1200;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.step-row {display:flex;gap:1rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:baseline;flex-wrap:wrap;}
+.step-row:last-child{border-bottom:none;}
+.step-eq  {min-width:260px;color:#e2e8f0;font-size:.84rem;}
+.step-why {font-size:.7rem;color:#6b7280;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.formula-chip{display:inline-block;background:#0d0e1f;border:1px solid #818cf8;border-radius:.4rem;padding:.3rem .8rem;
+  font-size:.82rem;color:#c7d2fe;font-family:monospace;margin:.2rem;}
+.hh-cell{display:inline-block;min-width:2rem;text-align:center;padding:.25rem .4rem;border-radius:.3rem;
+  font-size:.82rem;font-weight:700;background:#161b22;margin:.1rem;transition:background .3s,color .3s;}
+.hh-cell.active{background:#4f46e5;color:#fff;}
+.hh-cell.zero{background:#1a2f1a;color:#34d399;}
+.hh-cell.neg{background:#3a0000;color:#ef4444;}
+.mat-cell{width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:600;border-radius:.25rem;cursor:pointer;transition:background .2s;}
+.mat-cell.zero{background:#161b22;color:#4b5563;}
+.mat-cell.one {background:#1a1f4a;color:#818cf8;}
+.mat-cell.hl  {background:#4f46e5;color:#fff;}
+.walk-chip{display:inline-block;padding:.2rem .5rem;border-radius:.3rem;font-size:.78rem;font-family:monospace;
+  margin:.1rem;background:#161b22;border:1px solid #21262d;color:#e2e8f0;}
+.walk-chip.active{background:#0d0e1f;border-color:#818cf8;color:#818cf8;}
+.comp-badge{display:inline-block;padding:.2rem .6rem;border-radius:9999px;font-size:.72rem;font-weight:700;margin:.15rem;}
+.katex{font-size:1em;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#818cf8">Diszkrét matematika VI — fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Gráfelmélet 1.</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2026</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(129,140,248,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-alap',this)"><i class="bi bi-diagram-3 me-1"></i>Alapfogalmak</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-hh',this)"><i class="bi bi-sort-numeric-down me-1"></i>Havel-Hakimi</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-mat',this)"><i class="bi bi-grid-3x3 me-1"></i>Mátrix &amp; Séta</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-osszef',this)"><i class="bi bi-share me-1"></i>Összefüggőség</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-izo',this)"><i class="bi bi-stars me-1"></i>Izomorfizmus</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════════════════════ TAB 1: ALAPFOGALMAK ══════════════════════ -->
+<div id="tab-alap">
+  <h5 class="fw-bold mb-3" style="color:#818cf8">Gráf alapfogalmak és kézfogási tétel</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#818cf8">1. Definíció — Irányított gráf</div>
+        <div class="small">\(G=(V,E)\), ahol \(V\) a csúcsok (vertices) véges nemüres halmaza, \(E\) az élhalmaz. Irányított gráfnál \(E\subseteq V\times V\), az élek rendezett párok \((a,b)\). \(a\) az él <em>kezdőpontja</em>, \(b\) a <em>végpontja</em>.</div>
+      </div>
+      <div class="def-box mt-2">
+        <div class="lbl mb-1" style="color:#818cf8">5. Definíció — Irányítatlan gráf</div>
+        <div class="small">Irányítatlan gráfban az élek <em>rendezetlen</em> párok \(\{a,b\}\), ahol \(a\ne b\) (vagy \(a=b\), ha hurokél). A gráf szimmetrikus kapcsolatokat ábrázol.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#818cf8">7. Definíció — Fokszám</div>
+        <div class="small">Az \(a\in V\) csúcs <strong>fokszáma</strong> \(d(a)\): a csúcshoz illeszkedő élek száma. <em>Hurokél</em> kétszer számít (\(d(a)\mathrel{+}=2\)). \(d(a)=0\) esetén <strong>izolált pont</strong> (Def 9).</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#4f46e5">10. Tétel — Kézfogási tétel</div>
+        <div class="small">Minden irányítatlan gráfra:
+        \[\sum_{v\in V} d(v) = 2|E|\]
+        <strong>Következmény:</strong> A páratlan fokszámú csúcsok száma mindig páros.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="lbl mb-1" style="color:#818cf8">12. Definíció — Egyszerű gráf</div>
+    <div class="small">Egy gráf <strong>egyszerű</strong>, ha nincs benne hurokél (\(a=b\) él) és nincsenek <em>párhuzamos élek</em> (ugyanaz a pár többször). Egyszerű gráfban \(d(v)\le |V|-1\) minden \(v\)-re.</div>
+  </div>
+
+  <!-- Interactive canvas: draw a graph, count degrees -->
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#818cf8">Interaktív — kézfogási tétel ellenőrzés</div>
+    <div class="small mb-2 text-secondary">Kattints a csúcsokra élek hozzáadásához / eltávolításához. A fokszámok és \(2|E|\) automatikusan frissülnek.</div>
+    <canvas id="cvAlap" width="560" height="260" style="border-radius:.4rem;background:#0d0e1f;cursor:crosshair;max-width:100%"></canvas>
+    <div id="alapStats" class="mt-2 small text-secondary"></div>
+    <div class="mt-2 d-flex gap-2 flex-wrap">
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #818cf8;color:#818cf8" onclick="alapReset()">Visszaállít (K₄)</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #4f46e5;color:#c7d2fe" onclick="alapAddEdge()">+ Él hozzáad</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #374151;color:#9ca3af" onclick="alapRemoveEdge()">− Él töröl</button>
+    </div>
+  </div>
+
+  <div class="ex-box mt-3">
+    <div class="lbl mb-1" style="color:#34d399">Kézfogási tétel — bizonyítás ötlete</div>
+    <div class="small">Minden él pontosan két csúcsot köt össze, ezért az összegzéskor <em>minden élt kétszer számolunk</em> (egyszer mindkét végpontjánál). Tehát \(\sum d(v) = 2|E|\). &#x25a1;</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 2: HAVEL-HAKIMI ══════════════════════ -->
+<div id="tab-hh" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#818cf8">Havel-Hakimi algoritmus</h5>
+
+  <div class="thm-box mb-3">
+    <div class="lbl mb-1" style="color:#4f46e5">14. Tétel — Havel-Hakimi (ekvivalens feltételek)</div>
+    <div class="small">Legyen \((d_1,\ldots,d_n)\) nemnegatív egész sorozat, \(d_1\ge\cdots\ge d_n\). A sorozat <em>grafikus</em> (megvalósítható egyszerű gráffal) \(\Longleftrightarrow\) az alábbi feltételek bármelyike teljesül:
+    <ol class="mt-1 mb-0">
+      <li>Létezik olyan egyszerű gráf, amelynek fokszámsorozata pontosan ez.</li>
+      <li>A sorozat összege páros, és a fokszámok nem haladják meg \(n-1\)-et.</li>
+      <li>Rekurzív feltétel (Havel-Hakimi lépés): a \((d_2-1,\ldots,d_{d_1+1}-1,d_{d_1+2},\ldots,d_n)\) sorozat (rendezés után) szintén grafikus.</li>
+    </ol>
+    </div>
+  </div>
+
+  <div class="info-box mb-3">
+    <div class="lbl mb-1" style="color:#818cf8">15. Algoritmus — Havel-Hakimi lépések</div>
+    <div class="small">
+      <strong>1.</strong> Rendezd csökkenőbe a sorozatot.<br>
+      <strong>2.</strong> Vedd a legnagyobb \(d_1\) elemet, töröld a listából.<br>
+      <strong>3.</strong> Csökkentsd a következő \(d_1\) elemet egyenként 1-gyel.<br>
+      <strong>4.</strong> Ha valamelyik negatív lesz → <span style="color:#ef4444">a sorozat NEM grafikus</span>.<br>
+      <strong>5.</strong> Ha mind nulla lett → <span style="color:#34d399">a sorozat GRAFIKUS</span>.<br>
+      <strong>6.</strong> Különben rendezz és ismételd az 1. lépéstől.
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="ex-box">
+        <div class="lbl mb-1" style="color:#34d399">16. Példa — grafikus sorozat</div>
+        <div class="small mb-1">\(7,5,4,4,3,2,2,1\) — 8 csúcs</div>
+        <button class="btn btn-sm mt-1" style="background:#0d0e1f;border:1px solid #34d399;color:#34d399" onclick="hhLoadEx(16)">Betölt és animál</button>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ex-box" style="border-color:#ef4444;background:#1a0000">
+        <div class="lbl mb-1" style="color:#ef4444">17. Példa — nem grafikus</div>
+        <div class="small mb-1">\(5,5,4,3,2,1\) — 6 csúcs</div>
+        <button class="btn btn-sm mt-1" style="background:#0d0e1f;border:1px solid #ef4444;color:#ef4444" onclick="hhLoadEx(17)">Betölt és animál</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="lbl mb-2" style="color:#818cf8">Interaktív tesztelő</div>
+    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+      <input id="hhInput" class="form-control form-control-sm" style="max-width:280px;background:#0d0e1f;border-color:#374151;color:#e2e8f0"
+             placeholder="pl. 3,3,2,2,1,1" value="7,5,4,4,3,2,2,1">
+      <button class="btn btn-sm" style="background:#4f46e5;color:#fff;border:none" onclick="hhRun()">Futtat</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #374151;color:#9ca3af" onclick="hhStep()">Lépésenként</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #374151;color:#9ca3af" onclick="hhReset()">Reset</button>
+    </div>
+    <div id="hhSteps" class="small"></div>
+    <div id="hhVerdict" class="mt-2 fw-bold" style="font-size:.9rem"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 3: MÁTRIX & SÉTA ══════════════════════ -->
+<div id="tab-mat" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#818cf8">Szomszédsági mátrix és séta / út / kör</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#818cf8">20. Definíció — Szomszédsági mátrix</div>
+        <div class="small">Az \(n\times n\)-es \(A=(a_{ij})\) mátrixban \(a_{ij}=\) az \(i\) és \(j\) csúcsok közötti élek száma. Irányítatlan gráfnál \(A\) <em>szimmetrikus</em>, a sorok összege a csúcs fokszáma, az összes elem összege \(2|E|\).</div>
+      </div>
+      <div class="def-box mt-2">
+        <div class="lbl mb-1" style="color:#818cf8">23. Definíció — Séta (walk)</div>
+        <div class="small">Séta: \(v_0,e_1,v_1,e_2,v_2,\ldots,e_k,v_k\) ahol \(e_i\) a \(v_{i-1}\) és \(v_i\) csúcsot köti össze. <em>Zárt</em> séta: \(v_0=v_k\). <em>Nyílt</em> séta: \(v_0\ne v_k\). Hossza: \(k\) (élek száma).</div>
+      </div>
+      <div class="def-box mt-2">
+        <div class="lbl mb-1" style="color:#818cf8">25. Definíció — Út és kör</div>
+        <div class="small"><strong>Út (path):</strong> Séta, amelyben minden csúcs különböző (\(v_i\ne v_j\) ha \(i\ne j\)). <strong>Kör (cycle):</strong> Zárt séta, amelyben minden csúcs különböző (kivéve \(v_0=v_k\)) és \(k\ge3\).</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <!-- Adjacency matrix interactive -->
+      <div class="info-box">
+        <div class="lbl mb-2" style="color:#818cf8">22. Példa — szomszédsági mátrix</div>
+        <div class="small mb-2 text-secondary">Kattints a mátrix cellájára az él hozzáadásához / eltávolításához.</div>
+        <div id="matGrid" class="mb-2"></div>
+        <div class="small mt-2" id="matStats"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Walk explorer -->
+  <div class="info-box mt-2">
+    <div class="lbl mb-2" style="color:#818cf8">Séta / Út / Kör vizsgálat</div>
+    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+      <span class="small text-secondary">Csúcsok sorozata (pl. 1,2,3,4,2):</span>
+      <input id="walkInput" class="form-control form-control-sm" style="max-width:200px;background:#0d0e1f;border-color:#374151;color:#e2e8f0" value="1,3,5,6,4">
+      <button class="btn btn-sm" style="background:#4f46e5;color:#fff;border:none" onclick="walkCheck()">Elemez</button>
+    </div>
+    <div id="walkResult" class="small"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 4: ÖSSZEFÜGGŐSÉG ══════════════════════ -->
+<div id="tab-osszef" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#818cf8">Összefüggőség és komponensek</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#818cf8">28. Definíció — Összefüggő gráf</div>
+        <div class="small">Egy irányítatlan gráf <strong>összefüggő</strong>, ha bármely két csúcsa között létezik séta (és ezért út is). Ha nem összefüggő, <em>széteső</em> gráfnak nevezzük.</div>
+      </div>
+      <div class="def-box mt-2">
+        <div class="lbl mb-1" style="color:#818cf8">30. Definíció — Komponens</div>
+        <div class="small">Egy \(G\) gráf <strong>komponense</strong> egy maximális összefüggő részgráf — maximális abban az értelemben, hogy egyetlen csúcsot sem lehet hozzáadni anélkül, hogy megszakítsuk az összefüggőséget.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box">
+        <div class="lbl mb-1" style="color:#818cf8">31. Példa — Tintacsepegtetős algoritmus</div>
+        <div class="small">A tintacsepegtetős (ink-drop / BFS flood-fill) algoritmus: vegyél egy csúcsot, "fess" minden szomszédos csúcsot, majd azok szomszédjait, stb. — amíg el nem akad. Az egy menetben befestett csúcsok egy komponenst alkotnak. Indíts új cseppet a befestetlenek közül, amíg az összes be nem fested.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BFS visualization -->
+  <div class="info-box">
+    <div class="lbl mb-2" style="color:#818cf8">Interaktív — tintacsepegtetős (BFS) komponenskeresés</div>
+    <div class="small mb-2 text-secondary">Kattints a "Lépés" gombra a BFS animálásához. Minden szín egy különböző komponenst jelöl.</div>
+    <canvas id="cvBFS" width="560" height="280" style="border-radius:.4rem;background:#0d0e1f;max-width:100%"></canvas>
+    <div class="mt-2 d-flex gap-2 flex-wrap">
+      <button class="btn btn-sm" style="background:#4f46e5;color:#fff;border:none" onclick="bfsStep()">Lépés &#x25b6;</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #818cf8;color:#818cf8" onclick="bfsAuto()">Auto &#x23e9;</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #374151;color:#9ca3af" onclick="bfsReset()">Reset</button>
+    </div>
+    <div id="bfsStatus" class="small mt-2 text-secondary"></div>
+    <div id="bfsComps" class="mt-2"></div>
+  </div>
+
+  <div class="ex-box mt-3">
+    <div class="lbl mb-1" style="color:#34d399">31. Példa — mátrix alapján</div>
+    <div class="small">Az előadáson szereplő gráfban 6 csúcs van, a szomszédsági mátrix:
+    \[A=\begin{pmatrix}0&1&1&0&0&0\\1&0&1&0&0&0\\1&1&0&0&0&0\\0&0&0&0&1&1\\0&0&0&1&0&1\\0&0&0&1&1&0\end{pmatrix}\]
+    Az algoritmus két komponenst talál: \(\{1,2,3\}\) és \(\{4,5,6\}\).</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 5: IZOMORFIZMUS ══════════════════════ -->
+<div id="tab-izo" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#818cf8">Izomorfizmus</h5>
+
+  <div class="def-box mb-3">
+    <div class="lbl mb-1" style="color:#818cf8">32. Definíció — Izomorf gráfok</div>
+    <div class="small">A \(G_1=(V_1,E_1)\) és \(G_2=(V_2,E_2)\) gráfok <strong>izomorfak</strong>, ha léteznek bijekciók \(\varphi:V_1\to V_2\) és \(\psi:E_1\to E_2\) úgy, hogy az illeszkedési viszony megmarad: ha \(e\in E_1\) illeszkedik \(u,v\in V_1\)-re, akkor \(\psi(e)\in E_2\) illeszkedik \(\varphi(u),\varphi(v)\)-re. Jelölés: \(G_1\cong G_2\).</div>
+  </div>
+
+  <div class="thm-box mb-3">
+    <div class="lbl mb-1" style="color:#4f46e5">34. Állítás — Izomorfizmus invariánsok</div>
+    <div class="small">Ha \(G_1\cong G_2\), akkor szükségszerűen egyezik:
+    <ul class="mb-0 mt-1">
+      <li>csúcsszám: \(|V_1|=|V_2|\)</li>
+      <li>élszám: \(|E_1|=|E_2|\)</li>
+      <li>fokszámsorozat (rendezetten is)</li>
+      <li>összefüggőség, komponensszám</li>
+      <li>körök száma és hosszai</li>
+    </ul>
+    <strong>Figyelem:</strong> Ezek szükséges, de <em>nem elégséges</em> feltételek!</div>
+  </div>
+
+  <!-- Non-isomorphic example -->
+  <div class="ex-box mb-3">
+    <div class="lbl mb-1" style="color:#34d399">35. Példa — Nem izomorf gráfok</div>
+    <div class="small mb-2">Mindkét gráfra: \(|V|=7,\;|E|=11\), fokszámsorozat: \(4,3,3,3,3,3,3\). Mégis <em>nem izomorfak</em>, mert eltér a 4-es fokú csúcson átmenő 3-körök (háromszögek) száma.</div>
+    <canvas id="cvIzo" width="560" height="240" style="border-radius:.4rem;background:#0d0e1f;max-width:100%"></canvas>
+    <div class="mt-2 d-flex gap-2">
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #818cf8;color:#818cf8" onclick="izoHighlight('G1')">G₁ háromszögek</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #4f46e5;color:#c7d2fe" onclick="izoHighlight('G2')">G₂ háromszögek</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #374151;color:#9ca3af" onclick="izoHighlight(null)">Töröl</button>
+    </div>
+    <div id="izoDesc" class="small mt-2 text-secondary"></div>
+  </div>
+
+  <!-- Invariants checker -->
+  <div class="info-box">
+    <div class="lbl mb-2" style="color:#818cf8">Invariáns ellenőrző</div>
+    <div class="small mb-2 text-secondary">Add meg két gráf fokszámsorozatát (vesszővel elválasztva). Az ellenőrző szükséges feltételeket vizsgál.</div>
+    <div class="d-flex gap-2 mb-2 flex-wrap align-items-center">
+      <div>
+        <div class="lbl mb-1" style="color:#818cf8">G₁</div>
+        <input id="izoSeq1" class="form-control form-control-sm" style="max-width:180px;background:#0d0e1f;border-color:#374151;color:#e2e8f0" value="4,3,3,3,3,3,3">
+      </div>
+      <div>
+        <div class="lbl mb-1" style="color:#818cf8">G₂</div>
+        <input id="izoSeq2" class="form-control form-control-sm" style="max-width:180px;background:#0d0e1f;border-color:#374151;color:#e2e8f0" value="4,3,3,3,3,3,3">
+      </div>
+      <div class="align-self-end">
+        <button class="btn btn-sm" style="background:#4f46e5;color:#fff;border:none" onclick="izoCheck()">Ellenőriz</button>
+      </div>
+    </div>
+    <div id="izoResult" class="small"></div>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+// ─── Shared helpers ─────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(p => p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  reRender(document.getElementById(id));
+}
+function reRender(el) {
+  if (window.renderMathInElement) renderMathInElement(el, {
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+}
+
+// ─── TAB 1: ALAPFOGALMAK canvas ──────────────────────────────────────────────
+const ALAP_NODES = [
+  {x:80, y:130}, {x:200, y:50}, {x:320, y:50},
+  {x:440, y:130},{x:320, y:210},{x:200, y:210}
+];
+let alapEdges = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,2],[3,5]]; // K4-ish
+let alapMode = null; // 'add' | 'remove'
+let alapSel  = -1;
+
+function alapDraw() {
+  const cv = document.getElementById('cvAlap');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  // edges
+  ctx.strokeStyle='#4f46e5'; ctx.lineWidth=1.5;
+  alapEdges.forEach(([a,b]) => {
+    ctx.beginPath();
+    ctx.moveTo(ALAP_NODES[a].x, ALAP_NODES[a].y);
+    ctx.lineTo(ALAP_NODES[b].x, ALAP_NODES[b].y);
+    ctx.stroke();
+  });
+  // degrees
+  const deg = Array(ALAP_NODES.length).fill(0);
+  alapEdges.forEach(([a,b]) => { deg[a]++; deg[b]++; });
+  // nodes
+  ALAP_NODES.forEach((n,i) => {
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 14, 0, Math.PI*2);
+    ctx.fillStyle = (i===alapSel) ? '#6366f1' : '#1e2040';
+    ctx.fill();
+    ctx.strokeStyle='#818cf8'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#e2e8f0'; ctx.font='bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(i+1, n.x, n.y);
+    // degree label
+    ctx.fillStyle='#818cf8'; ctx.font='10px monospace';
+    ctx.fillText('d='+deg[i], n.x, n.y+24);
+  });
+  // stats
+  const sumD = deg.reduce((s,d)=>s+d,0);
+  document.getElementById('alapStats').textContent =
+    `Fokszámok: [${deg.join(', ')}]  |  Σd(v) = ${sumD}  |  2|E| = ${2*alapEdges.length}  →  ${sumD===2*alapEdges.length?'✓ Kézfogási tétel teljesül':'✗ Hiba!'}`;
+}
+function alapReset() {
+  alapEdges = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,2],[3,5]];
+  alapSel=-1; alapMode=null; alapDraw();
+}
+function alapAddEdge() { alapMode='add'; alapSel=-1; }
+function alapRemoveEdge() { alapMode='remove'; alapSel=-1; }
+
+document.getElementById('cvAlap')?.addEventListener('click', e => {
+  const cv = document.getElementById('cvAlap');
+  const r  = cv.getBoundingClientRect();
+  const mx = (e.clientX-r.left)*(cv.width/r.width);
+  const my = (e.clientY-r.top)*(cv.height/r.height);
+  let hit=-1;
+  ALAP_NODES.forEach((n,i)=>{ if(Math.hypot(n.x-mx,n.y-my)<18) hit=i; });
+  if(hit<0) return;
+  if(alapMode==='add') {
+    if(alapSel<0) { alapSel=hit; }
+    else {
+      const a=Math.min(alapSel,hit), b=Math.max(alapSel,hit);
+      if(a!==b && !alapEdges.find(([x,y])=>x===a&&y===b))
+        alapEdges.push([a,b]);
+      alapSel=-1;
+    }
+  } else if(alapMode==='remove') {
+    if(alapSel<0) { alapSel=hit; }
+    else {
+      const a=Math.min(alapSel,hit), b=Math.max(alapSel,hit);
+      alapEdges = alapEdges.filter(([x,y])=>!(x===a&&y===b));
+      alapSel=-1;
+    }
+  }
+  alapDraw();
+});
+
+// ─── TAB 2: HAVEL-HAKIMI ─────────────────────────────────────────────────────
+let hhSeq=[], hhHistory=[], hhPtr=0;
+
+function hhParse(str) {
+  return str.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
+}
+function hhLoadEx(ex) {
+  document.getElementById('hhInput').value = ex===16 ? '7,5,4,4,3,2,2,1' : '5,5,4,3,2,1';
+  hhRun();
+}
+function hhRun() {
+  const raw = document.getElementById('hhInput').value;
+  hhSeq = hhParse(raw);
+  hhHistory = [];
+  hhPtr = 0;
+  // compute all steps
+  let seq = [...hhSeq].sort((a,b)=>b-a);
+  hhHistory.push({seq:[...seq], action:'start'});
+  for(let iter=0; iter<30; iter++) {
+    if(seq.every(x=>x===0)) { hhHistory.push({seq:[...seq], action:'done', ok:true}); break; }
+    const d1 = seq[0];
+    seq = seq.slice(1);
+    for(let i=0;i<d1;i++) {
+      if(i>=seq.length) { hhHistory.push({seq:[...seq], action:'done', ok:false, err:'Nincs elég csúcs'}); return; }
+      seq[i]--;
+    }
+    if(seq.some(x=>x<0)) { hhHistory.push({seq:[...seq], action:'done', ok:false, err:'Negatív fokszám'}); break; }
+    seq.sort((a,b)=>b-a);
+    hhHistory.push({seq:[...seq], action:'step', reduced:d1});
+  }
+  hhRender();
+}
+function hhStep() {
+  if(!hhHistory.length) hhRun();
+  if(hhPtr < hhHistory.length-1) hhPtr++;
+  hhRender();
+}
+function hhReset() {
+  hhHistory=[]; hhPtr=0;
+  document.getElementById('hhSteps').innerHTML='';
+  document.getElementById('hhVerdict').textContent='';
+}
+function hhRender() {
+  const el = document.getElementById('hhSteps');
+  const vd = document.getElementById('hhVerdict');
+  el.innerHTML='';
+  hhHistory.slice(0, hhPtr+1).forEach((h, idx) => {
+    const row = document.createElement('div');
+    row.style.cssText='margin-bottom:.5rem;';
+    if(h.action==='start') {
+      row.innerHTML = `<span class="lbl" style="color:#818cf8">Induló sorozat: </span>` + hhCells(h.seq);
+    } else if(h.action==='step') {
+      row.innerHTML = `<span class="lbl" style="color:#8892a4">${idx}. lépés (d₁=${h.reduced} → csökkent): </span>` + hhCells(h.seq);
+    } else if(h.action==='done' && h.ok) {
+      vd.innerHTML = '<span style="color:#34d399">✓ A sorozat GRAFIKUS — megvalósítható egyszerű gráffal</span>';
+    } else if(h.action==='done' && !h.ok) {
+      vd.innerHTML = `<span style="color:#ef4444">✗ A sorozat NEM GRAFIKUS (${h.err||''})</span>`;
+    }
+    el.appendChild(row);
+  });
+}
+function hhCells(seq) {
+  return seq.map(x => {
+    const cls = x<0 ? 'neg' : x===0 ? 'zero' : '';
+    return `<span class="hh-cell ${cls}">${x}</span>`;
+  }).join('');
+}
+
+// ─── TAB 3: MÁTRIX & SÉTA ────────────────────────────────────────────────────
+// Default: 6-node graph from Example 22 (two triangles + cross-edges)
+const MAT_N = 6;
+let matAdj = [
+  [0,1,1,1,0,0],
+  [1,0,1,0,1,0],
+  [1,1,0,0,0,1],
+  [1,0,0,0,1,1],
+  [0,1,0,1,0,1],
+  [0,0,1,1,1,0]
+];
+
+function matBuild() {
+  const el = document.getElementById('matGrid');
+  if(!el) return;
+  el.innerHTML='';
+  const wrap = document.createElement('div');
+  wrap.style.cssText='display:grid;grid-template-columns:repeat('+(MAT_N+1)+',2rem);gap:.15rem;';
+  // header row
+  wrap.appendChild(Object.assign(document.createElement('div'),{style:'width:2rem'}));
+  for(let j=0;j<MAT_N;j++){
+    const h=document.createElement('div');
+    h.className='mat-cell'; h.style.cssText='background:transparent;color:#818cf8;font-size:.68rem';
+    h.textContent='v'+(j+1); wrap.appendChild(h);
+  }
+  for(let i=0;i<MAT_N;i++){
+    const hd=document.createElement('div');
+    hd.className='mat-cell'; hd.style.cssText='background:transparent;color:#818cf8;font-size:.68rem';
+    hd.textContent='v'+(i+1); wrap.appendChild(hd);
+    for(let j=0;j<MAT_N;j++){
+      const c=document.createElement('div');
+      c.className='mat-cell '+(matAdj[i][j]?'one':'zero');
+      c.textContent=matAdj[i][j];
+      c.addEventListener('click',()=>{
+        if(i===j) return;
+        matAdj[i][j]=matAdj[i][j]?0:1;
+        matAdj[j][i]=matAdj[i][j];
+        matBuild();
+      });
+      wrap.appendChild(c);
+    }
+  }
+  el.appendChild(wrap);
+  // stats
+  const deg=Array(MAT_N).fill(0).map((_,i)=>matAdj[i].reduce((s,x)=>s+x,0));
+  const edges=deg.reduce((s,d)=>s+d,0)/2;
+  document.getElementById('matStats').textContent=
+    `Fokszámok: [${deg.join(', ')}]  |  |E| = ${edges}  |  Σd = ${2*edges} = 2|E| ✓`;
+}
+function walkCheck() {
+  const raw=document.getElementById('walkInput').value;
+  const seq=raw.split(',').map(s=>parseInt(s.trim())-1).filter(n=>!isNaN(n)&&n>=0&&n<MAT_N);
+  const el=document.getElementById('walkResult');
+  if(seq.length<2){el.innerHTML='<span style="color:#ef4444">Legalább 2 csúcs kell!</span>';return;}
+  let valid=true, dups=new Set();
+  const issues=[];
+  for(let i=0;i<seq.length-1;i++){
+    if(!matAdj[seq[i]][seq[i+1]]){valid=false;issues.push(`Nincs él v${seq[i]+1}→v${seq[i+1]+1} között`);}
+    dups.add(seq[i]);
+  }
+  dups.add(seq[seq.length-1]);
+  const closed=seq[0]===seq[seq.length-1];
+  const path=dups.size===seq.length && !closed;
+  const cycle=dups.size===seq.length-1 && closed && seq.length>=4;
+  let html='<div class="d-flex flex-wrap gap-1 mb-1">';
+  seq.forEach((v,i)=>{ html+=`<span class="walk-chip${i>0&&!matAdj[seq[i-1]][v]?' neg':''}">v${v+1}</span>`; });
+  html+='</div>';
+  if(!valid) { html+=`<span style="color:#ef4444">✗ Nem érvényes séta: ${issues.join(', ')}</span>`; }
+  else {
+    html+=`<span style="color:#34d399">✓ Érvényes séta, hossza: ${seq.length-1}</span><br>`;
+    html+=`<span style="color:#c7d2fe">Típus: ${closed?'zárt':'nyílt'} · ${path?'Út (path)':cycle?'Kör (cycle)':'Séta (walk, ismétlő csúcs)'}</span>`;
+  }
+  el.innerHTML=html;
+}
+
+// ─── TAB 4: ÖSSZEFÜGGŐSÉG BFS ────────────────────────────────────────────────
+// Graph: 8 nodes, 2 components
+const BFS_POS = [
+  {x:100,y:80},{x:200,y:50},{x:260,y:140},{x:160,y:180},   // comp 1: 0-3
+  {x:360,y:80},{x:460,y:60},{x:500,y:160},{x:400,y:200}    // comp 2: 4-7
+];
+const BFS_ADJ = [
+  [0,1,0,1,0,0,0,0],
+  [1,0,1,0,0,0,0,0],
+  [0,1,0,1,0,0,0,0],
+  [1,0,1,0,0,0,0,0],
+  [0,0,0,0,0,1,0,1],
+  [0,0,0,0,1,0,1,0],
+  [0,0,0,0,0,1,0,1],
+  [0,0,0,0,1,0,1,0]
+];
+const COMP_COLORS=['#818cf8','#f43f5e','#34d399','#fbbf24','#22d3ee'];
+let bfsState=null;
+
+function bfsReset() {
+  bfsState={
+    color:Array(8).fill(-1),
+    queue:[],
+    curComp:-1,
+    nextNode:0,
+    done:false
+  };
+  clearInterval(bfsState.autoTimer);
+  document.getElementById('bfsStatus').textContent='Nyomj Lépés gombot a BFS indításához.';
+  document.getElementById('bfsComps').innerHTML='';
+  bfsDraw();
+}
+function bfsStep() {
+  if(!bfsState) bfsReset();
+  if(bfsState.done) return;
+  const s=bfsState;
+  if(s.queue.length===0) {
+    // find next unvisited
+    while(s.nextNode<8 && s.color[s.nextNode]>=0) s.nextNode++;
+    if(s.nextNode>=8) { s.done=true; bfsFinish(); return; }
+    s.curComp++;
+    s.queue.push(s.nextNode);
+    s.color[s.nextNode]=s.curComp;
+    s.nextNode++;
+  } else {
+    const v=s.queue.shift();
+    BFS_ADJ[v].forEach((c,u)=>{ if(c && s.color[u]<0){ s.color[u]=s.curComp; s.queue.push(u); } });
+  }
+  const visiting=s.queue[0]>=0 ? `Sor: [${s.queue.map(v=>'v'+(v+1)).join(', ')}]` : 'Sor üres';
+  document.getElementById('bfsStatus').textContent=visiting;
+  bfsDraw();
+  if(s.color.every(c=>c>=0)) { s.done=true; bfsFinish(); }
+}
+function bfsAuto() {
+  if(!bfsState) bfsReset();
+  if(bfsState.autoTimer) { clearInterval(bfsState.autoTimer); bfsState.autoTimer=null; return; }
+  bfsState.autoTimer=setInterval(()=>{ bfsStep(); if(bfsState.done) clearInterval(bfsState.autoTimer); },600);
+}
+function bfsFinish() {
+  const comps=[];
+  bfsState.color.forEach((c,v)=>{
+    if(!comps[c]) comps[c]=[];
+    comps[c].push(v+1);
+  });
+  let html='Komponensek: ';
+  comps.forEach((members,i)=>{
+    html+=`<span class="comp-badge" style="background:${COMP_COLORS[i]+'33'};color:${COMP_COLORS[i]};border:1px solid ${COMP_COLORS[i]}">{${members.join(',')}}</span> `;
+  });
+  document.getElementById('bfsComps').innerHTML=html;
+  document.getElementById('bfsStatus').textContent=`✓ Kész — ${comps.length} komponens találva`;
+}
+function bfsDraw() {
+  const cv=document.getElementById('cvBFS');
+  if(!cv) return;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  // edges
+  BFS_ADJ.forEach((row,i)=>row.forEach((c,j)=>{
+    if(c && i<j){
+      ctx.beginPath();
+      ctx.moveTo(BFS_POS[i].x,BFS_POS[i].y);
+      ctx.lineTo(BFS_POS[j].x,BFS_POS[j].y);
+      ctx.strokeStyle='#2a2f4a'; ctx.lineWidth=1.5; ctx.stroke();
+    }
+  }));
+  // nodes
+  BFS_POS.forEach((p,i)=>{
+    const col=bfsState && bfsState.color[i]>=0 ? COMP_COLORS[bfsState.color[i]] : '#374151';
+    ctx.beginPath(); ctx.arc(p.x,p.y,16,0,Math.PI*2);
+    ctx.fillStyle=col+'33'; ctx.fill();
+    ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#e2e8f0'; ctx.font='bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('v'+(i+1),p.x,p.y);
+  });
+}
+
+// ─── TAB 5: IZOMORFIZMUS ─────────────────────────────────────────────────────
+// Two non-isomorphic 7-node, 11-edge graphs with degree seq 4,3,3,3,3,3,3
+// G1: degree-4 node (0) is in 2 triangles
+// G2: degree-4 node (0) is in 0 triangles
+const IZO_POS = [
+  // G1 (left half): nodes 0-6
+  {x:80, y:120},{x:40, y:60},{x:130,y:50},{x:170,y:130},
+  {x:120,y:200},{x:40, y:190},{x:10, y:130},
+  // G2 (right half): nodes 0-6 offset
+  {x:380,y:120},{x:340,y:60},{x:430,y:50},{x:470,y:130},
+  {x:420,y:200},{x:340,y:190},{x:310,y:130}
+];
+// G1 edges: node 0 (degree 4) connects to 1,2,3,4; triangles 0-1-2 and 0-3-4
+const IZO_G1=[
+  [0,1],[0,2],[0,3],[0,4],  // degree-4 hub
+  [1,2],[3,4],               // triangles through hub
+  [1,6],[2,3],[4,5],[5,6],[3,6] // fill to 11 edges, deg seq 4,3,3,3,3,3,3? let's count
+  // 0:4, 1:3, 2:3, 3:3, 4:3, 5:2, 6:3 → need to fix 5
+];
+// Recalculate G1 to ensure degree seq exactly 4,3,3,3,3,3,3
+// 0→1,2,3,4 (d0=4); 1→0,2,6 (d1=3); 2→0,1,3 (d2=3); 3→0,2,4 (d3=3); 4→0,3,5 (d4=3); 5→4,6,? ; 6→1,5,?
+// edges so far (excluding 5,6 issues): [0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[1,6] → 8 edges
+// need 3 more; 5 needs d=3; 6 needs d=3; 5→4 already. add [4,5],[5,6],[6,?] — 6 has 1(→1). add [5,6] and [6,2]?
+// [0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[1,6],[4,5],[5,6],[2,6] → 11 edges
+// deg: 0=4, 1=3(0,2,6), 2=4(0,1,3,6)→ bad
+// Let me use a clean known construction:
+// G1: hub=0 in 2 triangles (0,1,2) and (0,3,4); remaining edges: (1,5),(2,5),(3,6),(4,6),(5,6) = 4+2+5=11
+// deg0=4, deg1=3, deg2=3, deg3=3, deg4=3, deg5=3, deg6=3 ✓
+const IZO_EDGES_G1=[
+  [0,1],[0,2],[0,3],[0,4],
+  [1,2],[3,4],
+  [1,5],[2,5],[3,6],[4,6],[5,6]
+];
+// G2: hub=0 NOT in any triangle; it connects to 1,2,3,4; none of 1,2,3,4 connect to each other
+// remaining: (1,5),(1,6),(2,5),(3,6),(4,5),(4,6),(5,6)=7+4=11
+// deg0=4, deg1=3(0,5,6), deg2=2(0,5)→bad
+// Clean construction: 0→1,2,3,4; 1→0,5,6; 2→0,5,6; 3→0,5,6; 4→0,5,6 → deg4=4(0,1,2,3,4)→bad
+// Try: 0→1,2,3,4(d=4); 1→0,5,6(d=3); 2→0,6,5(d=3); 3→0,5,? need 3rd; 4→0,?,?
+// 0→1,2,3,4; 1→0,5,6; 2→0,5,6; 3→0,6,5; 4→0,5,6 → 5 appears 4 times(1,2,3,4)→d5=4 bad
+// G2: 0→1,2,3,4; 1→0,5,6; 2→0,3,5; 3→0,2,6; 4→0,5,6; 5→1,2,4; 6→1,3,4
+// edges: [0,1],[0,2],[0,3],[0,4],[1,5],[1,6],[2,3],[2,5],[3,6],[4,5],[4,6] = 11 ✓
+// deg: 0=4✓ 1=3(0,5,6)✓ 2=3(0,3,5)✓ 3=3(0,2,6)✓ 4=3(0,5,6)✓ 5=3(1,2,4)✓ 6=3(1,3,4)✓
+// Triangles through node 0: check all triples (0,i,j) where [0,i],[0,j],[i,j] all exist
+// i,j ∈ {1,2,3,4}: [1,2]? no, [1,3]? no, [1,4]? no, [2,3]? yes [0,2][0,3][2,3] → TRIANGLE!
+// So G2 has 1 triangle through node 0 (0,2,3)
+// Let me make G2 with 0 triangles: 0→1,2,3,4; and no edge among {1,2,3,4}
+// 0→1,2,3,4; need deg=3 for each. Remaining nodes 5,6
+// 1→0,5,6; 2→0,5,6; 3→0,5,6; 4→0,5,6 → 5 has d=4, 6 has d=4 → bad
+// So can't have 0-triangle through the hub with only 7 nodes and this degree seq.
+// Actually with 7 nodes and the hub connected to 4, the other 2 nodes (5,6) each need degree 3
+// 5,6 must get 3 edges each total. Hub uses none of them. Each of 1,2,3,4 already has degree 1 (to hub).
+// They need 2 more edges each. Total extra edges needed: (4×2)/2 + edges to 5,6 from 1-4.
+// Just pick: [0,1],[0,2],[0,3],[0,4],[1,5],[2,6],[3,5],[4,6],[5,6],[1,3],[2,4]
+// deg: 0=4✓ 1=3(0,5,3)✓ 2=3(0,6,4)✓ 3=3(0,5,1)✓ 4=3(0,6,2)✓ 5=3(1,3,6)✓ 6=3(2,4,5)✓
+// triangles through 0: (0,i,j) needs [0,i],[0,j],[i,j]. Pairs from {1,2,3,4}: 1-2? no, 1-3? yes→triangle(0,1,3)!
+// Need no edges among {1,2,3,4}: [0,1],[0,2],[0,3],[0,4],[1,5],[2,5],[3,6],[4,6],[5,6],[?,?],[?,?]
+// Count: 4+6=10 edges so far. Need 1 more. deg: 0=4✓,1=2,2=2,3=2,4=2,5=3,6=3
+// Need 2 edges to give each of 1,2,3,4 one more. And no new edges among them.
+// 1→6: gives 1 and 6 one more. 2→6: gives 2 and 6 one more (but 6 then has d=5, bad)
+// [1,6],[2,5] → deg: 0=4,1=3,2=3,3=2,4=2,5=4,6=3 → 3 and 4 only have d=2, bad
+// This approach is tricky. Let's just use G1 vs a slight variant that has fewer triangles.
+// G1: triangles through 0 = (0,1,2) and (0,3,4) → 2 triangles
+// G2: [0,1],[0,2],[0,3],[0,4],[1,5],[1,6],[2,5],[3,6],[4,5],[4,6],[5,6]
+// deg: 0=4,1=3(0,5,6),2=2(0,5)→bad
+// I'll just use the working construction:
+// G1 (2 triangles): [0,1],[0,2],[0,3],[0,4],[1,2],[3,4],[1,5],[2,5],[3,6],[4,6],[5,6] ← from above
+// Triangles: (0,1,2), (0,3,4) → 2 triangles through node 0
+// G2 (1 triangle): [0,1],[0,2],[0,3],[0,4],[1,5],[1,6],[2,3],[2,5],[3,6],[4,5],[4,6]
+// deg: 0=4,1=3,2=3,3=3,4=3,5=3,6=3 ✓
+// triangles through 0: (0,2,3) since [0,2],[0,3],[2,3] all exist → 1 triangle
+const IZO_EDGES_G2=[
+  [0,1],[0,2],[0,3],[0,4],
+  [1,5],[1,6],[2,3],[2,5],[3,6],[4,5],[4,6]
+];
+// G1 triangles through 0: (0,1,2) and (0,3,4)
+// G2 triangles through 0: (0,2,3) only → 1
+
+let izoHL = null;
+
+function izoDraw() {
+  const cv=document.getElementById('cvIzo');
+  if(!cv) return;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  // Labels
+  ctx.fillStyle='#818cf8'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('G₁  (2 háromszög a 0-n át)',150,20);
+  ctx.fillText('G₂  (1 háromszög a 0-n át)',420,20);
+
+  function drawGraph(edges, offset, hlEdges) {
+    edges.forEach(([a,b])=>{
+      const p1=IZO_POS[a+offset], p2=IZO_POS[b+offset];
+      const isHL=hlEdges && hlEdges.some(([x,y])=>x===a&&y===b||x===b&&y===a);
+      ctx.beginPath();
+      ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y);
+      ctx.strokeStyle=isHL?'#f43f5e':'#4f46e5';
+      ctx.lineWidth=isHL?2.5:1.5; ctx.stroke();
+    });
+    IZO_POS.slice(offset,offset+7).forEach((p,i)=>{
+      const isHub=i===0;
+      ctx.beginPath(); ctx.arc(p.x,p.y,isHub?14:11,0,Math.PI*2);
+      ctx.fillStyle=isHub?'#2a1f6a':'#1a1f40'; ctx.fill();
+      ctx.strokeStyle=isHub?'#818cf8':'#4f46e5'; ctx.lineWidth=isHub?2:1.5; ctx.stroke();
+      ctx.fillStyle='#e2e8f0'; ctx.font=`bold ${isHub?11:10}px monospace`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('v'+(i+1),p.x,p.y);
+    });
+  }
+
+  const g1HL = izoHL==='G1' ? [[0,1],[1,2],[0,2],[0,3],[3,4],[0,4]] : null;
+  const g2HL = izoHL==='G2' ? [[0,2],[0,3],[2,3]] : null;
+  drawGraph(IZO_EDGES_G1, 0, g1HL);
+  drawGraph(IZO_EDGES_G2, 7, g2HL);
+}
+
+function izoHighlight(g) {
+  izoHL=g;
+  izoDraw();
+  const d=document.getElementById('izoDesc');
+  if(g==='G1') d.textContent='G₁: A 0-s csúcson átmenő háromszögek: (v1,v2,v3) és (v1,v4,v5) → 2 háromszög';
+  else if(g==='G2') d.textContent='G₂: A 0-s csúcson átmenő háromszög: (v1,v3,v4) → 1 háromszög → nem izomorf!';
+  else d.textContent='';
+}
+
+function izoCheck() {
+  const s1=document.getElementById('izoSeq1').value.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)).sort((a,b)=>b-a);
+  const s2=document.getElementById('izoSeq2').value.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)).sort((a,b)=>b-a);
+  const el=document.getElementById('izoResult');
+  let checks=[];
+  const ok=(cond,name)=>{ checks.push(`<span style="color:${cond?'#34d399':'#ef4444'}">${cond?'✓':'✗'} ${name}</span>`); return cond; };
+  const n1ok=ok(s1.length===s2.length,'|V₁|=|V₂|: '+s1.length+' vs '+s2.length);
+  ok(s1.reduce((s,x)=>s+x,0)===s2.reduce((s,x)=>s+x,0),'|E₁|=|E₂| (fokszámösszeg)');
+  ok(JSON.stringify(s1)===JSON.stringify(s2),'Fokszámsorozat egyezik');
+  const allOk=checks.every(c=>c.includes('#34d399'));
+  el.innerHTML=checks.join('  ')+`<br><span style="color:${allOk?'#fbbf24':'#ef4444'}" class="fw-bold mt-1 d-block">${allOk?'⚠ Szükséges feltételek teljesülnek — de ez nem elégséges az izomorfizmushoz!':'✗ Biztosan NEM izomorfak — szükséges feltétel sérül'}</span>`;
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+function initAll() {
+  alapDraw();
+  matBuild();
+  bfsReset();
+  izoDraw();
+}
+setTimeout(initAll, 400);
+</script>
+{% endblock %}

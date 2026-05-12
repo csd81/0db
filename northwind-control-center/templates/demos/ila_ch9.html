@@ -1,0 +1,696 @@
+{% extends "base.html" %}
+{% block title %}Diszkrét mat. I — Matematikai bizonyítások{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#67e8f9!important;}
+.ila-nav-link.active{color:#67e8f9!important;border-bottom-color:#67e8f9!important;}
+.def-box  {border-left:3px solid #67e8f9;background:#041f2e;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.thm-box  {border-left:3px solid #0891b2;background:#031926;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.ex-box   {border-left:3px solid #34d399;background:#0a1f10;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.info-box {background:#161b22;border:1px solid #21262d;padding:.75rem 1rem;border-radius:.4rem;margin:.7rem 0;}
+.warn-box {border-left:3px solid #f59e0b;background:#1a1200;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.step-row {display:flex;gap:1rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:baseline;flex-wrap:wrap;}
+.step-row:last-child{border-bottom:none;}
+.step-eq  {min-width:280px;color:#e2e8f0;font-size:.84rem;}
+.step-why {font-size:.7rem;color:#6b7280;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.badge-phase{font-size:.62rem;font-weight:700;padding:.2rem .55rem;border-radius:.25rem;letter-spacing:.04em;}
+.ind-step{background:#0c1a2e;border:1px solid #0e4060;border-radius:.4rem;padding:.65rem .9rem;margin:.4rem 0;transition:border-color .2s,background .2s;}
+.ind-step.active{border-color:#67e8f9;background:#062035;}
+.katex{font-size:1em;}
+.step-eq .katex{font-size:1.05em;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#67e8f9">Diszkrét matematika I — fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Matematikai bizonyítások</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2026</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(103,232,249,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-ind',this)"><i class="bi bi-ladder me-1"></i>Teljes indukció</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-peldak',this)"><i class="bi bi-calculator me-1"></i>Indukciós példák</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-indir',this)"><i class="bi bi-arrow-counterclockwise me-1"></i>Indirekt bizonyítás</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-indpeld',this)"><i class="bi bi-journal-x me-1"></i>Indirekt példák</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ex',this)"><i class="bi bi-lightbulb me-1"></i>Előadás+</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════════════════════ TAB 1: TELJES INDUKCIÓ ══════════════════════ -->
+<div id="tab-ind">
+  <h5 class="fw-bold mb-3" style="color:#67e8f9">Teljes indukció elve</h5>
+
+  <div class="def-box">
+    <div class="lbl mb-1" style="color:#67e8f9">1. Tétel — Teljes indukció elve</div>
+    Legyen \(A(n)\) egy állítás minden \(n \ge n_0\) egész számra. Tegyük fel, hogy
+    <ol class="small mb-0 mt-1">
+      <li><strong>Alaplépés:</strong> \(A(n_0)\) igaz,</li>
+      <li><strong>Indukciós lépés:</strong> ha \(A(k)\) igaz valamely \(k \ge n_0\)-ra, akkor \(A(k+1)\) is igaz.</li>
+    </ol>
+    Ekkor \(A(n)\) igaz minden \(n \ge n_0\) egész számra.
+  </div>
+
+  <div class="row g-3 mt-1">
+    <div class="col-md-4">
+      <div class="info-box text-center h-100 d-flex flex-column align-items-center justify-content-center gap-2">
+        <div style="font-size:1.8rem">🧱</div>
+        <div class="small fw-bold" style="color:#67e8f9">1. Alaplépés</div>
+        <div class="small text-secondary">Igazoljuk \(A(n_0)\)-t közvetlenül.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="info-box text-center h-100 d-flex flex-column align-items-center justify-content-center gap-2">
+        <div style="font-size:1.8rem">🔗</div>
+        <div class="small fw-bold" style="color:#67e8f9">2. Ind. hipotézis</div>
+        <div class="small text-secondary">Feltesszük: \(A(k)\) igaz valamely \(k \ge n_0\)-ra.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="info-box text-center h-100 d-flex flex-column align-items-center justify-content-center gap-2">
+        <div style="font-size:1.8rem">📐</div>
+        <div class="small fw-bold" style="color:#67e8f9">3. Ind. lépés</div>
+        <div class="small text-secondary">Ebből megmutatjuk \(A(k+1)\)-et.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="thm-box mt-3 small">
+    <strong>Intuitív kép:</strong> Képzeljük el a természetes számokat mint dominókat sorban. Ha az első dominó eldől (alaplépés), és minden eldőlt dominó maga után dönti a következőt (indukciós lépés), akkor az összes dominó elesik.
+  </div>
+
+  <p class="small fw-bold mt-3 mb-2" style="color:#a5f3fc">Interaktív: lépések megjelenítése</p>
+  <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+    <span class="small">Állítás:</span>
+    <select id="thm-sel" class="form-select form-select-sm" style="background:#161b22;border-color:#30363d;color:#e6edf3;max-width:260px" onchange="showInductionSteps()">
+      <option value="sum">1+2+⋯+n = n(n+1)/2</option>
+      <option value="pow">2ⁿ &gt; n² (n ≥ 5)</option>
+      <option value="div">9 | (4ⁿ + 15n − 1)</option>
+    </select>
+    <button onclick="animateSteps()" class="btn btn-sm" style="background:#0e4060;color:#67e8f9;border:1px solid #67e8f9">▶ Animálás</button>
+    <button onclick="resetSteps()" class="btn btn-sm" style="background:#161b22;color:#8892a4;border:1px solid #30363d">↺ Reset</button>
+  </div>
+  <div id="ind-steps-container"></div>
+</div>
+
+<!-- ══════════════════════ TAB 2: INDUKCIÓS PÉLDÁK ══════════════════════ -->
+<div id="tab-peldak" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#67e8f9">Indukciós példák — lépésről lépésre</h5>
+
+  <!-- Example 2 -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-2" style="color:#a5f3fc">2. példa — Összegképlet: \(1+2+\cdots+n = \dfrac{n(n+1)}{2}\)</div>
+
+    <div class="mb-2">
+      <span class="badge-phase" style="background:#042f2e;color:#67e8f9">Alaplépés (n=1)</span>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(1 = \dfrac{1 \cdot 2}{2} = 1\)</div>
+      <div class="step-why">Bal és jobb oldal egyenlő. ✓</div>
+    </div>
+
+    <div class="mt-3 mb-2">
+      <span class="badge-phase" style="background:#042f2e;color:#67e8f9">Ind. hipotézis (n=k)</span>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(1 + 2 + \cdots + k = \dfrac{k(k+1)}{2}\)</div>
+      <div class="step-why">Feltételezzük igaznak.</div>
+    </div>
+
+    <div class="mt-3 mb-2">
+      <span class="badge-phase" style="background:#042f2e;color:#67e8f9">Ind. lépés (n=k+1)</span>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(1+2+\cdots+k+(k+1)\)</div>
+      <div class="step-why">Az \((n=k+1)\) eset bal oldala.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(= \dfrac{k(k+1)}{2} + (k+1)\)</div>
+      <div class="step-why">Ind. hipotézis alkalmazva.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(= \dfrac{k(k+1) + 2(k+1)}{2}\)</div>
+      <div class="step-why">Közös nevezőre hozva.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(= \dfrac{(k+1)(k+2)}{2}\)</div>
+      <div class="step-why">Kiemelve \((k+1)\)-et. Ez éppen a \(k+1\)-re vonatkozó állítás. \(\square\)</div>
+    </div>
+
+    <div class="mt-3">
+      <div class="small text-secondary mb-1">Ellenőrzés: adj meg egy \(n\) értéket</div>
+      <div class="d-flex gap-2 align-items-center">
+        <input type="range" id="sum-n" min="1" max="20" value="5" oninput="checkSum()" style="width:120px">
+        <span class="small" id="sum-out"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Example 3 -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-2" style="color:#a5f3fc">3. példa — Egyenlőtlenség: \(2^n > n^2\) (minden \(n \ge 5\)-re)</div>
+
+    <div class="warn-box small mb-2">
+      <strong>Megjegyzés:</strong> \(n=4\)-re \(2^4=16=4^2\) — <em>nem</em> teljesül! Az alaplépés \(n_0=5\).
+    </div>
+
+    <div class="mb-2"><span class="badge-phase" style="background:#042f2e;color:#67e8f9">Alaplépés (n=5)</span></div>
+    <div class="step-row">
+      <div class="step-eq">\(2^5 = 32 > 25 = 5^2\)</div>
+      <div class="step-why">Közvetlen ellenőrzés. ✓</div>
+    </div>
+
+    <div class="mt-3 mb-2"><span class="badge-phase" style="background:#042f2e;color:#67e8f9">Ind. lépés (k → k+1)</span></div>
+    <div class="step-row">
+      <div class="step-eq">\(2^{k+1} = 2 \cdot 2^k > 2k^2\)</div>
+      <div class="step-why">Ind. hip.: \(2^k > k^2\).</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">Kell: \(2k^2 \ge (k+1)^2\)</div>
+      <div class="step-why">Elegendő megmutatni ezt.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(\Leftrightarrow k^2 - 2k - 1 \ge 0\)</div>
+      <div class="step-why">Átrendezve.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(\Leftrightarrow k(k-2) \ge 1\)</div>
+      <div class="step-why">Ami teljesül \(k \ge 3\)-ra (tehát \(k \ge 5\)-re is). \(\square\)</div>
+    </div>
+
+    <div class="mt-3">
+      <div class="small text-secondary mb-1">Vizuális ellenőrzés:</div>
+      <canvas id="pow-canvas" width="480" height="140" style="background:#0c1a2e;border-radius:.4rem"></canvas>
+    </div>
+  </div>
+
+  <!-- Example 4 -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-2" style="color:#a5f3fc">4. példa — Oszthatóság: \(9 \mid (4^n + 15n - 1)\) minden \(n \ge 0\)-ra</div>
+
+    <div class="mb-2"><span class="badge-phase" style="background:#042f2e;color:#67e8f9">Alaplépés (n=0)</span></div>
+    <div class="step-row">
+      <div class="step-eq">\(a_0 = 4^0 + 0 - 1 = 0\)</div>
+      <div class="step-why">\(9 \mid 0\) ✓</div>
+    </div>
+
+    <div class="mt-3 mb-2"><span class="badge-phase" style="background:#042f2e;color:#67e8f9">Ind. lépés (k → k+1)</span></div>
+    <div class="step-row">
+      <div class="step-eq">\(a_{k+1} = 4^{k+1} + 15(k+1) - 1\)</div>
+      <div class="step-why">Definíció szerint.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(= 4 \cdot 4^k + 15k + 14\)</div>
+      <div class="step-why">Kifejtve.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(= 4(4^k + 15k - 1) - 45k + 18\)</div>
+      <div class="step-why">Az ind. hipotézis megjelenik.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(= 4 \cdot 9\ell - 45k + 18\)</div>
+      <div class="step-why">Ind. hip.: \(a_k = 9\ell\).</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(= 9(4\ell - 5k + 2)\)</div>
+      <div class="step-why">Kiemelve 9-et. \(9 \mid a_{k+1}\). \(\square\)</div>
+    </div>
+
+    <div class="mt-3">
+      <div class="small text-secondary mb-1">Ellenőrizd tetszőleges \(n\)-re:</div>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <input type="range" id="div9-n" min="0" max="12" value="3" oninput="checkDiv9()" style="width:120px">
+        <span class="small" id="div9-out"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 3: INDIREKT BIZONYÍTÁS ══════════════════════ -->
+<div id="tab-indir" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#67e8f9">Indirekt bizonyítás</h5>
+
+  <div class="def-box">
+    <div class="lbl mb-1" style="color:#67e8f9">Az indirekt bizonyítás módszere</div>
+    Egy \(A\) állítás bizonyításához tegyük fel, hogy \(A\) <strong>nem</strong> teljesül (vegyük az ellentétes állítást, \(\neg A\)). Ha ebből <strong>ellentmondásra</strong> jutunk, akkor \(\neg A\) nem lehet igaz, tehát \(A\) igaz.
+    \[
+      \neg A \Rightarrow \text{ellentmondás} \implies A \text{ igaz}
+    \]
+  </div>
+
+  <div class="row g-3 mt-1">
+    <div class="col-md-6">
+      <div class="info-box h-100">
+        <div class="small fw-bold mb-2" style="color:#67e8f9">Direkt bizonyítás</div>
+        <div class="small text-secondary">
+          A feltételezésekből kiindulva, logikai lépések sorozatával közvetlenül eljutunk a bizonyítandó állításhoz.<br><br>
+          <em>Példa: két racionális szám szorzata racionális (5. példa).</em>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box h-100" style="border-color:rgba(103,232,249,.3)">
+        <div class="small fw-bold mb-2" style="color:#67e8f9">Indirekt bizonyítás</div>
+        <div class="small text-secondary">
+          Feltesszük az állítás tagadását. Levezetünk belőle valamit, ami ellentmond egy ismert igaz ténynek, az axiómáknak vagy a feltételeknek.<br><br>
+          <em>Példa: \(r \cdot x\) irracionális, ha \(r \ne 0\) racionális, \(x\) irracionális (7. példa).</em>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="thm-box mt-3 small">
+    <strong>Kapcsolat a logikával (6. fejezet):</strong> Az indirekt bizonyítás az \(A \Rightarrow B\) implikáció kontrapozitívján alapul:
+    \[
+      (A \Rightarrow B) \;\Leftrightarrow\; (\neg B \Rightarrow \neg A)
+    \]
+    Ha \(B\) igaz (mert feltétel vagy axióma), és \(\neg B\)-ből kiindulva eljutunk \(\neg A\)-ra, akkor \(A\)-t kizártuk.
+  </div>
+
+  <div class="info-box mt-3">
+    <div class="small fw-bold mb-2" style="color:#a5f3fc">Indirekt bizonyítás sémája</div>
+    <div class="ind-step">
+      <span class="badge-phase" style="background:#0e4060;color:#67e8f9">1. lépés</span>&nbsp;
+      <span class="small">Fogalmazzuk meg az <strong>indirekt feltételt</strong>: tegyük fel, hogy a bizonyítandó állítás <em>hamis</em>.</span>
+    </div>
+    <div class="ind-step">
+      <span class="badge-phase" style="background:#0e4060;color:#67e8f9">2. lépés</span>&nbsp;
+      <span class="small">Az indirekt feltételből és az egyéb feltételekből <strong>következtetéseket vonunk le</strong>.</span>
+    </div>
+    <div class="ind-step">
+      <span class="badge-phase" style="background:#0e4060;color:#67e8f9">3. lépés</span>&nbsp;
+      <span class="small">Eljutunk egy <strong>ellentmondáshoz</strong> (pl. x racionális ÉS irracionális egyszerre).</span>
+    </div>
+    <div class="ind-step">
+      <span class="badge-phase" style="background:#0e4060;color:#67e8f9">4. lépés</span>&nbsp;
+      <span class="small">Következtetés: az indirekt feltétel hamis → az eredeti állítás <strong>igaz</strong>. \(\square\)</span>
+    </div>
+  </div>
+
+  <!-- Interactive: spot the contradiction -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#a5f3fc">Interaktív: \(\sqrt{2}\) irracionális — indirekt bizonyítás</p>
+  <div class="info-box">
+    <div class="small text-secondary mb-2">A klasszikus példa. Kattints a lépésekre sorban:</div>
+    <div id="sqrt2-steps">
+      <div class="ind-step" id="sq2-0" onclick="sq2step(0)" style="cursor:pointer">
+        <span class="badge-phase" style="background:#0e4060;color:#67e8f9">Ind. feltétel</span>&nbsp;
+        <span class="small">Tegyük fel, hogy \(\sqrt{2} \in \mathbb{Q}\).</span>
+      </div>
+      <div class="ind-step d-none" id="sq2-1">
+        <span class="badge-phase" style="background:#0e4060;color:#67e8f9">Következmény</span>&nbsp;
+        <span class="small">Ekkor \(\sqrt{2} = p/q\) ahol \(p,q \in \mathbb{Z}\), \(q \ne 0\), és \(\gcd(p,q)=1\) (irreducibilis).</span>
+      </div>
+      <div class="ind-step d-none" id="sq2-2">
+        <span class="badge-phase" style="background:#0e4060;color:#67e8f9">Levezetés</span>&nbsp;
+        <span class="small">\(2 = p^2/q^2 \Rightarrow p^2 = 2q^2 \Rightarrow p^2\) páros \(\Rightarrow p\) páros \(\Rightarrow p=2m\).</span>
+      </div>
+      <div class="ind-step d-none" id="sq2-3">
+        <span class="badge-phase" style="background:#0e4060;color:#67e8f9">Levezetés</span>&nbsp;
+        <span class="small">\(4m^2 = 2q^2 \Rightarrow q^2 = 2m^2 \Rightarrow q^2\) páros \(\Rightarrow q\) páros.</span>
+      </div>
+      <div class="ind-step d-none" id="sq2-4">
+        <span class="badge-phase" style="background:#f87171;color:#fff">Ellentmondás!</span>&nbsp;
+        <span class="small">\(p\) és \(q\) mindkettő páros — de \(\gcd(p,q)=1\)-et feltettük. Ellentmondás! Tehát \(\sqrt{2} \notin \mathbb{Q}\). \(\square\)</span>
+      </div>
+    </div>
+    <div id="sq2-btn-row" class="mt-2">
+      <button onclick="sq2step(sq2cur)" class="btn btn-sm" style="background:#0e4060;color:#67e8f9;border:1px solid #67e8f9">Következő lépés →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 4: INDIREKT PÉLDÁK ══════════════════════ -->
+<div id="tab-indpeld" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#67e8f9">Indirekt bizonyítás — példák</h5>
+
+  <!-- Example 5 direct -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-2" style="color:#a5f3fc">5. példa — Direkt: két racionális szorzata racionális</div>
+    <div class="step-row">
+      <div class="step-eq">Legyen \(r_1 = p_1/q_1,\; r_2 = p_2/q_2\)</div>
+      <div class="step-why">\(p_i,q_i \in \mathbb{Z},\; q_i \ne 0\)</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(r_1 r_2 = \dfrac{p_1}{q_1}\cdot\dfrac{p_2}{q_2} = \dfrac{p_1 p_2}{q_1 q_2}\)</div>
+      <div class="step-why">\(p_1p_2,q_1q_2 \in \mathbb{Z}\), \(q_1q_2 \ne 0\), tehát \(r_1r_2 \in \mathbb{Q}\). \(\square\)</div>
+    </div>
+  </div>
+
+  <!-- Example 7 indirect -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-2" style="color:#a5f3fc">7. példa — Indirekt: \(r \ne 0\) racionális, \(x\) irracionális \(\Rightarrow rx\) irracionális</div>
+
+    <div class="mb-2"><span class="badge-phase" style="background:#042f2e;color:#67e8f9">Indirekt feltétel</span></div>
+    <div class="step-row">
+      <div class="step-eq">Tegyük fel, hogy \(rx \in \mathbb{Q}\)</div>
+      <div class="step-why">Az ellentett állítás: \(rx\) <em>racionális</em>.</div>
+    </div>
+
+    <div class="mt-2 mb-2"><span class="badge-phase" style="background:#042f2e;color:#67e8f9">Levezetés</span></div>
+    <div class="step-row">
+      <div class="step-eq">Ekkor \(r = p/q\) és \(rx = p_0/q_0\)</div>
+      <div class="step-why">Racionális definíciója.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(\dfrac{p}{q} \cdot x = \dfrac{p_0}{q_0}\)</div>
+      <div class="step-why">Feltételünk szerint.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(x = \dfrac{p_0 q}{q_0 p}\)</div>
+      <div class="step-why">Osztva \(p/q\)-val (\(p \ne 0\), mert \(r \ne 0\)).</div>
+    </div>
+
+    <div class="mt-2 mb-2"><span class="badge-phase" style="background:#f87171;color:#fff">Ellentmondás</span></div>
+    <div class="step-row">
+      <div class="step-eq">\(x \in \mathbb{Q}\)</div>
+      <div class="step-why">— de \(x\) irracionális volt! Ellentmondás. \(\square\)</div>
+    </div>
+
+    <div class="ex-box small mt-2">
+      <strong>Következmény (8. példa):</strong> Racionális és irracionális szám <em>összege</em> is irracionális. Bizonyítás ugyanígy: ha \(r + x \in \mathbb{Q}\), akkor \(x = (r+x)-r \in \mathbb{Q}\), ellentmondás.
+    </div>
+  </div>
+
+  <!-- Example 9: proof of induction itself -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-2" style="color:#a5f3fc">9. példa — A teljes indukció elvének indirekt bizonyítása</div>
+    <div class="thm-box small">
+      Bizonyítandó: ha az 1. Tétel feltételei teljesülnek, akkor \(A(n)\) igaz minden \(n \ge n_0\)-ra.
+    </div>
+
+    <div class="mb-2 mt-2"><span class="badge-phase" style="background:#042f2e;color:#67e8f9">Indirekt feltétel</span></div>
+    <div class="step-row">
+      <div class="step-eq">Tegyük fel: \(\exists\, k \ge n_0\), melyre \(A(k)\) hamis</div>
+      <div class="step-why">Az ellentett állítás.</div>
+    </div>
+
+    <div class="mt-2 mb-2"><span class="badge-phase" style="background:#042f2e;color:#67e8f9">Levezetés</span></div>
+    <div class="step-row">
+      <div class="step-eq">Az ilyen \(k\)-k között van legkisebb, legyen \(k_0\)</div>
+      <div class="step-why">Természetes számok jól rendezettsége.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">\(k_0 > n_0\), mert \(A(n_0)\) igaz</div>
+      <div class="step-why">A tétel 1. feltétele kizárja \(k_0 = n_0\)-t.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">Tehát \(k_0 - 1 \ge n_0\) és \(A(k_0-1)\) igaz</div>
+      <div class="step-why">\(k_0\) a legkisebb ellenpélda.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-eq">De ekkor \(A(k_0)\) is igaz (2. feltétel)</div>
+      <div class="step-why">Ellentmondás! Tehát nincs ellenpélda. \(\square\)</div>
+    </div>
+
+    <div class="thm-box small mt-2">
+      Ez a bizonyítás kulcsa: a <strong>természetes számok jól rendezettsége</strong> (minden nemüres részhalmaz tartalmaz legkisebb elemet) és az indukciós lépés együtt zárja ki az ellenpéldát.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 5: ELŐADÁS+ ══════════════════════ -->
+<div id="tab-ex" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#67e8f9">Előadás+ — Mélyebb betekintések</h5>
+
+  <!-- 1. Az indukció erős változata -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#a5f3fc">1. Erős indukció (teljes indukció erős alakja)</div>
+    <div class="def-box small">
+      Legyen \(A(n)\) egy állítás. Ha \(A(n_0),A(n_0+1),\ldots,A(k)\) mind igazak valamely \(k \ge n_0\)-ra, akkor \(A(k+1)\) is igaz. Ekkor \(A(n)\) igaz minden \(n \ge n_0\)-ra.
+    </div>
+    <p class="small mb-1">A különbség: az ind. hipotézisben nem csak \(A(k)\)-t tesszük fel, hanem <em>minden</em> \(n_0 \le j \le k\)-ra \(A(j)\)-t. Ez erősebb eszköz, de ekvivalens az alap változattal.</p>
+    <div class="ex-box small">
+      <strong>Mikor kell?</strong> Ha az ind. lépésben \(A(k)\) önmagában nem elég, hanem korábbi értékek is kellenek — pl. Fibonacci-szám: \(F_{k+1} = F_k + F_{k-1}\).
+    </div>
+  </div>
+
+  <!-- 2. n_0 megválasztása -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#a5f3fc">2. Az alaplépés \(n_0\) megválasztása — miért fontos</div>
+    <p class="small mb-1">Az indukció csak \(n \ge n_0\)-ra bizonyítja az állítást. Az alaplépés rossz megválasztása hibás eredményre vezet.</p>
+    <div class="ex-box small">
+      <strong>3. példa tanulsága:</strong> \(2^n > n^2\) nem teljesül \(n=4\)-re, ezért \(n_0 = 5\)-öt kellett választani. Az alaplépést mindig számszerűen kell igazolni — nem elég "nyilvánvalónak" tartani.
+    </div>
+    <div class="thm-box small">
+      <strong>Tipikus hiba:</strong> Ha az ind. lépés bizonyítása csak \(k \ge 3\)-ra működik (mint a 3. példában), akkor az alaplépést legalább \(n_0 = 3\)-ra kell venni, és az összes kisebb esetet (<em>esetleg</em> 3, 4, …) külön ellenőrizni.
+    </div>
+  </div>
+
+  <!-- 3. Indukció és oszthatóság -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#a5f3fc">3. Oszthatósági állítások és az indukciós trükk</div>
+    <p class="small mb-1">A 4. példában a kulcslépés: \(a_{k+1}\)-et olyan alakra hozni, amelyből \(a_k\) kiolvasható. A trükk:</p>
+    \[
+      a_{k+1} = 4 \cdot 4^k + 15k + 14 = 4(4^k + 15k - 1) - 45k + 18 = 4a_k - 9(5k-2)
+    \]
+    <p class="small">Ezért \(9 \mid a_k \Rightarrow 9 \mid 4a_k\), és \(9 \mid 9(5k-2)\) is, tehát \(9 \mid a_{k+1}\). Az ind. hipotézis "kiemelése" az algebrai kulcs.</p>
+    <div class="ex-box small">
+      <strong>Általános sablon:</strong> Ha \(p \mid f(k)\), írjuk \(f(k+1) = c \cdot f(k) + g(k)\), ahol \(p \mid g(k)\) igazolható közvetlenül. Ekkor \(p \mid f(k+1)\) következik.
+    </div>
+  </div>
+
+  <!-- 4. Mire nem jó az indukció -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#a5f3fc">4. Mire nem jó az indukció — tanulságos "bizonyítás"</div>
+    <div class="warn-box small">
+      <strong>Hamis tétel:</strong> "Minden lónak azonos a színe."<br><br>
+      <em>Hamis bizonyítás:</em> \(n=1\)-re triviális. Tegyük fel, hogy minden \(k\)-elemű lócsoportban azonos a szín. Vegyünk \(k+1\) lovat…<br><br>
+      <strong>Hiba:</strong> Az ind. lépés \(k=1 \to k+1=2\) esetén nem működik: két ló nem feltétlenül fed át közös elemet. Az alaplépés és az ind. lépés között nincs összefüggés. Az indukció megbukik, ha az állítás valójában hamis — a bizonyítás logikai hibát tartalmaz.
+    </div>
+    <p class="small mt-1">Tanulság: mindig ellenőrizzük az ind. lépést <em>kis esetekre</em> (\(k=1 \to 2\)), mielőtt általánosan kijelentenénk.</p>
+  </div>
+
+  <!-- 5. Összefüggés az indirekt és a kontrapozitív között -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#a5f3fc">5. Indirekt bizonyítás vs. kontrapozitív</div>
+    <div class="thm-box small">
+      \[
+        (A \Rightarrow B) \;\equiv\; (\neg B \Rightarrow \neg A)
+      \]
+      A kontrapozitív az ekvivalens átfogalmazás — a feltétel és a konklúzió megfordítva + tagadva.
+    </div>
+    <div class="row g-2 mt-1">
+      <div class="col-md-6">
+        <div class="ex-box small">
+          <strong>Indirekt:</strong> Feltesszük \(\neg B\)-t, eljutunk \(\neg A\)-ra (vagy más ellentmondásra), tehát \(B\) igaz.
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ex-box small">
+          <strong>Kontrapozitív:</strong> Feltesszük \(\neg B\)-t és közvetlenül belőle bizonyítjuk \(\neg A\)-t. Ez direkt bizonyítás \(\neg B \Rightarrow \neg A\)-ra.
+        </div>
+      </div>
+    </div>
+    <p class="small mt-2">A kettő szorosan rokon, de az indirekt kissé általánosabb: az ellentmondás bármely ismert igaz ténnyel jöhet, nem csak \(\neg A\)-val.</p>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});initAll();"></script>
+
+<script>
+function reRender(el){
+  if(window.renderMathInElement) renderMathInElement(el,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+}
+
+function showTab(id, el){
+  document.querySelectorAll('[id^="tab-"]').forEach(p=>p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(id==='tab-peldak')  { checkSum(); checkDiv9(); setTimeout(drawPowChart, 60); }
+  if(id==='tab-indir')   { setTimeout(()=>reRender(document.getElementById('tab-indir')),30); }
+  if(id==='tab-indpeld') { setTimeout(()=>reRender(document.getElementById('tab-indpeld')),30); }
+  if(id==='tab-ex')      { setTimeout(()=>reRender(document.getElementById('tab-ex')),30); }
+}
+
+/* ─── Induction stepper ─── */
+const IND_STEPS = {
+  sum: [
+    {phase:'Alaplépés (n=1)', eq:'1 = \\dfrac{1\\cdot2}{2} = 1', why:'Igaz ✓'},
+    {phase:'Ind. hipotézis', eq:'1+2+\\cdots+k = \\dfrac{k(k+1)}{2}', why:'Feltételezzük.'},
+    {phase:'Ind. lépés — bal oldal', eq:'1+2+\\cdots+k+(k+1)', why:'Az (n=k+1) eset bal oldala.'},
+    {phase:'Ind. hipotézis alkalmazása', eq:'= \\dfrac{k(k+1)}{2} + (k+1)', why:'Behelyettesítés.'},
+    {phase:'Algebrai lépés', eq:'= \\dfrac{k(k+1)+2(k+1)}{2}', why:'Közös nevező.'},
+    {phase:'Eredmény', eq:'= \\dfrac{(k+1)(k+2)}{2}', why:'Ez a (k+1)-re vonatkozó állítás. □'},
+  ],
+  pow: [
+    {phase:'Alaplépés (n=5)', eq:'2^5=32>25=5^2', why:'Igaz ✓'},
+    {phase:'Ind. hipotézis', eq:'2^k > k^2', why:'Feltételezzük k≥5-re.'},
+    {phase:'Ind. lépés — bal oldal', eq:'2^{k+1}=2\\cdot2^k > 2k^2', why:'Ind. hip. kétszeresezve.'},
+    {phase:'Kell még mutatni', eq:'2k^2 \\ge (k+1)^2 = k^2+2k+1', why:'Elegendő ezt belátni.'},
+    {phase:'Átrendezve', eq:'k^2-2k-1 \\ge 0', why:''},
+    {phase:'Eredmény', eq:'k(k-2) \\ge 1', why:'Teljesül k≥3-ra, tehát k≥5-re is. □'},
+  ],
+  div: [
+    {phase:'Alaplépés (n=0)', eq:'a_0 = 4^0+0-1=0', why:'9∣0 ✓'},
+    {phase:'Ind. hipotézis', eq:'9 \\mid a_k = 4^k+15k-1', why:'Feltételezzük.'},
+    {phase:'Kiírjuk a_{k+1}-et', eq:'a_{k+1} = 4^{k+1}+15(k+1)-1', why:'Definíció.'},
+    {phase:'Kifejtés', eq:'= 4\\cdot4^k+15k+14', why:''},
+    {phase:'Ind. hipotézis megjelenik', eq:'= 4(4^k+15k-1)-45k+18', why:'= 4a_k − 45k + 18'},
+    {phase:'Ind. hip. behelyettesítve', eq:'= 4\\cdot9\\ell - 9(5k-2)', why:'Ind. hip.: a_k=9ℓ'},
+    {phase:'Eredmény', eq:'= 9(4\\ell-5k+2)', why:'9 ∣ a_{k+1}. □'},
+  ],
+};
+
+let animTimer=null, animIdx=0;
+
+function showInductionSteps(){
+  clearInterval(animTimer);
+  const key=document.getElementById('thm-sel').value;
+  const steps=IND_STEPS[key];
+  const c=document.getElementById('ind-steps-container');
+  let html='';
+  steps.forEach((s,i)=>{
+    html+=`<div class="ind-step active" id="ist-${i}">
+      <span class="badge-phase" style="background:#0e4060;color:#67e8f9">${s.phase}</span>&nbsp;
+      <span class="small">\\(${s.eq}\\)</span>
+      ${s.why?`<span class="small text-secondary ms-2">— ${s.why}</span>`:''}
+    </div>`;
+  });
+  c.innerHTML=html;
+  reRender(c);
+}
+
+function animateSteps(){
+  clearInterval(animTimer);
+  const key=document.getElementById('thm-sel').value;
+  const steps=IND_STEPS[key];
+  const c=document.getElementById('ind-steps-container');
+  let html='';
+  steps.forEach((s,i)=>{
+    html+=`<div class="ind-step" id="ist-${i}" style="opacity:.25">
+      <span class="badge-phase" style="background:#0e4060;color:#67e8f9">${s.phase}</span>&nbsp;
+      <span class="small">\\(${s.eq}\\)</span>
+      ${s.why?`<span class="small text-secondary ms-2">— ${s.why}</span>`:''}
+    </div>`;
+  });
+  c.innerHTML=html;
+  reRender(c);
+  let idx=0;
+  function reveal(){
+    if(idx>=steps.length){ clearInterval(animTimer); return; }
+    const el=document.getElementById('ist-'+idx);
+    if(el){ el.style.opacity='1'; el.style.transition='opacity .4s'; el.classList.add('active'); }
+    idx++;
+  }
+  reveal();
+  animTimer=setInterval(reveal, 1100);
+}
+
+function resetSteps(){ clearInterval(animTimer); showInductionSteps(); }
+
+/* ─── Sum checker ─── */
+function checkSum(){
+  const n=+document.getElementById('sum-n').value;
+  const lhs=n*(n+1)/2;
+  const rhs=Array.from({length:n},(_,i)=>i+1).reduce((a,b)=>a+b,0);
+  document.getElementById('sum-out').innerHTML=
+    `n = <strong style="color:#67e8f9">${n}</strong> &nbsp;|&nbsp; `+
+    `1+…+${n} = <strong style="color:#34d399">${rhs}</strong> &nbsp;|&nbsp; `+
+    `n(n+1)/2 = <strong style="color:#34d399">${lhs}</strong> &nbsp; `+
+    (lhs===rhs?'<span style="color:#34d399">✓ egyeznek</span>':'<span style="color:#f87171">✗</span>');
+}
+
+/* ─── Div9 checker ─── */
+function checkDiv9(){
+  const n=+document.getElementById('div9-n').value;
+  const val=Math.pow(4,n)+15*n-1;
+  const ok=val%9===0;
+  document.getElementById('div9-out').innerHTML=
+    `n = <strong style="color:#67e8f9">${n}</strong> &nbsp;|&nbsp; `+
+    `4ⁿ+15n−1 = <strong style="color:#a5f3fc">${val}</strong> &nbsp;|&nbsp; `+
+    `${val} mod 9 = <strong style="color:${ok?'#34d399':'#f87171'}">${val%9}</strong> &nbsp;`+
+    (ok?'<span style="color:#34d399">✓ osztható 9-cel</span>':'<span style="color:#f87171">✗</span>');
+}
+
+/* ─── Power chart (2^n vs n²) ─── */
+function drawPowChart(){
+  const cv=document.getElementById('pow-canvas');
+  if(!cv) return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const maxN=12, pad=36;
+  const vals2n=[], valsN2=[];
+  for(let n=1;n<=maxN;n++){ vals2n.push(Math.pow(2,n)); valsN2.push(n*n); }
+  const maxY=Math.max(...vals2n,144);
+  const sx=n=>(pad+(n-1)/(maxN-1)*(W-2*pad));
+  const sy=v=>H-pad-(v/maxY)*(H-2*pad);
+
+  // axes
+  ctx.strokeStyle='#1e2830'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+
+  // n² line
+  ctx.beginPath(); ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2;
+  for(let i=0;i<maxN;i++){
+    const x=sx(i+1),y=sy(valsN2[i]);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // 2^n line
+  ctx.beginPath(); ctx.strokeStyle='#67e8f9'; ctx.lineWidth=2;
+  for(let i=0;i<maxN;i++){
+    const x=sx(i+1),y=sy(vals2n[i]);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // crossing marker at n=4 (equal) and n=5 (2^n takes over)
+  [4,5].forEach(n=>{
+    const x=sx(n);
+    ctx.strokeStyle=n===5?'#34d399':'#f87171'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x,pad); ctx.lineTo(x,H-pad); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=n===5?'#34d399':'#f87171'; ctx.font='bold 10px monospace'; ctx.textAlign='center';
+    ctx.fillText(n===5?'n=5 ✓':'n=4 =',x,pad-4);
+  });
+
+  // dots
+  for(let i=0;i<maxN;i++){
+    ctx.fillStyle='#67e8f9';
+    ctx.beginPath(); ctx.arc(sx(i+1),sy(vals2n[i]),3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f59e0b';
+    ctx.beginPath(); ctx.arc(sx(i+1),sy(valsN2[i]),3,0,Math.PI*2); ctx.fill();
+  }
+
+  // legend
+  ctx.font='11px monospace'; ctx.textAlign='left';
+  ctx.fillStyle='#67e8f9'; ctx.fillText('2ⁿ',W-pad+4,pad+6);
+  ctx.fillStyle='#f59e0b'; ctx.fillText('n²',W-pad+4,pad+20);
+
+  // x labels
+  ctx.fillStyle='#6b7280'; ctx.font='9px monospace'; ctx.textAlign='center';
+  for(let n=1;n<=maxN;n+=2) ctx.fillText(n,sx(n),H-8);
+}
+
+/* ─── sqrt(2) interactive ─── */
+let sq2cur=0;
+function sq2step(i){
+  if(sq2cur>4) return;
+  const el=document.getElementById('sq2-'+sq2cur);
+  if(el){ el.classList.remove('d-none'); reRender(el); }
+  sq2cur++;
+  if(sq2cur>4) document.getElementById('sq2-btn-row').innerHTML='<span class="small" style="color:#34d399">Bizonyítás kész! ✓</span>';
+}
+
+function initAll(){
+  showInductionSteps();
+  checkSum();
+  checkDiv9();
+  drawPowChart();
+}
+setTimeout(initAll,400);
+</script>
+{% endblock %}

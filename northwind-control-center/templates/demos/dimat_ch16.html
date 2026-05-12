@@ -1,0 +1,824 @@
+{% extends "base.html" %}
+{% block title %}16. fejezet – Gráfok izomorfizmusa{% endblock %}
+{% block content %}
+<style>
+:root { --acc:#38bdf8; --acc2:#0ea5e9; --bg:#0e1014; --card:#151920; --border:#1e2a38; }
+.ila-wrap { max-width:1100px; margin:0 auto; padding:2rem 1rem 4rem; }
+.ila-back { color:var(--acc); text-decoration:none; font-size:.85rem; opacity:.8; }
+.ila-back:hover { opacity:1; color:var(--acc); }
+.ila-hero { text-align:center; margin:1.5rem 0 2rem; }
+.ila-hero h1 { font-size:2rem; font-weight:700; color:#fff; }
+.ila-hero p { color:#8ba3bc; max-width:620px; margin:.5rem auto 0; font-size:.95rem; }
+.ila-nav { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.ila-nav-link { background:#151920; border:1px solid #1e2a38; color:#8ba3bc; padding:.45rem 1rem;
+  border-radius:6px; cursor:pointer; font-size:.85rem; transition:all .2s; }
+.ila-nav-link.active,.ila-nav-link:hover { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.ila-card { background:#151920; border:1px solid #1e2a38; border-radius:10px; padding:1.2rem; margin-bottom:1rem; }
+.ila-card h5 { color:var(--acc); font-size:.9rem; font-weight:700; margin-bottom:.7rem; text-transform:uppercase; letter-spacing:.05em; }
+canvas { border-radius:8px; background:#0a0f14; display:block; }
+.btn-acc { background:var(--acc); color:#000; border:none; font-weight:600; border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-acc:hover { background:var(--acc2); }
+.btn-out { background:transparent; color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-out:hover { background:var(--acc); color:#000; }
+.btn-sm2 { padding:.25rem .65rem; font-size:.78rem; border-radius:5px; }
+.preset-row { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.7rem; }
+.preset-btn { background:#1a2233; border:1px solid #2a3a50; color:#8ba3bc; padding:.3rem .7rem; border-radius:5px; cursor:pointer; font-size:.78rem; }
+.preset-btn:hover,.preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.log-box { background:#0a0f14; border:1px solid #1e2a38; border-radius:6px; padding:.7rem; font-size:.75rem; font-family:monospace; color:#8ba3bc; max-height:120px; overflow-y:auto; }
+.log-box .log-line { margin-bottom:2px; }
+.log-box .log-line.hi { color:#38bdf8; }
+.log-box .log-line.ok { color:#4ade80; }
+.log-box .log-line.fail { color:#ef4444; }
+.tbl-alg { width:100%; border-collapse:collapse; font-size:.82rem; }
+.tbl-alg th { background:#1a2233; color:var(--acc); padding:.5rem .7rem; text-align:left; font-weight:600; }
+.tbl-alg td { padding:.45rem .7rem; border-top:1px solid #1e2a38; color:#c8d8e8; }
+.verdict { font-size:1.1rem; font-weight:700; text-align:center; padding:.5rem; border-radius:8px; margin-top:.5rem; }
+.verdict.iso { background:#0a1f10; color:#4ade80; border:1px solid #4ade80; }
+.verdict.notiso { background:#1f0a0a; color:#ef4444; border:1px solid #ef4444; }
+.deg-chip { display:inline-block; background:#0a1520; border:1px solid #1e2a38; border-radius:5px;
+  padding:.2rem .5rem; font-size:.78rem; font-family:monospace; color:#c8d8e8; margin:.15rem; }
+.deg-chip.match { border-color:#4ade80; color:#4ade80; }
+.deg-chip.nomatch { border-color:#ef4444; color:#ef4444; }
+.canon-chip { display:inline-block; background:#0a0f14; border:1px solid #1e2a38; border-radius:5px;
+  padding:.25rem .6rem; font-size:.8rem; font-family:monospace; color:#38bdf8; margin:.15rem; }
+.slider-row { display:flex; align-items:center; gap:.6rem; font-size:.82rem; color:#8ba3bc; }
+.slider-row input[type=range] { flex:1; accent-color:var(--acc); }
+</style>
+
+<div class="ila-wrap">
+  <a href="{{ url_for('demos.learn_dimat') }}" class="ila-back">← Vissza a tananyaghoz</a>
+
+  <div class="ila-hero">
+    <h1>16. fejezet — Gráfok izomorfizmusa</h1>
+    <p>Mikor "ugyanaz" két gráf? Izomorfizmus, szükséges feltételek, fa-kanonikus alak, és a GI-probléma komplexitása.</p>
+  </div>
+
+  <div class="ila-nav">
+    <div class="ila-nav-link active" onclick="showTab('tab-def',this)">Definíció</div>
+    <div class="ila-nav-link" onclick="showTab('tab-cond',this)">Szükséges feltételek</div>
+    <div class="ila-nav-link" onclick="showTab('tab-trees',this)">Fák izomorfizmusa</div>
+    <div class="ila-nav-link" onclick="showTab('tab-search',this)">Izomorfizmus keresése</div>
+    <div class="ila-nav-link" onclick="showTab('tab-gi',this)">GI-probléma</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 1: DEFINÍCIÓ -->
+  <div id="tab-def" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Gráf-izomorfizmus — vizuális párosítás</h5>
+          <div class="preset-row" id="def-presets">
+            <div class="preset-btn active" onclick="defLoadPreset('iso_path')">Izomorf útak</div>
+            <div class="preset-btn" onclick="defLoadPreset('iso_cycle')">Izomorf körök</div>
+            <div class="preset-btn" onclick="defLoadPreset('iso_petersen')">Petersen-szerű</div>
+            <div class="preset-btn" onclick="defLoadPreset('notiso_same_deg')">Azonos foksorozat, NEM izomorf</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">G₁ gráf</div>
+              <canvas id="def-canvas1" width="360" height="240"></canvas>
+            </div>
+            <div class="col-md-6">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">G₂ gráf</div>
+              <canvas id="def-canvas2" width="360" height="240"></canvas>
+            </div>
+          </div>
+          <div id="def-verdict" class="verdict iso" style="margin-top:.8rem">—</div>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75;margin-top:.8rem">
+            <b style="color:var(--acc)">Definíció:</b> A \(G_1=(V_1,E_1)\) és \(G_2=(V_2,E_2)\) gráfok <em>izomorfak</em> (\(G_1 \cong G_2\)), ha létezik bijekció \(\varphi: V_1 \to V_2\), amelyre:<br>
+            \[\{u,v\} \in E_1 \iff \{\varphi(u),\varphi(v)\} \in E_2\]
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Mapping — csúcsleképezés</h5>
+          <div id="def-mapping" style="font-size:.82rem;font-family:monospace;color:#c8d8e8;line-height:1.8">—</div>
+          <div style="font-size:.78rem;color:#8ba3bc;margin-top:.5rem">A színek mutatják a megfeleltetett csúcsokat.</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Mire jó?</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:var(--acc)">Kémia:</b> Izomer molekulák azonosítása (SMILES, InChI)<br>
+            <b style="color:var(--acc)">Hálózatok:</b> Két hálózat struktúrálisan ugyanaz-e?<br>
+            <b style="color:var(--acc)">Képfelism.:</b> Szubgráf-izomorfizmus (mintaillesztés)<br>
+            <b style="color:var(--acc)">Bioinf.:</b> Fehérje-struktúra összehasonlítás
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 2: SZÜKSÉGES FELTÉTELEK -->
+  <div id="tab-cond" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Szükséges (de nem elégséges) feltételek az izomorfizmushoz</h5>
+          <div class="preset-row" id="cond-presets">
+            <div class="preset-btn active" onclick="condLoadPreset('same_all')">Minden feltétel teljesül (izomorf)</div>
+            <div class="preset-btn" onclick="condLoadPreset('diff_deg')">Eltérő foksorozat</div>
+            <div class="preset-btn" onclick="condLoadPreset('same_deg_notiso')">Azonos foksor, de nem izomorf</div>
+            <div class="preset-btn" onclick="condLoadPreset('diff_cycles')">Eltérő háromszögszám</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-5">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">G₁</div>
+              <canvas id="cond-canvas1" width="260" height="200"></canvas>
+            </div>
+            <div class="col-md-5">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">G₂</div>
+              <canvas id="cond-canvas2" width="260" height="200"></canvas>
+            </div>
+            <div class="col-md-2 d-flex flex-column justify-content-center gap-2">
+              <div id="cond-check-v" style="font-size:.8rem;font-family:monospace;color:#8ba3bc">—</div>
+            </div>
+          </div>
+          <div id="cond-table" class="mt-3"></div>
+          <div id="cond-verdict" class="verdict" style="margin-top:.6rem">—</div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>A feltételek</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Feltétel</th><th>Ha eltér</th><th>Megjegyzés</th></tr></thead>
+            <tbody>
+              <tr><td>Csúcsszám \(|V|\)</td><td>Biztosan nem izomorf</td><td>Szükséges</td></tr>
+              <tr><td>Élszám \(|E|\)</td><td>Biztosan nem izomorf</td><td>Szükséges</td></tr>
+              <tr><td>Foksorozat (rendezett)</td><td>Biztosan nem izomorf</td><td>Szükséges</td></tr>
+              <tr><td>Háromszögek száma</td><td>Biztosan nem izomorf</td><td>Szükséges</td></tr>
+              <tr><td>Összefüggőség, komponensek</td><td>Biztosan nem izomorf</td><td>Szükséges</td></tr>
+              <tr><td>Szomszédsági spektrum \(\lambda_i\)</td><td>Biztosan nem izomorf</td><td>Szükséges, de nem elégséges!</td></tr>
+              <tr><td>Összes fenti egyezik</td><td colspan="2"><b style="color:#f97316">Még akkor sem biztos, hogy izomorfak!</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 3: FÁK IZOMORFIZMUSA -->
+  <div id="tab-trees" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Fák kanonikus alakja — AHU algoritmus (középpont-módszer)</h5>
+          <div class="preset-row" id="tree-iso-presets">
+            <div class="preset-btn active" onclick="treeIsoLoadPreset('iso_trees')">Izomorf fák</div>
+            <div class="preset-btn" onclick="treeIsoLoadPreset('notiso_trees')">Nem izomorf fák</div>
+            <div class="preset-btn" onclick="treeIsoLoadPreset('caterpillar')">Hernyófa vs. út</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-5">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">T₁ fa</div>
+              <canvas id="tree-iso-canvas1" width="280" height="220"></canvas>
+            </div>
+            <div class="col-md-5">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">T₂ fa</div>
+              <canvas id="tree-iso-canvas2" width="280" height="220"></canvas>
+            </div>
+            <div class="col-md-2 d-flex flex-column justify-content-center">
+              <div id="tree-iso-verdict" class="verdict" style="font-size:.9rem;padding:.4rem">—</div>
+            </div>
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-md-6">
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">T₁ kanonikus kódja:</div>
+              <div id="tree-iso-code1" class="canon-chip">—</div>
+            </div>
+            <div class="col-md-6">
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">T₂ kanonikus kódja:</div>
+              <div id="tree-iso-code2" class="canon-chip">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>AHU algoritmus lépései</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:var(--acc)">1. Gyökér meghatározása:</b> Fa közepéből (center) gyökereztetjük.<br>
+            <b style="color:var(--acc)">2. Kanonikus kód:</b> Alulról felfelé rendelünk egész számot minden csúcsnak a gyerekei kódjai alapján (rendezett sorrend).<br>
+            <b style="color:var(--acc)">3. Összehasonlítás:</b> Ha a gyökerek kódjai egyenlők → T₁ ≅ T₂.<br><br>
+            Futásidő: \(\mathcal{O}(n)\)<br><br>
+            Fa izomorfizmus <b style="color:#4ade80">polinom</b>-idős — ellentétben az általános GI-vel!
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Hány különböző fa létezik n csúcson?</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <table class="tbl-alg" style="font-size:.78rem">
+              <thead><tr><th>\(n\)</th><th>Számos fák (non-isom.)</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>1</td></tr>
+                <tr><td>2</td><td>1</td></tr>
+                <tr><td>3</td><td>1</td></tr>
+                <tr><td>4</td><td>2</td></tr>
+                <tr><td>5</td><td>3</td></tr>
+                <tr><td>6</td><td>6</td></tr>
+                <tr><td>7</td><td>11</td></tr>
+                <tr><td>8</td><td>23</td></tr>
+                <tr><td>10</td><td>106</td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top:.4rem;font-size:.77rem;color:#8ba3bc">Cayley: \(n^{n-2}\) számozott fa, de izomorfizmus-osztályok száma sokkal kisebb.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 4: IZOMORFIZMUS KERESÉSE -->
+  <div id="tab-search" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Visszalépéses keresés (backtracking) — izomorfizmus megkeresése</h5>
+          <div class="preset-row" id="search-presets">
+            <div class="preset-btn active" onclick="searchLoadPreset('small_iso')">Kis izomorf (4 csúcs)</div>
+            <div class="preset-btn" onclick="searchLoadPreset('medium_iso')">Közepes (5 csúcs)</div>
+            <div class="preset-btn" onclick="searchLoadPreset('notiso4')">Nem izomorf (4 csúcs)</div>
+            <div class="preset-btn" onclick="searchLoadPreset('k4_iso')">K₄ (mindkét)</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-5">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">G₁</div>
+              <canvas id="search-canvas1" width="260" height="210"></canvas>
+            </div>
+            <div class="col-md-5">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">G₂</div>
+              <canvas id="search-canvas2" width="260" height="210"></canvas>
+            </div>
+            <div class="col-md-2"></div>
+          </div>
+          <div class="d-flex gap-2 mt-2 flex-wrap">
+            <button class="btn-acc btn-sm2" onclick="searchRun()">▶ Keresés indítása</button>
+            <button class="btn-out btn-sm2" onclick="searchStep()">Lépés →</button>
+            <button class="btn-out btn-sm2" id="search-auto-btn" onclick="searchToggleAuto()">▶ Auto</button>
+            <button class="btn-out btn-sm2" onclick="searchReset()">↺ Újra</button>
+          </div>
+          <div id="search-status" style="font-size:.8rem;color:#8ba3bc;margin-top:.4rem">Kattints ▶ Keresés-re.</div>
+          <div class="log-box mt-2" id="search-log"></div>
+          <div id="search-verdict" class="verdict" style="margin-top:.5rem">—</div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Részleges leképezés állapota</h5>
+          <div id="search-mapping-display" style="font-family:monospace;font-size:.83rem;color:#c8d8e8;line-height:1.8">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 5: GI PROBLÉMA -->
+  <div id="tab-gi" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>A GI-probléma komplexitása</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div style="font-size:.83rem;color:#c8d8e8;line-height:1.85">
+                <b style="color:#ef4444">GI ∈ NP:</b> Ha adott a bijekció, ellenőrzés \(\mathcal{O}(n^2)\) alatt megy.<br><br>
+                <b style="color:#f97316">GI nem ismert P-ben:</b> Nincs polinomidős algoritmus, de NP-teljesnek sem bizonyított.<br><br>
+                <b style="color:#4ade80">GI ∈ quasi-P:</b> Babai (2015) quasi-polinom idős algoritmust adott: \(n^{\mathcal{O}(\log n)}\).<br><br>
+                <b style="color:var(--acc)">GI speciális esetei P-ben:</b><br>
+                &bull; Fák (AHU, \(\mathcal{O}(n)\))<br>
+                &bull; Planáris gráfok (\(\mathcal{O}(n)\))<br>
+                &bull; Korlátozott genus, korlátozott fa-szélesség<br>
+                &bull; Intervallum-gráfok, töküveg-gráfok
+              </div>
+            </div>
+            <div class="col-md-6">
+              <canvas id="gi-complexity-canvas" width="340" height="260"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Erősen izomorf ≠ isomorf?</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:var(--acc)">Regularizált gráfpárok:</b> Léteznek nem-izomorf gráfok, amelyek:<br>
+            &bull; Ugyanannyi csúcsa és éle van<br>
+            &bull; Ugyanaz a foksorozat<br>
+            &bull; Ugyanannyi háromszögük van<br>
+            &bull; <em>Azonos</em> szomszédsági spektrumuk van (kospektrális gráfok)<br><br>
+            Ezeket <b>kospektrális párnak</b> (cospectral graphs) nevezzük. A spektrum sem elegendő az izomorfizmus igazolásához!
+          </div>
+          <button class="btn-out btn-sm2 mt-2" onclick="showCospectral()">Kospektrális pár mutatása</button>
+          <div class="row g-2 mt-2" id="cospectral-div" style="display:none">
+            <div class="col-6"><canvas id="cosp-c1" width="200" height="160"></canvas></div>
+            <div class="col-6"><canvas id="cosp-c2" width="200" height="160"></canvas></div>
+            <div class="col-12" id="cosp-info" style="font-size:.78rem;color:#8ba3bc"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Algoritmusok összehasonlítása</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Algoritmus</th><th>Gráftípus</th><th>Idő</th></tr></thead>
+            <tbody>
+              <tr><td>Naiv (brute-force)</td><td>Általános</td><td>\(\mathcal{O}(n!)\)</td></tr>
+              <tr><td>AHU</td><td>Fák</td><td>\(\mathcal{O}(n)\)</td></tr>
+              <tr><td>Hopcroft-Tarjan</td><td>Planáris</td><td>\(\mathcal{O}(n)\)</td></tr>
+              <tr><td>Weisfeiler-Leman</td><td>Általános (közelítő)</td><td>\(\mathcal{O}(n^2)\)</td></tr>
+              <tr><td>Babai (2015)</td><td>Általános</td><td>\(n^{O(\log n)}\)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+});
+</script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(refreshAll,50);
+}
+function setActivePreset(rowEl,btn){
+  rowEl.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+const NODE_R=14;
+const NODE_COLORS=['#1e6aaf','#166534','#7c2d12','#4a1d96','#5e4000','#1a4a3a','#5a1a4a','#0a3a5a'];
+
+function drawGraph(canvas,nodes,edges,nodeColors,edgeColors,labels,directed){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  edges.forEach((e,i)=>{
+    const a=nodes[e[0]],b=nodes[e[1]];
+    ctx.strokeStyle=edgeColors&&edgeColors[i]?edgeColors[i]:'#2a3a50';
+    ctx.lineWidth=edgeColors&&edgeColors[i]&&edgeColors[i]!=='#2a3a50'?2.5:1.5;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+  });
+  nodes.forEach((n,i)=>{
+    const col=nodeColors&&nodeColors[i]?nodeColors[i]:'#1e3a5f';
+    ctx.beginPath();ctx.arc(n.x,n.y,NODE_R,0,2*Math.PI);
+    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(labels?labels[i]:(n.l||(i+1)),n.x,n.y);
+  });
+}
+function buildAdj(n,edges){
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  return adj;
+}
+function degSeq(n,edges){
+  const deg=Array(n).fill(0);
+  edges.forEach(([a,b])=>{deg[a]++;deg[b]++;});
+  return [...deg].sort((a,b)=>b-a);
+}
+function triangleCount(n,edges){
+  const adj=buildAdj(n,edges);
+  let cnt=0;
+  for(let u=0;u<n;u++) for(const v of adj[u]) if(v>u) for(const w of adj[v]) if(w>v&&adj[u].includes(w)) cnt++;
+  return cnt;
+}
+function isConnected(n,edges){
+  if(n===0)return true;
+  const adj=buildAdj(n,edges),vis=Array(n).fill(false),q=[0];vis[0]=true;let c=1;
+  while(q.length){const u=q.shift();adj[u].forEach(v=>{if(!vis[v]){vis[v]=true;c++;q.push(v);}});}
+  return c===n;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 1: DEFINITION
+const DEF_PRESETS={
+  iso_path:{
+    g1:{nodes:[{x:40,y:120},{x:130,y:60},{x:220,y:120},{x:310,y:60}],edges:[[0,1],[1,2],[2,3]]},
+    g2:{nodes:[{x:50,y:150},{x:150,y:80},{x:250,y:150},{x:320,y:80}],edges:[[0,1],[1,2],[2,3]]},
+    mapping:[0,1,2,3],iso:true
+  },
+  iso_cycle:{
+    g1:{nodes:[{x:180,y:40},{x:310,y:130},{x:250,y:220},{x:110,y:220},{x:50,y:130}],edges:[[0,1],[1,2],[2,3],[3,4],[4,0]]},
+    g2:{nodes:[{x:180,y:220},{x:50,y:130},{x:110,y:40},{x:250,y:40},{x:310,y:130}],edges:[[0,1],[1,2],[2,3],[3,4],[4,0]]},
+    mapping:[0,1,2,3,4],iso:true
+  },
+  iso_petersen:{
+    g1:{nodes:[{x:180,y:40},{x:310,y:130},{x:260,y:230},{x:100,y:230},{x:50,y:130},
+               {x:180,y:100},{x:240,y:155},{x:220,y:205},{x:140,y:205},{x:120,y:155}],
+       edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[5,7],[6,8],[7,9],[8,5],[9,6],[0,5],[1,6],[2,7],[3,8],[4,9]]},
+    g2:{nodes:[{x:180,y:40},{x:310,y:130},{x:260,y:230},{x:100,y:230},{x:50,y:130},
+               {x:180,y:100},{x:240,y:155},{x:220,y:205},{x:140,y:205},{x:120,y,y:155}],
+       edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[5,7],[6,8],[7,9],[8,5],[9,6],[0,5],[1,6],[2,7],[3,8],[4,9]]},
+    mapping:[0,1,2,3,4,5,6,7,8,9],iso:true
+  },
+  notiso_same_deg:{
+    g1:{nodes:[{x:100,y:80},{x:260,y:80},{x:260,y:200},{x:100,y:200},{x:180,y:140}],
+       edges:[[0,1],[1,2],[2,3],[3,0],[0,4],[1,4]]},
+    g2:{nodes:[{x:100,y:80},{x:260,y:80},{x:260,y,y:200},{x:100,y:200},{x:180,y:140}],
+       edges:[[0,1],[1,2],[2,3],[3,0],[0,4],[2,4]]},
+    mapping:null,iso:false
+  }
+};
+let defData=null;
+function defLoadPreset(name){
+  const preset=DEF_PRESETS[name];
+  // fix possible typos in preset
+  defData={
+    g1:{nodes:preset.g1.nodes.map(n=>({x:n.x,y:n.y||120})),edges:preset.g1.edges},
+    g2:{nodes:preset.g2.nodes.map(n=>({x:n.x,y:n.y||120})),edges:preset.g2.edges},
+    mapping:preset.mapping,iso:preset.iso
+  };
+  setActivePreset(document.getElementById('def-presets'),event.target);
+  defRender();
+}
+function defRender(){
+  if(!defData) return;
+  const{g1,g2,mapping,iso}=defData;
+  const colors1=g1.nodes.map((_,i)=>NODE_COLORS[i%NODE_COLORS.length]);
+  const colors2=mapping?g1.nodes.map((_,i)=>NODE_COLORS[mapping.indexOf(i)<0?i:mapping.indexOf(i)%NODE_COLORS.length]):g2.nodes.map((_,i)=>NODE_COLORS[i%NODE_COLORS.length]);
+  drawGraph(document.getElementById('def-canvas1'),g1.nodes,g1.edges,colors1,null,g1.nodes.map((_,i)=>String.fromCharCode(65+i)));
+  drawGraph(document.getElementById('def-canvas2'),g2.nodes,g2.edges,colors2,null,g2.nodes.map((_,i)=>String.fromCharCode(65+i)));
+  const v=document.getElementById('def-verdict');
+  v.textContent=iso?'✓ G₁ ≅ G₂ — IZOMORFAK':'✗ G₁ ≇ G₂ — NEM IZOMORFAK';
+  v.className='verdict '+(iso?'iso':'notiso');
+  if(mapping){
+    document.getElementById('def-mapping').innerHTML=
+      g1.nodes.map((_,i)=>`${String.fromCharCode(65+i)} → ${String.fromCharCode(65+mapping[i])}`).join('<br>');
+  } else {
+    document.getElementById('def-mapping').innerHTML='Nincs izomorfizmus.';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 2: CONDITIONS
+const COND_PRESETS={
+  same_all:{
+    g1:{nodes:[{x:80,y:120},{x:180,y:50},{x:250,y:150},{x:150,y:190}],edges:[[0,1],[1,2],[2,3],[3,0],[0,2]]},
+    g2:{nodes:[{x:100,y:60},{x:220,y:60},{x:220,y:180},{x:100,y:180}],edges:[[0,1],[1,2],[2,3],[3,0],[1,3]]},
+    iso:true
+  },
+  diff_deg:{
+    g1:{nodes:[{x:80,y:120},{x:180,y:50},{x:250,y:150},{x:150,y:190}],edges:[[0,1],[1,2],[2,3],[3,0],[0,2]]},
+    g2:{nodes:[{x:100,y:60},{x:220,y:60},{x:220,y:180},{x:100,y:180}],edges:[[0,1],[1,2],[2,3],[3,0]]},
+    iso:false
+  },
+  same_deg_notiso:{
+    g1:{nodes:[{x:80,y:100},{x:180,y:60},{x:260,y:100},{x:220,y:190},{x:120,y:190}],
+       edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,2]]},
+    g2:{nodes:[{x:80,y:100},{x:180,y:60},{x:260,y:100},{x:220,y:190},{x:120,y:190}],
+       edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[1,3]]},
+    iso:false
+  },
+  diff_cycles:{
+    g1:{nodes:[{x:80,y:120},{x:180,y:60},{x:250,y:150},{x:150,y:200}],edges:[[0,1],[1,2],[2,3],[3,0],[0,2],[1,3]]},
+    g2:{nodes:[{x:100,y:60},{x:220,y:60},{x:220,y:180},{x:100,y:180}],edges:[[0,1],[1,2],[2,3],[3,0],[0,2]]},
+    iso:false
+  }
+};
+let condData=null;
+function condLoadPreset(name){
+  condData=JSON.parse(JSON.stringify(COND_PRESETS[name]));
+  setActivePreset(document.getElementById('cond-presets'),event.target);
+  condCompute();
+}
+function condCompute(){
+  if(!condData) return;
+  const{g1,g2,iso}=condData;
+  const n1=g1.nodes.length,n2=g2.nodes.length;
+  const e1=g1.edges.length,e2=g2.edges.length;
+  const d1=degSeq(n1,g1.edges),d2=degSeq(n2,g2.edges);
+  const t1=triangleCount(n1,g1.edges),t2=triangleCount(n2,g2.edges);
+  const c1=isConnected(n1,g1.edges),c2=isConnected(n2,g2.edges);
+  function check(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+  const rows=[
+    {label:'Csúcsszám |V|',v1:n1,v2:n2,ok:n1===n2},
+    {label:'Élszám |E|',v1:e1,v2:e2,ok:e1===e2},
+    {label:'Foksorozat',v1:d1.join(','),v2:d2.join(','),ok:check(d1,d2)},
+    {label:'Háromszögek',v1:t1,v2:t2,ok:t1===t2},
+    {label:'Összefüggő',v1:c1?'igen':'nem',v2:c2?'igen':'nem',ok:c1===c2}
+  ];
+  const allOk=rows.every(r=>r.ok);
+  document.getElementById('cond-table').innerHTML=
+    '<table class="tbl-alg"><thead><tr><th>Feltétel</th><th>G₁</th><th>G₂</th><th>Egyezik?</th></tr></thead><tbody>'+
+    rows.map(r=>`<tr><td>${r.label}</td><td>${r.v1}</td><td>${r.v2}</td><td style="color:${r.ok?'#4ade80':'#ef4444'}">${r.ok?'✓':'✗'}</td></tr>`).join('')+
+    '</tbody></table>';
+  const vd=document.getElementById('cond-verdict');
+  if(!allOk){vd.textContent='✗ Biztosan NEM izomorfak (feltétel nem teljesül)';vd.className='verdict notiso';}
+  else if(iso){vd.textContent='✓ Minden feltétel teljesül → Valóban izomorfak';vd.className='verdict iso';}
+  else{vd.textContent='⚠ Minden feltétel teljesül, de MÉGSEM izomorfak!';vd.className='verdict';vd.style.background='#1a0f00';vd.style.color='#f97316';vd.style.border='1px solid #f97316';}
+  drawGraph(document.getElementById('cond-canvas1'),g1.nodes,g1.edges,null,null,g1.nodes.map((_,i)=>i+1));
+  drawGraph(document.getElementById('cond-canvas2'),g2.nodes,g2.edges,null,null,g2.nodes.map((_,i)=>i+1));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 3: TREE ISOMORPHISM
+const TREE_ISO_PRESETS={
+  iso_trees:{
+    t1:{nodes:[{x:140,y:40},{x:60,y:120},{x:220,y:120},{x:30,y:200},{x:90,y:200},{x:200,y:200},{x:240,y:200}],
+       edges:[[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]]},
+    t2:{nodes:[{x:140,y:40},{x:70,y:120},{x:210,y:120},{x:40,y:200},{x:100,y:200},{x:185,y:200},{x:245,y:200}],
+       edges:[[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]]},
+    iso:true
+  },
+  notiso_trees:{
+    t1:{nodes:[{x:140,y:40},{x:60,y:120},{x:220,y:120},{x:30,y:200},{x:90,y:200},{x:200,y:200}],
+       edges:[[0,1],[0,2],[1,3],[1,4],[2,5]]},
+    t2:{nodes:[{x:140,y:40},{x:80,y:120},{x:200,y:120},{x:50,y:200},{x:110,y:200},{x:140,y:200}],
+       edges:[[0,1],[0,2],[1,3],[2,4],[2,5]]},
+    iso:false
+  },
+  caterpillar:{
+    t1:{nodes:[{x:60,y:140},{x:140,y:140},{x:220,y:140},{x:300,y:140},{x:140,y:60},{x:220,y:60},{x:220,y:220}],
+       edges:[[0,1],[1,2],[2,3],[1,4],[2,5],[2,6]]},
+    t2:{nodes:[{x:140,y:40},{x:60,y:120},{x:220,y:120},{x:30,y:200},{x:90,y:200},{x:200,y:200},{x:220,y:50}],
+       edges:[[0,1],[0,2],[1,3],[1,4],[2,5],[0,6]]},
+    iso:false
+  }
+};
+function treeCanonCode(nodes,edges,root){
+  const n=nodes.length,adj=buildAdj(n,edges);
+  const code=Array(n).fill('');
+  function dfs(u,par){
+    const childCodes=[];
+    adj[u].forEach(v=>{if(v!==par){dfs(v,u);childCodes.push(code[v]);}});
+    childCodes.sort();
+    code[u]='('+childCodes.join('')+')';
+  }
+  dfs(root,-1);
+  return code[root];
+}
+function treeFindCenter(n,edges){
+  const adj=buildAdj(n,edges);
+  let alive=Array(n).fill(true);
+  let remaining=n;
+  while(remaining>2){
+    const leaves=[];
+    for(let i=0;i<n;i++) if(alive[i]){const d=adj[i].filter(v=>alive[v]).length;if(d<=1)leaves.push(i);}
+    leaves.forEach(l=>{alive[l]=false;remaining--;});
+  }
+  return alive.map((_,i)=>i).filter(i=>alive[i]);
+}
+let treeIsoData=null;
+function treeIsoLoadPreset(name){
+  treeIsoData=JSON.parse(JSON.stringify(TREE_ISO_PRESETS[name]));
+  setActivePreset(document.getElementById('tree-iso-presets'),event.target);
+  treeIsoCompute();
+}
+function treeIsoCompute(){
+  if(!treeIsoData) return;
+  const{t1,t2}=treeIsoData;
+  const n1=t1.nodes.length,n2=t2.nodes.length;
+  let code1='?',code2='?',isIso=false;
+  if(n1===n2&&t1.edges.length===t2.edges.length){
+    const c1=treeFindCenter(n1,t1.edges);
+    const c2=treeFindCenter(n2,t2.edges);
+    code1=treeCanonCode(t1.nodes,t1.edges,c1[0]);
+    code2=treeCanonCode(t2.nodes,t2.edges,c2[0]);
+    // handle bicenter: also try second root
+    if(c1.length===2){const alt=treeCanonCode(t1.nodes,t1.edges,c1[1]);if(alt<code1)code1=alt;}
+    if(c2.length===2){const alt=treeCanonCode(t2.nodes,t2.edges,c2[1]);if(alt<code2)code2=alt;}
+    isIso=code1===code2;
+  }
+  const colors1=t1.nodes.map((_,i)=>NODE_COLORS[i%NODE_COLORS.length]);
+  drawGraph(document.getElementById('tree-iso-canvas1'),t1.nodes,t1.edges,colors1,null,t1.nodes.map((_,i)=>i+1));
+  drawGraph(document.getElementById('tree-iso-canvas2'),t2.nodes,t2.edges,null,null,t2.nodes.map((_,i)=>i+1));
+  document.getElementById('tree-iso-code1').textContent=code1;
+  document.getElementById('tree-iso-code2').textContent=code2;
+  const v=document.getElementById('tree-iso-verdict');
+  v.textContent=isIso?'T₁ ≅ T₂':'T₁ ≇ T₂';
+  v.className='verdict '+(isIso?'iso':'notiso');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 4: BACKTRACKING ISO SEARCH
+const SEARCH_PRESETS={
+  small_iso:{
+    g1:{n:4,edges:[[0,1],[1,2],[2,3],[0,3]]},
+    g2:{n:4,edges:[[0,2],[2,1],[1,3],[3,0]]}
+  },
+  medium_iso:{
+    g1:{n:5,edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,2]]},
+    g2:{n:5,edges:[[0,1],[1,3],[3,2],[2,4],[4,0],[0,3]]}
+  },
+  notiso4:{
+    g1:{n:4,edges:[[0,1],[1,2],[2,3],[0,3],[0,2]]},
+    g2:{n:4,edges:[[0,1],[1,2],[2,3],[3,0]]}
+  },
+  k4_iso:{
+    g1:{n:4,edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]},
+    g2:{n:4,edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]}
+  }
+};
+let searchData=null,searchState=null,searchAutoTimer=null;
+function circleLayout(n,cx,cy,r){return Array.from({length:n},(_,i)=>({x:cx+r*Math.cos(2*Math.PI*i/n-Math.PI/2),y:cy+r*Math.sin(2*Math.PI*i/n-Math.PI/2)}));}
+function searchLoadPreset(name){
+  const p=SEARCH_PRESETS[name];
+  searchData={
+    g1:{nodes:circleLayout(p.g1.n,130,105,80),edges:p.g1.edges,n:p.g1.n},
+    g2:{nodes:circleLayout(p.g2.n,130,105,80),edges:p.g2.edges,n:p.g2.n}
+  };
+  setActivePreset(document.getElementById('search-presets'),event.target);
+  searchReset();
+}
+function searchReset(){
+  if(searchAutoTimer){clearInterval(searchAutoTimer);searchAutoTimer=null;document.getElementById('search-auto-btn').textContent='▶ Auto';}
+  searchState=null;
+  document.getElementById('search-log').innerHTML='';
+  document.getElementById('search-status').textContent='Kattints ▶ Keresés-re.';
+  document.getElementById('search-verdict').textContent='—';document.getElementById('search-verdict').className='verdict';
+  document.getElementById('search-mapping-display').textContent='—';
+  searchRender([],[]);
+}
+function searchRender(m1,m2){
+  if(!searchData) return;
+  const{g1,g2}=searchData;
+  const nc1=g1.nodes.map((_,i)=>m1.includes(i)?NODE_COLORS[m1.indexOf(i)]:'#1e3a5f');
+  const nc2=g2.nodes.map((_,i)=>m2.includes(i)?NODE_COLORS[m2.indexOf(i)]:'#1e3a5f');
+  drawGraph(document.getElementById('search-canvas1'),g1.nodes,g1.edges,nc1,null,g1.nodes.map((_,i)=>i+1));
+  drawGraph(document.getElementById('search-canvas2'),g2.nodes,g2.edges,nc2,null,g2.nodes.map((_,i)=>i+1));
+}
+
+// Build adjacency matrix
+function adjMatrix(n,edges){
+  const A=Array.from({length:n},()=>Array(n).fill(0));
+  edges.forEach(([a,b])=>{A[a][b]=1;A[b][a]=1;});
+  return A;
+}
+
+// Backtracking ISO iterator (generates steps)
+function* isoSearchGen(g1,g2){
+  const n=g1.n, A1=adjMatrix(n,g1.edges), A2=adjMatrix(n,g2.edges);
+  const deg1=Array(n).fill(0),deg2=Array(n).fill(0);
+  g1.edges.forEach(([a,b])=>{deg1[a]++;deg1[b]++;});
+  g2.edges.forEach(([a,b])=>{deg2[a]++;deg2[b]++;});
+  if(n!==g2.n||g1.edges.length!==g2.edges.length){yield {type:'fail',reason:'|V| vagy |E| eltér'};return;}
+  const mapping=Array(n).fill(-1), used=Array(n).fill(false);
+  function isCompatible(u,v){
+    if(deg1[u]!==deg2[v]) return false;
+    for(let k=0;k<u;k++){if(mapping[k]!==-1&&A1[u][k]!==A2[v][mapping[k]]) return false;}
+    return true;
+  }
+  function* bt(depth){
+    if(depth===n){yield {type:'found',mapping:[...mapping]};return;}
+    for(let v=0;v<n;v++){
+      if(used[v]&&isCompatible(depth,v)){
+        mapping[depth]=v;used[v]=true;
+        yield {type:'try',depth,u:depth,v,mapping:[...mapping]};
+        yield* bt(depth+1);
+        if(searchState&&searchState.done) return;
+        mapping[depth]=-1;used[v]=false;
+        yield {type:'backtrack',depth,u:depth,v};
+      }
+    }
+    // try all v
+    for(let v=0;v<n;v++){
+      if(!used[v]&&isCompatible(depth,v)){
+        mapping[depth]=v;used[v]=true;
+        yield {type:'try',depth,u:depth,v,mapping:[...mapping]};
+        yield* bt(depth+1);
+        if(searchState&&searchState.done) return;
+        mapping[depth]=-1;used[v]=false;
+        yield {type:'backtrack',depth,u:depth,v};
+      }
+    }
+  }
+  yield* bt(0);
+  yield {type:'exhausted'};
+}
+
+function searchRun(){
+  if(!searchData) return;
+  searchState={gen:isoSearchGen(searchData.g1,searchData.g2),done:false};
+  document.getElementById('search-log').innerHTML='';
+  document.getElementById('search-status').textContent='Keresés folyamatban...';
+}
+function searchStep(){
+  if(!searchState||searchState.done) return;
+  const res=searchState.gen.next();
+  if(res.done||!res.value){searchState.done=true;return;}
+  const ev=res.value;
+  if(ev.type==='try'){
+    searchLog(`Próba: ${ev.u+1} → ${ev.v+1} (mélység ${ev.depth})`);
+    const m2=ev.mapping.filter(v=>v!==-1);
+    searchRender(Array.from({length:m2.length},(_,i)=>i),m2);
+    document.getElementById('search-mapping-display').innerHTML=
+      ev.mapping.map((v,i)=>v===-1?`${i+1} → ?`:`<span style="color:${NODE_COLORS[i%NODE_COLORS.length]}">${i+1} → ${v+1}</span>`).join('  ');
+  } else if(ev.type==='backtrack'){
+    searchLog(`↩ Visszalépés: ${ev.u+1} → ${ev.v+1}`,'fail');
+  } else if(ev.type==='found'){
+    searchState.done=true;
+    if(searchAutoTimer){clearInterval(searchAutoTimer);searchAutoTimer=null;document.getElementById('search-auto-btn').textContent='▶ Auto';}
+    searchLog('✓ Izomorfizmus megtalálva!','ok');
+    const v=document.getElementById('search-verdict');
+    v.textContent='✓ IZOMORFAK — leképezés: '+ev.mapping.map((v,i)=>`${i+1}→${v+1}`).join(', ');
+    v.className='verdict iso';
+    const m2=ev.mapping;
+    searchRender(Array.from({length:m2.length},(_,i)=>i),m2);
+    document.getElementById('search-mapping-display').innerHTML=
+      ev.mapping.map((v,i)=>`<span style="color:${NODE_COLORS[i%NODE_COLORS.length]}">${i+1} → ${v+1}</span>`).join('  ');
+  } else if(ev.type==='fail'||ev.type==='exhausted'){
+    searchState.done=true;
+    if(searchAutoTimer){clearInterval(searchAutoTimer);searchAutoTimer=null;document.getElementById('search-auto-btn').textContent='▶ Auto';}
+    searchLog('✗ Nincs izomorfizmus.','fail');
+    const v=document.getElementById('search-verdict');
+    v.textContent='✗ NEM IZOMORFAK';v.className='verdict notiso';
+  }
+}
+function searchToggleAuto(){
+  if(searchAutoTimer){clearInterval(searchAutoTimer);searchAutoTimer=null;document.getElementById('search-auto-btn').textContent='▶ Auto';}
+  else{if(!searchState)searchRun();searchAutoTimer=setInterval(()=>{searchStep();if(searchState&&searchState.done){clearInterval(searchAutoTimer);searchAutoTimer=null;document.getElementById('search-auto-btn').textContent='▶ Auto';}},300);document.getElementById('search-auto-btn').textContent='⏸ Stop';}
+}
+function searchLog(msg,cls=''){const lb=document.getElementById('search-log');lb.innerHTML+=`<div class="log-line ${cls}">${msg}</div>`;lb.scrollTop=lb.scrollHeight;}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 5: GI COMPLEXITY
+function drawComplexityDiagram(){
+  const cv=document.getElementById('gi-complexity-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  // Draw Venn-like diagram
+  const sets=[
+    {label:'P',cx:100,cy:130,rx:80,ry:100,color:'rgba(74,222,128,0.15)',bc:'#4ade80'},
+    {label:'quasi-P',cx:140,cy:130,rx:120,ry:115,color:'rgba(56,189,248,0.1)',bc:'#38bdf8'},
+    {label:'NP',cx:180,cy:130,rx:155,ry:130,color:'rgba(167,139,250,0.08)',bc:'#a78bfa'}
+  ];
+  sets.reverse().forEach(s=>{
+    ctx.beginPath();ctx.ellipse(s.cx,s.cy,s.rx,s.ry,0,0,2*Math.PI);
+    ctx.fillStyle=s.color;ctx.fill();ctx.strokeStyle=s.bc;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=s.bc;ctx.font='bold 11px monospace';ctx.textAlign='left';
+  });
+  ctx.fillStyle='#4ade80';ctx.font='bold 11px monospace';ctx.fillText('P',22,200);
+  ctx.fillStyle='#38bdf8';ctx.fillText('quasi-P (Babai)',28,220);
+  ctx.fillStyle='#a78bfa';ctx.fillText('NP',28,240);
+  // Items
+  const items=[
+    {label:'Fa-izomorf.',x:60,y:100,color:'#4ade80'},
+    {label:'Planáris GI',x:55,y:125,color:'#4ade80'},
+    {label:'GI (általános)',x:155,y:85,color:'#38bdf8'},
+    {label:'Szubgráf-izomorf.',x:250,y:110,color:'#f97316'},
+    {label:'Ham.-kör',x:260,y:135,color:'#f97316'}
+  ];
+  items.forEach(it=>{
+    ctx.fillStyle=it.color;ctx.font='10px monospace';ctx.textAlign='center';
+    ctx.fillText(it.label,it.x,it.y);
+  });
+  // NP-complete label
+  ctx.fillStyle='#f97316';ctx.font='9px monospace';ctx.textAlign='right';
+  ctx.fillText('NP-teljes →',338,110);
+}
+
+function showCospectral(){
+  const div=document.getElementById('cospectral-div');
+  div.style.display=div.style.display==='none'?'flex':'none';
+  if(div.style.display!=='none'){
+    // Two cospectral non-isomorphic graphs (classic example: K1,4 and C4+K1)
+    const g1={nodes:[{x:100,y:80},{x:40,y:140},{x:100,y:140},{x:160,y:140},{x:100,y:50}],edges:[[0,1],[0,2],[0,3],[0,4]]};
+    const g2={nodes:[{x:80,y:80},{x:150,y:80},{x:150,y:150},{x:80,y:150},{x:40,y:115}],edges:[[0,1],[1,2],[2,3],[3,0],[4,4]].filter(([a,b])=>a!==b).concat([[0,1],[1,2],[2,3],[3,0]])};
+    drawGraph(document.getElementById('cosp-c1'),g1.nodes,g1.edges,null,null,g1.nodes.map((_,i)=>i+1));
+    // Simpler: K_{1,4} vs C_4 + isolated K_1
+    const gc1n=[{x:100,y:80},{x:40,y:160},{x:80,y:160},{x:120,y:160},{x:160,y:160}];
+    const gc1e=[[0,1],[0,2],[0,3],[0,4]];
+    const gc2n=[{x:60,y:60},{x:140,y:60},{x:140,y:160},{x:60,y:160},{x:100,y:110}];
+    const gc2e=[[0,1],[1,2],[2,3],[3,0]];
+    drawGraph(document.getElementById('cosp-c1'),gc1n,gc1e,null,null,['c','1','2','3','4']);
+    drawGraph(document.getElementById('cosp-c2'),gc2n,gc2e,null,null,['1','2','3','4','?']);
+    document.getElementById('cosp-info').innerHTML='K₁,₄ (bal) és C₄∪K₁ (jobb): azonos spektrum, de nem izomorfak. Foksorozatok: [4,1,1,1,1] vs [2,2,2,2,0].';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+function refreshAll(){
+  if(defData) defRender();
+  if(condData) condCompute();
+  if(treeIsoData) treeIsoCompute();
+  if(searchData) searchRender([],[]);
+  drawComplexityDiagram();
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  defLoadPreset('iso_path');
+  condLoadPreset('same_all');
+  treeIsoLoadPreset('iso_trees');
+  searchLoadPreset('small_iso');
+  drawComplexityDiagram();
+});
+</script>
+{% endblock %}

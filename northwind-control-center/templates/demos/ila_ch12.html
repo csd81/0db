@@ -1,0 +1,732 @@
+{% extends "base.html" %}
+{% block title %}Diszkrét mat. IV — Rekurziók 1.{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#fbbf24!important;}
+.ila-nav-link.active{color:#fbbf24!important;border-bottom-color:#fbbf24!important;}
+.def-box  {border-left:3px solid #fbbf24;background:#1c1200;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.thm-box  {border-left:3px solid #d97706;background:#120d00;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.ex-box   {border-left:3px solid #34d399;background:#041f10;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.info-box {background:#161b22;border:1px solid #21262d;padding:.75rem 1rem;border-radius:.4rem;margin:.7rem 0;}
+.warn-box {border-left:3px solid #67e8f9;background:#031926;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.step-row {display:flex;gap:1rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:baseline;flex-wrap:wrap;}
+.step-row:last-child{border-bottom:none;}
+.step-eq  {min-width:260px;color:#e2e8f0;font-size:.84rem;}
+.step-why {font-size:.7rem;color:#6b7280;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.formula-chip{display:inline-block;background:#1c1200;border:1px solid #fbbf24;border-radius:.4rem;padding:.3rem .8rem;
+  font-size:.82rem;color:#fde68a;font-family:monospace;margin:.2rem;}
+.case-card{background:#0d1117;border:1px solid #21262d;border-radius:.4rem;padding:.8rem 1rem;margin:.5rem 0;}
+.case-card.active-case{border-color:#fbbf24;background:#1c1200;}
+.seq-chip{display:inline-block;background:#1c1200;border:1px solid #fbbf24;border-radius:.3rem;
+  padding:.15rem .55rem;font-size:.78rem;color:#fde68a;margin:.1rem;font-family:monospace;}
+.katex{font-size:1em;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#fbbf24">Diszkrét matematika IV — fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Rekurziók 1.</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2026</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(251,191,36,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-rek',this)"><i class="bi bi-arrow-repeat me-1"></i>Rekurzió példák</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-lin',this)"><i class="bi bi-list-ol me-1"></i>Lineáris diff.egyenletek</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-kar',this)"><i class="bi bi-graph-up me-1"></i>Karakterisztikus egyenlet</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-peld',this)"><i class="bi bi-calculator me-1"></i>Megoldott példák</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ex',this)"><i class="bi bi-stars me-1"></i>Előadás+</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════════════════════ TAB 1: REKURZIÓ PÉLDÁK ══════════════════════ -->
+<div id="tab-rek">
+  <h5 class="fw-bold mb-3" style="color:#fbbf24">Rekurziók alkalmazásai — 6 alappélda</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#fbbf24">1. Fibonacci-sorozat (nyúlpár)</div>
+        <div class="small">Az \(s_{n+1}=s_n+s_{n-1}\), \(s_0=1,s_1=1\) rekurzióval definiált sorozat.<br>
+        <em>Első néhány tag:</em> 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, …</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#fbbf24">2. Részhalmazok száma</div>
+        <div class="small">Az \(n\)-elemű halmaz részhalmazainak száma: \(s_n=2s_{n-1}\), \(s_0=1\).<br>
+        Megoldás: \(s_n=2^n\). (Minden elemre két lehetőség: benne van-e vagy sem.)</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#fbbf24">3. Hanoi tornyai</div>
+        <div class="small">\(n\) korong áthelyezésének minimális lépésszáma: \(s_n=2s_{n-1}+1\), \(s_1=1\).<br>
+        Megoldás: \(s_n=2^n-1\). (Például 64 korong: \(2^{64}-1 \approx 1.8\times10^{19}\) lépés.)</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#fbbf24">4. Egyenesek a síkban</div>
+        <div class="small">\(n\) db általános helyzetű egyenes hány részre osztja a síkot?<br>
+        \(s_n=s_{n-1}+n\), \(s_1=2\). Megoldás: \(s_n=\dfrac{n^2+n+2}{2}\).<br>
+        Értékek: \(s_1=2,\; s_2=4,\; s_3=7,\; s_4=11,\ldots\)</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#fbbf24">5. Bináris sorozat — nincs '00'</div>
+        <div class="small">\(n\)-hosszú bináris sorozatok száma, ahol nincs két egymás utáni 0:<br>
+        \(s_n=s_{n-1}+s_{n-2}\), \(s_0=1,s_1=2\). (Szintén Fibonacci-típusú!)<br>
+        Tagok: 1, 2, 3, 5, 8, 13, …</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#fbbf24">6. Bináris sorozat — nincs '001'</div>
+        <div class="small">\(n\)-hosszú bináris sorozatok száma, ahol nem szerepel '001':<br>
+        \(s_n=s_{n-1}+s_{n-2}+1\), \(s_0=1,s_1=2\).<br>
+        Tagok: 1, 2, 4, 7, 12, 20, …</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive sequence generator -->
+  <div class="info-box">
+    <div class="lbl mb-2" style="color:#fbbf24">Interaktív sorozatgenerátor</div>
+    <div class="row g-2 align-items-end mb-2">
+      <div class="col-auto">
+        <label class="lbl mb-1" style="color:#8892a4">Sorozat típusa</label>
+        <select id="seqType" class="form-select form-select-sm" style="background:#0d1117;border-color:#fbbf24;color:#e2e8f0;font-size:.8rem;width:auto">
+          <option value="fib">Fibonacci</option>
+          <option value="pow2">Részhalmazok (2ⁿ)</option>
+          <option value="hanoi">Hanoi</option>
+          <option value="lines">Egyenesek</option>
+          <option value="bin00">Bináris (nincs 00)</option>
+          <option value="bin001">Bináris (nincs 001)</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="lbl mb-1" style="color:#8892a4">Tagok száma (n)</label>
+        <input type="number" id="seqN" value="12" min="2" max="25" class="form-control form-control-sm"
+          style="background:#0d1117;border-color:#fbbf24;color:#fde68a;width:80px;font-size:.85rem">
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-sm px-3" style="background:#fbbf24;color:#000;font-weight:700" onclick="genSeq()">Generál</button>
+      </div>
+    </div>
+    <div id="seqOutput" class="mb-2" style="min-height:28px"></div>
+    <canvas id="seqCanvas" width="700" height="140" style="width:100%;max-width:700px;border-radius:.3rem;background:#0a0c10;display:block"></canvas>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 2: LINEÁRIS DIFF.EGYENLETEK ══════════════════════ -->
+<div id="tab-lin" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fbbf24">Lineáris differenciaegyenletek — elmélet</h5>
+
+  <div class="def-box">
+    <div class="lbl mb-1" style="color:#fbbf24">Definíció — k-adrendű konstans együtthatós lineáris differenciaegyenlet</div>
+    \[a_k x_n + a_{k-1}x_{n-1} + \cdots + a_0 x_{n-k} = f_n,\qquad n=k,k+1,\ldots\]
+    ahol \(a_k,a_{k-1},\ldots,a_0\) rögzített valós számok, \(a_k\ne 0\), és \(f_n\) egy adott sorozat.<br>
+    <span class="small text-secondary">Ha \(f_n\not\equiv 0\): <strong>inhomogén</strong> egyenlet; ha \(f_n\equiv 0\): <strong>homogén</strong> egyenlet.</span>
+  </div>
+
+  <div class="def-box mt-1">
+    <div class="lbl mb-1" style="color:#fbbf24">Kezdeti feltétel és kezdeti érték feladat</div>
+    <div class="small">A \(k\)-adrendű egyenlethez rendelt kezdeti feltétel: \(x_0=v_0,\; x_1=v_1,\;\ldots,\; x_{k-1}=v_{k-1}\).<br>
+    Az egyenlet + kezdeti feltétel együtt = <strong>kezdeti érték feladat</strong>. Mindig van egyértelmű megoldás, mert az egyenlet explicit rekurzióba írható.</div>
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#fbbf24">7. Tétel — lineáris kombináció</div>
+        <div class="small">Ha \(y_n\) és \(z_n\) megoldásai a homogén egyenletnek, akkor \(x_n=y_n+z_n\) is megoldás.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#fbbf24">8. Tétel — skalárszorosok</div>
+        <div class="small">Ha \(y_n\) megoldás és \(c\in\mathbb{R}\), akkor \(x_n=cy_n\) is megoldása a homogén egyenletnek.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="thm-box mt-1">
+    <div class="lbl mb-1" style="color:#fbbf24">9. Következmény — általános lineáris kombináció</div>
+    Ha \(y_n\) és \(z_n\) megoldások, akkor \(x_n=\alpha y_n+\beta z_n\) is megoldás minden \(\alpha,\beta\in\mathbb{R}\)-re.
+  </div>
+
+  <div class="thm-box mt-1">
+    <div class="lbl mb-1" style="color:#fbbf24">10. Következmény — lineáris tér</div>
+    A homogén egyenlet megoldásainak halmaza <strong>lineáris tér</strong>.
+  </div>
+
+  <div class="thm-box mt-1">
+    <div class="lbl mb-1" style="color:#fbbf24">11. Tétel — \(k\)-dimenziós megoldástér</div>
+    A \(k\)-adrendű homogén lineáris egyenlet megoldásainak halmaza <strong>\(k\)-dimenziós lineáris tér</strong>.<br>
+    <span class="small text-secondary">Bizonyítás (2. rend): Ha \(p_n\) az \((1,0)\), \(q_n\) a \((0,1)\) kezdeti feltételekhez tartozó megoldás, akkor \(\{p_n,q_n\}\) lineárisan független bázis, és minden megoldás \(y_n=\alpha p_n+\beta q_n\) alakú.</span>
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#fbbf24">12. Tétel</div>
+        <div class="small">Ha \(y_n\) és \(z_n\) megoldásai az inhomogén egyenletnek, akkor \(x_n=y_n-z_n\) megoldása a homogén egyenletnek.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#fbbf24">13. Tétel</div>
+        <div class="small">Ha \(y_n\) megoldás a homogénre és \(p_n\) partikuláris megoldás az inhomogénre, akkor \(x_n=y_n+p_n\) megoldása az inhomogénnek.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="thm-box mt-1" style="border-color:#fbbf24;background:#1c1200">
+    <div class="lbl mb-1" style="color:#fbbf24">14. Tétel — Általános megoldás struktúrája (★)</div>
+    Az inhomogén egyenlet <strong>általános megoldása</strong>:
+    \[\boxed{x_n = y_n + p_n}\]
+    ahol \(y_n\) a homogén egyenlet <em>általános megoldása</em> és \(p_n\) az inhomogén egyenlet egy <em>partikuláris megoldása</em>.
+  </div>
+
+  <div class="info-box mt-3 small">
+    <strong style="color:#fbbf24">Összefoglalás — megoldási stratégia:</strong>
+    <ol class="mb-0 mt-1" style="color:#c9d1d9">
+      <li>Megoldjuk a homogén egyenletet → kapjuk \(y_n\)-t (általános homogén megoldás)</li>
+      <li>Keresünk egy partikuláris megoldást \(p_n\)-t az inhomogén egyenlethez</li>
+      <li>Az általános megoldás: \(x_n = y_n + p_n\)</li>
+      <li>A kezdeti feltételekből meghatározzuk a szabad paramétereket</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 3: KARAKTERISZTIKUS EGYENLET ══════════════════════ -->
+<div id="tab-kar" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fbbf24">Karakterisztikus egyenlet — 3 eset</h5>
+
+  <div class="info-box small mb-3">
+    A homogén egyenlet megoldását <strong>\(y_n = r^n\)</strong> alakban keressük. Behelyettesítve az \(ay_n+by_{n-1}+cy_{n-2}=0\) egyenletbe és \(r^{n-2}\)-vel osztva kapjuk a <strong>karakterisztikus egyenletet</strong>:
+    \[ar^2 + br + c = 0\]
+    A megoldás típusa a diszkrimináns \(\Delta = b^2-4ac\) előjelétől függ.
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="case-card" id="case1card">
+        <div class="lbl mb-1" style="color:#fbbf24">1. eset — \(\Delta > 0\)</div>
+        <div class="fw-bold small mb-1">Két különböző valós gyök</div>
+        <div class="small text-secondary mb-2">\(r_1 \ne r_2\) mindkettő valós</div>
+        <div class="formula-chip">\(y_n = \alpha r_1^n + \beta r_2^n\)</div>
+        <div class="small text-secondary mt-2">Az \(r_1^n\) és \(r_2^n\) megoldások lineárisan függetlenek (\(r_1\ne r_2\) miatt).</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="case-card" id="case2card">
+        <div class="lbl mb-1" style="color:#fbbf24">2. eset — \(\Delta = 0\)</div>
+        <div class="fw-bold small mb-1">Kétszeres valós gyök</div>
+        <div class="small text-secondary mb-2">\(r_1 = r_2 = r = -\tfrac{b}{2a}\)</div>
+        <div class="formula-chip">\(y_n = (\alpha + \beta n)\,r^n\)</div>
+        <div class="small text-secondary mt-2">Az \(nr^n\) is megoldás, mert \(\Delta=0 \Rightarrow br+2c=0\).</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="case-card" id="case3card">
+        <div class="lbl mb-1" style="color:#fbbf24">3. eset — \(\Delta < 0\)</div>
+        <div class="fw-bold small mb-1">Komplex konjugált gyökök</div>
+        <div class="small text-secondary mb-2">\(r=\rho(\cos\varphi\pm i\sin\varphi)\)</div>
+        <div class="formula-chip">\(y_n = \rho^n(\alpha\cos n\varphi + \beta\sin n\varphi)\)</div>
+        <div class="small text-secondary mt-2">A valós és képzetes rész külön-külön is megoldás és lineárisan független.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive discriminant checker -->
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#fbbf24">Interaktív karakterisztikus egyenlet vizsgáló</div>
+    <div class="small mb-2">Adja meg az \(ay_n + by_{n-1} + cy_{n-2} = 0\) együtthatóit:</div>
+    <div class="row g-2 align-items-end">
+      <div class="col-auto">
+        <label class="lbl mb-1" style="color:#8892a4">a</label>
+        <input type="number" id="ka" value="1" class="form-control form-control-sm" style="background:#0d1117;border-color:#fbbf24;color:#fde68a;width:70px;font-size:.85rem">
+      </div>
+      <div class="col-auto">
+        <label class="lbl mb-1" style="color:#8892a4">b</label>
+        <input type="number" id="kb" value="3" class="form-control form-control-sm" style="background:#0d1117;border-color:#fbbf24;color:#fde68a;width:70px;font-size:.85rem">
+      </div>
+      <div class="col-auto">
+        <label class="lbl mb-1" style="color:#8892a4">c</label>
+        <input type="number" id="kc" value="2" class="form-control form-control-sm" style="background:#0d1117;border-color:#fbbf24;color:#fde68a;width:70px;font-size:.85rem">
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-sm px-3" style="background:#fbbf24;color:#000;font-weight:700" onclick="analyzeChar()">Elemez</button>
+      </div>
+    </div>
+    <div id="charResult" class="mt-2 small" style="min-height:80px"></div>
+  </div>
+
+  <div class="thm-box mt-3">
+    <div class="lbl mb-1" style="color:#fbbf24">k-adrendű eset (különböző valós gyökök)</div>
+    Az \(a_k r^k + a_{k-1}r^{k-1}+\cdots+a_0=0\) karakterisztikus egyenlet \(k\) db páronként különböző valós gyöke esetén:
+    \[y_n = c_1 r_1^n + c_2 r_2^n + \cdots + c_k r_k^n,\qquad n\in\mathbb{N}_0.\]
+  </div>
+
+  <div class="def-box mt-2 small">
+    <strong>Elsőrendű eset</strong> (\(ay_n + by_{n-1}=0\), \(a\ne 0\)):<br>
+    Karakterisztikus egyenlet: \(ar+b=0 \Rightarrow r=-b/a\).<br>
+    Általános megoldás: \(y_n = c\cdot r^n\) — geometriai sorozat!
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 4: MEGOLDOTT PÉLDÁK ══════════════════════ -->
+<div id="tab-peld" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fbbf24">Megoldott kezdeti érték feladatok</h5>
+
+  <!-- Example selector -->
+  <div class="d-flex gap-2 flex-wrap mb-3">
+    <button class="btn btn-sm px-3 ex-btn active-ex" onclick="showEx(15,this)">15. Példa</button>
+    <button class="btn btn-sm px-3 ex-btn" onclick="showEx(16,this)">16. Példa (Fibonacci)</button>
+    <button class="btn btn-sm px-3 ex-btn" onclick="showEx(17,this)">17. Példa</button>
+    <button class="btn btn-sm px-3 ex-btn" onclick="showEx(18,this)">18. Példa</button>
+    <button class="btn btn-sm px-3 ex-btn" onclick="showEx(19,this)">19. Példa</button>
+  </div>
+  <style>
+  .ex-btn{background:#1c1200;color:#fbbf24;border:1px solid #fbbf24;font-size:.78rem;font-weight:700;}
+  .ex-btn.active-ex{background:#fbbf24;color:#000;}
+  </style>
+
+  <!-- Example 15 -->
+  <div id="ex15">
+    <div class="ex-box mb-2">
+      <strong>Feladat:</strong> \(y_n + 3y_{n-1} + 2y_{n-2} = 0,\quad y_0=4,\quad y_1=-2\)
+    </div>
+    <div>
+      <div class="step-row"><div class="step-eq"><strong>1.</strong> Karakterisztikus egyenlet: \(r^2+3r+2=0\)</div><div class="step-why">behelyettesítve \(y_n=r^n\), osztva \(r^{n-2}\)-vel</div></div>
+      <div class="step-row"><div class="step-eq"><strong>2.</strong> Gyökök: \(r_1=-2,\quad r_2=-1\)</div><div class="step-why">\(\Delta=9-8=1>0\) → 1. eset</div></div>
+      <div class="step-row"><div class="step-eq"><strong>3.</strong> Általános megoldás: \(y_n=\alpha(-2)^n+\beta(-1)^n\)</div><div class="step-why">két különböző valós gyök</div></div>
+      <div class="step-row"><div class="step-eq"><strong>4.</strong> \(n=0\): \(\alpha+\beta=4\)</div><div class="step-why">kezdeti feltétel \(y_0=4\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>5.</strong> \(n=1\): \(-2\alpha-\beta=-2\)</div><div class="step-why">kezdeti feltétel \(y_1=-2\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>6.</strong> Megoldás: \(\alpha=-2,\quad\beta=6\)</div><div class="step-why">4+5 egyenletrendszer</div></div>
+      <div class="step-row"><div class="step-eq"><strong style="color:#fbbf24">Eredmény:</strong> \(\boxed{y_n=-2(-2)^n+6(-1)^n}\)</div></div>
+    </div>
+    <div class="info-box mt-2 small">
+      Ellenőrzés: \(y_0=-2\cdot1+6\cdot1=4\checkmark\quad y_1=-2\cdot(-2)+6\cdot(-1)=4-6=-2\checkmark\)<br>
+      \(y_2=-2\cdot4+6\cdot1=-2\quad\) és \(\quad -3y_1-2y_0=-3(-2)-2(4)=6-8=-2\checkmark\)
+    </div>
+    <div class="mt-2"><canvas id="cv15" width="600" height="130" style="width:100%;max-width:600px;background:#0a0c10;border-radius:.3rem"></canvas></div>
+  </div>
+
+  <!-- Example 16 -->
+  <div id="ex16" class="d-none">
+    <div class="ex-box mb-2">
+      <strong>Feladat:</strong> Fibonacci-sorozat — \(y_n=y_{n-1}+y_{n-2},\quad y_0=1,\quad y_1=1\)
+    </div>
+    <div>
+      <div class="step-row"><div class="step-eq"><strong>1.</strong> Karakterisztikus egyenlet: \(r^2-r-1=0\)</div><div class="step-why">\(y_n-y_{n-1}-y_{n-2}=0\) után</div></div>
+      <div class="step-row"><div class="step-eq"><strong>2.</strong> Gyökök: \(r_{1,2}=\dfrac{1\pm\sqrt{5}}{2}\)</div><div class="step-why">\(\Delta=1+4=5>0\) → 1. eset, arany arány!</div></div>
+      <div class="step-row"><div class="step-eq"><strong>3.</strong> \(\varphi=\dfrac{1+\sqrt{5}}{2}\approx1.618\) (arany arány), \(\hat\varphi=\dfrac{1-\sqrt{5}}{2}\approx-0.618\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>4.</strong> Általános megoldás: \(y_n=\alpha\varphi^n+\beta\hat\varphi^n\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>5.</strong> Kezdeti feltételekből: \(\alpha=\dfrac{1+\sqrt{5}}{2\sqrt{5}},\quad\beta=-\dfrac{1-\sqrt{5}}{2\sqrt{5}}\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong style="color:#fbbf24">Binet-képlet:</strong> \(\boxed{F_n=\dfrac{1}{\sqrt{5}}\!\left(\!\left(\dfrac{1+\sqrt5}{2}\right)^{\!n+1}\!-\left(\dfrac{1-\sqrt5}{2}\right)^{\!n+1}\right)}\)</div></div>
+    </div>
+    <div class="info-box mt-2 small">
+      <strong>\(|\hat\varphi|&lt;1\), így \(\hat\varphi^n\to0\)</strong>, ezért nagy \(n\)-re: \(F_n\approx\dfrac{\varphi^{n+1}}{\sqrt{5}}\).<br>
+      A szomszédos tagok hányados: \(\dfrac{F_{n+1}}{F_n}\to\varphi\approx1.61803\ldots\)
+    </div>
+    <div class="mt-2"><canvas id="cv16" width="600" height="130" style="width:100%;max-width:600px;background:#0a0c10;border-radius:.3rem"></canvas></div>
+  </div>
+
+  <!-- Example 17 -->
+  <div id="ex17" class="d-none">
+    <div class="ex-box mb-2">
+      <strong>Feladat:</strong> \(y_n - 6y_{n-1} + 9y_{n-2} = 0,\quad y_0=1,\quad y_1=0\)
+    </div>
+    <div>
+      <div class="step-row"><div class="step-eq"><strong>1.</strong> Karakterisztikus egyenlet: \(r^2-6r+9=0\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>2.</strong> \(\Delta=36-36=0\) → kétszeres gyök: \(r=3\)</div><div class="step-why">2. eset</div></div>
+      <div class="step-row"><div class="step-eq"><strong>3.</strong> Általános megoldás: \(y_n=(\alpha+\beta n)\cdot3^n\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>4.</strong> \(n=0\): \(\alpha=1\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>5.</strong> \(n=1\): \(3(\alpha+\beta)=0 \Rightarrow \beta=-1\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong style="color:#fbbf24">Eredmény:</strong> \(\boxed{y_n=(1-n)\cdot3^n=3^n-n\cdot3^n}\)</div></div>
+    </div>
+    <div class="info-box mt-2 small">
+      Ellenőrzés: \(y_0=1\checkmark\quad y_1=0\checkmark\quad y_2=(1-2)\cdot9=-9\)<br>
+      \(\quad6y_1-9y_0=0-9=-9\checkmark\)
+    </div>
+    <div class="mt-2"><canvas id="cv17" width="600" height="130" style="width:100%;max-width:600px;background:#0a0c10;border-radius:.3rem"></canvas></div>
+  </div>
+
+  <!-- Example 18 -->
+  <div id="ex18" class="d-none">
+    <div class="ex-box mb-2">
+      <strong>Feladat:</strong> \(y_n + 4y_{n-2} = 0,\quad y_0=-1,\quad y_1=0\)
+    </div>
+    <div>
+      <div class="step-row"><div class="step-eq"><strong>1.</strong> Karakterisztikus egyenlet: \(r^2+4=0\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>2.</strong> \(\Delta=-16&lt;0\) → komplex gyökök: \(r=\pm2i\)</div><div class="step-why">3. eset</div></div>
+      <div class="step-row"><div class="step-eq"><strong>3.</strong> Trigonometrikus alak: \(\rho=2,\quad\varphi=\pi/2\)</div><div class="step-why">\(2i=2(\cos\tfrac\pi2+i\sin\tfrac\pi2)\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>4.</strong> Általános megoldás: \(y_n=2^n\!\left(\alpha\cos\tfrac{\pi n}{2}+\beta\sin\tfrac{\pi n}{2}\right)\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>5.</strong> \(n=0\): \(\alpha=-1\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>6.</strong> \(n=1\): \(2\beta=0 \Rightarrow\beta=0\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong style="color:#fbbf24">Eredmény:</strong> \(\boxed{y_n=-2^n\cos\!\left(\dfrac{\pi n}{2}\right)}\)</div></div>
+    </div>
+    <div class="info-box mt-2 small">
+      Értékek: \(y_0=-1,\;y_1=0,\;y_2=4,\;y_3=0,\;y_4=-16,\ldots\) — rezgő, exponenciálisan növő sorozat!
+    </div>
+    <div class="mt-2"><canvas id="cv18" width="600" height="130" style="width:100%;max-width:600px;background:#0a0c10;border-radius:.3rem"></canvas></div>
+  </div>
+
+  <!-- Example 19 -->
+  <div id="ex19" class="d-none">
+    <div class="ex-box mb-2">
+      <strong>Feladat:</strong> \(y_n + 5y_{n-1} = 0,\quad y_0=4\) &nbsp;(elsőrendű)
+    </div>
+    <div>
+      <div class="step-row"><div class="step-eq"><strong>1.</strong> Karakterisztikus egyenlet: \(r+5=0\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>2.</strong> Egyértelmű gyök: \(r=-5\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>3.</strong> Általános megoldás: \(y_n=c\cdot(-5)^n\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong>4.</strong> \(n=0\): \(c=4\)</div></div>
+      <div class="step-row"><div class="step-eq"><strong style="color:#fbbf24">Eredmény:</strong> \(\boxed{y_n=4\cdot(-5)^n}\)</div></div>
+    </div>
+    <div class="info-box mt-2 small">
+      Geometriai sorozat. \(|r|=5>1\) → a tagok abszolút értéke exponenciálisan nő, előjele felváltva +/−.
+    </div>
+    <div class="mt-2"><canvas id="cv19" width="600" height="130" style="width:100%;max-width:600px;background:#0a0c10;border-radius:.3rem"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 5: ELŐADÁS+ ══════════════════════ -->
+<div id="tab-ex" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fbbf24">Előadás+ — mélyebb összefüggések</h5>
+
+  <!-- Golden ratio -->
+  <div class="def-box">
+    <div class="lbl mb-1" style="color:#fbbf24">Az arány arány (Golden Ratio) és a Fibonacci-sorozat</div>
+    <div class="small">A Fibonacci-sorozat karakterisztikus egyenlete \(r^2-r-1=0\) egyetlen pozitív gyöke az <strong>arány arány</strong>:
+    \[\varphi=\frac{1+\sqrt{5}}{2}\approx 1.61803\ldots\]
+    Fontos tulajdonsága: \(\varphi^2=\varphi+1\), azaz \(\varphi\) kielégíti saját karakterisztikus egyenletét.<br>
+    A másik gyök: \(\hat\varphi=\frac{1-\sqrt5}{2}\approx-0.618\), melyre \(|\hat\varphi|&lt;1\), tehát \(\hat\varphi^n\to0\).
+    </div>
+  </div>
+
+  <!-- Ratio convergence table -->
+  <div class="info-box mt-2">
+    <div class="lbl mb-2" style="color:#fbbf24">Konvergencia: \(F_{n+1}/F_n \to \varphi\)</div>
+    <div class="d-flex flex-wrap gap-1 mb-2" id="ratioChips"></div>
+    <canvas id="ratioCanvas" width="650" height="110" style="width:100%;max-width:650px;background:#0a0c10;border-radius:.3rem;display:block"></canvas>
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#fbbf24">Hanoi-megoldás levezetése</div>
+        <div class="small">Az \(s_n=2s_{n-1}+1\) inhomogén egyenlet. Keressük \(p_n=A\) konstans partikuláris megoldást:<br>
+        \(A=2A+1 \Rightarrow A=-1\).<br>
+        Homogén: \(s_n^{(h)}=c\cdot2^n\). Általános: \(s_n=c\cdot2^n-1\).<br>
+        \(s_1=1\): \(2c-1=1\Rightarrow c=1\), tehát \(\boxed{s_n=2^n-1}\).
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#fbbf24">Egyenesek megoldása</div>
+        <div class="small">Az \(s_n=s_{n-1}+n\), \(s_1=2\) inhomogén egyenlet. Teleskópos összeadás:<br>
+        \(s_n=s_1+\sum_{k=2}^n k=2+\frac{n(n+1)}{2}-1=\frac{n^2+n+2}{2}\).<br>
+        Ellenőrzés: \(s_1=2\checkmark\; s_2=4\checkmark\; s_3=7\checkmark\)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box mt-2">
+    <div class="lbl mb-1" style="color:#67e8f9">Tipikus hibák és csapdák</div>
+    <ul class="small mb-0">
+      <li><strong>Dupla gyök eseten</strong> NEM \(\alpha r^n+\beta r^n\) (ez ugyanaz!), hanem \(\alpha r^n+\beta \mathbf{n}r^n\).</li>
+      <li><strong>Komplex gyöknél</strong> a \(\rho\) az abszolút érték (\(|r|\)), a \(\varphi\) a szög, NEM a gyök valós/képzetes része.</li>
+      <li><strong>A partikuláris megoldás formáját</strong> az inhomogén \(f_n\) típusa alapján kell megválasztani (konstans, polinom, exponenciális, stb.).</li>
+      <li><strong>Kezdeti feltételek alkalmazása</strong> az általános megoldásra — NEM a homogén megoldásra külön.</li>
+    </ul>
+  </div>
+
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#fbbf24">Interaktív arány arány konvergencia vizsgáló</div>
+    <div class="d-flex gap-2 align-items-end mb-2">
+      <div>
+        <label class="lbl mb-1" style="color:#8892a4">Fibonacci tagok</label>
+        <input type="number" id="fibN" value="15" min="5" max="30"
+          class="form-control form-control-sm" style="background:#0d1117;border-color:#fbbf24;color:#fde68a;width:80px;font-size:.85rem">
+      </div>
+      <button class="btn btn-sm px-3" style="background:#fbbf24;color:#000;font-weight:700" onclick="drawRatio()">Frissít</button>
+    </div>
+    <div id="fibTable" class="small" style="font-family:monospace;color:#c9d1d9;line-height:1.7"></div>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]})"></script>
+<script>
+// ─── Tab switching ────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#tab-rek,#tab-lin,#tab-kar,#tab-peld,#tab-ex').forEach(el => el.classList.add('d-none'));
+  const el = document.getElementById(id);
+  el.classList.remove('d-none');
+  if (window.renderMathInElement) {
+    setTimeout(() => renderMathInElement(el, {
+      delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+    }), 30);
+  }
+  if (id === 'tab-rek')  { setTimeout(genSeq, 80); }
+  if (id === 'tab-kar')  { setTimeout(analyzeChar, 80); }
+  if (id === 'tab-peld') { setTimeout(() => drawExCanvas(currentEx), 120); }
+  if (id === 'tab-ex')   { setTimeout(() => { drawRatio(); buildRatioChips(); }, 80); }
+}
+
+// ─── Sequence generator ───────────────────────────────────────────────────────
+function computeSeq(type, n) {
+  let s = [];
+  if (type === 'fib')   { s[0]=1; s[1]=1; for(let i=2;i<n;i++) s[i]=s[i-1]+s[i-2]; }
+  if (type === 'pow2')  { for(let i=0;i<n;i++) s[i]=Math.pow(2,i); }
+  if (type === 'hanoi') { s[0]=0; s[1]=1; for(let i=2;i<n;i++) s[i]=2*s[i-1]+1; }
+  if (type === 'lines') { s[0]=1; s[1]=2; for(let i=2;i<n;i++) s[i]=s[i-1]+(i+1); }
+  if (type === 'bin00') { s[0]=1; s[1]=2; for(let i=2;i<n;i++) s[i]=s[i-1]+s[i-2]; }
+  if (type === 'bin001'){ s[0]=1; s[1]=2; for(let i=2;i<n;i++) s[i]=s[i-1]+s[i-2]+1; }
+  return s;
+}
+
+function genSeq() {
+  const type = document.getElementById('seqType').value;
+  const n = Math.min(25, Math.max(2, parseInt(document.getElementById('seqN').value)||12));
+  const s = computeSeq(type, n);
+  const out = document.getElementById('seqOutput');
+  out.innerHTML = s.map((v,i) => `<span class="seq-chip">s<sub>${i}</sub>=${v}</span>`).join('');
+  drawSeqCanvas(s);
+}
+
+function drawSeqCanvas(s) {
+  const cv = document.getElementById('seqCanvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  const mx = Math.max(...s.map(Math.abs), 1);
+  const pad = 30, bw = (W - pad*2) / s.length;
+  ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2); ctx.stroke();
+  s.forEach((v, i) => {
+    const x = pad + i * bw + bw/2;
+    const y = H/2 - (v / mx) * (H/2 - 12);
+    ctx.fillStyle = v >= 0 ? '#fbbf24' : '#f87171';
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, 2*Math.PI); ctx.fill();
+    if (i > 0) {
+      const px = pad + (i-1)*bw + bw/2;
+      const py = H/2 - (s[i-1]/mx)*(H/2-12);
+      ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y); ctx.stroke();
+    }
+    if (i % Math.max(1, Math.floor(s.length/8)) === 0) {
+      ctx.fillStyle = '#8892a4'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(i, x, H - 4);
+    }
+  });
+}
+
+// ─── Characteristic equation analyzer ────────────────────────────────────────
+function analyzeChar() {
+  const a = parseFloat(document.getElementById('ka').value) || 1;
+  const b = parseFloat(document.getElementById('kb').value) || 0;
+  const c = parseFloat(document.getElementById('kc').value) || 0;
+  const D = b*b - 4*a*c;
+  const el = document.getElementById('charResult');
+  let html = `<div class="mb-1" style="color:#8892a4">Karakterisztikus egyenlet: <span style="color:#fde68a">${a}r² + ${b}r + ${c} = 0</span>&nbsp;&nbsp; Δ = ${b}²−4·${a}·${c} = <strong style="color:#fbbf24">${D.toFixed(4)}</strong></div>`;
+
+  ['case1card','case2card','case3card'].forEach(id => {
+    const card = document.getElementById(id);
+    if (card) card.classList.remove('active-case');
+  });
+
+  if (D > 1e-9) {
+    const r1 = (-b + Math.sqrt(D)) / (2*a);
+    const r2 = (-b - Math.sqrt(D)) / (2*a);
+    html += `<div class="warn-box small" style="border-color:#fbbf24">1. eset (Δ>0): Két különböző valós gyök<br>
+      r₁ = ${r1.toFixed(5)}, &nbsp; r₂ = ${r2.toFixed(5)}<br>
+      Általános megoldás: y<sub>n</sub> = α·(${r1.toFixed(4)})ⁿ + β·(${r2.toFixed(4)})ⁿ</div>`;
+    document.getElementById('case1card').classList.add('active-case');
+  } else if (Math.abs(D) <= 1e-9) {
+    const r = -b / (2*a);
+    html += `<div class="warn-box small" style="border-color:#fbbf24">2. eset (Δ=0): Kétszeres valós gyök<br>
+      r = ${r.toFixed(5)}<br>
+      Általános megoldás: y<sub>n</sub> = (α + β·n)·(${r.toFixed(4)})ⁿ</div>`;
+    document.getElementById('case2card').classList.add('active-case');
+  } else {
+    const re = -b / (2*a);
+    const im = Math.sqrt(-D) / (2*a);
+    const rho = Math.sqrt(re*re + im*im);
+    const phi = Math.atan2(im, re);
+    html += `<div class="warn-box small" style="border-color:#fbbf24">3. eset (Δ&lt;0): Komplex konjugált gyökök<br>
+      r = ${re.toFixed(4)} ± ${im.toFixed(4)}i<br>
+      ρ = |r| = ${rho.toFixed(5)}, &nbsp; φ = ${phi.toFixed(5)} rad (${(phi*180/Math.PI).toFixed(2)}°)<br>
+      Általános megoldás: y<sub>n</sub> = ${rho.toFixed(4)}ⁿ · (α·cos(${phi.toFixed(4)}n) + β·sin(${phi.toFixed(4)}n))</div>`;
+    document.getElementById('case3card').classList.add('active-case');
+  }
+  el.innerHTML = html;
+}
+
+// ─── Example canvases ─────────────────────────────────────────────────────────
+let currentEx = 15;
+function showEx(n, btn) {
+  document.querySelectorAll('.ex-btn').forEach(b => b.classList.remove('active-ex'));
+  btn.classList.add('active-ex');
+  [15,16,17,18,19].forEach(i => {
+    const el = document.getElementById('ex'+i);
+    if (el) el.classList.toggle('d-none', i !== n);
+  });
+  currentEx = n;
+  if (window.renderMathInElement) {
+    const tab = document.getElementById('tab-peld');
+    setTimeout(() => renderMathInElement(tab, {
+      delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+    }), 30);
+  }
+  setTimeout(() => drawExCanvas(n), 80);
+}
+
+function drawExCanvas(ex) {
+  const cvId = 'cv' + ex;
+  const cv = document.getElementById(cvId);
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  let vals = [];
+  if (ex === 15) { for(let n=0;n<12;n++) vals.push(-2*Math.pow(-2,n)+6*Math.pow(-1,n)); }
+  if (ex === 16) { let a=1,b=1; vals=[a,b]; for(let i=2;i<16;i++){vals.push(a+b);[a,b]=[b,a+b];} }
+  if (ex === 17) { for(let n=0;n<9;n++) vals.push((1-n)*Math.pow(3,n)); }
+  if (ex === 18) { for(let n=0;n<12;n++) vals.push(-Math.pow(2,n)*Math.cos(Math.PI*n/2)); }
+  if (ex === 19) { for(let n=0;n<8;n++) vals.push(4*Math.pow(-5,n)); }
+
+  const mx = Math.max(...vals.map(Math.abs), 1);
+  const pad = 30, bw = (W - pad*2) / vals.length;
+  ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2); ctx.stroke();
+  ctx.fillStyle = '#8892a4'; ctx.font = '9px monospace';
+
+  vals.forEach((v, i) => {
+    const x = pad + i * bw + bw/2;
+    const yy = H/2 - (v / mx) * (H/2 - 12);
+    ctx.fillStyle = v >= 0 ? '#fbbf24' : '#f87171';
+    ctx.beginPath(); ctx.arc(x, Math.max(6, Math.min(H-6, yy)), 4, 0, 2*Math.PI); ctx.fill();
+    if (i > 0) {
+      const px = pad + (i-1)*bw + bw/2;
+      const pyy = H/2 - (vals[i-1]/mx)*(H/2-12);
+      ctx.strokeStyle = '#fbbf2466'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(px, Math.max(6,Math.min(H-6,pyy))); ctx.lineTo(x, Math.max(6,Math.min(H-6,yy))); ctx.stroke();
+    }
+    ctx.fillStyle = '#8892a4'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(i, x, H - 3);
+  });
+}
+
+// ─── Előadás+: ratio convergence ─────────────────────────────────────────────
+function fibSeq(n) {
+  let s = [1,1];
+  for(let i=2;i<n;i++) s.push(s[i-1]+s[i-2]);
+  return s;
+}
+
+const PHI = (1 + Math.sqrt(5)) / 2;
+
+function buildRatioChips() {
+  const s = fibSeq(16);
+  const div = document.getElementById('ratioChips');
+  if (!div) return;
+  let html = '';
+  for(let i=1;i<s.length;i++) {
+    const r = s[i]/s[i-1];
+    const err = Math.abs(r-PHI);
+    const col = err < 0.001 ? '#34d399' : err < 0.01 ? '#fbbf24' : '#f87171';
+    html += `<span style="display:inline-block;background:#0d1117;border:1px solid ${col};border-radius:.25rem;
+      padding:.1rem .5rem;font-size:.72rem;font-family:monospace;color:${col};margin:.1rem">
+      F${i+1}/F${i}=${r.toFixed(5)}</span>`;
+  }
+  div.innerHTML = html;
+}
+
+function drawRatio() {
+  const n = Math.min(30, Math.max(5, parseInt(document.getElementById('fibN').value)||15));
+  const s = fibSeq(n+1);
+  const ratios = [];
+  for(let i=1;i<s.length;i++) ratios.push(s[i]/s[i-1]);
+
+  // Table
+  const tbl = document.getElementById('fibTable');
+  if (tbl) {
+    let h = '<table style="border-collapse:collapse;width:100%"><tr style="color:#fbbf24">'
+      + '<th style="padding:.1rem .5rem;text-align:left">n</th>'
+      + '<th style="padding:.1rem .5rem">F(n)</th>'
+      + '<th style="padding:.1rem .5rem">F(n+1)/F(n)</th>'
+      + '<th style="padding:.1rem .5rem">|eltérés φ-től|</th></tr>';
+    for(let i=0;i<Math.min(n,s.length-1);i++) {
+      const r = ratios[i];
+      const err = Math.abs(r - PHI);
+      const col = err < 0.001 ? '#34d399' : err < 0.01 ? '#fbbf24' : '#f87171';
+      h += `<tr style="border-bottom:1px solid #21262d">
+        <td style="padding:.05rem .5rem;color:#8892a4">${i+1}</td>
+        <td style="padding:.05rem .5rem;color:#c9d1d9">${s[i]}</td>
+        <td style="padding:.05rem .5rem;color:${col}">${r.toFixed(8)}</td>
+        <td style="padding:.05rem .5rem;color:${col}">${err.toFixed(8)}</td>
+      </tr>`;
+    }
+    h += `<tr><td colspan="4" style="padding:.2rem .5rem;color:#fbbf24">φ = ${PHI.toFixed(10)}</td></tr></table>`;
+    tbl.innerHTML = h;
+  }
+
+  // Canvas
+  const cv = document.getElementById('ratioCanvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  const mn = 1, mx = 3;
+  const pad = 30, bw = (W - pad*2) / ratios.length;
+  // phi line
+  const phiY = H - pad - ((PHI - mn) / (mx - mn)) * (H - pad*2);
+  ctx.strokeStyle = '#fbbf2444'; ctx.lineWidth = 1; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(pad, phiY); ctx.lineTo(W-pad, phiY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#fbbf24'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+  ctx.fillText('φ', 4, phiY+3);
+
+  ratios.forEach((r, i) => {
+    const x = pad + i * bw + bw/2;
+    const y = H - pad - ((r - mn) / (mx - mn)) * (H - pad*2);
+    const clampY = Math.max(6, Math.min(H-6, y));
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(x, clampY, 3, 0, 2*Math.PI); ctx.fill();
+    if (i > 0) {
+      const px = pad + (i-1)*bw + bw/2;
+      const pr = H - pad - ((ratios[i-1]-mn)/(mx-mn))*(H-pad*2);
+      ctx.strokeStyle = '#fbbf2488'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(px, Math.max(6,Math.min(H-6,pr))); ctx.lineTo(x, clampY); ctx.stroke();
+    }
+  });
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  genSeq();
+  drawExCanvas(15);
+});
+</script>
+{% endblock %}

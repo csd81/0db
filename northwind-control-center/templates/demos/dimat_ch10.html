@@ -1,0 +1,824 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #38bdf8; --acc2: #7dd3fc; --acc3: #0ea5e9; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.12); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #10b981; background:rgba(16,185,129,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box  { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(56,189,248,.12); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.btn-graph { background:#1a2535; color:var(--acc2); border:1px solid rgba(56,189,248,.25); border-radius:6px; padding:.3rem .8rem; font-size:.8rem; cursor:pointer; transition:background .15s; margin:.15rem; }
+.btn-graph:hover, .btn-graph.active { background:rgba(56,189,248,.18); border-color:var(--acc); color:var(--acc); }
+input[type=number], select { background:#0e1117; border:1px solid #334155; border-radius:6px; color:#e2e8f0; padding:.3rem .6rem; font-size:.83rem; }
+input:focus, select:focus { outline:none; border-color:var(--acc); }
+canvas.graph-canvas { background:#0a0d14; border-radius:10px; border:1px solid #1e2533; display:block; }
+.chip { display:inline-block; background:#1a2535; border:1px solid #334155; border-radius:5px; padding:.12rem .5rem; font-size:.78rem; font-family:monospace; color:#7dd3fc; margin:.1rem; }
+.chip.odd { background:rgba(245,158,11,.12); border-color:#f59e0b; color:#fbbf24; }
+.chip.even { background:rgba(16,185,129,.1); border-color:#10b981; color:#34d399; }
+.trail-seg { display:inline-block; padding:.1rem .4rem; border-radius:4px; font-family:monospace; font-size:.8rem; margin:.1rem; }
+.step-box { background:#0e1117; border:1px solid #1e2533; border-radius:8px; padding:.7rem 1rem; margin:.4rem 0; font-size:.82rem; }
+.step-box.active { border-color:var(--acc); background:rgba(56,189,248,.06); }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1020px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.15);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-arrow-repeat" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">II.2. fejezet — Euler-utak és -körök</h4>
+      <small class="text-muted">Königsberg · Euler tételei · Fleury-algoritmus · Kínai postás</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-def',this)">Definíciók</span>
+    <span class="ila-nav-link" onclick="showTab('t-euler',this)">Euler tételei</span>
+    <span class="ila-nav-link" onclick="showTab('t-fleury',this)">Fleury-algoritmus</span>
+    <span class="ila-nav-link" onclick="showTab('t-sandbox',this)">Rajzolós játék</span>
+    <span class="ila-nav-link" onclick="showTab('t-postman',this)">Kínai postás</span>
+  </div>
+
+  <!-- TAB: Definíciók -->
+  <div id="t-def" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Alapdefiníciók</span>
+          <div class="def-box">
+            <strong>Séta:</strong> csúcsok és élek felváltva álló sorozata, ahol élismétlés megengedett.
+          </div>
+          <div class="def-box">
+            <strong>Euler-út:</strong> olyan séta, amely a gráf <em>minden élét pontosan egyszer</em> tartalmazza. Csúcsismétlés megengedett.
+          </div>
+          <div class="def-box">
+            <strong>Euler-kör:</strong> Euler-út, amelynek kezdő- és végpontja azonos (zárt Euler-út).
+          </div>
+          <div class="ex-box">
+            <strong>Analógia:</strong> „Rajzold meg az ábrát ceruza felemelése nélkül, minden vonalon csak egyszer áthaladva." Ha visszatérhetsz a kiindulópontba: Euler-kör. Ha nem: Euler-út.
+          </div>
+          <div class="thm-box">
+            <strong>Kínai postás (Mei-ko Kwan, 1962):</strong> Ha nem létezik Euler-kör, mennyi az összes élt lefedő legkisebb összsúlyú séta? (Élismétlés megengedett.)
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <span class="badge-acc">Euler-kör és -út szemléltetés</span>
+          <div class="d-flex gap-1 flex-wrap mb-2">
+            <button class="btn-graph active" onclick="setDefGraph('circuit',this)">Euler-kör ✓</button>
+            <button class="btn-graph" onclick="setDefGraph('path',this)">Euler-út ✓</button>
+            <button class="btn-graph" onclick="setDefGraph('none',this)">Sem kör, sem út</button>
+          </div>
+          <canvas id="def-canvas" class="graph-canvas" width="480" height="280"></canvas>
+          <div id="def-info" class="mt-2" style="font-size:.82rem;color:#94a3b8;"></div>
+          <div id="def-trail" class="mt-2" style="font-size:.8rem;line-height:2;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Euler tételei -->
+  <div id="t-euler" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Euler tétele (1736)</span>
+          <div class="thm-box">
+            <strong>Euler-kör:</strong> Összefüggő gráfban Euler-kör létezik \(\Leftrightarrow\) minden csúcs fokszáma <strong>páros</strong>.
+          </div>
+          <div class="thm-box">
+            <strong>Euler-út:</strong> Összefüggő gráfban Euler-út létezik \(\Leftrightarrow\) pontosan <strong>0 vagy 2</strong> páratlan fokszámú csúcs van.<br>
+            Ha 2 páratlan csúcs van, az út köztük vezet.
+          </div>
+          <div class="def-box" style="font-size:.82rem;">
+            <strong>Bizonyítás ötlete (körök esetén):</strong> Minden csúcsnál a bejárás során ugyanannyiszor lépünk be, mint ki — ez csak páros fokszámnál lehetséges. Konstruktív bizonyítás: indíts egy kört, fűzz hozzá részköröket.
+          </div>
+        </div>
+        <div class="card-dark mt-3">
+          <span class="badge-acc">Interaktív feltétel-ellenőrző</span>
+          <p style="font-size:.82rem;color:#94a3b8;">Adj meg egy foksorozatot (vesszővel elválasztva):</p>
+          <input type="text" id="deg-input" value="2,4,2,4,2" style="width:100%;margin-bottom:.5rem;" oninput="checkEuler()">
+          <div id="euler-check-out" style="font-size:.84rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <span class="badge-acc">Fokszám-vizsgáló</span>
+          <p style="font-size:.82rem;color:#94a3b8;">Kattints két csúcsra az él ki-/bekapcsolásához.</p>
+          <canvas id="euler-canvas" class="graph-canvas" width="480" height="300"></canvas>
+          <div id="euler-deg-info" class="mt-2" style="font-size:.83rem;"></div>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn-acc" onclick="resetEulerGraph()">Visszaállít</button>
+            <button class="btn-sec" onclick="makeAllEven()">Páros fokú legyen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Fleury-algoritmus -->
+  <div id="t-fleury" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Fleury-algoritmus szabályai</span>
+          <div class="step-box">
+            <strong style="color:var(--acc);">1.</strong> Kezd bármely csúcsból (ha Euler-út: páratlan fokú csúcsból).
+          </div>
+          <div class="step-box">
+            <strong style="color:var(--acc);">2.</strong> Minden lépésben válassz egy élt a jelenlegi csúcsból.
+          </div>
+          <div class="step-box">
+            <strong style="color:var(--acc);">3.</strong> <strong>Soha ne válassz elvágó élt</strong>, hacsak nincs más lehetőséged. (Elvágó él elhagyása szétbontja a gráfot.)
+          </div>
+          <div class="step-box">
+            <strong style="color:var(--acc);">4.</strong> Hagyd el a választott élt, és folytasd a következő csúcsból.
+          </div>
+          <div class="ex-box">
+            <strong>Elvágó él felismerése:</strong> Egy él elvágó, ha eltávolítása után a gráf elveszti összefüggőségét (a megmaradt aktív élek elérhető komponenseinek száma nő).
+          </div>
+          <div id="fleury-status" class="mt-3" style="font-size:.84rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <span class="badge-acc">Lépésenként — Fleury animáció</span>
+          <div class="d-flex gap-1 flex-wrap mb-2">
+            <button class="btn-graph active" onclick="setFleuryGraph('K4',this)">K₄</button>
+            <button class="btn-graph" onclick="setFleuryGraph('K33',this)">K₃,₃</button>
+            <button class="btn-graph" onclick="setFleuryGraph('house',this)">Ház</button>
+            <button class="btn-graph" onclick="setFleuryGraph('path_graph',this)">Euler-út</button>
+          </div>
+          <canvas id="fleury-canvas" class="graph-canvas" width="480" height="280"></canvas>
+          <div id="fleury-trail" class="mt-2" style="font-size:.8rem;line-height:2;min-height:2rem;"></div>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn-acc" onclick="fleuryStep()">Következő lépés ▶</button>
+            <button class="btn-sec" onclick="fleuryAuto()">Auto ▶▶</button>
+            <button class="btn-sec" onclick="resetFleury()">Újra</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Rajzolós játék -->
+  <div id="t-sandbox" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Szabadon szerkeszthető gráf</span>
+          <p style="font-size:.82rem;color:#94a3b8;">Kattints egy csúcsra, majd egy másikra az él hozzáadásához. Dupla kattintás: csúcs törlése.</p>
+          <div class="d-flex gap-1 flex-wrap mb-2">
+            <button class="btn-graph active" id="sb-mode-edge" onclick="setSbMode('edge',this)">Él hozzáad</button>
+            <button class="btn-graph" id="sb-mode-del" onclick="setSbMode('del',this)">Csúcs töröl</button>
+            <button class="btn-graph" id="sb-mode-move" onclick="setSbMode('move',this)">Húz</button>
+          </div>
+          <div id="sb-stats" class="mt-2" style="font-size:.84rem;"></div>
+          <div id="sb-euler" class="mt-2" style="font-size:.85rem;font-weight:600;"></div>
+          <div class="mt-3 d-flex gap-2 flex-wrap">
+            <button class="btn-sec" onclick="sbLoad('K4')">K₄</button>
+            <button class="btn-sec" onclick="sbLoad('C5')">C₅</button>
+            <button class="btn-sec" onclick="sbLoad('petersen')">Petersen</button>
+            <button class="btn-acc" onclick="sbLoad('clear')">Töröl</button>
+          </div>
+          <div class="mt-3">
+            <span class="badge-acc" style="margin-bottom:.3rem;display:inline-block;">Fokszámok</span>
+            <div id="sb-degrees" style="font-size:.79rem;line-height:1.8;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <canvas id="sb-canvas" class="graph-canvas" width="480" height="360" style="cursor:crosshair;"></canvas>
+          <div id="sb-trail-info" class="mt-2" style="font-size:.82rem;color:#94a3b8;">
+            Szerkeszd a gráfot — a program azonnal jelzi, van-e Euler-kör / -út.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Kínai postás -->
+  <div id="t-postman" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Kínai postás probléma</span>
+          <div class="def-box">
+            Adott élsúlyú gráfban járd be az összes élt a <strong>minimális összsúlyú séta</strong> során. Élismétlés megengedett.
+          </div>
+          <div class="thm-box">
+            <strong>Megoldás stratégia:</strong><br>
+            1. Ha Euler-kör létezik (minden fok páros): kész, az összsúly = Σélsúly.<br>
+            2. Ha páratlan fokú csúcsok vannak: <em>párosítsd</em> őket minimális összsúlyú utakkal, ismételd meg ezeket az éleket → az összsúly nő.
+          </div>
+          <div class="ex-box">
+            <strong>Példa:</strong> Egy utcahálózatban a szemétautónak minden utcát be kell járnia. A páratlan fokú csomópontok párosításával megkapjuk a szükséges ismétlések minimumát.
+          </div>
+          <div id="postman-info" class="mt-3" style="font-size:.84rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <span class="badge-acc">Kínai postás szimulátor</span>
+          <div class="d-flex gap-1 flex-wrap mb-2">
+            <button class="btn-graph active" onclick="setPostmanGraph('grid',this)">Rács</button>
+            <button class="btn-graph" onclick="setPostmanGraph('bridge',this)">Két híd</button>
+            <button class="btn-graph" onclick="setPostmanGraph('custom',this)">Egyedi</button>
+          </div>
+          <canvas id="postman-canvas" class="graph-canvas" width="480" height="300"></canvas>
+          <div id="postman-result" class="mt-2" style="font-size:.84rem;"></div>
+          <button class="btn-acc mt-2" onclick="solvePostman()">Megoldás megmutatása</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.ila-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  renderMathInElement(document.getElementById(id), {
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+}
+
+function edgeKey(a, b) { return Math.min(a,b)+','+Math.max(a,b); }
+
+function drawGraph(ctx, nodes, edges, opts = {}) {
+  const {
+    usedEdges = new Set(), currentNode = -1, trail = [],
+    bridgeEdges = new Set(), highlightNodes = new Set(),
+    removedEdges = new Set(), weights = null,
+    edgeColors = {}, selNode = -1,
+  } = opts;
+
+  const W = ctx.canvas.width, H = ctx.canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const trailColors = ['#f97316','#38bdf8','#10b981','#a78bfa','#f43f5e','#fbbf24','#34d399','#fb923c'];
+
+  edges.forEach((e, i) => {
+    const [a, b, w] = e;
+    if (removedEdges.has(i)) return;
+    const na = nodes[a], nb = nodes[b];
+    // Parallel edge offset
+    const parallels = edges.filter((e2,j) => !removedEdges.has(j) && ((e2[0]===a&&e2[1]===b)||(e2[0]===b&&e2[1]===a)));
+    const pidx = parallels.indexOf(e);
+    const dx = nb.x - na.x, dy = nb.y - na.y, len = Math.sqrt(dx*dx+dy*dy)||1;
+    const offset = parallels.length > 1 ? (pidx - (parallels.length-1)/2) * 16 : 0;
+    const nx = -dy/len*offset, ny = dx/len*offset;
+
+    const trailIdx = trail.indexOf(i);
+    const used = usedEdges.has(i);
+    const isBridge = bridgeEdges.has(i);
+    const eColor = edgeColors[i] || (used ? '#1e2533' : isBridge ? '#ef4444' : '#475569');
+    const eWidth = trailIdx >= 0 ? 3.5 : used ? 1 : 2;
+
+    ctx.beginPath();
+    if(parallels.length > 1) {
+      ctx.moveTo(na.x+nx, na.y+ny);
+      ctx.quadraticCurveTo((na.x+nb.x)/2+nx*1.5,(na.y+nb.y)/2+ny*1.5, nb.x+nx, nb.y+ny);
+    } else {
+      ctx.moveTo(na.x, na.y); ctx.lineTo(nb.x, nb.y);
+    }
+    ctx.strokeStyle = trailIdx >= 0 ? trailColors[trailIdx % trailColors.length] : eColor;
+    ctx.lineWidth = eWidth;
+    ctx.setLineDash(used && trailIdx < 0 ? [3,3] : []);
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Weight label
+    if (weights && w !== undefined) {
+      const mx = (na.x+nb.x)/2+nx*0.7, my = (na.y+nb.y)/2+ny*0.7;
+      ctx.fillStyle = '#94a3b8'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(w, mx, my - 6);
+    }
+  });
+
+  nodes.forEach((n, i) => {
+    if (n.removed) return;
+    const deg = edges.filter((e,j) => !removedEdges.has(j) && (e[0]===i||e[1]===i)).length;
+    const isOdd = deg % 2 !== 0;
+    const isCurrent = i === currentNode;
+    const isHL = highlightNodes.has(i);
+    const isSel = i === selNode;
+
+    ctx.beginPath(); ctx.arc(n.x, n.y, 15, 0, Math.PI*2);
+    ctx.fillStyle = '#12161f'; ctx.fill();
+    ctx.strokeStyle = isCurrent ? '#fbbf24' : isSel ? '#fbbf24' : isHL ? '#10b981' : isOdd ? '#f59e0b' : '#38bdf8';
+    ctx.lineWidth = isCurrent || isSel ? 3 : 2;
+    ctx.stroke();
+
+    ctx.fillStyle = isCurrent ? '#fbbf24' : isOdd ? '#fbbf24' : '#7dd3fc';
+    ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(n.label || i, n.x, n.y);
+  });
+}
+
+function getDegrees(nodes, edges, removedEdges = new Set()) {
+  return nodes.map((_, i) =>
+    edges.filter((e,j) => !removedEdges.has(j) && (e[0]===i||e[1]===i)).length
+  );
+}
+
+function isBridgeEdge(nodes, edges, removedEdges, edgeIdx) {
+  // DFS connectivity check with and without the edge
+  const n = nodes.length;
+  function connected(excluded) {
+    const active = nodes.map((_,i)=>i).filter(i => !nodes[i].removed);
+    if(active.length === 0) return true;
+    const start = active[0];
+    const visited = new Set([start]);
+    const q = [start];
+    while(q.length) {
+      const v = q.shift();
+      edges.forEach((e,j) => {
+        if(removedEdges.has(j) || j === excluded) return;
+        if(e[0]===v && !visited.has(e[1]) && !nodes[e[1]].removed){visited.add(e[1]);q.push(e[1]);}
+        if(e[1]===v && !visited.has(e[0]) && !nodes[e[0]].removed){visited.add(e[0]);q.push(e[0]);}
+      });
+    }
+    return active.every(i => visited.has(i));
+  }
+  if(removedEdges.has(edgeIdx)) return false;
+  const withEdge = connected(-1);
+  const withoutEdge = connected(edgeIdx);
+  return withEdge && !withoutEdge;
+}
+
+function countComponents(nodes, edges, removedEdges) {
+  const active = nodes.map((_,i)=>i).filter(i=>!nodes[i].removed);
+  if(!active.length) return 0;
+  const visited = new Set();
+  let comps = 0;
+  active.forEach(start => {
+    if(visited.has(start)) return;
+    comps++;
+    const q=[start]; visited.add(start);
+    while(q.length){
+      const v=q.shift();
+      edges.forEach((e,j)=>{
+        if(removedEdges.has(j)) return;
+        if(e[0]===v&&!visited.has(e[1])&&!nodes[e[1]].removed){visited.add(e[1]);q.push(e[1]);}
+        if(e[1]===v&&!visited.has(e[0])&&!nodes[e[0]].removed){visited.add(e[0]);q.push(e[0]);}
+      });
+    }
+  });
+  return comps;
+}
+
+// ─── TAB 1: DEF GRAPHS ────────────────────────────────────────────────────────
+const DEF_GRAPHS = {
+  circuit: {
+    nodes: [{x:80,y:140},{x:200,y:50},{x:320,y:140},{x:400,y:80},{x:400,y:200},{x:200,y:230}],
+    edges: [[0,1],[1,2],[2,0],[2,3],[3,4],[4,2],[0,5],[5,2]],
+    trail: [0,1,7,2,3,4,5,6], // edge indices forming Euler circuit
+    info: 'Euler-kör: minden csúcs fokszáma páros → létezik. Az út visszatér a kiindulópontba.',
+    startNode: 0,
+  },
+  path: {
+    nodes: [{x:60,y:140},{x:160,y:60},{x:280,y:60},{x:420,y:140},{x:280,y:220},{x:160,y:220}],
+    edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,1],[2,4],[1,3]],
+    trail: [0,1,5,4,6,2,3,7],
+    info: 'Euler-út (nem kör): pontosan 2 páratlan fokszámú csúcs van. Az út köztük vezet.',
+    startNode: 0,
+  },
+  none: {
+    nodes: [{x:100,y:100},{x:380,y:100},{x:100,y:220},{x:380,y:220}],
+    edges: [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],
+    trail: [],
+    info: '4 páratlan fokszámú csúcs (mind fok=3) → sem Euler-kör, sem Euler-út nem létezik!',
+    startNode: -1,
+  },
+};
+
+let defType = 'circuit';
+function setDefGraph(type, btn) {
+  defType = type;
+  document.querySelectorAll('#t-def .btn-graph').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawDef();
+}
+function drawDef() {
+  const G = DEF_GRAPHS[defType];
+  const ctx = document.getElementById('def-canvas').getContext('2d');
+  const used = new Set();
+  const trailColors = ['#f97316','#38bdf8','#10b981','#a78bfa','#f43f5e','#fbbf24','#34d399','#fb923c'];
+  drawGraph(ctx, G.nodes, G.edges, {
+    currentNode: G.startNode,
+    trail: G.trail,
+  });
+  document.getElementById('def-info').textContent = G.info;
+  if(G.trail.length > 0) {
+    const segs = G.trail.map((ei, t) => {
+      const e = G.edges[ei];
+      return `<span class="trail-seg" style="background:${trailColors[t%trailColors.length]}22;border:1px solid ${trailColors[t%trailColors.length]}66;color:${trailColors[t%trailColors.length]}">${e[0]}→${e[1]}</span>`;
+    });
+    document.getElementById('def-trail').innerHTML = 'Bejárás: ' + segs.join(' ');
+  } else {
+    document.getElementById('def-trail').innerHTML = '<span style="color:#ef4444;">Nincs Euler-út / -kör ebben a gráfban.</span>';
+  }
+}
+
+// ─── TAB 2: EULER DEGREE CHECKER ──────────────────────────────────────────────
+let eulerNodes, eulerEdges, eulerSel = null;
+function buildEulerNodes() {
+  eulerNodes = [
+    {x:80,y:80},{x:240,y:50},{x:400,y:80},{x:400,y:240},{x:240,y:270},{x:80,y:240},{x:240,y:160}
+  ];
+  eulerEdges = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[1,6],[6,4]];
+}
+function resetEulerGraph() { buildEulerNodes(); eulerSel = null; redrawEuler(); }
+
+function makeAllEven() {
+  // Add edges to make all degrees even (simple heuristic)
+  const degs = getDegrees(eulerNodes, eulerEdges);
+  const odds = degs.map((d,i)=>i).filter(i=>degs[i]%2!==0);
+  for(let i=0;i<odds.length-1;i+=2) {
+    if(!eulerEdges.find(e=>(e[0]===odds[i]&&e[1]===odds[i+1])||(e[0]===odds[i+1]&&e[1]===odds[i])))
+      eulerEdges.push([odds[i],odds[i+1]]);
+  }
+  eulerSel = null; redrawEuler();
+}
+
+function redrawEuler() {
+  const ctx = document.getElementById('euler-canvas').getContext('2d');
+  const degs = getDegrees(eulerNodes, eulerEdges);
+  drawGraph(ctx, eulerNodes, eulerEdges, { selNode: eulerSel });
+  const odds = degs.filter(d=>d%2!==0).length;
+  const chips = degs.map((d,i)=>`<span class="chip ${d%2!==0?'odd':'even'}">${i}:${d}</span>`).join('');
+  let verdict = '';
+  if(odds === 0) verdict = '<span style="color:#10b981">✓ Euler-kör létezik (0 páratlan fokú csúcs)</span>';
+  else if(odds === 2) verdict = '<span style="color:#38bdf8">✓ Euler-út létezik (2 páratlan fokú csúcs)</span>';
+  else verdict = `<span style="color:#ef4444">✗ Sem Euler-kör, sem -út (${odds} páratlan fokú csúcs)</span>`;
+  document.getElementById('euler-deg-info').innerHTML = chips + '<div style="margin-top:.5rem">' + verdict + '</div>';
+}
+
+function eulerCanvasClick(e) {
+  const rect = e.target.getBoundingClientRect();
+  const mx = e.clientX-rect.left, my = e.clientY-rect.top;
+  const hit = eulerNodes.findIndex(n => Math.hypot(n.x-mx,n.y-my)<18);
+  if(hit<0){eulerSel=null;redrawEuler();return;}
+  if(eulerSel===null){eulerSel=hit;}
+  else if(eulerSel===hit){eulerSel=null;}
+  else {
+    const ei = eulerEdges.findIndex(e=>(e[0]===eulerSel&&e[1]===hit)||(e[0]===hit&&e[1]===eulerSel));
+    if(ei>=0) eulerEdges.splice(ei,1); else eulerEdges.push([eulerSel,hit]);
+    eulerSel=null;
+  }
+  redrawEuler();
+}
+
+function checkEuler() {
+  const raw = document.getElementById('deg-input').value;
+  const degs = raw.split(',').map(s=>parseInt(s.trim())).filter(d=>!isNaN(d));
+  const odds = degs.filter(d=>d%2!==0).length;
+  const sum = degs.reduce((a,b)=>a+b,0);
+  const edges = sum/2;
+  let html = `<div>${degs.map(d=>`<span class="chip ${d%2!==0?'odd':'even'}">${d}</span>`).join('')}</div>`;
+  html += `<div style="margin-top:.4rem;color:#94a3b8;">∑fokszám = ${sum} → élek száma = ${edges}</div>`;
+  if(sum%2!==0) {html+=`<div style="color:#ef4444;">✗ Érvénytelen foksorozat (összeg nem páros)</div>`;}
+  else if(odds===0) html+=`<div style="color:#10b981;font-weight:600;">✓ Euler-kör létezhet (0 páratlan fokú csúcs)</div>`;
+  else if(odds===2) html+=`<div style="color:#38bdf8;font-weight:600;">✓ Euler-út létezhet (2 páratlan fokú csúcs)</div>`;
+  else html+=`<div style="color:#ef4444;font-weight:600;">✗ Nincs Euler-út/kör (${odds} páratlan fokú csúcs)</div>`;
+  document.getElementById('euler-check-out').innerHTML = html;
+}
+
+// ─── TAB 3: FLEURY ────────────────────────────────────────────────────────────
+const FLEURY_GRAPHS = {
+  K4: {
+    nodes:[{x:120,y:100},{x:360,y:100},{x:360,y:240},{x:120,y:240}],
+    edges:[[0,1],[1,2],[2,3],[3,0],[0,2],[1,3]],
+  },
+  K33: {
+    nodes:[{x:80,y:80},{x:240,y:80},{x:400,y:80},{x:80,y:240},{x:240,y:240},{x:400,y:240}],
+    edges:[[0,3],[0,4],[0,5],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5]],
+  },
+  house: {
+    nodes:[{x:240,y:40},{x:80,y:160},{x:400,y:160},{x:120,y:280},{x:360,y:280}],
+    edges:[[0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[1,4],[2,3]],
+  },
+  path_graph: {
+    nodes:[{x:60,y:160},{x:160,y:80},{x:280,y:80},{x:400,y:160},{x:400,y:240},{x:160,y:240}],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[1,4],[2,5],[0,3]],
+  },
+};
+
+let fleuryG = null, fleuryRemoved = new Set(), fleuryTrail = [], fleuryCurrent = -1, fleuryTimer = null;
+
+function setFleuryGraph(name, btn) {
+  document.querySelectorAll('#t-fleury .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const G = FLEURY_GRAPHS[name];
+  fleuryG = {
+    nodes: G.nodes.map(n=>({...n})),
+    edges: G.edges.map(e=>[...e]),
+  };
+  resetFleury();
+}
+
+function resetFleury() {
+  if(fleuryTimer) { clearInterval(fleuryTimer); fleuryTimer = null; }
+  fleuryRemoved = new Set();
+  fleuryTrail = [];
+  // Pick start: odd degree node if any, else node 0
+  const degs = getDegrees(fleuryG.nodes, fleuryG.edges);
+  const odds = degs.map((d,i)=>i).filter(i=>d%2!==0);
+  fleuryCurrent = odds.length ? odds[0] : 0;
+  document.getElementById('fleury-trail').innerHTML = '';
+  document.getElementById('fleury-status').textContent = '';
+  redrawFleury();
+}
+
+function redrawFleury() {
+  const ctx = document.getElementById('fleury-canvas').getContext('2d');
+  // Compute bridge edges among remaining
+  const bridges = new Set();
+  fleuryG.edges.forEach((e,i)=>{
+    if(!fleuryRemoved.has(i) && isBridgeEdge(fleuryG.nodes, fleuryG.edges, fleuryRemoved, i))
+      bridges.add(i);
+  });
+  drawGraph(ctx, fleuryG.nodes, fleuryG.edges, {
+    usedEdges: fleuryRemoved,
+    removedEdges: fleuryRemoved,
+    currentNode: fleuryCurrent,
+    bridgeEdges: bridges,
+  });
+  const trailColors = ['#f97316','#38bdf8','#10b981','#a78bfa','#f43f5e','#fbbf24'];
+  const segs = fleuryTrail.map((ei,t) => {
+    const e = fleuryG.edges[ei];
+    return `<span class="trail-seg" style="background:${trailColors[t%trailColors.length]}22;border:1px solid ${trailColors[t%trailColors.length]}55;color:${trailColors[t%trailColors.length]}">${e[0]}→${e[1]}</span>`;
+  });
+  document.getElementById('fleury-trail').innerHTML = segs.length ? 'Bejárás: '+segs.join(' ') : '';
+
+  const remaining = fleuryG.edges.filter((_,i)=>!fleuryRemoved.has(i)).length;
+  if(bridges.size) {
+    document.getElementById('fleury-status').innerHTML =
+      `<span style="color:#ef4444">⚠ Piros élek = elvágó élek. Csak végszükség esetén!</span><br>Maradék élek: ${remaining}`;
+  } else {
+    document.getElementById('fleury-status').innerHTML = `Maradék élek: ${remaining}`;
+  }
+}
+
+function fleuryStep() {
+  if(!fleuryG) return;
+  const remaining = fleuryG.edges.map((_,i)=>i).filter(i=>!fleuryRemoved.has(i));
+  if(!remaining.length) {
+    document.getElementById('fleury-status').innerHTML = '<span style="color:#10b981;font-weight:700;">✓ Kész! Euler-bejárás teljesítve.</span>';
+    return;
+  }
+
+  // Find edges incident to current
+  const incident = remaining.filter(i => fleuryG.edges[i][0]===fleuryCurrent || fleuryG.edges[i][1]===fleuryCurrent);
+  if(!incident.length) {
+    document.getElementById('fleury-status').innerHTML = '<span style="color:#ef4444">Elakadtunk! A gráf nem rendelkezik Euler-úttal/körrel, vagy rossz csúcsból indultunk.</span>';
+    return;
+  }
+
+  // Prefer non-bridge edges (Fleury rule)
+  const nonBridges = incident.filter(i => !isBridgeEdge(fleuryG.nodes, fleuryG.edges, fleuryRemoved, i));
+  const choice = nonBridges.length ? nonBridges[0] : incident[0];
+
+  const e = fleuryG.edges[choice];
+  const next = e[0]===fleuryCurrent ? e[1] : e[0];
+  fleuryRemoved.add(choice);
+  fleuryTrail.push(choice);
+  fleuryCurrent = next;
+  redrawFleury();
+}
+
+function fleuryAuto() {
+  if(fleuryTimer) { clearInterval(fleuryTimer); fleuryTimer = null; return; }
+  fleuryTimer = setInterval(()=>{
+    const remaining = fleuryG.edges.filter((_,i)=>!fleuryRemoved.has(i)).length;
+    if(!remaining){ clearInterval(fleuryTimer); fleuryTimer = null; return; }
+    fleuryStep();
+  }, 700);
+}
+
+// ─── TAB 4: SANDBOX ───────────────────────────────────────────────────────────
+let sbNodes = [], sbEdges = [], sbSel = null, sbMode = 'edge';
+let sbDragNode = null, sbDragOff = {x:0,y:0};
+
+function setSbMode(mode, btn) {
+  sbMode = mode; sbSel = null;
+  document.querySelectorAll('#t-sandbox .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  redrawSb();
+}
+
+function sbLoad(name) {
+  const PRESETS = {
+    K4: {nodes:[{x:120,y:100},{x:360,y:100},{x:360,y:260},{x:120,y:260}],edges:[[0,1],[1,2],[2,3],[3,0],[0,2],[1,3]]},
+    C5: {nodes:[{x:240,y:40},{x:390,y:160},{x:330,y:310},{x:150,y:310},{x:90,y:160}],edges:[[0,1],[1,2],[2,3],[3,4],[4,0]]},
+    petersen: {
+      nodes:[...Array(5).keys()].map(i=>({x:240+150*Math.cos(2*Math.PI*i/5-Math.PI/2),y:180+150*Math.sin(2*Math.PI*i/5-Math.PI/2)}))
+           .concat([...Array(5).keys()].map(i=>({x:240+70*Math.cos(2*Math.PI*i/5-Math.PI/2),y:180+70*Math.sin(2*Math.PI*i/5-Math.PI/2)}))),
+      edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],[5,7],[7,9],[9,6],[6,8],[8,5]],
+    },
+    clear: {nodes:[],edges:[]},
+  };
+  const G = PRESETS[name];
+  sbNodes = G.nodes.map(n=>({...n, label:''})); sbEdges = G.edges.map(e=>[...e]);
+  sbNodes.forEach((n,i)=>n.label=String.fromCharCode(65+i));
+  sbSel = null; redrawSb();
+}
+
+function redrawSb() {
+  const ctx = document.getElementById('sb-canvas').getContext('2d');
+  const degs = getDegrees(sbNodes, sbEdges);
+  drawGraph(ctx, sbNodes, sbEdges, {selNode: sbSel});
+  const odds = degs.filter(d=>d%2!==0).length;
+  const total = sbEdges.length;
+  document.getElementById('sb-stats').innerHTML =
+    `<span class="chip">|V|=${sbNodes.length}</span><span class="chip">|E|=${total}</span>`;
+  document.getElementById('sb-degrees').innerHTML =
+    degs.map((d,i)=>`<span class="chip ${d%2!==0?'odd':'even'}">${sbNodes[i].label||i}:${d}</span>`).join('');
+  let euler = '';
+  if(sbNodes.length===0){euler='';}
+  else if(countComponents(sbNodes,sbEdges,new Set())>1){euler='<span style="color:#ef4444">Nem összefüggő gráf</span>';}
+  else if(odds===0) euler='<span style="color:#10b981;font-weight:700;">✓ Euler-kör létezik</span>';
+  else if(odds===2) euler='<span style="color:#38bdf8;font-weight:700;">✓ Euler-út létezik (a ★ csúcsok között)</span>';
+  else euler=`<span style="color:#ef4444;font-weight:700;">✗ ${odds} páratlan csúcs — sem kör, sem út</span>`;
+  document.getElementById('sb-euler').innerHTML = euler;
+}
+
+function sbCanvasClick(e) {
+  const rect = e.target.getBoundingClientRect();
+  const mx = e.clientX-rect.left, my = e.clientY-rect.top;
+  const hit = sbNodes.findIndex(n=>Math.hypot(n.x-mx,n.y-my)<18);
+  if(sbMode === 'del') {
+    if(hit>=0){ sbNodes.splice(hit,1); sbEdges=sbEdges.filter(e=>e[0]!==hit&&e[1]!==hit).map(e=>[e[0]>hit?e[0]-1:e[0],e[1]>hit?e[1]-1:e[1]]); sbSel=null; }
+    redrawSb(); return;
+  }
+  if(sbMode === 'move') return;
+  // edge mode
+  if(hit<0){
+    // Add node
+    sbNodes.push({x:mx,y:my,label:String.fromCharCode(65+sbNodes.length%26)});
+    sbSel=null; redrawSb(); return;
+  }
+  if(sbSel===null){sbSel=hit;}
+  else if(sbSel===hit){sbSel=null;}
+  else {
+    const ei=sbEdges.findIndex(e=>(e[0]===sbSel&&e[1]===hit)||(e[0]===hit&&e[1]===sbSel));
+    if(ei>=0) sbEdges.splice(ei,1); else sbEdges.push([sbSel,hit]);
+    sbSel=null;
+  }
+  redrawSb();
+}
+
+function sbMouseDown(e) {
+  if(sbMode!=='move') return;
+  const rect=e.target.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=sbNodes.findIndex(n=>Math.hypot(n.x-mx,n.y-my)<18);
+  if(hit>=0){sbDragNode=hit;sbDragOff={x:mx-sbNodes[hit].x,y:my-sbNodes[hit].y};}
+}
+function sbMouseMove(e) {
+  if(sbDragNode===null||sbMode!=='move') return;
+  const rect=e.target.getBoundingClientRect();
+  sbNodes[sbDragNode].x=e.clientX-rect.left-sbDragOff.x;
+  sbNodes[sbDragNode].y=e.clientY-rect.top-sbDragOff.y;
+  redrawSb();
+}
+function sbMouseUp(){ sbDragNode=null; }
+
+// ─── TAB 5: POSTMAN ───────────────────────────────────────────────────────────
+const POSTMAN_GRAPHS = {
+  grid: {
+    nodes:[{x:80,y:80},{x:240,y:80},{x:400,y:80},{x:80,y:240},{x:240,y:240},{x:400,y:240}],
+    edges:[[0,1,3],[1,2,4],[3,4,2],[4,5,5],[0,3,3],[1,4,4],[2,5,2],[1,3,6],[2,4,5]],
+  },
+  bridge: {
+    nodes:[{x:80,y:160},{x:200,y:80},{x:200,y:240},{x:340,y:160},{x:420,y:80},{x:420,y:240}],
+    edges:[[0,1,2],[0,2,2],[1,2,3],[1,3,5],[2,3,4],[3,4,3],[3,5,3],[4,5,2]],
+  },
+  custom: {
+    nodes:[{x:80,y:160},{x:240,y:60},{x:400,y:160},{x:240,y:260}],
+    edges:[[0,1,3],[1,2,4],[2,3,2],[3,0,5],[0,2,6],[1,3,3]],
+  },
+};
+
+let postmanG = null, postmanHighlight = new Set();
+function setPostmanGraph(name, btn) {
+  document.querySelectorAll('#t-postman .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  postmanG = JSON.parse(JSON.stringify(POSTMAN_GRAPHS[name]));
+  postmanHighlight = new Set();
+  document.getElementById('postman-result').textContent = '';
+  redrawPostman();
+}
+
+function redrawPostman() {
+  const ctx = document.getElementById('postman-canvas').getContext('2d');
+  drawGraph(ctx, postmanG.nodes, postmanG.edges, { weights: true });
+
+  // Also show edge weight labels explicitly
+  const c = ctx;
+  postmanG.edges.forEach((e,i)=>{
+    const na=postmanG.nodes[e[0]], nb=postmanG.nodes[e[1]];
+    const mx=(na.x+nb.x)/2, my=(na.y+nb.y)/2;
+    c.fillStyle=postmanHighlight.has(i)?'#f97316':'#64748b';
+    c.font='bold 11px monospace'; c.textAlign='center'; c.textBaseline='middle';
+    c.fillText(e[2]||'', mx, my-8);
+  });
+
+  const totalW = postmanG.edges.reduce((a,e)=>a+(e[2]||1),0);
+  const degs = getDegrees(postmanG.nodes, postmanG.edges);
+  const odds = degs.map((d,i)=>i).filter(i=>degs[i]%2!==0);
+  const info = `Összsúly: ${totalW} | Páratlan fokú csúcsok: ${odds.join(', ')||'(nincs)'}`;
+  document.getElementById('postman-info').textContent = info;
+}
+
+function solvePostman() {
+  const degs = getDegrees(postmanG.nodes, postmanG.edges);
+  const odds = degs.map((d,i)=>i).filter(i=>degs[i]%2!==0);
+  const totalW = postmanG.edges.reduce((a,e)=>a+(e[2]||1),0);
+  if(odds.length===0) {
+    document.getElementById('postman-result').innerHTML =
+      `<span style="color:#10b981;font-weight:600;">✓ Euler-kör létezik! Minimális séta súlya = ${totalW} (nincs szükség élismétlésre).</span>`;
+    return;
+  }
+  // Brute-force min pairing for small number of odds
+  let minExtra = Infinity;
+  let bestPairs = [];
+  function pairs(arr, current) {
+    if(!arr.length){
+      let cost=0;
+      current.forEach(([u,v])=>{
+        // BFS shortest path weight
+        const dist=bfsWeight(postmanG.nodes, postmanG.edges, u);
+        cost+=dist[v]||99;
+      });
+      if(cost<minExtra){minExtra=cost;bestPairs=[...current];}
+      return;
+    }
+    const first=arr[0];
+    for(let i=1;i<arr.length;i++){
+      pairs(arr.filter((_,j)=>j!==0&&j!==i),[...current,[first,arr[i]]]);
+    }
+  }
+  if(odds.length<=6) pairs(odds,[]);
+  document.getElementById('postman-result').innerHTML =
+    `<span style="color:#f59e0b;font-weight:600;">Páratlan csúcsok: {${odds.join(', ')}}.<br>` +
+    `Minimális ismételt élek súlya: ${minExtra}.<br>` +
+    `Teljes postás-séta súlya: ${totalW + minExtra}.</span>`;
+}
+
+function bfsWeight(nodes, edges, start) {
+  const n=nodes.length;
+  const dist=new Array(n).fill(Infinity); dist[start]=0;
+  const q=[start];
+  while(q.length){
+    const v=q.shift();
+    edges.forEach(e=>{
+      if(e[0]===v&&dist[e[1]]>dist[v]+(e[2]||1)){dist[e[1]]=dist[v]+(e[2]||1);q.push(e[1]);}
+      if(e[1]===v&&dist[e[0]]>dist[v]+(e[2]||1)){dist[e[0]]=dist[v]+(e[2]||1);q.push(e[0]);}
+    });
+  }
+  return dist;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  drawDef();
+  buildEulerNodes(); redrawEuler(); checkEuler();
+  document.getElementById('euler-canvas').addEventListener('click', eulerCanvasClick);
+
+  setFleuryGraph('K4', document.querySelector('#t-fleury .btn-graph.active'));
+
+  sbLoad('K4');
+  const sbc=document.getElementById('sb-canvas');
+  sbc.addEventListener('click', sbCanvasClick);
+  sbc.addEventListener('mousedown', sbMouseDown);
+  sbc.addEventListener('mousemove', sbMouseMove);
+  sbc.addEventListener('mouseup', sbMouseUp);
+
+  setPostmanGraph('grid', document.querySelector('#t-postman .btn-graph.active'));
+
+  renderMathInElement(document.body, {
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+});
+</script>
+{% endblock %}

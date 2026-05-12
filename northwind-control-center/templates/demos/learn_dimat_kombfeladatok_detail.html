@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Feladat {{ ex.id }}) — {{ ex.title }}{% endblock %}
+{% block title %}Feladat / Exercise {{ ex.id }}) — {{ ex.title }}{% endblock %}
 
 {% block content %}
+{% import "_macros/i18n.html" as I %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -60,9 +61,9 @@
 <div class="kf-wrap">
 
   <div class="kf-crumb">
-    <a href="{{ url_for('demos.learn_dimat') }}">Tanulás</a>
+    <a href="{{ url_for('demos.learn_dimat') }}">{{ I.t('Tanulás', 'Learn') }}</a>
     &rsaquo;
-    <a href="{{ url_for('demos.kombfeladatok_index') }}">Kombinatorikai feladatok</a>
+    <a href="{{ url_for('demos.kombfeladatok_index') }}">{{ I.t('Kombinatorikai feladatok', 'Combinatorics Exercises') }}</a>
     &rsaquo; <span style="color:var(--acc2)">{{ ex.id }})</span>
   </div>
 
@@ -76,18 +77,21 @@
   </div>
 
   <div class="kf-card problem">
-    <div class="kf-card-label">Feladat</div>
+    <div class="kf-card-label">{{ I.t('Feladat', 'Exercise') }}</div>
     {% if ex.problem_html %}
       <div class="kf-body">{{ ex.problem_html|safe }}</div>
     {% else %}
-      <div class="kf-body" style="color:#64748b;font-style:italic;">A feladat szövege nincs külön elválasztva — lásd a megoldás-blokkban.</div>
+      <div class="kf-body" style="color:#64748b;font-style:italic;">{{ I.t('A feladat szövege nincs külön elválasztva — lásd a megoldás-blokkban.',
+            'The problem statement is not separately given — see the solution block.') }}</div>
     {% endif %}
   </div>
 
   {% if ex.solution_html %}
-  <button id="toggle-sol" class="btn-toggle" onclick="toggleSol(this)">Megoldás megjelenítése ▾</button>
+  <button id="toggle-sol" class="btn-toggle" onclick="toggleSol(this)" data-show="{{ 'Megoldás megjelenítése ▾' }}" data-hide="{{ 'Megoldás elrejtése ▴' }}" data-show-en="Show solution ▾" data-hide-en="Hide solution ▴">
+    <span class="i18n"><span class="hu">Megoldás megjelenítése ▾</span><span class="en">Show solution ▾</span></span>
+  </button>
   <div class="kf-card solution" id="sol-card" style="display:none;">
-    <div class="kf-card-label">Megoldás</div>
+    <div class="kf-card-label">{{ I.t('Megoldás', 'Solution') }}</div>
     <div class="kf-body">{{ ex.solution_html|safe }}</div>
   </div>
   {% endif %}
@@ -95,7 +99,7 @@
   <div class="kf-nav">
     {% if prev_id %}
     <a href="{{ url_for('demos.kombfeladatok_detail', exid=prev_id) }}">
-      <span class="lbl">← Előző</span>
+      <span class="lbl">{{ I.t('← Előző', '← Previous') }}</span>
       <span class="title">{{ prev_id }})</span>
     </a>
     {% else %}
@@ -104,7 +108,7 @@
 
     {% if next_id %}
     <a href="{{ url_for('demos.kombfeladatok_detail', exid=next_id) }}" style="text-align:right;">
-      <span class="lbl">Következő →</span>
+      <span class="lbl">{{ I.t('Következő →', 'Next →') }}</span>
       <span class="title">{{ next_id }})</span>
     </a>
     {% else %}
@@ -119,7 +123,14 @@ function toggleSol(btn) {
   const card = document.getElementById('sol-card');
   const open = card.style.display !== 'none';
   card.style.display = open ? 'none' : '';
-  btn.textContent = open ? 'Megoldás megjelenítése ▾' : 'Megoldás elrejtése ▴';
+  const isEN = document.documentElement.classList.contains('lang-en') || document.body.classList.contains('lang-en');
+  const show = isEN ? 'Show solution ▾' : 'Megoldás megjelenítése ▾';
+  const hide = isEN ? 'Hide solution ▴' : 'Megoldás elrejtése ▴';
+  btn.innerHTML = '<span class="i18n"><span class="hu">' +
+    (open ? 'Megoldás megjelenítése ▾' : 'Megoldás elrejtése ▴') +
+    '</span><span class="en">' +
+    (open ? 'Show solution ▾' : 'Hide solution ▴') +
+    '</span></span>';
 }
 document.addEventListener('keydown', (e) => {
   if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;

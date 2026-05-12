@@ -1,0 +1,588 @@
+{% extends "base.html" %}
+{% block title %}Diszkrét mat. V — Rekurziók 2.{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#f43f5e!important;}
+.ila-nav-link.active{color:#f43f5e!important;border-bottom-color:#f43f5e!important;}
+.def-box  {border-left:3px solid #f43f5e;background:#1a0009;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.thm-box  {border-left:3px solid #be123c;background:#120007;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.ex-box   {border-left:3px solid #34d399;background:#041f10;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.info-box {background:#161b22;border:1px solid #21262d;padding:.75rem 1rem;border-radius:.4rem;margin:.7rem 0;}
+.warn-box {border-left:3px solid #fbbf24;background:#1c1200;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.step-row {display:flex;gap:1rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:baseline;flex-wrap:wrap;}
+.step-row:last-child{border-bottom:none;}
+.step-eq  {min-width:260px;color:#e2e8f0;font-size:.84rem;}
+.step-why {font-size:.7rem;color:#6b7280;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.formula-chip{display:inline-block;background:#1a0009;border:1px solid #f43f5e;border-radius:.4rem;padding:.3rem .8rem;
+  font-size:.82rem;color:#fda4af;font-family:monospace;margin:.2rem;}
+.trial-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.8rem;}
+.trial-row:last-child{border-bottom:none;}
+.trial-hdr{font-size:.65rem;font-weight:700;color:#f43f5e;text-transform:uppercase;letter-spacing:.07em;}
+.katex{font-size:1em;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#f43f5e">Diszkrét matematika V — fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Rekurziók 2.</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2026</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(244,63,94,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-proba',this)"><i class="bi bi-search me-1"></i>Próbafüggvény</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-rez',this)"><i class="bi bi-exclamation-triangle me-1"></i>Rezonancia</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-pol',this)"><i class="bi bi-graph-up-arrow me-1"></i>Polinom tag</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-gen',this)"><i class="bi bi-infinity me-1"></i>Generátorfüggvény</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ex',this)"><i class="bi bi-stars me-1"></i>Szuperpozíció+</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════════════════════ TAB 1: PRÓBAFÜGGVÉNY ══════════════════════ -->
+<div id="tab-proba">
+  <h5 class="fw-bold mb-3" style="color:#f43f5e">Inhomogén egyenlet megoldása próbafüggvénnyel</h5>
+
+  <div class="def-box">
+    <div class="lbl mb-1" style="color:#f43f5e">A módszer elve</div>
+    <div class="small">Az inhomogén egyenlet általános megoldása \(x_n = y_n + p_n\), ahol \(y_n\) a homogén egyenlet általános megoldása, \(p_n\) egy <strong>partikuláris megoldás</strong>. A <strong>próbafüggvény módszere</strong> (határozatlan együtthatók módszere) az inhomogén tag alakját utánozza \(p_n\) keresésekor.</div>
+  </div>
+
+  <div class="thm-box">
+    <div class="lbl mb-1" style="color:#f43f5e">Fő eset — exponenciális inhomogén tag</div>
+    Ha \(f_n = a \cdot b^n\) és \(b^n\) <strong>nem</strong> megoldása a homogén egyenletnek:
+    \[\text{próbafüggvény:}\quad p_n = A \cdot b^n\]
+    Behelyettesítve meghatározható \(A\). Az általános megoldás: \(x_n = y_n + A \cdot b^n\).
+  </div>
+
+  <!-- Example 1 step-by-step -->
+  <div class="ex-box mt-2">
+    <div class="lbl mb-1" style="color:#34d399">1. Példa — teljes megoldás</div>
+    <div class="small mb-1">\(x_n - x_{n-1} - 6x_{n-2} = -7\cdot2^n,\quad x_0=3,\; x_1=2\)</div>
+    <div class="step-row"><div class="step-eq"><strong>1.</strong> Homogén: \(r^2-r-6=0 \Rightarrow r_1=3,\; r_2=-2\)</div><div class="step-why">karakterisztikus egyenlet</div></div>
+    <div class="step-row"><div class="step-eq"><strong>2.</strong> \(y_n = \alpha\cdot3^n + \beta\cdot(-2)^n\)</div><div class="step-why">homogén általános megoldás</div></div>
+    <div class="step-row"><div class="step-eq"><strong>3.</strong> Próba: \(p_n = A\cdot2^n\) (mert \(f_n\sim2^n\) és \(2\ne r_1,r_2\))</div></div>
+    <div class="step-row"><div class="step-eq"><strong>4.</strong> Behelyettesítve: \(-4A\cdot2^{n-2}= -7\cdot4\cdot2^{n-2}\Rightarrow A=7\)</div><div class="step-why">\(4A=28\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>5.</strong> Általános: \(x_n=\alpha\cdot3^n+\beta(-2)^n+7\cdot2^n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>6.</strong> \(x_0=3\Rightarrow\alpha+\beta+7=3\), \(x_1=2\Rightarrow 3\alpha-2\beta+14=2\)</div><div class="step-why">kezdeti feltételek</div></div>
+    <div class="step-row"><div class="step-eq"><strong style="color:#f43f5e">Eredmény:</strong> \(\boxed{x_n=-4\cdot3^n+7\cdot2^n}\quad(\alpha=-4,\;\beta=0)\)</div></div>
+  </div>
+
+  <!-- Example 5 -->
+  <div class="ex-box mt-2">
+    <div class="lbl mb-1" style="color:#34d399">5. Példa — elsőrendű</div>
+    <div class="small mb-1">\(x_n - 3x_{n-1} = 7(-4)^n,\quad x_0=9\)</div>
+    <div class="step-row"><div class="step-eq"><strong>1.</strong> Homogén: \(r-3=0\Rightarrow r=3\), \(y_n=c\cdot3^n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>2.</strong> Próba: \(p_n=A(-4)^n\) (mert \(-4\ne3\))</div></div>
+    <div class="step-row"><div class="step-eq"><strong>3.</strong> \(A(-4)^n-3A(-4)^{n-1}=7(-4)^n \Rightarrow -7A=7(-4)\Rightarrow A=4\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>4.</strong> \(x_0=9\Rightarrow c+4=9\Rightarrow c=5\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong style="color:#f43f5e">Eredmény:</strong> \(\boxed{x_n=5\cdot3^n+4(-4)^n}\)</div></div>
+  </div>
+
+  <!-- Interactive -->
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#f43f5e">Interaktív sorozatellenőrző</div>
+    <div class="small mb-2">Adja meg az \(x_n = c_1 r_1^n + c_2 r_2^n + A b^n\) megoldás paramétereit és ellenőrizze az egyenletet:</div>
+    <div class="row g-2 align-items-end mb-2">
+      <div class="col-auto"><label class="lbl mb-1" style="color:#8892a4">c₁</label><input type="number" id="p-c1" value="-4" class="form-control form-control-sm" style="background:#0d1117;border-color:#f43f5e;color:#fda4af;width:70px;font-size:.85rem"></div>
+      <div class="col-auto"><label class="lbl mb-1" style="color:#8892a4">r₁</label><input type="number" id="p-r1" value="3" class="form-control form-control-sm" style="background:#0d1117;border-color:#f43f5e;color:#fda4af;width:70px;font-size:.85rem"></div>
+      <div class="col-auto"><label class="lbl mb-1" style="color:#8892a4">c₂</label><input type="number" id="p-c2" value="0" class="form-control form-control-sm" style="background:#0d1117;border-color:#f43f5e;color:#fda4af;width:70px;font-size:.85rem"></div>
+      <div class="col-auto"><label class="lbl mb-1" style="color:#8892a4">r₂</label><input type="number" id="p-r2" value="-2" class="form-control form-control-sm" style="background:#0d1117;border-color:#f43f5e;color:#fda4af;width:70px;font-size:.85rem"></div>
+      <div class="col-auto"><label class="lbl mb-1" style="color:#8892a4">A</label><input type="number" id="p-A" value="7" class="form-control form-control-sm" style="background:#0d1117;border-color:#f43f5e;color:#fda4af;width:70px;font-size:.85rem"></div>
+      <div class="col-auto"><label class="lbl mb-1" style="color:#8892a4">b</label><input type="number" id="p-b" value="2" class="form-control form-control-sm" style="background:#0d1117;border-color:#f43f5e;color:#fda4af;width:70px;font-size:.85rem"></div>
+      <div class="col-auto"><button class="btn btn-sm px-3" style="background:#f43f5e;color:#fff;font-weight:700" onclick="genSol()">Generál</button></div>
+    </div>
+    <div id="sol-output" style="font-family:monospace;font-size:.78rem;color:#c9d1d9;line-height:1.8"></div>
+    <canvas id="sol-canvas" width="620" height="130" style="width:100%;max-width:620px;background:#0a0c10;border-radius:.3rem;display:block;margin-top:.5rem"></canvas>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 2: REZONANCIA ══════════════════════ -->
+<div id="tab-rez" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f43f5e">Rezonancia — b<sup>n</sup> már homogén megoldás</h5>
+
+  <div class="warn-box">
+    <div class="lbl mb-1" style="color:#fbbf24">Probléma</div>
+    <div class="small">Ha \(f_n = a\cdot b^n\) és \(b^n\) <strong>megoldása</strong> a homogén egyenletnek (\(b = r_i\) valamely gyökre), akkor a \(p_n = A\cdot b^n\) próba ellentmondáshoz vezet (bal oldal = 0, jobb oldal ≠ 0).</div>
+  </div>
+
+  <div class="thm-box mt-2">
+    <div class="lbl mb-1" style="color:#f43f5e">Rezonancia-szabály</div>
+    Ha \(b^n\) egyszerű gyök esetén homogén megoldás:
+    \[\text{próba: } p_n = A\cdot n\cdot b^n\]
+    Ha \(b^n\) kétszeres gyök esetén homogén megoldás is (\(n\cdot b^n\) is megoldás):
+    \[\text{próba: } p_n = A\cdot n^2\cdot b^n\]
+    <div class="small text-secondary mt-1">Megmutatható, hogy a fenti formulák valamelyike mindig működik.</div>
+  </div>
+
+  <div class="ex-box mt-2">
+    <div class="lbl mb-1" style="color:#34d399">2. Példa — rezonancia eset</div>
+    <div class="small mb-1">\(x_n - x_{n-1} - 6x_{n-2} = 10(-2)^n,\quad x_0=0,\; x_1=2\)</div>
+    <div class="step-row"><div class="step-eq"><strong>1.</strong> Homogén gyökök: \(r_1=3,\; r_2=-2\)</div><div class="step-why">ugyanaz mint 1. példában</div></div>
+    <div class="step-row"><div class="step-eq"><strong>2.</strong> \((-2)^n\) homogén megoldás (\(r_2=-2\)) → rezonancia!</div><div class="step-why">az egyszerű próba 0=10(−2)ⁿ ellentmondást ad</div></div>
+    <div class="step-row"><div class="step-eq"><strong>3.</strong> Új próba: \(p_n = An(-2)^n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>4.</strong> \(n(-2)^{n-2}\) tagok kiesnek: \(-2A+12A=40\Rightarrow 10A=40\Rightarrow A=4\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>5.</strong> \(x_n=\alpha\cdot3^n+\beta(-2)^n+4n(-2)^n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>6.</strong> \(\alpha+\beta=0,\quad 3\alpha-2\beta-8=2\Rightarrow\alpha=2,\;\beta=-2\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong style="color:#f43f5e">Eredmény:</strong> \(\boxed{x_n=2\cdot3^n-2(-2)^n+4n(-2)^n}\)</div></div>
+  </div>
+
+  <!-- Resonance visualizer -->
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#f43f5e">Rezonancia vizualizáció — miért nem működik az egyszerű próba?</div>
+    <div class="small mb-2">A \(p_n=A\cdot b^n\) próba kiesik a homogén egyenletből (éppen nulla lesz a bal oldal), ezért \(p_n=A\cdot n\cdot b^n\) kell:</div>
+    <canvas id="rez-canvas" width="620" height="150" style="width:100%;max-width:620px;background:#0a0c10;border-radius:.3rem;display:block"></canvas>
+    <div class="small mt-2 text-secondary">Narancssárga: \(4n(-2)^n\) — partikuláris megoldás. Kék: \(2\cdot3^n\). Zöld: \(-2(-2)^n\). Piros: teljes megoldás \(x_n\).</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 3: POLINOM TAG ══════════════════════ -->
+<div id="tab-pol" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f43f5e">Polinom inhomogén tag</h5>
+
+  <div class="thm-box">
+    <div class="lbl mb-1" style="color:#f43f5e">Polinom próbafüggvény szabálya</div>
+    Ha \(f_n\) egy \(k\)-adfokú polinom:<br>
+    <span class="small">• Ha 1 nem gyöke a karakterisztikus egyenletnek: \(p_n = A_k n^k + \cdots + A_1 n + A_0\)</span><br>
+    <span class="small">• Ha 1 egyszerű gyök: \(p_n = n\cdot(A_k n^k + \cdots + A_0)\) — az egész polinomot \(n\)-nel megszorozzuk</span><br>
+    <span class="small">• Ha 1 kétszeres gyök: \(p_n = n^2\cdot(\ldots)\)</span>
+  </div>
+
+  <div class="ex-box mt-2">
+    <div class="lbl mb-1" style="color:#34d399">3. Példa — lineáris polinom</div>
+    <div class="small mb-1">\(x_n - 4x_{n-2} = 6n-1,\quad x_0=-3,\; x_1=1\)</div>
+    <div class="step-row"><div class="step-eq"><strong>1.</strong> Homogén: \(r^2-4=0\Rightarrow r_1=2,\; r_2=-2\), \(y_n=\alpha2^n+\beta(-2)^n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>2.</strong> \(f_n=6n-1\) lineáris, 1 nem gyök → próba: \(p_n=An+B\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>3.</strong> \(An+B-4(A(n-2)+B)=6n-1\Rightarrow A-4A=6,\; B+8A-4B=-1\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>4.</strong> \(A=-2,\; B=-5\), partikuláris: \(p_n=-2n-5\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>5.</strong> \(\alpha+\beta-5=-3,\quad 2\alpha-2\beta-7=1\Rightarrow\alpha=3,\;\beta=-1\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong style="color:#f43f5e">Eredmény:</strong> \(\boxed{x_n=3\cdot2^n-(-2)^n-2n-5}\)</div></div>
+  </div>
+
+  <div class="ex-box mt-2">
+    <div class="lbl mb-1" style="color:#34d399">4. Példa — rezonancia polinom (egyenesek a síkban)</div>
+    <div class="small mb-1">\(s_n = s_{n-1}+n,\quad s_1=2\quad\) (\(n\) általános helyzetű egyenes)</div>
+    <div class="step-row"><div class="step-eq"><strong>1.</strong> Homogén: \(y_n=y_{n-1}\Rightarrow r=1\), \(y_n=c\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>2.</strong> \(f_n=n\) (polinom), de 1 gyök → \(p_n=An+B\) <em>nem</em> működik</div><div class="step-why">Az+B=A(n-1)+B+n ad ellentmondást</div></div>
+    <div class="step-row"><div class="step-eq"><strong>3.</strong> Próba: \(p_n=An^2+Bn\) (fokot eggyel emeljük)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>4.</strong> \(An^2+Bn=A(n-1)^2+B(n-1)+n\Rightarrow A=A,\; B=-2A+B+1,\; 0=A-B\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>5.</strong> \(A=B=\tfrac12\), általános: \(s_n=c+\tfrac12n^2+\tfrac12n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong>6.</strong> \(s_1=2\Rightarrow c=1\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong style="color:#f43f5e">Eredmény:</strong> \(\boxed{s_n=\dfrac{n^2+n+2}{2}}\quad\) (\(s_1=2,s_2=4,s_3=7\checkmark\))</div></div>
+  </div>
+
+  <!-- Interactive polynomial particular solution -->
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#f43f5e">Interaktív polinom próbafüggvény ellenőrző</div>
+    <div class="small mb-2">3. példa ellenőrzése: \(p_n = -2n-5\) kielégíti az \(x_n-4x_{n-2}=6n-1\) egyenletet?</div>
+    <div id="pol-check" class="small" style="font-family:monospace;line-height:2"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 4: GENERÁTORFÜGGVÉNY ══════════════════════ -->
+<div id="tab-gen" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f43f5e">Generátorfüggvény módszer</h5>
+
+  <div class="def-box">
+    <div class="lbl mb-1" style="color:#f43f5e">Definíció — generátorfüggvény</div>
+    Az \(s_n\;(n\in\mathbb{N}_0)\) sorozat <strong>generátorfüggvénye</strong>:
+    \[g(x) = \sum_{n=0}^{\infty} s_n x^n = s_0 + s_1 x + s_2 x^2 + \cdots\]
+    Két különböző sorozatnak mindig különböző a generátorfüggvénye — egyértelműen meghatározza a sorozatot.
+  </div>
+
+  <div class="thm-box mt-1">
+    <div class="lbl mb-1" style="color:#f43f5e">Alap azonosságok</div>
+    \[\sum_{n=0}^{\infty}x^n = \frac{1}{1-x},\quad|x|&lt;1\]
+    \[\sum_{n=0}^{\infty}(n+1)x^n = \frac{1}{(1-x)^2}\]
+    \[\sum_{n=0}^{\infty}\binom{m+n-1}{n}x^n = \frac{1}{(1-x)^m}\]
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>7. Példa:</strong> \(s_n=5n+2\)<br>
+        \(g(x)=5\sum nx^n+2\sum x^n=\dfrac{5}{(1-x)^2}-\dfrac{3}{1-x}=\dfrac{3x+2}{(1-x)^2}\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>8. Példa:</strong> \(s_n=6(-3)^n\)<br>
+        \(g(x)=6\sum(-3x)^n=\dfrac{6}{1+3x}\)
+      </div>
+    </div>
+  </div>
+
+  <div class="thm-box mt-2">
+    <div class="lbl mb-1" style="color:#f43f5e">10. Tétel — Parciális törtekre bontás</div>
+    <div class="small">Ha \(\dfrac{p(x)}{(x-x_1)\cdots(x-x_m)}\) valódi racionális tört és \(x_1,\ldots,x_m\) páronként különbözők, akkor:
+    \[\frac{p(x)}{(x-x_1)\cdots(x-x_m)} = \frac{A_1}{x-x_1}+\cdots+\frac{A_m}{x-x_m}\]
+    ahol \(A_1,\ldots,A_m\) egyértelműen meghatározott konstansok.</div>
+  </div>
+
+  <!-- Examples 9, 11, 12 -->
+  <div class="ex-box mt-2">
+    <div class="lbl mb-1" style="color:#34d399">9. Példa — \(s_n=2s_{n-1},\; s_0=1\) (génerátor megközelítés)</div>
+    <div class="step-row"><div class="step-eq">Legyen \(g(x)=\sum s_nx^n\). Ekkor \(2xg(x)=\sum 2s_{n-1}x^n\)</div></div>
+    <div class="step-row"><div class="step-eq">\((1-2x)g(x)=s_0=1\Rightarrow g(x)=\dfrac{1}{1-2x}=\sum(2x)^n=\sum 2^n x^n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong style="color:#f43f5e">Eredmény:</strong> \(s_n=2^n\)</div></div>
+  </div>
+
+  <div class="ex-box mt-2">
+    <div class="lbl mb-1" style="color:#34d399">11. Példa — Hanoi: \(s_n=2s_{n-1}+1,\; s_0=0\)</div>
+    <div class="step-row"><div class="step-eq">\((1-2x)g(x)-\dfrac{1}{1-x}=-1\Rightarrow g(x)=\dfrac{x}{(1-x)(1-2x)}\)</div></div>
+    <div class="step-row"><div class="step-eq">Parciális törtekre bontás: \(\dfrac{x}{(1-x)(1-2x)}=\dfrac{-1}{1-x}+\dfrac{1}{1-2x}\)</div><div class="step-why">\(x=1:A=-1,\;x=\frac12:B=1\)</div></div>
+    <div class="step-row"><div class="step-eq">\(g(x)=\sum(-1+2^n)x^n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong style="color:#f43f5e">Eredmény:</strong> \(s_n=2^n-1\)</div></div>
+  </div>
+
+  <div class="ex-box mt-2">
+    <div class="lbl mb-1" style="color:#34d399">12. Példa — kétszeres gyök: \(s_n=-6s_{n-1}-9s_{n-2},\; s_0=0,s_1=1\)</div>
+    <div class="step-row"><div class="step-eq">\((1+6x+9x^2)g(x)=s_0+(s_1+6s_0)x=x\)</div></div>
+    <div class="step-row"><div class="step-eq">\(g(x)=\dfrac{x}{(1+3x)^2}=x\cdot\dfrac{1}{(1-(-3x))^2}=x\sum(n+1)(-3)^nx^n\)</div></div>
+    <div class="step-row"><div class="step-eq">\(=\sum(n+1)(-3)^nx^{n+1}=\sum n(-3)^{n-1}x^n\)</div></div>
+    <div class="step-row"><div class="step-eq"><strong style="color:#f43f5e">Eredmény:</strong> \(s_n=n(-3)^{n-1}\)</div></div>
+  </div>
+
+  <!-- Interactive generating function table -->
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#f43f5e">Generátorfüggvény táblázat — közönséges sorozatok</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+      <thead><tr style="border-bottom:1px solid #30363d">
+        <th style="padding:.3rem .6rem;color:#f43f5e;text-align:left">Sorozat \(s_n\)</th>
+        <th style="padding:.3rem .6rem;color:#f43f5e;text-align:left">Generátorfüggvény \(g(x)\)</th>
+        <th style="padding:.3rem .6rem;color:#f43f5e;text-align:left">Rekurzió</th>
+      </tr></thead>
+      <tbody id="gen-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 5: SZUPERPOZÍCIÓ+ ══════════════════════ -->
+<div id="tab-ex" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f43f5e">Szuperpozíció elve + Összefoglaló</h5>
+
+  <div class="thm-box">
+    <div class="lbl mb-1" style="color:#f43f5e">6. Tétel — Szuperpozíció elve</div>
+    Ha \(p_n\) megoldása \(ax_n+bx_{n-1}+cx_{n-2}=f_n\) és \(q_n\) megoldása \(ax_n+bx_{n-1}+cx_{n-2}=g_n\), akkor \(x_n=p_n+q_n\) megoldása az
+    \[ax_n+bx_{n-1}+cx_{n-2}=f_n+g_n\]
+    egyenletnek.
+    <div class="small text-secondary mt-1">Alkalmazás: ha \(f_n = f_n^{(1)}+f_n^{(2)}\) (pl. polinom + exponenciális), oldjuk meg külön-külön és adjuk össze a partikuláris megoldásokat.</div>
+  </div>
+
+  <!-- Summary table -->
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#f43f5e">Próbafüggvény összefoglaló táblázat</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.78rem;min-width:500px">
+        <thead>
+          <tr style="border-bottom:1px solid #30363d">
+            <th style="padding:.35rem .6rem;color:#f43f5e" class="trial-hdr">Inhomogén tag \(f_n\)</th>
+            <th style="padding:.35rem .6rem;color:#f43f5e" class="trial-hdr">Feltétel</th>
+            <th style="padding:.35rem .6rem;color:#f43f5e" class="trial-hdr">Próbafüggvény \(p_n\)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #21262d">
+            <td style="padding:.35rem .6rem;color:#fda4af">\(a\cdot b^n\)</td>
+            <td style="padding:.35rem .6rem;color:#8892a4">\(b\) nem gyök</td>
+            <td style="padding:.35rem .6rem;color:#c9d1d9">\(A\cdot b^n\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #21262d">
+            <td style="padding:.35rem .6rem;color:#fda4af">\(a\cdot b^n\)</td>
+            <td style="padding:.35rem .6rem;color:#8892a4">\(b\) egyszerű gyök</td>
+            <td style="padding:.35rem .6rem;color:#c9d1d9">\(A\cdot n\cdot b^n\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #21262d">
+            <td style="padding:.35rem .6rem;color:#fda4af">\(a\cdot b^n\)</td>
+            <td style="padding:.35rem .6rem;color:#8892a4">\(b\) kétszeres gyök</td>
+            <td style="padding:.35rem .6rem;color:#c9d1d9">\(A\cdot n^2\cdot b^n\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #21262d">
+            <td style="padding:.35rem .6rem;color:#fda4af">\(k\)-adfokú polinom</td>
+            <td style="padding:.35rem .6rem;color:#8892a4">1 nem gyök</td>
+            <td style="padding:.35rem .6rem;color:#c9d1d9">\(A_k n^k+\cdots+A_0\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #21262d">
+            <td style="padding:.35rem .6rem;color:#fda4af">\(k\)-adfokú polinom</td>
+            <td style="padding:.35rem .6rem;color:#8892a4">1 egyszerű gyök</td>
+            <td style="padding:.35rem .6rem;color:#c9d1d9">\(n\cdot(A_k n^k+\cdots+A_0)\)</td>
+          </tr>
+          <tr>
+            <td style="padding:.35rem .6rem;color:#fda4af">\(f_n^{(1)}+f_n^{(2)}\)</td>
+            <td style="padding:.35rem .6rem;color:#8892a4">szuperpozíció</td>
+            <td style="padding:.35rem .6rem;color:#c9d1d9">\(p_n^{(1)}+p_n^{(2)}\)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Method comparison -->
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#f43f5e">Próbafüggvény módszer — mikor?</div>
+        <ul class="small mb-0">
+          <li>Egyszerű exponenciális vagy polinom inhomogén tag</li>
+          <li>Rövid számolás, könnyen ellenőrizhető</li>
+          <li>Rezonancia esetén eggyel magasabb fokú próba</li>
+          <li>Szuperpozícióval összetett jobb oldalra is alkalmazható</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#f43f5e">Generátorfüggvény módszer — mikor?</div>
+        <ul class="small mb-0">
+          <li>Homogén egyenletekre is elegáns</li>
+          <li>Parciális törtekre bontással \(s_n\) közvetlenül adódik</li>
+          <li>Nem kell az \(s_0=0\) feltétel — de a sorozatot nullától kell értelmezni</li>
+          <li>Komplex számításra, de strukturált</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive combined solver -->
+  <div class="info-box mt-3">
+    <div class="lbl mb-2" style="color:#f43f5e">Megoldás-ellenőrző — az összes példa verifikálása</div>
+    <div class="small mb-1" style="color:#8892a4">Az összes példa n=0..7 tagjainak ellenőrzése (rekurzió vs. zárt képlet):</div>
+    <div id="verify-all" style="font-family:monospace;font-size:.75rem;line-height:1.9;color:#c9d1d9"></div>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});initAll();"></script>
+<script>
+function reRender(el){
+  if(window.renderMathInElement) renderMathInElement(el,{
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+}
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+const TABS = ['tab-proba','tab-rez','tab-pol','tab-gen','tab-ex'];
+function showTab(id, btn) {
+  TABS.forEach(t => document.getElementById(t).classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  setTimeout(() => reRender(document.getElementById(id)), 30);
+  if (id === 'tab-proba') setTimeout(genSol, 80);
+  if (id === 'tab-rez')   setTimeout(drawRez, 80);
+  if (id === 'tab-pol')   setTimeout(checkPol, 60);
+  if (id === 'tab-gen')   setTimeout(buildGenTable, 60);
+  if (id === 'tab-ex')    setTimeout(verifyAll, 60);
+}
+
+// ─── Tab 1: Solution generator ────────────────────────────────────────────────
+function genSol() {
+  const c1 = parseFloat(document.getElementById('p-c1').value) || 0;
+  const r1 = parseFloat(document.getElementById('p-r1').value) || 0;
+  const c2 = parseFloat(document.getElementById('p-c2').value) || 0;
+  const r2 = parseFloat(document.getElementById('p-r2').value) || 0;
+  const A  = parseFloat(document.getElementById('p-A').value)  || 0;
+  const b  = parseFloat(document.getElementById('p-b').value)  || 0;
+  const vals = [];
+  for (let n = 0; n <= 10; n++) {
+    vals.push(c1*Math.pow(r1,n) + c2*Math.pow(r2,n) + A*Math.pow(b,n));
+  }
+  const out = document.getElementById('sol-output');
+  out.innerHTML = vals.map((v,i) => `x<sub>${i}</sub> = <span style="color:#fda4af">${v.toFixed(3)}</span>`).join(' &nbsp; ');
+  drawSolCanvas(vals);
+}
+
+function drawSolCanvas(vals) {
+  const cv = document.getElementById('sol-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  const mx = Math.max(...vals.map(Math.abs), 1);
+  const pad = 28, bw = (W - pad*2) / vals.length;
+  ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2); ctx.stroke();
+  vals.forEach((v, i) => {
+    const x = pad + i*bw + bw/2;
+    const y = H/2 - (v/mx)*(H/2-10);
+    const cy = Math.max(6, Math.min(H-6, y));
+    ctx.fillStyle = v >= 0 ? '#f43f5e' : '#60a5fa';
+    ctx.beginPath(); ctx.arc(x, cy, 4, 0, 2*Math.PI); ctx.fill();
+    if (i > 0) {
+      const px = pad+(i-1)*bw+bw/2;
+      const py = H/2-(vals[i-1]/mx)*(H/2-10);
+      ctx.strokeStyle = '#f43f5e66'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(px,Math.max(6,Math.min(H-6,py))); ctx.lineTo(x,cy); ctx.stroke();
+    }
+    ctx.fillStyle='#6b7280';ctx.font='9px monospace';ctx.textAlign='center';
+    ctx.fillText(i,x,H-3);
+  });
+}
+
+// ─── Tab 2: Resonance canvas ─────────────────────────────────────────────────
+function drawRez() {
+  const cv = document.getElementById('rez-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  const N = 9;
+  const series = {
+    part: n => 4*n*Math.pow(-2,n),
+    hom1: n => 2*Math.pow(3,n),
+    hom2: n => -2*Math.pow(-2,n),
+    full: n => 2*Math.pow(3,n) - 2*Math.pow(-2,n) + 4*n*Math.pow(-2,n)
+  };
+  const colors = { part:'#fb923c', hom1:'#60a5fa', hom2:'#34d399', full:'#f43f5e' };
+  const labels = { part:'4n(−2)ⁿ', hom1:'2·3ⁿ', hom2:'−2(−2)ⁿ', full:'xₙ (teljes)' };
+  const allVals = Object.values(series).flatMap(f => Array.from({length:N},(_,i)=>f(i))).map(Math.abs);
+  const mx = Math.max(...allVals, 1);
+  const pad = 32, bw = (W-pad*2)/N;
+  ctx.strokeStyle='#21262d';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,H/2);ctx.lineTo(W-pad,H/2);ctx.stroke();
+  Object.keys(series).forEach(key => {
+    const f = series[key];
+    const col = colors[key];
+    ctx.strokeStyle = col; ctx.lineWidth = key==='full'?2:1;
+    for (let i = 0; i < N; i++) {
+      const x = pad+i*bw+bw/2;
+      const v = f(i);
+      const y = Math.max(4,Math.min(H-4, H/2-(v/mx)*(H/2-10)));
+      ctx.fillStyle=col;
+      ctx.beginPath();ctx.arc(x,y,key==='full'?4:3,0,2*Math.PI);ctx.fill();
+      if (i>0) {
+        const pv = f(i-1);
+        const py=Math.max(4,Math.min(H-4,H/2-(pv/mx)*(H/2-10)));
+        ctx.beginPath();ctx.moveTo(pad+(i-1)*bw+bw/2,py);ctx.lineTo(x,y);ctx.stroke();
+      }
+    }
+  });
+  // legend
+  let lx=pad;
+  Object.keys(labels).forEach(key=>{
+    ctx.fillStyle=colors[key];ctx.font='bold 9px monospace';ctx.textAlign='left';
+    ctx.fillText('● '+labels[key],lx,H-3);
+    lx+=120;
+  });
+}
+
+// ─── Tab 3: Polynomial check ─────────────────────────────────────────────────
+function checkPol() {
+  const el = document.getElementById('pol-check');
+  if (!el) return;
+  let html = '<span style="color:#fbbf24">Ellenőrzés: p_n = -2n-5 az x_n - 4x_{n-2} = 6n-1 egyenletben (n=2..6)</span><br>';
+  for (let n = 2; n <= 6; n++) {
+    const pn = -2*n - 5;
+    const pn2 = -2*(n-2) - 5;
+    const lhs = pn - 4*pn2;
+    const rhs = 6*n - 1;
+    const ok = Math.abs(lhs-rhs) < 1e-9;
+    html += `n=${n}: p<sub>${n}</sub>=${pn}, p<sub>${n-2}</sub>=${pn2} → lhs=${pn}-4·${pn2}=<strong style="color:${ok?'#34d399':'#f87171'}">${lhs}</strong> = rhs=${rhs} ${ok?'✓':'✗'}<br>`;
+  }
+  el.innerHTML = html;
+}
+
+// ─── Tab 4: Generating function table ────────────────────────────────────────
+function buildGenTable() {
+  const tbody = document.getElementById('gen-tbody');
+  if (!tbody || tbody.children.length > 0) return;
+  const rows = [
+    ['\\(1\\)', '\\(\\dfrac{1}{1-x}\\)', '\\(s_n=1\\)'],
+    ['\\(a^n\\)', '\\(\\dfrac{1}{1-ax}\\)', '\\(s_n=as_{n-1},\\; s_0=1\\)'],
+    ['\\(n+1\\)', '\\(\\dfrac{1}{(1-x)^2}\\)', '—'],
+    ['\\(\\binom{m+n-1}{n}\\)', '\\(\\dfrac{1}{(1-x)^m}\\)', '—'],
+    ['\\(2^n-1\\)', '\\(\\dfrac{x}{(1-x)(1-2x)}\\)', '\\(s_n=2s_{n-1}+1,\\;s_0=0\\)'],
+    ['\\(n(-3)^{n-1}\\)', '\\(\\dfrac{x}{(1+3x)^2}\\)', '\\(s_n=-6s_{n-1}-9s_{n-2}\\)'],
+    ['\\(5n+2\\)', '\\(\\dfrac{3x+2}{(1-x)^2}\\)', '—'],
+    ['\\(6(-3)^n\\)', '\\(\\dfrac{6}{1+3x}\\)', '—'],
+  ];
+  rows.forEach(([sn,gx,rek])=>{
+    const tr = document.createElement('tr');
+    tr.style.borderBottom='1px solid #21262d';
+    tr.innerHTML=`<td style="padding:.3rem .6rem;color:#fda4af">${sn}</td>
+      <td style="padding:.3rem .6rem;color:#c9d1d9">${gx}</td>
+      <td style="padding:.3rem .6rem;color:#6b7280;font-size:.72rem">${rek}</td>`;
+    tbody.appendChild(tr);
+  });
+  reRender(tbody.parentElement);
+}
+
+// ─── Tab 5: Verify all examples ───────────────────────────────────────────────
+function verifyAll() {
+  const el = document.getElementById('verify-all');
+  if (!el) return;
+  const examples = [
+    {
+      label:'1. Példa: xₙ = −4·3ⁿ + 7·2ⁿ',
+      closed: n => -4*Math.pow(3,n)+7*Math.pow(2,n),
+      recur: (xn,xn1,xn2) => xn1+6*xn2-7*Math.pow(2, /* solved from equation */ 0),
+      check: n => {
+        const x = n => -4*Math.pow(3,n)+7*Math.pow(2,n);
+        if (n<2) return null;
+        return Math.abs(x(n)-x(n-1)-6*x(n-2)+7*Math.pow(2,n)) < 1e-6;
+      }
+    },
+    {
+      label:'2. Példa: xₙ = 2·3ⁿ − 2(−2)ⁿ + 4n(−2)ⁿ',
+      check: n => {
+        const x = n => 2*Math.pow(3,n)-2*Math.pow(-2,n)+4*n*Math.pow(-2,n);
+        if (n<2) return null;
+        return Math.abs(x(n)-x(n-1)-6*x(n-2)-10*Math.pow(-2,n)) < 1e-6;
+      }
+    },
+    {
+      label:'3. Példa: xₙ = 3·2ⁿ − (−2)ⁿ − 2n − 5',
+      check: n => {
+        const x = n => 3*Math.pow(2,n)-Math.pow(-2,n)-2*n-5;
+        if (n<2) return null;
+        return Math.abs(x(n)-4*x(n-2)-(6*n-1)) < 1e-6;
+      }
+    },
+    {
+      label:'4. Példa: sₙ = (n²+n+2)/2',
+      check: n => {
+        const s = n => (n*n+n+2)/2;
+        if (n<1) return null;
+        return Math.abs(s(n)-s(n-1)-n) < 1e-6;
+      }
+    },
+    {
+      label:'5. Példa: xₙ = 5·3ⁿ + 4(−4)ⁿ',
+      check: n => {
+        const x = n => 5*Math.pow(3,n)+4*Math.pow(-4,n);
+        if (n<1) return null;
+        return Math.abs(x(n)-3*x(n-1)-7*Math.pow(-4,n)) < 1e-6;
+      }
+    },
+  ];
+  let html = '';
+  examples.forEach(ex => {
+    const results = [];
+    for (let n=0;n<=7;n++){
+      const r=ex.check(n);
+      if(r===null) results.push(`<span style="color:#8892a4">n=${n}:IC</span>`);
+      else results.push(`<span style="color:${r?'#34d399':'#f87171'}">n=${n}:${r?'✓':'✗'}</span>`);
+    }
+    html+=`<div><span style="color:#fda4af;font-weight:700">${ex.label}</span> — ${results.join(' ')}</div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function initAll(){
+  genSol();
+  drawRez();
+  checkPol();
+  buildGenTable();
+  verifyAll();
+}
+setTimeout(initAll, 400);
+</script>
+{% endblock %}

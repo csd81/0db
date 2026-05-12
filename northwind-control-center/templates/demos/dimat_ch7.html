@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% block title %}I.7. Extremális halmazrendszerek — Dimat{% endblock %}
+{% block content %}
+<style>
+:root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(16,185,129,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(16,185,129,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(16,185,129,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.inp { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .6rem; font-size:.85rem; }
+.res-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+.res-table th { background:#1a1f2e; color:#64748b; padding:.4rem .7rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.73rem; text-transform:uppercase; }
+.res-table td { padding:.4rem .7rem; border-bottom:1px solid #161b28; }
+.subset-chip { display:inline-flex; align-items:center; justify-content:center; min-width:38px; padding:.2rem .45rem; border-radius:6px; font-size:.78rem; font-family:monospace; cursor:pointer; border:2px solid #1e2533; background:#0e1014; color:#94a3b8; transition:all .2s; margin:2px; user-select:none; }
+.subset-chip:hover { border-color:var(--acc3); }
+.subset-chip.selected { background:rgba(16,185,129,.2); border-color:var(--acc); color:var(--acc2); }
+.subset-chip.conflict { background:rgba(239,68,68,.15); border-color:#ef4444; color:#fca5a5; }
+.warn-box { border-left:3px solid #ef4444; background:rgba(239,68,68,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+canvas { border-radius:8px; display:block; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-layers" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">I.7. fejezet — Extremális halmazrendszerek</h4>
+      <small class="text-muted">Sperner tétele · Erdős-Ko-Rado · Fisher/Ryser · Szimplexek</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-sperner',this)">Sperner tétele</span>
+    <span class="ila-nav-link" onclick="showTab('t-ekr',this)">Erdős-Ko-Rado</span>
+    <span class="ila-nav-link" onclick="showTab('t-fisher',this)">Fisher &amp; Ryser</span>
+    <span class="ila-nav-link" onclick="showTab('t-simplex',this)">Szimplexek</span>
+  </div>
+
+  <!-- TAB 1: Sperner -->
+  <div id="t-sperner" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Sperner tétele (1928)</div>
+          <div class="def-box">
+            Egy \(\mathcal{F} \subseteq \mathcal{P}(\{1,\ldots,n\})\) <strong>antiláncnak</strong> nevezzük, ha egyetlen \(A,B \in \mathcal{F}\) sem teljesíti az \(A \subsetneq B\) feltételt.
+          </div>
+          <div class="thm-box">
+            <strong>Sperner (1928):</strong><br>
+            \[\max|\mathcal{F}| = \binom{n}{\lfloor n/2\rfloor}\]
+            Ez pontosan a \(\lfloor n/2 \rfloor\)-elemű részhalmazok száma.
+          </div>
+          <div class="thm-box">
+            <strong>Lubell-egyenlőtlenség:</strong><br>
+            \[\sum_{A_i \in \mathcal{F}} \frac{1}{\binom{n}{|A_i|}} \leq 1\]
+            tetszőleges anticláncra.
+          </div>
+          <table class="res-table mt-2">
+            <thead><tr><th>n</th><th>max antilánc</th><th>= C(n,⌊n/2⌋)</th></tr></thead>
+            <tbody id="sperner-tbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Interaktív — n=4 antilánc-építő</div>
+          <p style="font-size:.82rem;color:#94a3b8;">Kattintson a részhalmazokra az antiláncba való felvételhez. Piros = tartalmazási konfliktus.</p>
+          <div id="sperner-chips"></div>
+          <div class="d-flex gap-3 mt-2">
+            <div id="sperner-lubell" style="font-size:.82rem;color:#94a3b8;"></div>
+            <div id="sperner-status" style="font-size:.82rem;"></div>
+          </div>
+          <button class="btn-sec mt-2" style="font-size:.78rem;" onclick="spernerReset()">Törlés</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: EKR -->
+  <div id="t-ekr" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Erdős-Ko-Rado tétel (1961)</div>
+          <div class="def-box">
+            \(\mathcal{F}\) <strong>metsző rendszer</strong>, ha minden \(A,B \in \mathcal{F}\)-re \(A \cap B \neq \emptyset\).
+          </div>
+          <div class="thm-box">
+            <strong>EKR tétel:</strong> Ha \(|\mathcal{F}|\) egy metsző \(k\)-elem részhalmazrendszer \(\{1,\ldots,n\}\) felett és \(k \leq n/2\), akkor<br>
+            \[|\mathcal{F}| \leq \binom{n-1}{k-1}\]
+            Egyenlőség esetén \(\mathcal{F}\) egy <em>csillag</em>: az összes \(k\)-részhalmaz, amely tartalmaz egy rögzített elemet.
+          </div>
+          <div class="ex-box">
+            <strong>Katona elegáns bizonyítása:</strong> Tekintsük az \(\{1,\ldots,n\}\) ciklikus permutációit. Minden permutációban legfeljebb \(k\) darab \(\mathcal{F}\)-beli halmaz jelenik meg egymás mellett. Ez adja az egyenlőtlenséget.
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Interaktív — EKR korlát</div>
+          <p style="font-size:.82rem;color:#94a3b8;">Adja meg n és k értékét:</p>
+          <div class="d-flex gap-2 mb-3">
+            <label style="font-size:.82rem;color:#94a3b8;">n = <input class="inp" id="ekr-n" type="number" value="6" min="2" max="20" style="width:60px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">k = <input class="inp" id="ekr-k" type="number" value="2" min="1" max="10" style="width:60px;"></label>
+            <button class="btn-acc" onclick="calcEKR()">Számít</button>
+          </div>
+          <div id="ekr-out"></div>
+          <div class="mt-3">
+            <p style="font-size:.82rem;color:#94a3b8;">EKR korlát táblázata (n=5..10, k=2):</p>
+            <table class="res-table">
+              <thead><tr><th>n</th><th>k=2</th><th>C(n,2)</th><th>C(n-1,1)</th><th>arány</th></tr></thead>
+              <tbody id="ekr-tbl"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Fisher / Ryser -->
+  <div id="t-fisher" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="card-dark mb-3">
+          <div class="badge-acc">Tétel-összefoglaló</div>
+          <div class="table-responsive">
+            <table class="res-table">
+              <thead><tr><th>Tétel</th><th>Feltétel</th><th>Következtetés</th><th>Módszer</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td style="color:var(--acc2);">Erdős-DeBruijn</td>
+                  <td>\(|A_i \cap A_j|=1\) minden \(i \neq j\)-re</td>
+                  <td>\(m \leq n\)</td>
+                  <td>Kombinatorikus</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--acc2);">Gallai-következmény</td>
+                  <td>m nem kollineáris pont a síkban</td>
+                  <td>Legalább m egyenest határoz meg</td>
+                  <td>Dualizáció</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--acc2);">Fisher-egyenlőtlenség</td>
+                  <td>\(|A_i \cap A_j|=t\) és \(|A_i|=k\) minden \(i \neq j\)-re</td>
+                  <td>\(m \leq n\)</td>
+                  <td>Lineáris algebra</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--acc2);">Ryser általánosítása</td>
+                  <td>Két lehetséges metszési méret</td>
+                  <td>m ≤ n + általánosítás</td>
+                  <td>Lineáris algebra</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc">Erdős-DeBruijn</div>
+          <div class="thm-box">
+            Ha \(A_1,\ldots,A_m \subseteq \{1,\ldots,n\}\) és \(|A_i \cap A_j|=1\) minden \(i \neq j\)-re (projektív sík tulajdonság), akkor \(m \leq n\).
+          </div>
+          <div class="ex-box">
+            <strong>Példa — Fano-sík:</strong> 7 pont, 7 egyenes, minden kettő metszi egymást pontosan 1 pontban. \(m=n=7\). ✓
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc">Fisher-egyenlőtlenség</div>
+          <div class="thm-box">
+            Legyen \(A_1,\ldots,A_m \subseteq \{1,\ldots,n\}\) olyan, hogy \(|A_i|=k\) és \(|A_i \cap A_j|=t\) minden \(i \neq j\)-re. Ekkor \(m \leq n\).
+          </div>
+          <div class="def-box" style="font-size:.8rem;">
+            <strong>Bizonyítás vázlata (lin. algebra):</strong><br>
+            Legyen \(M\) az \(m \times n\) incidensmátrix. Ekkor<br>
+            \(M M^T = (k-t)I + tJ\)<br>
+            ahol \(J\) az egyes mátrix. Ez a mátrix reguláris, ha \(k \neq t\), tehát \(\text{rang}(M) = m \leq n\).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: Simplices -->
+  <div id="t-simplex" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Algebrai szimplex</div>
+          <div class="def-box">
+            Vektorok egy \(S = \{v_1,\ldots,v_k\}\) halmaza <strong>algebrai szimplex</strong>, ha:<br>
+            • az egész halmaz lineárisan összefüggő,<br>
+            • minden valódi részhalmaza lineárisan független.
+          </div>
+          <div class="thm-box">
+            Kapcsolat kémiához: egy \(S\) szimplex pontosan egy minimális kémiai reakcióegyenletnek felel meg, amelyben az összetevők lineárisan összefüggnek.
+          </div>
+          <div class="thm-box">
+            Kapcsolat matroid-elmélethez: a lineáris matroid körjei pontosan az algebrai szimplexek.
+          </div>
+          <div class="ex-box" style="font-size:.8rem;">
+            <strong>Szalkai-LaFlamme korlát:</strong><br>
+            Az \(F^n\) tér k-dimenziós alterén lévő szimplexek száma legfeljebb \(\binom{n}{k+1}\).
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Példa — szimplex \(\mathbb{R}^2\)-ben</div>
+          <p style="font-size:.82rem;color:#94a3b8;">Három vektor \(\mathbb{R}^2\)-ben: ha összegük nulla, szimplex.</p>
+          <canvas id="simplex-canvas" width="380" height="260"></canvas>
+          <div id="simplex-desc" style="margin-top:.5rem;font-size:.82rem;color:#94a3b8;"></div>
+          <button class="btn-sec mt-2" onclick="drawSimplex()">Új példa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function initAll(){
+  buildSpernerTable();
+  buildSpernerChips();
+  buildEKRTable();
+  drawSimplex();
+}
+
+/* ── SPERNER ── */
+function choose(n,k){
+  if(k<0||k>n)return 0;
+  if(k===0||k===n)return 1;
+  k=Math.min(k,n-k);
+  let r=1;
+  for(let i=0;i<k;i++) r=r*(n-i)/(i+1);
+  return Math.round(r);
+}
+function buildSpernerTable(){
+  let html='';
+  for(let n=1;n<=8;n++){
+    const hk=Math.floor(n/2);
+    const val=choose(n,hk);
+    html+=`<tr><td>${n}</td><td style="color:var(--acc2);">${val}</td><td style="color:#64748b;">C(${n},${hk})</td></tr>`;
+  }
+  document.getElementById('sperner-tbl').innerHTML=html;
+}
+
+// Generate all subsets of {1,2,3,4}
+const N4=4;
+const allSubsets4=[];
+for(let mask=0;mask<(1<<N4);mask++){
+  const s=[];
+  for(let i=0;i<N4;i++) if(mask&(1<<i)) s.push(i+1);
+  allSubsets4.push(s);
+}
+let selectedSubsets=new Set();
+
+function subsetLabel(s){ return s.length===0?'∅':'{'+s.join(',')+'}';}
+function subsetKey(s){ return s.join(',');}
+
+function buildSpernerChips(){
+  const el=document.getElementById('sperner-chips');
+  // Group by size
+  let html='';
+  for(let sz=0;sz<=N4;sz++){
+    const row=allSubsets4.filter(s=>s.length===sz);
+    if(!row.length)continue;
+    html+=`<div style="margin:.3rem 0;"><span style="font-size:.72rem;color:#64748b;min-width:3rem;display:inline-block;">|A|=${sz}:</span>`;
+    row.forEach(s=>{
+      html+=`<span class="subset-chip" id="chip-${s.join('-')}" onclick="toggleSubset(${JSON.stringify(s)})">${subsetLabel(s)}</span>`;
+    });
+    html+='</div>';
+  }
+  el.innerHTML=html;
+  updateSpernerStatus();
+}
+
+function toggleSubset(s){
+  const key=subsetKey(s);
+  if(selectedSubsets.has(key)) selectedSubsets.delete(key);
+  else selectedSubsets.add(key);
+  updateSpernerStatus();
+}
+
+function updateSpernerStatus(){
+  // Check all pairs for containment conflicts
+  const selArrays=allSubsets4.filter(s=>selectedSubsets.has(subsetKey(s)));
+  const conflicts=new Set();
+  for(let i=0;i<selArrays.length;i++){
+    for(let j=0;j<selArrays.length;j++){
+      if(i===j)continue;
+      const a=selArrays[i],b=selArrays[j];
+      if(a.every(x=>b.includes(x))&&a.length<b.length){
+        conflicts.add(subsetKey(a));conflicts.add(subsetKey(b));
+      }
+    }
+  }
+  allSubsets4.forEach(s=>{
+    const key=subsetKey(s);
+    const chip=document.getElementById('chip-'+s.join('-'));
+    if(!chip)return;
+    chip.classList.remove('selected','conflict');
+    if(selectedSubsets.has(key)){
+      chip.classList.add(conflicts.has(key)?'conflict':'selected');
+    }
+  });
+  // Lubell sum
+  let lubell=0;
+  selArrays.forEach(s=>{ lubell+=1/choose(N4,s.length); });
+  const maxAC=choose(N4,Math.floor(N4/2));
+  document.getElementById('sperner-lubell').innerHTML=
+    `Lubell-összeg: <strong style="color:${lubell>1.001?'#ef4444':'var(--acc2)'};">${lubell.toFixed(4)}</strong> ≤ 1 &nbsp;|&nbsp; Antilánc mérete: <strong style="color:var(--acc2);">${selArrays.length}</strong> / max ${maxAC}`;
+  document.getElementById('sperner-status').innerHTML=
+    conflicts.size>0?`<span style="color:#ef4444;"><i class="bi bi-x-circle"></i> Tartalmazási konfliktus!</span>`:
+    selArrays.length>0?`<span style="color:var(--acc);"><i class="bi bi-check-circle"></i> Érvényes antilánc</span>`:'';
+}
+
+function spernerReset(){selectedSubsets.clear();updateSpernerStatus();}
+
+/* ── EKR ── */
+function calcEKR(){
+  const n=parseInt(document.getElementById('ekr-n').value)||6;
+  const k=parseInt(document.getElementById('ekr-k').value)||2;
+  const total=choose(n,k);
+  const bound=choose(n-1,k-1);
+  const ok=k<=n/2;
+  let html='';
+  if(!ok){
+    html='<div class="warn-box">EKR feltétel: k ≤ n/2. Próbáljon kisebb k-t!</div>';
+  } else {
+    html=`<div class="def-box">
+      Összes ${k}-részhalmaz: <strong style="color:var(--acc2);">C(${n},${k}) = ${total}</strong><br>
+      EKR korlát: <strong style="color:#38bdf8;">C(${n-1},${k-1}) = ${bound}</strong><br>
+      "Csillag" (rögzített elem = 1): pontosan ${bound} darab ${k}-részhalmaz tartalmazza az 1-es elemet.
+    </div>`;
+  }
+  document.getElementById('ekr-out').innerHTML=html;
+}
+
+function buildEKRTable(){
+  let html='';
+  for(let n=5;n<=10;n++){
+    const total=choose(n,2);
+    const bound=choose(n-1,1);
+    const ratio=(bound/total*100).toFixed(1);
+    html+=`<tr><td>${n}</td><td style="color:var(--acc2);">${bound}</td><td>${total}</td><td style="color:#64748b;">${bound}</td><td style="color:#94a3b8;">${ratio}%</td></tr>`;
+  }
+  document.getElementById('ekr-tbl').innerHTML=html;
+}
+
+/* ── SIMPLEX canvas ── */
+let simplexVectors=[];
+function drawSimplex(){
+  const cv=document.getElementById('simplex-canvas');
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2;
+  // Draw axes
+  ctx.strokeStyle='#1e2533';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+  ctx.fillStyle='#334155';ctx.font='11px monospace';
+  ctx.fillText('x',W-12,cy-4);ctx.fillText('y',cx+4,10);
+  // Generate 3 vectors that sum to zero: v1, v2, -(v1+v2)
+  const angle=Math.random()*Math.PI*2;
+  const r1=60+Math.random()*40;
+  const r2=50+Math.random()*40;
+  const a2=angle+0.8+Math.random()*1.5;
+  const v1=[r1*Math.cos(angle),r1*Math.sin(angle)];
+  const v2=[r2*Math.cos(a2),r2*Math.sin(a2)];
+  const v3=[-(v1[0]+v2[0]),-(v1[1]+v2[1])];
+  simplexVectors=[v1,v2,v3];
+  const colors=['var(--acc)','#38bdf8','#f59e0b'];
+  const labels=['v₁','v₂','v₃'];
+  [v1,v2,v3].forEach((v,i)=>{
+    const ex=cx+v[0],ey=cy-v[1];
+    ctx.strokeStyle=colors[i];ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ex,ey);ctx.stroke();
+    // Arrowhead
+    const ang=Math.atan2(-(ey-cy),ex-cx);
+    ctx.fillStyle=colors[i];
+    ctx.beginPath();
+    ctx.moveTo(ex,ey);
+    ctx.lineTo(ex-10*Math.cos(ang-0.35),ey+10*Math.sin(ang-0.35));
+    ctx.lineTo(ex-10*Math.cos(ang+0.35),ey+10*Math.sin(ang+0.35));
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle=colors[i];ctx.font='bold 13px sans-serif';
+    ctx.fillText(labels[i],ex+8,ey-5);
+  });
+  // Simplex triangle
+  ctx.strokeStyle='rgba(16,185,129,.25)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(cx+v1[0],cy-v1[1]);
+  ctx.lineTo(cx+v2[0],cy-v2[1]);
+  ctx.lineTo(cx+v3[0],cy-v3[1]);
+  ctx.closePath();ctx.stroke();ctx.setLineDash([]);
+  const fmt=(x)=>(+x.toFixed(2));
+  document.getElementById('simplex-desc').innerHTML=
+    `v₁=(${fmt(v1[0])},${fmt(v1[1])}), &nbsp;v₂=(${fmt(v2[0])},${fmt(v2[1])}), &nbsp;v₃=(${fmt(v3[0])},${fmt(v3[1])})<br>
+     v₁+v₂+v₃ = (${fmt(v1[0]+v2[0]+v3[0])},${fmt(v1[1]+v2[1]+v3[1])}) = <strong style="color:var(--acc);">(0,0) ✓</strong> — lineárisan összefüggők<br>
+     Minden pár lineárisan független: v₁,v₂ → det≠0, stb.`;
+}
+</script>
+{% endblock %}

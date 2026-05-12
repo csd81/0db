@@ -52,7 +52,7 @@
 #pg-legend {
   position: absolute;
   bottom: 1rem;
-  right: 1rem;
+  left: 1rem;
   z-index: 1000;
   background: rgba(12, 14, 19, 0.88);
   border: 1px solid #1e2230;
@@ -61,10 +61,27 @@
   font-size: .68rem;
   color: #adb5bd;
 }
+
+/* 2D/3D toggle */
+#pg-view-toggle {
+  position: absolute; bottom: 1rem; right: 1rem; z-index: 999;
+  display: flex; border-radius: .35rem; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+#pg-view-toggle button {
+  padding: .25rem .65rem; font-size: .7rem; font-weight: 700;
+  border: none; cursor: pointer; transition: background .15s, color .15s;
+  background: #1e2028; color: #8892a4;
+}
+#pg-view-toggle button.active { background: #4ade80; color: #000; }
+.cesium-widget-credits, .cesium-viewer-toolbar { display: none !important; }
+
+#pg-map, #pg-globe { position: absolute; inset: 0; width: 100%; height: 100%; }
 </style>
 
 <div id="pg-shell">
   <div id="pg-map"></div>
+  <div id="pg-globe" style="display:none"></div>
 
   <!-- Floating side panel -->
   <div id="pg-panel">
@@ -103,7 +120,7 @@
     </div>
   </div>
 
-  <!-- Floating legend -->
+  <!-- Floating legend — bottom-left so toggle lives bottom-right -->
   <div id="pg-legend">
     <div class="mb-1 fw-semibold" style="color:#cdd">Circle size ∝ Betweenness</div>
     <div><span style="color:#ffd700;font-size:1.1rem">●</span> Top 1% — continental bridges</div>
@@ -111,10 +128,19 @@
     <div><span style="color:#0dcaf0;font-size:.85rem">●</span> Top 20%</div>
     <div><span style="color:#444">●</span> Rest</div>
   </div>
+
+  <!-- 2D/3D toggle -->
+  <div id="pg-view-toggle">
+    <button id="btn-2d" class="active">2D</button>
+    <button id="btn-3d">3D</button>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script>window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/';</script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Cesium.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/demos/graph_pagerank.js') }}"></script>

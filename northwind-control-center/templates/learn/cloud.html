@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Cloud Book Chapters{% endblock %}
+
+{% block content %}
+<style>
+.ch-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: .5rem;
+  padding: 1rem 1.2rem;
+  transition: border-color .15s, background .15s;
+}
+.ch-card:hover { border-color: #38bdf8; background: #071520; }
+.ch-num  { font-size: .6rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.ch-title { font-size: 1rem; font-weight: 700; margin: .2rem 0 .5rem; }
+.ch-desc  { font-size: .75rem; color: #8b949e; line-height: 1.55; }
+.ch-tags  { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .6rem; }
+.ch-tag   { font-size: .6rem; padding: .15rem .45rem; border-radius: .25rem; font-weight: 600; letter-spacing: .04em; }
+.launch-btn { font-size: .72rem; font-weight: 600; padding: .3rem .9rem; border-radius: .35rem; text-decoration: none; white-space: nowrap; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1100px">
+  <div class="d-flex align-items-center gap-3 mb-1">
+    <i class="bi bi-cloud-fill" style="font-size:1.5rem;color:#38bdf8"></i>
+    <h4 class="mb-0 fw-bold">Cloud Book — Chapters</h4>
+  </div>
+  <p class="text-secondary mb-4" style="font-size:.82rem">Interactive demos for each cloud book chapter, sorted in reading order.</p>
+
+  <div class="d-flex flex-column gap-3">
+
+    <!-- Ch 2 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#94a3b8">Chapter 2</div>
+      <div class="ch-title">The Road to Cloud Computing</div>
+      <div class="ch-desc">Historical evolution from mainframes to hyperscale cloud. Virtualisation layers, the economics of shared infrastructure, IaaS → PaaS → SaaS service model progression, and the key inflection points that made public cloud inevitable.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#0f172a;color:#94a3b8">History</span>
+          <span class="ch-tag" style="background:#0f172a;color:#94a3b8">IaaS/PaaS/SaaS</span>
+          <span class="ch-tag" style="background:#0f172a;color:#94a3b8">Virtualisation</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch2') }}" class="launch-btn ms-auto" style="background:#475569;color:#fff">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 3 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#38bdf8">Chapter 3</div>
+      <div class="ch-title">Cloud Technology Fundamentals</div>
+      <div class="ch-desc">Core cloud primitives: regions, availability zones, edge PoPs. Compute (VMs, containers, serverless), storage tiers, networking (VPC, peering, CDN). SLA arithmetic, shared-responsibility model, and multi-cloud vs hybrid-cloud trade-offs.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#082f49;color:#38bdf8">Regions / AZs</span>
+          <span class="ch-tag" style="background:#082f49;color:#38bdf8">SLA</span>
+          <span class="ch-tag" style="background:#082f49;color:#38bdf8">VPC</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_fundamentals') }}" class="launch-btn ms-auto" style="background:#38bdf8;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 4 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#f97316">Chapter 4</div>
+      <div class="ch-title">Amazon AWS</div>
+      <div class="ch-desc">AWS global infrastructure, EC2 instance families, S3 storage classes, RDS/Aurora, Lambda, SQS/SNS, VPC design patterns. IAM policy evaluation, cost optimisation with Reserved vs Spot, and AWS Well-Architected Framework pillars.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#431407;color:#f97316">EC2</span>
+          <span class="ch-tag" style="background:#431407;color:#f97316">S3</span>
+          <span class="ch-tag" style="background:#431407;color:#f97316">Lambda</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch4') }}" class="launch-btn ms-auto" style="background:#f97316;color:#fff">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 5 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#4285f4">Chapter 5</div>
+      <div class="ch-title">Google Cloud Platform</div>
+      <div class="ch-desc">GCP compute (GCE, GKE, Cloud Run), BigQuery serverless analytics, Cloud Spanner globally-distributed RDBMS, Pub/Sub messaging, Dataflow pipeline, Vertex AI. GCP networking: Andromeda SDN, global VPC, Cloud CDN, and Premium vs Standard tier.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#0c1a2e;color:#4285f4">BigQuery</span>
+          <span class="ch-tag" style="background:#0c1a2e;color:#4285f4">Spanner</span>
+          <span class="ch-tag" style="background:#0c1a2e;color:#4285f4">Dataflow</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch5') }}" class="launch-btn ms-auto" style="background:#4285f4;color:#fff">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 7 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#facc15">Chapter 7</div>
+      <div class="ch-title">MapReduce, Spark &amp; GCP Dataproc</div>
+      <div class="ch-desc">MapReduce execution model: split → map → shuffle → reduce. Word Count walkthrough. Apache Spark RDDs, DataFrames, lazy evaluation, DAG scheduler. Live Welford streaming variance demo. GCP Dataproc managed Spark/Hadoop cluster. Micro-batch vs true stream.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#1a1100;color:#facc15">MapReduce</span>
+          <span class="ch-tag" style="background:#1a1100;color:#facc15">Spark</span>
+          <span class="ch-tag" style="background:#1a1100;color:#facc15">Dataproc</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch7') }}" class="launch-btn ms-auto" style="background:#facc15;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 8 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#34d399">Chapter 8</div>
+      <div class="ch-title">Stream Data Processing</div>
+      <div class="ch-desc">Event streaming vs batch: latency, throughput, ordering guarantees. Apache Kafka consumer groups, partition assignment, backpressure. Apache Beam unified programming model (batch + stream). Live Kafka consumer-group demo on Northwind Orders topic.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#052e16;color:#34d399">Kafka</span>
+          <span class="ch-tag" style="background:#052e16;color:#34d399">Beam</span>
+          <span class="ch-tag" style="background:#052e16;color:#34d399">Streaming</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch8') }}" class="launch-btn ms-auto" style="background:#34d399;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 9 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#818cf8">Chapter 9</div>
+      <div class="ch-title">Cloud Functions / FaaS</div>
+      <div class="ch-desc">Serverless execution model: event-driven, stateless, pay-per-invocation. Cold start vs warm start latency. Live Cloud Functions demo: invoke HTTP trigger, inspect state, reset. Contrast FaaS vs containers vs VMs for workload suitability.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#1e1b4b;color:#818cf8">FaaS</span>
+          <span class="ch-tag" style="background:#1e1b4b;color:#818cf8">Cold Start</span>
+          <span class="ch-tag" style="background:#1e1b4b;color:#818cf8">Serverless</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch9') }}" class="launch-btn ms-auto" style="background:#818cf8;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 10 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#22d3ee">Chapter 10</div>
+      <div class="ch-title">Service Communication — Pub/Sub</div>
+      <div class="ch-desc">RPC → REST → Pub/Sub protocol evolution. Fan-out pattern: one publisher, N subscribers in parallel. At-least-once delivery, idempotency, dead-letter queues. Live Pub/Sub fan-out demo with animated message flow across simulated subscribers.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#083344;color:#22d3ee">Pub/Sub</span>
+          <span class="ch-tag" style="background:#083344;color:#22d3ee">Fan-out</span>
+          <span class="ch-tag" style="background:#083344;color:#22d3ee">Idempotency</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch10') }}" class="launch-btn ms-auto" style="background:#22d3ee;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 11 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#a78bfa">Chapter 11</div>
+      <div class="ch-title">GCP AI Service Examples</div>
+      <div class="ch-desc">Vertex AI, AutoML, Vision API, Natural Language API, Translation API. BigQuery ML model lifecycle: CREATE MODEL → ML.EVALUATE → ML.PREDICT. Pre-trained vs fine-tuned models trade-offs. GCP AI vs AWS AI vs Azure AI service comparison.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#1e1b4b;color:#a78bfa">Vertex AI</span>
+          <span class="ch-tag" style="background:#1e1b4b;color:#a78bfa">AutoML</span>
+          <span class="ch-tag" style="background:#1e1b4b;color:#a78bfa">Vision API</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch11') }}" class="launch-btn ms-auto" style="background:#a78bfa;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 12 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#fb923c">Chapter 12</div>
+      <div class="ch-title">Cloud Service Orchestration</div>
+      <div class="ch-desc">Orchestration vs choreography. Google Cloud Composer (managed Airflow), AWS Step Functions, Azure Logic Apps. DAG design, task dependencies, retry policies, and monitoring. Live pipeline orchestration demo with animated task-execution timeline.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#431407;color:#fb923c">Airflow</span>
+          <span class="ch-tag" style="background:#431407;color:#fb923c">Step Functions</span>
+          <span class="ch-tag" style="background:#431407;color:#fb923c">DAG</span>
+        </div>
+        <a href="{{ url_for('demos.cloud_ch12') }}" class="launch-btn ms-auto" style="background:#fb923c;color:#000">Launch →</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

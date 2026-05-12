@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(16,185,129,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(16,185,129,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box  { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(16,185,129,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+table.res-tbl { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.res-tbl th { background:#1a1f2e; color:#64748b; padding:.4rem .7rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.73rem; text-transform:uppercase; letter-spacing:.06em; }
+table.res-tbl td { padding:.4rem .7rem; border-bottom:1px solid #161b28; vertical-align:middle; }
+input[type=number],select { background:#0e1117; border:1px solid #334155; border-radius:6px; color:#e2e8f0; padding:.3rem .6rem; font-size:.83rem; }
+input[type=number]:focus,select:focus { outline:none; border-color:var(--acc); }
+.val-big { font-size:1.05rem; font-weight:700; color:var(--acc2); font-family:monospace; }
+.pascal-cell { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:6px; font-size:.75rem; font-weight:700; cursor:pointer; margin:1px; transition:all .2s; border:2px solid transparent; font-family:monospace; }
+.pascal-cell:hover { border-color:var(--acc2); transform:scale(1.15); }
+.pascal-cell.sel { border-color:var(--acc); box-shadow:0 0 8px rgba(16,185,129,.6); transform:scale(1.2); }
+.pascal-row { display:flex; justify-content:center; margin:1px 0; }
+.term-row { display:flex; flex-wrap:wrap; gap:.4rem; margin:.4rem 0; }
+.term-chip { background:#1a2535; border:1px solid #334155; border-radius:6px; padding:.2rem .55rem; font-size:.8rem; font-family:monospace; color:#94a3b8; }
+.stars-vis { font-size:1.1rem; letter-spacing:.1em; color:var(--acc2); font-family:monospace; background:#0e1117; border:1px solid #1e2533; border-radius:8px; padding:.6rem 1rem; margin:.5rem 0; word-break:break-all; }
+.id-row { display:flex; align-items:center; gap:.6rem; margin:.5rem 0; font-size:.83rem; }
+.id-check { font-size:.9rem; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-triangle" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">I.3. fejezet — Binomiális és polinomiális együtthatók</h4>
+      <small class="text-muted">Binomiális tétel · Pascal-háromszög · Összegzések · Rugalmas pénzérmék</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-binom',this)">Binomiális tétel</span>
+    <span class="ila-nav-link" onclick="showTab('t-pascal',this)">Pascal-háromszög</span>
+    <span class="ila-nav-link" onclick="showTab('t-osszeg',this)">Összegzések</span>
+    <span class="ila-nav-link" onclick="showTab('t-coin',this)">Rugalmas pénzérmék</span>
+    <span class="ila-nav-link" onclick="showTab('t-azon',this)">Azonosságok ellenőrző</span>
+  </div>
+
+  <!-- ═══ TAB 1: Binomiális tétel ═══ -->
+  <div id="t-binom" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Newton-féle binomiális tétel</div>
+          <div class="thm-box">
+            \[(a+b)^n = \sum_{i=0}^{n} \binom{n}{i} a^{n-i} b^{i}\]
+          </div>
+          <p style="font-size:.83rem;color:#94a3b8;">Kombinatorikus bizonyítás: \(\binom{n}{i}\) az \(n\) zárójelből kiválasztott \(i\) db \(b\)-tényező száma.</p>
+          <div class="thm-box">
+            <strong>Speciális esetek:</strong><br>
+            \((1+1)^n = 2^n\) — az összes részhalmaz száma<br>
+            \((1-1)^n = 0\) — pozitív és negatív tagok kioltják egymást<br>
+            \((1+x)^n = \sum \binom{n}{i}x^i\) — generátorfüggvény
+          </div>
+          <div class="d-flex gap-2 flex-wrap align-items-center mt-3">
+            <label style="font-size:.83rem;color:#94a3b8;">a = <input type="number" id="bi-a" value="2" min="-9" max="9" style="width:60px" oninput="expandBinom()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">b = <input type="number" id="bi-b" value="3" min="-9" max="9" style="width:60px" oninput="expandBinom()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">n = <input type="number" id="bi-n" value="4" min="1" max="8" style="width:55px" oninput="expandBinom()"></label>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Kifejtés tagjai</div>
+          <div id="binom-terms" class="term-row"></div>
+          <div id="binom-sum" class="def-box mt-2" style="font-size:.88rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: Pascal-háromszög ═══ -->
+  <div id="t-pascal" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="d-flex gap-2 mb-2 flex-wrap">
+            <button class="btn-sec" onclick="highlightDiag()">Átlók kiemelése</button>
+            <button class="btn-sec" onclick="highlightPow()">Sor összegek (2ⁿ)</button>
+            <button class="btn-sec" onclick="clearHighlight()">Törlés</button>
+          </div>
+          <div id="pascal-grid" style="overflow-x:auto;"></div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Kiválasztott cella</div>
+          <div id="pascal-info" class="def-box" style="font-size:.83rem;min-height:60px;color:#64748b;">Kattints egy cellára!</div>
+          <div class="thm-box mt-2" style="font-size:.83rem;">
+            <strong>Főbb azonosságok:</strong><br>
+            \(\binom{n}{0}=\binom{n}{n}=1\)<br>
+            \(\binom{n}{k}=\binom{n}{n-k}\) (szimmetria)<br>
+            \(\binom{n-1}{k-1}+\binom{n-1}{k}=\binom{n}{k}\) (Pascal-szabály)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Összegzések ═══ -->
+  <div id="t-osszeg" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc">Főbb összegzési azonosságok</div>
+          <table class="res-tbl">
+            <thead><tr><th>Azonosság</th><th>Eredmény</th></tr></thead>
+            <tbody>
+              <tr><td>\(\sum_{i=0}^{n}\binom{n}{i}\)</td><td style="color:var(--acc2);">\(2^n\) (összes részhalmaz)</td></tr>
+              <tr><td>\(\sum_{i=0}^{n}(-1)^i\binom{n}{i}\)</td><td style="color:var(--acc2);">\(0\) (váltakozó)</td></tr>
+              <tr><td>\(\sum_{i=0}^{n}i\binom{n}{i}\)</td><td style="color:var(--acc2);">\(n\cdot 2^{n-1}\) (differenciálással)</td></tr>
+              <tr><td>\(\sum_{i=0}^{k}\binom{n}{i}\binom{m}{k-i}\)</td><td style="color:var(--acc2);">\(\binom{n+m}{k}\) (Vandermonde)</td></tr>
+              <tr><td>\(\sum_{i=0}^{r}\binom{n+i}{i}\)</td><td style="color:var(--acc2);">\(\binom{n+r+1}{r}\) (felső összegzés)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc">Numerikus ellenőrző</div>
+          <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+            <label style="font-size:.83rem;color:#94a3b8;">Azonosság:
+              <select id="sum-id" onchange="checkSumId()">
+                <option value="all">Σ C(n,i) = 2ⁿ</option>
+                <option value="alt">Σ (-1)ⁱ C(n,i) = 0</option>
+                <option value="wt">Σ i·C(n,i) = n·2ⁿ⁻¹</option>
+                <option value="vdm">Vandermonde</option>
+                <option value="upper">Felső összegzés</option>
+              </select>
+            </label>
+          </div>
+          <div class="d-flex gap-3 flex-wrap mb-2">
+            <label style="font-size:.83rem;color:#94a3b8;">n = <input type="number" id="sum-n" value="5" min="1" max="15" style="width:60px" oninput="checkSumId()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">k = <input type="number" id="sum-k" value="3" min="0" max="15" style="width:60px" oninput="checkSumId()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">m = <input type="number" id="sum-m" value="4" min="1" max="15" style="width:60px" oninput="checkSumId()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">r = <input type="number" id="sum-r" value="3" min="0" max="15" style="width:60px" oninput="checkSumId()"></label>
+          </div>
+          <div id="sum-result" class="ex-box" style="font-size:.83rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Rugalmas pénzérmék ═══ -->
+  <div id="t-coin" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Ismétléses kombináció — csillagok és korlátok</div>
+          <div class="thm-box">\[C^{ism}(n,k) = \binom{n+k-1}{k}\]</div>
+          <p style="font-size:.83rem;color:#94a3b8;">\(n\) különböző típusból \(k\) darabot választunk visszatevéssel. Egyenértékű azzal, hogy \(k\) csillagot helyezünk el \(n\) csoport között \((n-1)\) korláttal.</p>
+          <div class="d-flex gap-3 flex-wrap align-items-center mb-2">
+            <label style="font-size:.83rem;color:#94a3b8;">n (típus) = <input type="number" id="sb-n" value="3" min="1" max="8" style="width:60px" oninput="updateStars()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">k (db) = <input type="number" id="sb-k" value="4" min="0" max="10" style="width:60px" oninput="updateStars()"></label>
+          </div>
+          <div id="sb-result" class="def-box" style="font-size:.83rem;"></div>
+          <div id="sb-visual" class="stars-vis mt-2"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Elfogult pénzérme — p = (3+√3)/6</div>
+          <div class="thm-box">\[p = \frac{3+\sqrt{3}}{6} \approx 0.7887\]</div>
+          <p style="font-size:.83rem;color:#94a3b8;">Ha egy dobásnál a fej valószínűsége \(p\), és <em>két dobás közül pontosan az első fej</em> esetén fogadunk el, a tényleges elfogadási arány \(\frac{1}{3}\). Ezt szimmetria-megszakításra használják véletlenszám-generálásban.</p>
+          <div class="ex-box" style="font-size:.83rem;">
+            <strong>Számítás:</strong><br>
+            \(P(\text{első fej, második írás}) = p(1-p)\)<br>
+            \(P(\text{első írás, második fej}) = (1-p)p\)<br>
+            A két esemény szimmetrikus → arányuk 1:1 → \(\frac{1}{3}\)-os szimulációhoz nem szükséges.
+            <br><br>
+            <strong>Von Neumann trükk:</strong> elfogult érme \(\to\) igazságos döntés két dobással.
+          </div>
+          <button class="btn-acc mt-2" onclick="simCoin()">100 dobás szimulálása</button>
+          <div id="coin-sim" class="mt-2" style="font-size:.83rem;color:#94a3b8;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: Azonosságok ellenőrző ═══ -->
+  <div id="t-azon" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Paraméterek</div>
+          <div class="d-flex gap-3 flex-wrap mb-3">
+            <label style="font-size:.83rem;color:#94a3b8;">n = <input type="number" id="id-n" value="7" min="1" max="20" style="width:65px" oninput="checkIds()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">k = <input type="number" id="id-k" value="3" min="0" max="20" style="width:65px" oninput="checkIds()"></label>
+          </div>
+          <div id="id-results"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Pascal-háromszög azonosság tábla</div>
+          <p style="font-size:.82rem;color:#64748b;">C(n,k) értékek n=0..7, k=0..7:</p>
+          <div style="overflow-x:auto;" id="id-pascal-mini"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── C(n,k) BigInt ──
+function C(n,k){
+  if(k<0||k>n) return BigInt(0);
+  if(k===0||k===n) return BigInt(1);
+  k=Math.min(k,n-k);
+  let r=BigInt(1);
+  for(let i=0;i<k;i++) r=r*BigInt(n-i)/BigInt(i+1);
+  return r;
+}
+function Cn(n,k){ return Number(C(n,k)); }
+
+// ── Pascal array ──
+function buildPascalArr(rows){
+  const p=[];
+  for(let i=0;i<=rows;i++){
+    p.push([]);
+    for(let j=0;j<=i;j++) p[i].push(Number(C(i,j)));
+  }
+  return p;
+}
+const PASCAL=buildPascalArr(12);
+
+// ── Tab 1: Binomial expansion ──
+function expandBinom(){
+  const a=parseInt(document.getElementById('bi-a').value)||2;
+  const b=parseInt(document.getElementById('bi-b').value)||3;
+  const n=parseInt(document.getElementById('bi-n').value)||4;
+  const termBox=document.getElementById('binom-terms');
+  const sumBox=document.getElementById('binom-sum');
+  termBox.innerHTML='';
+  let total=0;
+  for(let i=0;i<=n;i++){
+    const coef=Cn(n,i);
+    const aPow=Math.pow(a,n-i);
+    const bPow=Math.pow(b,i);
+    const val=coef*aPow*bPow;
+    total+=val;
+    const aStr=(n-i===0)?'':(n-i===1?'a':'a'+(n-i));
+    const bStr=(i===0)?'':(i===1?'b':'b'+i);
+    const chip=document.createElement('div');
+    chip.className='term-chip';
+    chip.title=`C(${n},${i})·${a}^${n-i}·${b}^${i} = ${val}`;
+    chip.innerHTML=`<span style="color:#38bdf8;">C(${n},${i})</span>·${aPow}·${bPow} = <span style="color:var(--acc2);">${val}</span>`;
+    termBox.appendChild(chip);
+  }
+  sumBox.innerHTML=`\\((${a}+${b})^{${n}} = ${total.toLocaleString('hu-HU')}\\)`;
+  if(window.renderMathInElement){
+    renderMathInElement(sumBox,{delimiters:[{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+  }
+}
+
+// ── Tab 2: Pascal ──
+let selCell=null;
+function buildPascalGrid(){
+  const grid=document.getElementById('pascal-grid');
+  grid.innerHTML='';
+  const maxVal=Math.max(...PASCAL.flat());
+  PASCAL.forEach((row,n)=>{
+    const rowDiv=document.createElement('div');
+    rowDiv.className='pascal-row';
+    row.forEach((val,k)=>{
+      const cell=document.createElement('div');
+      cell.className='pascal-cell';
+      const t=val/maxVal;
+      const bg=`rgba(16,185,129,${0.04+t*0.7})`;
+      cell.style.background=bg;
+      cell.style.color=t>0.4?'#fff':'#94a3b8';
+      cell.textContent=val>999?'…':val;
+      cell.title=`C(${n},${k}) = ${val}`;
+      cell.dataset.n=n; cell.dataset.k=k;
+      cell.onclick=()=>selectPascalCell(n,k,cell);
+      rowDiv.appendChild(cell);
+    });
+    grid.appendChild(rowDiv);
+  });
+}
+function selectPascalCell(n,k,el){
+  if(selCell) selCell.classList.remove('sel');
+  el.classList.add('sel');
+  selCell=el;
+  const val=Cn(n,k);
+  const p1=n>0&&k>0?Cn(n-1,k-1):0;
+  const p2=n>0&&k<=n-1?Cn(n-1,k):0;
+  const box=document.getElementById('pascal-info');
+  box.innerHTML=`<strong>C(${n},${k}) = ${val}</strong><br>Pascal-szabály: C(${n-1},${k-1}) + C(${n-1},${k}) = ${p1} + ${p2} = ${p1+p2} ${p1+p2===val&&n>0?'✓':''}`;
+}
+let hlMode='';
+function highlightDiag(){
+  hlMode='diag';
+  const cells=document.querySelectorAll('.pascal-cell');
+  cells.forEach(c=>{
+    const n=parseInt(c.dataset.n), k=parseInt(c.dataset.k);
+    c.style.outline=(k===3||k===4)?'2px solid #f59e0b':'none';
+  });
+}
+function highlightPow(){
+  hlMode='pow';
+  const cells=document.querySelectorAll('.pascal-cell');
+  PASCAL.forEach((row,n)=>{
+    const s=row.reduce((a,b)=>a+b,0);
+    cells.forEach(c=>{
+      if(parseInt(c.dataset.n)===n){
+        c.style.outline=`2px solid rgba(56,189,248,${Math.min(1,s/512)})`;
+      }
+    });
+  });
+}
+function clearHighlight(){
+  document.querySelectorAll('.pascal-cell').forEach(c=>{ c.style.outline='none'; });
+}
+
+// ── Tab 3: Summation identities ──
+function checkSumId(){
+  const idKey=document.getElementById('sum-id').value;
+  const n=parseInt(document.getElementById('sum-n').value)||5;
+  const k=parseInt(document.getElementById('sum-k').value)||3;
+  const m=parseInt(document.getElementById('sum-m').value)||4;
+  const r=parseInt(document.getElementById('sum-r').value)||3;
+  const box=document.getElementById('sum-result');
+  let lhs,rhs,label;
+  if(idKey==='all'){
+    lhs=0; for(let i=0;i<=n;i++) lhs+=Cn(n,i);
+    rhs=Math.pow(2,n);
+    label=`Σ C(${n},i) = ${lhs} | 2^${n} = ${rhs}`;
+  } else if(idKey==='alt'){
+    lhs=0; for(let i=0;i<=n;i++) lhs+=Math.pow(-1,i)*Cn(n,i);
+    rhs=0;
+    label=`Σ (-1)^i·C(${n},i) = ${lhs} | 0 = ${rhs}`;
+  } else if(idKey==='wt'){
+    lhs=0; for(let i=0;i<=n;i++) lhs+=i*Cn(n,i);
+    rhs=n*Math.pow(2,n-1);
+    label=`Σ i·C(${n},i) = ${lhs} | ${n}·2^${n-1} = ${rhs}`;
+  } else if(idKey==='vdm'){
+    lhs=0; for(let i=0;i<=k;i++) lhs+=Cn(n,i)*Cn(m,k-i);
+    rhs=Cn(n+m,k);
+    label=`Σ C(${n},i)·C(${m},${k}-i) = ${lhs} | C(${n+m},${k}) = ${rhs}`;
+  } else {
+    lhs=0; for(let i=0;i<=r;i++) lhs+=Cn(n+i,i);
+    rhs=Cn(n+r+1,r);
+    label=`Σ C(${n}+i,i) i=0..${r} = ${lhs} | C(${n+r+1},${r}) = ${rhs}`;
+  }
+  const ok=Math.abs(lhs-rhs)<0.001;
+  box.innerHTML=`${label}<br><span style="color:${ok?'#34d399':'#ef4444'};font-weight:700;">${ok?'✓ Igaz':'✗ Eltérés!'}</span>`;
+}
+
+// ── Tab 4: Stars and bars ──
+function updateStars(){
+  const n=parseInt(document.getElementById('sb-n').value)||3;
+  const k=parseInt(document.getElementById('sb-k').value)||4;
+  const val=Cn(n+k-1,k);
+  document.getElementById('sb-result').innerHTML=
+    `C(${n}+${k}-1, ${k}) = C(${n+k-1}, ${k}) = <span class="val-big">${val}</span>`;
+  // Show visual for small cases
+  const vis=document.getElementById('sb-visual');
+  if(k<=8&&n<=5){
+    // enumerate a few examples
+    const examples=[];
+    function gen(rem,types,cur){
+      if(types===1){examples.push([...cur,rem]);return;}
+      for(let i=0;i<=rem&&examples.length<6;i++) gen(rem-i,types-1,[...cur,i]);
+    }
+    gen(k,n,[]);
+    vis.innerHTML=examples.slice(0,6).map(combo=>{
+      let s='';
+      combo.forEach((cnt,i)=>{
+        s+='★'.repeat(cnt);
+        if(i<n-1) s+='|';
+      });
+      return s;
+    }).join('<br>');
+  } else {
+    vis.textContent='(Túl nagy a vizualizációhoz)';
+  }
+}
+function simCoin(){
+  const p=(3+Math.sqrt(3))/6;
+  let heads=0,tails=0,pairs=0;
+  for(let i=0;i<200;i++){
+    const d1=Math.random()<p;
+    const d2=Math.random()<p;
+    if(d1&&!d2){heads++;pairs++;}
+    else if(!d1&&d2){tails++;pairs++;}
+  }
+  document.getElementById('coin-sim').innerHTML=
+    `200 dobáspár eredménye: <span style="color:var(--acc2);">Fej=${heads}</span>, <span style="color:#f59e0b;">Írás=${tails}</span>, Érvénytelen=${200-pairs}<br>Fej arány: ${pairs>0?(heads/pairs*100).toFixed(1):0}% (várt: 50%)`;
+}
+
+// ── Tab 5: Identity checker ──
+function checkIds(){
+  const n=parseInt(document.getElementById('id-n').value)||7;
+  const k=parseInt(document.getElementById('id-k').value)||3;
+  const box=document.getElementById('id-results');
+  const ids=[
+    {
+      label:`C(${n},${k}) = C(${n},${n}-${k}) (szimmetria)`,
+      lhs:Cn(n,k), rhs:Cn(n,n-k)
+    },{
+      label:`C(${n},${k}) + C(${n},${k+1}) = C(${n+1},${k+1}) (Pascal)`,
+      lhs:Cn(n,k)+Cn(n,k+1), rhs:Cn(n+1,k+1)
+    },{
+      label:`C(${n},${k}) = ${n}/${k}·C(${n-1},${k-1}) (rekurzió)`,
+      lhs:Cn(n,k), rhs:k>0?Math.round(n/k*Cn(n-1,k-1)):0
+    },{
+      label:`Σ C(${n},i) = 2^${n} (összes részhalmaz)`,
+      lhs:(()=>{let s=0;for(let i=0;i<=n;i++)s+=Cn(n,i);return s;})(),
+      rhs:Math.pow(2,n)
+    }
+  ];
+  box.innerHTML=ids.map(({label,lhs,rhs})=>{
+    const ok=Math.abs(lhs-rhs)<0.01;
+    return `<div class="id-row">
+      <span class="id-check" style="color:${ok?'#34d399':'#ef4444'}">${ok?'✓':'✗'}</span>
+      <span style="font-size:.82rem;color:#94a3b8;">${label}</span>
+      <span style="margin-left:auto;font-family:monospace;color:var(--acc2);font-size:.82rem;">${lhs} = ${rhs}</span>
+    </div>`;
+  }).join('');
+  buildIdMiniPascal();
+}
+function buildIdMiniPascal(){
+  const box=document.getElementById('id-pascal-mini');
+  let html='<table class="res-tbl"><thead><tr><th>n\\k</th>';
+  for(let k=0;k<=7;k++) html+=`<th>${k}</th>`;
+  html+='</tr></thead><tbody>';
+  for(let n=0;n<=7;n++){
+    html+=`<tr><td style="color:#64748b;font-weight:700;">${n}</td>`;
+    for(let k=0;k<=7;k++){
+      const v=k>n?'':Cn(n,k);
+      html+=`<td style="color:${k<=n?'var(--acc2)':'#334155'};font-family:monospace;">${v===''?'':v}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  box.innerHTML=html;
+}
+
+function initAll(){
+  expandBinom();
+  buildPascalGrid();
+  checkSumId();
+  updateStars();
+  checkIds();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,799 @@
+{% extends "base.html" %}
+{% block title %}ILA 5. fejezet — Halmazok számossága{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#a78bfa!important;}
+.ila-nav-link.active{color:#a78bfa!important;border-bottom-color:#a78bfa!important;}
+.def-box{background:#13141a;border-left:3px solid #a78bfa;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.thm-box{background:#13141a;border-left:3px solid #7c3aed;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.ex-box{background:#0f1a0f;border-left:3px solid #34d399;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.info-box{background:#13141a;border-radius:8px;border:1px solid rgba(167,139,250,.2);padding:1rem 1.25rem;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.pf-step{display:flex;gap:1.5rem;padding:.42rem 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:baseline;}
+.pf-step:last-child{border-bottom:none;}
+.pf-eq{min-width:200px;color:#e2e8f0;font-size:.85rem;}
+.pf-why{font-size:.72rem;color:#6b7280;line-height:1.4;}
+.type-btn{padding:.35rem .9rem;font-size:.76rem;font-weight:600;border:1px solid rgba(167,139,250,.3);
+  border-radius:.3rem;background:transparent;color:#8892a4;cursor:pointer;transition:all .15s;}
+.type-btn:hover{border-color:#a78bfa;color:#a78bfa;}
+.type-btn.active{background:rgba(167,139,250,.18);border-color:#a78bfa;color:#c4b5fd;}
+.katex{font-size:1em;}
+.card-sz{background:#1a1b25;border:1px solid rgba(167,139,250,.2);border-radius:8px;padding:.8rem 1rem;text-align:center;}
+.diag-cell{width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;font-family:monospace;border:1px solid rgba(255,255,255,.06);border-radius:3px;}
+.diag-cell.hi{background:rgba(167,139,250,.25);border-color:#a78bfa;color:#c4b5fd;font-weight:700;}
+.diag-cell.changed{background:rgba(52,211,153,.2);border-color:#34d399;color:#34d399;font-weight:700;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#a78bfa">ILA — 5. fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Halmazok számossága</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2025</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(167,139,250,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-sz',this)"><i class="bi bi-123 me-1"></i>Számosság</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ko',this)"><i class="bi bi-infinity me-1"></i>Kontinuum</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-mv',this)"><i class="bi bi-list-ol me-1"></i>Megszámlálható</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-za',this)"><i class="bi bi-grid me-1"></i>Zárt műveletek</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ca',this)"><i class="bi bi-diagram-2 me-1"></i>Cantor-tétel</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ex',this)"><i class="bi bi-lightbulb me-1"></i>Előadás+</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════ TAB 1: SZÁMOSSÁG ══════ -->
+<div id="tab-sz">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Véges és végtelen halmaz</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Az \(A\) halmaz <strong style="color:#a78bfa">véges</strong>, ha valamely \(n\in\mathbb{N}_0\)-ra létezik
+        \(\{1,\ldots,n\}\to A\) bijekció. Ekkor \(|A|=n\).<br><br>
+        Ha \(A\) nem véges, akkor <strong style="color:#a78bfa">végtelen</strong>.
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Számosság azonossága és rendje</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        \(|A|=|B|\): létezik \(A\to B\) bijekció.<br>
+        \(|A|\le|B|\): létezik \(A\to B\) injekció.<br>
+        \(|A|&lt;|B|\): \(|A|\le|B|\) és \(|A|\ne|B|\).
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Számosság ekvivalenciareláció</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A \(|A|=|B|\) reláció tetszőleges halmazrendszeren ekvivalenciareláció:
+        <ul style="margin:.4rem 0 0 1.1rem;padding:0;line-height:2">
+          <li><strong>Reflexív:</strong> \(\mathrm{id}_A:A\to A\) bijekció</li>
+          <li><strong>Szimmetrikus:</strong> \(\varphi:A\to B\) bijekció → \(\varphi^{-1}:B\to A\) bijekció</li>
+          <li><strong>Tranzitív:</strong> \(\psi\circ\varphi:A\to C\) bijekció</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Cantor–Schröder–Bernstein</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        <ol style="margin:0 0 0 1.1rem;padding:0;line-height:2.1">
+          <li>\(|A|\le|A|\)</li>
+          <li>Ha \(|A|\le|B|\) és \(|B|\le|A|\), akkor \(|A|=|B|\)</li>
+          <li>Ha \(|A|\le|B|\) és \(|B|\le|C|\), akkor \(|A|\le|C|\)</li>
+        </ol>
+        <div style="font-size:.76rem;color:#8892a4;margin-top:.4rem">
+          A 2. pont a halmazelmélet egyik legfontosabb eredménye — két injekció "összevonásából" bijekciót kapunk.
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — bijekció és injekció</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">Két halmaz számossága és kapcsolatuk vizualizációja:</div>
+      <div class="d-flex gap-2 flex-wrap mb-3">
+        <button class="type-btn active" onclick="showBij('bij')">Bijekció |A|=|B|</button>
+        <button class="type-btn" onclick="showBij('inj')">Injekció |A|≤|B|</button>
+        <button class="type-btn" onclick="showBij('inf')">Véges ≤ végtelen</button>
+      </div>
+      <canvas id="bij-canvas" width="340" height="220" style="border-radius:8px;background:#0d0e14;display:block;margin:0 auto"></canvas>
+      <div id="bij-info" style="margin-top:.6rem;font-size:.8rem;color:#c4cdd8;text-align:center"></div>
+    </div>
+
+    <div class="ex-box mt-3">
+      <div class="lbl mb-2" style="color:#34d399">Példák — számosságok</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:2">
+        \(|\{a,b,c\}| = |\{1,2,3\}| = 3\)<br>
+        \(|\mathbb{N}| \le |\mathbb{R}|\) &nbsp;— &nbsp;\(\varphi(n)=n\) injektív<br>
+        \(A\subseteq B \Rightarrow |A|\le|B|\) &nbsp;— &nbsp;\(a\mapsto a\) injektív<br>
+        \(|(a,b)| = |\mathbb{R}|\) &nbsp;— &nbsp;\(\tan\) bijekció \((-\tfrac\pi2,\tfrac\pi2)\to\mathbb{R}\)
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 2: KONTINUUM ══════ -->
+<div id="tab-ko" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Kontinuum számosság</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A valós számok halmazának számosságát
+        <strong style="color:#a78bfa">kontinuum számosságnak</strong> hívjuk.
+        Jelölése: \(|\mathbb{R}|\) vagy \(\mathfrak{c}\).
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Minden intervallum kontinuum számosságú</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Az összes \((a,b)\), \([a,b]\), \((a,b]\), \([a,b)\), \((-\infty,a)\), \((-\infty,a]\),
+        \((a,\infty)\), \([a,\infty)\), \((-\infty,\infty)\) alakú intervallum kontinuum számosságú.<br><br>
+        <strong>Bizonyítás (zártra):</strong>
+        \[(a,b)\subseteq[a,b]\subseteq\mathbb{R}\]
+        \[\Rightarrow |\mathbb{R}|=|(a,b)|\le|[a,b]|\le|\mathbb{R}|\]
+        A Cantor–Schröder–Bernstein-tételből: \(|[a,b]|=|\mathbb{R}|\).
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Bijekció \([a,b]\to[c,d]\)</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        \[f:[a,b]\to[c,d], \quad f(x)=\frac{d-c}{b-a}(x-a)+c\]
+        Ez lineáris bijekció — megmutatja, hogy bármely két zárt intervallum azonos számosságú.<br><br>
+        <strong>Tan bijekció:</strong> A \(\tan\) (megszorítva \((-\tfrac\pi2,\tfrac\pi2)\)-re)
+        bijekció a nyílt intervallum és \(\mathbb{R}\) között.
+        \[|(a,b)|=\left|\!\left(-\tfrac\pi2,\tfrac\pi2\right)\right|=|\mathbb{R}|\]
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — lineáris bijekció [a,b]→[c,d]</div>
+      <div class="row g-2 mb-2" style="font-size:.77rem;color:#8892a4">
+        <div class="col-6">
+          \([a,b]\):
+          <div class="d-flex gap-1 align-items-center mt-1">
+            <span>a=</span><input type="range" id="sl-a" min="-5" max="4" value="0" style="width:70px" oninput="drawLinBij()">
+            <span id="lbl-a">0</span>
+            <span>&nbsp;b=</span><input type="range" id="sl-b" min="-4" max="5" value="3" style="width:70px" oninput="drawLinBij()">
+            <span id="lbl-b">3</span>
+          </div>
+        </div>
+        <div class="col-6">
+          \([c,d]\):
+          <div class="d-flex gap-1 align-items-center mt-1">
+            <span>c=</span><input type="range" id="sl-c" min="-5" max="4" value="-2" style="width:70px" oninput="drawLinBij()">
+            <span id="lbl-c">-2</span>
+            <span>&nbsp;d=</span><input type="range" id="sl-d" min="-4" max="5" value="5" style="width:70px" oninput="drawLinBij()">
+            <span id="lbl-d">5</span>
+          </div>
+        </div>
+      </div>
+      <canvas id="bij2-canvas" width="340" height="200" style="border-radius:8px;background:#0d0e14;display:block"></canvas>
+      <div id="bij2-formula" style="margin-top:.5rem;font-size:.8rem;color:#c4cdd8;text-align:center"></div>
+    </div>
+
+    <div class="info-box mt-3">
+      <div class="lbl mb-2" style="color:#a78bfa">Számossági lánc</div>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;font-size:.82rem;color:#c4cdd8">
+        <span style="background:#1a0f2e;color:#a78bfa;padding:.2rem .5rem;border-radius:4px;font-family:monospace">1</span>
+        <span style="color:#6b7280">&lt;</span>
+        <span style="background:#1a0f2e;color:#a78bfa;padding:.2rem .5rem;border-radius:4px;font-family:monospace">2</span>
+        <span style="color:#6b7280">&lt; ··· &lt;</span>
+        <span style="background:#1a0f2e;color:#a78bfa;padding:.2rem .5rem;border-radius:4px;font-family:monospace">n</span>
+        <span style="color:#6b7280">&lt; ··· &lt;</span>
+        <span style="background:#0a2a2e;color:#22d3ee;padding:.2rem .5rem;border-radius:4px;font-family:monospace">|ℕ₀|</span>
+        <span style="color:#6b7280">&lt;</span>
+        <span style="background:#1a1a0a;color:#fbbf24;padding:.2rem .5rem;border-radius:4px;font-family:monospace">|ℝ|</span>
+      </div>
+      <div style="font-size:.75rem;color:#6b7280;margin-top:.4rem">
+        A kontinuum-hipotézis (Cantor): nincs \(|\mathbb{N}_0|&lt;|A|&lt;|\mathbb{R}|\) számosság —
+        ez a ZFC axiómáktól <em>független</em> állítás (Gödel, Cohen).
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 3: MEGSZÁMLÁLHATÓ ══════ -->
+<div id="tab-mv" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-5">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Megszámlálhatóan végtelen</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A \(\mathbb{N}_0\) halmaz számosságát <strong style="color:#a78bfa">megszámlálhatóan végtelen számosságnak</strong> nevezzük.
+        Egy \(A\) halmaz megszámlálhatóan végtelen, ha \(|A|=|\mathbb{N}_0|\), azaz létezik
+        \(\mathbb{N}_0\to A\) bijekció — az elemei felsorolhatók egy végtelen sorozatban.
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Megszámlálható halmazok</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:2">
+        \(|\mathbb{N}|=|\mathbb{N}_0|\) &nbsp;— &nbsp;\(\varphi(n)=n+1\)<br>
+        \(|\mathbb{Z}|=|\mathbb{N}_0|\) &nbsp;— &nbsp;felsorolás: \(0,1,-1,2,-2,3,-3,\ldots\)<br>
+        \(|\mathbb{Q}|=|\mathbb{N}_0|\) &nbsp;— &nbsp;racionális táblázat spirális átlója
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — |ℕ₀| ≠ |ℝ| (Cantor-átló)</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        <strong>Bizonyítás</strong> (indirekt): tegyük fel, hogy \(x_1,x_2,x_3,\ldots\) tartalmazza
+        az összes \((0,1)\)-beli valós számot. Írjuk fel tizedes törtként:
+        \[x_n = 0.x_{n1}x_{n2}x_{n3}\ldots\]
+        Definiáljuk:
+        \[y_n = \begin{cases}7 & \text{ha }x_{nn}=8\\ 8 & \text{ha }x_{nn}\ne8\end{cases},
+          \quad y = 0.y_1y_2y_3\ldots\]
+        Ekkor \(0&lt;y&lt;1\), de \(y\ne x_n\) minden \(n\)-re (az \(n\)-edik tizedes jegy különbözik).
+        Ellentmondás. \(\square\)
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-7">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — Cantor-átló vizualizáció</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">
+        Az táblázat \(x_n = 0.x_{n1}x_{n2}\ldots\) számokat mutat. Az átlós elemek (lilával)
+        megadják az \(y\) számot (zölddel), amely nem szerepel az összes sorban.
+      </div>
+      <button class="type-btn mb-2" onclick="regenCantor()">Új véletlen mátrix ↺</button>
+      <div id="cantor-grid" style="display:inline-grid;gap:2px;margin-bottom:.6rem"></div>
+      <div id="cantor-y" style="font-size:.82rem;color:#34d399;margin-bottom:.4rem;font-family:monospace"></div>
+      <div id="cantor-explain" style="font-size:.76rem;color:#8892a4;line-height:1.6"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 4: ZÁRT MŰVELETEK ══════ -->
+<div id="tab-za" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Megszámlálható halmazok zárt műveletek alatt</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Ha \(A\) és \(B\) megszámlálhatóan végtelen, akkor:
+        <ol style="margin:.4rem 0 0 1.1rem;padding:0;line-height:2.2">
+          <li>\(A\cup B\) megszámlálhatóan végtelen<br>
+            <em style="color:#6b7280;font-size:.76rem">Biz: fésűs egyesítés \(a_1,b_1,a_2,b_2,\ldots\)</em></li>
+          <li>\(A\times B\) megszámlálhatóan végtelen<br>
+            <em style="color:#6b7280;font-size:.76rem">Biz: végtelen táblázat átlók mentén</em></li>
+          <li>\(A\cup F\) megszámlálhatóan végtelen, ha \(F\) véges</li>
+          <li>\(\bigcup_{n=1}^\infty A_n\) megszámlálhatóan végtelen, ha minden \(A_n\) az<br>
+            <em style="color:#6b7280;font-size:.76rem">Biz: kettős táblázat átlók mentén</em></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">|ℚ| megszámlálható</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A \(\mathbb{Q}\) halmaz megszámlálhatóan végtelen, mert a
+        \(\frac{p}{q}\) racionálisok (minden \(p\in\mathbb{Z}, q\in\mathbb{N}\)) elrendezhetők
+        egy kétdimenziós táblázatban, amely spirális mozgással bejárható.
+        \[0,\;\tfrac11,\;-\tfrac11,\;\tfrac12,\;-\tfrac12,\;\tfrac21,\;\tfrac13,\ldots\]
+        (Az ismétléseket kihagyva minden racionális pontosan egyszer szerepel.)
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — ℕ×ℕ átlós bejárás</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">
+        Az \(A\times B\) (ahol \(A=B=\mathbb{N}\)) átlók mentén felsorolható.
+        A szín az átló sorrendjét mutatja:
+      </div>
+      <canvas id="diag-canvas" width="340" height="280" style="border-radius:8px;background:#0d0e14;display:block"></canvas>
+      <div style="margin-top:.4rem;font-size:.76rem;color:#8892a4">
+        \(\mathbb{N}\times\mathbb{N}\) első \(k\times k\)-ja. Az átlók mentén:
+        \((1,1),(1,2),(2,1),(1,3),(2,2),(3,1),\ldots\)
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 5: CANTOR-TÉTEL ══════ -->
+<div id="tab-ca" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel (Cantor) — |A| &lt; |𝒫(A)|</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Tetszőleges \(A\) halmaz esetén \(|A|&lt;|\mathcal{P}(A)|\).<br><br>
+        <strong>Bizonyítás:</strong><br>
+        1. \(a\mapsto\{a\}\) injektív, tehát \(|A|\le|\mathcal{P}(A)|\).<br><br>
+        2. Nincs \(A\to\mathcal{P}(A)\) szürjekció: tegyük fel, hogy \(\psi:A\to\mathcal{P}(A)\)
+        szürjektív. Legyen
+        \[X = \{a\in A: a\notin\psi(a)\}.\]
+        Ekkor \(X\subseteq A\), tehát \(\exists x\in A\): \(\psi(x)=X\). De:
+        \[x\in X \Leftrightarrow x\notin\psi(x)=X\]
+        — ellentmondás. Tehát \(|A|\ne|\mathcal{P}(A)|\). \(\square\)
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — |ℝ| = |𝒫(ℕ₀)|</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        <div class="pf-step">
+          <div class="pf-eq">\(|\mathcal{P}(\mathbb{N}_0)|\le|\mathbb{R}|\)</div>
+          <div class="pf-why">\(A\subseteq\mathbb{N}_0 \mapsto 0.x_0x_1x_2\ldots\) ahol \(x_i=1\) ha \(i\in A\), \(0\) egyébként — injektív</div>
+        </div>
+        <div class="pf-step">
+          <div class="pf-eq">\(|\mathbb{R}|\le|\mathcal{P}(\mathbb{N}_0)|\)</div>
+          <div class="pf-why">\(x\in(0,1) \mapsto\) kettes számrendszerbeli végtelen törtjének \(1\)-es helyei — injektív</div>
+        </div>
+        <div class="pf-step">
+          <div class="pf-eq">\(|\mathbb{R}|=|\mathcal{P}(\mathbb{N}_0)|\)</div>
+          <div class="pf-why" style="color:#34d399">Cantor–Schröder–Bernstein-tételből</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Végtelen számossági hierarchia</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:2">
+        \[|\mathbb{N}_0|&lt;|\mathcal{P}(\mathbb{N}_0)|=|\mathbb{R}|&lt;|\mathcal{P}(\mathbb{R})|&lt;|\mathcal{P}(\mathcal{P}(\mathbb{R}))|&lt;\cdots\]
+        Minden számosságnál van nagyobb — végtelen sok különböző végtelen számosság van.
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — 𝒫(A) vs A</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">
+        Válaszd ki \(A\) méretét és lásd a hatványhalmazt:
+      </div>
+      <div class="d-flex gap-2 align-items-center mb-3">
+        <span style="font-size:.8rem;color:#c4cdd8">\(|A|\) =</span>
+        <input type="range" id="pwr-n" min="1" max="4" value="3" oninput="drawPower()">
+        <span id="pwr-n-lbl" style="font-size:.8rem;color:#e2e8f0">3</span>
+        <span style="font-size:.8rem;color:#8892a4">→ \(|\mathcal{P}(A)|\) =</span>
+        <span id="pwr-pa-lbl" style="font-size:.8rem;color:#a78bfa;font-weight:700">8</span>
+      </div>
+      <canvas id="pwr-canvas" width="340" height="260" style="border-radius:8px;background:#0d0e14;display:block"></canvas>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 6: ELŐADÁS+ ══════ -->
+<div id="tab-ex" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Számlálás = bijekció</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Mit jelent, hogy egy halmaznak <em>4 eleme van</em>? Mindegyik elemhez egy egyedi számot rendelünk:
+        \[1\mapsto a_1,\quad 2\mapsto a_2,\quad 3\mapsto a_3,\quad 4\mapsto a_4\]
+        Ez pontosan egy <strong style="color:#a78bfa">bijekció \(\{1,2,3,4\}\to A\)</strong>:
+        <ul style="margin:.5rem 0 0 1.1rem;padding:0;line-height:2">
+          <li>Különböző elemek különböző számot kapnak (injektív)</li>
+          <li>Minden elem kap számot (szürjektív)</li>
+        </ul>
+        Az általános definíció csak ezt formalizálja: \(|A|=n\) ↔ létezik bijekció \(\{1,\ldots,n\}\to A\).
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Felsorolás = bijekció ℕ₀ → A</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Az \(a_0,a_1,a_2,\ldots\) felsorolás formálisan egy <strong style="color:#a78bfa">leképezés \(\mathbb{N}_0\to A\)</strong>:
+        \[n \mapsto a_n\]
+        <ul style="margin:.5rem 0 0 1.1rem;padding:0;line-height:2.1">
+          <li><strong>Injektív</strong> ↔ minden elem legfeljebb egyszer szerepel<br>
+            <em style="color:#6b7280;font-size:.76rem">(ha \(n\ne m\), akkor \(a_n\ne a_m\))</em></li>
+          <li><strong>Szürjektív</strong> ↔ minden elem szerepel valahol<br>
+            <em style="color:#6b7280;font-size:.76rem">(minden \(a\in A\)-hoz \(\exists n: a_n=a\))</em></li>
+          <li><strong>Bijektív</strong> ↔ pontosan egyszer szerepel minden elem = A megszámlálhatóan végtelen</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Metafora: „páros tánc" (|A| ≤ |B|)</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Képzeljük el, hogy az \(A\) halmaz elemei fiúk, a \(B\) halmaz elemei lányok egy táncteremben.
+        <ul style="margin:.5rem 0 0 1.1rem;padding:0;line-height:2">
+          <li>\(|A|=|B|\): minden fiúhoz pontosan egy lány párolható (bijekció)</li>
+          <li>\(|A|\le|B|\): minden fiú talál táncpartnert, de maradhatnak „táncra váró" lányok (injekció, nem szükségszerűen szürjekció)</li>
+          <li>\(|A|&lt;|B|\): injekció van, de bijekció nincs — a B halmaz „nagyobb"</li>
+        </ul>
+        Ez még végtelen halmazokra is működik: ha be tudjuk párosítani \(\mathbb{N}\)-t \(\mathbb{R}\) egy részhalmazába, akkor \(|\mathbb{N}|\le|\mathbb{R}|\).
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Miért pontosan |ℕ₀| &lt; |ℝ|?</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Ez két különálló tétel együttes következménye:
+        <div class="mt-2">
+          <div class="pf-step">
+            <div class="pf-eq" style="min-width:170px">1. Cantor-tétel</div>
+            <div class="pf-why">\(|A|&lt;|\mathcal{P}(A)|\) minden \(A\)-ra, tehát \(|\mathbb{N}_0|&lt;|\mathcal{P}(\mathbb{N}_0)|\)</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq" style="min-width:170px">2. |ℝ| = |𝒫(ℕ₀)|</div>
+            <div class="pf-why">(CSB-tétellel: kétirányú injekció → bijekció)</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq" style="min-width:170px">3. Tranzitivitás</div>
+            <div class="pf-why">\(|\mathbb{N}_0|&lt;|\mathcal{P}(\mathbb{N}_0)|=|\mathbb{R}|\) → \(|\mathbb{N}_0|&lt;|\mathbb{R}|\) \(\square\)</div>
+          </div>
+        </div>
+        <div style="font-size:.76rem;color:#8892a4;margin-top:.5rem">
+          A Cantor-átlóbizonyítás közvetlenül is mutatja ezt (\(\mathbb{R}\not\subseteq\) felsorolható), de az algebrai út szemléletesebb: két independens eredmény összekapcsolása.
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box mt-3">
+      <div class="lbl mb-2" style="color:#a78bfa">Végtelen számosságok hierarchiája</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85;margin-bottom:.75rem">
+        A Cantor-tételt ismételten alkalmazva végtelen sok különböző végtelen számosságot kapunk:
+        {% raw %}\[|\mathbb{N}_0| \;{\color{#f97316}<}\; |\mathcal{P}(\mathbb{N}_0)| \;{\color{#f97316}<}\; |\mathcal{P}(\mathcal{P}(\mathbb{N}_0))| \;{\color{#f97316}<}\; \cdots\]{% endraw %}
+        ahol \(|\mathcal{P}(\mathbb{N}_0)|=|\mathbb{R}|\) a kontinuum számosság.
+      </div>
+      <canvas id="hier-canvas" width="340" height="160" style="border-radius:8px;background:#0d0e14;display:block"></canvas>
+    </div>
+
+    <div class="ex-box mt-3">
+      <div class="lbl mb-2" style="color:#34d399">A kontinuum-hipotézis</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Cantor felvetette: van-e \(A\) halmaz amelyre \(|\mathbb{N}_0|&lt;|A|&lt;|\mathbb{R}|\)?<br><br>
+        A válasz: <strong style="color:#f97316">a kérdés eldönthetetlen</strong> a Zermelo–Fraenkel axiómák alapján:
+        <ul style="margin:.4rem 0 0 1.1rem;padding:0;line-height:2">
+          <li>Gödel (1940): a kontinuum-hipotézis <em>nem cáfolható</em> ZFC-ben</li>
+          <li>Cohen (1963): a kontinuum-hipotézis <em>nem bizonyítható</em> ZFC-ben</li>
+        </ul>
+        <span style="font-size:.76rem;color:#8892a4">Ez a matematika egyik legmélyebb eredménye: a ZFC axiómarendszer „túl gyenge" e kérdés eldöntéséhez.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+</div><!-- /pt-4 -->
+
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('[id^="tab-"]').forEach(p=>p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='tab-sz') setTimeout(()=>showBij('bij'),30);
+  if(id==='tab-ko') setTimeout(()=>{drawLinBij();drawSzLanc();},30);
+  if(id==='tab-mv') setTimeout(regenCantor,30);
+  if(id==='tab-za') setTimeout(drawDiagTable,30);
+  if(id==='tab-ca') setTimeout(drawPower,30);
+  if(id==='tab-ex') setTimeout(drawHierarchy,30);
+}
+
+const PAL=['#a78bfa','#34d399','#f97316','#22d3ee','#f472b6','#fbbf24'];
+
+/* ─── Tab 1: bijection visual ─── */
+function showBij(mode){
+  document.querySelectorAll('#tab-sz .type-btn').forEach(b=>b.classList.remove('active'));
+  event?.target?.classList?.add('active');
+  const cv=document.getElementById('bij-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  const modes={
+    bij:{A:['a₁','a₂','a₃','a₄'],B:['b₁','b₂','b₃','b₄'],arrows:[[0,0],[1,1],[2,2],[3,3]],label:'|A|=|B|=4 · bijekció'},
+    inj:{A:['a₁','a₂','a₃'],B:['b₁','b₂','b₃','b₄','b₅'],arrows:[[0,0],[1,2],[2,4]],label:'|A|=3 ≤ |B|=5 · injekció'},
+    inf:{A:['1','2','3','4'],B:['1','2','3','4','⋯','⋯'],arrows:[[0,0],[1,1],[2,2],[3,3]],label:'|A|=4 ≤ |ℕ| · véges≤végtelen'},
+  };
+  const d=modes[mode];
+  const nA=d.A.length,nB=d.B.length;
+  const lx=90,rx=W-90,padY=30;
+  const stA=(H-2*padY)/(nA+1),stB=(H-2*padY)/(nB+1);
+
+  function nodeY(n,total){return padY+(H-2*padY)/(total+1)*(n+1);}
+
+  // draw ovals
+  function drawOval(cx,label,col){
+    ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.globalAlpha=0.5;
+    ctx.beginPath();ctx.ellipse(cx,H/2,35,H/2-15,0,0,2*Math.PI);ctx.stroke();
+    ctx.globalAlpha=1;
+    ctx.fillStyle=col;ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+    ctx.fillText(label,cx,12);
+  }
+  drawOval(lx,'A','#a78bfa');
+  drawOval(rx,'B','#22d3ee');
+
+  // nodes
+  d.A.forEach((lbl,i)=>{
+    const y=nodeY(i,nA);
+    ctx.beginPath();ctx.arc(lx,y,10,0,2*Math.PI);
+    ctx.fillStyle='#a78bfa33';ctx.fill();
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#e2e8f0';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(lbl,lx,y);
+  });
+  d.B.forEach((lbl,i)=>{
+    const y=nodeY(i,nB);
+    ctx.beginPath();ctx.arc(rx,y,10,0,2*Math.PI);
+    ctx.fillStyle='#22d3ee33';ctx.fill();
+    ctx.strokeStyle='#22d3ee';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#e2e8f0';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(lbl,rx,y);
+  });
+  // arrows
+  d.arrows.forEach(([ai,bi],i)=>{
+    const y1=nodeY(ai,nA),y2=nodeY(bi,nB);
+    ctx.strokeStyle=PAL[i%PAL.length];ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(lx+11,y1);ctx.lineTo(rx-11,y2);ctx.stroke();
+    // arrowhead
+    const dx=rx-11-(lx+11),dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+    const ux=dx/len,uy=dy/len,ah=7;
+    ctx.fillStyle=PAL[i%PAL.length];
+    ctx.beginPath();ctx.moveTo(rx-11,y2);
+    ctx.lineTo(rx-11-ah*(ux-0.4*uy),y2-ah*(uy+0.4*ux));
+    ctx.lineTo(rx-11-ah*(ux+0.4*uy),y2-ah*(uy-0.4*ux));
+    ctx.closePath();ctx.fill();
+  });
+  document.getElementById('bij-info').textContent=d.label;
+}
+
+/* ─── Tab 2: linear bijection ─── */
+function drawLinBij(){
+  const a=+document.getElementById('sl-a').value;
+  const b=+document.getElementById('sl-b').value;
+  const c=+document.getElementById('sl-c').value;
+  const d2=+document.getElementById('sl-d').value;
+  document.getElementById('lbl-a').textContent=a;
+  document.getElementById('lbl-b').textContent=b;
+  document.getElementById('lbl-c').textContent=c;
+  document.getElementById('lbl-d').textContent=d2;
+  const cv=document.getElementById('bij2-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  if(b<=a||d2<=c){
+    ctx.fillStyle='#ef4444';ctx.font='12px sans-serif';ctx.textAlign='center';
+    ctx.fillText('a < b és c < d szükséges',W/2,H/2);return;
+  }
+  const pad=30;
+  const xScale=(W-2*pad)/(b-a+2), yScale=(H-2*pad)/(d2-c+2);
+  const toX=x=>(x-a+1)*xScale+pad;
+  const toY=y=>H-pad-(y-c+1)*yScale;
+  // axes
+  ctx.strokeStyle='#2a3040';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,pad);ctx.lineTo(pad,H-pad);ctx.lineTo(W-pad,H-pad);ctx.stroke();
+  // function line
+  ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(toX(a),toY(c));ctx.lineTo(toX(b),toY(d2));ctx.stroke();
+  // labels
+  ctx.fillStyle='#8892a4';ctx.font='10px monospace';ctx.textAlign='center';
+  ctx.fillText('a='+a,toX(a),H-pad+12);
+  ctx.fillText('b='+b,toX(b),H-pad+12);
+  ctx.textAlign='right';
+  ctx.fillText('c='+c,pad-4,toY(c));
+  ctx.fillText('d='+d2,pad-4,toY(d2));
+  // slope
+  const slope=((d2-c)/(b-a)).toFixed(2);
+  document.getElementById('bij2-formula').innerHTML=
+    `\\(f(x)=\\frac{${d2-c}}{${b-a}}(x-${a})+${c}\\) &nbsp;&nbsp; meredekség: ${slope}`;
+  if(window.renderMathInElement) renderMathInElement(document.getElementById('bij2-formula'),{
+    delimiters:[{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+}
+
+/* ─── Tab 3: Cantor diagonal ─── */
+const N_CANT=7;
+let cantorDigits=[];
+
+function regenCantor(){
+  cantorDigits=Array.from({length:N_CANT},()=>Array.from({length:N_CANT},()=>Math.floor(Math.random()*10)));
+  const grid=document.getElementById('cantor-grid');
+  grid.style.gridTemplateColumns=`3rem repeat(${N_CANT},2rem)`;
+  let html='';
+  // header row
+  html+='<div></div>';
+  for(let j=0;j<N_CANT;j++) html+=`<div class="diag-cell" style="color:#8892a4;font-size:.65rem">.d${j+1}</div>`;
+  for(let i=0;i<N_CANT;i++){
+    html+=`<div class="diag-cell" style="color:#a78bfa;font-size:.68rem">x${i+1}=0.</div>`;
+    for(let j=0;j<N_CANT;j++){
+      const isD=i===j;
+      html+=`<div class="diag-cell${isD?' hi':''}">${cantorDigits[i][j]}</div>`;
+    }
+  }
+  grid.innerHTML=html;
+  // y number
+  const yn=cantorDigits.map((row,i)=>row[i]===8?7:8);
+  document.getElementById('cantor-y').textContent=`y = 0.${yn.join('')}...`;
+  document.getElementById('cantor-explain').innerHTML=
+    `Az átlós elemek: ${cantorDigits.map((r,i)=>r[i]).join(', ')}.<br>
+     \(y_n\): ha \(x_{nn}=8\), akkor \(y_n=7\), különben \(y_n=8\).<br>
+     Így \(y=${yn.join('')}\\ldots\) és \(y\ne x_n\) minden \(n\)-re ⟹ \(x_1,x_2,\ldots\) nem tartalmaz minden valós számot.`;
+  if(window.renderMathInElement) renderMathInElement(document.getElementById('cantor-explain'),{
+    delimiters:[{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+}
+
+/* ─── Tab 4: diagonal table ─── */
+function drawDiagTable(){
+  const cv=document.getElementById('diag-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const K=6,pad=30,cell=(Math.min(W,H)-2*pad)/K;
+  // compute diagonal order
+  const order=[];
+  for(let s=0;s<2*K-1;s++){
+    for(let i=0;i<=s;i++){
+      const j=s-i;
+      if(i<K&&j<K) order.push([i,j]);
+    }
+  }
+  const orderMap={};
+  order.forEach(([i,j],idx)=>orderMap[`${i},${j}`]=idx+1);
+  // draw cells
+  for(let i=0;i<K;i++) for(let j=0;j<K;j++){
+    const x=pad+j*cell,y=pad+i*cell;
+    const idx=orderMap[`${i},${j}`]||0;
+    const diagNum=i+j;
+    const hue=diagNum/(2*K-2);
+    // color by diagonal
+    const colors=['#a78bfa','#c4b5fd','#7c3aed','#34d399','#22d3ee','#f97316','#fbbf24','#f472b6','#60a5fa','#e879f9'];
+    const col=colors[diagNum%colors.length];
+    ctx.fillStyle=col+'22';ctx.fillRect(x,y,cell-2,cell-2);
+    ctx.strokeStyle=col+'66';ctx.lineWidth=1;ctx.strokeRect(x,y,cell-2,cell-2);
+    ctx.fillStyle=col;ctx.font='bold '+(cell>40?10:8)+'px monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(idx,x+cell/2-1,y+cell/2-1);
+  }
+  // axis labels
+  ctx.fillStyle='#8892a4';ctx.font='9px monospace';ctx.textAlign='center';
+  for(let j=0;j<K;j++) ctx.fillText(j+1,pad+j*cell+cell/2-1,pad-10);
+  ctx.textAlign='right';
+  for(let i=0;i<K;i++) ctx.fillText(i+1,pad-6,pad+i*cell+cell/2-1);
+  ctx.fillStyle='#6b7280';ctx.font='9px sans-serif';
+  ctx.textAlign='left';ctx.fillText('A',pad+K*cell/2-8,10);
+  ctx.textAlign='right';ctx.fillText('B',pad-20,pad+K*cell/2);
+}
+
+/* ─── Tab 5: power set visual ─── */
+function drawPower(){
+  const n=+document.getElementById('pwr-n').value;
+  document.getElementById('pwr-n-lbl').textContent=n;
+  const pa=1<<n;
+  document.getElementById('pwr-pa-lbl').textContent=pa;
+  const cv=document.getElementById('pwr-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  const els=Array.from({length:n},(_,i)=>i+1);
+  // draw all subsets as rounded rects
+  const cols=Math.min(pa,8);
+  const rows=Math.ceil(pa/cols);
+  const bw=(W-20)/cols,bh=(H-40)/rows;
+  const subsets=[];
+  for(let mask=0;mask<pa;mask++){
+    const sub=[];
+    for(let i=0;i<n;i++) if(mask&(1<<i)) sub.push(i+1);
+    subsets.push(sub);
+  }
+  subsets.forEach((sub,idx)=>{
+    const col=idx%cols,row=Math.floor(idx/cols);
+    const x=10+col*bw,y=30+row*bh;
+    const col2=PAL[sub.length%PAL.length];
+    ctx.fillStyle=col2+'22';ctx.strokeStyle=col2+'88';ctx.lineWidth=1;
+    ctx.beginPath();ctx.roundRect(x+2,y+2,bw-6,bh-6,4);ctx.fill();ctx.stroke();
+    const lbl=sub.length===0?'∅':'{'+sub.join(',')+'}';
+    ctx.fillStyle=col2;ctx.font=`bold ${bw>50?9:7}px monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(lbl,x+bw/2,y+bh/2);
+  });
+  ctx.fillStyle='#8892a4';ctx.font='10px sans-serif';ctx.textAlign='left';
+  ctx.fillText(`A = {${els.join(',')}}  →  |A| = ${n}  →  |𝒫(A)| = 2ⁿ = ${pa}`,10,14);
+}
+
+/* ─── Tab 6: cardinality hierarchy ─── */
+function drawHierarchy(){
+  const cv=document.getElementById('hier-canvas');
+  if(!cv) return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Nodes: label, color, x-position
+  const nodes=[
+    {lbl:'|ℕ₀|',  sub:'ℵ₀',        col:'#a78bfa', x:38},
+    {lbl:'|𝒫(ℕ₀)|',sub:'= |ℝ| = 𝔠', col:'#22d3ee', x:140},
+    {lbl:'|𝒫(ℝ)|', sub:'',           col:'#34d399', x:242},
+    {lbl:'|𝒫(𝒫(ℝ))|',sub:'',         col:'#f97316', x:330},
+  ];
+  const nodeW=68, nodeH=44, cy=H/2;
+
+  // Draw "<" arrows between nodes
+  ctx.font='bold 16px serif';
+  ctx.textBaseline='middle';
+  nodes.forEach((n,i)=>{
+    if(i<nodes.length-1){
+      const x1=n.x+nodeW/2+4, x2=nodes[i+1].x-nodeW/2-4;
+      ctx.strokeStyle='#4b5563';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(x1,cy);ctx.lineTo(x2,cy);ctx.stroke();
+      // arrowhead
+      ctx.fillStyle='#4b5563';
+      ctx.beginPath();ctx.moveTo(x2,cy);ctx.lineTo(x2-8,cy-5);ctx.lineTo(x2-8,cy+5);ctx.closePath();ctx.fill();
+      // "<" label
+      ctx.fillStyle='#6b7280';ctx.font='bold 13px monospace';ctx.textAlign='center';
+      ctx.fillText('<',(x1+x2)/2,cy-14);
+    }
+  });
+
+  // Draw "…" ellipsis after last node
+  const last=nodes[nodes.length-1];
+  ctx.fillStyle='#4b5563';ctx.font='bold 14px monospace';ctx.textAlign='left';
+  ctx.fillText(' < …',last.x+nodeW/2+2,cy);
+
+  // Draw node boxes
+  nodes.forEach(n=>{
+    const x=n.x-nodeW/2, y=cy-nodeH/2;
+    // box
+    ctx.fillStyle=n.col+'1a';
+    ctx.strokeStyle=n.col+'99';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(x,y,nodeW,nodeH,6);ctx.fill();ctx.stroke();
+    // main label
+    ctx.fillStyle=n.col;ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(n.lbl,n.x,n.sub?cy-8:cy);
+    // subtitle
+    if(n.sub){
+      ctx.fillStyle='#8892a4';ctx.font='8px monospace';
+      ctx.fillText(n.sub,n.x,cy+10);
+    }
+  });
+
+  // Cantor's theorem label
+  ctx.fillStyle='#6b7280';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('Cantor-tétel: |A| < |𝒫(A)| minden A-ra',10,H-14);
+}
+
+/* ─── Init ─── */
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{showBij('bij');},150);
+});
+</script>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{
+    delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],
+    throwOnError:false})"></script>
+{% endblock %}

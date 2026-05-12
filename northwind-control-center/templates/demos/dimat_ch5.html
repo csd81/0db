@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% block title %}I.5. Rekurzív sorozatok — Dimat{% endblock %}
+{% block content %}
+<style>
+:root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(16,185,129,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(16,185,129,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(16,185,129,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.inp { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .6rem; font-size:.85rem; width:80px; }
+.res-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+.res-table th { background:#1a1f2e; color:#64748b; padding:.4rem .7rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.73rem; text-transform:uppercase; }
+.res-table td { padding:.4rem .7rem; border-bottom:1px solid #161b28; font-family:monospace; }
+canvas { border-radius:8px; display:block; }
+.warn-box { border-left:3px solid #ef4444; background:rgba(239,68,68,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-arrow-repeat" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">I.5. fejezet — Rekurzív sorozatok</h4>
+      <small class="text-muted">Iteráció · Lineáris rekurziók · Fibonacci · Ackermann · Mersenne</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-alap',this)">Rekurziók alapjai</span>
+    <span class="ila-nav-link" onclick="showTab('t-lin',this)">Lineáris rekurziók</span>
+    <span class="ila-nav-link" onclick="showTab('t-fib',this)">Fibonacci-sorozat</span>
+    <span class="ila-nav-link" onclick="showTab('t-nev',this)">Nevezetes rekurziók</span>
+    <span class="ila-nav-link" onclick="showTab('t-diff',this)">Differencia-operátor</span>
+  </div>
+
+  <!-- TAB 1 -->
+  <div id="t-alap" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc">Definíció</div>
+          <div class="def-box">
+            Egy <strong>rekurzív sorozat</strong> olyan \((a_n)\) sorozat, amelyet egy
+            \(a_n = f(a_{n-1}, a_{n-2}, \ldots, a_{n-k})\) összefüggés (rekurzió) és
+            néhány kezdőérték \(a_0, a_1, \ldots, a_{k-1}\) egyértelműen meghatároz.
+          </div>
+          <p style="font-size:.84rem;color:#94a3b8;margin:.5rem 0">
+            <strong style="color:#e2e8f0;">Iterációs módszer:</strong> ismételten helyettesítsük be a rekurziót, amíg explicit képletet kapunk.
+          </p>
+          <div class="ex-box">
+            <strong>Példa:</strong> \(a_{n+1} = 2 \cdot a_n,\; a_0 = 1\)<br>
+            \(a_1 = 2 \cdot 1 = 2\)<br>
+            \(a_2 = 2 \cdot 2 = 4\)<br>
+            \(a_3 = 2 \cdot 4 = 8\)<br>
+            \(\vdots\)<br>
+            \(a_n = 2^n\) — geometriai sorozat.
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc">Interaktív — Geometriai rekurzió</div>
+          <p style="font-size:.82rem;color:#94a3b8;">Adja meg \(a_0\) és \(r\) értékét (\(a_{n+1}=r \cdot a_n\)):</p>
+          <div class="d-flex gap-2 mb-2 flex-wrap">
+            <label style="font-size:.82rem;color:#94a3b8;">a₀ = <input class="inp" id="geo-a0" type="number" value="1" style="width:70px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">r = <input class="inp" id="geo-r" type="number" value="2" style="width:70px;"></label>
+            <button class="btn-acc" onclick="calcGeo()">Számít</button>
+          </div>
+          <div id="geo-out"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div id="t-lin" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Lineáris homogén rekurzió</div>
+          <div class="def-box">
+            \(a_n = c_1 a_{n-1} + c_2 a_{n-2}\)<br>
+            <strong>Karakterisztikus polinom:</strong> \(x^2 = c_1 x + c_2\)
+          </div>
+          <div class="thm-box">
+            <strong>Tétel:</strong> Ha \(r_1 \ne r_2\) valós gyökök, akkor<br>
+            \(a_n = A \cdot r_1^n + B \cdot r_2^n\)<br>
+            ahol \(A, B\) a kezdőértékekből meghatározható.<br><br>
+            Ha \(r_1 = r_2 = r\) (kétszeres gyök):<br>
+            \(a_n = (A + Bn)\,r^n\)
+          </div>
+          <div class="ex-box">
+            <strong>Példa:</strong> \(a_n = 5a_{n-1} - 6a_{n-2}\)<br>
+            Karakterisztikus egyenlet: \(x^2 - 5x + 6 = 0\)<br>
+            Gyökök: \(r_1=2,\; r_2=3\)<br>
+            Általános megoldás: \(a_n = A \cdot 2^n + B \cdot 3^n\)
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Interaktív megoldó</div>
+          <p style="font-size:.82rem;color:#94a3b8;">\(a_n = c_1\,a_{n-1} + c_2\,a_{n-2}\), adja meg az együtthatókat és kezdőértékeket:</p>
+          <div class="d-flex gap-2 flex-wrap mb-2">
+            <label style="font-size:.82rem;color:#94a3b8;">c₁ = <input class="inp" id="lin-c1" type="number" value="5" style="width:60px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">c₂ = <input class="inp" id="lin-c2" type="number" value="-6" style="width:60px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">a₀ = <input class="inp" id="lin-a0" type="number" value="1" style="width:60px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">a₁ = <input class="inp" id="lin-a1" type="number" value="1" style="width:60px;"></label>
+            <button class="btn-acc" onclick="calcLin()">Számít</button>
+          </div>
+          <div id="lin-out"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div id="t-fib" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Fibonacci-sorozat</div>
+          <div class="def-box">
+            \(F_0=0,\; F_1=1,\; F_{n+1}=F_n+F_{n-1}\)
+          </div>
+          <div class="thm-box">
+            <strong>Binet-képlet:</strong><br>
+            \(F_n = \dfrac{\varphi^n - \psi^n}{\sqrt{5}}\)<br>
+            ahol \(\varphi = \dfrac{1+\sqrt{5}}{2} \approx 1{,}6180\ldots\) (arany arány)<br>
+            és \(\psi = \dfrac{1-\sqrt{5}}{2}\)
+          </div>
+          <div class="ex-box">
+            <strong>Tulajdonság:</strong> \(\gcd(F_m, F_n) = F_{\gcd(m,n)}\)<br><br>
+            <strong>Konvergencia:</strong> \(\dfrac{F_n}{F_{n-1}} \to \varphi\)
+          </div>
+          <table class="res-table mt-2">
+            <thead><tr><th>n</th><th>F_n</th><th>F_n/F_{n-1}</th></tr></thead>
+            <tbody id="fib-conv-tbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc">F₀ … F₂₀ táblázat</div>
+          <div id="fib-table" style="display:flex;flex-wrap:wrap;gap:.3rem;"></div>
+        </div>
+        <div class="card-dark mb-3">
+          <div class="badge-acc">Interaktív — F_n számítás</div>
+          <div class="d-flex gap-2 align-items-center mb-2">
+            <label style="font-size:.82rem;color:#94a3b8;">n = <input class="inp" id="fib-n" type="number" value="30" min="0" max="200" style="width:70px;"></label>
+            <button class="btn-acc" onclick="calcFib()">Számít</button>
+          </div>
+          <div id="fib-out"></div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc">Fibonacci-spirál</div>
+          <canvas id="fib-canvas" width="380" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4 -->
+  <div id="t-nev" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-dark mb-3">
+          <div class="badge-acc">Hanoi tornyai</div>
+          <div class="def-box">
+            \(H_n = 2H_{n-1}+1,\quad H_1=1\)<br>
+            Megoldás: \(H_n = 2^n - 1\)
+          </div>
+          <div class="d-flex gap-2 align-items-center mb-2">
+            <label style="font-size:.82rem;color:#94a3b8;">n = <input class="inp" id="hanoi-n" type="number" value="10" min="1" max="20" style="width:70px;"></label>
+            <button class="btn-acc" onclick="calcHanoi()">Számít</button>
+          </div>
+          <div id="hanoi-out"></div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc">Mersenne-prímek</div>
+          <div class="def-box">
+            \(M_p = 2^p - 1\) ahol \(p\) prím
+          </div>
+          <div class="d-flex gap-2 align-items-center mb-2">
+            <label style="font-size:.82rem;color:#94a3b8;">p = <input class="inp" id="mers-p" type="number" value="7" min="2" max="61" style="width:70px;"></label>
+            <button class="btn-acc" onclick="calcMersenne()">Számít</button>
+          </div>
+          <div id="mers-out"></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc">Ackermann-függvény</div>
+          <div class="def-box">
+            \(A(0,n)=n+1\)<br>
+            \(A(m,0)=A(m-1,1)\)<br>
+            \(A(m,n)=A(m-1,A(m,n-1))\)
+          </div>
+          <table class="res-table mb-2">
+            <thead><tr><th>m</th><th>A(m,n)</th><th>Explicit</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>A(0,n)</td><td style="color:var(--acc2);">n+1</td></tr>
+              <tr><td>1</td><td>A(1,n)</td><td style="color:var(--acc2);">n+2</td></tr>
+              <tr><td>2</td><td>A(2,n)</td><td style="color:var(--acc2);">2n+3</td></tr>
+              <tr><td>3</td><td>A(3,n)</td><td style="color:var(--acc2);">2^(n+3)−3</td></tr>
+              <tr><td>4</td><td>A(4,1)</td><td style="color:#ef4444;">≈ 2^65536 (csillagászati!)</td></tr>
+            </tbody>
+          </table>
+          <div class="d-flex gap-2 align-items-center mb-2">
+            <label style="font-size:.82rem;color:#94a3b8;">m=<input class="inp" id="ack-m" type="number" value="3" min="0" max="4" style="width:55px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">n=<input class="inp" id="ack-n" type="number" value="3" min="0" max="10" style="width:55px;"></label>
+            <button class="btn-acc" onclick="calcAckermann()">Számít</button>
+          </div>
+          <div id="ack-out"></div>
+          <div class="warn-box" style="margin-top:.5rem;font-size:.78rem;">
+            <i class="bi bi-exclamation-triangle"></i> m≥4 esetén a függvény értéke csillagászatilag nagy — ne próbálkozzon!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5 -->
+  <div id="t-diff" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Δ-operátor (differenciaoperátor)</div>
+          <div class="def-box">
+            \(\Delta a_n = a_{n+1} - a_n\)<br>
+            \(\Delta^2 a_n = \Delta(\Delta a_n) = a_{n+2} - 2a_{n+1} + a_n\)
+          </div>
+          <div class="thm-box">
+            <strong>Tétel:</strong> Ha \(\Delta^k a_n = c\) (állandó) minden \(n\)-re,<br>
+            akkor \((a_n)\) egy \(k\)-adfokú polinom sorozata.
+          </div>
+          <div class="ex-box">
+            <strong>Példa — négyzetszámok:</strong><br>
+            \((a_n) = 1, 4, 9, 16, 25, \ldots\)<br>
+            \(\Delta^1 = 3, 5, 7, 9, \ldots\)<br>
+            \(\Delta^2 = 2, 2, 2, \ldots\) (állandó!)<br>
+            Tehát \(a_n = n^2\) másodfokú polinom. ✓
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Interaktív differencia-táblázat</div>
+          <p style="font-size:.82rem;color:#94a3b8;">Adjon meg egy sorozatot (vesszővel elválasztva):</p>
+          <div class="d-flex gap-2 mb-3">
+            <input style="background:#0e1014;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:.3rem .6rem;font-size:.85rem;flex:1;" id="diff-seq" type="text" value="1,4,9,16,25,36,49">
+            <button class="btn-acc" onclick="calcDiff()">Számít</button>
+          </div>
+          <div id="diff-out"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function initAll(){
+  buildFibTable();
+  buildFibConvTable();
+  drawFibSpiral();
+}
+
+/* ── TAB 1: Geometric recursion ── */
+function calcGeo(){
+  const a0=parseFloat(document.getElementById('geo-a0').value)||0;
+  const r=parseFloat(document.getElementById('geo-r').value)||2;
+  let html='<table class="res-table"><thead><tr><th>n</th><th>a_n</th><th>r^n · a₀</th></tr></thead><tbody>';
+  for(let i=0;i<10;i++){
+    const val=a0*Math.pow(r,i);
+    html+=`<tr><td>${i}</td><td style="color:var(--acc2);">${+val.toFixed(6)}</td><td style="color:#64748b;">${a0}·${r}^${i}</td></tr>`;
+  }
+  html+='</tbody></table>';
+  html+=`<p style="font-size:.82rem;color:#94a3b8;margin-top:.5rem;">Általános képlet: \\(a_n = ${a0} \\cdot ${r}^n\\)</p>`;
+  document.getElementById('geo-out').innerHTML=html;
+  renderMathInElement(document.getElementById('geo-out'),{delimiters:[{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+}
+
+/* ── TAB 2: Linear recurrence ── */
+function calcLin(){
+  const c1=parseFloat(document.getElementById('lin-c1').value)||0;
+  const c2=parseFloat(document.getElementById('lin-c2').value)||0;
+  const a0=parseFloat(document.getElementById('lin-a0').value)||0;
+  const a1=parseFloat(document.getElementById('lin-a1').value)||0;
+  // Characteristic polynomial: x^2 - c1*x - c2 = 0
+  const disc=c1*c1+4*c2;
+  let html='';
+  html+=`<p style="font-size:.82rem;color:#94a3b8;">Karakterisztikus egyenlet: \\(x^2 - ${c1}x - (${c2}) = 0\\)</p>`;
+  html+=`<p style="font-size:.82rem;color:#94a3b8;">Diszkrimináns: \\(D = ${c1}^2 + 4\\cdot(${c2}) = ${disc}\\)</p>`;
+  if(disc<0){
+    html+='<div class="warn-box">Komplex gyökök — a sorozat oszcillál.</div>';
+  } else {
+    const r1=(c1+Math.sqrt(disc))/2;
+    const r2=(c1-Math.sqrt(disc))/2;
+    html+=`<p style="font-size:.82rem;color:#94a3b8;">Gyökök: \\(r_1=${+r1.toFixed(4)},\\; r_2=${+r2.toFixed(4)}\\)</p>`;
+  }
+  // Compute terms directly
+  let seq=[a0,a1];
+  for(let i=2;i<10;i++) seq.push(c1*seq[i-1]+c2*seq[i-2]);
+  html+='<table class="res-table"><thead><tr><th>n</th><th>a_n</th></tr></thead><tbody>';
+  seq.forEach((v,i)=>{ html+=`<tr><td>${i}</td><td style="color:var(--acc2);">${+v.toFixed(4)}</td></tr>`; });
+  html+='</tbody></table>';
+  document.getElementById('lin-out').innerHTML=html;
+  renderMathInElement(document.getElementById('lin-out'),{delimiters:[{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+}
+
+/* ── TAB 3: Fibonacci ── */
+function fib(n){
+  let a=0n,b=1n;
+  for(let i=0;i<n;i++){let t=a+b;a=b;b=t;}
+  return a;
+}
+function buildFibTable(){
+  const el=document.getElementById('fib-table');
+  let html='';
+  for(let i=0;i<=20;i++){
+    html+=`<div style="background:#1a1f2e;border-radius:6px;padding:.3rem .5rem;font-size:.78rem;font-family:monospace;text-align:center;">
+      <div style="color:#64748b;">F<sub>${i}</sub></div>
+      <div style="color:var(--acc2);">${fib(i)}</div>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+function buildFibConvTable(){
+  const el=document.getElementById('fib-conv-tbl');
+  let html='';
+  for(let i=2;i<=12;i++){
+    const fn=Number(fib(i)), fn1=Number(fib(i-1));
+    const ratio=fn1?+(fn/fn1).toFixed(7):'—';
+    html+=`<tr><td>${i}</td><td>${fn}</td><td style="color:var(--acc2);">${ratio}</td></tr>`;
+  }
+  el.innerHTML=html;
+}
+function calcFib(){
+  const n=parseInt(document.getElementById('fib-n').value)||0;
+  const exact=fib(n).toString();
+  const phi=(1+Math.sqrt(5))/2;
+  const binet=Math.round(Math.pow(phi,n)/Math.sqrt(5));
+  document.getElementById('fib-out').innerHTML=
+    `<p style="font-size:.84rem;color:#e2e8f0;">F<sub>${n}</sub> = <span style="color:var(--acc2);font-family:monospace;">${exact}</span></p>
+     <p style="font-size:.82rem;color:#64748b;">Binet-közelítés (kerekítve): ${binet}</p>`;
+}
+function drawFibSpiral(){
+  const cv=document.getElementById('fib-canvas');
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+  const fibs=[1,1,2,3,5,8,13,21,34,55,89];
+  const scale=2.5;
+  let x=W/2-30,y=H/2-20;
+  const colors=['#10b981','#34d399','#059669','#38bdf8','#818cf8','#f59e0b','#ef4444','#e879f9','#10b981','#34d399','#059669'];
+  const dirs=[[1,0],[0,-1],[-1,0],[0,1]];
+  let dir=0,cx=x,cy=y;
+  fibs.forEach((f,i)=>{
+    const s=f*scale;
+    ctx.strokeStyle=colors[i%colors.length];
+    ctx.lineWidth=1.5;
+    ctx.strokeRect(cx,cy,s*(dirs[dir][0]||1)*Math.sign(dirs[dir][0]||1),s*(dirs[dir][1]||1)*Math.sign(dirs[dir][1]||1));
+    // Arc
+    ctx.beginPath();
+    ctx.strokeStyle=colors[i%colors.length];
+    const [dx,dy]=dirs[dir];
+    let ax=cx,ay=cy,r=s;
+    if(dir===0){ax=cx;ay=cy+s;} else if(dir===1){ax=cx+s;ay=cy+s;} else if(dir===2){ax=cx+s;ay=cy;} else{ax=cx;ay=cy;}
+    ctx.arc(ax,ay,r,(dir+2)*Math.PI/2,(dir+3)*Math.PI/2);
+    ctx.stroke();
+    if(f>0) ctx.fillStyle=colors[i%colors.length]+'22';
+    if(dir===0){cx+=s;} else if(dir===1){cy-=s;} else if(dir===2){cx-=s;} else{cy+=s;}
+    dir=(dir+1)%4;
+  });
+  ctx.fillStyle='#94a3b8';ctx.font='11px monospace';ctx.fillText('φ ≈ 1.6180339887…',8,H-8);
+}
+
+/* ── TAB 4: Hanoi, Ackermann, Mersenne ── */
+function calcHanoi(){
+  const n=parseInt(document.getElementById('hanoi-n').value)||1;
+  const moves=Math.pow(2,n)-1;
+  const sec=moves;
+  const days=Math.floor(sec/86400);
+  const hrs=Math.floor((sec%86400)/3600);
+  document.getElementById('hanoi-out').innerHTML=
+    `<div class="def-box">H<sub>${n}</sub> = 2<sup>${n}</sup>−1 = <strong style="color:var(--acc2);">${moves.toLocaleString('hu')}</strong> lépés<br>
+    <span style="font-size:.8rem;color:#94a3b8;">Idő (1 lépés/mp): ${days} nap ${hrs} óra</span></div>`;
+}
+function calcAckermann(){
+  const m=parseInt(document.getElementById('ack-m').value)||0;
+  const n=parseInt(document.getElementById('ack-n').value)||0;
+  if(m>3){document.getElementById('ack-out').innerHTML='<div class="warn-box">m≥4 esetén a szám csillagászatilag nagy!</div>';return;}
+  let result;
+  if(m===0) result=n+1;
+  else if(m===1) result=n+2;
+  else if(m===2) result=2*n+3;
+  else if(m===3) result=Math.pow(2,n+3)-3;
+  document.getElementById('ack-out').innerHTML=
+    `<div class="def-box">A(${m},${n}) = <strong style="color:var(--acc2);">${result.toLocaleString('hu')}</strong></div>`;
+}
+function calcMersenne(){
+  const p=parseInt(document.getElementById('mers-p').value)||7;
+  const isPrime=(x)=>{if(x<2)return false;for(let i=2;i<=Math.sqrt(x);i++)if(x%i===0)return false;return true;};
+  if(!isPrime(p)){document.getElementById('mers-out').innerHTML='<div class="warn-box">p nem prímszám!</div>';return;}
+  if(p>52){document.getElementById('mers-out').innerHTML=`<div class="def-box">M<sub>${p}</sub> = 2<sup>${p}</sup>−1 — túl nagy a pontos megjelenítéshez (> 2^52)</div>`;return;}
+  const mp=Math.pow(2,p)-1;
+  document.getElementById('mers-out').innerHTML=
+    `<div class="def-box">M<sub>${p}</sub> = 2<sup>${p}</sup>−1 = <strong style="color:var(--acc2);">${mp.toLocaleString('hu')}</strong></div>`;
+}
+
+/* ── TAB 5: Difference table ── */
+function calcDiff(){
+  const raw=document.getElementById('diff-seq').value;
+  const seq=raw.split(',').map(s=>parseFloat(s.trim())).filter(x=>!isNaN(x));
+  if(seq.length<2){document.getElementById('diff-out').innerHTML='<div class="warn-box">Legalább 2 elemet adjon meg!</div>';return;}
+  const table=[seq];
+  let cur=seq;
+  for(let k=1;k<Math.min(cur.length,5);k++){
+    const next=[];
+    for(let i=0;i<cur.length-1;i++) next.push(+(cur[i+1]-cur[i]).toFixed(6));
+    table.push(next);
+    cur=next;
+    if(next.every(v=>Math.abs(v-next[0])<1e-9)) break;
+  }
+  const colors=['var(--acc2)','#38bdf8','#f59e0b','#e879f9','#ef4444'];
+  let html='<div style="overflow-x:auto;">';
+  table.forEach((row,k)=>{
+    html+=`<div style="margin:.3rem 0;font-size:.82rem;">`;
+    html+=`<span style="color:#64748b;font-family:monospace;display:inline-block;width:3rem;">Δ^${k}:</span>`;
+    row.forEach(v=>{
+      html+=`<span style="color:${colors[k%colors.length]};font-family:monospace;display:inline-block;min-width:56px;text-align:right;padding:0 .3rem;">${v}</span>`;
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  const last=table[table.length-1];
+  if(last.length>1&&last.every(v=>Math.abs(v-last[0])<1e-9)){
+    html+=`<div class="def-box">A Δ<sup>${table.length-1}</sup> sorozat állandó → az eredeti sorozat egy <strong>${table.length-1}. fokú polinomnak</strong> felel meg.</div>`;
+  }
+  document.getElementById('diff-out').innerHTML=html;
+}
+</script>
+{% endblock %}

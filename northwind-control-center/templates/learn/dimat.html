@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Kombinatorika és Gráfelmélet{% endblock %}
+{% block title %}Kombinatorika és Gráfelmélet · Combinatorics & Graph Theory{% endblock %}
 
 {% block content %}
+{% import "_macros/i18n.html" as I %}
 <style>
 .ch-card {
   background: #0d1117;
@@ -32,12 +33,12 @@
 <div class="container-fluid px-4 py-4" style="max-width:1200px">
   <div class="d-flex align-items-center gap-3 mb-1">
     <i class="bi bi-diagram-3-fill" style="font-size:1.5rem;color:#10b981"></i>
-    <h4 class="mb-0 fw-bold">Kombinatorika és Gráfelmélet</h4>
+    <h4 class="mb-0 fw-bold">{{ I.t('Kombinatorika és Gráfelmélet', 'Combinatorics &amp; Graph Theory') }}</h4>
   </div>
-  <p class="text-secondary mb-1" style="font-size:.82rem">Kéziratos tankönyv &middot; Magyar nyelv&ucirc;</p>
+  <p class="text-secondary mb-1" style="font-size:.82rem">{{ I.t('Kéziratos tankönyv &middot; Magyar nyelvű', 'Manuscript textbook &middot; Hungarian original') }}</p>
   <p class="text-secondary mb-3" style="font-size:.78rem">
-    <span class="badge me-1" style="background:#0d2b1e;color:#10b981;font-weight:600">I. rész: Kombinatorika — 8 fejezet</span>
-    <span class="badge" style="background:#0a1f2e;color:#38bdf8;font-weight:600">II. rész: Gráfelmélet — 15 fejezet</span>
+    <span class="badge me-1" style="background:#0d2b1e;color:#10b981;font-weight:600">{{ I.t('I. rész: Kombinatorika — 8 fejezet', 'Part I: Combinatorics — 8 chapters') }}</span>
+    <span class="badge" style="background:#0a1f2e;color:#38bdf8;font-weight:600">{{ I.t('II. rész: Gráfelmélet — 15 fejezet', 'Part II: Graph Theory — 15 chapters') }}</span>
   </p>
 
   <!-- Tételsor banner -->
@@ -48,12 +49,13 @@
     <div style="display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;">
       <span style="font-size:1.4rem;">🎯</span>
       <div style="flex:1;min-width:200px;">
-        <div style="color:#fbbf24;font-weight:700;font-size:.95rem;">Tételsor — 39 vizsgatétel</div>
+        <div style="color:#fbbf24;font-weight:700;font-size:.95rem;">{{ I.t('Tételsor — 39 vizsgatétel', 'Theorem List — 39 exam topics') }}</div>
         <div style="color:#9ca3af;font-size:.78rem;margin-top:.1rem;">
-          Négy útvonal: Kombinatorika · Gráfelmélet · Számelmélet · ILA Alapok
+          {{ I.t('Négy útvonal: Kombinatorika · Gráfelmélet · Számelmélet · ILA Alapok',
+                 'Four paths: Combinatorics · Graph Theory · Number Theory · ILA Foundations') }}
         </div>
       </div>
-      <span style="color:#f59e0b;font-weight:600;font-size:.85rem;">Megnyit →</span>
+      <span style="color:#f59e0b;font-weight:600;font-size:.85rem;">{{ I.t('Megnyit →', 'Open →') }}</span>
     </div>
   </a>
 
@@ -64,12 +66,13 @@
     <div style="display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;">
       <span style="font-size:1.4rem;">📚</span>
       <div style="flex:1;min-width:200px;">
-        <div style="color:#10b981;font-weight:700;font-size:.95rem;">Kombinatorikai feladatok — Szalkai 2023</div>
+        <div style="color:#10b981;font-weight:700;font-size:.95rem;">{{ I.t('Kombinatorikai feladatok — Szalkai 2023', 'Combinatorics Exercises — Szalkai 2023') }}</div>
         <div style="color:#9ca3af;font-size:.78rem;margin-top:.1rem;">
-          103 részletesen megoldott feladat · Kombinatorika + Gráfelmélet · KaTeX-renderelt
+          {{ I.t('103 részletesen megoldott feladat · Kombinatorika + Gráfelmélet · KaTeX-renderelt',
+                 '103 fully-worked exercises · Combinatorics + Graph theory · KaTeX-rendered') }}
         </div>
       </div>
-      <span style="color:#10b981;font-weight:600;font-size:.85rem;">Megnyit →</span>
+      <span style="color:#10b981;font-weight:600;font-size:.85rem;">{{ I.t('Megnyit →', 'Open →') }}</span>
     </div>
   </a>
 
@@ -77,14 +80,14 @@
   <div class="dq-progress-strip" id="dimat-me-strip" style="margin-bottom:1rem">
     <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="dimat-xp">—</div><div class="dq-progress-stat-lbl">XP</div></div>
     <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="dimat-streak">—</div><div class="dq-progress-stat-lbl">Streak</div></div>
-    <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="dimat-solved">—</div><div class="dq-progress-stat-lbl">Megoldva</div></div>
+    <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="dimat-solved">—</div><div class="dq-progress-stat-lbl">{{ I.t('Megoldva', 'Solved') }}</div></div>
     <div class="dq-progress-stat"><div class="dq-progress-stat-val" id="dimat-ach">—</div><div class="dq-progress-stat-lbl">🎖️</div></div>
     <div style="margin-left:auto;display:flex;gap:.5rem">
       <a href="{{ url_for('demos.dimat_challenges') }}"
          class="dq-btn dq-btn-primary" style="text-decoration:none;font-size:.78rem">
-        🏆 Napi kihívás →
+        {{ I.t('🏆 Napi kihívás →', '🏆 Daily challenge →') }}
       </a>
-      <button id="dimat-tree-toggle" class="dq-btn" style="font-size:.78rem">🗺️ Skill-tree</button>
+      <button id="dimat-tree-toggle" class="dq-btn" style="font-size:.78rem">{{ I.t('🗺️ Skill-tree', '🗺️ Skill tree') }}</button>
     </div>
   </div>
 
@@ -92,20 +95,21 @@
   <div id="dimat-skill-tree-wrap" style="display:none;margin-bottom:1.5rem">
     <canvas id="dq-skill-tree-canvas"></canvas>
     <p style="font-size:.7rem;color:#64748b;text-align:center;margin-top:.4rem">
-      Az élek <em>ajánlott</em> fejezet-sorrendet mutatnak. Nincs zárolás — bármelyik fejezethez ugorhatsz.
+      {{ I.t('Az élek <em>ajánlott</em> fejezet-sorrendet mutatnak. Nincs zárolás — bármelyik fejezethez ugorhatsz.',
+             'The edges suggest a <em>recommended</em> chapter order. Nothing is locked — jump to any chapter.') }}
     </p>
   </div>
 
-  <!-- Bevezetés -->
+  <!-- Bevezetés / Introduction -->
   <div class="ch-card">
-    <div class="ch-num" style="color:#10b981">0. fejezet</div>
-    <div class="ch-title">Bevezetés</div>
-    <div class="ch-desc">Általános jelölések és konvenciók: számhalmazok \(\mathbb{N},\mathbb{Z},\mathbb{Q},\mathbb{R},\mathbb{C}\), hatványhalmaz \(\mathcal{P}(A)\), egészrészek \(\lfloor x\rfloor\), \(\lceil x\rceil\), aszimptotika \(\mathcal{O}(f)\). A sakktábla-paradoxon: \(2^{64}-1\approx 1{,}8\times 10^{19}\).</div>
+    <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">0. fejezet</span><span class="en">Chapter 0</span></span></div>
+    <div class="ch-title"><span class="i18n"><span class="hu">Bevezetés</span><span class="en">Introduction</span></span></div>
+    <div class="ch-desc"><span class="i18n"><span class="hu">Általános jelölések és konvenciók: számhalmazok \(\mathbb{N},\mathbb{Z},\mathbb{Q},\mathbb{R},\mathbb{C}\), hatványhalmaz \(\mathcal{P}(A)\), egészrészek \(\lfloor x\rfloor\), \(\lceil x\rceil\), aszimptotika \(\mathcal{O}(f)\). A sakktábla-paradoxon: \(2^{64}-1\approx 1{,}8\times 10^{19}\).</span><span class="en">General notation and conventions: number sets \(\mathbb{N},\mathbb{Z},\mathbb{Q},\mathbb{R},\mathbb{C}\), power set \(\mathcal{P}(A)\), floor/ceiling \(\lfloor x\rfloor\), \(\lceil x\rceil\), asymptotics \(\mathcal{O}(f)\). The chessboard paradox: \(2^{64}-1\approx 1.8\times 10^{19}\).</span></span></div>
     <div class="ch-tags">
-      <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Jelölések</span>
-      <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Hatványhalmaz</span>
-      <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Egészrészek</span>
-      <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Sakktábla</span>
+      <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Jelölések</span><span class="en">Notation</span></span></span>
+      <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Hatványhalmaz</span><span class="en">Power set</span></span></span>
+      <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Egészrészek</span><span class="en">Floor/ceiling</span></span></span>
+      <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Sakktábla</span><span class="en">Chessboard</span></span></span>
     </div>
     <div class="mt-3">
       <a href="{{ url_for('demos.dimat_ch0') }}" class="btn btn-sm px-3" style="background:#10b981;color:#000;border:none;font-weight:600">Launch →</a>
@@ -115,19 +119,19 @@
   <!-- PART I -->
   <div class="part-header">
     <i class="bi bi-grid-3x3-gap-fill" style="color:#10b981;font-size:1rem"></i>
-    <h5 style="color:#10b981">I. rész — Kombinatorika</h5>
+    <h5 style="color:#10b981"><span class="i18n"><span class="hu">I. rész — Kombinatorika</span><span class="en">Part I — Combinatorics</span></span></h5>
   </div>
 
   <div class="grid-2">
 
     <!-- I.1 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#10b981">I.1. fejezet</div>
-      <div class="ch-title">Halmazok</div>
-      <div class="ch-desc">Halmazok definíciója és alapm&ucirc;veletek. Cantor-tétel: nem létezik mindent tartalmazó halmaz. Boole-axiómák BA1–BA14. Venn-diagramok, De Morgan, Dualitás elve. Min&odblac;ségi függetlenség, DNF/CNF normálformák.</div>
+      <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">I.1. fejezet</span><span class="en">Chapter I.1</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Halmazok</span><span class="en">Sets</span></span></div>
+      <div class="ch-desc">Halmazok definíciója és alapm&ucirc;veletek. <span class="i18n"><span class="hu">Cantor-tétel</span><span class="en">Cantor's theorem</span></span>: nem létezik mindent tartalmazó halmaz. Boole-axiómák BA1–BA14. <span class="i18n"><span class="hu">Venn</span><span class="en">Venn</span></span>-diagramok, <span class="i18n"><span class="hu">De Morgan</span><span class="en">De Morgan</span></span>, Dualitás elve. Min&odblac;ségi függetlenség, DNF/CNF normálformák.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Cantor-tétel</span>
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Boole-algebrák</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Boole-algebrák</span><span class="en">Boolean algebras</span></span></span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Venn</span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">De Morgan</span>
       </div>
@@ -138,14 +142,14 @@
 
     <!-- I.2 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#10b981">I.2. fejezet</div>
-      <div class="ch-title">Elemi leszámlálások</div>
-      <div class="ch-desc">Általános számlálási módszerek. Teljes indukció. Permutációk \(P(n)=n!\), variációk \(V(n,k)\), kombinációk \(\binom{n}{k}\). A Stirling-formula: \(n!\approx\sqrt{2\pi n}\,(n/e)^n\).</div>
+      <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">I.2. fejezet</span><span class="en">Chapter I.2</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Elemi leszámlálások</span><span class="en">Elementary counting</span></span></div>
+      <div class="ch-desc">Általános számlálási módszerek. Teljes indukció. <span class="i18n"><span class="hu">Permutációk</span><span class="en">Permutations</span></span> \(P(n)=n!\), variációk \(V(n,k)\), kombinációk \(\binom{n}{k}\). A <span class="i18n"><span class="hu">Stirling</span><span class="en">Stirling</span></span>-formula: \(n!\approx\sqrt{2\pi n}\,(n/e)^n\).</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Permutációk</span>
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Kombinációk</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Kombinációk</span><span class="en">Combinations</span></span></span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Stirling</span>
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Indukció</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Indukció</span><span class="en">Induction</span></span></span>
       </div>
       <div class="mt-3">
         <a href="{{ url_for('demos.dimat_ch2') }}" class="btn btn-sm px-3" style="background:#10b981;color:#000;border:none;font-weight:600">Launch →</a>
@@ -154,13 +158,13 @@
 
     <!-- I.3 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#10b981">I.3. fejezet</div>
-      <div class="ch-title">Binomiális és polinomiális együtthatók</div>
-      <div class="ch-desc">Binomiális tétel: \((x+y)^n=\sum_k\binom{n}{k}x^k y^{n-k}\). Polinomiális tétel. Összegzési módszerek, hatványok összege. Rugalmas pénzérmék (stars-and-bars) kombinatorikai modell.</div>
+      <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">I.3. fejezet</span><span class="en">Chapter I.3</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Binomiális és polinomiális együtthatók</span><span class="en">Binomial &amp; multinomial coefficients</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Binomiális tétel</span><span class="en">Binomial theorem</span></span>: \((x+y)^n=\sum_k\binom{n}{k}x^k y^{n-k}\). Polinomiális tétel. <span class="i18n"><span class="hu">Összegzés</span><span class="en">Summation</span></span>i módszerek, hatványok összege. Rugalmas pénzérmék (stars-and-bars) kombinatorikai modell.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Binomiális tétel</span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Összegzés</span>
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Pénzérmék</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Pénzérmék</span><span class="en">Coins</span></span></span>
       </div>
       <div class="mt-3">
         <a href="{{ url_for('demos.dimat_ch3') }}" class="btn btn-sm px-3" style="background:#10b981;color:#000;border:none;font-weight:600">Launch →</a>
@@ -169,12 +173,12 @@
 
     <!-- I.4 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#10b981">I.4. fejezet</div>
-      <div class="ch-title">A logikai szitaformula</div>
-      <div class="ch-desc">Befoglalás-kizárás elve: \(|A_1\cup\cdots\cup A_n|=\sum|A_i|-\sum|A_i\cap A_j|+\cdots\). Elcserélt levelek (derangements) \(D_n\). Additív halmazfüggvények és Möbius-inverzió.</div>
+      <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">I.4. fejezet</span><span class="en">Chapter I.4</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">A logikai szitaformula</span><span class="en">The inclusion–exclusion principle</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Befoglalás-kizárás</span><span class="en">Inclusion–exclusion</span></span> elve: \(|A_1\cup\cdots\cup A_n|=\sum|A_i|-\sum|A_i\cap A_j|+\cdots\). Elcserélt levelek (derangements) \(D_n\). Additív halmazfüggvények és <span class="i18n"><span class="hu">Möbius</span><span class="en">Möbius</span></span>-inverzió.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Befoglalás-kizárás</span>
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Derangements</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Derangements</span><span class="en">Derangements</span></span></span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Möbius</span>
       </div>
       <div class="mt-3">
@@ -184,14 +188,14 @@
 
     <!-- I.5 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#10b981">I.5. fejezet</div>
-      <div class="ch-title">Rekurzív sorozatok</div>
-      <div class="ch-desc">Iterációs módszer, lineáris rekurziók karakterisztikus polinomja. Fibonacci-sorozat \(F_n=F_{n-1}+F_{n-2}\), Binet-képlet. Szimultán rekurziók. Ackermann-függvény, Lucas-Lehmer teszt, Newton-módszer.</div>
+      <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">I.5. fejezet</span><span class="en">Chapter I.5</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Rekurzív sorozatok</span><span class="en">Recursive sequences</span></span></div>
+      <div class="ch-desc">Iterációs módszer, lineáris rekurziók karakterisztikus polinomja. <span class="i18n"><span class="hu">Fibonacci</span><span class="en">Fibonacci</span></span>-sorozat \(F_n=F_{n-1}+F_{n-2}\), Binet-képlet. Szimultán rekurziók. <span class="i18n"><span class="hu">Ackermann</span><span class="en">Ackermann</span></span>-függvény, Lucas-Lehmer teszt, Newton-módszer.</div>
       <div class="ch-tags">
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Rekurzió</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Rekurzió</span><span class="en">Recursion</span></span></span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Fibonacci</span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Ackermann</span>
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Mersenne</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Mersenne</span><span class="en">Mersenne</span></span></span>
       </div>
       <div class="mt-3">
         <a href="{{ url_for('demos.dimat_ch5') }}" class="btn btn-sm px-3" style="background:#10b981;color:#000;border:none;font-weight:600">Launch →</a>
@@ -200,9 +204,9 @@
 
     <!-- I.6 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#10b981">I.6. fejezet</div>
-      <div class="ch-title">Generátorfüggvények</div>
-      <div class="ch-desc">Hatványsor-módszer lineáris és nemlineáris rekurziókhoz. Catalan-számok \(C_n=\frac{1}{n+1}\binom{2n}{n}\) és a szülőzárójelek száma. Pénzváltási probléma. Exponenciális generátorfüggvények.</div>
+      <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">I.6. fejezet</span><span class="en">Chapter I.6</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu"><span class="i18n"><span class="hu">Generátorfüggvény</span><span class="en">Generating fn</span></span>ek</span><span class="en">Generating functions</span></span></div>
+      <div class="ch-desc">Hatványsor-módszer lineáris és nemlineáris rekurziókhoz. <span class="i18n"><span class="hu">Catalan</span><span class="en">Catalan</span></span>-számok \(C_n=\frac{1}{n+1}\binom{2n}{n}\) és a szülőzárójelek száma. <span class="i18n"><span class="hu">Pénzváltás</span><span class="en">Coin change</span></span>i probléma. Exponenciális generátorfüggvények.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Generátorfüggvény</span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Catalan</span>
@@ -215,13 +219,13 @@
 
     <!-- I.7 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#10b981">I.7. fejezet</div>
-      <div class="ch-title">Extremális halmazrendszerek</div>
-      <div class="ch-desc">Sperner tétele: \(\mathcal{F}\subseteq\mathcal{P}(n)\) antichain \(\Rightarrow|\mathcal{F}|\leq\binom{n}{\lfloor n/2\rfloor}\). Erd&odblac;s-Ko-Rado, Fisher, Ryser tételei. Szimplexek kombinatorikája.</div>
+      <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">I.7. fejezet</span><span class="en">Chapter I.7</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu"><span class="i18n"><span class="hu">Extremális</span><span class="en">Extremal</span></span> halmazrendszerek</span><span class="en">Extremal set systems</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Sperner</span><span class="en">Sperner</span></span> tétele: \(\mathcal{F}\subseteq\mathcal{P}(n)\) antichain \(\Rightarrow|\mathcal{F}|\leq\binom{n}{\lfloor n/2\rfloor}\). Erd&odblac;s-Ko-Rado, Fisher, Ryser tételei. <span class="i18n"><span class="hu">Szimplexek</span><span class="en">Simplices</span></span> kombinatorikája.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Sperner</span>
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Erdős-Ko-Rado</span>
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Antichain</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Erdős-Ko-Rado</span><span class="en">Erdős-Ko-Rado</span></span></span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Antichain</span><span class="en">Antichain</span></span></span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Szimplexek</span>
       </div>
       <div class="mt-3">
@@ -231,11 +235,11 @@
 
     <!-- I.8 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#10b981">I.8. fejezet</div>
-      <div class="ch-title">Partíciós problémák</div>
-      <div class="ch-desc">Számok felbontása összegekre: \(p(n)\) partíciófüggvény, Young-diagramok, Ferrer-diagramok. Halmazpartíciók, Bell-számok \(B_n\), Stirling-számok másodfajból \(S(n,k)\).</div>
+      <div class="ch-num" style="color:#10b981"><span class="i18n"><span class="hu">I.8. fejezet</span><span class="en">Chapter I.8</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Partíciós problémák</span><span class="en">Partition problems</span></span></div>
+      <div class="ch-desc">Számok felbontása összegekre: \(p(n)\) partíciófüggvény, <span class="i18n"><span class="hu">Young-diagram</span><span class="en">Young diagram</span></span>ok, Ferrer-diagramok. Halmazpartíciók, <span class="i18n"><span class="hu">Bell-számok</span><span class="en">Bell numbers</span></span> \(B_n\), Stirling-számok másodfajból \(S(n,k)\).</div>
       <div class="ch-tags">
-        <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Partíciók</span>
+        <span class="ch-tag" style="background:#0d2b1e;color:#10b981"><span class="i18n"><span class="hu">Partíciók</span><span class="en">Partitions</span></span></span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Bell-számok</span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Stirling</span>
         <span class="ch-tag" style="background:#0d2b1e;color:#10b981">Young-diagram</span>
@@ -250,18 +254,18 @@
   <!-- PART II -->
   <div class="part-header">
     <i class="bi bi-share-fill" style="color:#38bdf8;font-size:1rem"></i>
-    <h5 style="color:#38bdf8">II. rész — Gráfelmélet</h5>
+    <h5 style="color:#38bdf8"><span class="i18n"><span class="hu">II. rész — Gráfelmélet</span><span class="en">Part II — Graph Theory</span></span></h5>
   </div>
 
   <div class="grid-2">
 
     <!-- II.1 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#38bdf8">II.1. fejezet</div>
-      <div class="ch-title">Gráfelméleti alapfogalmak</div>
-      <div class="ch-desc">Gráf \(G=(V,E)\), irányított és irányítatlan. Névezetes gráfok: \(K_n\), \(K_{m,n}\), \(C_n\), \(P_n\), \(Q_n\). Fok, szomszédosság, összefügg&odblac;ség. Utak, körök, összefügg&odblac; komponensek.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.1. fejezet</span><span class="en">Chapter II.1</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Gráfelméleti alapfogalmak</span><span class="en">Graph theory basics</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Gráf \(G=(V,E)\), irányított és irányítatlan. Névezetes gráfok: \(K_n\), \(K_{m,n}\), \(C_n\), \(P_n\), \(Q_n\). Fok, szomszédosság, összefüggőség. Utak, körök, összefüggő komponensek.</span><span class="en">Graph \(G=(V,E)\), directed and undirected. Named graphs: \(K_n\), \(K_{m,n}\), \(C_n\), \(P_n\), \(Q_n\). Degree, adjacency, connectivity. Walks, cycles, connected components.</span></span></div>
       <div class="ch-tags">
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Alapfogalmak</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Alapfogalmak</span><span class="en">Basics</span></span></span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Összefügg&odblac;ség</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">\(K_n,K_{m,n}\)</span>
       </div>
@@ -272,13 +276,13 @@
 
     <!-- II.2 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#38bdf8">II.2. fejezet</div>
-      <div class="ch-title">Euler körök és utak</div>
-      <div class="ch-desc">A königsbergi hidak problémája. Euler tétele: összefügg&odblac; gráfban Euler-kör létezik \(\Leftrightarrow\) minden csúcs fokszáma páros. Euler-út feltétele. Fleury-algoritmus.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.2. fejezet</span><span class="en">Chapter II.2</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Euler körök és utak</span><span class="en">Euler circuits &amp; paths</span></span></div>
+      <div class="ch-desc">A königsbergi hidak problémája. Euler tétele: összefügg&odblac; gráfban <span class="i18n"><span class="hu">Euler-kör</span><span class="en">Euler circuit</span></span> létezik \(\Leftrightarrow\) minden csúcs fokszáma páros. Euler-út feltétele. Fleury-algoritmus.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Euler-kör</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Königsberg</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Paritás</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu"><span class="i18n"><span class="hu">König</span><span class="en">König</span></span>sberg</span><span class="en">Königsberg</span></span></span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Paritás</span><span class="en">Parity</span></span></span>
       </div>
       <div class="mt-3">
         <a href="{{ url_for('demos.dimat_ch10') }}" class="btn btn-sm px-3" style="background:#38bdf8;color:#000;border:none;font-weight:600">Launch →</a>
@@ -287,9 +291,9 @@
 
     <!-- II.3 -->
     <div class="ch-card stub">
-      <div class="ch-num" style="color:#38bdf8">II.3. fejezet</div>
-      <div class="ch-title">Hamilton körök és utak</div>
-      <div class="ch-desc">Hamilton-kör és Dirac-tétel (\(\delta(G)\geq n/2\)). Ore-tétel. Kockagráfok \(Q_n\) és Gray-kódok: szomszédos kódszavak pontosan 1 bitben különböznek. NP-teljességi megjegyzések.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.3. fejezet</span><span class="en">Chapter II.3</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu"><span class="i18n"><span class="hu">Hamilton</span><span class="en">Hamilton</span></span> körök és utak</span><span class="en">Hamilton circuits &amp; paths</span></span></div>
+      <div class="ch-desc">Hamilton-kör és <span class="i18n"><span class="hu">Dirac-tétel</span><span class="en">Dirac's theorem</span></span> (\(\delta(G)\geq n/2\)). Ore-tétel. <span class="i18n"><span class="hu">Kockagráf</span><span class="en">Cube graph</span></span>ok \(Q_n\) és <span class="i18n"><span class="hu">Gray-kód</span><span class="en">Gray code</span></span>ok: szomszédos kódszavak pontosan 1 bitben különböznek. NP-teljességi megjegyzések.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Hamilton</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Dirac-tétel</span>
@@ -303,9 +307,9 @@
 
     <!-- II.4 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.4. fejezet</div>
-      <div class="ch-title">Gráfok mátrixai</div>
-      <div class="ch-desc">Szomszédsági mátrix \(A\), csúcs-él incidenciamátrix \(B\), Laplace-mátrix \(L=D-A\). Hatványozás: \(A^k_{ij}\) = hossz-\(k\) séták száma \(i\)-ből \(j\)-be. Spektrum és sajátértékek.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.4. fejezet</span><span class="en">Chapter II.4</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Gráfok mátrixai</span><span class="en">Matrices of graphs</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Szomszédsági mátrix</span><span class="en">Adjacency matrix</span></span> \(A\), csúcs-él incidenciamátrix \(B\), <span class="i18n"><span class="hu">Laplace</span><span class="en">Laplacian</span></span>-mátrix \(L=D-A\). Hatványozás: \(A^k_{ij}\) = hossz-\(k\) séták száma \(i\)-ből \(j\)-be. <span class="i18n"><span class="hu">Spektrum</span><span class="en">Spectrum</span></span> és sajátértékek.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Szomszédsági mátrix</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Laplace</span>
@@ -318,12 +322,12 @@
 
     <!-- II.5 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.5. fejezet</div>
-      <div class="ch-title">Útkeres&odblac; algoritmusok</div>
-      <div class="ch-desc">Dijkstra algoritmusa nemnegatív súlyú gráfokban: prioritásos sorral \(O((V+E)\log V)\). Mohó stratégia, helyességbizonyítás. Bellman-Ford áttekintés.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.5. fejezet</span><span class="en">Chapter II.5</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Útkereső algoritmusok</span><span class="en">Shortest-path algorithms</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Dijkstra</span><span class="en">Dijkstra</span></span> algoritmusa nemnegatív súlyú gráfokban: prioritásos sorral \(O((V+E)\log V)\). <span class="i18n"><span class="hu">Mohó</span><span class="en">Greedy</span></span> stratégia, helyességbizonyítás. Bellman-Ford áttekintés.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Dijkstra</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Legrövidebb út</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Legrövidebb út</span><span class="en">Shortest path</span></span></span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Mohó</span>
       </div>
       <div class="mt-3">
@@ -333,13 +337,13 @@
 
     <!-- II.6 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.6. fejezet</div>
-      <div class="ch-title">Fák</div>
-      <div class="ch-desc">Fa: összefügg&odblac;, körmentes gráf, \(|E|=|V|-1\). Számozott fák száma: Cayley-képlet \(n^{n-2}\). Bináris fák és Catalan-számok. Rendezési algoritmusok bináris fán.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.6. fejezet</span><span class="en">Chapter II.6</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Fák</span><span class="en">Trees</span></span></div>
+      <div class="ch-desc">Fa: összefügg&odblac;, körmentes gráf, \(|E|=|V|-1\). Számozott fák száma: Cayley-képlet \(n^{n-2}\). Bináris fák és Catalan-számok. <span class="i18n"><span class="hu">Rendezés</span><span class="en">Sorting</span></span>i algoritmusok bináris fán.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Fák</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Cayley \(n^{n-2}\)</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Bináris fa</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Bináris fa</span><span class="en">Binary tree</span></span></span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Rendezés</span>
       </div>
       <div class="mt-3">
@@ -349,9 +353,9 @@
 
     <!-- II.7 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.7. fejezet</div>
-      <div class="ch-title">Feszít&odblac;fák</div>
-      <div class="ch-desc">Minimális feszít&odblac;fa: Kruskal-algoritmus (Union-Find) és Prim-algoritmus. Utazó ügynök metrikus gráfokban: MST-alapú 2-approximáció. Christofides-algoritmus.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.7. fejezet</span><span class="en">Chapter II.7</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Feszítőfák</span><span class="en">Spanning trees</span></span></div>
+      <div class="ch-desc">Minimális feszít&odblac;fa: <span class="i18n"><span class="hu">Kruskal</span><span class="en">Kruskal</span></span>-algoritmus (Union-Find) és Prim-algoritmus. <span class="i18n"><span class="hu">Utazó ügynök</span><span class="en">TSP</span></span> metrikus gráfokban: <span class="i18n"><span class="hu">MST</span><span class="en">MST</span></span>-alapú 2-approximáció. Christofides-algoritmus.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Kruskal</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">MST</span>
@@ -364,12 +368,12 @@
 
     <!-- II.8 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.8. fejezet</div>
-      <div class="ch-title">Gráfok izomorfizmusa</div>
-      <div class="ch-desc">Izomorfizmus: fok-sorozat, körök száma, spektrum mint szükséges feltételek. Fák kanonikus alakja és középpont-módszer. GI-probléma komplexitása.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.8. fejezet</span><span class="en">Chapter II.8</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Gráfok izomorfizmusa</span><span class="en">Graph isomorphism</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Izomorfizmus</span><span class="en">Isomorphism</span></span>: fok-sorozat, körök száma, spektrum mint szükséges feltételek. Fák kanonikus alakja és középpont-módszer. <span class="i18n"><span class="hu">GI-probléma</span><span class="en">GI problem</span></span> komplexitása.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Izomorfizmus</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Invariánsok</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Invariánsok</span><span class="en">Invariants</span></span></span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">GI-probléma</span>
       </div>
       <div class="mt-3">
@@ -379,14 +383,14 @@
 
     <!-- II.9 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.9. fejezet</div>
-      <div class="ch-title">Síkgráfok</div>
-      <div class="ch-desc">Kuratowski tétele: \(G\) síkbarajzolható \(\Leftrightarrow\) nem tartalmaz \(K_5\) vagy \(K_{3,3}\) részgráfot. Euler poliéder-formula: \(v-e+f=2\). Fullerének, \(C_{60}\). Négy-szín tétel.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.9. fejezet</span><span class="en">Chapter II.9</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Síkgráfok</span><span class="en">Planar graphs</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Kuratowski</span><span class="en">Kuratowski</span></span> tétele: \(G\) síkbarajzolható \(\Leftrightarrow\) nem tartalmaz \(K_5\) vagy \(K_{3,3}\) részgráfot. Euler poliéder-formula: \(v-e+f=2\). <span class="i18n"><span class="hu">Fullerén</span><span class="en">Fullerene</span></span>ek, \(C_{60}\). Négy-szín tétel.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Kuratowski</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Euler \(v-e+f=2\)</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Fullerén</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">4-szín tétel</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">4-szín tétel</span><span class="en">4-color theorem</span></span></span>
       </div>
       <div class="mt-3">
         <a href="{{ url_for('demos.dimat_ch17') }}" class="btn btn-sm px-3" style="background:#38bdf8;color:#000;border:none;font-weight:600">Launch →</a>
@@ -395,11 +399,11 @@
 
     <!-- II.10 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.10. fejezet</div>
-      <div class="ch-title">Gráfok színezései</div>
-      <div class="ch-desc">Csúcsszínezés, kromatikus szám \(\chi(G)\). Brooks-tétel. Élszínezés és Vizing-tétel. Ramsey-elmélet: \(R(s,t)\) Ramsey-számok, \(R(3,3)=6\), \(R(4,4)=18\). Probabilisztikus módszer.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.10. fejezet</span><span class="en">Chapter II.10</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Gráfok színezései</span><span class="en">Graph colorings</span></span></div>
+      <div class="ch-desc">Csúcsszínezés, kromatikus szám \(\chi(G)\). <span class="i18n"><span class="hu">Brooks</span><span class="en">Brooks</span></span>-tétel. Élszínezés és Vizing-tétel. <span class="i18n"><span class="hu">Ramsey</span><span class="en">Ramsey</span></span>-elmélet: \(R(s,t)\) Ramsey-számok, \(R(3,3)=6\), \(R(4,4)=18\). <span class="i18n"><span class="hu">Probabilisztikus</span><span class="en">Probabilistic</span></span> módszer.</div>
       <div class="ch-tags">
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Színezés</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Színezés</span><span class="en">Coloring</span></span></span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Ramsey</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Brooks</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Probabilisztikus</span>
@@ -411,9 +415,9 @@
 
     <!-- II.11 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.11. fejezet</div>
-      <div class="ch-title">Kétpólusú gráfok</div>
-      <div class="ch-desc">Páros gráfok és König tétele: \(\nu(G)=\tau(G)\). Párosítás, maximum párosítás, augmentáló utak. Hall-feltétel. Magyar módszer súlyozott hozzárendelési feladathoz.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.11. fejezet</span><span class="en">Chapter II.11</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Kétpólusú gráfok</span><span class="en">Bipartite graphs</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Páros gráf</span><span class="en">Bipartite graph</span></span>ok és König tétele: \(\nu(G)=\tau(G)\). <span class="i18n"><span class="hu">Párosítás</span><span class="en">Matching</span></span>, maximum párosítás, augmentáló utak. <span class="i18n"><span class="hu">Hall-feltétel</span><span class="en">Hall's condition</span></span>. Magyar módszer súlyozott hozzárendelési feladathoz.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Páros gráf</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">König</span>
@@ -427,9 +431,9 @@
 
     <!-- II.12 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.12. fejezet</div>
-      <div class="ch-title">Extremális gráfok</div>
-      <div class="ch-desc">Turán-tétel: \(K_{r+1}\)-mentes gráf maximális élszáma \(ex(n,K_{r+1})=\left(1-\tfrac{1}{r}\right)\tfrac{n^2}{2}\), a Turán-gráf \(T(n,r)\) az extrém eset. Kövári-Sós-Turán tétel.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.12. fejezet</span><span class="en">Chapter II.12</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Extremális gráfok</span><span class="en">Extremal graphs</span></span></div>
+      <div class="ch-desc"><span class="i18n"><span class="hu">Turán-tétel</span><span class="en">Turán's theorem</span></span>: \(K_{r+1}\)-mentes gráf maximális élszáma \(ex(n,K_{r+1})=\left(1-\tfrac{1}{r}\right)\tfrac{n^2}{2}\), a <span class="i18n"><span class="hu">Turán-gráf</span><span class="en">Turán graph</span></span> \(T(n,r)\) az extrém eset. Kövári-Sós-Turán tétel.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Turán-tétel</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Extremális</span>
@@ -442,12 +446,12 @@
 
     <!-- II.13 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.13. fejezet</div>
-      <div class="ch-title">Gráfok spektruma</div>
-      <div class="ch-desc">Szomszédsági mátrix sajátértékei: \(\lambda_1\geq\cdots\geq\lambda_n\). Karakterisztikus polinom \(p_G(\lambda)=\det(\lambda I - A)\). Reguláris gráfok spektruma, Lovász–Pelikán tétel: kétpólusú \(\Leftrightarrow\) spektrum szimmetrikus.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.13. fejezet</span><span class="en">Chapter II.13</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Gráfok spektruma</span><span class="en">Graph spectra</span></span></div>
+      <div class="ch-desc">Szomszédsági mátrix sajátértékei: \(\lambda_1\geq\cdots\geq\lambda_n\). Karakterisztikus polinom \(p_G(\lambda)=\det(\lambda I - A)\). Reguláris gráfok spektruma, <span class="i18n"><span class="hu">Lovász–Pelikán</span><span class="en">Lovász–Pelikán</span></span> tétel: kétpólusú \(\Leftrightarrow\) spektrum szimmetrikus.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Spektrum</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Sajátértékek</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Sajátértékek</span><span class="en">Eigenvalues</span></span></span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Lovász–Pelikán</span>
       </div>
       <div class="mt-3">
@@ -457,13 +461,13 @@
 
     <!-- II.14 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.14. fejezet</div>
-      <div class="ch-title">Hálózati folyamok</div>
-      <div class="ch-desc">Folyamhálózat: forrás, nyel&odblac;, kapacitás. Max-flow min-cut tétel (Ford-Fulkerson). Javítható utak BFS-sel (Edmonds-Karp). Alkalmazások: párosítás, szállítási feladat.</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.14. fejezet</span><span class="en">Chapter II.14</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu">Hálózati folyamok</span><span class="en">Network flows</span></span></div>
+      <div class="ch-desc">Folyamhálózat: forrás, nyel&odblac;, kapacitás. <span class="i18n"><span class="hu">Max-flow</span><span class="en">Max-flow</span></span> min-cut tétel (<span class="i18n"><span class="hu">Ford-Fulkerson</span><span class="en">Ford–Fulkerson</span></span>). Javítható utak BFS-sel (<span class="i18n"><span class="hu">Edmonds-Karp</span><span class="en">Edmonds–Karp</span></span>). Alkalmazások: párosítás, szállítási feladat.</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Max-flow</span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Ford-Fulkerson</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Min-cut</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Min-cut</span><span class="en">Min-cut</span></span></span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Edmonds-Karp</span>
       </div>
       <div class="mt-3">
@@ -473,14 +477,14 @@
 
     <!-- II.15 -->
     <div class="ch-card">
-      <div class="ch-num" style="color:#38bdf8">II.15. fejezet</div>
-      <div class="ch-title">Matroidok</div>
-      <div class="ch-desc">Matroid \((S,\mathcal{F})\): I1–I3 függetlenségi axiómák. Grafikus, uniform és partíció matroidok. Rangfüggvény \(r(X)\), körök, bázisok. Körök és bázisok min/max száma (DHLS-tétel).</div>
+      <div class="ch-num" style="color:#38bdf8"><span class="i18n"><span class="hu">II.15. fejezet</span><span class="en">Chapter II.15</span></span></div>
+      <div class="ch-title"><span class="i18n"><span class="hu"><span class="i18n"><span class="hu">Matroid</span><span class="en">Matroid</span></span>ok</span><span class="en">Matroids</span></span></div>
+      <div class="ch-desc">Matroid \((S,\mathcal{F})\): I1–I3 függetlenségi axiómák. Grafikus, uniform és partíció matroidok. <span class="i18n"><span class="hu">Rangfüggvény</span><span class="en">Rank function</span></span> \(r(X)\), körök, bázisok. Körök és bázisok min/max száma (DHLS-tétel).</div>
       <div class="ch-tags">
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Matroid</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Független halmazok</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Független halmazok</span><span class="en">Independent sets</span></span></span>
         <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Rangfüggvény</span>
-        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8">Körök & Bázisok</span>
+        <span class="ch-tag" style="background:#0a1f2e;color:#38bdf8"><span class="i18n"><span class="hu">Körök & Bázisok</span><span class="en">Circuits &amp; bases</span></span></span>
       </div>
       <div class="mt-3">
         <a href="{{ url_for('demos.dimat_ch23') }}" class="btn btn-sm px-3" style="background:#38bdf8;color:#000;border:none;font-weight:600">Launch →</a>
@@ -492,16 +496,16 @@
   <!-- PART III -->
   <div class="part-header">
     <i class="bi bi-journal-text" style="color:#a78bfa;font-size:1rem"></i>
-    <h5 style="color:#a78bfa">III. rész — Függelék</h5>
+    <h5 style="color:#a78bfa"><span class="i18n"><span class="hu">III. rész — <span class="i18n"><span class="hu">Függelék</span><span class="en">Appendix</span></span></span><span class="en">Part III — Appendix</span></span></h5>
   </div>
 
   <div class="ch-card">
     <div class="ch-num" style="color:#a78bfa">Függelék</div>
-    <div class="ch-title">Referencia-táblázatok</div>
-    <div class="ch-desc">Az \(\binom{x}{n}\) polinomok explicit alakja és koordinátái az \(\{\binom{x}{k}:k\le n\}\) bázisban. A \(P_k(n):=\sum_{i=1}^n i^k\) hatványösszeg-polinomok \(k=0,\ldots,12\)-ig. Parciális törtekre bontás módszertana.</div>
+    <div class="ch-title"><span class="i18n"><span class="hu">Referencia-táblázatok</span><span class="en">Reference tables</span></span></div>
+    <div class="ch-desc">Az \(\binom{x}{n}\) polinomok explicit alakja és koordinátái az \(\{\binom{x}{k}:k\le n\}\) bázisban. A \(P_k(n):=\sum_{i=1}^n i^k\) hatványösszeg-polinomok \(k=0,\ldots,12\)-ig. <span class="i18n"><span class="hu">Parciális törtek</span><span class="en">Partial fractions</span></span>re bontás módszertana.</div>
     <div class="ch-tags">
-      <span class="ch-tag" style="background:#1e1a2e;color:#a78bfa">Binomiális pol.</span>
-      <span class="ch-tag" style="background:#1e1a2e;color:#a78bfa">Hatványösszegek</span>
+      <span class="ch-tag" style="background:#1e1a2e;color:#a78bfa"><span class="i18n"><span class="hu">Binomiális pol.</span><span class="en">Binomial polys</span></span></span>
+      <span class="ch-tag" style="background:#1e1a2e;color:#a78bfa"><span class="i18n"><span class="hu">Hatványösszegek</span><span class="en">Power sums</span></span></span>
       <span class="ch-tag" style="background:#1e1a2e;color:#a78bfa">Parciális törtek</span>
     </div>
     <div class="mt-3">

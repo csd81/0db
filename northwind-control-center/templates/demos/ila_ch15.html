@@ -1,0 +1,651 @@
+{% extends "base.html" %}
+{% block title %}Diszkrét mat. VII — Gráfelmélet 2.{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#c084fc!important;}
+.ila-nav-link.active{color:#c084fc!important;border-bottom-color:#c084fc!important;}
+.def-box  {border-left:3px solid #c084fc;background:#130a1f;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.thm-box  {border-left:3px solid #7c3aed;background:#0c0714;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.ex-box   {border-left:3px solid #34d399;background:#041f10;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.info-box {background:#161b22;border:1px solid #21262d;padding:.75rem 1rem;border-radius:.4rem;margin:.7rem 0;}
+.step-row {display:flex;gap:1rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:baseline;flex-wrap:wrap;}
+.step-row:last-child{border-bottom:none;}
+.step-eq  {min-width:220px;color:#e2e8f0;font-size:.84rem;}
+.step-why {font-size:.7rem;color:#6b7280;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.prop-ok{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:.3rem;font-size:.73rem;font-weight:600;background:#041f10;border:1px solid #34d399;color:#34d399;margin:.1rem;}
+.prop-no{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:.3rem;font-size:.73rem;font-weight:600;background:#1a0000;border:1px solid #ef4444;color:#ef4444;margin:.1rem;}
+.prop-na{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:.3rem;font-size:.73rem;font-weight:600;background:#161b22;border:1px solid #374151;color:#6b7280;margin:.1rem;}
+.fl-step{background:#161b22;border:1px solid #21262d;border-radius:.35rem;padding:.5rem .8rem;margin:.25rem 0;font-size:.8rem;transition:border-color .2s,background .2s;}
+.fl-step.active{border-color:#c084fc;background:#130a1f;}
+.fl-step.done{border-color:#34d39955;opacity:.7;}
+.cmp-tbl{width:100%;font-size:.78rem;border-collapse:collapse;}
+.cmp-tbl th{background:#0c0714;color:#c084fc;padding:.45rem .65rem;border:1px solid #21262d;text-align:left;}
+.cmp-tbl td{padding:.4rem .65rem;border:1px solid #21262d;color:#e2e8f0;vertical-align:top;}
+.cmp-tbl tr:nth-child(even) td{background:#0d0714;}
+.katex{font-size:1em;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#c084fc">Diszkrét matematika VII — fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Gráfelmélet 2.</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2026</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(192,132,252,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-fa',this)"><i class="bi bi-diagram-3 me-1"></i>Fák</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-euler',this)"><i class="bi bi-bezier2 me-1"></i>Euler-tétel</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-fleury',this)"><i class="bi bi-arrow-repeat me-1"></i>Fleury</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-hamilton',this)"><i class="bi bi-circle me-1"></i>Hamilton-kör</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-osszefo',this)"><i class="bi bi-table me-1"></i>Összefoglaló</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════════ TAB 1: FÁK ══════════ -->
+<div id="tab-fa">
+  <h5 class="fw-bold mb-3" style="color:#c084fc">Fák</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#c084fc">1. Definíció — Fa</div>
+        <div class="small">Egy \(G\) gráfot <strong>fának</strong> hívunk, ha <em>összefüggő</em>, <em>körmentes</em> és <em>hurokélmentes</em>. (A hurokél maga is egy kör, így a hurokélmentesség elhagyható.)</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#7c3aed">5. Tétel — Fa és élszám</div>
+        <div class="small">Az alábbi állítások ekvivalensek hurokélmentes, \(n\) pontú \(G\)-re:
+        <ol class="mb-0 mt-1">
+          <li>\(G\) fa</li>
+          <li>\(G\) összefüggő és \(n-1\) éle van</li>
+          <li>\(G\) körmentes és \(n-1\) éle van</li>
+        </ol>
+        </div>
+      </div>
+      <div class="def-box mt-2">
+        <div class="lbl mb-1" style="color:#c084fc">6. Állítás — Levélpont</div>
+        <div class="small">Az 5. Tétel bármely feltétele esetén létezik <strong>fokszám-1 pont</strong> (levél) a gráfban. Bizonyítás: tekintsük a leghosszabb utat; végpontja csak az útba eső pontokba köthetne élt, de akkor kör keletkezne — tehát fokszáma 1.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#7c3aed">4. Tétel — Ekvivalens feltételek</div>
+        <div class="small">Az alábbi állítások ekvivalensek hurokélmentes \(G\)-re:
+        <ol class="mb-0 mt-1">
+          <li>\(G\) fa (összefüggő + körmentes)</li>
+          <li>Tetszőleges két pont között <em>pontosan egy út</em> vezet</li>
+          <li>\(G\) összefüggő, de tetszőleges élét elhagyva <em>két komponensre</em> esik szét</li>
+          <li>\(G\) körmentes, de tetszőleges új él hozzáadásakor <em>kör keletkezik</em></li>
+        </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="lbl mb-2" style="color:#c084fc">Interaktív fa-ellenőrző — kattints két csúcsra az él hozzáadásához/eltávolításához</div>
+    <canvas id="cvFa" width="540" height="240" style="border-radius:.4rem;background:#0d0e1f;cursor:crosshair;max-width:100%"></canvas>
+    <div id="faProps" class="mt-2 small"></div>
+    <div class="mt-2 d-flex gap-2 flex-wrap">
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #c084fc;color:#c084fc" onclick="faReset()">Visszaállít (fa)</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #374151;color:#9ca3af" onclick="faClear()">Élek törlése</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ TAB 2: EULER ══════════ -->
+<div id="tab-euler" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#c084fc">Euler-vonal és Euler-tétel</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#c084fc">7. Definíció — Vonal (trail)</div>
+        <div class="small">Séta, amelynek élei <em>páronként különbözők</em>. Zárt vonal: kezdő- és végpont azonos; nyílt vonal: különbözők.</div>
+      </div>
+      <div class="def-box mt-2">
+        <div class="lbl mb-1" style="color:#c084fc">8. Definíció — Euler-vonal</div>
+        <div class="small">Vonal, amely a gráf <em>összes</em> élét tartalmazza. Ha zárt: <strong>zárt Euler-vonal</strong>. Egy \(G\) gráf <strong>Euler-gráf</strong>, ha létezik benne zárt Euler-vonal.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#7c3aed">9. Tétel — Euler-tétel</div>
+        <div class="small">Legyen \(G\) izolált pontot nem tartalmazó gráf. Ekkor \(G\) Euler-gráf \(\iff\) \(G\) összefüggő és minden csúcsának fokszáma <strong>páros</strong>.</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#7c3aed">10. Következmény — Nyílt Euler-vonal</div>
+        <div class="small">\(G\)-ben létezik nyílt Euler-vonal \(\iff\) \(G\) összefüggő és <strong>pontosan két</strong> csúcsának fokszáma páratlan (ezek az Euler-vonal végpontjai).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Königsberg -->
+  <div class="ex-box mb-3">
+    <div class="lbl mb-1" style="color:#34d399">11. Példa — Königsbergi hidak (1736)</div>
+    <div class="small mb-2">A feladat: bejárható-e mind a 7 híd pontosan egyszer, visszatérve a kiindulópontba? A gráf 4 csúcsa a folyópart-szakaszokat/szigeteket, 7 éle a hidakat jelöli.</div>
+    <div class="row g-3 align-items-center">
+      <div class="col-auto">
+        <canvas id="cvKB" width="300" height="180" style="border-radius:.4rem;background:#0d0e1f;max-width:100%"></canvas>
+      </div>
+      <div class="col">
+        <div id="kbDeg" class="small"></div>
+        <div class="mt-2 small" style="color:#ef4444;font-weight:600">Mind a 4 csúcs fokszáma páratlan → nincs zárt Euler-vonal → a feladatnak nincs megoldása.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Euler checker -->
+  <div class="info-box">
+    <div class="lbl mb-2" style="color:#c084fc">Interaktív Euler-ellenőrző</div>
+    <div class="small mb-2 text-secondary">Kattints két csúcsra él hozzáadásához/eltávolításához. Az ellenőrző megmutatja, létezik-e Euler-vonal.</div>
+    <canvas id="cvEu" width="360" height="200" style="border-radius:.4rem;background:#0d0e1f;cursor:crosshair;max-width:100%"></canvas>
+    <div id="euDeg" class="mt-2 small"></div>
+    <div id="euVerdict" class="mt-1 fw-bold small"></div>
+    <div class="mt-2 d-flex gap-2">
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #c084fc;color:#c084fc" onclick="euReset()">Reset (Euler-gráf)</button>
+      <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #374151;color:#9ca3af" onclick="euClear()">Töröl</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ TAB 3: FLEURY ══════════ -->
+<div id="tab-fleury" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#c084fc">Fleury-algoritmus</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-5">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#c084fc">12. Definíció — Vágóél</div>
+        <div class="small">A \(G\) gráf egy \(e\) élét <strong>vágóélnek</strong> nevezzük, ha \(e\) elhagyásával valamely összefüggő komponens két komponensre esik szét.</div>
+      </div>
+      <div class="info-box mt-2">
+        <div class="lbl mb-1" style="color:#c084fc">14. Algoritmus — Fleury</div>
+        <div class="small">
+          <strong>1.</strong> Válassz tetszőleges \(v_0\) kezdőpontot.<br>
+          <strong>2.</strong> Az aktuális \(v_i\) pontból válassz élt, amelyre:<br>
+          &emsp;(a) még nincs bejárva, és<br>
+          &emsp;(b) <em>csak akkor vágóél</em>, ha nincs más lehetőség.<br>
+          <strong>3.</strong> Ismételd, amíg van bejáratlan él.
+        </div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#7c3aed">16. Tétel</div>
+        <div class="small">Ha \(G\) Euler-gráf és \(v_0\) nem izolált, akkor a Fleury-algoritmus zárt Euler-vonalat ad.</div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="info-box">
+        <div class="lbl mb-2" style="color:#c084fc">15. Példa — animáció (9 lépés)</div>
+        <canvas id="cvFleury" width="450" height="260" style="border-radius:.4rem;background:#0d0e1f;max-width:100%"></canvas>
+        <div id="flDesc" class="small mt-2" style="color:#c4b5fd;min-height:2em"></div>
+        <div id="flPath" class="small mt-1 text-secondary" style="font-family:monospace"></div>
+        <div class="mt-2 d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm" style="background:#7c3aed;color:#fff;border:none" onclick="flNext()">Következő lépés ▶</button>
+          <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #c084fc;color:#c084fc" onclick="flAuto()">Auto ⏩</button>
+          <button class="btn btn-sm" style="background:#0d0e1f;border:1px solid #374151;color:#9ca3af" onclick="flReset()">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step list -->
+  <div class="info-box">
+    <div class="lbl mb-2" style="color:#c084fc">Lépések</div>
+    <div id="flStepList" class="small"></div>
+  </div>
+</div>
+
+<!-- ══════════ TAB 4: HAMILTON ══════════ -->
+<div id="tab-hamilton" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#c084fc">Hamilton-kör</h5>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#c084fc">17. Definíció</div>
+        <div class="small">Egy \(G\) gráf körét <strong>Hamilton-körnek</strong> nevezzük, ha minden csúcsot pontosan egyszer tartalmaz. Olyan utat, amely minden csúcsot tartalmaz, <strong>Hamilton-útnak</strong> hívunk.</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#7c3aed">19. Tétel — Szükséges feltétel</div>
+        <div class="small">Ha \(G=(V,E)\)-ben létezik Hamilton-kör, akkor tetszőleges \(S\subseteq V\) (\(|S|=m\)) esetén a \(G-S\) gráf komponenseinek száma legfeljebb \(m\).</div>
+        <div class="small mt-1 text-secondary">Bizonyítás: az \(m\) kivett csúcs a Hamilton-kört legfeljebb \(m\) részre bontja.</div>
+      </div>
+      <div class="ex-box mt-2">
+        <div class="lbl mb-1" style="color:#34d399">20. Példa — nincs Hamilton-kör</div>
+        <div class="small">Ha \(S=\{a\}\) (egyetlen csúcs), és elhagyásakor 2 komponens keletkezik, akkor a 19. Tétel alapján nincs Hamilton-kör (\(1 < 2\) feltétel sérül).</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#7c3aed">21. Tétel — Dirac (elegendő feltétel)</div>
+        <div class="small">Legyen \(G\) egyszerű \(n\)-csúcsú gráf, \(n\ge3\). Ha minden csúcs fokszáma legalább \(\lceil n/2\rceil\), akkor \(G\)-ben létezik Hamilton-kör.
+        <br><br>
+        <em>Figyelem:</em> Ez <strong>elegendő, de nem szükséges</strong> feltétel — vannak gráfok, amelyek nem teljesítik Dirac feltételét, mégis van bennük Hamilton-kör.</div>
+      </div>
+      <div class="info-box mt-2">
+        <div class="lbl mb-2" style="color:#c084fc">Dirac-feltétel ellenőrző</div>
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+          <div>
+            <div class="lbl mb-1" style="color:#8892a4">Csúcsok száma (n)</div>
+            <input id="diracN" type="number" min="3" max="20" value="6" class="form-control form-control-sm" style="width:80px;background:#0d0e1f;border-color:#374151;color:#e2e8f0">
+          </div>
+          <div>
+            <div class="lbl mb-1" style="color:#8892a4">Min. fokszám (k)</div>
+            <input id="diracK" type="number" min="1" max="20" value="3" class="form-control form-control-sm" style="width:80px;background:#0d0e1f;border-color:#374151;color:#e2e8f0">
+          </div>
+          <div class="align-self-end">
+            <button class="btn btn-sm" style="background:#7c3aed;color:#fff;border:none" onclick="diracCheck()">Ellenőriz</button>
+          </div>
+        </div>
+        <div id="diracResult" class="small"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="ex-box">
+        <div class="lbl mb-1" style="color:#34d399">22. Példa — Dirac teljesül</div>
+        <div class="small">\(n=6\), minden pont fokszáma \(\ge3=n/2\). Dirac-tétel garantálja a Hamilton-kör létezését.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ex-box">
+        <div class="lbl mb-1" style="color:#34d399">23. Példa — Dirac nem teljesül, de van HC</div>
+        <div class="small">\(n=8\), vannak \(d=3 < n/2=4\) fokszámú csúcsok. A Dirac-feltétel nem teljesül, de a gráfban <em>mégis</em> létezik Hamilton-kör. Dirac elegendő, de nem szükséges.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box mt-3">
+    <div class="lbl mb-1" style="color:#fbbf24">Megjegyzés — NP-nehézség</div>
+    <div class="small">Hamilton-kör keresésére <strong>nincs ismert hatékony (polinom idejű) algoritmus</strong>, és Hamilton-kör létezésére nincs ismert szükséges és elégséges feltétel. Ez alapvetően különbözik az Euler-vonal esetétől, ahol a Fleury-algoritmus hatékony, és az Euler-tétel pontos karakterizációt ad.</div>
+  </div>
+</div>
+
+<!-- ══════════ TAB 5: ÖSSZEFOGLALÓ ══════════ -->
+<div id="tab-osszefo" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#c084fc">Összefoglaló</h5>
+
+  <table class="cmp-tbl mb-4">
+    <thead>
+      <tr>
+        <th style="width:18%">Fogalom</th>
+        <th>Fák</th>
+        <th>Euler-vonal</th>
+        <th>Hamilton-kör</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="fw-bold" style="color:#c084fc">Definíció</td>
+        <td>Összefüggő, körmentes, hurokélmentes gráf</td>
+        <td>Minden élt pontosan egyszer bejáró séta</td>
+        <td>Minden csúcsot pontosan egyszer tartalmazó kör</td>
+      </tr>
+      <tr>
+        <td class="fw-bold" style="color:#c084fc">Szükséges és elégséges feltétel</td>
+        <td>Összefüggő + \(n-1\) él; vagy körmentes + \(n-1\) él (5. Tétel)</td>
+        <td>Összefüggő + minden fokszám páros (zárt); pontosan 2 páratlan (nyílt)</td>
+        <td><span style="color:#ef4444">Nem ismert</span> szükséges és elégséges feltétel</td>
+      </tr>
+      <tr>
+        <td class="fw-bold" style="color:#c084fc">Szükséges feltétel</td>
+        <td>Van fokszám-1 pont (levél)</td>
+        <td>Összefüggőség + fokszám-paritás</td>
+        <td>\(S\) elhagyásával legfeljebb \(|S|\) komponens (19. Tétel)</td>
+      </tr>
+      <tr>
+        <td class="fw-bold" style="color:#c084fc">Elegendő feltétel</td>
+        <td>—</td>
+        <td>Euler-tétel (szükséges és elégséges)</td>
+        <td>Dirac: \(d(v)\ge n/2\) minden \(v\)-re (21. Tétel)</td>
+      </tr>
+      <tr>
+        <td class="fw-bold" style="color:#c084fc">Algoritmus</td>
+        <td>BFS/DFS fa-bejárás; levélleválasztásos bizonyítás</td>
+        <td>Fleury-algoritmus (vágóélkerülés)</td>
+        <td><span style="color:#ef4444">Nincs ismert hatékony algoritmus</span> (NP-nehéz)</td>
+      </tr>
+      <tr>
+        <td class="fw-bold" style="color:#c084fc">Példa</td>
+        <td>\(n\) csúcsú fa: \(n-1\) él, minden él vágóél</td>
+        <td>Königsbergi hidak (4 páratlan fokszám → nem Euler-gráf)</td>
+        <td>\(K_n\) teljes gráf: mindig van HC (\(d=n-1\ge n/2\))</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="def-box text-center py-3">
+        <div class="lbl mb-1" style="color:#c084fc">Kulcsszámok — Fák</div>
+        <div style="font-size:1.8rem;font-weight:900;color:#c084fc">\(n-1\)</div>
+        <div class="small text-secondary mt-1">élek száma \(n\)-csúcsú fában</div>
+        <div class="small mt-2">\(\sum d(v) = 2(n-1)\) — kézfogási tételből</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="thm-box text-center py-3">
+        <div class="lbl mb-1" style="color:#7c3aed">Kulcsszámok — Euler</div>
+        <div style="font-size:1.8rem;font-weight:900;color:#a78bfa">0 vagy 2</div>
+        <div class="small text-secondary mt-1">páratlan fokszámú csúcs száma</div>
+        <div class="small mt-2">0 → zárt Euler-vonal &nbsp;|&nbsp; 2 → nyílt Euler-vonal</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="thm-box text-center py-3">
+        <div class="lbl mb-1" style="color:#7c3aed">Kulcsszámok — Hamilton</div>
+        <div style="font-size:1.8rem;font-weight:900;color:#a78bfa">\(\lceil n/2\rceil\)</div>
+        <div class="small text-secondary mt-1">Dirac-küszöb (min. fokszám)</div>
+        <div class="small mt-2">Ha \(d(v)\ge\lceil n/2\rceil\) → HC garantált</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+// ── Shared ──────────────────────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('[id^="tab-"]').forEach(p=>p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  reRender(document.getElementById(id));
+}
+function reRender(el){
+  if(window.renderMathInElement) renderMathInElement(el,{
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+}
+
+// ── Graph utilities ──────────────────────────────────────────────────────────
+function isConnected(n, edges){
+  if(n===0) return true;
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  const vis=new Array(n).fill(false);
+  const q=[0]; vis[0]=true; let cnt=1;
+  while(q.length){const v=q.shift();for(const u of adj[v]) if(!vis[u]){vis[u]=true;cnt++;q.push(u);}}
+  return cnt===n;
+}
+function hasCycle(n, edges){
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach(([a,b],i)=>{adj[a].push({to:b,ei:i});adj[b].push({to:a,ei:i});});
+  const vis=new Array(n).fill(false);
+  function dfs(v,pe){
+    vis[v]=true;
+    for(const {to,ei} of adj[v]){
+      if(ei===pe) continue;
+      if(vis[to]) return true;
+      if(dfs(to,ei)) return true;
+    }
+    return false;
+  }
+  for(let i=0;i<n;i++) if(!vis[i]&&dfs(i,-1)) return true;
+  return false;
+}
+function drawNode(ctx,x,y,label,fill,stroke){
+  ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);
+  ctx.fillStyle=fill||'#1e2040';ctx.fill();
+  ctx.strokeStyle=stroke||'#c084fc';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#e2e8f0';ctx.font='bold 11px monospace';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x,y);
+}
+function drawEdge(ctx,x1,y1,x2,y2,color,width){
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+  ctx.strokeStyle=color||'#4a3060';ctx.lineWidth=width||1.5;ctx.stroke();
+}
+
+// ── TAB 1: FÁK ──────────────────────────────────────────────────────────────
+const FA_POS=[{x:110,y:120},{x:220,y:55},{x:330,y:55},{x:440,y:120},{x:330,y:185},{x:220,y:185}];
+let faEdges=[[0,1],[1,2],[2,3],[3,4],[4,5]]; // path = tree
+let faSel=-1;
+
+function faCheck(){
+  const n=FA_POS.length, e=faEdges.length;
+  const conn=isConnected(n,faEdges), cyclic=hasCycle(n,faEdges);
+  const isTree=conn&&!cyclic;
+  const edgeOk=e===n-1;
+  const el=document.getElementById('faProps');
+  const chip=(ok,t)=>`<span class="${ok?'prop-ok':'prop-no'}">${ok?'✓':'✗'} ${t}</span>`;
+  el.innerHTML=chip(conn,'Összefüggő')+chip(!cyclic,'Körmentes')+chip(edgeOk,`|E|=${e} = n−1=${n-1}`)
+    +`&nbsp;&nbsp;<strong style="color:${isTree?'#c084fc':'#ef4444'}">${isTree?'✓ Fa!':'✗ Nem fa'}</strong>`;
+}
+function faDraw(){
+  const cv=document.getElementById('cvFa'); if(!cv) return;
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height);
+  const n=FA_POS.length, e=faEdges.length;
+  const conn=isConnected(n,faEdges), cyclic=hasCycle(n,faEdges);
+  const isTree=conn&&!cyclic;
+  faEdges.forEach(([a,b])=>drawEdge(ctx,FA_POS[a].x,FA_POS[a].y,FA_POS[b].x,FA_POS[b].y,isTree?'#7c3aed':'#ef4444',2));
+  FA_POS.forEach((p,i)=>drawNode(ctx,p.x,p.y,i+1,(i===faSel?'#4a1d96':'#1a1040'),(i===faSel?'#e9d5ff':'#c084fc')));
+  faCheck();
+}
+function faReset(){faEdges=[[0,1],[1,2],[2,3],[3,4],[4,5]];faSel=-1;faDraw();}
+function faClear(){faEdges=[];faSel=-1;faDraw();}
+document.getElementById('cvFa')?.addEventListener('click',e=>{
+  const cv=document.getElementById('cvFa'),r=cv.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(cv.width/r.width),my=(e.clientY-r.top)*(cv.height/r.height);
+  let hit=-1;
+  FA_POS.forEach((p,i)=>{if(Math.hypot(p.x-mx,p.y-my)<18) hit=i;});
+  if(hit<0){faSel=-1;faDraw();return;}
+  if(faSel<0){faSel=hit;faDraw();return;}
+  if(faSel===hit){faSel=-1;faDraw();return;}
+  const a=Math.min(faSel,hit),b=Math.max(faSel,hit);
+  const idx=faEdges.findIndex(([x,y])=>x===a&&y===b);
+  if(idx>=0) faEdges.splice(idx,1); else faEdges.push([a,b]);
+  faSel=-1; faDraw();
+});
+
+// ── TAB 2: EULER ────────────────────────────────────────────────────────────
+// Königsberg: 4 nodes (A=0 left, B=1 right, C=2 top-island, D=3 bottom-island)
+const KB_POS=[{x:65,y:90,l:'A'},{x:235,y:90,l:'B'},{x:150,y:45,l:'C'},{x:150,y:135,l:'D'}];
+// edges: A-C×2, A-D×2, B-C×2, B-D×1 — degrees: A=4? No, need all odd
+// Classic: A-C×2, B-C×2, A-D×1, B-D×1, C-D×1 → d(A)=3,d(B)=3,d(C)=5,d(D)=3 ✓
+const KB_EDGES=[
+  {a:0,b:2,mul:2},{a:1,b:2,mul:2},{a:0,b:3,mul:1},{a:1,b:3,mul:1},{a:2,b:3,mul:1}
+];
+function drawKB(){
+  const cv=document.getElementById('cvKB');if(!cv)return;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+  KB_EDGES.forEach(({a,b,mul})=>{
+    const p1=KB_POS[a],p2=KB_POS[b];
+    const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.hypot(dx,dy);
+    const px=-dy/len,py=dx/len;
+    const offsets=mul===2?[-6,6]:[0];
+    offsets.forEach(off=>{
+      ctx.beginPath();
+      ctx.moveTo(p1.x+px*off,p1.y+py*off);
+      ctx.lineTo(p2.x+px*off,p2.y+py*off);
+      ctx.strokeStyle='#f97316';ctx.lineWidth=2;ctx.stroke();
+    });
+  });
+  const deg=[0,0,0,0];
+  KB_EDGES.forEach(({a,b,mul})=>{deg[a]+=mul;deg[b]+=mul;});
+  KB_POS.forEach((p,i)=>{
+    drawNode(ctx,p.x,p.y,p.l,'#1a0a00','#f97316');
+    ctx.fillStyle='#f97316';ctx.font='10px monospace';ctx.textAlign='center';
+    ctx.fillText('d='+deg[i],p.x,p.y+28);
+  });
+  const el=document.getElementById('kbDeg');if(el){
+    el.innerHTML='Fokszámok: '+KB_POS.map((p,i)=>{
+      const d=deg[i];
+      return `<span style="color:${d%2?'#ef4444':'#34d399'};font-weight:700">${p.l}: d=${d}</span>`;
+    }).join(' &nbsp; ');
+  }
+}
+
+// Interactive Euler checker — 5-node pentagon
+const EU_POS=(()=>{const r=80,cx=180,cy=100;return Array.from({length:5},(_, i)=>({
+  x:cx+r*Math.cos(i*2*Math.PI/5-Math.PI/2),
+  y:cy+r*Math.sin(i*2*Math.PI/5-Math.PI/2)
+}));})();
+// Default: Euler graph (all even degrees) — cycle + chord
+let euEdges=[[0,1],[1,2],[2,3],[3,4],[4,0],[0,2],[1,3]];
+let euSel=-1;
+function euDeg(){
+  const d=new Array(EU_POS.length).fill(0);
+  euEdges.forEach(([a,b])=>{d[a]++;d[b]++;});
+  return d;
+}
+function euCheck(){
+  const d=euDeg(),n=EU_POS.length;
+  const oddIdx=d.map((v,i)=>v%2?i:-1).filter(i=>i>=0);
+  const conn=isConnected(n,euEdges);
+  let verdict='',color='';
+  if(!conn){verdict='✗ Nem összefüggő → nincs Euler-vonal';color='#ef4444';}
+  else if(oddIdx.length===0){verdict='✓ Euler-gráf: zárt Euler-vonal létezik';color='#34d399';}
+  else if(oddIdx.length===2){verdict=`✓ Nyílt Euler-vonal létezik (végpontok: v${oddIdx[0]+1}, v${oddIdx[1]+1})`;color='#fbbf24';}
+  else{verdict=`✗ ${oddIdx.length} páratlan fokszámú pont → nincs Euler-vonal`;color='#ef4444';}
+  document.getElementById('euDeg').innerHTML='Fokszámok: '+d.map((v,i)=>`<span style="color:${v%2?'#ef4444':'#34d399'};font-weight:700">v${i+1}:${v}</span>`).join(' ');
+  document.getElementById('euVerdict').innerHTML=`<span style="color:${color}">${verdict}</span>`;
+}
+function euDraw(){
+  const cv=document.getElementById('cvEu');if(!cv)return;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+  euEdges.forEach(([a,b])=>drawEdge(ctx,EU_POS[a].x,EU_POS[a].y,EU_POS[b].x,EU_POS[b].y,'#7c3aed',2));
+  const d=euDeg();
+  EU_POS.forEach((p,i)=>drawNode(ctx,p.x,p.y,'v'+(i+1),(i===euSel?'#3b1f70':'#1a1040'),d[i]%2?'#ef4444':'#34d399'));
+  euCheck();
+}
+function euReset(){euEdges=[[0,1],[1,2],[2,3],[3,4],[4,0],[0,2],[1,3]];euSel=-1;euDraw();}
+function euClear(){euEdges=[];euSel=-1;euDraw();}
+document.getElementById('cvEu')?.addEventListener('click',e=>{
+  const cv=document.getElementById('cvEu'),r=cv.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(cv.width/r.width),my=(e.clientY-r.top)*(cv.height/r.height);
+  let hit=-1;
+  EU_POS.forEach((p,i)=>{if(Math.hypot(p.x-mx,p.y-my)<18) hit=i;});
+  if(hit<0){euSel=-1;euDraw();return;}
+  if(euSel<0){euSel=hit;euDraw();return;}
+  if(euSel===hit){euSel=-1;euDraw();return;}
+  const a=Math.min(euSel,hit),b=Math.max(euSel,hit);
+  const idx=euEdges.findIndex(([x,y])=>x===a&&y===b);
+  if(idx>=0) euEdges.splice(idx,1); else euEdges.push([a,b]);
+  euSel=-1;euDraw();
+});
+
+// ── TAB 3: FLEURY ───────────────────────────────────────────────────────────
+// Nodes: a=0,b=1,c=2,d=3,f=4,g=5,e=6
+const FL_POS=[
+  {x:120,y:155,l:'a'},{x:55,y:85,l:'b'},{x:55,y:225,l:'c'},
+  {x:185,y:60,l:'d'},{x:280,y:155,l:'f'},{x:390,y:85,l:'g'},{x:390,y:225,l:'e'}
+];
+// Edges: e1={a,b}, e2={b,c}, e3={a,c}, e4={a,d}, e5={d,f}, e6={a,f}, e7={f,g}, e8={e,f}, e9={e,g}
+const FL_EDGES=[
+  {a:0,b:1,lbl:'e₁'},{a:1,b:2,lbl:'e₂'},{a:0,b:2,lbl:'e₃'},
+  {a:0,b:3,lbl:'e₄'},{a:3,b:4,lbl:'e₅'},{a:0,b:4,lbl:'e₆'},
+  {a:4,b:5,lbl:'e₇'},{a:4,b:6,lbl:'e₈'},{a:5,b:6,lbl:'e₉'}
+];
+const FL_STEPS=[
+  {ei:3,from:0,to:3,desc:'e₄: a → d',note:'Bármelyik a-ból induló él választható.'},
+  {ei:4,from:3,to:4,desc:'e₅: d → f',note:'Egyetlen bejáratlan él d-ből.'},
+  {ei:6,from:4,to:5,desc:'e₇: f → g',note:'⚠ e₆ vágóél lenne — elkerüljük! e₇ vagy e₈ választható.'},
+  {ei:8,from:5,to:6,desc:'e₉: g → e',note:'Egyetlen bejáratlan él g-ből.'},
+  {ei:7,from:6,to:4,desc:'e₈: e → f',note:'Egyetlen bejáratlan él e-ből.'},
+  {ei:5,from:4,to:0,desc:'e₆: f → a',note:'Egyetlen bejáratlan él f-ből.'},
+  {ei:0,from:0,to:1,desc:'e₁: a → b',note:''},
+  {ei:1,from:1,to:2,desc:'e₂: b → c',note:'Egyetlen bejáratlan él b-ből.'},
+  {ei:2,from:2,to:0,desc:'e₃: c → a',note:'Zárt Euler-vonal kész! ✓'},
+];
+let flStep=-1, flUsed=new Set(), flCur=0, flAutoTimer=null;
+
+function flDraw(){
+  const cv=document.getElementById('cvFleury');if(!cv)return;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+  FL_EDGES.forEach(({a,b,lbl},i)=>{
+    const p1=FL_POS[a],p2=FL_POS[b];
+    let color='#2a2f4a',width=1.5;
+    if(flUsed.has(i)){color='#7c3aed55';width=1;}
+    else if(flStep>=0 && FL_STEPS[flStep]?.ei===i){color='#c084fc';width=3;}
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
+    ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();
+    // edge label
+    const mx=(p1.x+p2.x)/2+8,my=(p1.y+p2.y)/2-6;
+    ctx.fillStyle=flUsed.has(i)?'#4b3070':'#6b7280';ctx.font='10px monospace';
+    ctx.textAlign='center';ctx.fillText(lbl,mx,my);
+  });
+  FL_POS.forEach((p,i)=>{
+    const isCur=i===flCur&&flStep>=0;
+    drawNode(ctx,p.x,p.y,p.l,isCur?'#4a1d96':'#1a1040',isCur?'#e9d5ff':'#c084fc');
+  });
+  // path label
+  const pathEdges=FL_STEPS.slice(0,Math.max(0,flStep+1)).map(s=>FL_EDGES[s.ei].lbl);
+  document.getElementById('flPath').textContent=flStep<0?'W₀ = a (kiindulópont)':
+    'W'+FL_STEPS.slice(0,flStep+1).length+' = '+pathEdges.join(', ');
+  // description
+  const descEl=document.getElementById('flDesc');
+  if(flStep<0) descEl.textContent='Kezdőpont: a. Nyomj "Következő lépés"-t.';
+  else{
+    const s=FL_STEPS[flStep];
+    descEl.innerHTML=`<strong>${flStep+1}. lépés:</strong> ${s.desc}`+(s.note?` &nbsp;<span style="color:#9ca3af">${s.note}</span>`:'');
+  }
+  // step list
+  const sl=document.getElementById('flStepList');
+  sl.innerHTML=FL_STEPS.map((s,i)=>{
+    const cls=i===flStep?'fl-step active':i<flStep?'fl-step done':'fl-step';
+    return `<div class="${cls}"><span style="color:#c084fc;font-weight:700">${i+1}.</span> ${s.desc}${s.note?` <span style="color:#6b7280;font-size:.7rem">(${s.note})</span>`:''}`;
+  }).join('');
+}
+function flNext(){
+  if(flStep>=FL_STEPS.length-1) return;
+  flStep++;
+  flUsed.add(FL_STEPS[flStep].ei);
+  flCur=FL_STEPS[flStep].to;
+  flDraw();
+}
+function flReset(){
+  flStep=-1;flUsed=new Set();flCur=0;
+  clearInterval(flAutoTimer);flAutoTimer=null;
+  flDraw();
+}
+function flAuto(){
+  if(flAutoTimer){clearInterval(flAutoTimer);flAutoTimer=null;return;}
+  flAutoTimer=setInterval(()=>{
+    if(flStep>=FL_STEPS.length-1){clearInterval(flAutoTimer);flAutoTimer=null;return;}
+    flNext();
+  },900);
+}
+
+// ── TAB 4: HAMILTON — Dirac checker ─────────────────────────────────────────
+function diracCheck(){
+  const n=parseInt(document.getElementById('diracN').value)||6;
+  const k=parseInt(document.getElementById('diracK').value)||3;
+  const el=document.getElementById('diracResult');
+  const half=n/2;
+  const ok=k>=half;
+  const maxDeg=n-1;
+  const feasible=k<=maxDeg;
+  let html='';
+  html+=`<span class="${ok?'prop-ok':'prop-no'}">${ok?'✓':'✗'} d(v)=${k} ${ok?'≥':'<'} n/2=${half}</span> `;
+  if(!feasible) html+=`<span class="prop-no">✗ k=${k} > n−1=${maxDeg} (egyszerű gráfban nem lehetséges)</span>`;
+  html+=`<br><span style="color:${ok&&feasible?'#34d399':'#9ca3af'};font-weight:600;margin-top:.3rem;display:block">`;
+  if(!feasible) html+='Egyszerű gráfban a fokszám legfeljebb n−1 lehet.';
+  else if(ok) html+=`Dirac-feltétel teljesül: ${n}-csúcsú gráfban, ha minden csúcs fokszáma ≥ ${Math.ceil(half)}, garantált a Hamilton-kör.`;
+  else html+=`Dirac-feltétel NEM teljesül. Ez nem jelenti, hogy nincs Hamilton-kör — csak a tétel nem alkalmazható.`;
+  html+='</span>';
+  el.innerHTML=html;
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+function initAll(){
+  faDraw();
+  drawKB();
+  euDraw();
+  flDraw();
+  diracCheck();
+}
+setTimeout(initAll,400);
+</script>
+{% endblock %}

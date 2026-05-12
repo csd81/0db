@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+{% block title %}ILA 1. fejezet — Halmazelmélet{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link {
+  background:transparent!important;border:none!important;
+  border-bottom:2px solid transparent!important;color:#8892a4!important;
+  border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;
+}
+.ila-nav-link:hover{color:#a78bfa!important;}
+.ila-nav-link.active{color:#a78bfa!important;border-bottom-color:#a78bfa!important;}
+.def-box{background:#13141a;border-left:3px solid #a78bfa;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.thm-box{background:#13141a;border-left:3px solid #7c3aed;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.ex-box {background:#0f1a0f;border-left:3px solid #34d399;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.info-box{background:#13141a;border-radius:8px;border:1px solid rgba(167,139,250,.2);padding:1rem 1.25rem;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.op-btn{padding:.3rem .75rem;font-size:.74rem;font-weight:600;border:1px solid rgba(167,139,250,.3);
+  border-radius:.3rem;background:transparent;color:#8892a4;cursor:pointer;transition:all .15s;}
+.op-btn:hover{border-color:#a78bfa;color:#a78bfa;}
+.op-btn.active{background:rgba(167,139,250,.18);border-color:#a78bfa;color:#c4b5fd;}
+.pf-step{display:flex;gap:1.5rem;padding:.42rem 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:baseline;}
+.pf-step:last-child{border-bottom:none;}
+.pf-eq{min-width:260px;color:#e2e8f0;font-size:.85rem;}
+.pf-why{font-size:.72rem;color:#6b7280;line-height:1.4;}
+.law-grid{display:grid;grid-template-columns:1fr 200px;gap:.35rem 1rem;align-items:center;font-size:.79rem;padding:.38rem .5rem;border-bottom:1px solid rgba(255,255,255,.04);}
+.law-grid:last-child{border-bottom:none;}
+/* KaTeX size tuning */
+.katex { font-size: 1em; }
+.pf-eq .katex { font-size: 1.05em; }
+</style>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#a78bfa">ILA — 1. fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Halmazelmélet</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2025 &nbsp;|&nbsp; Szendrei Ágnes: Diszkrét matematika, Polygon, 2004</p>
+</div>
+
+<!-- ── Tab Nav ────────────────────────────────────────────────────────────── -->
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(167,139,250,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-al',this)"><i class="bi bi-collection me-1"></i>Alapfogalmak</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-re',this)"><i class="bi bi-diagram-2 me-1"></i>Részhalmaz</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-mu',this)"><i class="bi bi-intersect me-1"></i>Halmazműveletek</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-az',this)"><i class="bi bi-check2-square me-1"></i>Azonosságok</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-bi',this)"><i class="bi bi-pencil-square me-1"></i>Bizonyítások</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════════════════════ TAB 1: ALAPFOGALMAK ══════════════════════ -->
+<div id="tab-al">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Halmaz</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.8">
+        A <strong style="color:#a78bfa">halmaz</strong> alapfogalom — <em>nem definiáljuk</em>. Intuitívan: jól meghatározott, egymástól megkülönböztethető dolgok összessége.<br><br>
+        \(a \in A\) : <strong>a</strong> eleme az <strong>A</strong> halmaznak — szintén alapfogalom.
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Példák</div>
+      <div style="font-size:.81rem;color:#c4cdd8;line-height:2.2">
+        \(A = \{1, 5, 7\}\) &nbsp;→&nbsp; \(5 \in A,\quad 4 \notin A\)<br>
+        \(B = \{x \in \mathbb{R} : x \ge 3 \text{ és } x < 10\}\) &nbsp;→ \(3 \in B,\; 10 \notin B\)<br>
+        \(C = \{1, A, \{4\}\}\) &nbsp;→&nbsp; \(4 \notin C,\quad \{4\} \in C\)<br>
+        \(D = \{2, 4, 6, 8, \ldots\}\) &nbsp;(páros pozitív egészek)
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Egyenlőség &amp; Üres halmaz</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.8">
+        Az <strong>A</strong> és <strong>B</strong> halmazok <strong style="color:#a78bfa">egyenlőek</strong>, ha ugyanazok az elemeik:<br>
+        \[\{1,5,8\} = \{1,8,5\} = \{1,8,1,5\} \;\neq\; \big\{\{1\},\{5\},8\big\}\]
+        Azt a halmazt, amelynek nincs eleme, <strong style="color:#a78bfa">üres halmaznak</strong> hívjuk: \(\emptyset\).<br>
+        \(U\) — az univerzális halmaz (az összes vizsgált elem halmaza).
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="info-box mb-3">
+      <div class="lbl mb-3" style="color:#a78bfa">Számhalmazok jelölései</div>
+      <div style="display:flex;flex-direction:column;gap:.55rem">
+        <div style="display:flex;gap:1rem;align-items:center">
+          <span style="min-width:44px;font-size:1rem;color:#a78bfa;font-weight:700">\(\mathbb{R}\)</span>
+          <span style="font-size:.8rem;color:#c4cdd8">valós számok halmaza</span>
+        </div>
+        <div style="display:flex;gap:1rem;align-items:center">
+          <span style="min-width:44px;font-size:1rem;color:#a78bfa;font-weight:700">\(\mathbb{Q}\)</span>
+          <span style="font-size:.8rem;color:#c4cdd8">racionális számok — két egész szám hányadosaként felírható valós számok</span>
+        </div>
+        <div style="display:flex;gap:1rem;align-items:center">
+          <span style="min-width:44px;font-size:1rem;color:#a78bfa;font-weight:700">\(\mathbb{Z}\)</span>
+          <span style="font-size:.8rem;color:#c4cdd8">egész számok halmaza</span>
+        </div>
+        <div style="display:flex;gap:1rem;align-items:center">
+          <span style="min-width:44px;font-size:1rem;color:#a78bfa;font-weight:700">\(\mathbb{N}\)</span>
+          <span style="font-size:.8rem;color:#c4cdd8">pozitív egész számok: \(\mathbb{N} = \{1, 2, 3, 4, \ldots\}\)</span>
+        </div>
+        <div style="display:flex;gap:1rem;align-items:center">
+          <span style="min-width:44px;font-size:1rem;color:#a78bfa;font-weight:700">\(\mathbb{N}_0\)</span>
+          <span style="font-size:.8rem;color:#c4cdd8">nemnegatív egész számok: \(\mathbb{N}_0 = \{0, 1, 2, 3, \ldots\}\)</span>
+        </div>
+      </div>
+      <div style="margin-top:.75rem;padding-top:.65rem;border-top:1px solid rgba(167,139,250,.15);font-size:.82rem;color:#8892a4">
+        Összefüggés: \(\mathbb{N} \subset \mathbb{N}_0 \subset \mathbb{Z} \subset \mathbb{Q} \subset \mathbb{R}\)
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="lbl mb-3" style="color:#a78bfa">Venn-diagram — A az U-ban</div>
+      <div style="display:flex;justify-content:center">
+        <svg width="260" height="155" viewBox="0 0 260 155">
+          <rect x="5" y="5" width="250" height="145" rx="6" fill="none" stroke="#374151" stroke-width="1.5"/>
+          <text x="238" y="22" fill="#6b7280" font-size="13" font-family="Georgia,serif">U</text>
+          <circle cx="125" cy="80" r="52" fill="rgba(167,139,250,.18)" stroke="#a78bfa" stroke-width="2"/>
+          <text x="115" y="86" fill="#e2e8f0" font-size="19" font-family="Georgia,serif" font-weight="bold">A</text>
+        </svg>
+      </div>
+      <div style="font-size:.72rem;color:#6b7280;text-align:center;margin-top:.3rem">Minden halmaz az \(U\) univerzális halmazban ábrázolható</div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════ TAB 2: RÉSZHALMAZ ══════════════════════ -->
+<div id="tab-re" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Részhalmaz</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.8">
+        Azt mondjuk, hogy <strong>A</strong> <strong style="color:#a78bfa">részhalmaza</strong> B-nek, ha A minden eleme eleme B-nek is.<br>
+        Jelölés: \(A \subseteq B\) &nbsp;(vagy \(B \supseteq A\))
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Valódi részhalmaz</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.8">
+        <strong>A</strong> <strong style="color:#a78bfa">valódi részhalmaza</strong> B-nek, ha \(A \subseteq B\) és \(A \neq B\).<br>
+        Jelölés: \(A \subset B\)<br>
+        <span style="color:#6b7280;font-size:.74rem">⚠ Néhány könyv az \(A \subset B\) jelölést a részhalmaz (nem valódi) jelölésére is használja.</span>
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Példa</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:2.2">
+        \(\{1,3,5\} \subseteq \{1,2,3,4,5\}\), &nbsp;sőt&nbsp; \(\{1,3,5\} \subset \{1,2,3,4,5\}\)<br>
+        De &nbsp;\(\{1,2,3,4,5\} \not\subseteq \{1,3,5\}\)
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Részhalmaz tulajdonságai</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:2">
+        Tetszőleges \(A, B, C\) halmazokra:
+        <ol style="margin:.4rem 0 0 1.1rem;padding:0">
+          <li>\(\emptyset \subseteq A\) &nbsp;és&nbsp; \(A \subseteq A\)</li>
+          <li>ha \(A \subseteq B\) és \(B \subseteq C\), akkor \(A \subseteq C\) &nbsp;<span style="color:#6b7280;font-size:.73rem">(tranzitivitás)</span></li>
+          <li>\(A = B \;\Longleftrightarrow\; A \subseteq B \text{ és } B \subseteq A\) &nbsp;<span style="color:#6b7280;font-size:.73rem">(antiszimmetria)</span></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Diszjunkt halmazok</div>
+      <div style="font-size:.82rem;color:#c4cdd8">
+        Az <strong>A</strong> és <strong>B</strong> halmazok <strong style="color:#a78bfa">diszjunktak</strong>, ha \(A \cap B = \emptyset\).
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="info-box mb-3">
+      <div class="lbl mb-3" style="color:#a78bfa">\(A \subseteq B\) — Venn-diagram</div>
+      <div style="display:flex;justify-content:center">
+        <svg width="260" height="165" viewBox="0 0 260 165">
+          <rect x="5" y="5" width="250" height="155" rx="6" fill="none" stroke="#374151" stroke-width="1.5"/>
+          <text x="238" y="22" fill="#6b7280" font-size="13" font-family="Georgia,serif">U</text>
+          <circle cx="138" cy="88" r="63" fill="rgba(124,58,237,.15)" stroke="#7c3aed" stroke-width="2"/>
+          <circle cx="125" cy="88" r="36" fill="rgba(167,139,250,.28)" stroke="#a78bfa" stroke-width="2"/>
+          <text x="113" y="94" fill="#e2e8f0" font-size="16" font-family="Georgia,serif" font-weight="bold">A</text>
+          <text x="170" y="72" fill="#c4b5fd" font-size="18" font-family="Georgia,serif" font-weight="bold">B</text>
+        </svg>
+      </div>
+      <div style="font-size:.72rem;color:#6b7280;text-align:center;margin-top:.3rem">Ha \(A \subseteq B\), akkor \(A\) belül van \(B\)-ben</div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Hatványhalmaz</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.8">
+        Az <strong>A</strong> halmaz összes részhalmazainak halmazát <strong>A</strong> <strong style="color:#a78bfa">hatványhalmazának</strong> hívjuk.<br>
+        Jelölés: \(\mathcal{P}(A)\)
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Példa — Hatványhalmaz</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:2">
+        \(A = \{a, b, c\}\)<br>
+        \(\mathcal{P}(A) = \bigl\{\,\emptyset,\,\{a\},\,\{b\},\,\{c\},\,\{a,b\},\,\{a,c\},\,\{b,c\},\,\{a,b,c\}\,\bigr\}\)<br>
+        Ha \(|A| = n\), akkor \(|\mathcal{P}(A)| = 2^n\).<br>
+        <span style="color:#6b7280;font-size:.73rem">Jelen esetben: \(2^3 = 8\) elem ✓</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════ TAB 3: HALMAZMŰVELETEK ══════════════════════ -->
+<div id="tab-mu" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="lbl mb-3" style="color:#a78bfa">Interaktív Venn-diagram</div>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button class="op-btn active" onclick="selOp('union',this)">\(A \cup B\) &nbsp;unió</button>
+      <button class="op-btn" onclick="selOp('isect',this)">\(A \cap B\) &nbsp;metszet</button>
+      <button class="op-btn" onclick="selOp('dab',this)">\(A \setminus B\) &nbsp;különbség</button>
+      <button class="op-btn" onclick="selOp('dba',this)">\(B \setminus A\)</button>
+      <button class="op-btn" onclick="selOp('symd',this)">\(A \mathbin{\triangle} B\) &nbsp;szimm. különbség</button>
+      <button class="op-btn" onclick="selOp('comp',this)">\(\overline{A}\) &nbsp;komplemens</button>
+    </div>
+    <canvas id="venn" width="400" height="230"
+      style="display:block;border-radius:8px;border:1px solid rgba(167,139,250,.15);background:#0d1117"></canvas>
+
+    <div class="def-box mt-3">
+      <div class="lbl mb-1" style="color:#a78bfa" id="vn-title-wrap"></div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.65" id="vn-def-wrap"></div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="lbl mb-3" style="color:#a78bfa">Összefoglalás</div>
+    <div style="display:flex;flex-direction:column;gap:.45rem">
+      <div class="info-box" style="padding:.6rem 1rem">
+        <div style="font-size:.71rem;font-weight:700;color:#a78bfa;margin-bottom:.3rem">\(A \cup B\) — Unió</div>
+        <div style="font-size:.82rem;color:#c4cdd8">\(\{x \in U : x \in A \;\text{vagy}\; x \in B\}\)</div>
+      </div>
+      <div class="info-box" style="padding:.6rem 1rem">
+        <div style="font-size:.71rem;font-weight:700;color:#a78bfa;margin-bottom:.3rem">\(A \cap B\) — Metszet</div>
+        <div style="font-size:.82rem;color:#c4cdd8">\(\{x \in U : x \in A \;\text{és}\; x \in B\}\)</div>
+      </div>
+      <div class="info-box" style="padding:.6rem 1rem">
+        <div style="font-size:.71rem;font-weight:700;color:#a78bfa;margin-bottom:.3rem">\(A \setminus B\) — Különbség</div>
+        <div style="font-size:.82rem;color:#c4cdd8">\(\{x \in U : x \in A \;\text{és}\; x \notin B\}\)</div>
+      </div>
+      <div class="info-box" style="padding:.6rem 1rem">
+        <div style="font-size:.71rem;font-weight:700;color:#a78bfa;margin-bottom:.3rem">\(A \mathbin{\triangle} B\) — Szimmetrikus különbség</div>
+        <div style="font-size:.82rem;color:#c4cdd8">
+          \(\{x \in A \cup B : x \notin A \cap B\}\)<br>
+          <span style="color:#6b7280;font-size:.78rem">\(= (A \setminus B) \cup (B \setminus A) = (A \cap \overline{B}) \cup (\overline{A} \cap B)\)</span>
+        </div>
+      </div>
+      <div class="info-box" style="padding:.6rem 1rem">
+        <div style="font-size:.71rem;font-weight:700;color:#a78bfa;margin-bottom:.3rem">\(\overline{A}\) — Komplemens</div>
+        <div style="font-size:.82rem;color:#c4cdd8">\(\{x \in U : x \notin A\}\)</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════ TAB 4: AZONOSSÁGOK ══════════════════════ -->
+<div id="tab-az" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="lbl mb-2" style="color:#a78bfa">Halmaz-azonosságok (tetszőleges A, B, C-re)</div>
+    <div class="info-box mb-3">
+      <div style="display:grid;grid-template-columns:1fr 190px;gap:.35rem 1rem;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;padding:.3rem .5rem;border-bottom:1px solid rgba(167,139,250,.2)">
+        <div>Azonosság</div><div>Tulajdonság</div>
+      </div>
+      <div class="law-grid"><div style="color:#c4cdd8">\(A \cap A = A\)</div><div style="color:#6b7280">idempotencia</div></div>
+      <div class="law-grid"><div style="color:#c4cdd8">\(A \cap B = B \cap A\)</div><div style="color:#6b7280">kommutativitás</div></div>
+      <div class="law-grid"><div style="color:#c4cdd8">\((A \cap B) \cap C = A \cap (B \cap C)\)</div><div style="color:#6b7280">asszociativitás</div></div>
+      <div class="law-grid"><div style="color:#c4cdd8">\((A \cup B) \cap A = A\)</div><div style="color:#6b7280">abszorptivitás</div></div>
+      <div class="law-grid" style="background:rgba(167,139,250,.06)"><div style="color:#a78bfa">\((A \cup B) \cap C = (A \cap C) \cup (B \cap C)\)</div><div style="color:#a78bfa">disztributivitás</div></div>
+      <div class="law-grid"><div style="color:#c4cdd8">\(A \cup A = A\)</div><div style="color:#6b7280">idempotencia</div></div>
+      <div class="law-grid"><div style="color:#c4cdd8">\(A \cup B = B \cup A\)</div><div style="color:#6b7280">kommutativitás</div></div>
+      <div class="law-grid"><div style="color:#c4cdd8">\((A \cup B) \cup C = A \cup (B \cup C)\)</div><div style="color:#6b7280">asszociativitás</div></div>
+      <div class="law-grid"><div style="color:#c4cdd8">\((A \cap B) \cup A = A\)</div><div style="color:#6b7280">abszorptivitás</div></div>
+      <div class="law-grid" style="background:rgba(167,139,250,.06)"><div style="color:#a78bfa">\((A \cap B) \cup C = (A \cup C) \cap (B \cup C)\)</div><div style="color:#a78bfa">disztributivitás</div></div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">De Morgan azonosságok</div>
+      <div style="font-size:.85rem;color:#c4cdd8;line-height:2.2">
+        \[\overline{A \cap B} = \overline{A} \cup \overline{B}\]
+        \[\overline{A \cup B} = \overline{A} \cap \overline{B}\]
+        <span style="color:#6b7280;font-size:.76rem">A metszet komplementere = komplementek uniója, és fordítva.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="thm-box mb-3">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Különbség és szimm. különbség</div>
+      <div style="font-size:.85rem;color:#c4cdd8;line-height:2.2">
+        \[A \setminus B = A \cap \overline{B}\]
+        \[A \mathbin{\triangle} B = (A \cup B) \setminus (A \cap B) = (A \setminus B) \cup (B \setminus A) = (A \cap \overline{B}) \cup (\overline{A} \cap B)\]
+      </div>
+    </div>
+
+    <div class="info-box mb-3">
+      <div class="lbl mb-3" style="color:#a78bfa">Alaptulajdonságok</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .8rem;font-size:.85rem;color:#c4cdd8">
+        <div>\(\overline{\overline{A}} = A\)</div><div></div>
+        <div>\(A \cap \overline{A} = \emptyset\)</div><div>\(A \cup \overline{A} = U\)</div>
+        <div>\(A \cap U = A\)</div><div>\(A \cup U = U\)</div>
+        <div>\(A \cap \emptyset = \emptyset\)</div><div>\(A \cup \emptyset = A\)</div>
+      </div>
+    </div>
+
+    <div class="thm-box mb-3">
+      <div class="lbl mb-2" style="color:#7c3aed">Részhalmaz-jellemzések (\(A \subseteq B\) egyenértékű feltételei)</div>
+      <div style="font-size:.85rem;color:#c4cdd8;line-height:2.2">
+        \(A \subseteq B \;\Longleftrightarrow\; A \cup B = B\)<br>
+        \(A \subseteq B \;\Longleftrightarrow\; A \cap B = A\)<br>
+        \(A \subseteq B \;\Longleftrightarrow\; A \cap \overline{B} = \emptyset\)
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Indexelt halmazok</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.9">
+        Legyen \(I\) indexhalmaz, \(A_i \subseteq U\) minden \(i \in I\)-re. Ekkor:
+        \[\bigcap_{i \in I} A_i = \{x \in U : x \in A_i \text{ minden } i \in I\text{-re}\}\]
+        \[\bigcup_{i \in I} A_i = \{x \in U : x \in A_i \text{ valamely } i \in I\text{-re}\}\]
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════ TAB 5: BIZONYÍTÁSOK ══════════════════════ -->
+<div id="tab-bi" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="lbl mb-2" style="color:#a78bfa">1. Bizonyítás — Venn-diagrammal</div>
+    <div class="ex-box mb-3">
+      <div style="font-size:.82rem;font-weight:700;color:#c4cdd8;margin-bottom:.5rem">
+        Mutassuk meg: \((A \cap B) \cup C = (A \cup C) \cap (B \cup C)\)
+      </div>
+      <div style="font-size:.79rem;color:#8892a4;line-height:1.75">
+        Lépésről lépésre Venn-diagrammal (az előadás 15–18. diái):<br>
+        1.&nbsp; Jelöljük be \(A \cap B\)-t (a bal körök metszete)<br>
+        2.&nbsp; Az \((A \cap B) \cup C\) területe = bal oldal<br>
+        3.&nbsp; Jelöljük be \(A \cup C\)-t (A és C körök tele)<br>
+        4.&nbsp; Jelöljük be \(B \cup C\)-t (B és C körök tele)<br>
+        5.&nbsp; \((A \cup C) \cap (B \cup C)\) metszete = azonos terület a bal oldallal \(\blacksquare\)
+      </div>
+    </div>
+
+    <div class="lbl mb-2" style="color:#a78bfa">2. Bizonyítás — Algebrai</div>
+    <div class="info-box">
+      <div style="font-size:.82rem;font-weight:700;color:#c4cdd8;margin-bottom:.85rem">Mutassuk meg: \((A \cup B) \setminus C = (A \setminus C) \cup (B \setminus C)\)</div>
+      <div class="pf-step">
+        <div class="pf-eq">\((A \cup B) \setminus C\)</div><div></div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(= (A \cup B) \cap \overline{C}\)</div>
+        <div class="pf-why">\(A \setminus X = A \cap \overline{X}\)</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(= (A \cap \overline{C}) \cup (B \cap \overline{C})\)</div>
+        <div class="pf-why">disztributivitás</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq" style="color:#a78bfa">\(= (A \setminus C) \cup (B \setminus C) \quad\blacksquare\)</div>
+        <div class="pf-why">\(A \cap \overline{X} = A \setminus X\) visszaalakítva</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="lbl mb-2" style="color:#a78bfa">3. Bizonyítás — Algebrai (hosszabb)</div>
+    <div class="info-box">
+      <div style="font-size:.82rem;font-weight:700;color:#c4cdd8;margin-bottom:.5rem">Mutassuk meg: \(A \mathbin{\triangle} (A \mathbin{\triangle} B) = B\)</div>
+      <div style="font-size:.78rem;color:#6b7280;margin-bottom:.75rem">Felhasználjuk: \(X \mathbin{\triangle} Y = (X \cap \overline{Y}) \cup (\overline{X} \cap Y)\)</div>
+      <div class="pf-step">
+        <div class="pf-eq">Legyen \(X = A \mathbin{\triangle} B\)</div><div class="pf-why">rövidítés</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(X = (A \cap \overline{B}) \cup (\overline{A} \cap B)\)</div>
+        <div class="pf-why">\(\triangle\) definíciója</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(\overline{X} = (\overline{A} \cup B) \cap (A \cup \overline{B})\)</div>
+        <div class="pf-why">de Morgan kétszer</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(A \cap \overline{X} = (\overline{A} \cap B \cap A) \cup (A \cap A \cap \overline{B})\)</div>
+        <div class="pf-why">kifejtés disztributivitással</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(\phantom{A \cap \overline{X}\,}= \emptyset \cup (A \cap \overline{B}) = A \cap \overline{B}\)</div>
+        <div class="pf-why">\(A \cap \overline{A} = \emptyset\)</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(\overline{A} \cap X = (\overline{A} \cap A \cap \overline{B}) \cup (\overline{A} \cap \overline{A} \cap B)\)</div>
+        <div class="pf-why">kifejtés</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(\phantom{\overline{A} \cap X\,}= \emptyset \cup (\overline{A} \cap B) = \overline{A} \cap B\)</div>
+        <div class="pf-why">\(\overline{A} \cap A = \emptyset\)</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(A \mathbin{\triangle} X = (A \cap \overline{B}) \cup (\overline{A} \cap B)\)</div>
+        <div class="pf-why">összegyűjtve</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(\phantom{A \mathbin{\triangle} X\,}= (A \cup \overline{A}) \cap B\)</div>
+        <div class="pf-why">disztributivitás</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq">\(\phantom{A \mathbin{\triangle} X\,}= U \cap B\)</div>
+        <div class="pf-why">\(A \cup \overline{A} = U\)</div>
+      </div>
+      <div class="pf-step">
+        <div class="pf-eq" style="color:#a78bfa">\(= B \quad\blacksquare\)</div>
+        <div class="pf-why">\(U \cap B = B\)</div>
+      </div>
+      <div style="margin-top:.75rem;padding-top:.6rem;border-top:1px solid rgba(167,139,250,.15);font-size:.78rem;color:#6b7280;line-height:1.6">
+        <strong style="color:#a78bfa">Következmény:</strong> Ha \(C = A \mathbin{\triangle} B\), akkor \(A \mathbin{\triangle} C = B\) — azaz \(\triangle\) "visszacsinálható". Minden elem saját inverze a \((\mathcal{P}(U),\, \triangle,\, \emptyset)\) Abel-csoportban.
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- /pt-4 -->
+
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(p => p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Venn canvas ───────────────────────────────────────────────────────────────
+const VW = 400, VH = 230;
+const CA = {x: 148, y: 115, r: 88};
+const CB = {x: 252, y: 115, r: 88};
+const PURPLE = 'rgba(167,139,250,';
+
+function cA(c) { c.beginPath(); c.arc(CA.x, CA.y, CA.r, 0, Math.PI*2); }
+function cB(c) { c.beginPath(); c.arc(CB.x, CB.y, CB.r, 0, Math.PI*2); }
+
+function drawVenn(op) {
+  const canvas = document.getElementById('venn');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, VW, VH);
+
+  ctx.save();
+  switch (op) {
+    case 'union':
+      ctx.fillStyle = PURPLE + '0.42)';
+      cA(ctx); ctx.fill();
+      cB(ctx); ctx.fill();
+      break;
+    case 'isect':
+      cA(ctx); ctx.clip();
+      ctx.fillStyle = PURPLE + '0.6)';
+      cB(ctx); ctx.fill();
+      break;
+    case 'dab':
+      ctx.fillStyle = PURPLE + '0.52)';
+      cA(ctx); ctx.fill();
+      ctx.globalCompositeOperation = 'destination-out';
+      cB(ctx); ctx.fill();
+      break;
+    case 'dba':
+      ctx.fillStyle = PURPLE + '0.52)';
+      cB(ctx); ctx.fill();
+      ctx.globalCompositeOperation = 'destination-out';
+      cA(ctx); ctx.fill();
+      break;
+    case 'symd': {
+      const tmp = document.createElement('canvas');
+      tmp.width = VW; tmp.height = VH;
+      const tc = tmp.getContext('2d');
+      tc.fillStyle = 'rgb(167,139,250)';
+      tc.globalCompositeOperation = 'xor';
+      tc.beginPath(); tc.arc(CA.x, CA.y, CA.r, 0, Math.PI*2); tc.fill();
+      tc.beginPath(); tc.arc(CB.x, CB.y, CB.r, 0, Math.PI*2); tc.fill();
+      ctx.globalAlpha = 0.48;
+      ctx.drawImage(tmp, 0, 0);
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case 'comp':
+      ctx.fillStyle = PURPLE + '0.35)';
+      ctx.beginPath();
+      ctx.rect(4, 4, VW - 8, VH - 8);
+      ctx.arc(CA.x, CA.y, CA.r, 0, Math.PI * 2, true);
+      ctx.fill();
+      break;
+  }
+  ctx.restore();
+
+  ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2;
+  cA(ctx); ctx.stroke();
+  cB(ctx); ctx.stroke();
+  ctx.strokeStyle = '#374151'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(4, 4, VW - 8, VH - 8);
+  ctx.font = 'bold 18px Georgia,serif'; ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('A', CA.x - 68, CA.y - 63);
+  ctx.fillText('B', CB.x + 50, CB.y - 63);
+  ctx.font = '13px Georgia,serif'; ctx.fillStyle = '#6b7280';
+  ctx.fillText('U', VW - 22, 22);
+}
+
+const OP_META = {
+  union: { t: String.raw`\(A \cup B\) — Unió`,
+           d: String.raw`A és B <strong style="color:#a78bfa">uniója</strong>: \(\{x \in U : x \in A \text{ vagy } x \in B\}\)` },
+  isect: { t: String.raw`\(A \cap B\) — Metszet`,
+           d: String.raw`A és B <strong style="color:#a78bfa">metszete</strong>: \(\{x \in U : x \in A \text{ és } x \in B\}\)` },
+  dab:   { t: String.raw`\(A \setminus B\) — Különbség`,
+           d: String.raw`<strong style="color:#a78bfa">Különbség</strong>: \(\{x \in U : x \in A \text{ és } x \notin B\}\)` },
+  dba:   { t: String.raw`\(B \setminus A\) — Különbség`,
+           d: String.raw`\(\{x \in U : x \in B \text{ és } x \notin A\}\)` },
+  symd:  { t: String.raw`\(A \mathbin{\triangle} B\) — Szimmetrikus különbség`,
+           d: String.raw`<strong style="color:#a78bfa">Szimm. különbség</strong>: \((A \setminus B) \cup (B \setminus A)\) — ami pontosan az egyikben van, a másikban nem.` },
+  comp:  { t: String.raw`\(\overline{A}\) — Komplemens`,
+           d: String.raw`A <strong style="color:#a78bfa">komplementere</strong>: \(\{x \in U : x \notin A\}\)` },
+};
+
+function selOp(op, btn) {
+  document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const tw = document.getElementById('vn-title-wrap');
+  const dw = document.getElementById('vn-def-wrap');
+  tw.innerHTML = OP_META[op].t;
+  dw.innerHTML = OP_META[op].d;
+  if (window.renderMathInElement) {
+    renderMathInElement(tw, {delimiters:[{left:'\\(',right:'\\)',display:false}]});
+    renderMathInElement(dw, {delimiters:[{left:'\\(',right:'\\)',display:false}]});
+  }
+  drawVenn(op);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  drawVenn('union');
+  // Set initial Venn label after KaTeX is ready
+  setTimeout(() => selOp('union', document.querySelector('.op-btn.active')), 50);
+});
+</script>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left: '\\[', right: '\\]', display: true},
+      {left: '\\(', right: '\\)', display: false}
+    ],
+    throwOnError: false
+  })"></script>
+{% endblock %}

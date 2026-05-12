@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(16,185,129,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(16,185,129,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box  { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(16,185,129,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+table.res-tbl { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.res-tbl th { background:#1a1f2e; color:#64748b; padding:.4rem .7rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.73rem; text-transform:uppercase; letter-spacing:.06em; }
+table.res-tbl td { padding:.4rem .7rem; border-bottom:1px solid #161b28; }
+.prob-item { background:#0e1117; border:1px solid #1e2533; border-radius:8px; padding:1rem; margin:.6rem 0; }
+.prob-item .sol { display:none; margin-top:.7rem; padding-top:.7rem; border-top:1px solid #1e2533; color:#6ee7b7; font-size:.83rem; }
+.prob-item .sol.open { display:block; }
+input[type=number],select { background:#0e1117; border:1px solid #334155; border-radius:6px; color:#e2e8f0; padding:.3rem .6rem; font-size:.83rem; }
+input[type=number]:focus,select:focus { outline:none; border-color:var(--acc); }
+.val-big { font-size:1.05rem; font-weight:700; color:var(--acc2); font-family:monospace; }
+.step-line { font-size:.82rem; color:#94a3b8; margin:.2rem 0; font-family:monospace; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-123" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">I.2. fejezet — Elemi leszámlálások</h4>
+      <small class="text-muted">Alapelvek · Teljes indukció · P/V/C képletek · Stirling-formula</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-alap',this)">Alapelvek</span>
+    <span class="ila-nav-link" onclick="showTab('t-ind',this)">Teljes indukció</span>
+    <span class="ila-nav-link" onclick="showTab('t-pvc',this)">P / V / C számológép</span>
+    <span class="ila-nav-link" onclick="showTab('t-stir',this)">Stirling-formula</span>
+    <span class="ila-nav-link" onclick="showTab('t-fel',this)">Feladatok</span>
+  </div>
+
+  <!-- ═══ TAB 1: Alapelvek ═══ -->
+  <div id="t-alap" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card-dark h-100">
+          <div class="badge-acc">Összeadási elv</div>
+          <div class="def-box">Ha egy esemény \(A_1, A_2, \ldots, A_k\) kizáró eseteken belül összesen \(n_1, n_2, \ldots, n_k\) féleképpen valósulhat meg, akkor az összes lehetőség száma \(n_1+n_2+\cdots+n_k\).</div>
+          <div class="ex-box"><strong>Példa:</strong> Hányféle 2-jegyű szám osztható 3-mal <em>vagy</em> 5-tel?<br>3-mal osztható: 30 db (12,15,…,99), 5-tel osztható: 18 db, mindkettővel: 6 db → \(30+18-6=42\).</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card-dark h-100">
+          <div class="badge-acc">Szorzási elv</div>
+          <div class="def-box">Ha egy összetett eseményt \(k\) egymástól független lépésben lehet végrehajtani, és az \(i\)-edik lépés \(n_i\) féleképpen lehetséges, akkor az összes lehetőség \(n_1 \cdot n_2 \cdots n_k\).</div>
+          <div class="ex-box"><strong>Példa:</strong> Hányféle 4-jegyű PIN-kód létezik? Minden pozícióban 0–9, tehát \(10^4 = 10\,000\) lehetőség.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card-dark h-100">
+          <div class="badge-acc">Bijekció elv</div>
+          <div class="def-box">Ha \(A\) és \(B\) halmazok között bijekció (kölcsönösen egyértelmű megfeleltetés) létezik, akkor \(|A|=|B|\). Így nehezebb halmazt könnyebbre képezhetünk.</div>
+          <div class="ex-box"><strong>Példa:</strong> Hányféle \(n\)-elemű részhalmaza van egy \(n\)-elemű halmaznak? Bijekcióval: minden részhalmaz ↔ bináris sorozat, tehát \(2^n\) db.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-dark mt-3">
+      <div class="badge-acc">Interaktív — szorzási elv számológép</div>
+      <p style="font-size:.83rem;color:#94a3b8;">Adj meg legfeljebb 6 lépést (hány lehetőség van az egyes lépéseknél), és a szorzási elv szerint kiszámítja az összes lehetőséget.</p>
+      <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+        <span style="font-size:.83rem;color:#94a3b8;">Lépések száma:</span>
+        <select id="mult-steps" onchange="buildMultSteps()">
+          <option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option>
+        </select>
+      </div>
+      <div id="mult-inputs" class="d-flex gap-2 flex-wrap align-items-center mb-2"></div>
+      <button class="btn-acc" onclick="calcMult()">Számít</button>
+      <div id="mult-result" class="mt-2 val-big"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: Teljes indukció ═══ -->
+  <div id="t-ind" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">A teljes indukció elve</div>
+          <div class="def-box">Legyen \(P(n)\) egy egész \(n\)-re vonatkozó állítás. Ha<br>
+            <strong>(B)</strong> \(P(n_0)\) igaz (alaplépés), és<br>
+            <strong>(I)</strong> \(P(n) \Rightarrow P(n+1)\) minden \(n \geq n_0\)-ra,<br>
+            akkor \(P(n)\) igaz minden \(n \geq n_0\)-ra.
+          </div>
+          <div class="thm-box"><strong>Bizonyítandó képlet kiválasztása:</strong></div>
+          <select id="ind-formula" class="mb-3" onchange="updateInd()">
+            <option value="sum1">1+2+…+n = n(n+1)/2</option>
+            <option value="sum2">1²+2²+…+n² = n(n+1)(2n+1)/6</option>
+            <option value="pow">2ⁿ > n (n ≥ 1)</option>
+          </select>
+          <div class="thm-box" id="ind-statement" style="font-size:.83rem;"></div>
+          <p style="font-size:.8rem;color:#64748b;margin-top:.6rem">Alaplépés ellenőrzés (n=1):</p>
+          <div id="ind-base" class="ex-box" style="font-size:.83rem;"></div>
+          <p style="font-size:.8rem;color:#64748b;margin-top:.6rem">Indukciós lépés vázlata:</p>
+          <div id="ind-step" class="def-box" style="font-size:.83rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Numerikus ellenőrzés</div>
+          <div class="d-flex gap-2 align-items-center mb-3">
+            <span style="font-size:.83rem;color:#94a3b8;">n max értéke:</span>
+            <input type="number" id="ind-nmax" value="10" min="1" max="20" style="width:70px" oninput="buildIndTable()">
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="res-tbl" id="ind-table">
+              <thead><tr><th>n</th><th>Bal oldal</th><th>Jobb oldal</th><th>Egyenlő?</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: P / V / C ═══ -->
+  <div id="t-pvc" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Paraméterek</div>
+          <div class="d-flex gap-3 flex-wrap align-items-center mb-3">
+            <label style="font-size:.83rem;color:#94a3b8;">n = <input type="number" id="pvc-n" value="5" min="1" max="20" style="width:65px" oninput="updatePVC()"></label>
+            <label style="font-size:.83rem;color:#94a3b8;">k = <input type="number" id="pvc-k" value="3" min="0" max="20" style="width:65px" oninput="updatePVC()"></label>
+          </div>
+          <div style="font-size:.8rem;color:#64748b;margin-bottom:.5rem">Ismétlések (multinomiálishoz), pl. "2,2,1":</div>
+          <input type="text" id="pvc-rep" value="2,2,1" placeholder="pl. 2,2,1" style="width:100%;background:#0e1117;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:.3rem .6rem;font-size:.83rem;" oninput="updatePVC()">
+          <div id="pvc-warn" style="font-size:.75rem;color:#f59e0b;margin-top:.3rem;"></div>
+        </div>
+        <div class="card-dark mt-3">
+          <div class="badge-acc">Gyors példák</div>
+          <button class="btn-sec mb-1" onclick="setPVC(52,5,'')">52 lapból 5 lap (C(52,5))</button><br>
+          <button class="btn-sec mb-1" onclick="setPVC(10,3,'')">3-jegyű PIN (10^3)</button><br>
+          <button class="btn-sec" onclick="setPVC(5,5,'3,1,1')">ALMA betűi (4 betű, ism.)</button>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Eredmények</div>
+          <div id="pvc-results"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Stirling ═══ -->
+  <div id="t-stir" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Stirling-formula</div>
+          <div class="thm-box">\[n! \approx \left(\frac{n}{e}\right)^n \sqrt{2\pi n}\]</div>
+          <p style="font-size:.83rem;color:#94a3b8;">A relatív hiba \(\to 0\) ahogy \(n\to\infty\). Nagyon hasznos aszimptotikus közelítés kombinatorikában és valószínűségszámításban.</p>
+          <div class="d-flex gap-2 align-items-center mb-3">
+            <span style="font-size:.83rem;color:#94a3b8;">n =</span>
+            <input type="number" id="stir-n" value="10" min="1" max="100" style="width:80px" oninput="updateStirling()">
+          </div>
+          <div id="stir-single" class="ex-box" style="font-size:.83rem;"></div>
+        </div>
+        <div class="card-dark mt-3">
+          <div class="badge-acc">Összehasonlító táblázat</div>
+          <table class="res-tbl" id="stir-table">
+            <thead><tr><th>n</th><th>Pontos n!</th><th>Stirling</th><th>Hiba %</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Log-skálás diagram (n! vs Stirling)</div>
+          <canvas id="stir-canvas" width="520" height="300" style="max-width:100%;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: Feladatok ═══ -->
+  <div id="t-fel" class="ila-tab">
+    <div class="card-dark">
+      <div class="badge-acc">Klasszikus feladatok</div>
+      <p style="font-size:.83rem;color:#94a3b8;">Kattints a „Megoldás" gombra a részletes megoldás megtekintéséhez.</p>
+
+      <div class="prob-item">
+        <strong style="font-size:.88rem;">1.</strong> <span style="font-size:.85rem;">Hány 4-jegyű természetes szám létezik?</span>
+        <br><button class="btn-sec mt-2" onclick="toggleSol(this)">Megoldás mutatása</button>
+        <div class="sol">A 4-jegyű számok: 1000–9999. Az ezres helyiérték 9 féle lehet (1–9), a többi 10-10 féle. Tehát \(9 \cdot 10 \cdot 10 \cdot 10 = 9000\) db.</div>
+      </div>
+
+      <div class="prob-item">
+        <strong style="font-size:.88rem;">2.</strong> <span style="font-size:.85rem;">Hányféle sorrendbe lehet állítani 6 embert?</span>
+        <br><button class="btn-sec mt-2" onclick="toggleSol(this)">Megoldás mutatása</button>
+        <div class="sol">Ez 6 elem permutációja: \(P(6) = 6! = 720\) féleképpen.</div>
+      </div>
+
+      <div class="prob-item">
+        <strong style="font-size:.88rem;">3.</strong> <span style="font-size:.85rem;">10 ember közül hányféleképpen választható 3 tagú bizottság?</span>
+        <br><button class="btn-sec mt-2" onclick="toggleSol(this)">Megoldás mutatása</button>
+        <div class="sol">A sorrend nem számít, tehát kombinációt számítunk: \(\binom{10}{3} = \frac{10!}{3!\,7!} = \frac{10\cdot9\cdot8}{6} = 120\) féleképpen.</div>
+      </div>
+
+      <div class="prob-item">
+        <strong style="font-size:.88rem;">4.</strong> <span style="font-size:.85rem;">A 26 betűs ABC-ből hányféle 3 betűs szó képezhető ismétléssel?</span>
+        <br><button class="btn-sec mt-2" onclick="toggleSol(this)">Megoldás mutatása</button>
+        <div class="sol">Ismétléses variáció: \(V^{ism}(26,3) = 26^3 = 17\,576\) féleképpen.</div>
+      </div>
+
+      <div class="prob-item">
+        <strong style="font-size:.88rem;">5.</strong> <span style="font-size:.85rem;">Hányféleképpen rendezhetők sorba a MATEMATIKA szó betűi?</span>
+        <br><button class="btn-sec mt-2" onclick="toggleSol(this)">Megoldás mutatása</button>
+        <div class="sol">A szó 10 betűből áll: M(2×), A(3×), T(2×), E, I, K. Multinomiális permutáció: \(\frac{10!}{3!\,2!\,2!\,1!\,1!\,1!} = \frac{3\,628\,800}{6\cdot2\cdot2} = 151\,200\) féleképpen.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Factorial (BigInt) ──
+function factorial(n){
+  if(n<0) return BigInt(0);
+  let r=BigInt(1);
+  for(let i=2;i<=n;i++) r*=BigInt(i);
+  return r;
+}
+function factF(n){ return Number(factorial(n)); }
+
+// ── Tab 1: Multiply ──
+function buildMultSteps(){
+  const k=parseInt(document.getElementById('mult-steps').value);
+  const box=document.getElementById('mult-inputs');
+  box.innerHTML='';
+  for(let i=0;i<k;i++){
+    const inp=document.createElement('input');
+    inp.type='number'; inp.value=10; inp.min=1; inp.max=10000;
+    inp.style.width='70px'; inp.className='mult-inp';
+    const lbl=document.createElement('span');
+    lbl.textContent=(i<k-1)?'×':''; lbl.style.cssText='color:#94a3b8;font-size:.9rem;';
+    box.appendChild(inp); box.appendChild(lbl);
+  }
+}
+function calcMult(){
+  const inputs=[...document.querySelectorAll('.mult-inp')];
+  let res=1, parts=[];
+  inputs.forEach(i=>{const v=parseInt(i.value)||1;res*=v;parts.push(v);});
+  document.getElementById('mult-result').textContent=parts.join(' × ')+ ' = ' + res.toLocaleString('hu-HU');
+}
+
+// ── Tab 2: Induction ──
+const IND_FORMULAS={
+  sum1:{
+    stmt:'\\( \\displaystyle\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2} \\)',
+    base:'n=1: bal = 1, jobb = 1·2/2 = 1. ✓',
+    step:'Tegyük fel, hogy igaz n-re. Ekkor \\(\\sum_{i=1}^{n+1}i = \\frac{n(n+1)}{2}+(n+1) = \\frac{(n+1)(n+2)}{2}\\). ✓',
+    lhs:n=>n*(n+1)/2, rhs:n=>n*(n+1)/2
+  },
+  sum2:{
+    stmt:'\\( \\displaystyle\\sum_{i=1}^{n} i^2 = \\frac{n(n+1)(2n+1)}{6} \\)',
+    base:'n=1: bal = 1, jobb = 1·2·3/6 = 1. ✓',
+    step:'Tegyük fel, hogy igaz n-re. Hozzáadjuk (n+1)²-t mindkét oldalhoz, és algebrai átalakítással igazoljuk az n+1-re vonatkozó alakot.',
+    lhs:n=>{let s=0;for(let i=1;i<=n;i++)s+=i*i;return s;},
+    rhs:n=>n*(n+1)*(2*n+1)/6
+  },
+  pow:{
+    stmt:'\\( 2^n > n \\) minden \\( n \\geq 1 \\)-re.',
+    base:'n=1: bal = 2, jobb = 1. 2 > 1 ✓',
+    step:'Tegyük fel 2ⁿ > n. Ekkor 2ⁿ⁺¹ = 2·2ⁿ > 2n ≥ n+1 (ha n≥1). ✓',
+    lhs:n=>Math.pow(2,n), rhs:n=>n
+  }
+};
+function updateInd(){
+  const key=document.getElementById('ind-formula').value;
+  const f=IND_FORMULAS[key];
+  document.getElementById('ind-statement').innerHTML=f.stmt;
+  document.getElementById('ind-base').textContent=f.base;
+  document.getElementById('ind-step').innerHTML=f.step;
+  buildIndTable();
+  if(window.renderMathInElement) renderMathInElement(document.getElementById('t-ind'),{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});
+}
+function buildIndTable(){
+  const key=document.getElementById('ind-formula').value;
+  const f=IND_FORMULAS[key];
+  const nmax=Math.min(20,Math.max(1,parseInt(document.getElementById('ind-nmax').value)||10));
+  const tbody=document.querySelector('#ind-table tbody');
+  tbody.innerHTML='';
+  for(let n=1;n<=nmax;n++){
+    const l=f.lhs(n), r=f.rhs(n);
+    const ok=Math.abs(l-r)<0.001;
+    tbody.innerHTML+=`<tr><td>${n}</td><td>${l.toLocaleString('hu-HU')}</td><td>${r.toLocaleString('hu-HU')}</td><td style="color:${ok?'#34d399':'#ef4444'}">${ok?'✓':'✗'}</td></tr>`;
+  }
+}
+
+// ── Tab 3: P/V/C ──
+function setPVC(n,k,rep){
+  document.getElementById('pvc-n').value=n;
+  document.getElementById('pvc-k').value=k;
+  document.getElementById('pvc-rep').value=rep;
+  updatePVC();
+}
+function updatePVC(){
+  const n=parseInt(document.getElementById('pvc-n').value)||5;
+  const k=parseInt(document.getElementById('pvc-k').value)||3;
+  const repStr=document.getElementById('pvc-rep').value.trim();
+  const box=document.getElementById('pvc-results');
+  const warn=document.getElementById('pvc-warn');
+  warn.textContent='';
+  if(k>n){warn.textContent='Figyelem: k > n — ismétléses esetekben mindig érvényes, ismétlés nélküliekben nem.'; }
+  // Pn = n!
+  const Pn=factorial(n);
+  // Multinomial
+  let repParts=repStr?repStr.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x)&&x>0):[];
+  let sumRep=repParts.reduce((a,b)=>a+b,0);
+  let mulFact=repParts.map(x=>factorial(x)).reduce((a,b)=>a*b,BigInt(1));
+  let Multi=factorial(sumRep)/mulFact;
+  // Vnk = n!/(n-k)!
+  const Vnk=(k<=n)?factorial(n)/factorial(n-k):BigInt(0);
+  // Vnk_ism = n^k
+  const Vism=BigInt(Math.round(Math.pow(n,k)));
+  // Cnk = n!/(k!(n-k)!)
+  const Cnk=(k<=n)?factorial(n)/(factorial(k)*factorial(n-k)):BigInt(0);
+  // Cnk_ism = C(n+k-1,k)
+  const nk=n+k-1;
+  const Cism=(k>=0)?factorial(nk)/(factorial(k)*factorial(nk-k)):BigInt(0);
+
+  box.innerHTML=`
+  <div class="step-line mb-1"><span style="color:#64748b">P(n) = n!</span></div>
+  <div class="ex-box mb-2">\\(P(${n}) = ${n}! = \\) <span class="val-big">${Pn.toLocaleString()}</span></div>
+
+  <div class="step-line mb-1"><span style="color:#64748b">Multinomiális (${repStr||'k₁,k₂,…'}): n!/(k₁!k₂!…)</span></div>
+  <div class="ex-box mb-2">\\(P(${sumRep};\\ ${repParts.join(',')}) = ${sumRep}! / (${repParts.map(x=>x+'!').join('\\cdot')}) = \\) <span class="val-big">${Multi.toLocaleString()}</span></div>
+
+  <div class="step-line mb-1"><span style="color:#64748b">V(n,k) = n!/(n-k)! — ismétlés nélküli variáció</span></div>
+  <div class="ex-box mb-2">\\(V(${n},${k}) = ${n}!/(${n}-${k})! = \\) <span class="val-big">${Vnk.toLocaleString()}</span></div>
+
+  <div class="step-line mb-1"><span style="color:#64748b">V&#8203;ˢ(n,k) = nᵏ — ismétléses variáció</span></div>
+  <div class="ex-box mb-2">\\(V^{ism}(${n},${k}) = ${n}^{${k}} = \\) <span class="val-big">${Vism.toLocaleString()}</span></div>
+
+  <div class="step-line mb-1"><span style="color:#64748b">C(n,k) = n!/(k!(n-k)!) — ismétlés nélküli kombináció</span></div>
+  <div class="ex-box mb-2">\\(\\binom{${n}}{${k}} = \\) <span class="val-big">${Cnk.toLocaleString()}</span></div>
+
+  <div class="step-line mb-1"><span style="color:#64748b">C&#8203;ˢ(n,k) = C(n+k-1,k) — ismétléses kombináció (csillagok és korlátok)</span></div>
+  <div class="ex-box mb-2">\\(C^{ism}(${n},${k}) = \\binom{${n+k-1}}{${k}} = \\) <span class="val-big">${Cism.toLocaleString()}</span></div>
+  `;
+  if(window.renderMathInElement) renderMathInElement(box,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});
+}
+
+// ── Tab 4: Stirling ──
+function stirling(n){
+  return Math.sqrt(2*Math.PI*n)*Math.pow(n/Math.E,n);
+}
+function updateStirling(){
+  const n=parseInt(document.getElementById('stir-n').value)||10;
+  const exact=n<=20?Number(factorial(n)):null;
+  const approx=stirling(n);
+  const err=exact?Math.abs(exact-approx)/exact*100:null;
+  const box=document.getElementById('stir-single');
+  box.innerHTML=`<strong>n = ${n}</strong><br>
+  Stirling ≈ <span class="val-big">${approx.toExponential(4)}</span><br>
+  ${exact!==null?`Pontos: <span class="val-big">${exact.toLocaleString('hu-HU')}</span><br>Relatív hiba: <span style="color:#f59e0b">${err.toFixed(4)}%</span>`:'(Pontos érték csak n≤20-ra)'}`;
+  buildStirTable();
+  drawStirChart();
+}
+function buildStirTable(){
+  const rows=[5,10,20,50,100];
+  const tbody=document.querySelector('#stir-table tbody');
+  tbody.innerHTML='';
+  rows.forEach(n=>{
+    const approx=stirling(n);
+    const exact=n<=20?Number(factorial(n)):null;
+    const err=exact?Math.abs(exact-approx)/exact*100:null;
+    tbody.innerHTML+=`<tr><td>${n}</td><td>${exact!==null?exact.toExponential(4):'—'}</td><td>${approx.toExponential(4)}</td><td style="color:#f59e0b">${err!==null?err.toFixed(4)+'%':'—'}</td></tr>`;
+  });
+}
+function drawStirChart(){
+  const canvas=document.getElementById('stir-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0e1117'; ctx.fillRect(0,0,W,H);
+  const pts=[];
+  for(let n=1;n<=20;n++){
+    const v=Math.log10(Math.max(1,Number(factorial(n))));
+    const s=Math.log10(Math.max(1,stirling(n)));
+    pts.push({n,v,s});
+  }
+  const maxV=pts[pts.length-1].v;
+  const pad={l:50,r:20,t:20,b:30};
+  const gW=W-pad.l-pad.r, gH=H-pad.t-pad.b;
+  // axes
+  ctx.strokeStyle='#334155'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,pad.t+gH); ctx.lineTo(pad.l+gW,pad.t+gH); ctx.stroke();
+  // label
+  ctx.fillStyle='#64748b'; ctx.font='11px monospace'; ctx.textAlign='left';
+  ctx.fillText('log₁₀(n!)',4,pad.t+10);
+  ctx.textAlign='center';
+  // exact line
+  ctx.strokeStyle='#34d399'; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  pts.forEach((p,i)=>{
+    const x=pad.l+(p.n-1)/(20-1)*gW;
+    const y=pad.t+gH-(p.v/maxV)*gH;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // stirling line
+  ctx.strokeStyle='#f59e0b'; ctx.lineWidth=1.8; ctx.setLineDash([5,4]);
+  ctx.beginPath();
+  pts.forEach((p,i)=>{
+    const x=pad.l+(p.n-1)/(20-1)*gW;
+    const y=pad.t+gH-(p.s/maxV)*gH;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke(); ctx.setLineDash([]);
+  // x labels
+  ctx.fillStyle='#64748b'; ctx.font='10px monospace'; ctx.textAlign='center';
+  [1,5,10,15,20].forEach(n=>{
+    const x=pad.l+(n-1)/(20-1)*gW;
+    ctx.fillText(n,x,pad.t+gH+14);
+  });
+  // legend
+  ctx.fillStyle='#34d399'; ctx.font='11px monospace'; ctx.textAlign='left';
+  ctx.fillText('── Pontos n!',pad.l+10,pad.t+16);
+  ctx.fillStyle='#f59e0b';
+  ctx.fillText('--- Stirling',pad.l+110,pad.t+16);
+}
+
+// ── Shared ──
+function toggleSol(btn){
+  const sol=btn.nextElementSibling;
+  sol.classList.toggle('open');
+  btn.textContent=sol.classList.contains('open')?'Megoldás elrejtése':'Megoldás mutatása';
+}
+
+function initAll(){
+  buildMultSteps();
+  updateInd();
+  updatePVC();
+  updateStirling();
+}
+</script>
+{% endblock %}

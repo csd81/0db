@@ -1,0 +1,680 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #38bdf8; --acc2: #7dd3fc; --acc3: #0ea5e9; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.12); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #10b981; background:rgba(16,185,129,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box  { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(56,189,248,.12); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.btn-graph { background:#1a2535; color:var(--acc2); border:1px solid rgba(56,189,248,.25); border-radius:6px; padding:.3rem .8rem; font-size:.8rem; cursor:pointer; transition:background .15s; margin:.15rem; }
+.btn-graph:hover, .btn-graph.active { background:rgba(56,189,248,.18); border-color:var(--acc); color:var(--acc); }
+input[type=number], select { background:#0e1117; border:1px solid #334155; border-radius:6px; color:#e2e8f0; padding:.3rem .6rem; font-size:.83rem; }
+input:focus, select:focus { outline:none; border-color:var(--acc); }
+canvas.graph-canvas { background:#0a0d14; border-radius:10px; border:1px solid #1e2533; display:block; }
+/* Matrix table */
+.mat-table { border-collapse:collapse; font-family:monospace; font-size:.82rem; }
+.mat-table td, .mat-table th { width:2.2rem; height:2rem; text-align:center; vertical-align:middle; border:1px solid #1a2535; padding:0; }
+.mat-table th { color:#64748b; font-size:.72rem; background:#0e1117; }
+.mat-cell-0 { color:#334155; }
+.mat-cell-pos { color:#38bdf8; font-weight:700; }
+.mat-cell-neg { color:#f59e0b; font-weight:700; }
+.mat-cell-hl { background:rgba(56,189,248,.15); color:#7dd3fc; font-weight:700; }
+.mat-cell-diag { background:rgba(16,185,129,.1); color:#34d399; font-weight:700; }
+.chip { display:inline-block; background:#1a2535; border:1px solid #334155; border-radius:5px; padding:.12rem .5rem; font-size:.78rem; font-family:monospace; color:#7dd3fc; margin:.1rem; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1020px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.15);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-grid-fill" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">II.4. fejezet — Gráf-mátrixok</h4>
+      <small class="text-muted">Adjacencia · Incidencia · Laplace · Utak száma · Kirchhoff-tétel</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-adj',this)">Adjacencia</span>
+    <span class="ila-nav-link" onclick="showTab('t-inc',this)">Incidencia</span>
+    <span class="ila-nav-link" onclick="showTab('t-power',this)">A^k — Utak</span>
+    <span class="ila-nav-link" onclick="showTab('t-laplace',this)">Laplace &amp; Kirchhoff</span>
+    <span class="ila-nav-link" onclick="showTab('t-ink',this)">Tintacsöpp BFS</span>
+  </div>
+
+  <!-- TAB: Adjacencia -->
+  <div id="t-adj" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Csúcsmátrix (adjacencia-mátrix)</span>
+          <div class="def-box">
+            \([A]_{ij} = \) az élek száma \(v_i\) és \(v_j\) között.<br>
+            Egyszerű gráf: \(A \in \{0,1\}^{n\times n}\), szimmetrikus (\(A^T=A\)), nullás főátló.
+          </div>
+          <div class="thm-box">
+            Sor összege = fokszám: \(\sum_j [A]_{ij} = \delta(v_i)\).<br>
+            Súlyozott gráf: \([A]_{ij}=w_{ij}\) (hiányzó él: \(\infty\) vagy 0).
+          </div>
+          <div class="d-flex gap-1 flex-wrap mt-3">
+            <button class="btn-graph active" onclick="loadAdjGraph('cycle4',this)">C₄</button>
+            <button class="btn-graph" onclick="loadAdjGraph('K4',this)">K₄</button>
+            <button class="btn-graph" onclick="loadAdjGraph('path5',this)">P₅</button>
+            <button class="btn-graph" onclick="loadAdjGraph('bipartite',this)">K₂,₃</button>
+            <button class="btn-graph" onclick="loadAdjGraph('weighted',this)">Súlyozott</button>
+          </div>
+          <div id="adj-info" class="mt-3" style="font-size:.82rem;color:#94a3b8;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="row g-2">
+            <div class="col-6">
+              <canvas id="adj-graph-canvas" class="graph-canvas" width="230" height="220"></canvas>
+            </div>
+            <div class="col-6">
+              <div style="overflow-x:auto;">
+                <div style="font-size:.75rem;color:#64748b;margin-bottom:.3rem;">Adjacencia-mátrix A:</div>
+                <div id="adj-matrix"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div style="font-size:.75rem;color:#64748b;margin-bottom:.3rem;">Kattints egy cellára a kiemeléshez:</div>
+            <div id="adj-cell-info" style="font-size:.82rem;color:#94a3b8;min-height:1.5rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Incidencia -->
+  <div id="t-inc" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Élmátrix (incidencia-mátrix)</span>
+          <div class="def-box">
+            \(B\) mérete: \(|V|\times|E|\).<br>
+            Irányítatlan: \([B]_{ij}=1\) ha \(v_i\) illeszkedik \(e_j\)-re, különben 0.<br>
+            Irányított: \([B]_{ij}=+1\) ha \(e_j\) \(v_i\)-ből indul, \(-1\) ha oda érkezik.
+          </div>
+          <div class="thm-box">
+            Rang: \(r(B) = n - k\), ahol \(k\) a komponensek száma.<br>
+            Hipergráfra is alkalmazható: oszlopok hiperéleket kódolnak.
+          </div>
+          <div class="def-box">
+            <strong>Izolált csúcs:</strong> csupa 0-ás sor.<br>
+            <strong>Hurokél:</strong> egy 1-es az oszlopban (irányítatlan esetén).
+          </div>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-graph active" onclick="loadIncGraph('path4',this)">P₄</button>
+            <button class="btn-graph" onclick="loadIncGraph('cycle4',this)">C₄</button>
+            <button class="btn-graph" onclick="loadIncGraph('K4',this)">K₄</button>
+            <button class="btn-graph" onclick="loadIncGraph('directed',this)">Irányított</button>
+          </div>
+          <div id="inc-info" class="mt-3" style="font-size:.82rem;color:#94a3b8;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="row g-2">
+            <div class="col-5">
+              <canvas id="inc-graph-canvas" class="graph-canvas" width="210" height="220"></canvas>
+            </div>
+            <div class="col-7">
+              <div style="overflow-x:auto;">
+                <div style="font-size:.75rem;color:#64748b;margin-bottom:.3rem;">Incidencia-mátrix B:</div>
+                <div id="inc-matrix"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2" id="inc-cell-info" style="font-size:.82rem;color:#94a3b8;min-height:1.5rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: A^k utak -->
+  <div id="t-power" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">4.8. Tétel — A^k és utak száma</span>
+          <div class="thm-box">
+            Az \(A^k\) mátrix \((i,j)\)-edik eleme megadja a \(v_i \to v_j\) pontosan \(k\) hosszú sétái számát.<br><br>
+            Következmények:<br>
+            \([A^2]_{ii} = \delta(v_i)\) (fokszám)<br>
+            \(\operatorname{tr}(A^3) = 6 \cdot \triangle\) (háromszögek száma × 6)
+          </div>
+          <div class="d-flex gap-2 align-items-center mt-3">
+            <label class="text-muted" style="font-size:.78rem;">k hatványfok:</label>
+            <input type="number" id="pk" value="2" min="1" max="6" style="width:64px;" oninput="redrawPower()">
+          </div>
+          <div id="power-info" class="mt-3" style="font-size:.83rem;"></div>
+        </div>
+        <div class="card-dark mt-3">
+          <span class="badge-acc">Gráf választó</span>
+          <div class="d-flex gap-1 flex-wrap">
+            <button class="btn-graph active" onclick="loadPowerGraph('C4',this)">C₄</button>
+            <button class="btn-graph" onclick="loadPowerGraph('K4',this)">K₄</button>
+            <button class="btn-graph" onclick="loadPowerGraph('path4',this)">P₄</button>
+            <button class="btn-graph" onclick="loadPowerGraph('triangle',this)">Háromszög</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <div style="font-size:.75rem;color:#64748b;margin-bottom:.3rem;">Adjacencia A:</div>
+              <div id="power-A"></div>
+            </div>
+            <div class="col-6">
+              <div style="font-size:.75rem;color:#64748b;margin-bottom:.3rem;" id="power-label">A²:</div>
+              <div id="power-Ak"></div>
+            </div>
+          </div>
+          <canvas id="power-canvas" class="graph-canvas" width="480" height="220"></canvas>
+          <div id="power-path-info" class="mt-2" style="font-size:.81rem;color:#94a3b8;">Kattints egy A^k cellára az utak értelmezéséhez.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Laplace & Kirchhoff -->
+  <div id="t-laplace" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Laplace-mátrix (Kirchhoff-mátrix)</span>
+          <div class="def-box">
+            \(L = D - A\)<br>
+            ahol \(D\) a fokszám-diagonálmátrix: \([D]_{ii}=\delta(v_i)\).
+          </div>
+          <div class="thm-box">
+            <strong>Kirchhoff-féle fa-mátrix tétel:</strong><br>
+            A gráf feszítőfáinak száma = \(L\) bármely \((n-1)\times(n-1)\)-es aldeterminánsának értéke.
+          </div>
+          <div class="def-box">
+            <strong>Spektrális gráfelmélet:</strong> \(L\) sajátértékei \(0=\lambda_1\le\lambda_2\le\cdots\le\lambda_n\).<br>
+            \(\lambda_2 > 0 \Leftrightarrow\) összefüggő gráf.<br>
+            \(\lambda_2\) = algebraic connectivity (Fiedler-érték).
+          </div>
+          <div class="d-flex gap-1 flex-wrap mt-2">
+            <button class="btn-graph active" onclick="loadLapGraph('K3',this)">K₃</button>
+            <button class="btn-graph" onclick="loadLapGraph('path4',this)">P₄</button>
+            <button class="btn-graph" onclick="loadLapGraph('C4',this)">C₄</button>
+            <button class="btn-graph" onclick="loadLapGraph('K4',this)">K₄</button>
+          </div>
+          <div id="lap-info" class="mt-3" style="font-size:.83rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="row g-2 mb-2">
+            <div class="col-4">
+              <div style="font-size:.72rem;color:#64748b;margin-bottom:.2rem;">D (fok-diag.):</div>
+              <div id="lap-D"></div>
+            </div>
+            <div class="col-4">
+              <div style="font-size:.72rem;color:#64748b;margin-bottom:.2rem;">A:</div>
+              <div id="lap-A"></div>
+            </div>
+            <div class="col-4">
+              <div style="font-size:.72rem;color:#64748b;margin-bottom:.2rem;">L = D−A:</div>
+              <div id="lap-L"></div>
+            </div>
+          </div>
+          <canvas id="lap-canvas" class="graph-canvas" width="480" height="210"></canvas>
+          <div id="lap-kirchhoff" class="mt-2" style="font-size:.84rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Tintacsöpp BFS -->
+  <div id="t-ink" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">4.13. Algoritmus — „Tintacsöppentős" BFS</span>
+          <div class="def-box">
+            Indulj egy csúcsból. Adj hozzá egy „tintacsöppet" — az szétfolyik az összes szomszédra, majd azok szomszédaira, amíg az egész komponens beszíneződik. Ismételd a következő be nem színezett csúcsból.
+          </div>
+          <p style="font-size:.82rem;color:#94a3b8;">Az adjacencia-mátrix segítségével mátrix-szorzással is megkaphatjuk: ha \(\mathbf{x}\) az aktuálisan elért csúcsok vektora, akkor \(A\mathbf{x}\) megadja az elérhető szomszédokat.</p>
+          <div class="d-flex gap-1 flex-wrap mb-2">
+            <button class="btn-graph active" onclick="loadInkGraph('disconnected',this)">Szétesett</button>
+            <button class="btn-graph" onclick="loadInkGraph('K4',this)">K₄</button>
+            <button class="btn-graph" onclick="loadInkGraph('bridge',this)">Két komponens</button>
+          </div>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn-acc" onclick="inkStep()">Lépés ▶</button>
+            <button class="btn-sec" onclick="inkAuto()">Auto ▶▶</button>
+            <button class="btn-sec" onclick="resetInk()">Újra</button>
+          </div>
+          <div id="ink-status" class="mt-3" style="font-size:.84rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <canvas id="ink-canvas" class="graph-canvas" width="480" height="280"></canvas>
+          <div class="row g-2 mt-2">
+            <div class="col-6">
+              <div style="font-size:.72rem;color:#64748b;margin-bottom:.2rem;">Elért csúcsok (x vektor):</div>
+              <div id="ink-x-vec" style="font-family:monospace;font-size:.82rem;color:#7dd3fc;"></div>
+            </div>
+            <div class="col-6">
+              <div style="font-size:.72rem;color:#64748b;margin-bottom:.2rem;">Komponensek:</div>
+              <div id="ink-comps" style="font-size:.82rem;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.ila-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  renderMathInElement(document.getElementById(id), {
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+}
+
+// ─── Graph presets ─────────────────────────────────────────────────────────────
+function circleNodes(n,cx,cy,r,labels){
+  return Array.from({length:n},(_,i)=>({
+    x:cx+r*Math.cos(2*Math.PI*i/n-Math.PI/2),
+    y:cy+r*Math.sin(2*Math.PI*i/n-Math.PI/2),
+    label:labels?labels[i]:String.fromCharCode(65+i)
+  }));
+}
+
+const GRAPH_PRESETS = {
+  cycle4:{nodes:circleNodes(4,115,110,80),edges:[[0,1],[1,2],[2,3],[3,0]]},
+  K4:{nodes:circleNodes(4,115,110,80),edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]},
+  path5:{nodes:[{x:20,y:110,label:'A'},{x:65,y:110,label:'B'},{x:110,y:110,label:'C'},{x:155,y:110,label:'D'},{x:200,y:110,label:'E'}],edges:[[0,1],[1,2],[2,3],[3,4]]},
+  bipartite:{nodes:[{x:40,y:60,label:'A'},{x:40,y:130,label:'B'},{x:40,y:200,label:'C'},{x:160,y:90,label:'D'},{x:160,y:170,label:'E'}],edges:[[0,3],[0,4],[1,3],[1,4],[2,4]]},
+  weighted:{nodes:circleNodes(4,115,110,80),edges:[[0,1,3],[1,2,5],[2,3,2],[3,0,4],[0,2,7]]},
+  path4:{nodes:[{x:20,y:110,label:'A'},{x:80,y:110,label:'B'},{x:140,y:110,label:'C'},{x:200,y:110,label:'D'}],edges:[[0,1],[1,2],[2,3]]},
+  K3:{nodes:circleNodes(3,115,110,75),edges:[[0,1],[1,2],[2,0]]},
+  triangle:{nodes:circleNodes(3,115,110,75),edges:[[0,1],[1,2],[2,0]]},
+  C4:{nodes:circleNodes(4,115,110,80),edges:[[0,1],[1,2],[2,3],[3,0]]},
+  directed:{nodes:circleNodes(4,115,110,80),edges:[[0,1],[1,2],[2,3],[3,0],[0,2]],directed:true},
+  disconnected:{nodes:[{x:80,y:80,label:'A'},{x:160,y:80,label:'B'},{x:120,y:160,label:'C'},{x:280,y:80,label:'D'},{x:360,y:80,label:'E'},{x:320,y:160,label:'F'}],edges:[[0,1],[1,2],[2,0],[3,4],[4,5],[5,3]]},
+  bridge:{nodes:[{x:80,y:100,label:'A'},{x:160,y:60,label:'B'},{x:160,y:140,label:'C'},{x:260,y:100,label:'D'},{x:340,y:60,label:'E'},{x:340,y:140,label:'F'}],edges:[[0,1],[0,2],[1,2],[2,3],[3,4],[3,5],[4,5]]},
+};
+
+// ─── Generic draw ─────────────────────────────────────────────────────────────
+function drawSimpleGraph(canvasId, G, opts={}) {
+  const canvas=document.getElementById(canvasId);
+  const ctx=canvas.getContext('2d');
+  const {nodeColors={},hlEdges=new Set(),directed=false}=opts;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  G.edges.forEach(([a,b],i)=>{
+    const na=G.nodes[a],nb=G.nodes[b];
+    ctx.beginPath(); ctx.moveTo(na.x,na.y); ctx.lineTo(nb.x,nb.y);
+    ctx.strokeStyle=hlEdges.has(i)?'#f97316':'#334155'; ctx.lineWidth=1.5; ctx.stroke();
+    if(directed){ // arrowhead
+      const dx=nb.x-na.x,dy=nb.y-na.y,len=Math.sqrt(dx*dx+dy*dy)||1;
+      const ux=dx/len,uy=dy/len,r=14;
+      const hx=nb.x-ux*r,hy=nb.y-uy*r;
+      ctx.beginPath(); ctx.moveTo(hx+ux*10,hy+uy*10); ctx.lineTo(hx-uy*5,hy+ux*5); ctx.lineTo(hx+uy*5,hy-ux*5); ctx.closePath();
+      ctx.fillStyle='#334155'; ctx.fill();
+    }
+    if(G.edges[i][2]){ // weight
+      const mx=(na.x+nb.x)/2,my=(na.y+nb.y)/2;
+      ctx.fillStyle='#94a3b8'; ctx.font='10px monospace'; ctx.textAlign='center';
+      ctx.fillText(G.edges[i][2],mx,my-6);
+    }
+  });
+  G.nodes.forEach((n,i)=>{
+    const col=nodeColors[i]||'#38bdf8';
+    ctx.beginPath(); ctx.arc(n.x,n.y,13,0,Math.PI*2);
+    ctx.fillStyle='#0a0d14'; ctx.fill();
+    ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=col; ctx.font='bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(n.label||i,n.x,n.y);
+  });
+}
+
+// ─── Matrix building ───────────────────────────────────────────────────────────
+function buildAdjMatrix(G) {
+  const n=G.nodes.length;
+  const A=Array.from({length:n},()=>new Array(n).fill(0));
+  G.edges.forEach(([a,b,w])=>{
+    A[a][b]+=(w||1); if(!G.directed) A[b][a]+=(w||1);
+  });
+  return A;
+}
+
+function buildIncMatrix(G) {
+  const n=G.nodes.length, m=G.edges.length;
+  const B=Array.from({length:n},()=>new Array(m).fill(0));
+  G.edges.forEach(([a,b],j)=>{
+    if(G.directed){ B[a][j]=1; B[b][j]=-1; }
+    else { B[a][j]=1; B[b][j]=1; }
+  });
+  return B;
+}
+
+function matMul(A,B){
+  const n=A.length,m=B[0].length,k=B.length;
+  const C=Array.from({length:n},()=>new Array(m).fill(0));
+  for(let i=0;i<n;i++) for(let j=0;j<m;j++) for(let l=0;l<k;l++) C[i][j]+=A[i][l]*B[l][j];
+  return C;
+}
+function matPow(A,k){ let R=A; for(let i=1;i<k;i++) R=matMul(R,A); return R; }
+
+function renderMatrix(containerId, A, opts={}) {
+  const {rowLabels=null,colLabels=null,hlCell=null,isInc=false}=opts;
+  const n=A.length, m=A[0].length;
+  let html='<table class="mat-table">';
+  if(colLabels){
+    html+='<tr><th></th>';
+    colLabels.forEach(l=>{ html+=`<th>${l}</th>`; });
+    html+='</tr>';
+  }
+  A.forEach((row,i)=>{
+    html+='<tr>';
+    if(rowLabels) html+=`<th>${rowLabels[i]}</th>`;
+    row.forEach((v,j)=>{
+      const isHL=hlCell&&hlCell[0]===i&&hlCell[1]===j;
+      const isDiag=i===j&&!isInc;
+      const cls=isHL?'mat-cell-hl':isDiag?'mat-cell-diag':v===0?'mat-cell-0':v>0?'mat-cell-pos':'mat-cell-neg';
+      html+=`<td class="${cls}" onclick="matCellClick('${containerId}',${i},${j})">${v===0?'·':v}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</table>';
+  document.getElementById(containerId).innerHTML=html;
+}
+
+function matCellClick(cid,i,j){ /* handled per-tab */ }
+
+// ─── TAB 1: ADJACENCY ─────────────────────────────────────────────────────────
+let adjG=null;
+function loadAdjGraph(name,btn){
+  document.querySelectorAll('#t-adj .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  adjG=JSON.parse(JSON.stringify(GRAPH_PRESETS[name]||GRAPH_PRESETS.cycle4));
+  redrawAdj();
+}
+function redrawAdj(){
+  drawSimpleGraph('adj-graph-canvas',adjG);
+  const A=buildAdjMatrix(adjG);
+  const n=A.length;
+  const labels=adjG.nodes.map(n=>n.label);
+  renderMatrix('adj-matrix',A,{rowLabels:labels,colLabels:labels});
+  const degs=A.map(row=>row.reduce((a,b)=>a+b,0));
+  const sym=A.every((row,i)=>row.every((v,j)=>v===A[j][i]));
+  document.getElementById('adj-info').innerHTML=
+    `<span class="chip">n=${n}</span><span class="chip">élek=${adjG.edges.length}</span>` +
+    `<span class="chip">szimmetrikus=${sym?'✓':'✗'}</span><br>` +
+    `Fokszámok: ${degs.map((d,i)=>`${labels[i]}:${d}`).join(', ')}`;
+  document.getElementById('adj-cell-info').textContent='';
+}
+// Override matCellClick for adj
+const _origMatCellClick = matCellClick;
+window.matCellClick = function(cid,i,j){
+  if(cid==='adj-matrix'&&adjG){
+    const A=buildAdjMatrix(adjG);
+    const li=adjG.nodes[i].label, lj=adjG.nodes[j].label;
+    document.getElementById('adj-cell-info').innerHTML=
+      `A[${li}][${lj}] = ${A[i][j]} → ${A[i][j]===0?`nincs él ${li} és ${lj} között`:`${A[i][j]} él fut ${li} → ${lj}`}`;
+  }
+  if(cid==='power-A'||cid==='power-Ak') pwCellClick(cid,i,j);
+};
+
+// ─── TAB 2: INCIDENCE ─────────────────────────────────────────────────────────
+let incG=null;
+function loadIncGraph(name,btn){
+  document.querySelectorAll('#t-inc .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  incG=JSON.parse(JSON.stringify(GRAPH_PRESETS[name]||GRAPH_PRESETS.path4));
+  redrawInc();
+}
+function redrawInc(){
+  drawSimpleGraph('inc-graph-canvas',incG,{directed:incG.directed});
+  const B=buildIncMatrix(incG);
+  const rowL=incG.nodes.map(n=>n.label);
+  const colL=incG.edges.map((_,i)=>`e${i+1}`);
+  renderMatrix('inc-matrix',B,{rowLabels:rowL,colLabels:colL,isInc:true});
+  const n=incG.nodes.length, k=countComponents(incG);
+  const rank=n-k;
+  document.getElementById('inc-info').innerHTML=
+    `Méret: ${n}×${incG.edges.length} | rang(B) = n−k = ${n}−${k} = ${rank}`;
+}
+function countComponents(G){
+  const n=G.nodes.length;
+  const vis=new Array(n).fill(false); let comps=0;
+  for(let s=0;s<n;s++){
+    if(vis[s]) continue; comps++;
+    const q=[s]; vis[s]=true;
+    while(q.length){
+      const v=q.shift();
+      G.edges.forEach(e=>{
+        if(e[0]===v&&!vis[e[1]]){vis[e[1]]=true;q.push(e[1]);}
+        if(!G.directed&&e[1]===v&&!vis[e[0]]){vis[e[0]]=true;q.push(e[0]);}
+      });
+    }
+  }
+  return comps;
+}
+
+// ─── TAB 3: A^k POWERS ────────────────────────────────────────────────────────
+let powerG=null, powerAk=null, powerA=null;
+function loadPowerGraph(name,btn){
+  document.querySelectorAll('#t-power .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  powerG=JSON.parse(JSON.stringify(GRAPH_PRESETS[name]||GRAPH_PRESETS.C4));
+  redrawPower();
+}
+function redrawPower(){
+  const k=parseInt(document.getElementById('pk').value)||2;
+  powerA=buildAdjMatrix(powerG);
+  powerAk=matPow(powerA,k);
+  const labels=powerG.nodes.map(n=>n.label);
+  renderMatrix('power-A',powerA,{rowLabels:labels,colLabels:labels});
+  document.getElementById('power-label').textContent=`A${k>1?k.toString().split('').map(d=>'⁰¹²³⁴⁵⁶'[d]||d).join(''):''}:`;
+  renderMatrix('power-Ak',powerAk,{rowLabels:labels,colLabels:labels});
+
+  // Draw graph with highlighted power info
+  const ctx=document.getElementById('power-canvas').getContext('2d');
+  ctx.clearRect(0,0,480,220);
+  // Scale nodes to canvas
+  const scNodes=powerG.nodes.map(n=>({...n,x:n.x*1.6+40,y:n.y*0.85+10}));
+  const scG={...powerG,nodes:scNodes};
+  const tctx={canvas:document.getElementById('power-canvas'),clearRect:()=>{},beginPath:()=>{},moveTo:()=>{},lineTo:()=>{},stroke:()=>{},arc:()=>{},fill:()=>{},fillText:()=>{},textAlign:'center',textBaseline:'middle'};
+  // Just draw directly
+  drawSimpleGraph('power-canvas',scG);
+
+  // Trace info
+  const n=powerG.nodes.length;
+  const tr=Array.from({length:n},(_,i)=>powerAk[i][i]).reduce((a,b)=>a+b,0);
+  const triangles=k===3?tr/6:null;
+  let info=`tr(A${k}) = ${tr}`;
+  if(k===2) info+=` = Σ fokszámok (${powerA.map((r,i)=>powerG.nodes[i].label+':'+r.reduce((a,b)=>a+b,0)).join(', ')})`;
+  if(triangles!==null) info+=` → háromszögek száma = ${tr}/6 = ${tr/6}`;
+  document.getElementById('power-info').innerHTML=`<span class="chip">k=${k}</span> ${info}`;
+  document.getElementById('power-path-info').textContent='Kattints egy A^k cellára az értelmezéshez.';
+}
+function pwCellClick(cid,i,j){
+  if(!powerG||!powerAk) return;
+  const k=parseInt(document.getElementById('pk').value)||2;
+  const li=powerG.nodes[i].label, lj=powerG.nodes[j].label;
+  const v=powerAk[i][j];
+  document.getElementById('power-path-info').innerHTML=
+    `A${k>1?'^'+k:''}[${li}][${lj}] = <strong style="color:var(--acc2)">${v}</strong> — pontosan ${k} hosszú séta ${li}→${lj} érintésével (${v} db)`;
+}
+
+// ─── TAB 4: LAPLACE ───────────────────────────────────────────────────────────
+let lapG=null;
+function loadLapGraph(name,btn){
+  document.querySelectorAll('#t-laplace .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  lapG=JSON.parse(JSON.stringify(GRAPH_PRESETS[name]||GRAPH_PRESETS.K3));
+  redrawLap();
+}
+function redrawLap(){
+  const n=lapG.nodes.length;
+  const A=buildAdjMatrix(lapG);
+  const degs=A.map(row=>row.reduce((a,b)=>a+b,0));
+  const D=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?degs[i]:0));
+  const L=A.map((row,i)=>row.map((v,j)=>D[i][j]-v));
+  const labels=lapG.nodes.map(n=>n.label);
+  renderMatrix('lap-D',D,{rowLabels:labels,colLabels:labels});
+  renderMatrix('lap-A',A,{rowLabels:labels,colLabels:labels});
+  renderMatrix('lap-L',L,{rowLabels:labels,colLabels:labels});
+
+  // Draw graph
+  const scNodes=lapG.nodes.map(n=>({...n,x:n.x*2.2+40,y:n.y*0.95+10}));
+  drawSimpleGraph('lap-canvas',{...lapG,nodes:scNodes});
+
+  // Kirchhoff: spanning trees count = det of (n-1)×(n-1) cofactor
+  const trees=kirchhoffCount(L,n);
+  document.getElementById('lap-kirchhoff').innerHTML=
+    `Kirchhoff-tétel: feszítőfák száma = cofaktor(L,0,0) = <strong style="color:var(--acc2)">${trees}</strong>`;
+  document.getElementById('lap-info').innerHTML=
+    `Fokszámok: ${degs.map((d,i)=>`${labels[i]}:${d}`).join(', ')}<br>λ₂ > 0 → gráf összefüggő: <strong style="color:${countComponents(lapG)===1?'#10b981':'#ef4444'}">${countComponents(lapG)===1?'✓':'✗'}</strong>`;
+}
+function kirchhoffCount(L,n){
+  // Delete row 0, col 0, compute determinant
+  if(n<=1) return 1;
+  const M=L.slice(1).map(row=>row.slice(1));
+  return Math.round(det(M));
+}
+function det(M){
+  const n=M.length;
+  if(n===1) return M[0][0];
+  if(n===2) return M[0][0]*M[1][1]-M[0][1]*M[1][0];
+  let d=0;
+  for(let j=0;j<n;j++){
+    const minor=M.slice(1).map(row=>[...row.slice(0,j),...row.slice(j+1)]);
+    d+=Math.pow(-1,j)*M[0][j]*det(minor);
+  }
+  return d;
+}
+
+// ─── TAB 5: INK BFS ───────────────────────────────────────────────────────────
+let inkG=null, inkVisited=[], inkQueue=[], inkCompColors=[], inkTimer=null, inkCompOf=[];
+const COMP_COLORS=['#38bdf8','#10b981','#f97316','#a78bfa','#f43f5e'];
+
+function loadInkGraph(name,btn){
+  document.querySelectorAll('#t-ink .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  inkG=JSON.parse(JSON.stringify(GRAPH_PRESETS[name]||GRAPH_PRESETS.disconnected));
+  resetInk();
+}
+function resetInk(){
+  if(inkTimer){clearInterval(inkTimer);inkTimer=null;}
+  const n=inkG.nodes.length;
+  inkVisited=new Array(n).fill(false);
+  inkQueue=[];
+  inkCompOf=new Array(n).fill(-1);
+  inkCompColors=[];
+  // Find first unvisited
+  for(let i=0;i<n;i++) if(!inkVisited[i]){inkQueue.push(i);inkVisited[i]=true;inkCompOf[i]=0;break;}
+  inkCompColors.push(COMP_COLORS[0]);
+  redrawInk();
+}
+function inkStep(){
+  if(!inkG) return;
+  const n=inkG.nodes.length;
+  if(inkQueue.length===0){
+    // Start new component
+    const next=inkVisited.findIndex(v=>!v);
+    if(next<0){document.getElementById('ink-status').innerHTML='<span style="color:#10b981;font-weight:700;">✓ Kész! Minden komponens megtalálva.</span>';return;}
+    const ci=inkCompColors.length;
+    inkCompColors.push(COMP_COLORS[ci%COMP_COLORS.length]);
+    inkQueue.push(next); inkVisited[next]=true; inkCompOf[next]=ci;
+  }
+  const v=inkQueue.shift();
+  inkG.edges.forEach(e=>{
+    const nb=e[0]===v?e[1]:e[1]===v?e[0]:-1;
+    if(nb>=0&&!inkVisited[nb]){inkVisited[nb]=true;inkQueue.push(nb);inkCompOf[nb]=inkCompOf[v];}
+  });
+  redrawInk();
+}
+function inkAuto(){
+  if(inkTimer){clearInterval(inkTimer);inkTimer=null;return;}
+  inkTimer=setInterval(()=>{
+    const remaining=inkVisited.some(v=>!v)||inkQueue.length>0;
+    if(!remaining){clearInterval(inkTimer);inkTimer=null;return;}
+    inkStep();
+  },600);
+}
+function redrawInk(){
+  const canvas=document.getElementById('ink-canvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const scNodes=inkG.nodes.map(n=>({...n,x:n.x*0.92+20,y:n.y*0.92+10}));
+  // Edges
+  inkG.edges.forEach(e=>{
+    const na=scNodes[e[0]],nb=scNodes[e[1]];
+    ctx.beginPath(); ctx.moveTo(na.x,na.y); ctx.lineTo(nb.x,nb.y);
+    ctx.strokeStyle='#334155'; ctx.lineWidth=1.5; ctx.stroke();
+  });
+  // Nodes
+  scNodes.forEach((n,i)=>{
+    const ci=inkCompOf[i];
+    const col=ci>=0?inkCompColors[ci]:'#334155';
+    const inQueue=inkQueue.includes(i);
+    ctx.beginPath(); ctx.arc(n.x,n.y,14,0,Math.PI*2);
+    ctx.fillStyle=ci>=0?col+'22':'#0a0d14'; ctx.fill();
+    ctx.strokeStyle=inQueue?'#fbbf24':col; ctx.lineWidth=inQueue?3:2; ctx.stroke();
+    ctx.fillStyle=ci>=0?col:'#334155';
+    ctx.font='bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(inkG.nodes[i].label,n.x,n.y);
+  });
+  // x-vector
+  const xvec=inkG.nodes.map((_,i)=>inkVisited[i]?1:0);
+  document.getElementById('ink-x-vec').textContent='['+xvec.join(', ')+']';
+  // Components
+  const compCount=inkCompColors.length;
+  const compsHtml=Array.from({length:compCount},(_,ci)=>{
+    const members=inkG.nodes.filter((_,i)=>inkCompOf[i]===ci).map(n=>n.label);
+    return members.length?`<span class="chip" style="color:${COMP_COLORS[ci%COMP_COLORS.length]};border-color:${COMP_COLORS[ci%COMP_COLORS.length]}">K${ci+1}: {${members.join(',')}}</span>`:''
+  }).join('');
+  document.getElementById('ink-comps').innerHTML=compsHtml;
+  const pending=inkG.nodes.length-inkVisited.filter(Boolean).length;
+  document.getElementById('ink-status').innerHTML=
+    pending>0?`<span style="color:#94a3b8">Feldolgozatlan: ${pending} csúcs | Sor: [${inkQueue.map(i=>inkG.nodes[i].label).join(',')}]</span>`
+    :'<span style="color:#10b981">✓ Minden csúcs elérve!</span>';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  loadAdjGraph('cycle4', document.querySelector('#t-adj .btn-graph.active'));
+  loadIncGraph('path4',  document.querySelector('#t-inc .btn-graph.active'));
+  loadPowerGraph('C4',   document.querySelector('#t-power .btn-graph.active'));
+  loadLapGraph('K3',     document.querySelector('#t-laplace .btn-graph.active'));
+  loadInkGraph('disconnected', document.querySelector('#t-ink .btn-graph.active'));
+
+  renderMathInElement(document.body,{
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+});
+</script>
+{% endblock %}

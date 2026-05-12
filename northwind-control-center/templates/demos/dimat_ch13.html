@@ -1,0 +1,1052 @@
+{% extends "base.html" %}
+{% block title %}13. fejezet – Útkeresési algoritmusok{% endblock %}
+{% block content %}
+<style>
+:root { --acc:#38bdf8; --acc2:#0ea5e9; --bg:#0e1014; --card:#151920; --border:#1e2a38; }
+.ila-wrap { max-width:1100px; margin:0 auto; padding:2rem 1rem 4rem; }
+.ila-back { color:var(--acc); text-decoration:none; font-size:.85rem; opacity:.8; }
+.ila-back:hover { opacity:1; color:var(--acc); }
+.ila-hero { text-align:center; margin:1.5rem 0 2rem; }
+.ila-hero h1 { font-size:2rem; font-weight:700; color:#fff; }
+.ila-hero p { color:#8ba3bc; max-width:600px; margin:.5rem auto 0; font-size:.95rem; }
+.ila-nav { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.ila-nav-link { background:#151920; border:1px solid #1e2a38; color:#8ba3bc; padding:.45rem 1rem;
+  border-radius:6px; cursor:pointer; font-size:.85rem; transition:all .2s; }
+.ila-nav-link.active, .ila-nav-link:hover { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.ila-card { background:#151920; border:1px solid #1e2a38; border-radius:10px; padding:1.2rem; margin-bottom:1rem; }
+.ila-card h5 { color:var(--acc); font-size:.9rem; font-weight:700; margin-bottom:.7rem; text-transform:uppercase; letter-spacing:.05em; }
+canvas { border-radius:8px; background:#0a0f14; display:block; }
+.btn-acc { background:var(--acc); color:#000; border:none; font-weight:600; border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-acc:hover { background:var(--acc2); }
+.btn-out { background:transparent; color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-out:hover { background:var(--acc); color:#000; }
+.btn-sm2 { padding:.25rem .65rem; font-size:.78rem; border-radius:5px; }
+.tbl-alg { width:100%; border-collapse:collapse; font-size:.82rem; }
+.tbl-alg th { background:#1a2233; color:var(--acc); padding:.5rem .7rem; text-align:left; font-weight:600; }
+.tbl-alg td { padding:.45rem .7rem; border-top:1px solid #1e2a38; color:#c8d8e8; }
+.tbl-alg tr:hover td { background:#1a2233; }
+.state-row { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.6rem; }
+.state-chip { background:#0a1520; border:1px solid #1e2a38; border-radius:6px; padding:.3rem .6rem; font-size:.75rem; font-family:monospace; color:#8ba3bc; }
+.state-chip.final { border-color:#22d3ee; color:#22d3ee; }
+.state-chip.current { border-color:#f97316; color:#f97316; }
+.chip-val { color:#fff; font-weight:700; }
+.preset-row { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.7rem; }
+.preset-btn { background:#1a2233; border:1px solid #2a3a50; color:#8ba3bc; padding:.3rem .7rem; border-radius:5px; cursor:pointer; font-size:.78rem; }
+.preset-btn:hover, .preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.matrix-wrap { overflow-x:auto; }
+.matrix-tbl { border-collapse:collapse; font-size:.78rem; font-family:monospace; }
+.matrix-tbl th, .matrix-tbl td { padding:.3rem .55rem; border:1px solid #1e2a38; text-align:center; min-width:38px; }
+.matrix-tbl th { background:#1a2233; color:var(--acc); }
+.matrix-tbl td { color:#c8d8e8; }
+.matrix-tbl td.updated { background:#0a2a10; color:#4ade80; }
+.matrix-tbl td.inf { color:#3a4a5a; }
+.matrix-tbl td.diag { color:#38bdf8; }
+.legend-row { display:flex; gap:1rem; flex-wrap:wrap; font-size:.78rem; color:#8ba3bc; margin-top:.5rem; }
+.legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; }
+.log-box { background:#0a0f14; border:1px solid #1e2a38; border-radius:6px; padding:.7rem; font-size:.75rem; font-family:monospace; color:#8ba3bc; height:100px; overflow-y:auto; }
+.log-box .log-line { margin-bottom:2px; }
+.log-box .log-line.hi { color:#38bdf8; }
+.range-row { display:flex; align-items:center; gap:.6rem; font-size:.82rem; color:#8ba3bc; }
+.range-row input[type=range] { flex:1; accent-color:var(--acc); }
+</style>
+
+<div class="ila-wrap">
+  <a href="{{ url_for('demos.learn_dimat') }}" class="ila-back">← Vissza a tananyaghoz</a>
+
+  <div class="ila-hero">
+    <h1>13. fejezet — Útkeresési algoritmusok</h1>
+    <p>Dijkstra, BFS, Bellman-Ford és Floyd-Warshall — legrövidebb utak súlyozott és súlyozatlan gráfokban.</p>
+  </div>
+
+  <div class="ila-nav">
+    <div class="ila-nav-link active" onclick="showTab('tab-dijkstra',this)">Dijkstra</div>
+    <div class="ila-nav-link" onclick="showTab('tab-bfs',this)">BFS legrövidebb út</div>
+    <div class="ila-nav-link" onclick="showTab('tab-bellman',this)">Bellman-Ford</div>
+    <div class="ila-nav-link" onclick="showTab('tab-floyd',this)">Floyd-Warshall</div>
+    <div class="ila-nav-link" onclick="showTab('tab-compare',this)">Összehasonlítás</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ TAB 1: DIJKSTRA -->
+  <div id="tab-dijkstra" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Dijkstra algoritmusa — lépésenkénti animáció</h5>
+          <div class="preset-row" id="dijk-presets">
+            <div class="preset-btn active" onclick="dijkLoadPreset('small')">Kis gráf (6 csúcs)</div>
+            <div class="preset-btn" onclick="dijkLoadPreset('medium')">Közép (8 csúcs)</div>
+            <div class="preset-btn" onclick="dijkLoadPreset('grid')">Rácsszerű</div>
+            <div class="preset-btn" onclick="dijkLoadPreset('dense')">Sűrű</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="dijk-canvas" width="480" height="320"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#1e3a5f"></span>Ideiglenes</span>
+                <span><span class="legend-dot" style="background:#38bdf8"></span>Aktuális</span>
+                <span><span class="legend-dot" style="background:#4ade80"></span>Végleges</span>
+                <span><span class="legend-dot" style="background:#ef4444"></span>Cél</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+                <label class="text-muted" style="font-size:.82rem">Forrás:</label>
+                <select id="dijk-src" class="form-select form-select-sm" style="width:80px;background:#0a0f14;color:#fff;border-color:#1e2a38"></select>
+                <label class="text-muted" style="font-size:.82rem">Cél:</label>
+                <select id="dijk-dst" class="form-select form-select-sm" style="width:80px;background:#0a0f14;color:#fff;border-color:#1e2a38"></select>
+              </div>
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="dijkReset()">↺ Újra</button>
+                <button class="btn-out btn-sm2" onclick="dijkStep()">Lépés →</button>
+                <button class="btn-out btn-sm2" id="dijk-auto-btn" onclick="dijkToggleAuto()">▶ Auto</button>
+                <button class="btn-out btn-sm2" onclick="dijkFinish()">⏩ Kész</button>
+              </div>
+              <div style="font-size:.8rem;color:#8ba3bc;margin-bottom:.5rem" id="dijk-status">Kattints Lépés-re az indításhoz.</div>
+              <div style="font-size:.78rem;color:#8ba3bc;margin-bottom:.3rem;font-weight:600">Csúcs állapotok:</div>
+              <div class="state-row" id="dijk-state-chips"></div>
+              <div class="log-box mt-2" id="dijk-log"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Az algoritmus lépései</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.7">
+            <b style="color:var(--acc)">Adminisztráció:</b> minden \(x\) csúcshoz:
+            <ul style="margin:.4rem 0 .6rem 1.2rem">
+              <li>\(l(x)\) — eddig ismert legkisebb távolság (kezdetben \(+\infty\), forrásból \(0\))</li>
+              <li>\(P(x)\) — megelőző csúcs (az optimal úton)</li>
+              <li>\(T(x)\) — ideiglenes (i) vagy végleges (h)</li>
+            </ul>
+            <b style="color:var(--acc)">Ciklus:</b>
+            <ol style="margin:.4rem 0 0 1.2rem">
+              <li>Válaszd a legkisebb \(l(y)\)-jű ideiglenes csúcsot → \(T(y):=h\)</li>
+              <li>Minden \(x\) szomszédra: ha \(l(y)+w(y,x) &lt; l(x)\), frissítsd \(l(x)\) és \(P(x)\)</li>
+              <li>Ismételd, amíg van véges ideiglenes csúcs</li>
+            </ol>
+            <div style="margin-top:.6rem">Futásidő: \(\mathcal{O}(n^2)\) egyszerű esetben, \(\mathcal{O}((n+m)\log n)\) kupaccal.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Távolságtáblázat</h5>
+          <div class="matrix-wrap"><table class="matrix-tbl" id="dijk-dist-tbl"><thead></thead><tbody></tbody></table></div>
+          <div style="font-size:.78rem;color:#8ba3bc;margin-top:.5rem">Zöld = frissített; kék átló = forráscsúcs \((l=0)\).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ TAB 2: BFS -->
+  <div id="tab-bfs" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>BFS — legrövidebb út súlyozatlan gráfban</h5>
+          <div class="preset-row" id="bfs-presets">
+            <div class="preset-btn active" onclick="bfsLoadPreset('grid4')">4×4 rács</div>
+            <div class="preset-btn" onclick="bfsLoadPreset('cycle')">Körös</div>
+            <div class="preset-btn" onclick="bfsLoadPreset('tree')">Fa</div>
+            <div class="preset-btn" onclick="bfsLoadPreset('bipartite')">Kétoldalú</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="bfs-canvas" width="480" height="320"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#1e3a5f"></span>Fel nem tárt</span>
+                <span><span class="legend-dot" style="background:#f97316"></span>Sor (queue)</span>
+                <span><span class="legend-dot" style="background:#4ade80"></span>Meglátogatott</span>
+                <span><span class="legend-dot" style="background:#ef4444"></span>Cél</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+                <label class="text-muted" style="font-size:.82rem">Forrás:</label>
+                <select id="bfs-src" class="form-select form-select-sm" style="width:80px;background:#0a0f14;color:#fff;border-color:#1e2a38"></select>
+                <label class="text-muted" style="font-size:.82rem">Cél:</label>
+                <select id="bfs-dst" class="form-select form-select-sm" style="width:80px;background:#0a0f14;color:#fff;border-color:#1e2a38"></select>
+              </div>
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="bfsReset()">↺ Újra</button>
+                <button class="btn-out btn-sm2" onclick="bfsStep()">Lépés →</button>
+                <button class="btn-out btn-sm2" id="bfs-auto-btn" onclick="bfsToggleAuto()">▶ Auto</button>
+              </div>
+              <div style="font-size:.8rem;color:#8ba3bc;margin-bottom:.4rem" id="bfs-status">Kattints Lépés-re.</div>
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">Sor (queue):</div>
+              <div id="bfs-queue-disp" style="font-family:monospace;font-size:.8rem;color:#f97316;background:#0a0f14;border:1px solid #1e2a38;border-radius:6px;padding:.4rem .6rem;min-height:2rem">[ ]</div>
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-top:.5rem;margin-bottom:.3rem">Távolságok:</div>
+              <div class="state-row" id="bfs-dist-chips"></div>
+              <div class="log-box mt-2" id="bfs-log"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>BFS vs Dijkstra — mikor melyiket?</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Tulajdonság</th><th>BFS</th><th>Dijkstra</th></tr></thead>
+            <tbody>
+              <tr><td>Gráf típusa</td><td>Súlyozatlan (vagy egységsúlyú)</td><td>Nemnegatív súlyú élek</td></tr>
+              <tr><td>Adatszerkezet</td><td>FIFO sor</td><td>Minimális prioritássor (kupac)</td></tr>
+              <tr><td>Futásidő</td><td>\(\mathcal{O}(n+m)\)</td><td>\(\mathcal{O}((n+m)\log n)\)</td></tr>
+              <tr><td>Negatív élek</td><td>Nem kezeli</td><td>Nem kezeli</td></tr>
+              <tr><td>Eredmény</td><td>Minimális élszámú út</td><td>Minimális összsúlyú út</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ TAB 3: BELLMAN-FORD -->
+  <div id="tab-bellman" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Bellman-Ford — relaxáció negatív élekkel</h5>
+          <div class="preset-row">
+            <div class="preset-btn active" onclick="bfLoadPreset('neg')">Negatív él</div>
+            <div class="preset-btn" onclick="bfLoadPreset('negcycle')">Negatív kör</div>
+            <div class="preset-btn" onclick="bfLoadPreset('dag')">DAG</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-7">
+              <canvas id="bf-canvas" width="480" height="300"></canvas>
+              <div class="legend-row mt-2">
+                <span><span class="legend-dot" style="background:#1e3a5f"></span>Nem relaxált</span>
+                <span><span class="legend-dot" style="background:#f97316"></span>Relaxálás alatt</span>
+                <span><span class="legend-dot" style="background:#4ade80"></span>Frissítve</span>
+                <span><span class="legend-dot" style="background:#ef4444"></span>Negatív kör</span>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+                <label class="text-muted" style="font-size:.82rem">Forrás:</label>
+                <select id="bf-src" class="form-select form-select-sm" style="width:80px;background:#0a0f14;color:#fff;border-color:#1e2a38"></select>
+              </div>
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="bfReset()">↺ Újra</button>
+                <button class="btn-out btn-sm2" onclick="bfStep()">Lépés →</button>
+                <button class="btn-out btn-sm2" id="bf-auto-btn" onclick="bfToggleAuto()">▶ Auto</button>
+              </div>
+              <div style="font-size:.8rem;color:#8ba3bc;margin-bottom:.4rem" id="bf-status">Kattints Lépés-re.</div>
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">Iteráció: <span id="bf-iter">0</span> / <span id="bf-iter-max">n-1</span></div>
+              <div class="state-row" id="bf-state-chips"></div>
+              <div class="log-box mt-2" id="bf-log"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Az algoritmus</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.7">
+            <b style="color:var(--acc)">Relaxáció:</b> minden \((u,v,w)\) élre:<br>
+            ha \(l[u]+w &lt; l[v]\): \(l[v] := l[u]+w,\; P[v]:=u\)<br><br>
+            <b style="color:var(--acc)">Ismétlés:</b> \(n-1\)-szer az összes élre<br><br>
+            <b style="color:var(--acc)">Negatív kördetekció:</b> ha az \(n\). körben is frissíthető valami → negatív kör van<br><br>
+            Futásidő: \(\mathcal{O}(n \cdot m)\)<br>
+            Előny Dijkstrával szemben: kezeli a negatív éleket.
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>\(l[v]\) értékek evolúciója</h5>
+          <canvas id="bf-chart" width="300" height="160" style="background:#0a0f14;border-radius:6px"></canvas>
+          <div style="font-size:.75rem;color:#8ba3bc;margin-top:.4rem">Minden sor egy iteráció; minden oszlop egy csúcs \(l\)-értéke.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ TAB 4: FLOYD-WARSHALL -->
+  <div id="tab-floyd" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Floyd-Warshall — minden párra legrövidebb út</h5>
+          <div class="preset-row">
+            <div class="preset-btn active" onclick="fwLoadPreset('small')">Kis gráf (5)</div>
+            <div class="preset-btn" onclick="fwLoadPreset('neg')">Negatív élek</div>
+            <div class="preset-btn" onclick="fwLoadPreset('directed')">Irányított</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6">
+              <canvas id="fw-canvas" width="360" height="260"></canvas>
+              <div class="mt-2 d-flex gap-2 flex-wrap">
+                <button class="btn-acc btn-sm2" onclick="fwReset()">↺ Újra</button>
+                <button class="btn-out btn-sm2" onclick="fwStep()">Lépés k++</button>
+                <button class="btn-out btn-sm2" id="fw-auto-btn" onclick="fwToggleAuto()">▶ Auto</button>
+              </div>
+              <div style="font-size:.8rem;color:#8ba3bc;margin-top:.4rem" id="fw-status">k = 0 (kezdeti távolságmátrix)</div>
+            </div>
+            <div class="col-md-6">
+              <div style="font-size:.78rem;color:#8ba3bc;font-weight:600;margin-bottom:.3rem">
+                \(D^{(k)}\) mátrix — <span id="fw-k-label">k=0</span>
+              </div>
+              <div class="matrix-wrap"><table class="matrix-tbl" id="fw-matrix"><thead></thead><tbody></tbody></table></div>
+              <div style="font-size:.75rem;color:#8ba3bc;margin-top:.4rem">
+                Zöld = frissített ebben a lépésben. \(D[i][j] = \min(D[i][j],\, D[i][k]+D[k][j])\)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Következő-csúcs (next-hop) mátrix</h5>
+          <div class="matrix-wrap"><table class="matrix-tbl" id="fw-next"><thead></thead><tbody></tbody></table></div>
+          <div style="font-size:.75rem;color:#8ba3bc;margin-top:.4rem">Út rekonstrukciója: kövessd a NEXT[i][j] mutatókat a célig.</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Az algoritmus</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.7">
+            Inicializáció: \(D[i][j] = w(i,j)\) ha él, \(0\) ha \(i=j\), \(+\infty\) egyébként<br><br>
+            Három egymásba ágyazott ciklus:
+            <pre style="background:#0a0f14;padding:.5rem;border-radius:5px;font-size:.76rem;color:#38bdf8;margin:.4rem 0">for k in 1..n:
+  for i in 1..n:
+    for j in 1..n:
+      if D[i][k]+D[k][j] &lt; D[i][j]:
+        D[i][j] = D[i][k]+D[k][j]
+        NEXT[i][j] = NEXT[i][k]</pre>
+            Futásidő: \(\mathcal{O}(n^3)\)<br>
+            Negatív éleket kezel, negatív köröket nem.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ TAB 5: ÖSSZEHASONLÍTÁS -->
+  <div id="tab-compare" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Algoritmus-verseny — ugyanaz a gráf, négy megközelítés</h5>
+          <div class="preset-row">
+            <div class="preset-btn active" onclick="raceLoadPreset('mixed')">Vegyes súlyok</div>
+            <div class="preset-btn" onclick="raceLoadPreset('sparse')">Ritka</div>
+            <div class="preset-btn" onclick="raceLoadPreset('dense8')">Sűrű (8 csúcs)</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-8">
+              <canvas id="race-canvas" width="540" height="300"></canvas>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+                <label class="text-muted" style="font-size:.82rem">Forrás:</label>
+                <select id="race-src" class="form-select form-select-sm" style="width:80px;background:#0a0f14;color:#fff;border-color:#1e2a38"></select>
+                <label class="text-muted" style="font-size:.82rem">Cél:</label>
+                <select id="race-dst" class="form-select form-select-sm" style="width:80px;background:#0a0f14;color:#fff;border-color:#1e2a38"></select>
+              </div>
+              <button class="btn-acc" style="width:100%;margin-bottom:.5rem" onclick="runRace()">▶ Futtatás</button>
+              <div id="race-results" style="font-size:.8rem;color:#8ba3bc">Az összes algoritmus eredményei itt jelennek meg.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Összehasonlítási táblázat</h5>
+          <table class="tbl-alg">
+            <thead>
+              <tr><th>Algoritmus</th><th>Gráf</th><th>Negatív élek</th><th>Negatív körök</th><th>Forrás</th><th>Futásidő</th><th>Megjegyzés</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span style="color:#38bdf8;font-weight:600">BFS</span></td>
+                <td>Súlyozatlan</td>
+                <td>—</td><td>—</td><td>Egy</td>
+                <td>\(\mathcal{O}(n+m)\)</td>
+                <td>Legegyszerűbb, leggyorsabb</td>
+              </tr>
+              <tr>
+                <td><span style="color:#4ade80;font-weight:600">Dijkstra</span></td>
+                <td>Nemnegatív súlyú</td>
+                <td>✗</td><td>✗</td><td>Egy</td>
+                <td>\(\mathcal{O}((n+m)\log n)\)</td>
+                <td>Legelterjedtebb</td>
+              </tr>
+              <tr>
+                <td><span style="color:#f97316;font-weight:600">Bellman-Ford</span></td>
+                <td>Általános irányított</td>
+                <td>✓</td><td>Detektálja</td><td>Egy</td>
+                <td>\(\mathcal{O}(n \cdot m)\)</td>
+                <td>Lassabb, de robusztus</td>
+              </tr>
+              <tr>
+                <td><span style="color:#a78bfa;font-weight:600">Floyd-Warshall</span></td>
+                <td>Általános</td>
+                <td>✓</td><td>Detektálja</td><td>Összes pár</td>
+                <td>\(\mathcal{O}(n^3)\)</td>
+                <td>Teljes távolságmátrix</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Mikor melyiket?</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:#38bdf8">BFS</b> — térképes navigáció, labirintus, szociális hálózatok (hop-távolság)<br>
+            <b style="color:#4ade80">Dijkstra</b> — GPS útvonaltervezés, hálózati routing (OSPF), játékok<br>
+            <b style="color:#f97316">Bellman-Ford</b> — pénzügyi arbitrázs detekció, BGP routing, negatív élek<br>
+            <b style="color:#a78bfa">Floyd-Warshall</b> — kis gráf, minden pár kell, tranzitív lezárt
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Speciális esetek</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:var(--acc)">DAG (körmentes irányított):</b> topológiai sorrend + egy relaxáció → \(\mathcal{O}(n+m)\)<br>
+            <b style="color:var(--acc)">Irányítatlan fa:</b> BFS/DFS egyszer → \(\mathcal{O}(n)\)<br>
+            <b style="color:var(--acc)">Sűrű gráf (\(m \approx n^2\)):</b> Dijkstra tömbbel → \(\mathcal{O}(n^2)\), jobb mint kupaccal<br>
+            <b style="color:var(--acc)">Euklidészi gráf:</b> A* heurisztikával Dijkstra gyorsítható
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+});
+</script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+// Helpers
+const INF = 1e9;
+function showTab(id, btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function setActivePreset(row, btn){
+  row.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// GRAPH PRESETS ─── shared format: {nodes:[{x,y,label}], edges:[{u,v,w,directed?}]}
+const PRESETS = {
+  // Dijkstra presets
+  dijk_small:{
+    nodes:[{x:80,y:160,l:'A'},{x:200,y:60,l:'B'},{x:200,y:260,l:'C'},{x:340,y:60,l:'D'},{x:340,y:260,l:'E'},{x:440,y:160,l:'F'}],
+    edges:[{u:0,v:1,w:4},{u:0,v:2,w:2},{u:1,v:2,w:1},{u:1,v:3,w:5},{u:2,v:4,w:8},{u:3,v:4,w:2},{u:3,v:5,w:6},{u:4,v:5,w:3}]
+  },
+  dijk_medium:{
+    nodes:[{x:60,y:150,l:'A'},{x:160,y:60,l:'B'},{x:160,y:250,l:'C'},{x:260,y:150,l:'D'},{x:360,y:60,l:'E'},{x:360,y:250,l:'F'},{x:460,y:150,l:'G'},{x:260,y:300,l:'H'}],
+    edges:[{u:0,v:1,w:2},{u:0,v:2,w:6},{u:1,v:3,w:5},{u:2,v:3,w:8},{u:1,v:4,w:10},{u:3,v:4,w:15},{u:3,v:5,w:3},{u:4,v:6,w:4},{u:5,v:6,w:7},{u:2,v:7,w:2},{u:7,v:5,w:4}]
+  },
+  dijk_grid:{
+    nodes:[{x:80,y:80,l:'0'},{x:200,y:80,l:'1'},{x:320,y:80,l:'2'},{x:440,y:80,l:'3'},
+           {x:80,y:180,l:'4'},{x:200,y:180,l:'5'},{x:320,y:180,l:'6'},{x:440,y:180,l:'7'},
+           {x:80,y:280,l:'8'},{x:200,y:280,l:'9'},{x:320,y:280,l:'A'},{x:440,y:280,l:'B'}],
+    edges:[{u:0,v:1,w:3},{u:1,v:2,w:1},{u:2,v:3,w:4},{u:4,v:5,w:2},{u:5,v:6,w:5},{u:6,v:7,w:2},
+           {u:8,v:9,w:3},{u:9,v:10,w:1},{u:10,v:11,w:6},{u:0,v:4,w:2},{u:1,v:5,w:3},
+           {u:2,v:6,w:1},{u:3,v:7,w:4},{u:4,v:8,w:5},{u:5,v:9,w:2},{u:6,v:10,w:3},{u:7,v:11,w:1}]
+  },
+  dijk_dense:{
+    nodes:[{x:120,y:80,l:'A'},{x:280,y:60,l:'B'},{x:400,y:120,l:'C'},{x:400,y:240,l:'D'},{x:280,y:280,l:'E'},{x:120,y:240,l:'F'}],
+    edges:[{u:0,v:1,w:7},{u:0,v:2,w:9},{u:0,v:5,w:14},{u:1,v:2,w:10},{u:1,v:3,w:15},{u:2,v:3,w:11},{u:2,v:5,w:2},{u:3,v:4,w:6},{u:4,v:5,w:9}]
+  },
+  // BFS presets (w=1 uniform)
+  bfs_grid4:{
+    nodes:[{x:80,y:80,l:'0'},{x:180,y:80,l:'1'},{x:280,y:80,l:'2'},{x:380,y:80,l:'3'},
+           {x:80,y:180,l:'4'},{x:180,y:180,l:'5'},{x:280,y:180,l:'6'},{x:380,y:180,l:'7'},
+           {x:80,y:280,l:'8'},{x:180,y:280,l:'9'},{x:280,y:280,l:'A'},{x:380,y:280,l:'B'}],
+    edges:[{u:0,v:1,w:1},{u:1,v:2,w:1},{u:2,v:3,w:1},{u:4,v:5,w:1},{u:5,v:6,w:1},{u:6,v:7,w:1},
+           {u:8,v:9,w:1},{u:9,v:10,w:1},{u:10,v:11,w:1},{u:0,v:4,w:1},{u:1,v:5,w:1},
+           {u:2,v:6,w:1},{u:3,v:7,w:1},{u:4,v:8,w:1},{u:5,v:9,w:1},{u:6,v:10,w:1},{u:7,v:11,w:1}]
+  },
+  bfs_cycle:{
+    nodes:[{x:240,y:60,l:'0'},{x:380,y:140,l:'1'},{x:340,y:290,l:'2'},{x:140,y:290,l:'3'},{x:100,y:140,l:'4'},{x:240,y:190,l:'5'}],
+    edges:[{u:0,v:1,w:1},{u:1,v:2,w:1},{u:2,v:3,w:1},{u:3,v:4,w:1},{u:4,v:0,w:1},{u:0,v:5,w:1},{u:1,v:5,w:1},{u:2,v:5,w:1},{u:3,v:5,w:1},{u:4,v:5,w:1}]
+  },
+  bfs_tree:{
+    nodes:[{x:240,y:40,l:'0'},{x:120,y:120,l:'1'},{x:360,y:120,l:'2'},{x:60,y:210,l:'3'},{x:180,y:210,l:'4'},{x:300,y:210,l:'5'},{x:420,y:210,l:'6'}],
+    edges:[{u:0,v:1,w:1},{u:0,v:2,w:1},{u:1,v:3,w:1},{u:1,v:4,w:1},{u:2,v:5,w:1},{u:2,v:6,w:1}]
+  },
+  bfs_bipartite:{
+    nodes:[{x:80,y:100,l:'A'},{x:80,y:180,l:'B'},{x:80,y:260,l:'C'},{x:300,y:80,l:'X'},{x:300,y:170,l:'Y'},{x:300,y:260,l:'Z'}],
+    edges:[{u:0,v:3,w:1},{u:0,v:4,w:1},{u:1,v:3,w:1},{u:1,v:5,w:1},{u:2,v:4,w:1},{u:2,v:5,w:1}]
+  },
+  // Bellman-Ford
+  bf_neg:{
+    nodes:[{x:80,y:160,l:'A'},{x:200,y:70,l:'B'},{x:200,y:250,l:'C'},{x:360,y:70,l:'D'},{x:360,y:250,l:'E'},{x:460,y:160,l:'F'}],
+    edges:[{u:0,v:1,w:6,d:true},{u:0,v:2,w:7,d:true},{u:1,v:3,w:5,d:true},{u:2,v:1,w:-4,d:true},{u:2,v:4,w:9,d:true},{u:3,v:5,w:3,d:true},{u:4,v:3,w:-2,d:true},{u:4,v:5,w:4,d:true}]
+  },
+  bf_negcycle:{
+    nodes:[{x:100,y:160,l:'A'},{x:250,y:70,l:'B'},{x:400,y:160,l:'C'},{x:250,y:250,l:'D'}],
+    edges:[{u:0,v:1,w:1,d:true},{u:1,v:2,w:-3,d:true},{u:2,v:3,w:2,d:true},{u:3,v:1,w:1,d:true},{u:0,v:3,w:4,d:true}]
+  },
+  bf_dag:{
+    nodes:[{x:60,y:160,l:'A'},{x:180,y:80,l:'B'},{x:180,y:240,l:'C'},{x:320,y:80,l:'D'},{x:320,y:240,l:'E'},{x:440,y:160,l:'F'}],
+    edges:[{u:0,v:1,w:5,d:true},{u:0,v:2,w:3,d:true},{u:1,v:3,w:6,d:true},{u:1,v:4,w:-1,d:true},{u:2,v:4,w:4,d:true},{u:3,v:5,w:2,d:true},{u:4,v:5,w:7,d:true}]
+  },
+  // Floyd-Warshall
+  fw_small:{
+    nodes:[{x:200,y:60,l:'A'},{x:320,y:150,l:'B'},{x:260,y:260,l:'C'},{x:100,y:260,l:'D'},{x:60,y:150,l:'E'}],
+    edges:[{u:0,v:1,w:3},{u:0,v:4,w:8},{u:1,v:2,w:2},{u:2,v:4,w:5},{u:3,v:0,w:4,d:true},{u:4,v:3,w:1,d:true},{u:1,v:3,w:7}]
+  },
+  fw_neg:{
+    nodes:[{x:180,y:60,l:'A'},{x:320,y:60,l:'B'},{x:380,y:200,l:'C'},{x:240,y:270,l:'D'},{x:80,y:200,l:'E'}],
+    edges:[{u:0,v:1,w:3,d:true},{u:1,v:2,w:-2,d:true},{u:2,v:3,w:2,d:true},{u:3,v:4,w:-1,d:true},{u:4,v:0,w:4,d:true},{u:0,v:2,w:8,d:true},{u:1,v:4,w:7,d:true}]
+  },
+  fw_directed:{
+    nodes:[{x:160,y:80,l:'A'},{x:340,y:80,l:'B'},{x:420,y:210,l:'C'},{x:240,y:280,l:'D'},{x:80,y:210,l:'E'}],
+    edges:[{u:0,v:1,w:5,d:true},{u:0,v:4,w:10,d:true},{u:1,v:2,w:3,d:true},{u:2,v:3,w:1,d:true},{u:3,v:0,w:7,d:true},{u:4,v:3,w:2,d:true},{u:1,v:4,w:6,d:true}]
+  },
+  // Race presets
+  race_mixed:{
+    nodes:[{x:80,y:160,l:'A'},{x:200,y:60,l:'B'},{x:200,y:260,l:'C'},{x:340,y:60,l:'D'},{x:340,y:260,l:'E'},{x:460,y:160,l:'F'}],
+    edges:[{u:0,v:1,w:4},{u:0,v:2,w:2},{u:1,v:2,w:1},{u:1,v:3,w:5},{u:2,v:4,w:8},{u:3,v:4,w:2},{u:3,v:5,w:6},{u:4,v:5,w:3}]
+  },
+  race_sparse:{
+    nodes:[{x:80,y:160,l:'A'},{x:200,y:80,l:'B'},{x:320,y:160,l:'C'},{x:460,y:100,l:'D'},{x:460,y:240,l:'E'},{x:200,y:240,l:'F'}],
+    edges:[{u:0,v:1,w:3},{u:1,v:2,w:2},{u:2,v:3,w:5},{u:2,v:4,w:7},{u:3,v:5,w:4},{u:4,v:5,w:1},{u:0,v:5,w:9}]
+  },
+  race_dense8:{
+    nodes:[{x:240,y:50,l:'A'},{x:380,y:120,l:'B'},{x:430,y:220,l:'C'},{x:350,y:310,l:'D'},
+           {x:200,y:330,l:'E'},{x:80,y:260,l:'F'},{x:60,y:150,l:'G'},{x:140,y:60,l:'H'}],
+    edges:[{u:0,v:1,w:4},{u:0,v:2,w:11},{u:0,v:7,w:8},{u:1,v:2,w:8},{u:1,v:3,w:9},{u:2,v:4,w:5},
+           {u:2,v:5,w:12},{u:3,v:4,w:10},{u:3,v:5,w:14},{u:4,v:5,w:4},{u:4,v:6,w:7},
+           {u:5,v:6,w:9},{u:6,v:7,w:2},{u:7,v:1,w:2}]
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────
+// DRAWING UTILITIES
+function drawGraph(canvas, nodes, edges, colors, edgeColors, directed, showWeights){
+  const ctx = canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0a0f14'; ctx.fillRect(0,0,W,H);
+  const R=16;
+  // edges
+  edges.forEach((e,i)=>{
+    const n1=nodes[e.u], n2=nodes[e.v];
+    const col = edgeColors && edgeColors[i] ? edgeColors[i] : '#2a3a50';
+    ctx.strokeStyle=col; ctx.lineWidth=edgeColors&&edgeColors[i]?2.5:1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(n1.x,n1.y); ctx.lineTo(n2.x,n2.y); ctx.stroke();
+    if(directed||e.d){
+      // arrow
+      const ang=Math.atan2(n2.y-n1.y,n2.x-n1.x);
+      const ax=n2.x-R*1.1*Math.cos(ang), ay=n2.y-R*1.1*Math.sin(ang);
+      ctx.fillStyle=col;
+      ctx.beginPath();
+      ctx.moveTo(ax,ay);
+      ctx.lineTo(ax-10*Math.cos(ang-0.4),ay-10*Math.sin(ang-0.4));
+      ctx.lineTo(ax-10*Math.cos(ang+0.4),ay-10*Math.sin(ang+0.4));
+      ctx.closePath(); ctx.fill();
+    }
+    if(showWeights!==false && e.w!==undefined){
+      const mx=(n1.x+n2.x)/2, my=(n1.y+n2.y)/2;
+      ctx.fillStyle='#f97316'; ctx.font='bold 11px monospace';
+      ctx.fillText(e.w<INF?e.w:'∞', mx+3, my-4);
+    }
+  });
+  // nodes
+  nodes.forEach((n,i)=>{
+    const col = colors && colors[i] ? colors[i] : '#1e3a5f';
+    ctx.beginPath(); ctx.arc(n.x,n.y,R,0,2*Math.PI);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.strokeStyle='#38bdf8'; ctx.lineWidth=1.5;
+    ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='bold 12px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(n.l||i, n.x, n.y);
+  });
+}
+
+// Build adjacency list
+function buildAdj(nodes, edges, directed){
+  const adj = nodes.map(()=>[]);
+  edges.forEach((e,i)=>{
+    adj[e.u].push({v:e.v,w:e.w,i});
+    if(!directed && !e.d) adj[e.v].push({v:e.u,w:e.w,i});
+  });
+  return adj;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ════════════ TAB 1: DIJKSTRA ════════════
+let dijkData=null, dijkState=null, dijkAutoTimer=null;
+
+function dijkLoadPreset(name){
+  const p = PRESETS['dijk_'+name];
+  dijkData = JSON.parse(JSON.stringify(p));
+  setActivePreset(document.getElementById('dijk-presets'), event.target);
+  const sel1=document.getElementById('dijk-src'), sel2=document.getElementById('dijk-dst');
+  sel1.innerHTML=sel2.innerHTML='';
+  dijkData.nodes.forEach((n,i)=>{ sel1.innerHTML+=`<option value="${i}">${n.l||i}</option>`; sel2.innerHTML+=`<option value="${i}">${n.l||i}</option>`; });
+  sel2.value=dijkData.nodes.length-1;
+  dijkReset();
+}
+function dijkReset(){
+  if(dijkAutoTimer){clearInterval(dijkAutoTimer);dijkAutoTimer=null;document.getElementById('dijk-auto-btn').textContent='▶ Auto';}
+  if(!dijkData) return;
+  const n=dijkData.nodes.length;
+  const src=parseInt(document.getElementById('dijk-src').value);
+  dijkState={
+    dist: Array(n).fill(INF), prev: Array(n).fill(-1),
+    settled: Array(n).fill(false), step:0, done:false,
+    src, dst:parseInt(document.getElementById('dijk-dst').value)
+  };
+  dijkState.dist[src]=0;
+  dijkRender();
+  dijkUpdateChips();
+  dijkUpdateTable();
+  document.getElementById('dijk-status').textContent='Kattints Lépés-re az indításhoz.';
+  document.getElementById('dijk-log').innerHTML='';
+}
+function dijkStep(){
+  if(!dijkState || dijkState.done) return;
+  const {dist,prev,settled} = dijkState;
+  const adj = buildAdj(dijkData.nodes, dijkData.edges, false);
+  // pick unsettled min
+  let u=-1, best=INF;
+  dist.forEach((d,i)=>{ if(!settled[i]&&d<best){best=d;u=i;} });
+  if(u===-1){dijkState.done=true;dijkDone();return;}
+  settled[u]=true;
+  dijkState.current=u;
+  const ul=dijkData.nodes[u].l||u;
+  dijkLog(`Véglegesítve: ${ul} (l=${best})`,'hi');
+  adj[u].forEach(({v,w})=>{
+    if(!settled[v]&&dist[u]+w<dist[v]){
+      dist[v]=dist[u]+w; prev[v]=u;
+      dijkLog(`  Frissítve: ${dijkData.nodes[v].l||v} → l=${dist[v]}`);
+    }
+  });
+  dijkState.step++;
+  dijkRender();dijkUpdateChips();dijkUpdateTable();
+  const allSettled=settled.every(Boolean);
+  if(allSettled){dijkState.done=true;dijkDone();}
+}
+function dijkDone(){
+  if(dijkAutoTimer){clearInterval(dijkAutoTimer);dijkAutoTimer=null;document.getElementById('dijk-auto-btn').textContent='▶ Auto';}
+  const dst=dijkState.dst;
+  const d=dijkState.dist[dst];
+  document.getElementById('dijk-status').textContent=
+    d<INF ? `Kész! Legrövidebb út: ${dijkData.nodes[dijkState.src].l}→${dijkData.nodes[dst].l} = ${d}` : 'Kész! A cél nem érhető el.';
+  dijkLog(d<INF?`Eredmény: ${dijkData.nodes[dijkState.src].l}→${dijkData.nodes[dst].l} távolság = ${d}`:`${dijkData.nodes[dst].l} nem elérhető`,'hi');
+}
+function dijkFinish(){while(!dijkState.done)dijkStep();}
+function dijkToggleAuto(){
+  if(dijkAutoTimer){clearInterval(dijkAutoTimer);dijkAutoTimer=null;document.getElementById('dijk-auto-btn').textContent='▶ Auto';}
+  else{dijkAutoTimer=setInterval(()=>{dijkStep();if(dijkState.done){clearInterval(dijkAutoTimer);dijkAutoTimer=null;document.getElementById('dijk-auto-btn').textContent='▶ Auto';}},700);document.getElementById('dijk-auto-btn').textContent='⏸ Stop';}
+}
+function dijkLog(msg,cls=''){
+  const lb=document.getElementById('dijk-log');
+  lb.innerHTML+=`<div class="log-line ${cls}">${msg}</div>`;
+  lb.scrollTop=lb.scrollHeight;
+}
+function dijkRender(){
+  if(!dijkData||!dijkState) return;
+  const {dist,settled,current,dst,src,prev,done}=dijkState;
+  const colors=dijkData.nodes.map((_,i)=>{
+    if(i===dst&&!done) return '#ef4444';
+    if(settled[i]) return '#166534';
+    if(i===current) return '#0ea5e9';
+    return '#1e3a5f';
+  });
+  // highlight shortest path edges when done
+  const edgeColors=dijkData.edges.map(()=>null);
+  if(done&&dist[dst]<INF){
+    let cur=dst; const pathNodes=new Set([cur]);
+    while(prev[cur]!==-1){const p=prev[cur];pathNodes.add(p);cur=p;}
+    dijkData.edges.forEach((e,i)=>{
+      if((pathNodes.has(e.u)&&pathNodes.has(e.v))) edgeColors[i]='#4ade80';
+    });
+  }
+  drawGraph(document.getElementById('dijk-canvas'),dijkData.nodes,dijkData.edges,colors,edgeColors,false,true);
+}
+function dijkUpdateChips(){
+  if(!dijkState) return;
+  const {dist,settled,current,src}=dijkState;
+  document.getElementById('dijk-state-chips').innerHTML=dijkData.nodes.map((n,i)=>{
+    const d=dist[i]; const lab=n.l||i;
+    const cls=settled[i]?'final':i===current?'current':'';
+    return `<div class="state-chip ${cls}"><b>${lab}</b>: <span class="chip-val">${d>=INF?'∞':d}</span>${settled[i]?' ✓':''}</div>`;
+  }).join('');
+}
+function dijkUpdateTable(){
+  if(!dijkData||!dijkState) return;
+  const nodes=dijkData.nodes; const {dist,settled,src}=dijkState;
+  const tbl=document.getElementById('dijk-dist-tbl');
+  tbl.querySelector('thead').innerHTML='<tr><th>Csúcs</th><th>l(x)</th><th>Állapot</th></tr>';
+  tbl.querySelector('tbody').innerHTML=nodes.map((n,i)=>{
+    const d=dist[i]; const lab=n.l||i;
+    const cls=i===src?'diag':settled[i]?'updated':'';
+    return `<tr><td>${lab}</td><td class="${cls}">${d>=INF?'∞':d}</td><td>${settled[i]?'végleges':'ideiglenes'}</td></tr>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ════════════ TAB 2: BFS ════════════
+let bfsData=null, bfsState=null, bfsAutoTimer=null;
+
+function bfsLoadPreset(name){
+  bfsData=JSON.parse(JSON.stringify(PRESETS['bfs_'+name]));
+  setActivePreset(document.getElementById('bfs-presets'),event.target);
+  const s1=document.getElementById('bfs-src'),s2=document.getElementById('bfs-dst');
+  s1.innerHTML=s2.innerHTML='';
+  bfsData.nodes.forEach((n,i)=>{s1.innerHTML+=`<option value="${i}">${n.l||i}</option>`;s2.innerHTML+=`<option value="${i}">${n.l||i}</option>`;});
+  s2.value=bfsData.nodes.length-1;
+  bfsReset();
+}
+function bfsReset(){
+  if(bfsAutoTimer){clearInterval(bfsAutoTimer);bfsAutoTimer=null;document.getElementById('bfs-auto-btn').textContent='▶ Auto';}
+  if(!bfsData) return;
+  const n=bfsData.nodes.length, src=parseInt(document.getElementById('bfs-src').value);
+  bfsState={dist:Array(n).fill(-1),prev:Array(n).fill(-1),visited:Array(n).fill(false),queue:[src],
+    inQueue:Array(n).fill(false),src,dst:parseInt(document.getElementById('bfs-dst').value),done:false};
+  bfsState.dist[src]=0;bfsState.visited[src]=true;bfsState.inQueue[src]=true;
+  bfsRender();bfsUpdateChips();
+  document.getElementById('bfs-log').innerHTML='';
+  document.getElementById('bfs-status').textContent='Kattints Lépés-re.';
+  document.getElementById('bfs-queue-disp').textContent=`[ ${src} ]`;
+}
+function bfsStep(){
+  if(!bfsState||bfsState.done) return;
+  const {dist,prev,visited,queue,inQueue,dst}=bfsState;
+  if(!queue.length){bfsState.done=true;bfsDone();return;}
+  const u=queue.shift();inQueue[u]=false;
+  const adj=buildAdj(bfsData.nodes,bfsData.edges,false);
+  const ul=bfsData.nodes[u].l||u;
+  bfsLog(`Meglátogatva: ${ul} (d=${dist[u]})`,'hi');
+  adj[u].forEach(({v})=>{
+    if(!visited[v]){visited[v]=true;dist[v]=dist[u]+1;prev[v]=u;queue.push(v);inQueue[v]=true;
+      bfsLog(`  Hozzáadva sorhoz: ${bfsData.nodes[v].l||v} (d=${dist[v]})`);
+    }
+  });
+  if(u===dst){bfsState.done=true;bfsDone();return;}
+  bfsRender();bfsUpdateChips();
+  document.getElementById('bfs-queue-disp').textContent=queue.length?`[ ${queue.map(i=>bfsData.nodes[i].l||i).join(', ')} ]`:'[ ]';
+}
+function bfsDone(){
+  if(bfsAutoTimer){clearInterval(bfsAutoTimer);bfsAutoTimer=null;document.getElementById('bfs-auto-btn').textContent='▶ Auto';}
+  const {dist,dst,src}=bfsState;
+  const d=dist[dst];
+  document.getElementById('bfs-status').textContent=
+    d>=0?`Kész! ${bfsData.nodes[src].l}→${bfsData.nodes[dst].l} = ${d} él`:`${bfsData.nodes[dst].l} nem elérhető`;
+  bfsRender();bfsUpdateChips();
+  document.getElementById('bfs-queue-disp').textContent='[ ]';
+}
+function bfsToggleAuto(){
+  if(bfsAutoTimer){clearInterval(bfsAutoTimer);bfsAutoTimer=null;document.getElementById('bfs-auto-btn').textContent='▶ Auto';}
+  else{bfsAutoTimer=setInterval(()=>{bfsStep();if(bfsState.done){clearInterval(bfsAutoTimer);bfsAutoTimer=null;document.getElementById('bfs-auto-btn').textContent='▶ Auto';}},600);document.getElementById('bfs-auto-btn').textContent='⏸ Stop';}
+}
+function bfsLog(msg,cls=''){const lb=document.getElementById('bfs-log');lb.innerHTML+=`<div class="log-line ${cls}">${msg}</div>`;lb.scrollTop=lb.scrollHeight;}
+function bfsRender(){
+  if(!bfsData||!bfsState) return;
+  const {visited,inQueue,dst,dist,done,prev,src}=bfsState;
+  const colors=bfsData.nodes.map((_,i)=>{
+    if(i===dst&&!done) return '#ef4444';
+    if(visited[i]) return '#166534';
+    if(inQueue[i]) return '#c2410c';
+    return '#1e3a5f';
+  });
+  const edgeColors=bfsData.edges.map(()=>null);
+  if(done&&dist[dst]>=0){
+    let cur=dst; const pNodes=new Set([cur]);
+    while(prev[cur]!==-1){const p=prev[cur];pNodes.add(p);cur=p;}
+    bfsData.edges.forEach((e,i)=>{if(pNodes.has(e.u)&&pNodes.has(e.v)) edgeColors[i]='#4ade80';});
+  }
+  drawGraph(document.getElementById('bfs-canvas'),bfsData.nodes,bfsData.edges,colors,edgeColors,false,false);
+}
+function bfsUpdateChips(){
+  if(!bfsState) return;
+  const {dist}=bfsState;
+  document.getElementById('bfs-dist-chips').innerHTML=bfsData.nodes.map((n,i)=>{
+    const d=dist[i];
+    return `<div class="state-chip ${d>=0?'final':''}"><b>${n.l||i}</b>: <span class="chip-val">${d>=0?d:'?'}</span></div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ════════════ TAB 3: BELLMAN-FORD ════════════
+let bfData=null, bfState=null, bfAutoTimer=null, bfHistory=[];
+
+function bfLoadPreset(name){
+  bfData=JSON.parse(JSON.stringify(PRESETS['bf_'+name]));
+  setActivePreset(document.querySelector('#tab-bellman .preset-row'), event.target);
+  const sel=document.getElementById('bf-src');sel.innerHTML='';
+  bfData.nodes.forEach((n,i)=>{sel.innerHTML+=`<option value="${i}">${n.l||i}</option>`;});
+  document.getElementById('bf-iter-max').textContent=bfData.nodes.length-1;
+  bfReset();
+}
+function bfReset(){
+  if(bfAutoTimer){clearInterval(bfAutoTimer);bfAutoTimer=null;document.getElementById('bf-auto-btn').textContent='▶ Auto';}
+  if(!bfData) return;
+  const n=bfData.nodes.length, src=parseInt(document.getElementById('bf-src').value);
+  bfState={dist:Array(n).fill(INF),prev:Array(n).fill(-1),src,iter:0,edgeIdx:0,done:false,negCycle:false,updated:Array(n).fill(false)};
+  bfState.dist[src]=0;
+  bfHistory=[[...bfState.dist]];
+  bfRender();bfUpdateChips();bfDrawChart();
+  document.getElementById('bf-iter').textContent=0;
+  document.getElementById('bf-log').innerHTML='';
+  document.getElementById('bf-status').textContent='Kattints Lépés-re.';
+}
+function bfStep(){
+  if(!bfData||bfState.done) return;
+  const {dist,prev,updated} = bfState;
+  const n=bfData.nodes.length, m=bfData.edges.length;
+  if(bfState.iter<n-1){
+    // do one full relaxation round
+    let anyUpdate=false;
+    bfState.updated=Array(n).fill(false);
+    bfData.edges.forEach((e,i)=>{
+      const {u,v,w}=e;
+      if(dist[u]<INF && dist[u]+w<dist[v]){
+        dist[v]=dist[u]+w; prev[v]=u; bfState.updated[v]=true; anyUpdate=true;
+        bfsLog_bf(`  Relaxált: ${bfData.nodes[u].l}→${bfData.nodes[v].l} → l=${dist[v]}`);
+      }
+    });
+    bfState.iter++;
+    document.getElementById('bf-iter').textContent=bfState.iter;
+    bfLog(`Iteráció ${bfState.iter}: ${anyUpdate?'frissítés történt':'nincs változás'}`,'hi');
+    bfHistory.push([...dist]);
+    bfRender();bfUpdateChips();bfDrawChart();
+    if(!anyUpdate){bfState.done=true;bfLog('Korai befejezés — konvergált.','hi');}
+    if(bfState.iter===n-1){
+      // check n-th iteration for neg cycle
+      let negFound=false;
+      bfData.edges.forEach(e=>{const{u,v,w}=e;if(dist[u]<INF&&dist[u]+w<dist[v]){negFound=true;}});
+      if(negFound){bfState.negCycle=true;bfLog('⚠ Negatív kör detektálva!','hi');}
+      bfState.done=true;
+    }
+  } else {bfState.done=true;}
+  document.getElementById('bf-status').textContent=bfState.negCycle?'⚠ Negatív kör van!':bfState.done?'Kész!':'Lépés…';
+}
+function bfLog(msg,cls=''){const lb=document.getElementById('bf-log');lb.innerHTML+=`<div class="log-line ${cls}">${msg}</div>`;lb.scrollTop=lb.scrollHeight;}
+function bfsLog_bf(msg){bfLog(msg);}
+function bfToggleAuto(){
+  if(bfAutoTimer){clearInterval(bfAutoTimer);bfAutoTimer=null;document.getElementById('bf-auto-btn').textContent='▶ Auto';}
+  else{bfAutoTimer=setInterval(()=>{bfStep();if(bfState.done){clearInterval(bfAutoTimer);bfAutoTimer=null;document.getElementById('bf-auto-btn').textContent='▶ Auto';}},800);document.getElementById('bf-auto-btn').textContent='⏸ Stop';}
+}
+function bfRender(){
+  if(!bfData||!bfState) return;
+  const {dist,updated,negCycle}=bfState;
+  const colors=bfData.nodes.map((_,i)=>negCycle?'#7f1d1d':updated[i]?'#166534':'#1e3a5f');
+  drawGraph(document.getElementById('bf-canvas'),bfData.nodes,bfData.edges,colors,null,true,true);
+}
+function bfUpdateChips(){
+  if(!bfState) return;
+  document.getElementById('bf-state-chips').innerHTML=bfData.nodes.map((n,i)=>{
+    const d=bfState.dist[i];
+    return `<div class="state-chip ${d<INF?'final':''}"><b>${n.l||i}</b>: <span class="chip-val">${d>=INF?'∞':d}</span></div>`;
+  }).join('');
+}
+function bfDrawChart(){
+  const cv=document.getElementById('bf-chart');
+  const ctx=cv.getContext('2d'); const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#0a0f14'; ctx.fillRect(0,0,W,H);
+  if(!bfData||bfHistory.length<2) return;
+  const n=bfData.nodes.length, iters=bfHistory.length;
+  const cellW=W/n, cellH=(H-20)/iters;
+  bfHistory.forEach((row,ri)=>{
+    row.forEach((v,ci)=>{
+      const x=ci*cellW, y=20+ri*cellH;
+      const alpha=v>=INF?0.1:Math.max(0.1,1-v/50);
+      ctx.fillStyle=`rgba(56,189,248,${alpha})`;
+      ctx.fillRect(x+1,y+1,cellW-2,cellH-2);
+      ctx.fillStyle='#fff'; ctx.font='9px monospace'; ctx.textAlign='center';
+      ctx.fillText(v>=INF?'∞':v, x+cellW/2, y+cellH/2+3);
+    });
+  });
+  // header
+  ctx.fillStyle='#38bdf8'; ctx.font='bold 9px monospace'; ctx.textAlign='center';
+  bfData.nodes.forEach((nn,i)=>ctx.fillText(nn.l||i, i*cellW+cellW/2, 12));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ════════════ TAB 4: FLOYD-WARSHALL ════════════
+let fwData=null, fwState=null, fwAutoTimer=null;
+
+function fwLoadPreset(name){
+  fwData=JSON.parse(JSON.stringify(PRESETS['fw_'+name]));
+  setActivePreset(document.querySelector('#tab-floyd .preset-row'),event.target);
+  fwReset();
+}
+function fwBuildMatrix(nodes, edges){
+  const n=nodes.length;
+  const D=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?0:INF));
+  const NEXT=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>j));
+  edges.forEach(e=>{
+    if(D[e.u][e.v]>e.w){D[e.u][e.v]=e.w;NEXT[e.u][e.v]=e.v;}
+    if(!e.d&&D[e.v][e.u]>e.w){D[e.v][e.u]=e.w;NEXT[e.v][e.u]=e.u;}
+  });
+  return {D,NEXT};
+}
+function fwReset(){
+  if(fwAutoTimer){clearInterval(fwAutoTimer);fwAutoTimer=null;document.getElementById('fw-auto-btn').textContent='▶ Auto';}
+  if(!fwData) return;
+  const {D,NEXT}=fwBuildMatrix(fwData.nodes,fwData.edges);
+  fwState={D,NEXT,k:0,n:fwData.nodes.length,done:false,updated:[]};
+  document.getElementById('fw-k-label').textContent='k=0 (inicializálás)';
+  document.getElementById('fw-status').textContent='k = 0 (kezdeti távolságmátrix)';
+  fwRenderMatrix();fwRenderCanvas();
+  document.getElementById('fw-log') && (document.getElementById('fw-log').innerHTML='');
+}
+function fwStep(){
+  if(!fwData||fwState.done) return;
+  const {D,NEXT,n}=fwState;
+  const k=fwState.k;
+  if(k>=n){fwState.done=true;document.getElementById('fw-status').textContent='Kész! Teljes távolságmátrix kész.';return;}
+  fwState.updated=[];
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+    if(D[i][k]+D[k][j]<D[i][j]){
+      D[i][j]=D[i][k]+D[k][j]; NEXT[i][j]=NEXT[i][k];
+      fwState.updated.push(`${i},${j}`);
+    }
+  }
+  fwState.k++;
+  document.getElementById('fw-k-label').textContent=`k=${fwState.k} (átmenő: ${fwData.nodes[k].l||k})`;
+  document.getElementById('fw-status').textContent=`k=${fwState.k} — ${fwData.nodes[k].l||k} csúcson keresztüli relaxáció`;
+  if(fwState.k>=n){fwState.done=true;document.getElementById('fw-status').textContent='Kész! Teljes távolságmátrix.';}
+  fwRenderMatrix();fwRenderCanvas();
+}
+function fwToggleAuto(){
+  if(fwAutoTimer){clearInterval(fwAutoTimer);fwAutoTimer=null;document.getElementById('fw-auto-btn').textContent='▶ Auto';}
+  else{fwAutoTimer=setInterval(()=>{fwStep();if(fwState.done){clearInterval(fwAutoTimer);fwAutoTimer=null;document.getElementById('fw-auto-btn').textContent='▶ Auto';}},800);document.getElementById('fw-auto-btn').textContent='⏸ Stop';}
+}
+function fwRenderMatrix(){
+  if(!fwData||!fwState) return;
+  const {D,NEXT,updated,n}=fwState;
+  const labels=fwData.nodes.map((nd,i)=>nd.l||i);
+  const tbl=document.getElementById('fw-matrix');
+  tbl.querySelector('thead').innerHTML='<tr><th></th>'+labels.map(l=>`<th>${l}</th>`).join('')+'</tr>';
+  tbl.querySelector('tbody').innerHTML=labels.map((rl,i)=>`<tr><th>${rl}</th>${D[i].map((v,j)=>{
+    const cls=i===j?'diag':updated&&updated.includes(`${i},${j}`)&&i!==j?'updated':v>=INF?'inf':'';
+    return `<td class="${cls}">${v>=INF?'∞':v}</td>`;
+  }).join('')}</tr>`).join('');
+  // NEXT table
+  const tbl2=document.getElementById('fw-next');
+  tbl2.querySelector('thead').innerHTML='<tr><th></th>'+labels.map(l=>`<th>${l}</th>`).join('')+'</tr>';
+  tbl2.querySelector('tbody').innerHTML=labels.map((rl,i)=>`<tr><th>${rl}</th>${NEXT[i].map((v,j)=>{
+    return `<td>${i===j?'-':labels[v]}</td>`;
+  }).join('')}</tr>`).join('');
+}
+function fwRenderCanvas(){
+  if(!fwData) return;
+  drawGraph(document.getElementById('fw-canvas'),fwData.nodes,fwData.edges,null,null,
+    fwData.edges.some(e=>e.d),true);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ════════════ TAB 5: RACE ════════════
+let raceData=null;
+function raceLoadPreset(name){
+  raceData=JSON.parse(JSON.stringify(PRESETS['race_'+name]));
+  setActivePreset(document.querySelector('#tab-compare .preset-row'),event.target);
+  const s1=document.getElementById('race-src'),s2=document.getElementById('race-dst');
+  s1.innerHTML=s2.innerHTML='';
+  raceData.nodes.forEach((n,i)=>{s1.innerHTML+=`<option value="${i}">${n.l||i}</option>`;s2.innerHTML+=`<option value="${i}">${n.l||i}</option>`;});
+  s2.value=raceData.nodes.length-1;
+  drawGraph(document.getElementById('race-canvas'),raceData.nodes,raceData.edges,null,null,false,true);
+  document.getElementById('race-results').innerHTML='Kattints ▶ Futtatás-ra.';
+}
+function dijkstraFull(nodes,edges,src){
+  const n=nodes.length;
+  const dist=Array(n).fill(INF), settled=Array(n).fill(false), prev=Array(n).fill(-1);
+  dist[src]=0;
+  const adj=buildAdj(nodes,edges,false);
+  for(let _=0;_<n;_++){
+    let u=-1,best=INF;
+    dist.forEach((d,i)=>{if(!settled[i]&&d<best){best=d;u=i;}});
+    if(u===-1) break; settled[u]=true;
+    adj[u].forEach(({v,w})=>{if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prev[v]=u;}});
+  }
+  return {dist,prev};
+}
+function bfsFull(nodes,edges,src){
+  const n=nodes.length, dist=Array(n).fill(-1), prev=Array(n).fill(-1);
+  dist[src]=0; const q=[src], vis=Array(n).fill(false); vis[src]=true;
+  const adj=buildAdj(nodes,edges,false);
+  while(q.length){const u=q.shift();adj[u].forEach(({v})=>{if(!vis[v]){vis[v]=true;dist[v]=dist[u]+1;prev[v]=u;q.push(v);}});}
+  return {dist,prev};
+}
+function bellmanFull(nodes,edges,src){
+  const n=nodes.length, dist=Array(n).fill(INF), prev=Array(n).fill(-1);
+  dist[src]=0;
+  for(let i=0;i<n-1;i++) edges.forEach(e=>{if(dist[e.u]<INF&&dist[e.u]+e.w<dist[e.v]){dist[e.v]=dist[e.u]+e.w;prev[e.v]=e.u;if(!e.d){if(dist[e.v]<INF&&dist[e.v]+e.w<dist[e.u]){dist[e.u]=dist[e.v]+e.w;prev[e.u]=e.v;}}}});
+  return {dist,prev};
+}
+function fwFull(nodes,edges){
+  const n=nodes.length;
+  const D=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?0:INF));
+  edges.forEach(e=>{if(D[e.u][e.v]>e.w)D[e.u][e.v]=e.w;if(!e.d&&D[e.v][e.u]>e.w)D[e.v][e.u]=e.w;});
+  for(let k=0;k<n;k++) for(let i=0;i<n;i++) for(let j=0;j<n;j++) if(D[i][k]+D[k][j]<D[i][j]) D[i][j]=D[i][k]+D[k][j];
+  return D;
+}
+function runRace(){
+  if(!raceData) return;
+  const src=parseInt(document.getElementById('race-src').value);
+  const dst=parseInt(document.getElementById('race-dst').value);
+  const {nodes,edges}=raceData;
+  const d1=dijkstraFull(nodes,edges,src);
+  const d2=bfsFull(nodes,edges,src);
+  const d3=bellmanFull(nodes,edges,src);
+  const d4=fwFull(nodes,edges);
+  const fmt=v=>v>=INF||v<0?'∞':v;
+  const srcL=nodes[src].l||src, dstL=nodes[dst].l||dst;
+  document.getElementById('race-results').innerHTML=`
+    <b style="color:#8ba3bc">${srcL} → ${dstL} távolsága:</b><br><br>
+    <span style="color:#38bdf8">BFS:</span> <b>${fmt(d2.dist[dst])}</b> él<br>
+    <span style="color:#4ade80">Dijkstra:</span> <b>${fmt(d1.dist[dst])}</b><br>
+    <span style="color:#f97316">Bellman-Ford:</span> <b>${fmt(d3.dist[dst])}</b><br>
+    <span style="color:#a78bfa">Floyd-Warshall:</span> <b>${fmt(d4[src][dst])}</b><br><br>
+    <span style="color:#8ba3bc;font-size:.75rem">(BFS = él-szám, nem súly)</span>
+  `;
+  // highlight path on canvas
+  const colors=nodes.map((_,i)=>i===src?'#0ea5e9':i===dst?'#ef4444':'#1e3a5f');
+  const edgeColors=edges.map(()=>null);
+  if(d1.dist[dst]<INF){
+    let cur=dst;const pn=new Set([cur]);while(d1.prev[cur]!==-1){const p=d1.prev[cur];pn.add(p);cur=p;}
+    edges.forEach((e,i)=>{if(pn.has(e.u)&&pn.has(e.v)) edgeColors[i]='#4ade80';});
+  }
+  drawGraph(document.getElementById('race-canvas'),nodes,edges,colors,edgeColors,false,true);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// INIT on load
+window.addEventListener('DOMContentLoaded',()=>{
+  dijkLoadPreset('small');document.querySelector('#dijk-presets .preset-btn').click();
+  bfsLoadPreset('grid4');document.querySelector('#bfs-presets .preset-btn').click();
+  bfLoadPreset('neg');document.querySelector('#tab-bellman .preset-row .preset-btn').click();
+  fwLoadPreset('small');document.querySelector('#tab-floyd .preset-row .preset-btn').click();
+  raceLoadPreset('mixed');document.querySelector('#tab-compare .preset-row .preset-btn').click();
+});
+// Re-init canvases when tab becomes visible (fixes blank canvas on first switch)
+document.querySelectorAll('.ila-nav-link').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    setTimeout(()=>{
+      if(dijkData) dijkRender();
+      if(bfsData) bfsRender();
+      if(bfData) bfRender();
+      if(fwData) fwRenderCanvas();
+      if(raceData) drawGraph(document.getElementById('race-canvas'),raceData.nodes,raceData.edges,null,null,false,true);
+    },50);
+  });
+});
+</script>
+{% endblock %}

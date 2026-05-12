@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+{% block title %}I.6. Generátorfüggvények — Dimat{% endblock %}
+{% block content %}
+<style>
+:root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(16,185,129,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(16,185,129,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(16,185,129,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.inp { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .6rem; font-size:.85rem; }
+.res-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+.res-table th { background:#1a1f2e; color:#64748b; padding:.4rem .7rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.73rem; text-transform:uppercase; }
+.res-table td { padding:.4rem .7rem; border-bottom:1px solid #161b28; font-family:monospace; }
+.step { background:#0e1014; border-left:3px solid #38bdf8; padding:.5rem .8rem; border-radius:0 6px 6px 0; margin:.4rem 0; font-size:.82rem; }
+.warn-box { border-left:3px solid #ef4444; background:rgba(239,68,68,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-graph-up" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">I.6. fejezet — Generátorfüggvények</h4>
+      <small class="text-muted">Generátorfüggvény módszer · Lineáris rekurziók · Catalan-számok · Pénzváltás · EGF</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-alap',this)">Alapfogalom</span>
+    <span class="ila-nav-link" onclick="showTab('t-lin',this)">Lineáris rekurziók</span>
+    <span class="ila-nav-link" onclick="showTab('t-cat',this)">Catalan-számok</span>
+    <span class="ila-nav-link" onclick="showTab('t-coin',this)">Pénzváltás</span>
+    <span class="ila-nav-link" onclick="showTab('t-egf',this)">Exponenciális GF</span>
+  </div>
+
+  <!-- TAB 1 -->
+  <div id="t-alap" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Definíció</div>
+          <div class="def-box">
+            Az \((a_n)\) sorozat <strong>ordinális generátorfüggvénye</strong>:<br>
+            \[F(x) = \sum_{n=0}^{\infty} a_n x^n\]
+            A sorozat tagja: \([x^n]F(x) = a_n\).
+          </div>
+          <div class="thm-box">
+            <strong>Kulcsgondolat:</strong> a hatványsorokon végzett algebrai műveletek pontosan megfelelnek a sorozatokon végzett bizonyos műveleteknek.
+          </div>
+          <div class="ex-box">
+            Ha \(a_{n+1} = c\cdot a_n + d\), akkor \(F(x)\) egy lineáris egyenletnek tesz eleget, és megoldható zárt alakban.
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Nevezetes generátorfüggvények</div>
+          <table class="res-table">
+            <thead><tr><th>F(x)</th><th>a_n koefficiense</th><th>Megjegyzés</th></tr></thead>
+            <tbody>
+              <tr><td>\(\frac{1}{1-x}\)</td><td style="color:var(--acc2);">1</td><td>konstans sorozat</td></tr>
+              <tr><td>\(\frac{1}{(1-x)^2}\)</td><td style="color:var(--acc2);">n+1</td><td>természetes számok</td></tr>
+              <tr><td>\(\frac{1}{(1-x)^k}\)</td><td style="color:var(--acc2);">\(\binom{n+k-1}{k-1}\)</td><td>kombinatorikus</td></tr>
+              <tr><td>\(\frac{x}{1-x-x^2}\)</td><td style="color:var(--acc2);">F_n (Fibonacci)</td><td>rekurzív</td></tr>
+              <tr><td>\(\frac{1}{1-cx}\)</td><td style="color:var(--acc2);">c^n</td><td>geometriai</td></tr>
+              <tr><td>\(\frac{x}{(1-x)(1-2x)}\)</td><td style="color:var(--acc2);">2^n−1</td><td>Hanoi</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div id="t-lin" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Módszer lépései</div>
+          <div class="def-box">
+            Legyen \(a_{n+2}=c_1 a_{n+1}+c_2 a_n\), \(a_0,a_1\) adott.
+          </div>
+          <div class="step">1. Szorozzuk \(x^n\)-nel, összegezzük \(n=0\)-tól \(\infty\)-ig.</div>
+          <div class="step">2. \(F(x)\)-re lineáris egyenletet kapunk.</div>
+          <div class="step">3. Megoldjuk \(F(x)\)-re.</div>
+          <div class="step">4. Parciális törtekre bontjuk.</div>
+          <div class="step">5. Visszaolvassuk az \(a_n\) tagokat.</div>
+          <div class="thm-box mt-2">
+            <strong>Fibonacci:</strong><br>
+            \(F(x)=\dfrac{x}{1-x-x^2}\)<br>
+            Parciális törtekre bontva:<br>
+            \(F(x)=\dfrac{1}{\sqrt{5}}\left(\dfrac{1}{1-\varphi x}-\dfrac{1}{1-\psi x}\right)\)<br>
+            → Binet-képlet: \(a_n=\dfrac{\varphi^n-\psi^n}{\sqrt{5}}\)
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Interaktív — \(F(x)\) levezetése</div>
+          <p style="font-size:.82rem;color:#94a3b8;">\(a_{n+2} = c_1\,a_{n+1} + c_2\,a_n\), adja meg a paramétereket:</p>
+          <div class="d-flex gap-2 flex-wrap mb-2">
+            <label style="font-size:.82rem;color:#94a3b8;">c₁=<input class="inp" id="gflin-c1" type="number" value="1" style="width:55px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">c₂=<input class="inp" id="gflin-c2" type="number" value="1" style="width:55px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">a₀=<input class="inp" id="gflin-a0" type="number" value="0" style="width:55px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">a₁=<input class="inp" id="gflin-a1" type="number" value="1" style="width:55px;"></label>
+            <button class="btn-acc" onclick="calcGFLin()">Számít</button>
+          </div>
+          <div id="gflin-out"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div id="t-cat" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Catalan-számok</div>
+          <div class="def-box">
+            \(t_0=1,\quad t_{n+1}=\sum_{i=0}^{n}t_i\,t_{n-i}\)
+          </div>
+          <div class="thm-box">
+            Generátorfüggvény: \(F(x)=xF(x)^2+1\)<br>
+            Megoldás: \(F(x)=\dfrac{1-\sqrt{1-4x}}{2x}\)<br>
+            Explicit: \(t_n=\dfrac{1}{n+1}\binom{2n}{n}\)
+          </div>
+          <table class="res-table mt-2">
+            <thead><tr><th>n</th><th>t_n</th></tr></thead>
+            <tbody id="cat-tbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc">Interaktív — Catalan(n)</div>
+          <div class="d-flex gap-2 align-items-center mb-2">
+            <label style="font-size:.82rem;color:#94a3b8;">n = <input class="inp" id="cat-n" type="number" value="5" min="0" max="30" style="width:70px;"></label>
+            <button class="btn-acc" onclick="calcCatalan()">Számít</button>
+          </div>
+          <div id="cat-out"></div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc">Catalan-számok értelmezései</div>
+          <div class="ex-box" style="font-size:.8rem;">
+            <strong>t_n darab …</strong><br>
+            • helyes zárójel-sorozat 2n jelből<br>
+            • bináris fa n+1 levéllel<br>
+            • konvex (n+2)-szög háromszögesítése<br>
+            • hegyi út (nem keresztezi az átlót)<br>
+            • 1×n-es sakktábla feltöltése dominókkal
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4 -->
+  <div id="t-coin" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Pénzváltás — Coin change</div>
+          <div class="def-box">
+            Hányféleképpen váltható n forint<br>
+            \(h_1, h_2, \ldots, h_k\) felhasználásával?<br>
+            (sorrend nem számít)
+          </div>
+          <div class="thm-box">
+            Generátorfüggvény:<br>
+            \[F(x)=\prod_{i=1}^{k}\frac{1}{1-x^{h_i}}\]
+            \([x^n]F(x)\) = a lehetséges módszerek száma.
+          </div>
+          <div class="ex-box">
+            <strong>Példa:</strong> 10 forint {1,2,5}-tel:<br>
+            \(F(x)=\dfrac{1}{(1-x)(1-x^2)(1-x^5)}\)<br>
+            Megoldások száma = 10
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <div class="badge-acc">Interaktív pénzváltó</div>
+          <p style="font-size:.82rem;color:#94a3b8;">Adja meg a célösszeget és az érmék értékét (vesszővel):</p>
+          <div class="d-flex gap-2 flex-wrap mb-2">
+            <label style="font-size:.82rem;color:#94a3b8;">n = <input class="inp" id="coin-n" type="number" value="10" min="1" max="50" style="width:60px;"></label>
+            <label style="font-size:.82rem;color:#94a3b8;">Érmék: <input class="inp" id="coin-d" type="text" value="1,2,5" style="width:120px;"></label>
+            <button class="btn-acc" onclick="calcCoin()">Számít</button>
+          </div>
+          <div id="coin-out"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5 -->
+  <div id="t-egf" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <div class="badge-acc">Exponenciális generátorfüggvény (EGF)</div>
+          <div class="def-box">
+            \[F(x) = \sum_{n=0}^{\infty} a_n \frac{x^n}{n!}\]
+            ahol \(a_n = n!\,[x^n]F(x)\).
+          </div>
+          <div class="thm-box">
+            <strong>Bell-számok EGF-je:</strong><br>
+            \[B(x)=e^{e^x-1}\]
+            \(B_n = n!\,[x^n]e^{e^x-1}\)<br>
+            \(B_n\) = az \(\{1,\ldots,n\}\) halmaz összes partíciójának száma.
+          </div>
+          <table class="res-table mt-2">
+            <thead><tr><th>n</th><th>B_n</th></tr></thead>
+            <tbody id="bell-tbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc">Stirling-számok (2. faj) — \(S(n,k)\)</div>
+          <p style="font-size:.82rem;color:#94a3b8;">S(n,k) = az \(\{1,\ldots,n\}\) halmaz pontosan k nem üres részhalmazra való felbontásainak száma.</p>
+          <p style="font-size:.82rem;color:#94a3b8;">Összefüggés: \(B_n = \sum_{k=0}^{n} S(n,k)\)</p>
+          <div id="stirling-table" style="overflow-x:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function initAll(){
+  buildCatalanTable();
+  buildBellTable();
+  buildStirlingTable();
+}
+
+/* ── TAB 2: GF for linear recurrences ── */
+function calcGFLin(){
+  const c1=parseFloat(document.getElementById('gflin-c1').value)||1;
+  const c2=parseFloat(document.getElementById('gflin-c2').value)||1;
+  const a0=parseFloat(document.getElementById('gflin-a0').value)||0;
+  const a1=parseFloat(document.getElementById('gflin-a1').value)||1;
+  // F(x) = (a0 + (a1 - c1*a0)x) / (1 - c1*x - c2*x^2)
+  const num0=a0;
+  const num1=a1-c1*a0;
+  let html=`<div class="def-box" style="font-size:.82rem;">
+    <strong>Generátorfüggvény alakja:</strong><br>
+    \\(F(x) = \\dfrac{${num0} + ${num1}x}{1 - ${c1}x - ${c2}x^2}\\)
+  </div>`;
+  // Compute terms by recurrence
+  const seq=[a0,a1];
+  for(let i=2;i<8;i++) seq.push(c1*seq[i-1]+c2*seq[i-2]);
+  html+='<table class="res-table"><thead><tr><th>n</th>';
+  seq.forEach((_,i)=>html+=`<th>${i}</th>`);
+  html+='</tr></thead><tbody><tr><td style="color:#64748b;">a_n</td>';
+  seq.forEach(v=>html+=`<td style="color:var(--acc2);">${+v.toFixed(4)}</td>`);
+  html+='</tr></tbody></table>';
+  document.getElementById('gflin-out').innerHTML=html;
+  renderMathInElement(document.getElementById('gflin-out'),{delimiters:[{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+}
+
+/* ── TAB 3: Catalan ── */
+function catalan(n){
+  // C(n) = C(2n,n)/(n+1) using BigInt
+  if(n<0) return 0n;
+  let num=1n,den=1n;
+  for(let i=0;i<n;i++){
+    num*=BigInt(2*n-i);
+    den*=BigInt(i+1);
+  }
+  return num/den/BigInt(n+1);
+}
+function buildCatalanTable(){
+  let html='';
+  const known=[1,1,2,5,14,42,132,429,1430,4862];
+  known.forEach((v,i)=>{ html+=`<tr><td>${i}</td><td style="color:var(--acc2);">${v}</td></tr>`; });
+  document.getElementById('cat-tbl').innerHTML=html;
+}
+function calcCatalan(){
+  const n=parseInt(document.getElementById('cat-n').value)||0;
+  const val=catalan(n).toString();
+  const interps=[
+    `Helyes zárójel-sorozat \(2\\cdot${n}\) jelből`,
+    `Bináris fa ${n+1} levéllel`,
+    `Konvex ${n+2}-szög háromszögesítése`,
+    `Hegyi utak (nem lépnek az átló alá)`,
+    `Permutációk 231-mintát elkerülve`,
+  ];
+  let html=`<div class="def-box">t<sub>${n}</sub> = <strong style="color:var(--acc2);">${val}</strong></div>`;
+  html+=`<p style="font-size:.82rem;color:#94a3b8;">Értelmezések (mindegyik <strong style="color:var(--acc2);">${val}</strong> darab):</p><ul style="font-size:.8rem;color:#94a3b8;padding-left:1.2rem;">`;
+  interps.forEach(s=>{ html+=`<li>${s}</li>`; });
+  html+='</ul>';
+  document.getElementById('cat-out').innerHTML=html;
+  renderMathInElement(document.getElementById('cat-out'),{delimiters:[{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+}
+
+/* ── TAB 4: Coin change ── */
+function calcCoin(){
+  const n=parseInt(document.getElementById('coin-n').value)||10;
+  const denoms=document.getElementById('coin-d').value.split(',').map(s=>parseInt(s.trim())).filter(x=>x>0);
+  if(!denoms.length){document.getElementById('coin-out').innerHTML='<div class="warn-box">Adjon meg érmék értékeit!</div>';return;}
+  // DP
+  const dp=new Array(n+1).fill(0);
+  dp[0]=1;
+  for(const d of denoms){
+    for(let i=d;i<=n;i++) dp[i]+=dp[i-d];
+  }
+  let html=`<div class="def-box">${n} forint felbontásainak száma [${denoms.join(',')}] érmékkel: <strong style="color:var(--acc2);">${dp[n]}</strong></div>`;
+  if(n<=20){
+    html+='<table class="res-table"><thead><tr><th>összeg</th><th>módszerek száma</th></tr></thead><tbody>';
+    for(let i=1;i<=n;i++){
+      html+=`<tr><td>${i}</td><td style="color:var(--acc2);">${dp[i]}</td></tr>`;
+    }
+    html+='</tbody></table>';
+  }
+  document.getElementById('coin-out').innerHTML=html;
+}
+
+/* ── TAB 5: Bell & Stirling ── */
+function stirling2(n,k){
+  if(k===0) return n===0?1:0;
+  if(n===0) return 0;
+  if(k===n) return 1;
+  if(k===1) return 1;
+  // Inclusion-exclusion formula
+  let s=0;
+  for(let j=0;j<=k;j++){
+    const sign=(j%2===0)?1:-1;
+    let comb=1;
+    for(let i=0;i<j;i++) comb=comb*(k-i)/(i+1);
+    s+=sign*Math.round(comb)*Math.pow(k-j,n);
+  }
+  return Math.round(s/factorial(k));
+}
+function factorial(n){let r=1;for(let i=2;i<=n;i++)r*=i;return r;}
+function bellNumbers(maxN){
+  const B=[1n];
+  for(let n=1;n<=maxN;n++){
+    let s=0n;
+    for(let k=0;k<n;k++) s+=BigInt(stirling2(n,k+1));
+    B.push(s);
+  }
+  return B;
+}
+function buildBellTable(){
+  const B=bellNumbers(10);
+  let html='';
+  B.forEach((v,i)=>{ html+=`<tr><td>${i}</td><td style="color:var(--acc2);">${v}</td></tr>`; });
+  document.getElementById('bell-tbl').innerHTML=html;
+}
+function buildStirlingTable(){
+  const N=6;
+  let html='<table class="res-table"><thead><tr><th>n \\ k</th>';
+  for(let k=0;k<=N;k++) html+=`<th>${k}</th>`;
+  html+='</tr></thead><tbody>';
+  for(let n=0;n<=N;n++){
+    html+=`<tr><td style="color:#64748b;">${n}</td>`;
+    for(let k=0;k<=N;k++){
+      const v=stirling2(n,k);
+      html+=`<td style="color:${v>0?'var(--acc2)':'#334155'};">${v}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  document.getElementById('stirling-table').innerHTML=html;
+}
+</script>
+{% endblock %}

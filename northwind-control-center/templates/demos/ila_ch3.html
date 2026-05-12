@@ -1,0 +1,926 @@
+{% extends "base.html" %}
+{% block title %}ILA 3. fejezet — Permutációk{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#a78bfa!important;}
+.ila-nav-link.active{color:#a78bfa!important;border-bottom-color:#a78bfa!important;}
+.def-box{background:#13141a;border-left:3px solid #a78bfa;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.thm-box{background:#13141a;border-left:3px solid #7c3aed;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.ex-box{background:#0f1a0f;border-left:3px solid #34d399;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.info-box{background:#13141a;border-radius:8px;border:1px solid rgba(167,139,250,.2);padding:1rem 1.25rem;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.pf-step{display:flex;gap:1.5rem;padding:.42rem 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:baseline;}
+.pf-step:last-child{border-bottom:none;}
+.pf-eq{min-width:230px;color:#e2e8f0;font-size:.85rem;}
+.pf-why{font-size:.72rem;color:#6b7280;line-height:1.4;}
+.type-btn{padding:.35rem .9rem;font-size:.76rem;font-weight:600;border:1px solid rgba(167,139,250,.3);
+  border-radius:.3rem;background:transparent;color:#8892a4;cursor:pointer;transition:all .15s;}
+.type-btn:hover{border-color:#a78bfa;color:#a78bfa;}
+.type-btn.active{background:rgba(167,139,250,.18);border-color:#a78bfa;color:#c4b5fd;}
+.katex{font-size:1em;}
+.perm-matrix{display:inline-flex;flex-direction:column;gap:1px;font-family:monospace;
+  font-size:.9rem;color:#e2e8f0;background:rgba(167,139,250,.06);
+  border:1px solid rgba(167,139,250,.2);border-radius:6px;padding:.5rem .8rem;
+  position:relative;}
+.perm-row{display:flex;gap:1.2rem;}
+.perm-cell{min-width:1.2rem;text-align:center;}
+.perm-paren{font-size:2rem;color:#a78bfa;font-weight:100;align-self:stretch;display:flex;align-items:center;}
+.cycle-span{display:inline-block;padding:.15rem .5rem;border-radius:.25rem;
+  font-family:monospace;font-size:.85rem;margin:.15rem;}
+#perm-canvas{border-radius:8px;background:#0d0e14;display:block;}
+.inp-cell{width:2rem;height:2rem;text-align:center;background:#1a1b25;border:1px solid rgba(167,139,250,.3);
+  border-radius:4px;color:#e2e8f0;font-size:.9rem;font-family:monospace;}
+.inp-cell:focus{outline:none;border-color:#a78bfa;background:#1e1f2e;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#a78bfa">ILA — 3. fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Permutációk</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2025</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(167,139,250,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-al',this)"><i class="bi bi-shuffle me-1"></i>Alapfogalmak</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-cy',this)"><i class="bi bi-arrow-repeat me-1"></i>Ciklusok</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-id',this)"><i class="bi bi-diagram-3 me-1"></i>Idegen ciklusok</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ha',this)"><i class="bi bi-superscript me-1"></i>Hatványok</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-tr',this)"><i class="bi bi-grid-3x3-gap me-1"></i>Transzpozíciók</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ex',this)"><i class="bi bi-lightbulb me-1"></i>Előadás+</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════ TAB 1: ALAPFOGALMAK ══════ -->
+<div id="tab-al">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Véges halmaz</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Az \(A\) halmazt <strong style="color:#a78bfa">végesnek</strong> nevezzük, ha létezik olyan
+        \(n \in \mathbb{N}_0\), amelyre bijekció adható \(\{1, 2, \ldots, n\}\) és \(A\) között.
+        Ilyenkor az \(A\) halmaz <strong style="color:#a78bfa">elemszáma</strong> \(|A| = n\).
+        Ha \(n = 0\), akkor \(A = \emptyset\).
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Permutáció, S_n</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen \(A\) véges halmaz, \(|A| = n\). Az \(A\) halmaz egy
+        <strong style="color:#a78bfa">permutációja</strong> egy \(A \to A\) bijekció.<br><br>
+        Az \(\{1, 2, \ldots, n\}\) halmaz összes permutációjának halmazát
+        \(S_n\)-nel jelöljük — ezt <strong style="color:#a78bfa">szimmetrikus csoportnak</strong>
+        nevezzük. \(|S_n| = n!\)
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Mátrixos jelölés</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A permutációt kétsorú mátrixban adjuk meg: a felső sorban az értelmezési
+        tartomány elemei, az alsó sorban a képeik szerepelnek.
+        \[\sigma = \begin{pmatrix} 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\ 4 & 3 & 2 & 6 & 9 & 1 & 7 & 8 & 5 \end{pmatrix}\]
+        Tehát \(\sigma(1)=4,\; \sigma(2)=3,\; \ldots,\; \sigma(9)=5\).
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — S_n tulajdonságai</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyenek \(\sigma, \tau \in S_n\). Ekkor:
+        <ol style="margin:.5rem 0 0 1rem;padding:0;line-height:2">
+          <li>A szorzat \(\sigma\tau \in S_n\) (bijekció ∘ bijekció = bijekció)</li>
+          <li>A szorzás <strong style="color:#c4b5fd">asszociatív</strong>: \((\sigma\tau)\varrho = \sigma(\tau\varrho)\)</li>
+          <li>Az <strong style="color:#c4b5fd">identitás</strong> \(\mathrm{id} \in S_n\), és \(\mathrm{id}\,\sigma = \sigma\,\mathrm{id} = \sigma\)</li>
+          <li>Minden \(\sigma\)-nak van <strong style="color:#c4b5fd">inverze</strong> \(\sigma^{-1} \in S_n\)</li>
+          <li>\((\sigma\tau)^{-1} = \tau^{-1}\sigma^{-1}\)</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Példa — S_9, nem-kommutativitás</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyenek
+        \[\sigma = \begin{pmatrix} 1&2&3&4&5&6&7&8&9\\ 4&3&2&6&9&1&7&8&5 \end{pmatrix}, \quad
+          \tau = \begin{pmatrix} 1&2&3&4&5&6&7&8&9\\ 2&1&4&3&6&5&8&7&9 \end{pmatrix}\]
+        Ekkor (először \(\tau\), majd \(\sigma\) lép — jobb-bal sorrend):
+        \[\sigma\tau = \begin{pmatrix} 1&2&3&4&5&6&7&8&9\\ 3&4&6&2&1&9&8&7&5 \end{pmatrix},\quad
+          \tau\sigma = \begin{pmatrix} 1&2&3&4&5&6&7&8&9\\ 3&4&1&5&9&2&8&7&6 \end{pmatrix}\]
+        Az \(S_n\) (<strong style="color:#f97316">n ≥ 3</strong>) nem kommutatív: \(\sigma\tau \neq \tau\sigma\)!<br>
+        Az inverz:
+        \[\sigma^{-1} = \begin{pmatrix} 1&2&3&4&5&6&7&8&9\\ 6&3&2&1&9&4&7&8&5 \end{pmatrix}\]
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 2: CIKLUSOK ══════ -->
+<div id="tab-cy" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Gráfos ábrázolás</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Minden \(\sigma \in S_n\) ábrázolható irányított gráfként:
+        csúcsok: \(1, 2, \ldots, n\); élek: \(i \to \sigma(i)\).
+        Az önmagára mutató \(i \to i\) éleket <strong style="color:#a78bfa">hurokéleknek</strong> nevezzük
+        (fixpontok). Az összes nem-fixpontot tartalmazó halmaz:
+        \[M_\sigma = \{ a \in A : \sigma(a) \neq a \}\]
+        <strong>Tétel:</strong> \(M_\sigma = \emptyset \;\Longleftrightarrow\; \sigma = \mathrm{id}\).
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Ciklus</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A \(\sigma \in S_n\) permutáció <strong style="color:#a78bfa">ciklus</strong>, ha
+        \[M_\sigma = \{a_1, a_2, \ldots, a_k\}\]
+        ahol \(\sigma(a_1)=a_2,\; \sigma(a_2)=a_3,\; \ldots,\; \sigma(a_k)=a_1\).
+        Jelölése: \((a_1\; a_2\; \ldots\; a_k)\). Az \(1\)-ciklus az identitás.<br><br>
+        <strong>Megjegyzés:</strong> A ciklus <em>ekvivalens jelölések</em> halmaza:
+        \[(a_1\;a_2\;\ldots\;a_k) = (a_2\;a_3\;\ldots\;a_k\;a_1) = \cdots\]
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Példa — 4-ciklus S_9-ben</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        \[\gamma = \begin{pmatrix} 1&2&3&4&5&6&7&8&9\\ 1&2&8&2&5&6&7&3&9 \end{pmatrix}\]
+        Nem, helyesen: \(\gamma = (1\;5\;8\;3)\) azt jelenti:
+        \(\gamma(1)=5,\; \gamma(5)=8,\; \gamma(8)=3,\; \gamma(3)=1\), a többi fixpont.
+        Ekvivalens jelölések:
+        \[(1\;5\;8\;3) = (5\;8\;3\;1) = (8\;3\;1\;5) = (3\;1\;5\;8)\]
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Ciklusok szorzata és inverze</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen \(\gamma = (a_1\;a_2\;\ldots\;a_k)\) ciklus. Ekkor:
+        <ul style="margin:.5rem 0 0 1rem;padding:0;line-height:2">
+          <li>\(\gamma^{-1} = (a_k\;a_{k-1}\;\ldots\;a_1)\) — ciklus</li>
+          <li>Két ciklus szorzata <em>általában nem</em> ciklus</li>
+          <li>Két ciklus szorzata azonban ismét permutáció</li>
+        </ul>
+        <br>
+        <strong>Példa</strong> \(\gamma=(1\;5\;8\;3),\; \delta=(1\;3\;5\;6\;2)\) esetén:
+        \[\gamma\delta \text{ és } \delta\gamma \text{ nem ciklus általában.}\]
+        \[\gamma^{-1} = (3\;8\;5\;1)\]
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Vizualizáció — ciklus gráfja</div>
+      <canvas id="cycle-canvas" width="320" height="180" style="border-radius:8px;background:#0d0e14;display:block;margin:0 auto"></canvas>
+      <div class="d-flex gap-2 justify-content-center mt-2">
+        <button class="type-btn active" onclick="setCycleDemo('gamma')">γ = (1 5 8 3)</button>
+        <button class="type-btn" onclick="setCycleDemo('delta')">δ = (2 4 6)</button>
+        <button class="type-btn" onclick="setCycleDemo('id')">id (S₄)</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 3: IDEGEN CIKLUSOK ══════ -->
+<div id="tab-id" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Idegen ciklusok</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A \(\gamma, \delta \in S_n\) ciklusokat <strong style="color:#a78bfa">idegennek</strong>
+        (diszjunktnak) nevezzük, ha
+        \[M_\gamma \cap M_\delta = \emptyset.\]
+        Tehát nincs közös mozgott elemük.
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Idegen ciklusok szorzata</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyenek \(\gamma, \delta \in S_n\) idegen ciklusok. Ekkor:
+        \[(\gamma\delta)(a) = \begin{cases} \gamma(a) & \text{ha } a \in M_\gamma \\ \delta(a) & \text{ha } a \in M_\delta \\ a & \text{ha } a \notin M_\gamma \cup M_\delta \end{cases}\]
+        <strong>Következmény:</strong> Idegen ciklusok <strong style="color:#c4b5fd">felcserélhetők</strong>:
+        \[\gamma\delta = \delta\gamma.\]
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Felbontás idegen ciklusokra</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Minden \(\sigma \in S_n\), \(\sigma \neq \mathrm{id}\) felírható egymástól idegen
+        ciklusok szorzataként. Ez a felbontás <strong style="color:#c4b5fd">egyértelmű</strong>
+        (a ciklusok sorrendjétől és reprezentáns-választástól eltekintve).
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Példa — felbontás S_9-ben</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        \[\sigma = \begin{pmatrix} 1&2&3&4&5&6&7&8&9\\ 4&3&2&6&9&1&7&8&5 \end{pmatrix}\]
+        <div class="mt-2">
+          Nyomon követjük az elemeket: \(1 \to 4 \to 6 \to 1\) → ciklus \((1\;4\;6)\)<br>
+          \(2 \to 3 \to 2\) → ciklus \((2\;3)\)<br>
+          \(5 \to 9 \to 5\) → ciklus \((5\;9)\)<br>
+          \(7, 8\) fixpontok.
+        </div>
+        \[\sigma = (1\;4\;6)(2\;3)(5\;9)\]
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — ciklus-felbontás</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.6rem">
+        Add meg n értékét és a permutáció alsó sorát (az i-edik mező értéke = σ(i)):
+      </div>
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <span style="font-size:.8rem;color:#c4cdd8">n =</span>
+        <select id="perm-n" onchange="rebuildInputs()" style="background:#1a1b25;border:1px solid rgba(167,139,250,.3);color:#e2e8f0;border-radius:4px;padding:.2rem .4rem;font-size:.8rem">
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8" selected>8</option>
+          <option value="9">9</option>
+        </select>
+      </div>
+      <div class="mb-1" style="font-size:.77rem;color:#8892a4">Felső sor (1..n):</div>
+      <div id="perm-top-row" class="perm-row mb-1" style="gap:.4rem"></div>
+      <div class="mb-1" style="font-size:.77rem;color:#8892a4">Alsó sor (σ(i)):</div>
+      <div id="perm-inputs" class="perm-row mb-3" style="gap:.4rem"></div>
+      <button class="type-btn active" onclick="runDecomp()" style="margin-bottom:.75rem">Felbontás →</button>
+
+      <div id="decomp-result" style="font-size:.82rem;color:#c4cdd8;min-height:60px"></div>
+      <canvas id="perm-canvas" width="320" height="180" style="margin-top:.6rem;border-radius:8px;display:block"></canvas>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 4: HATVÁNYOK ══════ -->
+<div id="tab-ha" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Permutáció hatványai</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen \(\sigma \in S_n\). Definiáljuk:
+        \[\sigma^0 = \mathrm{id}, \quad \sigma^{n+1} = \sigma^n \cdot \sigma \quad (n \geq 0)\]
+        \[\sigma^{-n} = (\sigma^{-1})^n \quad (n > 0)\]
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Hatványszabályok</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Minden \(\sigma \in S_n\) és \(k, m \in \mathbb{Z}\) esetén:
+        <ul style="margin:.5rem 0 0 1rem;padding:0;line-height:2.2">
+          <li>\((\sigma^k)^m = \sigma^{km}\)</li>
+          <li>\(\sigma^{k+m} = \sigma^k \cdot \sigma^m\)</li>
+          <li>\((\sigma^k)^{-1} = (\sigma^{-1})^k\)</li>
+        </ul>
+        <br>
+        <strong>Tétel (k-ciklus rendje):</strong> Ha \(\gamma = (a_1\;\ldots\;a_k)\), akkor
+        \(\gamma^k = \mathrm{id}\), és \(k\) a legkisebb ilyen pozitív egész.
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Idegen ciklusok szorzatának rendje</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Ha \(\sigma = \gamma_1 \gamma_2 \cdots \gamma_r\) idegen ciklusok szorzata
+        és \(\gamma_i\) rendje \(k_i\), akkor \(\sigma\) rendje:
+        \[\mathrm{ord}(\sigma) = \mathrm{lkkt}(k_1, k_2, \ldots, k_r)\]
+        (legkisebb közös többszörös).
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Példa — σ¹⁰⁰ kiszámítása</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen
+        \[\sigma = \begin{pmatrix} 1&2&3&4&5&6&7&8&9\\ 4&3&2&6&9&1&7&8&5 \end{pmatrix} = (1\;4\;6)(2\;3)(5\;9).\]
+        Számítsuk ki \(\sigma^{100}\)-t!<br><br>
+
+        Mivel idegen ciklusokról van szó:
+        \[\sigma^{100} = (1\;4\;6)^{100}\cdot(2\;3)^{100}\cdot(5\;9)^{100}\]
+        <div class="mt-2">
+          <div class="pf-step">
+            <div class="pf-eq">\(100 = 3 \cdot 33 + 1\)</div>
+            <div class="pf-why">\((1\;4\;6)^3 = \mathrm{id}\), maradék 1</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq">\((1\;4\;6)^{100} = ((1\;4\;6)^3)^{33}\cdot(1\;4\;6) = (1\;4\;6)\)</div>
+            <div class="pf-why">3-ciklus, \(3|99\)</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq">\(100 = 2 \cdot 50\)</div>
+            <div class="pf-why">\((2\;3)^2 = \mathrm{id}\)</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq">\((2\;3)^{100} = ((2\;3)^2)^{50} = \mathrm{id}\)</div>
+            <div class="pf-why">2-ciklus, \(2|100\)</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq">\((5\;9)^{100} = \mathrm{id}\)</div>
+            <div class="pf-why">ugyanígy</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq">\(\sigma^{100} = (1\;4\;6)\)</div>
+            <div class="pf-why" style="color:#34d399">végeredmény</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box mt-2">
+      <div class="lbl mb-1" style="color:#a78bfa">σ rendje</div>
+      <div style="font-size:.82rem;color:#c4cdd8">
+        \(\mathrm{ord}(\sigma) = \mathrm{lkkt}(3, 2, 2) = 6\), tehát \(\sigma^6 = \mathrm{id}\).
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 5: TRANSZPOZÍCIÓK ══════ -->
+<div id="tab-tr" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Transzpozíció</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A kettő hosszú ciklusokat <strong style="color:#a78bfa">transzpozíciónak</strong> hívjuk.
+        Tehát \(\tau = (a\;b)\) egy transzpozíció, ahol \(a \neq b\):
+        \[\tau(a)=b, \quad \tau(b)=a, \quad \tau(x)=x \text{ egyébként.}\]
+        Megjegyzés: \(\tau^{-1} = \tau\) (öninverz), \(\tau^2 = \mathrm{id}\).
+        <br><br>
+        <strong>Példa S_5-ben:</strong> \((1\;3)\) és \((1\;5)\) transzpozíciók.
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Ciklus = transzpozíciók szorzata</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Minden \(k\)-ciklus felírható \((k-1)\) transzpozíció szorzataként:
+        \[(a_1\;a_2\;\ldots\;a_k) = (a_1\;a_2)(a_1\;a_3)(a_1\;a_4)\cdots(a_1\;a_k)\]
+        <div style="margin-top:.5rem;font-size:.75rem;color:#6b7280">
+          Bizonyítás: mindkét oldal azonos hozzárendelési szabályt ad:<br>
+          \(a_1 \mapsto a_2 \mapsto a_2\), \(a_2 \mapsto a_1 \mapsto a_3\), …, \(a_k \mapsto a_k \mapsto a_1\).
+        </div>
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Minden permutáció = transzpozíciók szorzata</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Minden \(\sigma \in S_n\) felírható transzpozíciók szorzataként.<br>
+        <em>Bizonyítás:</em> Először bontjuk fel idegen ciklusokra, majd minden ciklust
+        transzpozíciókra.
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="ex-box mb-3">
+      <div class="lbl mb-2" style="color:#34d399">Példa — felbontás transzpozíciókra</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.9">
+        \[(3\;1\;5\;2\;4) = (3\;1)(3\;5)(3\;2)(3\;4)\]
+        De ha ekvivalens alakban írjuk: \((1\;5\;2\;4\;3)\), akkor:
+        \[(1\;5\;2\;4\;3) = (1\;5)(1\;2)(1\;4)(1\;3)\]
+        A transzpozíciókra való <strong style="color:#f97316">felbontás nem egyértelmű</strong>,
+        de a transzpozíciók <em>száma paritásában</em> egyértelmű (páros/páratlan).
+      </div>
+    </div>
+
+    <div class="ex-box mb-3">
+      <div class="lbl mb-2" style="color:#34d399">Teljes példa S_9-ben</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.9">
+        \[\sigma = \begin{pmatrix}1&2&3&4&5&6&7&8&9\\7&5&6&3&1&4&2&9&8\end{pmatrix}\]
+        1. lépés — idegen ciklusokra:
+        \[\sigma = (1\;7\;2\;5)(3\;6\;4)(8\;9)\]
+        2. lépés — minden ciklust transzpozíciókra:
+        \[\sigma = (1\;7)(1\;2)(1\;5)\cdot(3\;6)(3\;4)\cdot(8\;9)\]
+        Összesen 6 transzpozíció → \(\sigma\) <strong style="color:#a78bfa">páros</strong> permutáció.
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — transzpozíció-felbontás</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">
+        Válassz permutációt, és lásd a lépésenkénti felbontást:
+      </div>
+      <div class="d-flex gap-2 flex-wrap mb-2">
+        <button class="type-btn active" onclick="showTransp('ex1')">(3 1 5 2 4)</button>
+        <button class="type-btn" onclick="showTransp('ex2')">(1 7 2 5)(3 6 4)(8 9)</button>
+        <button class="type-btn" onclick="showTransp('ex3')">(1 4 6)(2 3)</button>
+      </div>
+      <div id="transp-result" style="font-size:.82rem;color:#c4cdd8;min-height:80px;line-height:1.9"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 6: ELŐADÁS+ ══════ -->
+<div id="tab-ex" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-6">
+
+    <div class="info-box mb-3">
+      <div class="lbl mb-2" style="color:#a78bfa">Szorzás konvenciója — lépésenként</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.75">
+        <strong style="color:#a78bfa">(σ∘τ)(x) = σ(τ(x))</strong> — először τ lép, majd σ.
+        Ugyanaz a jobb-bal szabály, mint a 2. fejezet leképezéseinél.
+      </div>
+      <div style="font-size:.77rem;color:#8892a4;margin:.5rem 0 .3rem">
+        Példa: σ és τ szorzata elemenkénti kiszámítással:
+      </div>
+      <div style="overflow-x:auto">
+        <table style="font-size:.72rem;color:#c4cdd8;border-collapse:collapse;width:100%">
+          <thead>
+            <tr style="color:#8892a4;border-bottom:1px solid rgba(167,139,250,.2)">
+              <th style="padding:.25rem .5rem;text-align:center">i</th>
+              <th style="padding:.25rem .5rem;text-align:center">τ(i)</th>
+              <th style="padding:.25rem .5rem;text-align:center">σ(τ(i))</th>
+              <th style="padding:.25rem .5rem;text-align:center;color:#a78bfa">(σ∘τ)(i)</th>
+            </tr>
+          </thead>
+          <tbody id="comp-tbody"></tbody>
+        </table>
+      </div>
+      <div style="font-size:.78rem;margin-top:.5rem;color:#c4cdd8">
+        Eredmény: \(\sigma\tau = \begin{pmatrix}1&2&3&4&5&6&7&8&9\\3&4&6&2&1&9&8&7&5\end{pmatrix}\)
+      </div>
+      <div style="font-size:.75rem;margin-top:.3rem;color:#f97316">
+        A τ∘σ más eredményt ad → S₉ nem kommutatív!
+      </div>
+    </div>
+
+    <div class="def-box" style="border-left-color:#f59e0b">
+      <div class="lbl mb-2" style="color:#f59e0b">Ciklus inverze — fordított sorrend</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        \[(a_1\;a_2\;\ldots\;a_k)^{-1} = (a_k\;a_{k-1}\;\ldots\;a_1)\]
+        Az elemeket <strong style="color:#f59e0b">fordított sorrendben</strong> kell leírni.<br><br>
+        <strong>Példa:</strong> \(\gamma=(1\;5\;8\;3)\)
+        \[\gamma^{-1} = (3\;8\;5\;1)\]
+        <em>Ellenőrzés:</em> \(\gamma(1)=5\) → \(\gamma^{-1}(5)=1\;\checkmark\), \(\gamma(8)=3\) → \(\gamma^{-1}(3)=8\;\checkmark\)<br><br>
+        Idegen ciklusok szorzatánál minden ciklust megfordítunk, és a sorrendet is felcseréljük:
+        \[(\gamma_1\gamma_2\cdots\gamma_r)^{-1} = \gamma_r^{-1}\cdots\gamma_2^{-1}\gamma_1^{-1}\]
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-6">
+
+    <div class="thm-box mb-3">
+      <div class="lbl mb-2" style="color:#7c3aed">Transzpozíció-felbontás paritása — invariáns</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.75">
+        A felbontás <strong style="color:#f97316">nem egyértelmű</strong> — ugyanaz a ciklus több különböző módón bontható transzpozíciókra, de a transzpozíciók száma <strong style="color:#34d399">paritásban mindig azonos</strong>.
+      </div>
+      <div style="font-size:.77rem;color:#8892a4;margin:.5rem 0 .3rem">
+        Válaszd a (1 7 2 5) 4-ciklus kezdőelemét:
+      </div>
+      <div class="d-flex gap-2 flex-wrap mb-2">
+        <button class="type-btn active" onclick="showCycleDecomp('1',event)">Kezd 1-el</button>
+        <button class="type-btn" onclick="showCycleDecomp('7',event)">Kezd 7-el</button>
+        <button class="type-btn" onclick="showCycleDecomp('2',event)">Kezd 2-vel</button>
+      </div>
+      <div id="cycle-decomp-result" style="font-size:.82rem;color:#c4cdd8;min-height:60px;line-height:1.9"></div>
+    </div>
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Irányított gráf → ciklusok kapcsolata</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.75">
+        A permutáció irányított gráfjában az összefüggő <strong style="color:#a78bfa">körök</strong> (nem-fixpont komponensek) pontosan a ciklus-felbontás ciklusait adják.
+        <ul style="margin:.5rem 0 0 1rem;padding:0;line-height:2.1">
+          <li><strong style="color:#a78bfa">Fixpont</strong> → hurokél (ön-nyíl) a gráfban</li>
+          <li><strong style="color:#a78bfa">k-ciklus</strong> → k csúcsból álló irányított kör</li>
+          <li>Az összes kör összeszedése = a teljes ciklus-felbontás</li>
+        </ul>
+      </div>
+      <div style="margin-top:.6rem;padding:.5rem .75rem;background:rgba(167,139,250,.06);border-radius:6px;font-size:.75rem;color:#8892a4;border:1px solid rgba(167,139,250,.15)">
+        <i class="bi bi-info-circle me-1" style="color:#a78bfa"></i>
+        <strong style="color:#c4b5fd">Előzetes:</strong> Gráfokkal a <em>Diszkrét Matematika</em> tárgyban (2. félév) részletesebben foglalkoznak — irányított és irányítatlan gráfok, összefüggőség, mátrixos leírás.
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+</div><!-- /pt-4 -->
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(p => p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (id === 'tab-cy') setTimeout(drawCycleDemo, 30);
+  if (id === 'tab-id') { rebuildInputs(); setTimeout(runDecomp, 60); }
+  if (id === 'tab-tr') setTimeout(() => showTransp('ex1', document.querySelector('#tab-tr .type-btn')), 30);
+  if (id === 'tab-ex') { buildCompTable(); showCycleDecomp('1'); }
+}
+
+/* ─── Tab 2: cycle canvas ─── */
+const CYCLE_DEMOS = {
+  gamma: { n: 9, perm: [0,5,2,1,2,8,6,7,3,9], cycles: [[1,5,8,3]], fixed: [2,4,6,7,9], label: 'γ = (1 5 8 3)' },
+  delta: { n: 6, perm: [0,1,4,3,6,5,2], cycles: [[2,4,6]], fixed: [1,3,5], label: 'δ = (2 4 6)' },
+  id:    { n: 4, perm: [0,1,2,3,4], cycles: [], fixed: [1,2,3,4], label: 'id (S₄)' },
+};
+let _cycleDemo = 'gamma';
+
+function setCycleDemo(key) {
+  _cycleDemo = key;
+  document.querySelectorAll('#tab-cy .type-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  drawCycleDemo();
+}
+
+const CYCLE_COLORS = ['#a78bfa','#34d399','#f97316','#22d3ee','#f472b6'];
+
+function drawCycleDemo() {
+  const cv = document.getElementById('cycle-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const d = CYCLE_DEMOS[_cycleDemo];
+  const n = d.perm.length - 1;
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W/2, cy = H/2, R = Math.min(W,H)*0.36;
+  const pts = [];
+  for (let i = 1; i <= n; i++) {
+    const a = (2*Math.PI*i/n) - Math.PI/2;
+    pts.push({ x: cx + R*Math.cos(a), y: cy + R*Math.sin(a), i });
+  }
+
+  function drawArc(from, to, color, fixed) {
+    const f = pts[from-1], t = pts[to-1];
+    ctx.strokeStyle = color;
+    ctx.lineWidth = fixed ? 1.2 : 2;
+    ctx.globalAlpha = fixed ? 0.35 : 0.85;
+    ctx.beginPath();
+    if (from === to) {
+      ctx.arc(f.x, f.y-14, 7, 0, 2*Math.PI);
+    } else {
+      const mx = (f.x+t.x)/2, my = (f.y+t.y)/2;
+      const dx = t.x-f.x, dy = t.y-f.y;
+      const len = Math.sqrt(dx*dx+dy*dy);
+      const bend = 0.28;
+      const cpx = mx - dy*bend, cpy = my + dx*bend;
+      ctx.moveTo(f.x, f.y);
+      ctx.quadraticCurveTo(cpx, cpy, t.x, t.y);
+      const tx2 = t.x - (cpx - t.x)*0.15;
+      const ty2 = t.y - (cpy - t.y)*0.15;
+      _arrowHead(ctx, tx2, ty2, t.x, t.y, color);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  d.fixed.forEach(i => drawArc(i, i, '#4a5568', true));
+  d.cycles.forEach((cyc, ci) => {
+    const col = CYCLE_COLORS[ci % CYCLE_COLORS.length];
+    for (let j = 0; j < cyc.length; j++) {
+      drawArc(cyc[j], cyc[(j+1)%cyc.length], col, false);
+    }
+  });
+
+  pts.forEach(p => {
+    const isCycle = d.cycles.some(c => c.includes(p.i));
+    const col = isCycle ? CYCLE_COLORS[d.cycles.findIndex(c => c.includes(p.i)) % CYCLE_COLORS.length] : '#4a5568';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 10, 0, 2*Math.PI);
+    ctx.fillStyle = isCycle ? col + '33' : '#1a1b25';
+    ctx.fill();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.i, p.x, p.y);
+  });
+
+  ctx.fillStyle = '#8892a4';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(d.label, 6, 4);
+}
+
+function _arrowHead(ctx, fx, fy, tx, ty, color) {
+  const dx = tx-fx, dy = ty-fy;
+  const len = Math.sqrt(dx*dx+dy*dy)||1;
+  const ux = dx/len, uy = dy/len;
+  const ah = 8;
+  ctx.beginPath();
+  ctx.moveTo(tx, ty);
+  ctx.lineTo(tx - ah*(ux-0.4*uy), ty - ah*(uy+0.4*ux));
+  ctx.lineTo(tx - ah*(ux+0.4*uy), ty - ah*(uy-0.4*ux));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+/* ─── Tab 3: permutation decomposer ─── */
+function rebuildInputs() {
+  const n = parseInt(document.getElementById('perm-n').value);
+  const top = document.getElementById('perm-top-row');
+  const inp = document.getElementById('perm-inputs');
+  top.innerHTML = '';
+  inp.innerHTML = '';
+  for (let i = 1; i <= n; i++) {
+    const s = document.createElement('span');
+    s.className = 'inp-cell d-flex align-items-center justify-content-center';
+    s.style.cssText = 'background:#0d0e14;border:1px solid rgba(167,139,250,.15);color:#6b7280;font-size:.8rem;min-width:2rem;height:2rem;border-radius:4px;text-align:center';
+    s.textContent = i;
+    top.appendChild(s);
+
+    const el = document.createElement('input');
+    el.type = 'text'; el.maxLength = 1;
+    el.className = 'inp-cell';
+    el.id = 'pc-' + i;
+    el.value = i; // default: identity
+    el.addEventListener('input', () => {});
+    inp.appendChild(el);
+  }
+  runDecomp();
+}
+
+function readPerm() {
+  const n = parseInt(document.getElementById('perm-n').value);
+  const perm = [0];
+  for (let i = 1; i <= n; i++) {
+    const v = parseInt(document.getElementById('pc-' + i)?.value);
+    perm.push(isNaN(v) ? i : v);
+  }
+  return perm;
+}
+
+function computeCycles(perm) {
+  const n = perm.length - 1;
+  const visited = new Array(n+1).fill(false);
+  const cycles = [];
+  for (let i = 1; i <= n; i++) {
+    if (!visited[i] && perm[i] !== i) {
+      const cyc = [];
+      let j = i;
+      while (!visited[j]) { visited[j]=true; cyc.push(j); j=perm[j]; }
+      cycles.push(cyc);
+    } else { visited[i] = true; }
+  }
+  return cycles;
+}
+
+function gcd(a,b){ return b===0?a:gcd(b,a%b); }
+function lcm(a,b){ return a*b/gcd(a,b); }
+
+const PALETTE = ['#a78bfa','#34d399','#f97316','#22d3ee','#f472b6','#fbbf24'];
+
+function runDecomp() {
+  const perm = readPerm();
+  const n = perm.length - 1;
+  const cycles = computeCycles(perm);
+  const order = cycles.length ? cycles.reduce((acc,c)=>lcm(acc,c.length),1) : 1;
+
+  let html = '';
+  if (cycles.length === 0) {
+    html = '<span style="color:#34d399">σ = id (identitás permutáció)</span>';
+  } else {
+    html += '<div style="margin-bottom:.4rem"><span style="color:#8892a4;font-size:.75rem">Ciklusok: </span>';
+    cycles.forEach((c,i) => {
+      const col = PALETTE[i % PALETTE.length];
+      html += `<span class="cycle-span" style="background:${col}22;color:${col};border:1px solid ${col}44">(${c.join(' ')})</span>`;
+    });
+    html += '</div>';
+    html += `<div style="font-size:.77rem;color:#8892a4">Rend (ord σ): <span style="color:#e2e8f0;font-weight:600">lkkt(${cycles.map(c=>c.length).join(', ')}) = ${order}</span></div>`;
+  }
+  document.getElementById('decomp-result').innerHTML = html;
+
+  drawPermGraph(perm, cycles, n);
+  if (window.renderMathInElement) renderMathInElement(document.getElementById('decomp-result'), {
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});
+}
+
+function drawPermGraph(perm, cycles, n) {
+  const cv = document.getElementById('perm-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  const cx = W/2, cy = H/2, R = Math.min(W,H)*0.36;
+  const pts = [];
+  for (let i = 1; i <= n; i++) {
+    const a = (2*Math.PI*(i-1)/n) - Math.PI/2;
+    pts.push({ x: cx+R*Math.cos(a), y: cy+R*Math.sin(a), i });
+  }
+
+  const nodeColor = new Array(n+1).fill('#4a5568');
+  cycles.forEach((c,ci) => c.forEach(v => nodeColor[v] = PALETTE[ci%PALETTE.length]));
+
+  for (let i = 1; i <= n; i++) {
+    const f = pts[i-1], t = pts[perm[i]-1];
+    const col = nodeColor[i];
+    ctx.strokeStyle = col;
+    ctx.lineWidth = perm[i]===i ? 1 : 2;
+    ctx.globalAlpha = perm[i]===i ? 0.3 : 0.8;
+    ctx.beginPath();
+    if (perm[i] === i) {
+      ctx.arc(f.x, f.y-14, 7, 0, 2*Math.PI);
+    } else {
+      const mx=(f.x+t.x)/2,my=(f.y+t.y)/2,dx=t.x-f.x,dy=t.y-f.y;
+      const cpx=mx-dy*0.25,cpy=my+dx*0.25;
+      ctx.moveTo(f.x,f.y); ctx.quadraticCurveTo(cpx,cpy,t.x,t.y);
+      _arrowHead(ctx,cpx+(t.x-cpx)*0.85,cpy+(t.y-cpy)*0.85,t.x,t.y,col);
+    }
+    ctx.stroke(); ctx.globalAlpha=1;
+  }
+
+  pts.forEach(p => {
+    const col = nodeColor[p.i];
+    ctx.beginPath(); ctx.arc(p.x,p.y,10,0,2*Math.PI);
+    ctx.fillStyle = col==='#4a5568'?'#1a1b25':col+'33'; ctx.fill();
+    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#e2e8f0'; ctx.font='bold 10px monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(p.i,p.x,p.y);
+  });
+}
+
+/* ─── Tab 5: transposition decomposer ─── */
+const TRANSP_EX = {
+  ex1: {
+    label: String.raw`(3\;1\;5\;2\;4)`,
+    cycles: [[3,1,5,2,4]],
+    steps: [
+      { eq: String.raw`(3\;1\;5\;2\;4)`, why: 'egyetlen 5-ciklus' },
+      { eq: String.raw`= (3\;1)(3\;5)(3\;2)(3\;4)`, why: 'az \\((a_1\\,a_2)(a_1\\,a_3)\\cdots\\) képlet alapján' },
+    ],
+    parity: 'páros', count: 4,
+  },
+  ex2: {
+    label: String.raw`(1\;7\;2\;5)(3\;6\;4)(8\;9)`,
+    cycles: [[1,7,2,5],[3,6,4],[8,9]],
+    steps: [
+      { eq: String.raw`(1\;7\;2\;5)(3\;6\;4)(8\;9)`, why: 'idegen ciklusok szorzata' },
+      { eq: String.raw`= (1\;7)(1\;2)(1\;5)\cdot(3\;6)(3\;4)\cdot(8\;9)`, why: 'minden ciklust transzpozíciókra bontunk' },
+    ],
+    parity: 'páros', count: 6,
+  },
+  ex3: {
+    label: String.raw`(1\;4\;6)(2\;3)`,
+    cycles: [[1,4,6],[2,3]],
+    steps: [
+      { eq: String.raw`(1\;4\;6)(2\;3)`, why: 'két idegen ciklus' },
+      { eq: String.raw`= (1\;4)(1\;6)\cdot(2\;3)`, why: '3-ciklus → 2 transz., 2-ciklus → 1 transz.' },
+    ],
+    parity: 'páratlan', count: 3,
+  },
+};
+
+function showTransp(key) {
+  _currentTransp = key;
+  document.querySelectorAll('#tab-tr .type-btn').forEach(b=>b.classList.remove('active'));
+  event?.target?.classList?.add('active');
+  const d = TRANSP_EX[key];
+  const parCol = d.parity==='páros'?'#34d399':'#f97316';
+  let html = `<div class="mb-2" style="font-size:.8rem;color:#8892a4">Permutáció: <span style="color:#e2e8f0">\\(${d.label}\\)</span></div>`;
+  html += '<div>';
+  d.steps.forEach((s,i) => {
+    html += `<div class="pf-step"><div class="pf-eq">\\(${s.eq}\\)</div><div class="pf-why">${s.why}</div></div>`;
+  });
+  html += '</div>';
+  html += `<div class="mt-2" style="font-size:.78rem">Transzpozíciók száma: <span style="color:#e2e8f0;font-weight:600">${d.count}</span> → σ <span style="color:${parCol};font-weight:600">${d.parity}</span> permutáció.</div>`;
+  document.getElementById('transp-result').innerHTML = html;
+  if (window.renderMathInElement) renderMathInElement(document.getElementById('transp-result'), {
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});
+}
+let _currentTransp='ex1';
+
+/* ─── Tab 6: composition table ─── */
+const _SIGMA = [0,4,3,2,6,9,1,7,8,5];
+const _TAU   = [0,2,1,4,3,6,5,8,7,9];
+
+function buildCompTable() {
+  const tb = document.getElementById('comp-tbody');
+  if (!tb) return;
+  tb.innerHTML = '';
+  for (let i = 1; i <= 9; i++) {
+    const ti = _TAU[i];
+    const sti = _SIGMA[ti];
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid rgba(167,139,250,.06)';
+    const accent = (i % 2 === 0) ? 'rgba(167,139,250,.04)' : 'transparent';
+    tr.style.background = accent;
+    tr.innerHTML = `
+      <td style="padding:.18rem .5rem;text-align:center;color:#8892a4">${i}</td>
+      <td style="padding:.18rem .5rem;text-align:center">${ti}</td>
+      <td style="padding:.18rem .5rem;text-align:center">${sti}</td>
+      <td style="padding:.18rem .5rem;text-align:center;color:#a78bfa;font-weight:700">${sti}</td>`;
+    tb.appendChild(tr);
+  }
+  if (window.renderMathInElement) renderMathInElement(document.getElementById('tab-ex'),
+    {delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});
+}
+
+/* ─── Tab 6: cycle decomposition parity demo ─── */
+const _CYCLE_DECOMPS = {
+  '1': {
+    cycle: '(1\\;7\\;2\\;5)',
+    decomp: '(1\\;7)(1\\;2)(1\\;5)',
+    count: 3, parity: 'páratlan', col: '#f97316',
+    note: 'a (a₁ a₂ a₃ a₄) = (a₁ a₂)(a₁ a₃)(a₁ a₄) képlet alapján'
+  },
+  '7': {
+    cycle: '(7\\;2\\;5\\;1)',
+    decomp: '(7\\;2)(7\\;5)(7\\;1)',
+    count: 3, parity: 'páratlan', col: '#f97316',
+    note: 'ugyanaz a ciklus, 7-el kezdve írjuk le'
+  },
+  '2': {
+    cycle: '(2\\;5\\;1\\;7)',
+    decomp: '(2\\;5)(2\\;1)(2\\;7)',
+    count: 3, parity: 'páratlan', col: '#f97316',
+    note: 'ugyanaz a ciklus, 2-vel kezdve írjuk le'
+  },
+};
+
+function showCycleDecomp(key, ev) {
+  if (ev) {
+    document.querySelectorAll('#tab-ex .type-btn').forEach(b=>b.classList.remove('active'));
+    ev.target.classList.add('active');
+  }
+  const d = _CYCLE_DECOMPS[key];
+  const html = `
+    <div style="margin-bottom:.35rem;font-size:.78rem;color:#8892a4">${d.note}</div>
+    <div class="pf-step">
+      <div class="pf-eq">\\(${d.cycle}\\)</div>
+      <div class="pf-why">ugyanaz a 4-ciklus</div>
+    </div>
+    <div class="pf-step">
+      <div class="pf-eq">\\(= ${d.decomp}\\)</div>
+      <div class="pf-why">transzpozíció-felbontás</div>
+    </div>
+    <div style="font-size:.78rem;margin-top:.4rem">
+      Transzpozíciók száma: <span style="color:#e2e8f0;font-weight:600">${d.count}</span>
+      → <span style="color:${d.col};font-weight:700">${d.parity}</span> permutáció
+    </div>
+    <div style="margin-top:.3rem;padding:.3rem .6rem;background:rgba(52,211,153,.06);border-radius:4px;font-size:.73rem;color:#34d399;border-left:2px solid #34d399">
+      Mindhárom felbontásban 3 transzpozíció → paritás invariáns!
+    </div>`;
+  document.getElementById('cycle-decomp-result').innerHTML = html;
+  if (window.renderMathInElement) renderMathInElement(document.getElementById('cycle-decomp-result'),
+    {delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});
+}
+
+/* ─── Init ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    drawCycleDemo();
+    rebuildInputs();
+    if (document.getElementById('transp-result'))
+      showTransp('ex1');
+  }, 200);
+});
+</script>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],
+    throwOnError:false
+  })"></script>
+{% endblock %}

@@ -1,0 +1,815 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #38bdf8; --acc2: #7dd3fc; --acc3: #0ea5e9; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(56,189,248,.12); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box { border-left:3px solid var(--acc); background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box { border-left:3px solid #10b981; background:rgba(16,185,129,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box  { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(56,189,248,.12); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.btn-graph { background:#1a2535; color:var(--acc2); border:1px solid rgba(56,189,248,.25); border-radius:6px; padding:.3rem .8rem; font-size:.8rem; cursor:pointer; transition:background .15s; margin:.15rem; }
+.btn-graph:hover, .btn-graph.active { background:rgba(56,189,248,.18); border-color:var(--acc); color:var(--acc); }
+input[type=number], select { background:#0e1117; border:1px solid #334155; border-radius:6px; color:#e2e8f0; padding:.3rem .6rem; font-size:.83rem; }
+input:focus, select:focus { outline:none; border-color:var(--acc); }
+canvas.graph-canvas { background:#0a0d14; border-radius:10px; border:1px solid #1e2533; display:block; }
+.chip { display:inline-block; background:#1a2535; border:1px solid #334155; border-radius:5px; padding:.12rem .5rem; font-size:.78rem; font-family:monospace; color:#7dd3fc; margin:.1rem; }
+.knight-cell { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; border-radius:4px; cursor:pointer; transition:background .12s; user-select:none; }
+.gray-row { font-family:monospace; font-size:.82rem; line-height:2; }
+.gray-bit { display:inline-block; width:1.2rem; text-align:center; font-weight:700; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:1020px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,.15);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-signpost-split-fill" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">II.3. fejezet — Hamilton-utak és -körök</h4>
+      <small class="text-muted">Dodekaéder · NP-teljesség · Dirac · Ore · Kockagráf · Gray-kódok · Huszár</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-def',this)">Definíciók</span>
+    <span class="ila-nav-link" onclick="showTab('t-theorems',this)">Dirac &amp; Ore</span>
+    <span class="ila-nav-link" onclick="showTab('t-sandbox',this)">Hamilton-kereső</span>
+    <span class="ila-nav-link" onclick="showTab('t-hypercube',this)">Kockagráf &amp; Gray</span>
+    <span class="ila-nav-link" onclick="showTab('t-knight',this)">Huszárvándorlás</span>
+  </div>
+
+  <!-- TAB: Definíciók -->
+  <div id="t-def" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Alapfogalmak</span>
+          <div class="def-box">
+            <strong>Hamilton-út:</strong> a gráf minden csúcsát pontosan egyszer érintő egyszerű út.
+          </div>
+          <div class="def-box">
+            <strong>Hamilton-kör:</strong> Hamilton-út, amelynek kezdő- és végpontja azonos (zárt bejárás).
+          </div>
+          <div class="thm-box">
+            <strong>NP-teljesség:</strong> A Hamilton-kör keresése NP-teljes — jelenleg csak \(\mathcal{O}(2^n)\) algoritmusok ismertek. Éles különbség az Euler-köröktől (amelyek \(\mathcal{O}(|E|)\) időben megtalálhatók)!
+          </div>
+          <div class="ex-box">
+            <strong>Történet:</strong> William Rowan Hamilton, 1857. A dodekaéder csúcsaira mint „városokra" épülő „Icosian Game" — minden várost pontosan egyszer érintve körbe kell járni.
+          </div>
+          <div class="thm-box">
+            <strong>Kizáró feltétel (elvágó csúcsok):</strong> Ha \(k\) csúcs elhagyásával a gráf \(>k\) komponensre esik, <strong>nincs Hamilton-kör</strong>. Ha \(>k+1\) komponensre, nincs Hamilton-út sem.
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <span class="badge-acc">Hamilton-kör vs Euler-kör</span>
+          <div class="d-flex gap-1 flex-wrap mb-2">
+            <button class="btn-graph active" onclick="setDefGraph('both',this)">Mindkettő létezik</button>
+            <button class="btn-graph" onclick="setDefGraph('ham_only',this)">Csak Hamilton</button>
+            <button class="btn-graph" onclick="setDefGraph('euler_only',this)">Csak Euler</button>
+            <button class="btn-graph" onclick="setDefGraph('neither',this)">Egyik sem</button>
+          </div>
+          <canvas id="def-canvas" class="graph-canvas" width="480" height="270"></canvas>
+          <div id="def-info" class="mt-2" style="font-size:.82rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Dirac & Ore -->
+  <div id="t-theorems" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Dirac tétele (1952)</span>
+          <div class="thm-box">
+            Ha \(|V|\ge 3\) és minden \(v\in V\) csúcsra \(\delta(v)\ge\dfrac{|V|}{2}\), akkor van Hamilton-kör.
+          </div>
+          <div class="badge-acc" style="margin-top:.5rem;">Ore tétele (1960)</div>
+          <div class="thm-box">
+            Ha minden nem szomszédos \(u,v\) párra \(\delta(u)+\delta(v)\ge|V|\), akkor van Hamilton-kör.
+          </div>
+          <div class="def-box" style="font-size:.82rem;">
+            Dirac ⊆ Ore (Dirac feltétele erősebb). Mindkettő csak elégséges, nem szükséges!
+          </div>
+          <div class="ex-box" style="font-size:.82rem;">
+            Egyéb tételek: <strong>Pósa</strong> (kis fokú csúcsok száma korlátozott), <strong>Tutte</strong> (minden 4-összefüggő síkgráfnak van Hamilton-köre), <strong>Erdős–Pósa</strong>.
+          </div>
+        </div>
+        <div class="card-dark mt-3">
+          <span class="badge-acc">Feltétel-ellenőrző</span>
+          <p style="font-size:.82rem;color:#94a3b8;">Adj meg fokszámokat (vesszővel):</p>
+          <input type="text" id="thm-degs" value="3,3,3,3,3,3" style="width:100%;margin-bottom:.5rem;" oninput="checkTheorems()">
+          <div id="thm-out" style="font-size:.83rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <span class="badge-acc">Interaktív gráf — Dirac/Ore ellenőrzés</span>
+          <p style="font-size:.82rem;color:#94a3b8;">Kattints két csúcsra az él ki-/bekapcsolásához. Húzd a csúcsokat!</p>
+          <canvas id="thm-canvas" class="graph-canvas" width="480" height="300"></canvas>
+          <div id="thm-graph-info" class="mt-2" style="font-size:.83rem;"></div>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn-acc" onclick="resetThmGraph()">Visszaállít</button>
+            <button class="btn-sec" onclick="makeDirac()">Dirac-feltétel teljesítése</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Hamilton-kereső sandbox -->
+  <div id="t-sandbox" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Játéktér</span>
+          <p style="font-size:.82rem;color:#94a3b8;">Kattints csúcsokra sorban a Hamilton-út/kör próbálásához. Élre kattintva törölheted az utolsó lépést.</p>
+          <div class="d-flex gap-1 flex-wrap mb-2">
+            <button class="btn-graph active" onclick="loadSbGraph('K5',this)">K₅</button>
+            <button class="btn-graph" onclick="loadSbGraph('petersen',this)">Petersen</button>
+            <button class="btn-graph" onclick="loadSbGraph('dodeca',this)">Dodekaéder</button>
+            <button class="btn-graph" onclick="loadSbGraph('bipartite',this)">Páros</button>
+          </div>
+          <div id="sb-status" class="mt-2" style="font-size:.84rem;font-weight:600;"></div>
+          <div id="sb-trail" class="mt-2" style="font-size:.8rem;font-family:monospace;color:#7dd3fc;line-height:1.8;"></div>
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn-acc" onclick="sbUndo()">← Vissza</button>
+            <button class="btn-sec" onclick="sbReset()">Újra</button>
+            <button class="btn-sec" onclick="sbSolve()">Megoldás ▶</button>
+          </div>
+          <div id="sb-solve-info" class="mt-2" style="font-size:.8rem;color:#94a3b8;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <canvas id="sb-canvas" class="graph-canvas" width="480" height="360"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Hypercube & Gray codes -->
+  <div id="t-hypercube" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">n-dimenziós kockagráf H_n</span>
+          <div class="def-box">
+            Csúcsok: az összes \(n\)-bites bináris sorozat (\(2^n\) db).<br>
+            Élek: két csúcs szomszédos \(\Leftrightarrow\) pontosan 1 bitben térnek el.
+          </div>
+          <div class="thm-box">
+            \(H_n\) tulajdonságai: \(n\)-reguláris, kétpólusú, átmérő \(=n\), \(n\ge 2\) esetén <strong>van Hamilton-kör</strong>.
+          </div>
+          <div class="def-box">
+            <strong>Gray-kód:</strong> a \(2^n\) bináris sorozat olyan sorrendbe rendezése, ahol egymás utáni szomszédok pontosan 1 bitben különböznek. Pontosan a \(H_n\) Hamilton-körjének csúcssorrendje!
+          </div>
+          <div class="ex-box">
+            <strong>Alkalmazás:</strong> rotációs kódolók (pl. szervomotor-pozíció). Bitváltásnál csak 1 vezéték változik → nincs téves közbenső érték.
+          </div>
+          <div class="d-flex gap-2 align-items-center mt-3">
+            <label class="text-muted" style="font-size:.78rem;">n =</label>
+            <input type="number" id="hc-n" value="3" min="1" max="4" style="width:60px;" oninput="buildHypercube()">
+          </div>
+          <div id="hc-stats" class="mt-2" style="font-size:.82rem;color:#94a3b8;"></div>
+        </div>
+        <div class="card-dark mt-3">
+          <span class="badge-acc">Gray-kód sorozat</span>
+          <div id="gray-list" class="gray-row"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark">
+          <canvas id="hc-canvas" class="graph-canvas" width="480" height="360"></canvas>
+          <div id="hc-trail-info" class="mt-2" style="font-size:.8rem;color:#94a3b8;">A Hamilton-kör a Gray-kód sorrendjét követi.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Knight's tour -->
+  <div id="t-knight" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark">
+          <span class="badge-acc">Huszárvándorlás</span>
+          <div class="def-box">
+            Egy \(n\times n\)-es sakktáblán a huszár minden mezőt pontosan egyszer látogat meg — ez egy Hamilton-út (vagy kör) a huszár lépéseinek gráfjában.
+          </div>
+          <div class="thm-box">
+            <strong>Warnsdorff heurisztikája (1823):</strong> Minden lépésnél válaszd azt a mezőt, amelyről a legkevesebb továbblépési lehetőség adódik. Ez \(\mathcal{O}(n^2)\) időben ad megoldást!
+          </div>
+          <div class="ex-box">
+            \(5\times5\)-ös tábla: létezik Hamilton-kör.<br>
+            \(4\times4\)-es: csak Hamilton-út lehetséges (páros méretű tábla, páros kétpólusú gráf).
+          </div>
+          <div class="d-flex gap-2 align-items-center mt-3">
+            <label class="text-muted" style="font-size:.78rem;">Tábla:</label>
+            <select id="kt-size" onchange="resetKnight()">
+              <option value="5">5×5</option>
+              <option value="6">6×6</option>
+              <option value="8" selected>8×8</option>
+            </select>
+            <button class="btn-acc" onclick="solveKnight()">Warnsdorff ▶</button>
+            <button class="btn-sec" onclick="resetKnight()">Töröl</button>
+          </div>
+          <div id="kt-status" class="mt-3" style="font-size:.84rem;"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark" style="overflow:auto;">
+          <p style="font-size:.82rem;color:#94a3b8;margin-bottom:.5rem;">Kattints egy mezőre a huszár elhelyezéséhez / kézi léptetéséhez.</p>
+          <div id="kt-board" style="display:inline-block;line-height:0;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.ila-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  renderMathInElement(document.getElementById(id), {
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+}
+
+function circleNodes(n, cx, cy, r) {
+  return Array.from({length:n},(_,i)=>({
+    x: cx + r*Math.cos(2*Math.PI*i/n - Math.PI/2),
+    y: cy + r*Math.sin(2*Math.PI*i/n - Math.PI/2),
+    label: String.fromCharCode(65+i)
+  }));
+}
+function edgeKey(a,b){ return Math.min(a,b)+','+Math.max(a,b); }
+
+// Generic graph draw
+function drawGraph(ctx, nodes, edges, opts={}) {
+  const {hamPath=[], hamEdges=new Set(), selNode=-1, removed=new Set(), dimEdges=new Set()} = opts;
+  const W=ctx.canvas.width, H=ctx.canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const HAM_COLORS=['#f97316','#38bdf8','#10b981','#a78bfa','#f43f5e','#fbbf24','#34d399','#60a5fa'];
+
+  edges.forEach((e,i) => {
+    const [a,b]=e; if(removed.has(i)) return;
+    const na=nodes[a], nb=nodes[b];
+    const isHam=hamEdges.has(edgeKey(a,b));
+    const isDim=dimEdges.has(i);
+    ctx.beginPath(); ctx.moveTo(na.x,na.y); ctx.lineTo(nb.x,nb.y);
+    ctx.strokeStyle = isHam ? '#f97316' : isDim ? '#1e2533' : '#334155';
+    ctx.lineWidth = isHam ? 3 : 1.5;
+    ctx.setLineDash(isDim?[2,4]:[]);
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+
+  nodes.forEach((n,i) => {
+    const hi = hamPath.indexOf(i);
+    const isSel = i===selNode;
+    const isVisited = hi>=0;
+    ctx.beginPath(); ctx.arc(n.x,n.y,15,0,Math.PI*2);
+    ctx.fillStyle = '#12161f'; ctx.fill();
+    ctx.strokeStyle = isSel?'#fbbf24': isVisited?HAM_COLORS[hi%HAM_COLORS.length]:'#475569';
+    ctx.lineWidth = isSel||isVisited ? 2.5 : 1.5; ctx.stroke();
+    ctx.fillStyle = isSel?'#fbbf24': isVisited?HAM_COLORS[hi%HAM_COLORS.length]:'#64748b';
+    ctx.font='bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(n.label||i, n.x, n.y);
+  });
+}
+
+function getDegrees(nodes, edges) {
+  return nodes.map((_,i)=>edges.filter(e=>e[0]===i||e[1]===i).length);
+}
+function areAdjacent(edges, a, b) {
+  return edges.some(e=>(e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a));
+}
+
+// ─── TAB 1: DEF GRAPHS ────────────────────────────────────────────────────────
+const DEF_GRAPHS_DATA = {
+  both: {
+    nodes: circleNodes(6, 240, 135, 110),
+    // K6 — has both Euler (all even) and Hamilton
+    edgesFn: n => {const e=[]; for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) e.push([i,j]); return e;},
+    hamCycle: [0,1,2,3,4,5],
+    info: 'K₆: Minden csúcs fokszáma 5 (páratlan) → nincs Euler-kör. ' +
+          'Javítás: K₄ — minden fokszám 3 (páratlan). Mindkettő: K₄ minden fokszám páros és Hamilton-kör is van (ha n páros). ' +
+          'Valójában K_4 fokszám = 3 páratlan. Mindkét feltétel: pl. a kör gráf C₆.',
+    infoOverride: 'Kör gráf C₆: minden fokszám 2 (páros) → Euler-kör ✓. 6 csúcs körbe → Hamilton-kör ✓.',
+    preset: 'C6',
+  },
+  ham_only: {
+    nodes: circleNodes(5, 240, 135, 110),
+    edgesFn: n=>{const e=[]; for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) e.push([i,j]); return e;},
+    hamCycle:[0,1,2,3,4],
+    infoOverride:'K₅: minden fokszám 4 (páros) → Euler-kör IS van. Mindkettő is! Valódi "csak Hamilton": pl. C₃ (háromszög), fokszám=2 → Euler is.',
+    note:'Tiszta eset: Petersen-gráf — nincs Euler-kör (fokszámok 3, páratlan), nincs Hamilton-kör sem!',
+    preset:'petersen_small',
+  },
+  euler_only: {
+    preset:'euler_only',
+    infoOverride:'Két háromszög közös csúcson (nyakkendő): a középső csúcs fokszáma 4 (páros), a többi 2 → minden fokszám páros → Euler-kör ✓. De a közbenső csúcs elvágó → Hamilton-kör ✗.',
+  },
+  neither: {
+    preset:'neither',
+    infoOverride:'Petersen-gráf: minden fokszám 3 (páratlan) → nincs Euler-kör. Bebizonyítható hogy Hamilton-kör sincs. Mindkettő hiányzik!',
+  },
+};
+
+const PRESET_GRAPHS = {
+  C6: {
+    nodes: circleNodes(6,240,135,110),
+    edges: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]],
+    hamCycle:[0,1,2,3,4,5],
+  },
+  petersen_small: {
+    nodes: [...circleNodes(5,240,135,100),...circleNodes(5,240,135,45)],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],[5,7],[7,9],[9,6],[6,8],[8,5]],
+    hamCycle:[], // Petersen has no HC
+  },
+  euler_only: {
+    nodes:[{x:120,y:135,label:'A'},{x:240,y:60,label:'B'},{x:240,y:210,label:'C'},{x:360,y:135,label:'D'}],
+    edges:[[0,1],[0,2],[1,2],[1,3],[2,3],[1,2]], // bowtie-ish
+    hamCycle:[],
+  },
+  neither: {
+    nodes:[...circleNodes(5,240,135,100),...circleNodes(5,240,135,45)],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],[5,7],[7,9],[9,6],[6,8],[8,5]],
+    hamCycle:[],
+  },
+};
+
+// Override euler_only as bowtie
+PRESET_GRAPHS.euler_only = {
+  nodes:[{x:120,y:135,label:'A'},{x:240,y:80,label:'B'},{x:240,y:190,label:'C'},
+         {x:360,y:135,label:'D'},{x:300,y:50,label:'E'},{x:300,y:220,label:'F'}],
+  edges:[[0,1],[0,2],[1,2],[1,3],[2,3],[3,4],[3,5],[4,5]],
+  hamCycle:[],
+};
+
+let defType='both';
+function setDefGraph(type, btn){
+  defType=type;
+  document.querySelectorAll('#t-def .btn-graph').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawDef();
+}
+function drawDef(){
+  const presetKey = DEF_GRAPHS_DATA[defType].preset||defType;
+  const G = PRESET_GRAPHS[presetKey]||PRESET_GRAPHS.C6;
+  const ctx=document.getElementById('def-canvas').getContext('2d');
+  const hamEdgeSet=new Set();
+  const hc=G.hamCycle||[];
+  for(let i=0;i<hc.length;i++) hamEdgeSet.add(edgeKey(hc[i],hc[(i+1)%hc.length]));
+  drawGraph(ctx,G.nodes,G.edges,{hamPath:hc, hamEdges:hamEdgeSet});
+  document.getElementById('def-info').innerHTML =
+    '<span style="font-size:.82rem;color:#94a3b8;">'+(DEF_GRAPHS_DATA[defType].infoOverride||'')+'</span>';
+}
+
+// ─── TAB 2: DIRAC/ORE ─────────────────────────────────────────────────────────
+let thmNodes, thmEdges, thmSel=null, thmDrag=null, thmDragOff={x:0,y:0};
+function buildThmGraph(){
+  thmNodes=circleNodes(6,240,150,120);
+  thmEdges=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,3],[1,4],[2,5]];
+}
+function resetThmGraph(){ buildThmGraph(); thmSel=null; redrawThm(); }
+
+function makeDirac(){
+  // Add edges until all degrees >= n/2
+  const n=thmNodes.length;
+  const threshold=Math.ceil(n/2);
+  let changed=true;
+  while(changed){
+    changed=false;
+    const degs=getDegrees(thmNodes,thmEdges);
+    for(let i=0;i<n&&!changed;i++){
+      if(degs[i]<threshold){
+        for(let j=0;j<n&&!changed;j++){
+          if(i!==j&&!areAdjacent(thmEdges,i,j)){
+            thmEdges.push([i,j]); changed=true;
+          }
+        }
+      }
+    }
+  }
+  thmSel=null; redrawThm();
+}
+
+function redrawThm(){
+  const ctx=document.getElementById('thm-canvas').getContext('2d');
+  const n=thmNodes.length;
+  drawGraph(ctx,thmNodes,thmEdges,{selNode:thmSel});
+  const degs=getDegrees(thmNodes,thmEdges);
+  const minDeg=Math.min(...degs);
+  const dirac=minDeg>=n/2;
+  // Ore check
+  let ore=true;
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+    if(!areAdjacent(thmEdges,i,j)&&degs[i]+degs[j]<n) ore=false;
+  }
+  const chips=degs.map((d,i)=>`<span class="chip">${String.fromCharCode(65+i)}:${d}</span>`).join('');
+  document.getElementById('thm-graph-info').innerHTML=
+    chips+'<div style="margin-top:.4rem;">' +
+    `Dirac (min fok≥${Math.ceil(n/2)}): <strong style="color:${dirac?'#10b981':'#ef4444'}">${dirac?'✓ teljesül':'✗ nem teljesül'}</strong> &nbsp;` +
+    `Ore (∑fok≥n): <strong style="color:${ore?'#10b981':'#ef4444'}">${ore?'✓ teljesül':'✗ nem teljesül'}</strong></div>`;
+}
+
+function thmClick(e){
+  const rect=e.target.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=thmNodes.findIndex(n=>Math.hypot(n.x-mx,n.y-my)<18);
+  if(hit<0){thmSel=null;redrawThm();return;}
+  if(thmSel===null){thmSel=hit;}
+  else if(thmSel===hit){thmSel=null;}
+  else{
+    const ei=thmEdges.findIndex(e=>(e[0]===thmSel&&e[1]===hit)||(e[0]===hit&&e[1]===thmSel));
+    if(ei>=0) thmEdges.splice(ei,1); else thmEdges.push([thmSel,hit]);
+    thmSel=null;
+  }
+  redrawThm();
+}
+function thmMouseDown(e){
+  const rect=e.target.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  const hit=thmNodes.findIndex(n=>Math.hypot(n.x-mx,n.y-my)<18);
+  if(hit>=0){thmDrag=hit;thmDragOff={x:mx-thmNodes[hit].x,y:my-thmNodes[hit].y};}
+}
+function thmMouseMove(e){
+  if(thmDrag===null) return;
+  const rect=e.target.getBoundingClientRect();
+  thmNodes[thmDrag].x=e.clientX-rect.left-thmDragOff.x;
+  thmNodes[thmDrag].y=e.clientY-rect.top-thmDragOff.y;
+  redrawThm();
+}
+function thmMouseUp(){ thmDrag=null; }
+
+function checkTheorems(){
+  const raw=document.getElementById('thm-degs').value;
+  const degs=raw.split(',').map(s=>parseInt(s.trim())).filter(d=>!isNaN(d));
+  if(!degs.length){document.getElementById('thm-out').textContent='';return;}
+  const n=degs.length;
+  const sum=degs.reduce((a,b)=>a+b,0);
+  if(sum%2!==0){document.getElementById('thm-out').innerHTML='<span style="color:#ef4444">Érvénytelen foksorozat (összeg páratlan)</span>';return;}
+  const minDeg=Math.min(...degs);
+  const dirac=minDeg>=n/2;
+  let html=`<div>n=${n}, min fok=${minDeg}, korlát=⌈n/2⌉=${Math.ceil(n/2)}</div>`;
+  html+=`<div>Dirac: <strong style="color:${dirac?'#10b981':'#ef4444'}">${dirac?'✓ Hamilton-kör garantált':'✗ nem garantált'}</strong></div>`;
+  // Ore: can't check without adjacency, but if all pairs sum >= n it's satisfied
+  const minPairSum=degs.slice().sort((a,b)=>a-b).slice(0,2).reduce((a,b)=>a+b,0);
+  const ore=minPairSum>=n;
+  html+=`<div>Ore (legkisebb 2 fok összege=${minPairSum}≥n=${n}?): <strong style="color:${ore?'#10b981':'#f59e0b'}">${ore?'✓ Hamilton-kör garantált (szükséges feltétel)':'? Nem dönthető el foksorozatból egyértelműen'}</strong></div>`;
+  document.getElementById('thm-out').innerHTML=html;
+}
+
+// ─── TAB 3: HAMILTON SANDBOX ──────────────────────────────────────────────────
+const SB_PRESETS = {
+  K5:{
+    nodes:circleNodes(5,240,180,140),
+    edges:(()=>{const e=[];for(let i=0;i<5;i++)for(let j=i+1;j<5;j++)e.push([i,j]);return e;})(),
+  },
+  petersen:{
+    nodes:[...circleNodes(5,240,180,130),...circleNodes(5,240,180,55)],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],[5,7],[7,9],[9,6],[6,8],[8,5]],
+  },
+  dodeca:{
+    nodes:[
+      ...circleNodes(5,240,180,140),
+      ...circleNodes(5,240,180,90),
+      ...circleNodes(10,240,180,50).filter((_,i)=>i%2===0),
+      {x:240,y:180},
+    ],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],
+           [5,6],[6,7],[7,8],[8,9],[9,5],
+           [5,10],[6,11],[7,12],[8,13],[9,14],[10,11],[11,12],[12,13],[13,14],[14,10]],
+  },
+  bipartite:{
+    nodes:[{x:80,y:80,label:'A'},{x:240,y:80,label:'B'},{x:400,y:80,label:'C'},
+           {x:80,y:250,label:'D'},{x:240,y:250,label:'E'},{x:400,y:250,label:'F'}],
+    edges:[[0,3],[0,4],[1,3],[1,4],[1,5],[2,4],[2,5]],
+  },
+};
+
+// Fix dodeca
+SB_PRESETS.dodeca = {
+  nodes: [
+    ...circleNodes(5,240,180,140).map((n,i)=>({...n,label:i+''})),
+    ...circleNodes(5,240,180,80).map((n,i)=>({...n,label:(i+5)+''})),
+    ...circleNodes(5,240,180,30).map((n,i)=>({...n,label:(i+10)+''})),
+  ],
+  edges:[
+    [0,1],[1,2],[2,3],[3,4],[4,0],
+    [0,5],[1,6],[2,7],[3,8],[4,9],
+    [5,6],[6,7],[7,8],[8,9],[9,5],
+    [5,10],[6,11],[7,12],[8,13],[9,14],
+    [10,11],[11,12],[12,13],[13,14],[14,10],
+  ],
+};
+
+let sbG=null, sbPath=[], sbSel=null;
+
+function loadSbGraph(name,btn){
+  document.querySelectorAll('#t-sandbox .btn-graph').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  sbG=JSON.parse(JSON.stringify(SB_PRESETS[name]||SB_PRESETS.K5));
+  sbG.nodes.forEach((n,i)=>{ if(!n.label) n.label=String.fromCharCode(65+i); });
+  sbPath=[]; sbSel=null;
+  document.getElementById('sb-solve-info').textContent='';
+  redrawSb();
+}
+
+function redrawSb(){
+  const ctx=document.getElementById('sb-canvas').getContext('2d');
+  const n=sbG.nodes.length;
+  const hamEdges=new Set();
+  for(let i=0;i<sbPath.length-1;i++) hamEdges.add(edgeKey(sbPath[i],sbPath[i+1]));
+  drawGraph(ctx,sbG.nodes,sbG.edges,{hamPath:sbPath,hamEdges,selNode:sbSel});
+  const complete=sbPath.length===n;
+  const closed=complete&&areAdjacent(sbG.edges,sbPath[0],sbPath[sbPath.length-1]);
+  let status='';
+  if(complete&&closed) status='<span style="color:#10b981;font-size:1rem;">🎉 Hamilton-kör! Minden csúcs pontosan egyszer, visszaért!</span>';
+  else if(complete) status='<span style="color:#38bdf8;">✓ Hamilton-út! Minden csúcs pontosan egyszer.</span>';
+  else if(sbPath.length>0) status=`<span style="color:#94a3b8;">${sbPath.length} / ${n} csúcs érintve</span>`;
+  document.getElementById('sb-status').innerHTML=status;
+  document.getElementById('sb-trail').textContent=sbPath.length?'Út: '+sbPath.map(i=>sbG.nodes[i].label).join(' → '):'';
+}
+
+function sbCanvasClick(e){
+  const rect=e.target.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=sbG.nodes.findIndex(n=>Math.hypot(n.x-mx,n.y-my)<18);
+  if(hit<0) return;
+  if(sbPath.length===0){ sbPath.push(hit); sbSel=null; redrawSb(); return; }
+  const last=sbPath[sbPath.length-1];
+  if(hit===last) return;
+  if(sbPath.includes(hit)&&!(hit===sbPath[0]&&sbPath.length===sbG.nodes.length)) return;
+  if(!areAdjacent(sbG.edges,last,hit)){ document.getElementById('sb-status').innerHTML='<span style="color:#ef4444">Nincs él a két csúcs között!</span>'; return; }
+  sbPath.push(hit); sbSel=null; redrawSb();
+}
+function sbUndo(){ if(sbPath.length>0){sbPath.pop(); redrawSb();} }
+function sbReset(){ sbPath=[]; sbSel=null; redrawSb(); }
+
+function sbSolve(){
+  // Backtracking HC search (small graphs only)
+  const n=sbG.nodes.length;
+  if(n>15){document.getElementById('sb-solve-info').textContent='Túl nagy gráf a teljes kereséshez.';return;}
+  const adj=sbG.nodes.map((_,i)=>sbG.edges.filter(e=>e[0]===i||e[1]===i).map(e=>e[0]===i?e[1]:e[0]));
+  const found=[];
+  function bt(path,visited){
+    if(path.length===n){
+      if(adj[path[path.length-1]].includes(path[0])) found.push([...path,path[0]]);
+      return;
+    }
+    if(found.length>=1) return;
+    const last=path[path.length-1];
+    for(const nb of adj[last]){
+      if(!visited[nb]){ visited[nb]=true; path.push(nb); bt(path,visited); path.pop(); visited[nb]=false; }
+    }
+  }
+  const vis=new Array(n).fill(false); vis[0]=true;
+  bt([0],vis);
+  if(found.length){
+    sbPath=found[0].slice(0,-1);
+    document.getElementById('sb-solve-info').innerHTML='<span style="color:#10b981">✓ Hamilton-kör megtalálva!</span>';
+  } else {
+    // Try Hamilton path
+    let hpath=null;
+    for(let s=0;s<n&&!hpath;s++){
+      const vis2=new Array(n).fill(false); vis2[s]=true;
+      const foundP=[];
+      function btp(path,visited){
+        if(path.length===n){foundP.push([...path]);return;}
+        if(foundP.length>=1) return;
+        const last=path[path.length-1];
+        for(const nb of adj[last]){if(!visited[nb]){visited[nb]=true;path.push(nb);btp(path,visited);path.pop();visited[nb]=false;}}
+      }
+      btp([s],vis2);
+      if(foundP.length) hpath=foundP[0];
+    }
+    if(hpath){sbPath=hpath;document.getElementById('sb-solve-info').innerHTML='<span style="color:#38bdf8">✓ Hamilton-út megtalálva (kör nincs)</span>';}
+    else{document.getElementById('sb-solve-info').innerHTML='<span style="color:#ef4444">✗ Nincs Hamilton-kör és nincs Hamilton-út sem.</span>';}
+  }
+  redrawSb();
+}
+
+// ─── TAB 4: HYPERCUBE & GRAY ──────────────────────────────────────────────────
+function buildHypercube(){
+  const n=parseInt(document.getElementById('hc-n').value)||3;
+  const size=1<<n;
+  const ctx=document.getElementById('hc-canvas').getContext('2d');
+  const W=ctx.canvas.width, H=ctx.canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Layout: 3D projection for n=3, 2D grid for n<=2, recursive offset for n=4
+  const positions=[];
+  if(n===1){
+    positions.push({x:W/2-80,y:H/2},{x:W/2+80,y:H/2});
+  } else if(n===2){
+    positions.push({x:W/2-80,y:H/2-70},{x:W/2+80,y:H/2-70},{x:W/2-80,y:H/2+70},{x:W/2+80,y:H/2+70});
+  } else if(n===3){
+    const d=110,s=65;
+    [[0,0],[1,0],[1,1],[0,1],[0,0],[1,0],[1,1],[0,1]].forEach(([gx,gy],i)=>{
+      const off=i<4?0:1;
+      positions.push({x:W/2-d/2+gx*d+off*s, y:H/2-d/2+gy*d-off*s});
+    });
+  } else { // n=4
+    const d=80,s=40;
+    for(let i=0;i<16;i++){
+      const b=[...Array(4)].map((_,bit)=>(i>>bit)&1);
+      positions.push({x:W/2-d+b[0]*d+b[2]*s-20, y:H/2-d+b[1]*d+b[3]*s-10});
+    }
+  }
+
+  // Draw edges
+  for(let i=0;i<size;i++){
+    for(let bit=0;bit<n;bit++){
+      const j=i^(1<<bit);
+      if(j>i){
+        ctx.beginPath(); ctx.moveTo(positions[i].x,positions[i].y); ctx.lineTo(positions[j].x,positions[j].y);
+        ctx.strokeStyle='#334155'; ctx.lineWidth=1.5; ctx.stroke();
+      }
+    }
+  }
+
+  // Gray code Hamilton path
+  const gray=grayCode(n);
+  for(let t=0;t<gray.length;t++){
+    const a=gray[t], b=gray[(t+1)%gray.length];
+    ctx.beginPath(); ctx.moveTo(positions[a].x,positions[a].y); ctx.lineTo(positions[b].x,positions[b].y);
+    ctx.strokeStyle=`hsl(${t*360/gray.length},90%,65%)`; ctx.lineWidth=3; ctx.stroke();
+  }
+
+  // Draw nodes
+  for(let i=0;i<size;i++){
+    const order=gray.indexOf(i);
+    const p=positions[i];
+    ctx.beginPath(); ctx.arc(p.x,p.y,14,0,Math.PI*2);
+    ctx.fillStyle='#0a0d14'; ctx.fill();
+    ctx.strokeStyle=`hsl(${order*360/size},80%,60%)`; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=`hsl(${order*360/size},80%,75%)`;
+    ctx.font='9px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(i.toString(2).padStart(n,'0'),p.x,p.y);
+  }
+
+  // Gray code list
+  const grayList=document.getElementById('gray-list');
+  grayList.innerHTML=gray.map((g,t)=>{
+    const bits=g.toString(2).padStart(n,'0').split('');
+    const prev=t>0?gray[t-1].toString(2).padStart(n,'0'):'';
+    const bitsHtml=bits.map((b,bi)=>{
+      const changed=prev&&prev[bi]!==b;
+      return `<span class="gray-bit" style="color:${changed?'#f97316':'#7dd3fc'}">${b}</span>`;
+    }).join('');
+    return `<div>${(t+'').padStart(2,'0')}: ${bitsHtml} <span style="color:#334155;font-size:.7rem;">= ${g}</span></div>`;
+  }).join('');
+
+  document.getElementById('hc-stats').textContent=
+    `${size} csúcs · ${size*n/2} él · ${n}-reguláris · átmérő=${n}`;
+  document.getElementById('hc-trail-info').textContent=
+    `Gray-kód: ${gray.map(g=>g.toString(2).padStart(n,'0')).join(' → ')} → (vissza: ${gray[0].toString(2).padStart(n,'0')})`;
+}
+
+function grayCode(n){
+  if(n===0) return [0];
+  const prev=grayCode(n-1);
+  return [...prev,...[...prev].reverse().map(x=>x|(1<<(n-1)))];
+}
+
+// ─── TAB 5: KNIGHT'S TOUR ─────────────────────────────────────────────────────
+let ktSize=8, ktVisited=[], ktCurrent=null, ktOrder=[];
+
+function resetKnight(){
+  ktSize=parseInt(document.getElementById('kt-size').value)||8;
+  ktVisited=Array.from({length:ktSize},()=>new Array(ktSize).fill(0));
+  ktCurrent=null; ktOrder=[];
+  document.getElementById('kt-status').textContent='Kattints egy mezőre a huszár elhelyezéséhez.';
+  renderBoard();
+}
+
+function renderBoard(){
+  const board=document.getElementById('kt-board');
+  board.innerHTML='';
+  const sz=Math.min(44,Math.floor(320/ktSize));
+  for(let r=0;r<ktSize;r++){
+    const row=document.createElement('div');
+    row.style.display='flex';
+    for(let c=0;c<ktSize;c++){
+      const cell=document.createElement('div');
+      cell.className='knight-cell';
+      cell.style.width=sz+'px'; cell.style.height=sz+'px'; cell.style.fontSize=(sz*0.35)+'px';
+      const isLight=(r+c)%2===0;
+      const step=ktVisited[r][c];
+      const isCurrent=ktCurrent&&ktCurrent[0]===r&&ktCurrent[1]===c;
+      const isReachable=canReach(r,c);
+      cell.style.background=isCurrent?'#fbbf24':step>0?`hsl(${step*360/ktSize**2},70%,35%)`
+        :isReachable?'rgba(56,189,248,.18)'
+        :(isLight?'#1e2d3e':'#0e1520');
+      cell.style.color=isCurrent?'#000':step>0?'#fff':'#64748b';
+      cell.style.border=isCurrent?'2px solid #fbbf24':isReachable?'1px solid rgba(56,189,248,.4)':'1px solid #1a2535';
+      cell.textContent=step>0?step:(isCurrent?'♞':'');
+      cell.onclick=()=>ktClick(r,c);
+      row.appendChild(cell);
+    }
+    board.appendChild(row);
+  }
+}
+
+function canReach(r,c){
+  if(!ktCurrent) return false;
+  const moves=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+  return moves.some(([dr,dc])=>ktCurrent[0]+dr===r&&ktCurrent[1]+dc===c)&&ktVisited[r][c]===0;
+}
+
+function ktClick(r,c){
+  if(!ktCurrent){
+    ktCurrent=[r,c]; ktVisited[r][c]=1; ktOrder=[[r,c]];
+    document.getElementById('kt-status').textContent='Huszár elhelyezve. Kattints a következő mezőre (kék = elérhető).';
+  } else {
+    if(!canReach(r,c)){
+      document.getElementById('kt-status').innerHTML='<span style="color:#ef4444">Nem elérhető lépés!</span>'; return;
+    }
+    ktCurrent=[r,c]; ktVisited[r][c]=ktOrder.length+1; ktOrder.push([r,c]);
+    const done=ktOrder.length===ktSize**2;
+    if(done){
+      const [fr,fc]=ktOrder[0],[lr,lc]=ktOrder[ktOrder.length-1];
+      const closes=canKnightMove(fr,fc,lr,lc);
+      document.getElementById('kt-status').innerHTML=closes
+        ?'<span style="color:#10b981;font-weight:700;">🎉 Hamilton-kör! Visszatér a kezdőmezőre.</span>'
+        :'<span style="color:#38bdf8;font-weight:700;">✓ Hamilton-út! Minden mező érintve.</span>';
+    } else {
+      document.getElementById('kt-status').textContent=`${ktOrder.length} / ${ktSize**2} mező`;
+    }
+  }
+  renderBoard();
+}
+
+function canKnightMove(r1,c1,r2,c2){
+  const dr=Math.abs(r1-r2),dc=Math.abs(c1-c2);
+  return (dr===1&&dc===2)||(dr===2&&dc===1);
+}
+
+function solveKnight(){
+  ktVisited=Array.from({length:ktSize},()=>new Array(ktSize).fill(0));
+  ktOrder=[];
+  // Warnsdorff heuristic from (0,0)
+  const MOVES=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+  function valid(r,c){ return r>=0&&r<ktSize&&c>=0&&c<ktSize; }
+  function degree(r,c){ return MOVES.filter(([dr,dc])=>valid(r+dr,c+dc)&&ktVisited[r+dr][c+dc]===0).length; }
+
+  let r=0,c=0; ktVisited[r][c]=1; ktOrder.push([r,c]); ktCurrent=[r,c];
+  for(let step=2;step<=ktSize**2;step++){
+    const moves=MOVES.map(([dr,dc])=>[r+dr,c+dc]).filter(([nr,nc])=>valid(nr,nc)&&ktVisited[nr][nc]===0);
+    if(!moves.length) break;
+    moves.sort((a,b)=>degree(a[0],a[1])-degree(b[0],b[1]));
+    [r,c]=moves[0];
+    ktVisited[r][c]=step; ktOrder.push([r,c]); ktCurrent=[r,c];
+  }
+  const done=ktOrder.length===ktSize**2;
+  const [fr,fc]=ktOrder[0],[lr,lc]=ktOrder[ktOrder.length-1];
+  const closes=done&&canKnightMove(fr,fc,lr,lc);
+  document.getElementById('kt-status').innerHTML=done
+    ?(closes?'<span style="color:#10b981;font-weight:700;">✓ Warnsdorff: Hamilton-kör!</span>'
+            :'<span style="color:#38bdf8;font-weight:700;">✓ Warnsdorff: Hamilton-út!</span>')
+    :'<span style="color:#f59e0b;">Warnsdorff nem talált teljes megoldást ettől a pozíciótól.</span>';
+  renderBoard();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  drawDef();
+  buildThmGraph(); redrawThm(); checkTheorems();
+  const tc=document.getElementById('thm-canvas');
+  tc.addEventListener('click',thmClick);
+  tc.addEventListener('mousedown',thmMouseDown);
+  tc.addEventListener('mousemove',thmMouseMove);
+  tc.addEventListener('mouseup',thmMouseUp);
+
+  loadSbGraph('K5');
+  document.getElementById('sb-canvas').addEventListener('click',sbCanvasClick);
+
+  buildHypercube();
+  resetKnight();
+
+  renderMathInElement(document.body,{
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+});
+</script>
+{% endblock %}

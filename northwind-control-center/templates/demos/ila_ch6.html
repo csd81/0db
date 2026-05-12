@@ -1,0 +1,721 @@
+{% extends "base.html" %}
+{% block title %}ILA 6. fejezet — Matematikai logika alapjai{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#a78bfa!important;}
+.ila-nav-link.active{color:#a78bfa!important;border-bottom-color:#a78bfa!important;}
+.def-box  { border-left:3px solid #a78bfa; background:#12101f; padding:.75rem 1rem; border-radius:.3rem; margin:.7rem 0; }
+.thm-box  { border-left:3px solid #7c3aed; background:#110f1e; padding:.75rem 1rem; border-radius:.3rem; margin:.7rem 0; }
+.ex-box   { border-left:3px solid #22c55e; background:#0a1f10; padding:.75rem 1rem; border-radius:.3rem; margin:.7rem 0; }
+.info-box { background:#161b22; border:1px solid #21262d; padding:.75rem 1rem; border-radius:.4rem; margin:.7rem 0; }
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.badge-op { display:inline-block; padding:.2rem .55rem; border-radius:.25rem; font-size:.75rem; font-weight:700; margin:.15rem; }
+canvas { border-radius:.4rem; }
+table.truth-tbl { border-collapse:collapse; font-size:.82rem; }
+table.truth-tbl th, table.truth-tbl td { padding:.22rem .6rem; border:1px solid #30363d; text-align:center; }
+table.truth-tbl thead th { background:#161b22; color:#a78bfa; }
+.T-cell { color:#4ade80; font-weight:700; }
+.F-cell { color:#f87171; }
+.highlight-row td { background:#1a0f2e !important; }
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#a78bfa">ILA — 6. fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Matematikai logika alapjai</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2025</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(167,139,250,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-itelets',this)"><i class="bi bi-table me-1"></i>Ítéletek &amp; műveletek</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ekviv',this)"><i class="bi bi-arrow-left-right me-1"></i>Ekvivalenciák &amp; NNF</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-dnf',this)"><i class="bi bi-list-nested me-1"></i>DNF / KNF</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-aramk',this)"><i class="bi bi-lightning me-1"></i>Logikai áramkörök</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-taut',this)"><i class="bi bi-check-circle me-1"></i>Tautológiák &amp; következmény</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ex',this)"><i class="bi bi-lightbulb me-1"></i>Előadás+</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- TAB 1: Ítéletek -->
+<div id="tab-itelets">
+  <h5 class="fw-bold mb-3" style="color:#a78bfa">Ítéletek és logikai műveletek</h5>
+  <div class="def-box">
+    <strong>Ítélet (propozíció):</strong> Olyan kijelentő mondat, amely igaz (<strong style="color:#4ade80">i</strong>) vagy hamis (<strong style="color:#f87171">h</strong>), de nem mindkettő.
+  </div>
+
+  <p class="small text-secondary mb-1 mt-3">Logikai összekötők:</p>
+  <div class="info-box">
+    <table class="w-100" style="font-size:.82rem;border-collapse:collapse">
+      <thead><tr>
+        <th style="padding:.3rem .6rem;border-bottom:1px solid #30363d;color:#a78bfa;text-align:left">Jel</th>
+        <th style="padding:.3rem .6rem;border-bottom:1px solid #30363d;color:#a78bfa;text-align:left">Neve</th>
+        <th style="padding:.3rem .6rem;border-bottom:1px solid #30363d;color:#a78bfa;text-align:left">Olvasás</th>
+        <th style="padding:.3rem .6rem;border-bottom:1px solid #30363d;color:#a78bfa;text-align:left">Igaz, ha…</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:.25rem .6rem"><span class="badge-op" style="background:#1a0f2e;color:#a78bfa">\(\neg A\)</span></td><td style="padding:.25rem .6rem">negáció</td><td style="padding:.25rem .6rem">nem A</td><td style="padding:.25rem .6rem">A hamis</td></tr>
+        <tr><td style="padding:.25rem .6rem"><span class="badge-op" style="background:#1a0f2e;color:#a78bfa">\(A \wedge B\)</span></td><td style="padding:.25rem .6rem">konjunkció</td><td style="padding:.25rem .6rem">A és B</td><td style="padding:.25rem .6rem">mindkettő igaz</td></tr>
+        <tr><td style="padding:.25rem .6rem"><span class="badge-op" style="background:#1a0f2e;color:#a78bfa">\(A \vee B\)</span></td><td style="padding:.25rem .6rem">diszjunkció</td><td style="padding:.25rem .6rem">A vagy B</td><td style="padding:.25rem .6rem">legalább egy igaz</td></tr>
+        <tr><td style="padding:.25rem .6rem"><span class="badge-op" style="background:#1a0f2e;color:#a78bfa">\(A \to B\)</span></td><td style="padding:.25rem .6rem">implikáció</td><td style="padding:.25rem .6rem">ha A, akkor B</td><td style="padding:.25rem .6rem">A=i és B=h esetén hamis, egyébként igaz</td></tr>
+        <tr><td style="padding:.25rem .6rem"><span class="badge-op" style="background:#1a0f2e;color:#a78bfa">\(A \leftrightarrow B\)</span></td><td style="padding:.25rem .6rem">ekvivalencia</td><td style="padding:.25rem .6rem">A akkor és csak akkor, ha B</td><td style="padding:.25rem .6rem">azonos értékűek</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="small text-secondary mt-3 mb-1">Interaktív igazságtábla:</p>
+  <div class="d-flex gap-3 flex-wrap">
+    <div>
+      <div class="mb-1 small" style="color:#8b949e">Válassz formulát:</div>
+      <select id="tt-sel" class="form-select form-select-sm" style="background:#161b22;border-color:#30363d;color:#e6edf3;width:200px" onchange="buildTruthTable()">
+        <option value="imp">A → B</option>
+        <option value="eqv">A ↔ B</option>
+        <option value="nand">¬(A ∧ B)</option>
+        <option value="xor">A ⊕ B (XOR)</option>
+        <option value="ab3">A ∧ (B ∨ C)</option>
+        <option value="imp3">A → (B → C)</option>
+      </select>
+    </div>
+  </div>
+  <div id="tt-out" class="mt-2"></div>
+</div>
+
+<!-- TAB 2: Ekvivalenciák & NNF -->
+<div id="tab-ekviv" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#a78bfa">Logikai ekvivalenciák &amp; negáció normálforma</h5>
+  <div class="def-box">
+    \(F \equiv G\) jelöli, hogy \(F\) és \(G\) logikailag ekvivalensek — minden értékadásnál azonos igazságértékűek.
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#c4b5fd">Főbb azonosságok:</p>
+  <div class="row g-2">
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div class="mb-1" style="color:#a78bfa">Implikáció / Ekvivalencia felváltása:</div>
+        \(A \to B \equiv (\neg A) \vee B\)<br>
+        \(A \leftrightarrow B \equiv (A \to B) \wedge (B \to A)\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div class="mb-1" style="color:#a78bfa">De Morgan-törvények:</div>
+        \(\neg(A \wedge B) \equiv (\neg A) \vee (\neg B)\)<br>
+        \(\neg(A \vee B) \equiv (\neg A) \wedge (\neg B)\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div class="mb-1" style="color:#a78bfa">Dupla negáció &amp; konstansok:</div>
+        \(\neg\neg A \equiv A\)<br>
+        \(A \wedge \mathbf{i} \equiv A,\quad A \vee \mathbf{h} \equiv A\)<br>
+        \(A \wedge \mathbf{h} \equiv \mathbf{h},\quad A \vee \mathbf{i} \equiv \mathbf{i}\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div class="mb-1" style="color:#a78bfa">Disztributivitás:</div>
+        \(A \wedge (B \vee C) \equiv (A \wedge B) \vee (A \wedge C)\)<br>
+        \(A \vee (B \wedge C) \equiv (A \vee B) \wedge (A \vee C)\)
+      </div>
+    </div>
+  </div>
+
+  <div class="thm-box mt-3">
+    <strong>Negáció normálforma (NNF / F*):</strong> Ha \(F\) nem tartalmaz \(\to\) és \(\leftrightarrow\) jeleket, az \(F^*\) formulát úgy kapjuk:
+    <ol class="small mb-0 mt-1">
+      <li>Minden \(\wedge\) jelet \(\vee\)-re, és minden \(\vee\) jelet \(\wedge\)-ra cserélünk,</li>
+      <li>minden negálatlan \(A_i\) változót \(\neg A_i\)-re, és minden \(\neg A_i\) negált változót \(A_i\)-re cserélünk.</li>
+    </ol>
+    Ekkor: \(\neg F \equiv F^*\)
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#c4b5fd">Interaktív NNF kalkulátor:</p>
+  <div class="d-flex gap-2 mb-2">
+    <select id="nnf-preset" class="form-select form-select-sm" style="background:#161b22;border-color:#30363d;color:#e6edf3;max-width:260px" onchange="nnfLoadPreset()">
+      <option value="">— Előbeállítás —</option>
+      <option value="A and (not B)">A ∧ (¬B)</option>
+      <option value="(A and (not B)) or (B and (not C))">(A ∧ ¬B) ∨ (B ∧ ¬C)</option>
+      <option value="(not A) and (B or (not C))">(¬A) ∧ (B ∨ ¬C)</option>
+    </select>
+  </div>
+  <div id="nnf-display" class="info-box small" style="min-height:60px">
+    <em class="text-secondary">Válassz előbeállítást fent.</em>
+  </div>
+</div>
+
+<!-- TAB 3: DNF/KNF -->
+<div id="tab-dnf" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#a78bfa">Diszjunktív és konjunktív normálforma</h5>
+
+  <div class="row g-2 mb-2">
+    <div class="col-md-6">
+      <div class="def-box small">
+        <strong>Diszjunktív normálforma (d.n.f.)</strong><br>
+        \(K_1 \vee K_2 \vee \cdots \vee K_n\) alakú formula, ahol minden \(K_i\) literálok konjunkciója.
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box small">
+        <strong>Konjunktív normálforma (k.n.f.)</strong><br>
+        \(D_1 \wedge D_2 \wedge \cdots \wedge D_n\) alakú formula, ahol minden \(D_i\) literálok diszjunkciója.
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box small">
+        <strong>Teljes d.n.f.</strong> (t.d.n.f.): d.n.f., ahol minden konjunkcióban <em>az összes</em> változó szerepel (negálva vagy sem).<br>
+        <span class="text-secondary">Tétel: Minden nem azonosan hamis formula ekvivalens egy t.d.n.f.-vel.</span>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box small">
+        <strong>Teljes k.n.f.</strong> (t.k.n.f.): k.n.f., ahol minden diszjunkcióban az összes változó szerepel.<br>
+        <span class="text-secondary">Tétel: Minden nem azonosan igaz formula ekvivalens egy t.k.n.f.-vel.</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="small fw-bold mt-2 mb-1" style="color:#c4b5fd">Igazságtábla → TDNF/TKNF generátor (2 változó: A, B):</p>
+  <p class="small text-secondary mb-2">Kattints az F oszlop celláira az igazságértékek beállításához:</p>
+  <div class="d-flex gap-4 flex-wrap">
+    <div>
+      <table class="truth-tbl" id="dnf-tbl">
+        <thead><tr><th>A</th><th>B</th><th>F (kattints)</th></tr></thead>
+        <tbody>
+          <tr data-idx="0"><td>i</td><td>i</td><td id="fc0" class="F-cell" onclick="toggleF(0)" style="cursor:pointer">h</td></tr>
+          <tr data-idx="1"><td>i</td><td>h</td><td id="fc1" class="F-cell" onclick="toggleF(1)" style="cursor:pointer">h</td></tr>
+          <tr data-idx="2"><td>h</td><td>i</td><td id="fc2" class="F-cell" onclick="toggleF(2)" style="cursor:pointer">h</td></tr>
+          <tr data-idx="3"><td>h</td><td>h</td><td id="fc3" class="F-cell" onclick="toggleF(3)" style="cursor:pointer">h</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="dnf-result" class="small" style="flex:1;min-width:220px;padding-top:.3rem"></div>
+  </div>
+
+  <div class="ex-box small mt-3">
+    <strong>Példa (előadásból):</strong> \(F = (A \leftrightarrow B) \vee ((\neg B) \wedge C)\)<br>
+    Az igazságtábla igaz sorai adják a t.d.n.f. konjunkcióit (minterms), a hamis sorai adják a t.k.n.f. diszjunkcióit (maxterms).
+  </div>
+</div>
+
+<!-- TAB 4: Áramkörök -->
+<div id="tab-aramk" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#a78bfa">Logikai áramkörök</h5>
+  <div class="info-box small mb-3">
+    Kapcsolók sorba kötve → <strong>konjunkció</strong>; párhuzamosan → <strong>diszjunkció</strong>. Szinkronizált (egyidejű) kapcsolók ugyanolyan betűjellel, fordított kapcsolók negált jelöléssel.
+  </div>
+
+  <p class="small fw-bold mb-1" style="color:#c4b5fd">Kapuk (gates):</p>
+  <div class="d-flex gap-3 flex-wrap mb-3">
+    <div class="info-box small" style="text-align:center;min-width:90px">
+      <div style="color:#a78bfa;font-weight:700">ÉS (AND)</div>
+      <div>\(A \wedge B\)</div>
+    </div>
+    <div class="info-box small" style="text-align:center;min-width:90px">
+      <div style="color:#22d3ee;font-weight:700">VAGY (OR)</div>
+      <div>\(A \vee B\)</div>
+    </div>
+    <div class="info-box small" style="text-align:center;min-width:90px">
+      <div style="color:#f87171;font-weight:700">NEM (NOT)</div>
+      <div>\(\neg A\)</div>
+    </div>
+  </div>
+
+  <p class="small fw-bold mb-1" style="color:#c4b5fd">Interaktív kapuhálózat — \(F = (A \wedge \neg B) \vee (B \wedge \neg C)\):</p>
+  <p class="small text-secondary mb-2">Állítsd be A, B, C értékét — a hálózat kiszámolja F értékét:</p>
+  <div class="d-flex gap-3 flex-wrap mb-2">
+    <label class="small"><input type="checkbox" id="sw-A" onchange="evalCircuit()"> A = i</label>
+    <label class="small"><input type="checkbox" id="sw-B" onchange="evalCircuit()"> B = i</label>
+    <label class="small"><input type="checkbox" id="sw-C" onchange="evalCircuit()"> C = i</label>
+  </div>
+  <canvas id="circuit-canvas" width="560" height="200" style="background:#0d1117;border:1px solid #21262d"></canvas>
+  <div id="circuit-result" class="mt-2 small"></div>
+
+  <div class="ex-box small mt-3">
+    <strong>Összetettebb példa (előadásból):</strong> \(F = (A \wedge \neg B) \vee ((\neg A) \wedge C) \vee (B \wedge C)\)<br>
+    A kapuhálózat felépítése: három AND-kapu kimenete OR-kapuba fut, NOT-kapuk adják a negált jeleket.
+  </div>
+</div>
+
+<!-- TAB 5: Tautológiák -->
+<div id="tab-taut" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#a78bfa">Tautológiák, következmény, következtetési szabályok</h5>
+
+  <div class="def-box">
+    <strong>Tautológia:</strong> Egy \(F\) formula tautológia, ha azonosan igaz (minden értékadásnál igaz). Jelölés: \(\models F\).
+  </div>
+  <div class="row g-2 mt-1">
+    <div class="col-md-4"><div class="ex-box small text-center">\(\models A \vee (\neg A)\)<br><span class="text-secondary">kizárt közép</span></div></div>
+    <div class="col-md-4"><div class="ex-box small text-center">\(\models A \to A\)<br><span class="text-secondary">identitás</span></div></div>
+    <div class="col-md-4"><div class="ex-box small text-center">\(\models A \to (B \to A)\)<br><span class="text-secondary">gyengítés</span></div></div>
+  </div>
+
+  <div class="thm-box mt-3 small">
+    <strong>Tétel:</strong> \(F \models G \iff \models F \to G\)
+  </div>
+
+  <div class="def-box mt-2">
+    <strong>Logikai következmény:</strong> \(G\) logikai következménye \(F_1, \ldots, F_n\)-nek, ha minden olyan esetben, amikor az összes premissza igaz, \(G\) is igaz. Jelölés: \(F_1, \ldots, F_n \models G\).
+  </div>
+  <div class="thm-box small">
+    Az alábbiak ekvivalensek: \(F_1, \ldots, F_n \models G\) &nbsp;⟺&nbsp; \(F_1 \wedge \cdots \wedge F_n \models G\) &nbsp;⟺&nbsp; \(\models (F_1 \wedge \cdots \wedge F_n) \to G\)
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#c4b5fd">Következtetési szabályok:</p>
+  <div class="row g-2">
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div style="color:#a78bfa;font-weight:700">Modus ponens</div>
+        \(A,\; A \to B \models B\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div style="color:#a78bfa;font-weight:700">Kontrapozíció</div>
+        \(A \to B \models (\neg B) \to (\neg A)\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div style="color:#a78bfa;font-weight:700">Hipotetikus szillogizmus</div>
+        \(A \to B,\; B \to C \models A \to C\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div style="color:#a78bfa;font-weight:700">Reductio ad absurdum</div>
+        \((\neg A) \to B,\; (\neg A) \to (\neg B) \models A\)
+      </div>
+    </div>
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#c4b5fd">Kvantorok &amp; predikátumok:</p>
+  <div class="row g-2">
+    <div class="col-md-6">
+      <div class="def-box small">
+        <strong>Predikátum:</strong> Egy- vagy többváltozós függvény, amelynek eredménye ítélet.<br>
+        Pl. \(P(x) = \text{„x osztható 3-mal"}\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box small">
+        <strong>Kvantorok:</strong><br>
+        \((\forall x)P(x)\) — "minden x-re P(x)"<br>
+        \((\exists x)P(x)\) — "létezik x, amelyre P(x)"
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="thm-box small">
+        \(\neg((\forall x)P(x)) \equiv (\exists x)\neg P(x)\)<br>
+        \(\neg((\exists x)P(x)) \equiv (\forall x)\neg P(x)\)
+      </div>
+    </div>
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#c4b5fd">Tautológia-ellenőrző (2 változó):</p>
+  <div class="d-flex gap-2 mb-2">
+    <select id="taut-sel" class="form-select form-select-sm" style="background:#161b22;border-color:#30363d;color:#e6edf3;max-width:260px" onchange="checkTaut()">
+      <option value="taut_excl">A ∨ ¬A</option>
+      <option value="taut_imp">A → A</option>
+      <option value="taut_mp">A ∧ (A→B) → B</option>
+      <option value="not_taut_ab">A → B</option>
+      <option value="not_taut_and">A ∧ B</option>
+    </select>
+  </div>
+  <div id="taut-result" class="info-box small" style="min-height:50px"></div>
+</div>
+
+<!-- TAB 6: Előadás+ -->
+<div id="tab-ex" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#a78bfa">Előadás+ — Kiegészítő magyarázatok</h5>
+
+  <div class="row g-3">
+    <!-- Left column -->
+    <div class="col-lg-6">
+
+      <!-- 1. Implikáció paradoxonai -->
+      <div class="mb-2 small fw-bold" style="color:#c4b5fd">1. Implikáció — a meglepő esetek</div>
+      <div class="def-box small">
+        Az <strong>implikáció \(A \to B\)</strong> csak akkor <span style="color:#f87171">hamis</span>, ha a premissza igaz és a konklúzió hamis.<br>
+        Minden más esetben — ideértve azt is, amikor a premissza <em>hamis</em> — az implikáció <span style="color:#4ade80">igaz</span>.
+      </div>
+      <div class="ex-box small">
+        <strong>Előadás-példa:</strong> „Ha süt a nap, elmegyünk ebédelni." (\(A \to B\))<br>
+        <table class="mt-2" style="border-collapse:collapse;font-size:.78rem">
+          <tr><th style="padding:.2rem .5rem;border:1px solid #30363d;color:#a78bfa">Süt a nap? (A)</th><th style="padding:.2rem .5rem;border:1px solid #30363d;color:#a78bfa">Ebédelünk? (B)</th><th style="padding:.2rem .5rem;border:1px solid #30363d;color:#a78bfa">Ígéret teljesült?</th></tr>
+          <tr><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="T-cell">i</td><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="T-cell">i</td><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="T-cell">i ✓</td></tr>
+          <tr><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="T-cell">i</td><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="F-cell">h</td><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="F-cell">h ✗ — ígéretsértés!</td></tr>
+          <tr><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="F-cell">h</td><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="T-cell">i</td><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="T-cell">i ✓ — nem ígérte, de mentünk</td></tr>
+          <tr><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="F-cell">h</td><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="F-cell">h</td><td style="padding:.2rem .5rem;border:1px solid #30363d;text-align:center" class="T-cell">i ✓ — nem ígérte, nem mentünk</td></tr>
+        </table>
+        <div class="mt-2" style="color:#8892a4">Az utolsó két sor intuitíve meglepő: ha a premissza hamis, az ígéretet nem lehet megszegni — az implikáció igaz lesz.</div>
+      </div>
+
+      <!-- 2. Megengedő vs. kizáró VAGY -->
+      <div class="mb-2 mt-3 small fw-bold" style="color:#c4b5fd">2. Megengedő vs. kizáró VAGY</div>
+      <div class="info-box small">
+        <div class="row g-2">
+          <div class="col-6">
+            <div style="color:#22d3ee;font-weight:700">Megengedő VAGY (∨)</div>
+            Igaz, ha <em>legalább egy</em> tag igaz.<br>
+            Matematikai logikában ezt használjuk.<br>
+            <span style="color:#8892a4">„A vagy B (vagy mindkettő)"</span>
+          </div>
+          <div class="col-6">
+            <div style="color:#f97316;font-weight:700">Kizáró VAGY (⊕, XOR)</div>
+            Igaz, ha <em>pontosan egy</em> tag igaz.<br>
+            Digitális technikában alapvető kapu.<br>
+            <span style="color:#8892a4">„A vagy B, de nem mindkettő"</span>
+          </div>
+        </div>
+        <div class="mt-2" style="color:#8892a4">Az előadásban: a hétköznapi „vagy" sokszor kizáró értelmű, de a matematikai logikában <strong>mindig megengedő</strong> a ∨. Az ⊕ jelölést nem vezettük be — \(A \oplus B \equiv (A \vee B) \wedge \neg(A \wedge B)\).</div>
+      </div>
+
+      <!-- 3. Formula rekurzív definíciója -->
+      <div class="mb-2 mt-3 small fw-bold" style="color:#c4b5fd">3. Formulák felépítése (rekurzív definíció)</div>
+      <div class="thm-box small">
+        <strong>Szintaxis:</strong> Minden összetett formulát zárójelek közé teszünk, kivéve a legkülső zárójeleket.
+        <ol class="mb-0 mt-1">
+          <li>Elemi ítélet \(A_1, A_2, \ldots\) — formula.</li>
+          <li>Ha \(F\) formula → \((\neg F)\) formula.</li>
+          <li>Ha \(F, G\) formula → \((F \wedge G)\), \((F \vee G)\), \((F \to G)\), \((F \leftrightarrow G)\) formula.</li>
+        </ol>
+        <div class="mt-1 text-secondary">A legkülső zárójeleket elhagyjuk. Pl. \(F(A,B,C)\) jelöli, hogy a formula az A, B, C változókat tartalmazza — ez egy logikai „függvény".</div>
+      </div>
+
+    </div>
+
+    <!-- Right column -->
+    <div class="col-lg-6">
+
+      <!-- 4. Modus tollens -->
+      <div class="mb-2 small fw-bold" style="color:#c4b5fd">4. Modus tollens (hiányzó következtetési szabály)</div>
+      <div class="info-box small">
+        <div style="color:#a78bfa;font-weight:700">Modus tollens</div>
+        \(A \to B,\;\; \neg B \;\models\; \neg A\)
+        <div class="mt-2 text-secondary">
+          <strong>Bizonyítás:</strong> Ha mindkét premissza igaz: \(\neg B\) igaz → \(B\) hamis. Ha \(A\) igaz lenne, akkor \(A \to B\) hamisra esne (i→h = h) — ellentmondás. Tehát \(A\) hamis, azaz \(\neg A\) igaz. ✓
+        </div>
+        <div class="mt-2">
+          <strong>Példa:</strong> „Ha esik az eső, az utca nedves." + „Az utca NEM nedves." → „Nem esik az eső."
+        </div>
+      </div>
+
+      <!-- 5. Kielégíthetőség -->
+      <div class="mb-2 mt-3 small fw-bold" style="color:#c4b5fd">5. Kielégíthetőség (satisfiability)</div>
+      <div class="def-box small">
+        <strong>Def.</strong> Egy \(\{F_1, \ldots, F_n\}\) formulahalmaz <em>kielégíthető</em>, ha létezik olyan változókiértékelés, amelyre <strong>minden</strong> \(F_i\) igaz.
+      </div>
+      <div class="ex-box small">
+        <strong>Kielégíthető:</strong> \(\{A \vee B,\; B \wedge C,\; \neg A\}\)<br>
+        Legyen \(A=\mathbf{h}, B=\mathbf{i}, C=\mathbf{i}\): &nbsp; \(h\vee i=i\), &nbsp; \(i\wedge i=i\), &nbsp; \(\neg h=i\). ✓
+      </div>
+      <div class="info-box small" style="border-color:#f87171">
+        <strong style="color:#f87171">Nem kielégíthető:</strong> \(\{A \vee B,\; B \wedge C,\; \neg B\}\)<br>
+        \(\neg B\) igaz → \(B\) hamis. De \(B \wedge C\) igazhoz \(B\) igaz kellene — <strong>ellentmondás</strong>. Nincs jó kiértékelés.
+      </div>
+
+      <!-- 6. Következmény ↔ tautológia -->
+      <div class="mb-2 mt-3 small fw-bold" style="color:#c4b5fd">6. Következmény ↔ tautológia kapcsolat</div>
+      <div class="thm-box small">
+        <strong>Tétel (az előadásból):</strong>
+        \[F_1, \ldots, F_n \models G \quad\Longleftrightarrow\quad \models (F_1 \wedge \cdots \wedge F_n) \to G\]
+        <div class="mt-1 text-secondary">
+          A logikai következmény <em>pontosan akkor</em> áll fenn, ha a premisszák konjunkciójából a konklúzióba vezető implikáció <strong>tautológia</strong>. Ez a kapcsolat teszi lehetővé a következtetési szabályok tautológiaként való ellenőrzését.
+        </div>
+        <div class="mt-2">
+          <strong>Pl. Modus ponens tautológiaként:</strong><br>
+          \(\models (A \wedge (A \to B)) \to B\)
+        </div>
+      </div>
+
+      <!-- 7. Ellentmondás és kizárt közép -->
+      <div class="mb-2 mt-3 small fw-bold" style="color:#c4b5fd">7. Azonosan hamis formulák (ellentmondás)</div>
+      <div class="info-box small">
+        <table style="border-collapse:collapse;font-size:.78rem;width:100%">
+          <tr>
+            <th style="padding:.2rem .5rem;border:1px solid #30363d;color:#a78bfa">Típus</th>
+            <th style="padding:.2rem .5rem;border:1px solid #30363d;color:#a78bfa">Def.</th>
+            <th style="padding:.2rem .5rem;border:1px solid #30363d;color:#a78bfa">Kanonikus példa</th>
+          </tr>
+          <tr>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d"><span style="color:#4ade80;font-weight:700">Tautológia</span></td>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d">Minden értékelésnél igaz</td>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d">\(A \vee \neg A\)</td>
+          </tr>
+          <tr>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d"><span style="color:#f87171;font-weight:700">Ellentmondás</span></td>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d">Minden értékelésnél hamis</td>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d">\(A \wedge \neg A\)</td>
+          </tr>
+          <tr>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d"><span style="color:#fbbf24;font-weight:700">Kielégíthető</span></td>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d">Van igaz értékelés</td>
+            <td style="padding:.2rem .5rem;border:1px solid #30363d">\(A \wedge B\)</td>
+          </tr>
+        </table>
+        <div class="mt-2 text-secondary">
+          Az előadásból: \(A \wedge \neg A\) magyarázata — ha A igaz, akkor ¬A hamis, kettő különböző értéket ÉS-sel kapcsolunk, eredmény hamis. Ha A hamis, akkor ¬A igaz — megint kettő különböző érték. Mindkét esetben hamis. ✓
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]})"></script>
+
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(p => p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if (id==='tab-itelets') buildTruthTable();
+  if (id==='tab-dnf') buildDNF();
+  if (id==='tab-aramk') setTimeout(drawCircuit, 30);
+  if (id==='tab-taut') checkTaut();
+  if (id==='tab-ex' && window.renderMathInElement) setTimeout(()=>renderMathInElement(document.getElementById('tab-ex'),{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]}),30);
+}
+
+// ── Tab 1: Truth table ──────────────────────────────────────────
+const TT_FORMULAS = {
+  imp:  { label:'A → B',        fn:(a,b)=> !a||b,           vars:['A','B'] },
+  eqv:  { label:'A ↔ B',        fn:(a,b)=> a===b,           vars:['A','B'] },
+  nand: { label:'¬(A ∧ B)',     fn:(a,b)=> !(a&&b),         vars:['A','B'] },
+  xor:  { label:'A ⊕ B',        fn:(a,b)=> a!==b,           vars:['A','B'] },
+  ab3:  { label:'A ∧ (B ∨ C)',  fn:(a,b,c)=> a&&(b||c),     vars:['A','B','C'] },
+  imp3: { label:'A → (B → C)',  fn:(a,b,c)=> !a||((!b)||c), vars:['A','B','C'] },
+};
+
+function buildTruthTable() {
+  const key = document.getElementById('tt-sel').value;
+  const f = TT_FORMULAS[key];
+  const v = f.vars; const n = v.length;
+  const rows = 1<<n;
+  let html = '<table class="truth-tbl"><thead><tr>';
+  v.forEach(x => html += `<th>${x}</th>`);
+  html += `<th style="color:#f9a8d4">${escHtml(f.label)}</th></tr></thead><tbody>`;
+  let allTrue=true, allFalse=true;
+  for (let r=0;r<rows;r++) {
+    const vals = v.map((_,i)=> !!(r & (1<<(n-1-i))));
+    const res = f.fn(...vals);
+    if (!res) allTrue=false; else allFalse=false;
+    const rc = res ? 'T-cell' : 'F-cell';
+    html += `<tr>${vals.map(b=>`<td class="${b?'T-cell':'F-cell'}">${b?'i':'h'}</td>`).join('')}<td class="${rc}">${res?'i':'h'}</td></tr>`;
+  }
+  html += '</tbody></table>';
+  const type = allTrue ? '<span style="color:#4ade80">⊨ Tautológia</span>' :
+               allFalse? '<span style="color:#f87171">Ellentmondás (azonosan hamis)</span>' :
+               '<span style="color:#fbbf24">Kielégíthető (sem tautológia, sem ellentmondás)</span>';
+  document.getElementById('tt-out').innerHTML = html + `<div class="small mt-2">${type}</div>`;
+  if (window.renderMathInElement) renderMathInElement(document.getElementById('tt-out'),{delimiters:[{left:'\\(',right:'\\)',display:false}]});
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+buildTruthTable();
+
+// ── Tab 2: NNF presets ──────────────────────────────────────────
+const NNF_DATA = {
+  'A and (not B)': {
+    F: String.raw`F = A \wedge (\neg B)`,
+    negF: String.raw`\neg F \equiv (\neg A) \vee B`,
+    Fstar: String.raw`F^* = (\neg A) \vee B`,
+    note: 'De Morgan: negáció befele tolva, ∧ → ∨'
+  },
+  '(A and (not B)) or (B and (not C))': {
+    F: String.raw`F = (A \wedge \neg B) \vee (B \wedge \neg C)`,
+    negF: String.raw`\neg F \equiv (\neg A \vee B) \wedge (\neg B \vee C)`,
+    Fstar: String.raw`F^* = (\neg A \vee B) \wedge (\neg B \vee C)`,
+    note: 'Kétszeres De Morgan alkalmazása'
+  },
+  '(not A) and (B or (not C))': {
+    F: String.raw`F = (\neg A) \wedge (B \vee \neg C)`,
+    negF: String.raw`\neg F \equiv A \vee ((\neg B) \wedge C)`,
+    Fstar: String.raw`F^* = A \vee (\neg B \wedge C)`,
+    note: 'Előadás példa: ¬¬A = A; De Morgan alkalmazva'
+  },
+};
+
+function nnfLoadPreset() {
+  const key = document.getElementById('nnf-preset').value;
+  const d = document.getElementById('nnf-display');
+  if (!key || !NNF_DATA[key]) { d.innerHTML='<em class="text-secondary">Válassz előbeállítást.</em>'; return; }
+  const e = NNF_DATA[key];
+  d.innerHTML = `
+    <div class="mb-1"><span style="color:#a78bfa">F:</span> &nbsp;\\(${e.F}\\)</div>
+    <div class="mb-1"><span style="color:#a78bfa">¬F:</span> &nbsp;\\(${e.negF}\\)</div>
+    <div class="mb-1"><span style="color:#4ade80">F* =</span> &nbsp;\\(${e.Fstar}\\)</div>
+    <div class="text-secondary mt-1">${e.note}</div>`;
+  if (window.renderMathInElement) renderMathInElement(d,{delimiters:[{left:'\\(',right:'\\)',display:false}]});
+}
+
+// ── Tab 3: DNF/KNF generator ─────────────────────────────────────
+const fVals = [false,false,false,false];
+function toggleF(idx) {
+  fVals[idx] = !fVals[idx];
+  const cell = document.getElementById('fc'+idx);
+  cell.textContent = fVals[idx]?'i':'h';
+  cell.className = fVals[idx]?'T-cell':'F-cell';
+  buildDNF();
+}
+function buildDNF() {
+  const combos = [['i','i'],['i','h'],['h','i'],['h','h']];
+  const trueRows = [], falseRows = [];
+  fVals.forEach((v,i)=>{ if(v) trueRows.push(i); else falseRows.push(i); });
+
+  let tdnf='', tknf='';
+  if (trueRows.length===0) {
+    tdnf='<span style="color:#f87171">Azonosan hamis — nincs t.d.n.f.</span>';
+  } else {
+    const terms = trueRows.map(i=>{
+      const a=combos[i][0]==='i', b=combos[i][1]==='i';
+      return `(${a?'A':'\\neg A'} \\wedge ${b?'B':'\\neg B'})`;
+    });
+    tdnf = '\\(' + terms.join(' \\vee ') + '\\)';
+  }
+  if (falseRows.length===0) {
+    tknf='<span style="color:#4ade80">Azonosan igaz — nincs t.k.n.f.</span>';
+  } else {
+    const terms = falseRows.map(i=>{
+      const a=combos[i][0]==='i', b=combos[i][1]==='i';
+      return `(${a?'\\neg A':'A'} \\vee ${b?'\\neg B':'B'})`;
+    });
+    tknf = '\\(' + terms.join(' \\wedge ') + '\\)';
+  }
+
+  const el = document.getElementById('dnf-result');
+  el.innerHTML = `
+    <div class="mb-2"><span style="color:#a78bfa;font-weight:700">T.d.n.f.:</span><br>${tdnf}</div>
+    <div><span style="color:#22d3ee;font-weight:700">T.k.n.f.:</span><br>${tknf}</div>`;
+  if (window.renderMathInElement) renderMathInElement(el,{delimiters:[{left:'\\(',right:'\\)',display:false}]});
+}
+
+// ── Tab 4: Circuit canvas ─────────────────────────────────────────
+function evalCircuit() {
+  const A = document.getElementById('sw-A').checked;
+  const B = document.getElementById('sw-B').checked;
+  const C = document.getElementById('sw-C').checked;
+  const F = (A && !B) || (B && !C);
+  document.getElementById('circuit-result').innerHTML =
+    `A=${A?'i':'h'}, B=${B?'i':'h'}, C=${C?'i':'h'} &nbsp;→&nbsp; ` +
+    `<strong style="color:${F?'#4ade80':'#f87171'};font-size:1rem">F = ${F?'i':'h'}</strong>` +
+    (F ? ' &nbsp;<span style="color:#fbbf24">⚡ áram folyik</span>' : ' &nbsp;<span class="text-secondary">nincs áram</span>');
+  drawCircuit();
+}
+
+function drawCircuit() {
+  const cvs = document.getElementById('circuit-canvas');
+  if (!cvs) return;
+  const ctx = cvs.getContext('2d');
+  const W=cvs.width, H=cvs.height;
+  ctx.clearRect(0,0,W,H);
+
+  const A = document.getElementById('sw-A').checked;
+  const B = document.getElementById('sw-B').checked;
+  const C = document.getElementById('sw-C').checked;
+  const nB=!B, nC=!C;
+  const g1=A&&nB, g2=B&&nC, F=g1||g2;
+
+  function line(x1,y1,x2,y2,on){
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.strokeStyle=on?'#a78bfa':'#30363d'; ctx.lineWidth=2; ctx.stroke();
+  }
+  function gate(x,y,type,val,label){
+    ctx.beginPath(); ctx.arc(x,y,18,0,Math.PI*2);
+    ctx.fillStyle=val?(type==='not'?'#f87171':'#a78bfa'):'#1e1e2e';
+    ctx.fill(); ctx.strokeStyle='#484f58'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='#e6edf3'; ctx.font='bold 10px monospace'; ctx.textAlign='center';
+    ctx.fillText(label,x,y+4);
+  }
+  function lbl(x,y,txt,clr='#8b949e'){
+    ctx.fillStyle=clr; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText(txt,x,y);
+  }
+
+  lbl(30,50,'A', A?'#a78bfa':'#484f58');
+  lbl(30,100,'B', B?'#a78bfa':'#484f58');
+  lbl(30,150,'C', C?'#a78bfa':'#484f58');
+
+  line(50,100,110,100,B);
+  gate(128,100,'not',nB,'¬B');
+  line(146,100,170,100,nB);
+
+  line(50,150,110,150,C);
+  gate(128,150,'not',nC,'¬C');
+  line(146,150,170,150,nC);
+
+  line(50,50,170,50,A);
+  line(170,50,220,50,A); line(170,100,220,100,nB);
+  ctx.beginPath(); ctx.moveTo(220,55); ctx.lineTo(220,95);
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1; ctx.stroke();
+  gate(240,75,'and',g1,'AND');
+  line(258,75,300,75,g1);
+
+  line(170,100,220,115,nB); line(170,150,220,135,nC);
+  ctx.beginPath(); ctx.moveTo(220,115); ctx.lineTo(220,135);
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1; ctx.stroke();
+  gate(240,125,'and',g2,'AND');
+  line(258,125,300,125,g2);
+
+  line(300,75,380,75,g1); line(300,125,380,125,g2);
+  ctx.beginPath(); ctx.moveTo(380,75); ctx.lineTo(380,125);
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1; ctx.stroke();
+  gate(400,100,'or',F,'OR');
+  line(418,100,480,100,F);
+
+  ctx.beginPath(); ctx.arc(490,100,12,0,Math.PI*2);
+  ctx.fillStyle=F?'#fbbf24':'#1e1e2e';
+  ctx.fill(); ctx.strokeStyle='#484f58'; ctx.lineWidth=1.5; ctx.stroke();
+  lbl(490,104,'F', F?'#0d1117':'#484f58');
+
+  lbl(30,62,A?'i':'h',A?'#4ade80':'#f87171');
+  lbl(30,112,B?'i':'h',B?'#4ade80':'#f87171');
+  lbl(30,162,C?'i':'h',C?'#4ade80':'#f87171');
+}
+
+// ── Tab 5: Tautology checker ──────────────────────────────────────
+const TAUT_DATA = {
+  taut_excl: { label:'A ∨ ¬A',           fn:(a,b)=> a||!a },
+  taut_imp:  { label:'A → A',             fn:(a,b)=> !a||a },
+  taut_mp:   { label:'A ∧ (A→B) → B',    fn:(a,b)=> !(a&&(!a||b))||b },
+  not_taut_ab:  { label:'A → B',          fn:(a,b)=> !a||b },
+  not_taut_and: { label:'A ∧ B',          fn:(a,b)=> a&&b },
+};
+function checkTaut() {
+  const key = document.getElementById('taut-sel').value;
+  const f = TAUT_DATA[key];
+  const rows=[];
+  let taut=true;
+  for (let a=1;a>=0;a--) for (let b=1;b>=0;b--) {
+    const av=!!a, bv=!!b, res=f.fn(av,bv);
+    if(!res) taut=false;
+    rows.push({av,bv,res});
+  }
+  let html=`<table class="truth-tbl mb-1"><thead><tr><th>A</th><th>B</th><th>${escHtml(f.label)}</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const hi=!r.res?' class="highlight-row"':'';
+    html+=`<tr${hi}><td class="${r.av?'T-cell':'F-cell'}">${r.av?'i':'h'}</td><td class="${r.bv?'T-cell':'F-cell'}">${r.bv?'i':'h'}</td><td class="${r.res?'T-cell':'F-cell'}">${r.res?'i':'h'}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  html+=taut
+    ? `<span style="color:#4ade80;font-weight:700">⊨ Tautológia</span> — minden sorban igaz`
+    : `<span style="color:#f87171;font-weight:700">Nem tautológia</span> — piros sor mutatja az ellenpéldát`;
+  document.getElementById('taut-result').innerHTML=html;
+}
+
+setTimeout(()=>{
+  buildTruthTable();
+  evalCircuit();
+  buildDNF();
+  checkTaut();
+},400);
+</script>
+{% endblock %}

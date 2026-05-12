@@ -1,0 +1,591 @@
+{% extends "base.html" %}
+{% block title %}ILA 8. fejezet — Absztrakt algebra{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#f59e0b!important;}
+.ila-nav-link.active{color:#f59e0b!important;border-bottom-color:#f59e0b!important;}
+.def-box  { border-left:3px solid #f59e0b; background:#1a1200; padding:.75rem 1rem; border-radius:.3rem; margin:.7rem 0; }
+.thm-box  { border-left:3px solid #d97706; background:#140e00; padding:.75rem 1rem; border-radius:.3rem; margin:.7rem 0; }
+.ex-box   { border-left:3px solid #22c55e; background:#0a1f10; padding:.75rem 1rem; border-radius:.3rem; margin:.7rem 0; }
+.info-box { background:#161b22; border:1px solid #21262d; padding:.75rem 1rem; border-radius:.4rem; margin:.7rem 0; }
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+canvas { border-radius:.4rem; display:block; }
+table.cayley { border-collapse:collapse; font-size:.78rem; }
+table.cayley th, table.cayley td { padding:.3rem .55rem; border:1px solid #30363d; text-align:center; }
+table.cayley thead th { background:#1a1200; color:#f59e0b; }
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#f59e0b">ILA — 8. fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Absztrakt algebra</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2025</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(245,158,11,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-muv',this)"><i class="bi bi-grid me-1"></i>Műveletek &amp; algebrák</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-csoport',this)"><i class="bi bi-diagram-3 me-1"></i>Félcsoport &amp; csoport</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-gyuru',this)"><i class="bi bi-layers me-1"></i>Gyűrű &amp; test</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-homo',this)"><i class="bi bi-arrow-right me-1"></i>Homomorfizmus</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-reszcs',this)"><i class="bi bi-circle-half me-1"></i>Részcsoport &amp; ciklikus</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ex',this)"><i class="bi bi-lightbulb me-1"></i>Előadás+</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- TAB 1: Műveletek -->
+<div id="tab-muv">
+  <h5 class="fw-bold mb-3" style="color:#f59e0b">Műveletek és algebrák</h5>
+  <div class="def-box">
+    <strong>n-változós művelet:</strong> Egy \(A^n \to A\) leképezés az \(A\) halmazon.<br>
+    <strong>Bináris művelet:</strong> \(n=2\), azaz \(A \times A \to A\).<br>
+    <strong>Algebra:</strong> Az \((A,\mathcal{F})\) rendezett párt algebrának nevezzük, ahol \(\mathcal{F}\) az \(A\)-n definiált műveletek véges halmaza.
+  </div>
+
+  <div class="row g-2 mt-1">
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div style="color:#f59e0b;font-weight:700">Asszociativitás:</div>
+        \((a \circ b) \circ c = a \circ (b \circ c)\) minden \(a,b,c \in A\)-ra.
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div style="color:#f59e0b;font-weight:700">Kommutativitás:</div>
+        \(a \circ b = b \circ a\) minden \(a,b \in A\)-ra.
+      </div>
+    </div>
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#fbbf24">Ismert algebrák tulajdonságai:</p>
+  <div class="info-box" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+      <thead><tr style="border-bottom:1px solid #30363d">
+        <th style="padding:.3rem .5rem;color:#f59e0b;text-align:left">Algebra</th>
+        <th style="padding:.3rem .5rem;color:#f59e0b">Asszoc.</th>
+        <th style="padding:.3rem .5rem;color:#f59e0b">Komm.</th>
+        <th style="padding:.3rem .5rem;color:#f59e0b">Zárva?</th>
+      </tr></thead>
+      <tbody id="alg-tbl-body"></tbody>
+    </table>
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#fbbf24">Interaktív tulajdonság-ellenőrző:</p>
+  <div class="d-flex gap-2 flex-wrap mb-2 align-items-center">
+    <select id="op-preset" class="form-select form-select-sm" style="background:#161b22;border-color:#30363d;color:#e6edf3;max-width:220px" onchange="checkOp()">
+      <option value="add">a ∘ b = a + b  (ℝ-en)</option>
+      <option value="sub">a ∘ b = a − b  (ℝ-en)</option>
+      <option value="mul">a ∘ b = a · b  (ℝ-en)</option>
+      <option value="custom1">a ∘ b = a + b + 1  (ℝ-en)</option>
+      <option value="max">a ∘ b = max(a,b)  (ℝ-en)</option>
+    </select>
+  </div>
+  <div id="op-result" class="info-box small" style="min-height:60px"></div>
+</div>
+
+<!-- TAB 2: Félcsoport & Csoport -->
+<div id="tab-csoport" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f59e0b">Félcsoport, monoid és csoport</h5>
+  <div class="row g-2">
+    <div class="col-md-4">
+      <div class="def-box small">
+        <strong>Félcsoport</strong> \((A,\circ)\): asszociatív bináris művelet.<br>
+        <em>Kommutatív</em>, ha \(\circ\) is kommutatív.
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="def-box small">
+        <strong>Egységelemes félcsoport (monoid):</strong> létezik \(e\), hogy \(a \circ e = e \circ a = a\) minden \(a\)-ra.<br>
+        <em>Az egységelem egyértelmű.</em>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="def-box small">
+        <strong>Csoport \((G,\cdot)\):</strong> egységelemes félcsoport, ahol minden elemnek létezik inverze: \(ab = ba = e\).<br>
+        <em>Abel-csoport:</em> kommutatív csoport.
+      </div>
+    </div>
+  </div>
+
+  <div class="thm-box small mt-1">
+    <strong>Zéruselem:</strong> \(z\)-re \(a \circ z = z \circ a = z\) minden \(a\)-ra. (Ha létezik, egyértelmű.)<br>
+    <strong>Inverz:</strong> \(b = a^{-1}\) ha \(ab = ba = e\). Egyértelmű (ha létezik). \((ab)^{-1} = b^{-1}a^{-1}\).
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#fbbf24">Cayley-tábla — \(\mathbb{Z}_n\) additív csoport:</p>
+  <div class="d-flex gap-2 mb-2 align-items-center">
+    <label class="small">n = <input type="range" id="zn-slider" min="2" max="8" value="4" oninput="document.getElementById('zn-val').textContent=this.value;buildCayley()" style="width:100px"> <span id="zn-val">4</span></label>
+    <span class="small text-secondary">&nbsp; (ℤₙ mod n összeadás)</span>
+  </div>
+  <div id="cayley-out" style="overflow-x:auto"></div>
+  <div id="cayley-props" class="small mt-2 info-box"></div>
+</div>
+
+<!-- TAB 3: Gyűrű & Test -->
+<div id="tab-gyuru" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f59e0b">Gyűrű és test</h5>
+  <div class="def-box">
+    Az \((A,+,\cdot)\) struktúra <strong>gyűrű</strong>, ha:
+    <ol class="small mb-0 mt-1">
+      <li>\((A,+)\) kommutatív csoport,</li>
+      <li>\((A,\cdot)\) félcsoport,</li>
+      <li>a \(\cdot\) művelet disztributív a \(+\)-ra vonatkozóan.</li>
+    </ol>
+    <em>Kommutatív gyűrű:</em> ha \(\cdot\) is kommutatív.
+  </div>
+  <div class="def-box">
+    <strong>Test \((A,+,\cdot)\):</strong> kommutatív gyűrű, amelyben \((A \setminus \{0\},\cdot)\) kommutatív csoport (ahol 0 a + egységeleme).
+  </div>
+  <div class="thm-box small">
+    Gyűrűben: \(a \cdot 0 = 0 \cdot a = 0\) és \((-a)b = a(-b) = -(ab)\).<br>
+    Ha szürjektív homomorfizmus létezik két algebra között, a struktúra megőrződik.
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#fbbf24">Algebrai struktúrák összehasonlítása:</p>
+  <div class="info-box" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+      <thead><tr style="border-bottom:1px solid #30363d">
+        <th style="padding:.3rem .5rem;color:#f59e0b;text-align:left">Struktúra</th>
+        <th style="padding:.3rem .5rem;color:#f59e0b">Assz.</th>
+        <th style="padding:.3rem .5rem;color:#f59e0b">Komm.</th>
+        <th style="padding:.3rem .5rem;color:#f59e0b">Egységelem</th>
+        <th style="padding:.3rem .5rem;color:#f59e0b">Inverz</th>
+        <th style="padding:.3rem .5rem;color:#f59e0b">Disztrib.</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:.25rem .5rem">Félcsoport</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓</td><td class="text-center" style="padding:.25rem .5rem;color:#f87171">—</td><td class="text-center" style="padding:.25rem .5rem;color:#f87171">—</td><td class="text-center" style="color:#f87171">—</td><td class="text-center" style="color:#f87171">—</td></tr>
+        <tr><td style="padding:.25rem .5rem">Monoid</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓</td><td class="text-center" style="padding:.25rem .5rem;color:#f87171">—</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓</td><td class="text-center" style="color:#f87171">—</td><td class="text-center" style="color:#f87171">—</td></tr>
+        <tr><td style="padding:.25rem .5rem">Csoport</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓</td><td class="text-center" style="padding:.25rem .5rem;color:#f87171">—</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓</td><td class="text-center" style="color:#4ade80">✓</td><td class="text-center" style="color:#f87171">—</td></tr>
+        <tr><td style="padding:.25rem .5rem">Abel-csoport</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓</td><td class="text-center" style="color:#4ade80">✓</td><td class="text-center" style="color:#f87171">—</td></tr>
+        <tr style="background:#1a1200"><td style="padding:.25rem .5rem;color:#f59e0b">Gyűrű</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓ (+,·)</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓ (+)</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓ (+)</td><td class="text-center" style="color:#4ade80">✓ (+)</td><td class="text-center" style="color:#4ade80">✓</td></tr>
+        <tr style="background:#1a1200"><td style="padding:.25rem .5rem;color:#f59e0b">Test</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓ (+,·)</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓ (+,·)</td><td class="text-center" style="padding:.25rem .5rem;color:#4ade80">✓ (+,·)</td><td class="text-center" style="color:#4ade80">✓ (+,·\{0})</td><td class="text-center" style="color:#4ade80">✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-4"><div class="ex-box small text-center">\((\mathbb{R},+,\cdot)\) — test</div></div>
+    <div class="col-md-4"><div class="ex-box small text-center">\((\mathbb{C},+,\cdot)\) — test</div></div>
+    <div class="col-md-4"><div class="ex-box small text-center">\((\mathbb{Z},+,\cdot)\) — gyűrű, nem test</div></div>
+    <div class="col-md-4"><div class="ex-box small text-center">\((\mathbb{R}^{n\times n},+,\cdot)\) — gyűrű, nem komm.</div></div>
+    <div class="col-md-4"><div class="ex-box small text-center">\((\mathcal{P}(U),\triangle,\cap)\) — gyűrű</div></div>
+    <div class="col-md-4"><div class="ex-box small text-center">\((\{i,h\},\leftrightarrow,\vee)\) — test</div></div>
+  </div>
+</div>
+
+<!-- TAB 4: Homomorfizmus -->
+<div id="tab-homo" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f59e0b">Homomorfizmus és izomorfizmus</h5>
+  <div class="def-box">
+    Egy \(\varphi : (A,\circ) \to (B,\ast)\) leképezés <strong>homomorfizmus</strong>, ha<br>
+    \[\varphi(a_1 \circ a_2) = \varphi(a_1) \ast \varphi(a_2)\quad\text{minden } a_1,a_2 \in A\text{-ra.}\]
+    Ha \(\varphi\) bijekció is, akkor <strong>izomorfizmus</strong>. Izomorf algebrák: \((A,\circ) \cong (B,\ast)\).
+  </div>
+
+  <div class="thm-box small">
+    <strong>Tétel:</strong> Ha \(\varphi\) szürjektív homomorfizmus, akkor:<br>
+    (1) ha \(\circ\) asszociatív, akkor \(\ast\) is; &nbsp;
+    (2) ha \((A,\circ)\) félcsoport/csoport, akkor \((B,\ast)\) is;<br>
+    (3) \(\varphi(e_A) = e_B\); &nbsp;
+    (4) \(\varphi(a^{-1}) = (\varphi(a))^{-1}\).
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#fbbf24">Ismert izomorfizmusok:</p>
+  <div class="row g-2">
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div style="color:#f59e0b;font-weight:700">log: \((\mathbb{R}_+,\cdot) \cong (\mathbb{R},+)\)</div>
+        \(\varphi = \log_a\), mivel \(\log(xy) = \log x + \log y\).<br>
+        Bijekció (szigorúan monoton és szürjektív).
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box small">
+        <div style="color:#f59e0b;font-weight:700">\(\mathbb{C} \cong (\mathbb{R}^2,+,\cdot)\)</div>
+        \(\varphi(a+bi) = (a,b)\), ahol szorzás: \((a_1,a_2)(b_1,b_2) = (a_1b_1-a_2b_2,a_1b_2+a_2b_1)\).
+      </div>
+    </div>
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#fbbf24">Interaktív: log homomorfizmus ellenőrző</p>
+  <div class="d-flex gap-2 mb-2 align-items-center flex-wrap">
+    <label class="small">x = <input type="number" id="hom-x" value="2" min="0.01" step="0.5" class="form-control form-control-sm d-inline-block" style="width:70px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="checkHom()"></label>
+    <label class="small">y = <input type="number" id="hom-y" value="8" min="0.01" step="0.5" class="form-control form-control-sm d-inline-block" style="width:70px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="checkHom()"></label>
+    <label class="small">alap = <input type="number" id="hom-base" value="2" min="1.01" step="0.5" class="form-control form-control-sm d-inline-block" style="width:70px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="checkHom()"></label>
+  </div>
+  <div id="hom-result" class="info-box small" style="min-height:60px"></div>
+</div>
+
+<!-- TAB 5: Részcsoport & ciklikus -->
+<div id="tab-reszcs" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f59e0b">Részcsoport, ciklikus csoport, Lagrange-tétel</h5>
+  <div class="def-box small">
+    <strong>Részcsoport:</strong> \((H,\cdot)\) részcsoport \((G,\cdot)\)-ban, ha \(H \subseteq G\) és \((H,\cdot)\) maga is csoport.
+  </div>
+  <div class="def-box small">
+    <strong>Generált csoport:</strong> \([H] = \{h_1^{k_1} h_2^{k_2} \cdots h_n^{k_n} : h_i \in H, k_i \in \{1,-1\}\}\) a legszűkebb részcsoport, amely \(H\)-t tartalmazza.<br>
+    Egyelemű \(H=\{a\}\) esetén: \([a]\) jelöli az \(a\) elem által generált csoportot.
+  </div>
+  <div class="def-box small">
+    <strong>Ciklikus csoport:</strong> Ha \(G = [a]\) valamely \(a \in G\)-re, a csoportot <em>ciklikusnak</em> nevezzük.<br>
+    <strong>Elem rendje:</strong> \(o(a) = k\) a legkisebb pozitív \(k\), amelyre \(a^k = e\).
+  </div>
+  <div class="thm-box small">
+    <strong>Lagrange-tétel:</strong> Egy részcsoport rendje mindig osztója a csoport rendjének \(|G|\)-nek.<br>
+    <strong>Következmény:</strong> Egy elem rendje mindig osztója \(|G|\)-nek.
+  </div>
+  <div class="thm-box small">
+    Minden ciklikus csoport izomorf vagy \((\mathbb{Z},+)\)-vel, vagy valamely \((\mathcal{E}_n,\cdot)\)-vel.
+  </div>
+
+  <p class="small fw-bold mt-3 mb-1" style="color:#fbbf24">Interaktív: \(\mathcal{E}_n\) ciklikus csoport és részcsoportjai</p>
+  <div class="d-flex align-items-center gap-3 mb-2">
+    <label class="small">n = <input type="range" id="en-n" min="2" max="12" value="6" oninput="document.getElementById('en-val').textContent=this.value;drawEn()" style="width:120px"> <span id="en-val">6</span></label>
+  </div>
+  <div class="d-flex gap-3 flex-wrap">
+    <canvas id="en-canvas" width="320" height="320" style="background:#0d1117;border:1px solid #21262d"></canvas>
+    <div id="en-info" class="small" style="flex:1;min-width:200px"></div>
+  </div>
+</div>
+
+<!-- TAB 6: Előadás+ -->
+<div id="tab-ex" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#f59e0b">Előadás+ — Mélyebb betekintések</h5>
+
+  <!-- 1. Zárt művelet és bináris művelet formálisan -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#fbbf24">1. Zárt és bináris műveletek — pontosan</div>
+    <p class="small mb-1">Az \(n\)-változós művelet formálisan egy \(A^n \to A\) leképezés. Bináris esetén \(n=2\), azaz az \(A \times A \to A\) típusú leképezés. A <em>zárt</em> jelző azt fejezi ki, hogy a művelet eredménye mindig az alaphalmaz \(A\) eleme — ez az \(A^n \to A\) típusban automatikusan benne van, de fontos hangsúlyozni, mert részhalmaz esetén elveszhet.</p>
+    <div class="ex-box small">
+      Példa: \((\mathbb{N}, -)\) <strong>nem zárt</strong>, mivel \(3 - 5 = -2 \notin \mathbb{N}\). Ezért \((\mathbb{N}, -)\) nem félcsoport.<br>
+      \((\mathbb{Z}, -)\) zárt, de nem asszociatív: \((5-3)-2 = 0 \neq 5-(3-2) = 4\).
+    </div>
+  </div>
+
+  <!-- 2. a○b = a+b+1 félcsoport-bizonyítás -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#fbbf24">2. \(a \circ b = a + b + 1\) — félcsoport-bizonyítás lépésről lépésre</div>
+    <p class="small mb-1">Az előadáson az \((\mathbb{R}, \circ)\) algebrát vizsgáltuk, ahol \(a \circ b = a + b + 1\).</p>
+    <div class="thm-box small">
+      <strong>Állítás:</strong> \((\mathbb{R}, \circ)\) félcsoport (sőt kommutatív).
+    </div>
+    <div class="small mt-2">
+      <strong>Bizonyítás — asszociativitás:</strong>
+      \[
+        (a \circ b) \circ c = (a+b+1)+c+1 = a+b+c+2
+      \]
+      \[
+        a \circ (b \circ c) = a+(b+c+1)+1 = a+b+c+2
+      \]
+      A két oldal egyenlő, tehát \(\circ\) asszociatív. \(\square\)
+    </div>
+    <div class="small mt-2">
+      <strong>Kommutativitás:</strong> \(a \circ b = a+b+1 = b+a+1 = b \circ a\). \(\square\)
+    </div>
+    <div class="ex-box small mt-2">
+      <strong>Megjegyzés:</strong> Az \(e = -1\) egységelem, hiszen \(a \circ (-1) = a+(-1)+1 = a\). Így \((\mathbb{R},\circ)\) monoid. Minden \(a\)-nak van inverze: \(a^{-1} = -a-2\), mert \(a \circ (-a-2) = a+(-a-2)+1 = -1 = e\). Tehát <strong>\((\mathbb{R},\circ)\) Abel-csoport</strong>.
+    </div>
+  </div>
+
+  <!-- 3. Csoport axiómák precízen -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#fbbf24">3. A csoport axiómái — szó szerint, ahogy az előadáson hangzott</div>
+    <p class="small mb-0">A \((G, \cdot)\) struktúra <strong>csoport</strong>, ha teljesül:</p>
+    <ol class="small mb-1">
+      <li><strong>Asszociativitás:</strong> \((a \cdot b) \cdot c = a \cdot (b \cdot c)\) minden \(a,b,c \in G\)-re.</li>
+      <li><strong>Egységelem:</strong> létezik \(e \in G\), hogy \(e \cdot a = a \cdot e = a\) minden \(a \in G\)-re.</li>
+      <li><strong>Inverz elem:</strong> minden \(a \in G\)-hez létezik \(a^{-1} \in G\), hogy \(a \cdot a^{-1} = a^{-1} \cdot a = e\).</li>
+    </ol>
+    <div class="thm-box small">
+      A csoport <strong>nem köteles</strong> kommutatív lenni. Ha az is, <em>Abel-csoportnak</em> (kommutatív csoportnak) nevezzük. Az egységelem és az inverz elemek egyértelműek.
+    </div>
+    <div class="ex-box small mt-2">
+      <strong>Példák:</strong><br>
+      Abel-csoport: \((\mathbb{Z},+)\), \((\mathbb{R}\setminus\{0\},\cdot)\), \((\mathbb{C}\setminus\{0\},\cdot)\), \(\mathcal{E}_n\).<br>
+      Nem Abel: \((S_n,\cdot)\) permutációk szorzása \(n \geq 3\)-ra.
+    </div>
+  </div>
+
+  <!-- 4. (ab)^n csak felcserélhető esetben -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#fbbf24">4. \((ab)^n = a^n b^n\) — mikor igaz?</div>
+    <p class="small mb-1">Ez az azonosság általában <strong>nem teljesül</strong> nem-Abel csoportokban.</p>
+    <div class="thm-box small">
+      <strong>Tétel:</strong> \((ab)^n = a^n b^n\) pontosan akkor igaz minden \(n\)-re, ha \(ab = ba\).
+    </div>
+    <div class="small mt-2">
+      <strong>Bizonyítás (vázlat, \(n=2\)):</strong>
+      \[
+        (ab)^2 = abab
+      \]
+      \[
+        a^2 b^2 = aabb
+      \]
+      A két oldal egyenlő \(\Leftrightarrow abab = aabb \Leftrightarrow ba = ab\).
+    </div>
+    <div class="ex-box small mt-2">
+      <strong>Kapcsolat a permutációkkal (3. fejezet):</strong> az \(S_n\) szimmetrikus csoportban \((\sigma\tau)^2 \neq \sigma^2\tau^2\) általában, mert a permutációk nem felcserélhetők.
+    </div>
+  </div>
+
+  <!-- 5. Gyűrű: miért csak félcsoport a szorzás -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#fbbf24">5. Gyűrű: miért csak félcsoport \((A,\cdot)\)?</div>
+    <p class="small mb-1">A gyűrű definíciójában \((A,\cdot)\) csak félcsoport, nem csoport — azaz nem kell, hogy minden elemnek legyen szorzás szerinti inverze.</p>
+    <div class="ex-box small">
+      <strong>Miért?</strong> Gyűrűben a \(0\) elem (az összeadás egységeleme) sohasem invertálható a szorzásra nézve: ha lenne \(0^{-1}\), akkor \(1 = 0 \cdot 0^{-1} = 0\) (gyűrűaxiómából), ami ellentmond a struktúrának.
+    </div>
+    <div class="small mt-2">
+      <strong>Test vs. gyűrű:</strong> Testben \((A \setminus \{0\}, \cdot)\) már kommutatív <em>csoport</em> — ezért invertálható minden nullától különböző elem.
+    </div>
+    <div class="thm-box small mt-1">
+      Gyűrűben érvényes: \(a \cdot 0 = 0 \cdot a = 0\) és \((-a) \cdot b = -(ab)\). Ezek nem axiómák, hanem következmények.
+    </div>
+  </div>
+
+  <!-- 6. Homomorfizmus gyűrűkre/testekre -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#fbbf24">6. Homomorfizmus gyűrűkre és testekre — mindkét műveletet meg kell őrizni</div>
+    <p class="small mb-1">Csoporthomomorfizmusnál elég egy műveletet megőrizni. Gyűrű- (és test-)homomorfizmusnál <strong>mindkét</strong> műveletet:</p>
+    <div class="def-box small">
+      A \(\varphi : (A,+,\cdot) \to (B,+,\cdot)\) leképezés <strong>gyűrűhomomorfizmus</strong>, ha:
+      \[
+        \varphi(a_1 + a_2) = \varphi(a_1) + \varphi(a_2)
+      \]
+      \[
+        \varphi(a_1 \cdot a_2) = \varphi(a_1) \cdot \varphi(a_2)
+      \]
+      minden \(a_1, a_2 \in A\)-ra.
+    </div>
+    <div class="ex-box small mt-1">
+      <strong>Klasszikus példa:</strong> \(\varphi : \mathbb{Z} \to \mathbb{Z}_n\), \(\varphi(k) = k \bmod n\).<br>
+      Mindkét feltétel: \((a+b) \bmod n = (a \bmod n + b \bmod n) \bmod n\) és \((ab) \bmod n = ((a \bmod n)(b \bmod n)) \bmod n\). \(\checkmark\)
+    </div>
+    <div class="small mt-2">
+      Ha csak az összeadást őrizné meg, <em>csoporthomomorfizmus</em> lenne, de nem gyűrűhomomorfizmus.
+    </div>
+  </div>
+
+  <!-- 7. Részcsoport példák a két előadásból -->
+  <div class="info-box mb-3">
+    <div class="fw-bold mb-1" style="color:#fbbf24">7. Részcsoport-példák az előadásból</div>
+    <div class="row g-2">
+      <div class="col-md-6">
+        <div class="ex-box small">
+          <strong>\(\mathcal{E}_n \leq (\mathbb{C}\setminus\{0\},\cdot)\):</strong><br>
+          Az \(n\)-edik egységgyökök halmaza \(\mathcal{E}_n = \{e^{2\pi i k/n} : k=0,\ldots,n-1\}\) részcsoport a komplex egységkörön, mert:<br>
+          (1) zárva szorzásra: \(e^{2\pi i k_1/n} \cdot e^{2\pi i k_2/n} = e^{2\pi i(k_1+k_2)/n} \in \mathcal{E}_n\),<br>
+          (2) inverz: \((e^{2\pi i k/n})^{-1} = e^{-2\pi i k/n} \in \mathcal{E}_n\).
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ex-box small">
+          <strong>Páros egészek \(\leq (\mathbb{Z},+)\):</strong><br>
+          \(2\mathbb{Z} = \{\ldots,-4,-2,0,2,4,\ldots\}\) részcsoport, mert:<br>
+          (1) zárva: páros + páros = páros,<br>
+          (2) egységelem: \(0 \in 2\mathbb{Z}\),<br>
+          (3) inverz: \(-2k \in 2\mathbb{Z}\).<br>
+          Index: \([\mathbb{Z} : 2\mathbb{Z}] = 2\) (páros/páratlan mellékosztályok).
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ex-box small">
+          <strong>\(n\mathbb{Z} \leq (\mathbb{Z},+)\):</strong><br>
+          Az \(n\)-nel osztható egészek minden \(n \geq 1\)-re részcsoportot alkotnak. Lagrange-tétel: \(|\mathbb{Z}_n / n\mathbb{Z}_n| = n\).
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ex-box small">
+          <strong>\(\{e\}\) és \(G\) triviális részcsoportok:</strong><br>
+          Minden csoportban létezik a triviális részcsoport \(\{e\}\) (egységelem) és maga \(G\) is részcsoport. Ezeket <em>improper</em> részcsoportoknak nevezzük.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});initAll();"></script>
+
+<script>
+function reRender(el){
+  if(window.renderMathInElement) renderMathInElement(el,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+}
+function yes(){ return '<span style="color:#4ade80;font-weight:700">✓</span>'; }
+function no() { return '<span style="color:#f87171;font-weight:700">✗</span>'; }
+
+function showTab(id, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(p => p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if(id==='tab-muv')     { buildAlgTable(); checkOp(); }
+  if(id==='tab-csoport') { buildCayley(); }
+  if(id==='tab-homo')    { checkHom(); }
+  if(id==='tab-reszcs')  { setTimeout(drawEn, 30); }
+  if(id==='tab-ex')      { setTimeout(()=>reRender(document.getElementById('tab-ex')), 30); }
+}
+
+const ALG_DATA = [
+  {name:'\\((\\mathbb{C},+)\\)', assoc:true, comm:true, closed:true},
+  {name:'\\((\\mathbb{R},+)\\)', assoc:true, comm:true, closed:true},
+  {name:'\\((\\mathbb{R},-)\\)', assoc:false,comm:false,closed:true},
+  {name:'\\((\\mathbb{R},\\cdot)\\)', assoc:true,comm:true,closed:true},
+  {name:'\\((\\mathbb{R}\\setminus\\{0\\},/)\\)', assoc:false,comm:false,closed:true},
+  {name:'\\((\\mathbb{R}^{n\\times n},\\cdot)\\)',assoc:true,comm:false,closed:true},
+  {name:'\\((S_n,\\cdot)\\)', assoc:true,comm:false,closed:true},
+  {name:'\\((\\mathcal{P}(U),\\cap)\\)',assoc:true,comm:true,closed:true},
+  {name:'\\(([0,1],+)\\)', assoc:true,comm:true,closed:false},
+];
+function buildAlgTable(){
+  let html='';
+  ALG_DATA.forEach(r=>{
+    html+=`<tr><td style="padding:.22rem .5rem;text-align:left">${r.name}</td><td class="text-center" style="padding:.22rem .5rem">${r.assoc?yes():no()}</td><td class="text-center" style="padding:.22rem .5rem">${r.comm?yes():no()}</td><td class="text-center" style="padding:.22rem .5rem">${r.closed?yes():no()}</td></tr>`;
+  });
+  const el=document.getElementById('alg-tbl-body');
+  el.innerHTML=html;
+  reRender(el);
+}
+
+const OPS = {
+  add:    {fn:(a,b)=>a+b,    label:'a ∘ b = a + b'},
+  sub:    {fn:(a,b)=>a-b,    label:'a ∘ b = a − b'},
+  mul:    {fn:(a,b)=>a*b,    label:'a ∘ b = a · b'},
+  custom1:{fn:(a,b)=>a+b+1,  label:'a ∘ b = a + b + 1'},
+  max:    {fn:(a,b)=>Math.max(a,b),label:'a ∘ b = max(a,b)'},
+};
+function checkOp(){
+  const key=document.getElementById('op-preset').value;
+  const op=OPS[key];
+  const samples=[-2,-1,0,1,2,3];
+  let assoc=true, comm=true;
+  for(const a of samples) for(const b of samples){
+    if(Math.abs(op.fn(a,b)-op.fn(b,a))>1e-9) comm=false;
+    for(const c of samples){
+      if(Math.abs(op.fn(op.fn(a,b),c)-op.fn(a,op.fn(b,c)))>1e-9) assoc=false;
+    }
+  }
+  const el=document.getElementById('op-result');
+  el.innerHTML=`<strong>${op.label}</strong><br>
+    Asszociatív: ${assoc?yes():no()}&nbsp;&nbsp;
+    Kommutatív: ${comm?yes():no()}`;
+}
+
+const COLORS8=['#f59e0b','#d97706','#fbbf24','#78350f','#fde68a','#92400e','#fef3c7','#b45309'];
+function buildCayley(){
+  const n=+document.getElementById('zn-slider').value;
+  let html='<table class="cayley"><thead><tr><th>+</th>';
+  for(let j=0;j<n;j++) html+=`<th>${j}</th>`;
+  html+='</tr></thead><tbody>';
+  for(let i=0;i<n;i++){
+    html+=`<tr><th>${i}</th>`;
+    for(let j=0;j<n;j++){
+      const v=(i+j)%n;
+      html+=`<td style="color:${COLORS8[v%COLORS8.length]}">${v}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  document.getElementById('cayley-out').innerHTML=html;
+  const el=document.getElementById('cayley-props');
+  el.innerHTML=`\\(\\mathbb{Z}_{${n}}\\) = \\{0, 1, \\ldots, ${n-1}\\}\\) mod ${n} összeadással:<br>
+    Abel-csoport ${yes()} &nbsp; Ciklikus ${yes()} &nbsp; Rend: ${n}&nbsp; &nbsp;
+    Generátor: \\(g=1\\)`;
+  reRender(el);
+}
+
+function checkHom(){
+  const x=+document.getElementById('hom-x').value;
+  const y=+document.getElementById('hom-y').value;
+  const b=+document.getElementById('hom-base').value;
+  if(x<=0||y<=0||b<=1){
+    document.getElementById('hom-result').innerHTML='<span style="color:#f87171">Adj meg x,y &gt; 0 és alap &gt; 1 értéket.</span>';
+    return;
+  }
+  const log=v=>Math.log(v)/Math.log(b);
+  const lhs=log(x*y);
+  const rhs=log(x)+log(y);
+  const ok=Math.abs(lhs-rhs)<1e-9;
+  const el=document.getElementById('hom-result');
+  el.innerHTML=`
+    \\(\\log_{${b.toFixed(2)}}(${x} \\cdot ${y}) = \\log_{${b.toFixed(2)}}(${x*y}) = ${lhs.toFixed(6)}\\)<br>
+    \\(\\log_{${b.toFixed(2)}} ${x} + \\log_{${b.toFixed(2)}} ${y} = ${log(x).toFixed(6)} + ${log(y).toFixed(6)} = ${rhs.toFixed(6)}\\)<br>
+    Egyenlők: ${ok?yes()+' Homomorfizmus teljesül':no()+' nem teljesül'}&nbsp; (diff = ${Math.abs(lhs-rhs).toExponential(2)})`;
+  reRender(el);
+}
+
+function gcd(a,b){return b===0?a:gcd(b,a%b);}
+function drawEn(){
+  const n=+document.getElementById('en-n').value;
+  const cvs=document.getElementById('en-canvas');
+  const ctx=cvs.getContext('2d');
+  const W=cvs.width,H=cvs.height,cx=W/2,cy=H/2,R=W*0.42;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#1e2830'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle='#f59e0b33'; ctx.lineWidth=1.5; ctx.stroke();
+
+  const divs=[]; for(let d=1;d<=n;d++) if(n%d===0) divs.push(d);
+  const pts=[];
+  for(let k=0;k<n;k++){
+    const ang=-Math.PI/2 + 2*Math.PI*k/n;
+    pts.push({x:cx+R*Math.cos(ang), y:cy+R*Math.sin(ang), k});
+  }
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.closePath();
+  ctx.strokeStyle='#f59e0b55'; ctx.lineWidth=1; ctx.stroke();
+
+  pts.forEach(p=>{
+    const col=p.k===0?'#f59e0b':['#22d3ee','#4ade80','#f472b6','#a78bfa','#fb923c'][p.k%5];
+    ctx.beginPath(); ctx.arc(p.x,p.y,6,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.strokeStyle='#0d1117'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle=col; ctx.font='bold 10px monospace'; ctx.textAlign='center';
+    const lx=p.x+(p.x-cx)*0.18, ly=p.y+(p.y-cy)*0.18;
+    ctx.fillText('ε'+p.k,lx,ly+3);
+  });
+
+  let html=`<div class="mb-2" style="color:#f59e0b;font-weight:700">\\(\\mathcal{E}_{${n}}\\) — ${n}-edik egységgyökök</div>`;
+  html+=`<div class="mb-2 small text-secondary">Elemek: \\(\\{1,\\varepsilon_1,\\varepsilon_1^2,\\ldots,\\varepsilon_1^{${n-1}}\\}\\)</div>`;
+  html+='<div class="small mb-1" style="color:#fbbf24">Elemek rendje:</div>';
+  html+='<table style="font-size:.75rem;border-collapse:collapse;width:100%">';
+  html+='<tr><th style="padding:.15rem .3rem;color:#f59e0b;border-bottom:1px solid #30363d">ε_k</th><th style="padding:.15rem .3rem;color:#f59e0b;border-bottom:1px solid #30363d">o(ε_k)</th><th style="padding:.15rem .3rem;color:#f59e0b;border-bottom:1px solid #30363d">Generátor?</th></tr>';
+  for(let k=0;k<n;k++){
+    const ord=n/gcd(n,k===0?n:k);
+    const isGen=ord===n;
+    html+=`<tr><td style="padding:.12rem .3rem">ε<sub>${k}</sub></td><td style="padding:.12rem .3rem;text-align:center">${k===0?1:ord}</td><td style="padding:.12rem .3rem;text-align:center">${(k===0?false:isGen)?yes():no()}</td></tr>`;
+  }
+  html+='</table>';
+  html+=`<div class="small mt-2" style="color:#fbbf24">Részcsoportok (Lagrange: |H| | ${n}):</div>`;
+  divs.forEach(d=>{
+    const members=[];
+    for(let k=0;k<n;k++) if(k%(n/d)===0) members.push('ε<sub>'+k+'</sub>');
+    html+=`<div class="small" style="color:#8b949e">|H|=${d}: {${members.join(', ')}}</div>`;
+  });
+  const infoEl=document.getElementById('en-info');
+  infoEl.innerHTML=html;
+  reRender(infoEl);
+}
+
+function initAll(){
+  buildAlgTable();
+  checkOp();
+  buildCayley();
+  checkHom();
+  drawEn();
+}
+setTimeout(initAll,400);
+</script>
+{% endblock %}

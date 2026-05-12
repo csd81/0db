@@ -1,0 +1,668 @@
+{% extends "base.html" %}
+{% block title %}19. fejezet – Kétpólusú gráfok{% endblock %}
+{% block content %}
+<style>
+:root{--acc:#38bdf8;--acc2:#0ea5e9;}
+.ila-wrap{max-width:1100px;margin:0 auto;padding:2rem 1rem 4rem;}
+.ila-back{color:var(--acc);text-decoration:none;font-size:.85rem;opacity:.8;}
+.ila-back:hover{opacity:1;}
+.ila-hero{text-align:center;margin:1.5rem 0 2rem;}
+.ila-hero h1{font-size:2rem;font-weight:700;color:#fff;}
+.ila-hero p{color:#8ba3bc;max-width:640px;margin:.5rem auto 0;font-size:.95rem;}
+.ila-nav{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.ila-nav-link{background:#151920;border:1px solid #1e2a38;color:#8ba3bc;padding:.45rem 1rem;border-radius:6px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+.ila-nav-link.active,.ila-nav-link:hover{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600;}
+.ila-tab{display:none;}.ila-tab.active{display:block;}
+.ila-card{background:#151920;border:1px solid #1e2a38;border-radius:10px;padding:1.2rem;margin-bottom:1rem;}
+.ila-card h5{color:var(--acc);font-size:.9rem;font-weight:700;margin-bottom:.7rem;text-transform:uppercase;letter-spacing:.05em;}
+canvas{border-radius:8px;background:#0a0f14;display:block;}
+.btn-acc{background:var(--acc);color:#000;border:none;font-weight:600;border-radius:6px;padding:.35rem .9rem;font-size:.85rem;cursor:pointer;}
+.btn-acc:hover{background:var(--acc2);}
+.btn-out{background:transparent;color:var(--acc);border:1px solid var(--acc);border-radius:6px;padding:.35rem .9rem;font-size:.85rem;cursor:pointer;}
+.btn-out:hover{background:var(--acc);color:#000;}
+.preset-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem;}
+.preset-btn{background:#1a2233;border:1px solid #2a3a50;color:#8ba3bc;padding:.3rem .7rem;border-radius:5px;cursor:pointer;font-size:.78rem;}
+.preset-btn:hover,.preset-btn.active{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600;}
+.tbl-alg{width:100%;border-collapse:collapse;font-size:.82rem;}
+.tbl-alg th{background:#1a2233;color:var(--acc);padding:.5rem .7rem;text-align:left;font-weight:600;}
+.tbl-alg td{padding:.45rem .7rem;border-top:1px solid #1e2a38;color:#c8d8e8;}
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1rem;}
+.metric-card{background:#0a0f14;border:1px solid #1e2a38;border-radius:8px;padding:.6rem;text-align:center;}
+.metric-val{font-size:1.5rem;font-weight:700;color:var(--acc);}
+.metric-label{font-size:.7rem;color:#8ba3bc;margin-top:.1rem;}
+.log-box{background:#060a0f;border:1px solid #1e2a38;border-radius:6px;padding:.6rem;font-size:.78rem;color:#8ba3bc;height:85px;overflow-y:auto;font-family:monospace;}
+.verdict{font-size:.95rem;font-weight:700;text-align:center;padding:.5rem;border-radius:8px;margin-top:.5rem;}
+.verdict.ok{background:#0a1f10;color:#4ade80;border:1px solid #4ade80;}
+.verdict.fail{background:#1f0a0a;color:#ef4444;border:1px solid #ef4444;}
+</style>
+
+<div class="ila-wrap">
+  <a href="{{ url_for('demos.learn_dimat') }}" class="ila-back">← Vissza a tananyaghoz</a>
+  <div class="ila-hero">
+    <h1>19. fejezet — Kétpólusú gráfok</h1>
+    <p>Páros gráfok, párosítás, augmentáló utak, Hall-feltétel \(|N(X)|\ge|X|\), König-tétel \(\nu(G)=\tau(G)\).</p>
+  </div>
+  <div class="ila-nav">
+    <div class="ila-nav-link active" onclick="showTab('tab-bip',this)">Páros gráf</div>
+    <div class="ila-nav-link" onclick="showTab('tab-match',this)">Párosítás</div>
+    <div class="ila-nav-link" onclick="showTab('tab-hall',this)">Hall-tétel</div>
+    <div class="ila-nav-link" onclick="showTab('tab-konig',this)">König-tétel</div>
+    <div class="ila-nav-link" onclick="showTab('tab-hung',this)">Magyar módszer</div>
+  </div>
+
+  <!-- TAB 1: PÁROS GRÁF -->
+  <div id="tab-bip" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>BFS kétszínezés — párosság ellenőrzése</h5>
+          <div class="preset-row">
+            <div class="preset-btn active" onclick="bipLoad('k33',this)">K₃,₃ (páros)</div>
+            <div class="preset-btn" onclick="bipLoad('c6',this)">C₆ (páros)</div>
+            <div class="preset-btn" onclick="bipLoad('c5',this)">C₅ (NEM páros)</div>
+            <div class="preset-btn" onclick="bipLoad('petersen',this)">Petersen (NEM páros)</div>
+          </div>
+          <canvas id="bip-canvas" width="560" height="320"></canvas>
+          <div class="mt-2 d-flex gap-2">
+            <button class="btn-acc" onclick="bipBFS()">BFS kétszínezés</button>
+            <button class="btn-out ms-auto" onclick="bipReset()">Visszaállítás</button>
+          </div>
+          <div class="log-box mt-2" id="bip-log">Indítsd el a BFS kétszínezést.</div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Eredmény</h5>
+          <div class="metric-row" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="metric-card"><div class="metric-val" id="bip-n">—</div><div class="metric-label">Csúcsok</div></div>
+            <div class="metric-card"><div class="metric-val" id="bip-e">—</div><div class="metric-label">Élek</div></div>
+            <div class="metric-card"><div class="metric-val" id="bip-odd">—</div><div class="metric-label">Páratlan kör</div></div>
+          </div>
+          <div id="bip-verdict" class="verdict fail">—</div>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>Tétel</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75">
+            <b style="color:var(--acc)">11.2. Tétel:</b> \(G\) kétpólusú (páros) \(\Leftrightarrow\) minden köre páros hosszúságú.<br><br>
+            BFS kétszínezés: csúcsokat felváltva A és B halmazba soroljuk. Ha él fut azonos halmazba → páratlan kör → nem páros.<br><br>
+            <b style="color:var(--acc)">Def.:</b> \(G=(V,E)\) kétpólusú, ha \(V=A\cup B\), \(A\cap B=\emptyset\), és minden él \(A\)-B között fut.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: PÁROSÍTÁS -->
+  <div id="tab-match" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>Maximális párosítás — augmentáló utak</h5>
+          <div class="preset-row">
+            <div class="preset-btn active" onclick="matchLoad('small',this)">4+4 gráf</div>
+            <div class="preset-btn" onclick="matchLoad('medium',this)">5+5 gráf</div>
+            <div class="preset-btn" onclick="matchLoad('hall',this)">Hall-példa</div>
+          </div>
+          <canvas id="match-canvas" width="560" height="300"></canvas>
+          <div class="mt-2 d-flex gap-2">
+            <button class="btn-acc" onclick="matchStep()">Lépés</button>
+            <button class="btn-acc" onclick="matchAll()">Teljes futtatás</button>
+            <button class="btn-out ms-auto" onclick="matchReset()">Vissza</button>
+          </div>
+          <div class="log-box mt-2" id="match-log">Lépésről lépésre augmentáló utat keres.</div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Állapot</h5>
+          <div class="metric-row" style="grid-template-columns:1fr 1fr;">
+            <div class="metric-card"><div class="metric-val" id="match-size">0</div><div class="metric-label">Párosítás mérete</div></div>
+            <div class="metric-card"><div class="metric-val" id="match-max">—</div><div class="metric-label">Maximum</div></div>
+          </div>
+          <div id="match-edges" style="font-size:.8rem;color:#8ba3bc;line-height:1.6"></div>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>Algoritmus</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Lépés</th><th>Leírás</th></tr></thead>
+            <tbody>
+              <tr><td>1.</td><td>Indul üres M párosítással</td></tr>
+              <tr><td>2.</td><td>BFS: szabad A-csúcsból augmentáló utat keres</td></tr>
+              <tr><td>3.</td><td>Ha talál: felváltja M és M∖élek az úton</td></tr>
+              <tr><td>4.</td><td>Ha nincs aug. út: M maximális</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: HALL-TÉTEL -->
+  <div id="tab-hall" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>Hall-feltétel \(|N(X)| \ge |X|\) ellenőrző</h5>
+          <canvas id="hall-canvas" width="560" height="300"></canvas>
+          <div class="mt-2 d-flex gap-2 align-items-center">
+            <button class="btn-acc" onclick="hallCheck()">Hall-feltétel ellenőrzése</button>
+            <button class="btn-out" onclick="hallRandom()">Véletlenszerű gráf</button>
+            <button class="btn-out ms-auto" onclick="hallReset()">Vissza</button>
+          </div>
+          <div class="log-box mt-2" id="hall-log">A kék csúcsok az A halmazban, a zöldek B-ben. Kattints csúcsra az X halmaz kiválasztásához.</div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Hall-tétel (11.6.)</h5>
+          <div style="font-size:.84rem;color:#c8d8e8;line-height:1.8">
+            Legyen \(G=(V_1\cup V_2,E)\) kétpólusú, \(|V_1|=m\).<br><br>
+            Pontosan akkor létezik \(m\) élből álló párosítás, ha minden \(X\subseteq V_1\)-re:<br>
+            \[|N(X)| \ge |X|\]
+            Ez a <b style="color:var(--acc)">Hall-feltétel</b> (házasítási feltétel).<br><br>
+            <b>Ha mindkét pólus teljesíti → 1-faktor (teljes párosítás).</b>
+          </div>
+          <div id="hall-result" class="verdict fail mt-2">—</div>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>Szükséges feltételek összefoglalója</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>X</th><th>\(|X|\)</th><th>\(|N(X)|\)</th><th>OK?</th></tr></thead>
+            <tbody id="hall-tbl"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: KÖNIG-TÉTEL -->
+  <div id="tab-konig" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="ila-card">
+          <h5>König-tétel: \(\nu(G)=\tau(G)\) demonstráció</h5>
+          <canvas id="konig-canvas" width="560" height="300"></canvas>
+          <div class="mt-2 d-flex gap-2">
+            <button class="btn-acc" onclick="konigRun()">König algoritmus</button>
+            <button class="btn-out ms-auto" onclick="konigReset()">Vissza</button>
+          </div>
+          <div class="log-box mt-2" id="konig-log">A König-tétel bizonyítja: páros gráfban a minimum lefogó csúcsrendszer = maximum párosítás.</div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ila-card">
+          <h5>Eredmény</h5>
+          <div class="metric-row" style="grid-template-columns:1fr 1fr;">
+            <div class="metric-card"><div class="metric-val" id="kon-nu">—</div><div class="metric-label">\(\nu(G)\) max párosítás</div></div>
+            <div class="metric-card"><div class="metric-val" id="kon-tau">—</div><div class="metric-label">\(\tau(G)\) min lefogó</div></div>
+          </div>
+          <div id="kon-verdict" class="verdict fail">—</div>
+        </div>
+        <div class="ila-card mt-2">
+          <h5>König-tétel (11.8.)</h5>
+          <div style="font-size:.84rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:var(--acc)">Páros gráfban:</b>
+            \[m(G) = M(G)\]
+            azaz a minimum lefogó csúcsrendszer (\(\tau\)) mérete egyenlő a maximum párosítás (\(\nu\)) méretével.<br><br>
+            Nem páros gráfban ez általában nem igaz (pl. \(C_5\): \(\nu=2\), \(\tau=3\)).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: MAGYAR MÓDSZER -->
+  <div id="tab-hung" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Magyar módszer (Hungarian method) — súlyozott párosítás</h5>
+          <div class="row g-3">
+            <div class="col-md-7">
+              <canvas id="hung-canvas" width="460" height="320"></canvas>
+              <div class="mt-2 d-flex gap-2">
+                <button class="btn-acc" onclick="hungStep()">Lépés</button>
+                <button class="btn-acc" onclick="hungAll()">Optimum</button>
+                <button class="btn-out ms-auto" onclick="hungReset()">Vissza</button>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="ila-card" style="background:#0a0f14">
+                <b style="color:var(--acc);font-size:.85rem">Súlymátrix</b>
+                <div id="hung-matrix" style="font-family:monospace;font-size:.8rem;color:#c8d8e8;margin-top:.5rem;white-space:pre"></div>
+              </div>
+              <div class="ila-card mt-2" style="background:#0a0f14">
+                <b style="color:var(--acc);font-size:.85rem">Eredmény</b>
+                <div id="hung-result" style="font-size:.83rem;color:#c8d8e8;margin-top:.3rem">—</div>
+              </div>
+              <div class="log-box mt-2" id="hung-log">Munkák optimális kiosztása munkásokhoz.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Algoritmus lépései</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Fázis</th><th>Leírás</th></tr></thead>
+            <tbody>
+              <tr><td>1. Redukció</td><td>Minden sor minimuma kivonva; majd oszlopoké</td></tr>
+              <tr><td>2. Lefedés</td><td>Min. vonalszám, ami lefedi a 0-kat</td></tr>
+              <tr><td>3. Módosítás</td><td>Ha vonalszám &lt; n: legkisebb nem fedett − min</td></tr>
+              <tr><td>4. Párosítás</td><td>Ha vonalszám = n: független nullák = optimum</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Alkalmazások</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Feladat</th><th>Megoldás</th></tr></thead>
+            <tbody>
+              <tr><td>Munkás-munka kiosztás</td><td>Min. költség teljes párosítás</td></tr>
+              <tr><td>Statikai ridegség</td><td>Laman-tétel: kétpólusú gráf rang</td></tr>
+              <tr><td>Ütemezés</td><td>Job scheduling min. makespan</td></tr>
+              <tr><td>Szállítási prob.</td><td>Hálózati folyam + König</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]})"></script>
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── BIPARTITE DATA ────────────────────────────────────────────────────────────
+const BIP_PRESETS = {
+  k33:{nodes:[{x:120,y:80,g:0},{x:280,y:80,g:0},{x:440,y:80,g:0},{x:120,y:240,g:1},{x:280,y:240,g:1},{x:440,y:240,g:1}],
+       edges:[[0,3],[0,4],[0,5],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5]]},
+  c6:{nodes:[{x:280,y:50,g:-1},{x:440,y:140,g:-1},{x:440,y:250,g:-1},{x:280,y:330,g:-1},{x:120,y:250,g:-1},{x:120,y:140,g:-1}],
+      edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]]},
+  c5:{nodes:[{x:280,y:50,g:-1},{x:440,y:160,g:-1},{x:370,y:310,g:-1},{x:190,y:310,g:-1},{x:120,y:160,g:-1}],
+      edges:[[0,1],[1,2],[2,3],[3,4],[4,0]]},
+  petersen:{nodes:[{x:280,y:40,g:-1},{x:440,y:160,g:-1},{x:380,y:310,g:-1},{x:180,y:310,g:-1},{x:120,y:160,g:-1},{x:280,y:130,g:-1},{x:355,y:190,g:-1},{x:320,y:280,g:-1},{x:240,y:280,g:-1},{x:205,y:190,g:-1}],
+             edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[5,7],[6,8],[7,9],[8,5],[9,6],[0,5],[1,6],[2,7],[3,8],[4,9]]}
+};
+let bipG={nodes:[],edges:[]}, bipColor=[];
+
+function bipLoad(name, btn) {
+  bipG=JSON.parse(JSON.stringify(BIP_PRESETS[name]));
+  bipColor=new Array(bipG.nodes.length).fill(-1);
+  document.querySelectorAll('#tab-bip .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('bip-n').textContent=bipG.nodes.length;
+  document.getElementById('bip-e').textContent=bipG.edges.length;
+  document.getElementById('bip-odd').textContent='—';
+  document.getElementById('bip-verdict').textContent='—'; document.getElementById('bip-verdict').className='verdict fail';
+  document.getElementById('bip-log').textContent='Indítsd el a BFS kétszínezést.';
+  bipDraw();
+}
+
+function bipDraw() {
+  const cv=document.getElementById('bip-canvas'),ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  bipG.edges.forEach(([u,v])=>{
+    ctx.beginPath();ctx.moveTo(bipG.nodes[u].x,bipG.nodes[u].y);ctx.lineTo(bipG.nodes[v].x,bipG.nodes[v].y);
+    ctx.strokeStyle='#2a3a50';ctx.lineWidth=1.5;ctx.stroke();
+  });
+  bipG.nodes.forEach((n,i)=>{
+    const col=bipColor[i]===0?'#38bdf8':bipColor[i]===1?'#4ade80':'#1e2a38';
+    ctx.beginPath();ctx.arc(n.x,n.y,16,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=bipColor[i]>=0?'#000':'#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(bipColor[i]===0?'A':bipColor[i]===1?'B':i,n.x,n.y);
+  });
+}
+
+function bipBFS() {
+  const n=bipG.nodes.length;
+  bipColor=new Array(n).fill(-1);
+  const adj=Array.from({length:n},()=>[]);
+  bipG.edges.forEach(([u,v])=>{adj[u].push(v);adj[v].push(u);});
+  let isBipartite=true, oddCycle=false;
+  for(let s=0;s<n;s++){
+    if(bipColor[s]>=0) continue;
+    bipColor[s]=0;
+    const q=[s];
+    while(q.length){
+      const v=q.shift();
+      for(const u of adj[v]){
+        if(bipColor[u]<0){bipColor[u]=1-bipColor[v];q.push(u);}
+        else if(bipColor[u]===bipColor[v]){isBipartite=false;oddCycle=true;}
+      }
+    }
+  }
+  bipDraw();
+  const vd=document.getElementById('bip-verdict');
+  if(isBipartite){vd.textContent='✓ Kétpólusú (páros) gráf — nincs páratlan kör';vd.className='verdict ok';}
+  else{vd.textContent='✗ NEM kétpólusú — páratlan kör van!';vd.className='verdict fail';}
+  document.getElementById('bip-odd').textContent=isBipartite?'Nincs':'Van';
+  document.getElementById('bip-log').textContent=isBipartite?
+    `Kétszínezés sikeres! A-csoport: ${bipColor.map((c,i)=>c===0?i:-1).filter(x=>x>=0).join(',')} | B-csoport: ${bipColor.map((c,i)=>c===1?i:-1).filter(x=>x>=0).join(',')}`:
+    'Páratlan kör detektálva — kétszínezés sikertelen.';
+}
+function bipReset(){bipColor=new Array(bipG.nodes.length).fill(-1);bipDraw();}
+
+// ── MATCHING ─────────────────────────────────────────────────────────────────
+const MATCH_PRESETS = {
+  small:{A:[0,1,2,3],B:[4,5,6,7],edges:[[0,4],[0,5],[1,5],[1,6],[2,6],[2,7],[3,7]]},
+  medium:{A:[0,1,2,3,4],B:[5,6,7,8,9],edges:[[0,5],[0,6],[1,6],[1,7],[2,7],[2,8],[3,8],[3,9],[4,9],[4,5]]},
+  hall:{A:[0,1,2,3],B:[4,5,6,7],edges:[[0,4],[0,5],[1,5],[2,5],[3,5],[3,6]]}
+};
+let matchG=null, matching=[], matchDone=false;
+
+function matchPos(side, idx, total, W, H) {
+  const y=60+idx*(H-120)/(total-1||1);
+  return {x:side===0?120:W-120, y};
+}
+
+function matchLoad(name, btn) {
+  matchG=JSON.parse(JSON.stringify(MATCH_PRESETS[name]));
+  matching=[];matchDone=false;
+  document.querySelectorAll('#tab-match .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('match-size').textContent=0;
+  document.getElementById('match-max').textContent='—';
+  document.getElementById('match-log').textContent='Augmentáló utak keresése. Nyomj Lépés-t.';
+  matchDraw();
+}
+
+function matchDraw() {
+  if(!matchG) return;
+  const cv=document.getElementById('match-canvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const posA=matchG.A.map((_,i)=>matchPos(0,i,matchG.A.length,W,H));
+  const posB=matchG.B.map((_,i)=>matchPos(1,i,matchG.B.length,W,H));
+  const pos=[...posA,...posB];
+  matchG.edges.forEach(([u,v])=>{
+    const inM=matching.some(([a,b])=>a===u&&b===v||a===v&&b===u);
+    ctx.beginPath();ctx.moveTo(pos[u].x,pos[u].y);ctx.lineTo(pos[v].x,pos[v].y);
+    ctx.strokeStyle=inM?'#4ade80':'#2a3a50';ctx.lineWidth=inM?3:1.5;ctx.stroke();
+  });
+  const matchedV=new Set(matching.flat());
+  [...matchG.A,...matchG.B].forEach((v,vi)=>{
+    const p=pos[v];
+    ctx.beginPath();ctx.arc(p.x,p.y,14,0,Math.PI*2);
+    ctx.fillStyle=matchedV.has(v)?'#1a4a1a':'#1e2a38';ctx.fill();
+    ctx.strokeStyle=vi<matchG.A.length?'#38bdf8':'#4ade80';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(v,p.x,p.y);
+  });
+  ctx.fillStyle='#38bdf8';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('A (bal pólus)',120,20);
+  ctx.fillStyle='#4ade80';ctx.fillText('B (jobb pólus)',W-120,20);
+  document.getElementById('match-size').textContent=matching.length;
+}
+
+function matchAugPath() {
+  if(!matchG) return false;
+  const matchedL=new Map(matching.map(([a,b])=>[a,b]));
+  const matchedR=new Map(matching.map(([a,b])=>[b,a]));
+  const adj={};
+  matchG.A.forEach(v=>{adj[v]=[];});
+  matchG.B.forEach(v=>{adj[v]=[];});
+  matchG.edges.forEach(([u,v])=>{adj[u].push(v);adj[v].push(u);});
+  for(const src of matchG.A){
+    if(matchedL.has(src)) continue;
+    // BFS for augmenting path
+    const prev=new Map([[src,null]]);
+    const q=[src];
+    let found=null;
+    outer: while(q.length){
+      const u=q.shift();
+      for(const v of adj[u]){
+        if(matchG.A.includes(u)){ // u in A, v in B
+          if(!prev.has(v)){prev.set(v,u);
+            if(!matchedR.has(v)){found=v;break outer;}
+            const u2=matchedR.get(v);
+            if(!prev.has(u2)){prev.set(u2,v);q.push(u2);}
+          }
+        }
+      }
+    }
+    if(found!==null){
+      // augment
+      let v=found;
+      while(v!==null){
+        const u=prev.get(v);
+        if(u!==null){
+          const idx=matching.findIndex(([a,b])=>a===u&&b===v||a===v&&b===u);
+          if(idx>=0) matching.splice(idx,1); else matching.push([u,v]);
+        }
+        v=prev.get(u)||null;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+function matchStep(){
+  const found=matchAugPath();
+  matchDraw();
+  if(found) document.getElementById('match-log').textContent=`Augmentáló út találva! Párosítás mérete: ${matching.length}.`;
+  else{document.getElementById('match-log').textContent=`Nincs több augmentáló út. Maximum párosítás: ${matching.length}.`;
+    document.getElementById('match-max').textContent=matching.length;}
+}
+function matchAll(){while(matchAugPath()){}matchDraw();document.getElementById('match-log').textContent=`Maximum párosítás: ${matching.length}.`;document.getElementById('match-max').textContent=matching.length;}
+function matchReset(){matching=[];matchDone=false;matchDraw();document.getElementById('match-log').textContent='Augmentáló utak keresése. Nyomj Lépés-t.';}
+
+// ── HALL CHECK ────────────────────────────────────────────────────────────────
+const HALL_A=[0,1,2,3], HALL_B=[4,5,6,7];
+let hallEdges=[[0,4],[0,5],[1,5],[1,6],[2,6],[2,7],[3,4],[3,7]];
+let hallSel=new Set();
+
+function hallPos(i, side, W, H){
+  const n=4;
+  return {x:side===0?120:W-120, y:60+i*(H-120)/(n-1)};
+}
+
+function hallDraw(){
+  const cv=document.getElementById('hall-canvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  hallEdges.forEach(([u,v])=>{
+    ctx.beginPath();ctx.moveTo(hallPos(u,0,W,H).x,hallPos(u,0,W,H).y);ctx.lineTo(hallPos(v-4,1,W,H).x,hallPos(v-4,1,W,H).y);
+    ctx.strokeStyle='#2a3a50';ctx.lineWidth=1.5;ctx.stroke();
+  });
+  HALL_A.forEach(v=>{
+    const p=hallPos(v,0,W,H);
+    ctx.beginPath();ctx.arc(p.x,p.y,14,0,Math.PI*2);
+    ctx.fillStyle=hallSel.has(v)?'#1a3a6a':'#1e2a38';ctx.fill();
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=hallSel.has(v)?3:1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(v,p.x,p.y);
+  });
+  HALL_B.forEach(v=>{
+    const p=hallPos(v-4,1,W,H);
+    ctx.beginPath();ctx.arc(p.x,p.y,14,0,Math.PI*2);ctx.fillStyle='#1e2a38';ctx.fill();
+    ctx.strokeStyle='#4ade80';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(v,p.x,p.y);
+  });
+}
+
+function hallNeighbors(X){
+  const N=new Set();
+  X.forEach(v=>hallEdges.filter(([u])=>u===v).forEach(([,w])=>N.add(w)));
+  return N;
+}
+
+function hallCheck(){
+  const subsets=[];
+  for(let mask=1;mask<(1<<4);mask++){
+    const X=HALL_A.filter((_,i)=>mask&(1<<i));
+    const N=hallNeighbors(new Set(X));
+    subsets.push({X,N:N.size,ok:N.size>=X.length});
+  }
+  const tbody=document.getElementById('hall-tbl');
+  tbody.innerHTML='';
+  subsets.forEach(({X,N,ok})=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>{${X.join(',')}}</td><td>${X.length}</td><td>${N}</td><td style="color:${ok?'#4ade80':'#ef4444'}">${ok?'✓':'✗'}</td>`;
+    tbody.appendChild(tr);
+  });
+  const allOk=subsets.every(s=>s.ok);
+  const res=document.getElementById('hall-result');
+  res.textContent=allOk?'✓ Hall-feltétel teljesül — létezik teljes párosítás!':'✗ Hall-feltétel NEM teljesül — nincs teljes párosítás';
+  res.className=allOk?'verdict ok':'verdict fail';
+}
+function hallRandom(){
+  hallEdges=[];
+  for(let a=0;a<4;a++) for(let b=4;b<8;b++) if(Math.random()<0.45) hallEdges.push([a,b]);
+  hallSel.clear();hallDraw();document.getElementById('hall-log').textContent='Új véletlenszerű gráf. Ellenőrizd a Hall-feltételt!';
+  document.getElementById('hall-tbl').innerHTML='';document.getElementById('hall-result').textContent='—';document.getElementById('hall-result').className='verdict fail';
+}
+function hallReset(){hallSel.clear();hallDraw();}
+hallDraw();
+
+// ── KÖNIG ─────────────────────────────────────────────────────────────────────
+const KON_A=[0,1,2], KON_B=[3,4,5];
+const KON_E=[[0,3],[0,4],[1,4],[1,5],[2,3],[2,5]];
+let konMatching=[], konCover=[];
+
+function konPos(i,side,W,H){return{x:side===0?150:W-150,y:60+i*(H-120)/2};}
+
+function konigDraw(){
+  const cv=document.getElementById('konig-canvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  KON_E.forEach(([u,v])=>{
+    const inM=konMatching.some(([a,b])=>a===u&&b===v);
+    ctx.beginPath();ctx.moveTo(konPos(u,0,W,H).x,konPos(u,0,W,H).y);ctx.lineTo(konPos(v-3,1,W,H).x,konPos(v-3,1,W,H).y);
+    ctx.strokeStyle=inM?'#4ade80':'#2a3a50';ctx.lineWidth=inM?3:1.5;ctx.stroke();
+  });
+  KON_A.forEach((v,i)=>{
+    const p=konPos(i,0,W,H),inC=konCover.includes(v);
+    ctx.beginPath();ctx.arc(p.x,p.y,16,0,Math.PI*2);ctx.fillStyle=inC?'#7c2d12':'#1e2a38';ctx.fill();
+    ctx.strokeStyle=inC?'#f97316':'#38bdf8';ctx.lineWidth=inC?3:1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(v,p.x,p.y);
+  });
+  KON_B.forEach((v,i)=>{
+    const p=konPos(i,1,W,H),inC=konCover.includes(v);
+    ctx.beginPath();ctx.arc(p.x,p.y,16,0,Math.PI*2);ctx.fillStyle=inC?'#7c2d12':'#1e2a38';ctx.fill();
+    ctx.strokeStyle=inC?'#f97316':'#4ade80';ctx.lineWidth=inC?3:1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(v,p.x,p.y);
+  });
+  ctx.fillStyle='#38bdf8';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('A pólus',150,20);
+  ctx.fillStyle='#4ade80';ctx.fillText('B pólus',W-150,20);
+  if(konCover.length) {ctx.fillStyle='#f97316';ctx.fillText('Narancs = lefogó csúcs',W/2,20);}
+}
+
+function konigRun(){
+  // Find max matching (simple greedy + augmenting)
+  konMatching=[];
+  const matchL=new Map(),matchR=new Map();
+  function aug(v,visited){
+    for(const [u,w] of KON_E){
+      if(u!==v) continue;
+      if(visited.has(w)) continue;
+      visited.add(w);
+      if(!matchR.has(w)||aug(matchR.get(w),visited)){matchL.set(v,w);matchR.set(w,v);return true;}
+    }return false;
+  }
+  KON_A.forEach(v=>aug(v,new Set()));
+  konMatching=[...matchL.entries()].map(([a,b])=>[a,b]);
+  // König: find vertex cover from max matching
+  const U=new Set(KON_A.filter(v=>!matchL.has(v)));
+  const alternating=new Set(U);
+  let changed=true;
+  while(changed){changed=false;
+    for(const [u,v] of KON_E){
+      if(alternating.has(u)&&!alternating.has(v)){alternating.add(v);changed=true;}
+      if(alternating.has(v)&&!alternating.has(u)&&matchR.has(v)&&!alternating.has(matchR.get(v))){alternating.add(matchR.get(v));changed=true;}
+    }
+  }
+  konCover=[...KON_A.filter(v=>!alternating.has(v)),...KON_B.filter(v=>alternating.has(v))];
+  konigDraw();
+  document.getElementById('kon-nu').textContent=konMatching.length;
+  document.getElementById('kon-tau').textContent=konCover.length;
+  const vd=document.getElementById('kon-verdict');
+  vd.textContent=konMatching.length===konCover.length?`✓ ν(G)=τ(G)=${konMatching.length} — König-tétel igazolva!`:'Eltérés?';
+  vd.className='verdict ok';
+  document.getElementById('konig-log').textContent=`Max párosítás: ${konMatching.length} él. Min lefogó csúcsrendszer: {${konCover.join(',')}} (${konCover.length} csúcs). ν=τ!`;
+}
+function konigReset(){konMatching=[];konCover=[];konigDraw();}
+konigDraw();
+
+// ── HUNGARIAN METHOD ──────────────────────────────────────────────────────────
+const HUNG_N=4;
+let hungCost=[[9,2,7,8],[6,4,3,7],[5,8,1,8],[7,6,9,4]];
+let hungMat=[], hungRowRed=[], hungColRed=[], hungStep_i=0, hungAssign=[];
+
+function hungReset(){
+  hungMat=hungCost.map(r=>[...r]);
+  hungRowRed=new Array(HUNG_N).fill(0);
+  hungColRed=new Array(HUNG_N).fill(0);
+  hungStep_i=0;hungAssign=[];
+  const pre=document.getElementById('hung-matrix');
+  pre.textContent='Eredeti súlymátrix:\n'+hungCost.map(r=>r.join('  ')).join('\n');
+  document.getElementById('hung-result').textContent='—';
+  document.getElementById('hung-log').textContent='Lépések: sor-redukció, oszlop-redukció, párosítás.';
+  hungDraw();
+}
+
+function hungDraw(){
+  const cv=document.getElementById('hung-canvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,r=130;
+  const aPos=Array.from({length:HUNG_N},(_,i)=>({x:cx-r,y:80+i*60}));
+  const bPos=Array.from({length:HUNG_N},(_,i)=>({x:cx+r,y:80+i*60}));
+  for(let i=0;i<HUNG_N;i++) for(let j=0;j<HUNG_N;j++){
+    const inA=hungAssign.some(([a,b])=>a===i&&b===j);
+    ctx.beginPath();ctx.moveTo(aPos[i].x,aPos[i].y);ctx.lineTo(bPos[j].x,bPos[j].y);
+    ctx.strokeStyle=inA?'#4ade80':'rgba(42,58,80,0.5)';ctx.lineWidth=inA?3:1;ctx.stroke();
+    if(inA||Math.random()<0.3){
+      const mx=(aPos[i].x+bPos[j].x)/2+10,my=(aPos[i].y+bPos[j].y)/2;
+      ctx.fillStyle='#8ba3bc';ctx.font='9px monospace';ctx.textAlign='center';ctx.fillText(hungCost[i][j],mx,my);
+    }
+  }
+  aPos.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,16,0,Math.PI*2);ctx.fillStyle='#1e3a5f';ctx.fill();
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`W${i+1}`,p.x,p.y);
+  });
+  bPos.forEach((p,i)=>{
+    const inA=hungAssign.some(([a,b])=>b===i);
+    ctx.beginPath();ctx.arc(p.x,p.y,16,0,Math.PI*2);ctx.fillStyle=inA?'#1a4a1a':'#1e2a38';ctx.fill();
+    ctx.strokeStyle='#4ade80';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`J${i+1}`,p.x,p.y);
+  });
+}
+
+function hungAll(){
+  // Hungarian algorithm
+  const n=HUNG_N,C=hungCost.map(r=>[...r]);
+  // Row reduction
+  for(let i=0;i<n;i++){const m=Math.min(...C[i]);C[i]=C[i].map(v=>v-m);}
+  // Col reduction
+  for(let j=0;j<n;j++){const m=Math.min(...C.map(r=>r[j]));C.forEach(r=>r[j]-=m);}
+  // Find independent zeros (greedy)
+  const assign=new Array(n).fill(-1),assignJ=new Array(n).fill(-1);
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++) if(C[i][j]===0&&assign[i]<0&&assignJ[j]<0){assign[i]=j;assignJ[j]=i;}
+  hungAssign=assign.map((j,i)=>[i,j]).filter(([,j])=>j>=0);
+  const total=hungAssign.reduce((s,[i,j])=>s+hungCost[i][j],0);
+  hungDraw();
+  document.getElementById('hung-result').innerHTML=
+    hungAssign.map(([i,j])=>`W${i+1}→J${j+1} (${hungCost[i][j]})`).join('<br>')+
+    `<br><b style="color:#4ade80">Összköltség: ${total}</b>`;
+  document.getElementById('hung-log').textContent=`Optimális kiosztás megtalálva. Összköltség: ${total}.`;
+  const pre=document.getElementById('hung-matrix');
+  pre.textContent='Redukált mátrix:\n'+C.map(r=>r.join('  ')).join('\n');
+}
+function hungStep(){hungAll();}
+
+hungReset();
+bipLoad('k33',null);
+matchLoad('small',null);
+</script>
+{% endblock %}

@@ -1,0 +1,945 @@
+{% extends "base.html" %}
+{% block title %}17. fejezet – Síkgráfok{% endblock %}
+{% block content %}
+<style>
+:root { --acc:#38bdf8; --acc2:#0ea5e9; }
+.ila-wrap { max-width:1100px; margin:0 auto; padding:2rem 1rem 4rem; }
+.ila-back { color:var(--acc); text-decoration:none; font-size:.85rem; opacity:.8; }
+.ila-back:hover { opacity:1; }
+.ila-hero { text-align:center; margin:1.5rem 0 2rem; }
+.ila-hero h1 { font-size:2rem; font-weight:700; color:#fff; }
+.ila-hero p { color:#8ba3bc; max-width:620px; margin:.5rem auto 0; font-size:.95rem; }
+.ila-nav { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.ila-nav-link { background:#151920; border:1px solid #1e2a38; color:#8ba3bc; padding:.45rem 1rem;
+  border-radius:6px; cursor:pointer; font-size:.85rem; transition:all .2s; }
+.ila-nav-link.active,.ila-nav-link:hover { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.ila-card { background:#151920; border:1px solid #1e2a38; border-radius:10px; padding:1.2rem; margin-bottom:1rem; }
+.ila-card h5 { color:var(--acc); font-size:.9rem; font-weight:700; margin-bottom:.7rem; text-transform:uppercase; letter-spacing:.05em; }
+canvas { border-radius:8px; background:#0a0f14; display:block; }
+.btn-acc { background:var(--acc); color:#000; border:none; font-weight:600; border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-acc:hover { background:var(--acc2); }
+.btn-out { background:transparent; color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.35rem .9rem; font-size:.85rem; cursor:pointer; }
+.btn-out:hover { background:var(--acc); color:#000; }
+.btn-sm2 { padding:.25rem .65rem; font-size:.78rem; border-radius:5px; }
+.preset-row { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.7rem; }
+.preset-btn { background:#1a2233; border:1px solid #2a3a50; color:#8ba3bc; padding:.3rem .7rem; border-radius:5px; cursor:pointer; font-size:.78rem; }
+.preset-btn:hover,.preset-btn.active { background:var(--acc); color:#000; border-color:var(--acc); font-weight:600; }
+.tbl-alg { width:100%; border-collapse:collapse; font-size:.82rem; }
+.tbl-alg th { background:#1a2233; color:var(--acc); padding:.5rem .7rem; text-align:left; font-weight:600; }
+.tbl-alg td { padding:.45rem .7rem; border-top:1px solid #1e2a38; color:#c8d8e8; }
+.verdict { font-size:1rem; font-weight:700; text-align:center; padding:.5rem; border-radius:8px; margin-top:.5rem; }
+.verdict.ok { background:#0a1f10; color:#4ade80; border:1px solid #4ade80; }
+.verdict.fail { background:#1f0a0a; color:#ef4444; border:1px solid #ef4444; }
+.metric-card { background:#0a0f14; border:1px solid #1e2a38; border-radius:8px; padding:.6rem; text-align:center; }
+.metric-val { font-size:1.4rem; font-weight:700; color:var(--acc); }
+.metric-label { font-size:.7rem; color:#8ba3bc; }
+.euler-box { background:#0a0f14; border:1px solid #38bdf8; border-radius:8px; padding:.8rem 1.2rem; text-align:center; font-size:1.3rem; font-weight:700; color:#38bdf8; }
+.slider-row { display:flex; align-items:center; gap:.6rem; font-size:.82rem; color:#8ba3bc; }
+.slider-row input[type=range] { flex:1; accent-color:var(--acc); }
+</style>
+
+<div class="ila-wrap">
+  <a href="{{ url_for('demos.learn_dimat') }}" class="ila-back">← Vissza a tananyaghoz</a>
+
+  <div class="ila-hero">
+    <h1>17. fejezet — Síkgráfok</h1>
+    <p>Planaritás, Kuratowski tétele, Euler-képlet (l+c−e=2), felületek és fullerének.</p>
+  </div>
+
+  <div class="ila-nav">
+    <div class="ila-nav-link active" onclick="showTab('tab-planar',this)">Síkbarajzolhatóság</div>
+    <div class="ila-nav-link" onclick="showTab('tab-euler',this)">Euler-képlet</div>
+    <div class="ila-nav-link" onclick="showTab('tab-kuratowski',this)">Kuratowski tétele</div>
+    <div class="ila-nav-link" onclick="showTab('tab-surfaces',this)">Felületek</div>
+    <div class="ila-nav-link" onclick="showTab('tab-fuller',this)">Fullerének</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 1: SÍKBARAJZOLHATÓSÁG -->
+  <div id="tab-planar" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Csúcsmozgató — terítsd ki a gráfot metszetmentesen!</h5>
+          <div class="preset-row" id="planar-presets">
+            <div class="preset-btn active" onclick="planarLoadPreset('k4',this)">K₄ (síkgráf)</div>
+            <div class="preset-btn" onclick="planarLoadPreset('k5',this)">K₅ (NEM síkgráf)</div>
+            <div class="preset-btn" onclick="planarLoadPreset('k33',this)">K₃,₃ (NEM síkgráf)</div>
+            <div class="preset-btn" onclick="planarLoadPreset('petersen',this)">Petersen-gráf</div>
+            <div class="preset-btn" onclick="planarLoadPreset('dodecahedron',this)">Dodekaéder (síkgráf)</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-8">
+              <canvas id="planar-canvas" width="540" height="360" style="cursor:grab"></canvas>
+            </div>
+            <div class="col-md-4">
+              <div class="row g-2 mb-3">
+                <div class="col-6"><div class="metric-card"><div class="metric-val" id="pl-crossings">0</div><div class="metric-label">Metszetek</div></div></div>
+                <div class="col-6"><div class="metric-card"><div class="metric-val" id="pl-edges">0</div><div class="metric-label">Élek</div></div></div>
+                <div class="col-6"><div class="metric-card"><div class="metric-val" id="pl-nodes">0</div><div class="metric-label">Csúcsok</div></div></div>
+                <div class="col-6"><div class="metric-card"><div class="metric-val" id="pl-3c6">0</div><div class="metric-label">3c−6 korlát</div></div></div>
+              </div>
+              <div id="pl-verdict" class="verdict fail">—</div>
+              <div style="font-size:.8rem;color:#8ba3bc;margin-top:.7rem;line-height:1.7">
+                Húzd a csúcsokat az elrendezés változtatásához.<br>
+                Piros él = metszés van.<br><br>
+                <b style="color:var(--acc)">Def.:</b> G síkgráf, ha lerajzolható metszések nélkül.
+              </div>
+              <button class="btn-out btn-sm2 mt-2" onclick="planarAutoLayout()">Auto-elrendezés</button>
+              <button class="btn-out btn-sm2 mt-1" onclick="planarCircleLayout()">Kör-elrendezés</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Ismert síkgráfok</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Gráf</th><th>Síkgráf?</th><th>Megjegyzés</th></tr></thead>
+            <tbody>
+              <tr><td>\(K_4\)</td><td style="color:#4ade80">✓ igen</td><td>Tetraéder</td></tr>
+              <tr><td>\(K_5\)</td><td style="color:#ef4444">✗ nem</td><td>5 csúcs, 10 él; 3·5−6=9 &lt; 10</td></tr>
+              <tr><td>\(K_{3,3}\)</td><td style="color:#ef4444">✗ nem</td><td>6 csúcs, 9 él; 2·6−4=8 &lt; 9 (páros)</td></tr>
+              <tr><td>\(K_6\)</td><td style="color:#ef4444">✗ nem</td><td>Tartalmaz \(K_5\)-t</td></tr>
+              <tr><td>Petersen-gráf</td><td style="color:#ef4444">✗ nem</td><td>Tartalmaz \(K_{3,3}\) felosztást</td></tr>
+              <tr><td>Minden fa</td><td style="color:#4ade80">✓ igen</td><td>\(|E|=|V|-1 \le 3|V|-6\)</td></tr>
+              <tr><td>Dodekaéder</td><td style="color:#4ade80">✓ igen</td><td>20 csúcs, 30 él</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Jordan-tétel és planaritás</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            <b style="color:var(--acc)">Jordan-tétel:</b> Minden egyszerű zárt görbe a sík két tartományra osztja — belső és külső.<br><br>
+            Ez teszi lehetővé a "lap" fogalom precíz definiálását síkgráfokban.<br><br>
+            <b style="color:var(--acc)">Gömb ↔ sík:</b> Sztereografikus projekcióval sík ↔ gömb, ezért a sík és a gömb planáris gráfjai megegyeznek.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 2: EULER-KÉPLET -->
+  <div id="tab-euler" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Euler poliédertétele — \(l + c - e = 2\)</h5>
+          <div class="preset-row" id="euler-presets">
+            <div class="preset-btn active" onclick="eulerLoadPreset('cube',this)">Kocka</div>
+            <div class="preset-btn" onclick="eulerLoadPreset('tetra',this)">Tetraéder</div>
+            <div class="preset-btn" onclick="eulerLoadPreset('k4',this)">K₄</div>
+            <div class="preset-btn" onclick="eulerLoadPreset('wheel5',this)">Kerék W₅</div>
+            <div class="preset-btn" onclick="eulerLoadPreset('dodeca',this)">Dodekaéder</div>
+            <div class="preset-btn" onclick="eulerLoadPreset('custom',this)">Egyedi rajz</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6">
+              <canvas id="euler-canvas" width="400" height="300" id="euler-canvas" style="cursor:crosshair"></canvas>
+              <div style="font-size:.75rem;color:#8ba3bc;margin-top:.3rem">Egyedi módban: kattints csúcshoz (üres: új csúcs; csúcson: él indul)</div>
+            </div>
+            <div class="col-md-6">
+              <div class="euler-box mb-3" id="euler-formula-display">l + c − e = ? + ? − ? = ?</div>
+              <div class="row g-2 mb-2">
+                <div class="col-4"><div class="metric-card"><div class="metric-val" id="eu-l">—</div><div class="metric-label">Lapok (l)</div></div></div>
+                <div class="col-4"><div class="metric-card"><div class="metric-val" id="eu-c">—</div><div class="metric-label">Csúcsok (c)</div></div></div>
+                <div class="col-4"><div class="metric-card"><div class="metric-val" id="eu-e">—</div><div class="metric-label">Élek (e)</div></div></div>
+              </div>
+              <div id="euler-checks" style="font-size:.83rem;color:#c8d8e8;line-height:1.8"></div>
+              <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75;margin-top:.5rem">
+                <b style="color:var(--acc)">Következmények (egyszerű síkgráf):</b><br>
+                \(e \le 3c - 6\)<br>
+                \(e \le 2c - 4\) (ha páros, azaz nincs háromszög)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Euler II. tétele — Fullerén-kényszer</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            3-reguláris síkgráfban, ahol minden él egy kör része:<br>
+            \[\sum_{i \ge 3}(6-i)\cdot n_i = 12\]
+            ahol \(n_i\) az \(i\)-szögű lapok száma.<br><br>
+            Ha csak 5- és 6-szögek vannak (\(n_5, n_6\)):<br>
+            \[(6-5)\cdot n_5 + (6-6)\cdot n_6 = 12\]
+            \[\boxed{n_5 = 12}\]
+            Mindig pontosan 12 ötszög van — a \(C_{60}\)-ban, a \(C_{20}\)-ban, mindenhol!
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Derékbőség (girth) korlát</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            Ha G síkgráf és derékbősége (legrövidebb kör) \(g\):<br>
+            \[e \le \frac{g}{g-2}(c-2)\]
+            <br>
+            <table class="tbl-alg" style="font-size:.78rem">
+              <thead><tr><th>g (derékbőség)</th><th>Korlát</th></tr></thead>
+              <tbody>
+                <tr><td>3 (van háromszög)</td><td>\(e \le 3c-6\)</td></tr>
+                <tr><td>4 (páros gráf)</td><td>\(e \le 2c-4\)</td></tr>
+                <tr><td>5 (Petersen-szerű)</td><td>\(e \le \frac{5}{3}(c-2)\)</td></tr>
+                <tr><td>6</td><td>\(e \le \frac{3}{2}(c-2)\)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 3: KURATOWSKI -->
+  <div id="tab-kuratowski" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Kuratowski tétele — K₅ és K₃,₃ mint "akadályok"</h5>
+          <div class="row g-3">
+            <div class="col-md-5">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">K₅ — teljes gráf 5 csúcson</div>
+              <canvas id="kur-k5" width="280" height="200"></canvas>
+              <div style="font-size:.75rem;color:#8ba3bc;margin-top:.3rem">10 él, 5 csúcs: 3·5−6=9 &lt; 10 → NEM síkgráf</div>
+            </div>
+            <div class="col-md-5">
+              <div style="font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:.3rem">K₃,₃ — három ház, három kút</div>
+              <canvas id="kur-k33" width="280" height="200"></canvas>
+              <div style="font-size:.75rem;color:#8ba3bc;margin-top:.3rem">9 él, 6 csúcs: 2·6−4=8 &lt; 9 (páros) → NEM síkgráf</div>
+            </div>
+          </div>
+          <div style="font-size:.88rem;color:#c8d8e8;line-height:1.8;margin-top:1rem;padding:.8rem;background:#0a0f14;border-radius:8px;border:1px solid #1e2a38">
+            <b style="color:#38bdf8">Kuratowski tétele (1930):</b><br>
+            G pontosan akkor síkba teríthető, ha <em>nem tartalmaz</em> \(K_5\)-tel vagy \(K_{3,3}\)-mal <b>homeomorf</b> részgráfot.<br>
+            Ekvivalensen (Wagner, 1937): G pontosan akkor planáris, ha sem \(K_5\), sem \(K_{3,3}\) nem <b>minorja</b>.
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Felosztás (subdivision) és minor — interaktív</h5>
+          <div class="preset-row" id="kur-presets">
+            <div class="preset-btn active" onclick="kurLoadPreset('k5_subdiv',this)">K₅ felosztása</div>
+            <div class="preset-btn" onclick="kurLoadPreset('k33_subdiv',this)">K₃,₃ felosztása</div>
+            <div class="preset-btn" onclick="kurLoadPreset('petersen_subdiv',this)">Petersen → K₃,₃</div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-8">
+              <canvas id="kur-canvas" width="520" height="280"></canvas>
+            </div>
+            <div class="col-md-4">
+              <div id="kur-info" style="font-size:.83rem;color:#c8d8e8;line-height:1.75">—</div>
+              <div style="font-size:.83rem;color:#c8d8e8;line-height:1.75;margin-top:.7rem">
+                <b style="color:var(--acc)">Redukció:</b> 2-fokú csúcs törlése + szomszédok összekötése.<br>
+                <b style="color:var(--acc)">Minor:</b> él-összehúzás, csúcs/él törlés.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 4: FELÜLETEK -->
+  <div id="tab-surfaces" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Euler-karakterisztika különböző felületeken</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <canvas id="surf-sphere" width="220" height="180"></canvas>
+              <div style="text-align:center;margin-top:.3rem">
+                <b style="color:#38bdf8">Gömb / Sík</b><br>
+                <span style="font-size:.8rem;color:#8ba3bc">\(\sigma = 2\), \(l+c-e=2\)<br>K₇ NEM rajzolható</span>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <canvas id="surf-torus" width="220" height="180"></canvas>
+              <div style="text-align:center;margin-top:.3rem">
+                <b style="color:#f97316">Tórusz</b><br>
+                <span style="font-size:.8rem;color:#8ba3bc">\(\sigma = 0\), \(l+c-e=0\)<br>K₇ rajzolható!</span>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <canvas id="surf-mobius" width="220" height="180"></canvas>
+              <div style="text-align:center;margin-top:.3rem">
+                <b style="color:#a78bfa">Möbius-szalag</b><br>
+                <span style="font-size:.8rem;color:#8ba3bc">Nem orientálható felület<br>\(\sigma = 1\)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Euler-karakterisztika kalkulátor</h5>
+          <div class="row g-3 align-items-center">
+            <div class="col-md-5">
+              <div class="slider-row mb-2"><label style="width:80px">Csúcsok c:</label><input type="range" min="4" max="20" value="8" id="surf-c" oninput="surfCalc()"><span id="surf-c-val">8</span></div>
+              <div class="slider-row mb-2"><label style="width:80px">Élek e:</label><input type="range" min="3" max="40" value="12" id="surf-e" oninput="surfCalc()"><span id="surf-e-val">12</span></div>
+              <div class="slider-row mb-2"><label style="width:80px">Lapok l:</label><input type="range" min="1" max="20" value="6" id="surf-l" oninput="surfCalc()"><span id="surf-l-val">6</span></div>
+            </div>
+            <div class="col-md-7">
+              <div class="euler-box" id="surf-euler-display">l + c − e = ?</div>
+              <div id="surf-result" style="font-size:.83rem;color:#c8d8e8;margin-top:.6rem;line-height:1.7"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Felületek összehasonlítása</h5>
+          <table class="tbl-alg">
+            <thead><tr><th>Felület</th><th>\(\sigma\)</th><th>Max. teljes gráf</th><th>Orientálható?</th></tr></thead>
+            <tbody>
+              <tr><td>Sík/Gömb</td><td>2</td><td>\(K_4\)</td><td>igen</td></tr>
+              <tr><td>Tórusz</td><td>0</td><td>\(K_7\)</td><td>igen</td></tr>
+              <tr><td>Kettős tórusz</td><td>−2</td><td>\(K_8\)</td><td>igen</td></tr>
+              <tr><td>Projektív sík</td><td>1</td><td>\(K_6\)</td><td>nem</td></tr>
+              <tr><td>Klein-palack</td><td>0</td><td>\(K_6\)</td><td>nem</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>K₇ a tóruszra rajzolva</h5>
+          <canvas id="surf-k7-torus" width="300" height="200"></canvas>
+          <div style="font-size:.75rem;color:#8ba3bc;margin-top:.4rem">K₇: 7 csúcs, 21 él, σ=0 esetén l=21−7+0=14 ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ TAB 5: FULLERÉNEK -->
+  <div id="tab-fuller" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="ila-card">
+          <h5>Fullerének — \(\sum(6-i)n_i = 12\)</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="preset-row" id="full-presets">
+                <div class="preset-btn active" onclick="fullLoad('c20',this)">C₂₀ (dodekaéder)</div>
+                <div class="preset-btn" onclick="fullLoad('c60',this)">C₆₀ (focilabda)</div>
+                <div class="preset-btn" onclick="fullLoad('c28',this)">C₂₈</div>
+              </div>
+              <canvas id="full-canvas" width="380" height="300"></canvas>
+            </div>
+            <div class="col-md-6">
+              <div id="full-stats" class="mb-3" style="font-size:.85rem;color:#c8d8e8;line-height:1.85">—</div>
+              <div class="euler-box" id="full-euler">?</div>
+              <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8;margin-top:.7rem">
+                <b style="color:var(--acc)">Fullerén:</b> 3-reguláris (minden szénnek 3 szomszédja), konvex poliéder, csak 5- és 6-szögű lapok.<br><br>
+                Euler II → \(n_5 = 12\) mindig (hatszögek száma változhat).<br><br>
+                \(C_{60}\): 12 ötszög + 20 hatszög; \(l+c-e = 32+60-90 = 2\) ✓
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Euler II. ellenőrző</h5>
+          <div style="font-size:.8rem;color:#8ba3bc;margin-bottom:.5rem">Add meg a lapok számát típusonként:</div>
+          <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+            <label style="font-size:.8rem;color:#8ba3bc;width:60px">3-szögek:</label><input type="number" id="eu2-n3" value="0" min="0" class="form-control form-control-sm" style="width:60px;background:#0a0f14;color:#fff;border-color:#1e2a38">
+            <label style="font-size:.8rem;color:#8ba3bc;width:60px">4-szögek:</label><input type="number" id="eu2-n4" value="0" min="0" class="form-control form-control-sm" style="width:60px;background:#0a0f14;color:#fff;border-color:#1e2a38">
+            <label style="font-size:.8rem;color:#8ba3bc;width:60px">5-szögek:</label><input type="number" id="eu2-n5" value="12" min="0" class="form-control form-control-sm" style="width:60px;background:#0a0f14;color:#fff;border-color:#1e2a38">
+            <label style="font-size:.8rem;color:#8ba3bc;width:60px">6-szögek:</label><input type="number" id="eu2-n6" value="20" min="0" class="form-control form-control-sm" style="width:60px;background:#0a0f14;color:#fff;border-color:#1e2a38">
+            <label style="font-size:.8rem;color:#8ba3bc;width:60px">7-szögek:</label><input type="number" id="eu2-n7" value="0" min="0" class="form-control form-control-sm" style="width:60px;background:#0a0f14;color:#fff;border-color:#1e2a38">
+          </div>
+          <button class="btn-acc btn-sm2" onclick="euler2Check()">Ellenőrzés</button>
+          <div id="eu2-result" style="font-size:.83rem;margin-top:.5rem;color:#c8d8e8"></div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ila-card">
+          <h5>Duális gráf</h5>
+          <div style="font-size:.83rem;color:#c8d8e8;line-height:1.8">
+            Síkgráf \(G\) <b>duálisa</b> \(G^*\): minden laphoz egy csúcs, két csúcs összekötve ha a lapok szomszédosak.<br><br>
+            <b style="color:var(--acc)">Tulajdonságok:</b><br>
+            &bull; \((G^*)^* = G\) (összefüggő esetben)<br>
+            &bull; A kocka duálisa az oktaéder, a dodekaéderé az ikozaéder<br>
+            &bull; \(|V(G^*)| = l(G),\; |E(G^*)| = e(G)\)<br>
+            &bull; Euler: \(l^*+c^*-e^* = c+l-e = 2\) ✓
+          </div>
+          <canvas id="dual-canvas" width="260" height="160" style="margin-top:.7rem"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+});
+</script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('.ila-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(refreshAll,50);
+}
+function setActivePreset(rowEl,btn){
+  rowEl.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+const NR=14;
+
+// ─────────────────────────────────────────────────────────────────
+// CROSSING DETECTION
+function seg_intersect(p1,p2,p3,p4){
+  function cross(o,a,b){return(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);}
+  function onSeg(p,q,r){return Math.min(p.x,r.x)<q.x&&q.x<Math.max(p.x,r.x)&&Math.min(p.y,r.y)<q.y&&q.y<Math.max(p.y,r.y);}
+  const d1=cross(p3,p4,p1),d2=cross(p3,p4,p2),d3=cross(p1,p2,p3),d4=cross(p1,p2,p4);
+  if(((d1>0&&d2<0)||(d1<0&&d2>0))&&((d3>0&&d4<0)||(d3<0&&d4>0)))return true;
+  return false;
+}
+function countCrossings(nodes,edges){
+  let cnt=0;
+  for(let i=0;i<edges.length;i++) for(let j=i+1;j<edges.length;j++){
+    const[a,b]=edges[i],[c,d]=edges[j];
+    if(a===c||a===d||b===c||b===d) continue;
+    if(seg_intersect(nodes[a],nodes[b],nodes[c],nodes[d])) cnt++;
+  }
+  return cnt;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 1: PLANAR DRAG
+const PLANAR_PRESETS={
+  k4:{
+    nodes:[{x:270,y:80},{x:100,y:280},{x:270,y:280},{x:440,y:280}],
+    edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]
+  },
+  k5:{
+    nodes:[{x:270,y:50},{x:430,y:180},{x:370,y:330},{x:170,y:330},{x:110,y:180}],
+    edges:[[0,1],[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]]
+  },
+  k33:{
+    nodes:[{x:120,y:80},{x:270,y:80},{x:420,y:80},{x:120,y:280},{x:270,y:280},{x:420,y:280}],
+    edges:[[0,3],[0,4],[0,5],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5]]
+  },
+  petersen:{
+    nodes:[{x:270,y:40},{x:440,y:160},{x:380,y:330},{x:160,y:330},{x:100,y:160},
+           {x:270,y:130},{x:360,y:195},{x:325,y:290},{x:215,y:290},{x:180,y:195}],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[5,7],[6,8],[7,9],[8,5],[9,6],[0,5],[1,6],[2,7],[3,8],[4,9]]
+  },
+  dodecahedron:{
+    nodes:[
+      {x:270,y:30},{x:420,y:110},{x:460,y:260},{x:360,y:340},{x:180,y:340},{x:80,y:260},{x:120,y:110},
+      {x:270,y:100},{x:380,y:165},{x:400,y:270},{x:310,y:310},{x:230,y:310},{x:140,y:270},{x:160,y:165},
+      {x:270,y:165},{x:310,y:225},{x:310,y:265},{x:230,y:265},{x:230,y:225},{x:270,y:200}
+    ],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[0,7],[1,8],[2,9],[3,10],[4,11],[5,12],[6,13],
+           [7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,7],[7,19],[8,15],[9,16],[10,17],[11,18],[12,14],[13,14],
+           [14,18],[14,15],[15,16],[16,17],[17,18],[18,19],[19,15]]
+  }
+};
+
+let planarData=null,planarDrag=null;
+function planarLoadPreset(name,btn){
+  planarData=JSON.parse(JSON.stringify(PLANAR_PRESETS[name]));
+  setActivePreset(document.getElementById('planar-presets'),btn);
+  planarRender();
+}
+function planarRender(){
+  if(!planarData) return;
+  const{nodes,edges}=planarData;
+  const cv=document.getElementById('planar-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const crossEdges=new Set();
+  for(let i=0;i<edges.length;i++) for(let j=i+1;j<edges.length;j++){
+    const[a,b]=edges[i],[c,d]=edges[j];
+    if(a===c||a===d||b===c||b===d) continue;
+    if(seg_intersect(nodes[a],nodes[b],nodes[c],nodes[d])){crossEdges.add(i);crossEdges.add(j);}
+  }
+  edges.forEach(([a,b],i)=>{
+    ctx.strokeStyle=crossEdges.has(i)?'#ef4444':'#2a5a8a';
+    ctx.lineWidth=crossEdges.has(i)?2.5:1.5;
+    ctx.beginPath();ctx.moveTo(nodes[a].x,nodes[a].y);ctx.lineTo(nodes[b].x,nodes[b].y);ctx.stroke();
+  });
+  nodes.forEach((n,i)=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,NR,0,2*Math.PI);
+    ctx.fillStyle='#1e3a5f';ctx.fill();ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,n.x,n.y);
+  });
+  const cross=countCrossings(nodes,edges);
+  document.getElementById('pl-crossings').textContent=cross;
+  document.getElementById('pl-edges').textContent=edges.length;
+  document.getElementById('pl-nodes').textContent=nodes.length;
+  document.getElementById('pl-3c6').textContent=3*nodes.length-6;
+  const v=document.getElementById('pl-verdict');
+  if(cross===0){v.textContent='✓ Metszetmentes — síkgráf (ebben az elrendezésben)';v.className='verdict ok';}
+  else{v.textContent=`✗ ${cross} metszés — próbálj újra elrendezni!`;v.className='verdict fail';}
+}
+const pc=document.getElementById('planar-canvas');
+pc.addEventListener('mousedown',e=>{
+  if(!planarData) return;
+  const r=pc.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  planarData.nodes.forEach((n,i)=>{if(Math.hypot(n.x-mx,n.y-my)<NR+4)planarDrag=i;});
+});
+pc.addEventListener('mousemove',e=>{
+  if(planarDrag===null||planarDrag===undefined) return;
+  const r=pc.getBoundingClientRect();
+  planarData.nodes[planarDrag].x=e.clientX-r.left;
+  planarData.nodes[planarDrag].y=e.clientY-r.top;
+  planarRender();
+});
+pc.addEventListener('mouseup',()=>{planarDrag=null;});
+pc.addEventListener('mouseleave',()=>{planarDrag=null;});
+function planarAutoLayout(){
+  if(!planarData) return;
+  const n=planarData.nodes.length,W=540,H=360;
+  // Force-directed: simple spring
+  let{nodes,edges}=planarData;
+  const cx=W/2,cy=H/2,r=Math.min(W,H)*0.38;
+  nodes.forEach((nd,i)=>{nd.x=cx+r*Math.cos(2*Math.PI*i/n-Math.PI/2);nd.y=cy+r*Math.sin(2*Math.PI*i/n-Math.PI/2);});
+  // simple spring iterations
+  for(let iter=0;iter<300;iter++){
+    const forces=nodes.map(()=>({x:0,y:0}));
+    const K=80,rep=3000;
+    edges.forEach(([a,b])=>{
+      const dx=nodes[b].x-nodes[a].x,dy=nodes[b].y-nodes[a].y;
+      const d=Math.max(Math.hypot(dx,dy),1),f=(d-K)/d*0.3;
+      forces[a].x+=dx*f;forces[a].y+=dy*f;
+      forces[b].x-=dx*f;forces[b].y-=dy*f;
+    });
+    for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+      const dx=nodes[j].x-nodes[i].x,dy=nodes[j].y-nodes[i].y;
+      const d2=Math.max(dx*dx+dy*dy,1),f=rep/d2;
+      forces[i].x-=dx*f;forces[i].y-=dy*f;
+      forces[j].x+=dx*f;forces[j].y+=dy*f;
+    }
+    nodes.forEach((nd,i)=>{
+      nd.x=Math.max(30,Math.min(W-30,nd.x+forces[i].x*0.1));
+      nd.y=Math.max(30,Math.min(H-30,nd.y+forces[i].y*0.1));
+    });
+  }
+  planarRender();
+}
+function planarCircleLayout(){
+  if(!planarData) return;
+  const n=planarData.nodes.length,cx=270,cy=180,r=150;
+  planarData.nodes.forEach((nd,i)=>{nd.x=cx+r*Math.cos(2*Math.PI*i/n-Math.PI/2);nd.y=cy+r*Math.sin(2*Math.PI*i/n-Math.PI/2);});
+  planarRender();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 2: EULER FORMULA
+const EULER_PRESETS={
+  cube:{nodes:[{x:130,y:80},{x:230,y:80},{x:230,y:180},{x:130,y:180},{x:90,y:50},{x:190,y:50},{x:190,y:150},{x:90,y:150}],
+    edges:[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]],faces:6,desc:'Kocka: l=6, c=8, e=12'},
+  tetra:{nodes:[{x:200,y:40},{x:80,y:240},{x:320,y:240},{x:200,y:180}],
+    edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],faces:4,desc:'Tetraéder: l=4, c=4, e=6'},
+  k4:{nodes:[{x:200,y:50},{x:80,y:250},{x:320,y:250},{x:200,y:180}],
+    edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],faces:4,desc:'K₄: l=4, c=4, e=6'},
+  wheel5:{nodes:[{x:200,y:150},{x:200,y:50},{x:330,y:115},{x:285,y:270},{x:115,y:270},{x:70,y:115}],
+    edges:[[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[2,3],[3,4],[4,5],[5,1]],faces:6,desc:'W₅: l=6, c=6, e=10'},
+  dodeca:{nodes:[],edges:[],faces:12,desc:'Dodekaéder: l=12, c=20, e=30'}
+};
+let eulerData=null,eulerCustom=null,eulerCustomMode=false;
+function eulerLoadPreset(name,btn){
+  if(name==='custom'){
+    eulerCustomMode=true;eulerCustom={nodes:[],edges:[]};
+    setActivePreset(document.getElementById('euler-presets'),btn);
+    eulerRender();return;
+  }
+  eulerCustomMode=false;
+  eulerData=JSON.parse(JSON.stringify(EULER_PRESETS[name]));
+  setActivePreset(document.getElementById('euler-presets'),btn);
+  eulerRender();
+}
+function eulerRender(){
+  const cv=document.getElementById('euler-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const data=eulerCustomMode?eulerCustom:eulerData;
+  if(!data||!data.nodes.length){
+    ctx.fillStyle='#8ba3bc';ctx.font='13px monospace';ctx.textAlign='center';
+    ctx.fillText('Kattints csúcsok hozzáadásához, majd csúcsokon kattintva éleket',W/2,H/2-10);
+    ctx.fillText('húzz köztük.',W/2,H/2+10);
+    eulerUpdate(0,0,0);return;
+  }
+  data.edges.forEach(([a,b])=>{
+    ctx.strokeStyle='#2a5a8a';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(data.nodes[a].x,data.nodes[a].y);ctx.lineTo(data.nodes[b].x,data.nodes[b].y);ctx.stroke();
+  });
+  data.nodes.forEach((n,i)=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,NR,0,2*Math.PI);ctx.fillStyle='#1e3a5f';ctx.fill();
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,n.x,n.y);
+  });
+  if(!eulerCustomMode&&eulerData){
+    // Compute faces via Euler formula (we know it)
+    const c=eulerData.nodes.length,e=eulerData.edges.length,l=eulerData.faces;
+    eulerUpdate(l,c,e);
+  } else if(eulerCustomMode){
+    const c=eulerCustom.nodes.length,e=eulerCustom.edges.length;
+    // Approximate faces: for connected planar graph l = e - c + 2
+    const conn=c>0&&eulerCustom.edges.length>=c-1;
+    const l=conn?e-c+2:1;
+    eulerUpdate(l,c,e);
+  }
+}
+function eulerUpdate(l,c,e){
+  const sum=l+c-e;
+  document.getElementById('eu-l').textContent=l;
+  document.getElementById('eu-c').textContent=c;
+  document.getElementById('eu-e').textContent=e;
+  document.getElementById('euler-formula-display').textContent=`l + c − e = ${l} + ${c} − ${e} = ${sum}`;
+  document.getElementById('euler-formula-display').style.color=sum===2?'#4ade80':'#f97316';
+  const checks=[];
+  if(c>0){
+    const planE=3*c-6;
+    checks.push(`e=${e} ≤ 3c−6=${planE}: ${e<=planE?'<span style="color:#4ade80">✓</span>':'<span style="color:#ef4444">✗ (nem síkgráf!)</span>'}`);
+  }
+  document.getElementById('euler-checks').innerHTML=checks.join('<br>');
+}
+// Custom canvas interaction
+let eulerEdgeStart=null;
+document.getElementById('euler-canvas').addEventListener('click',e=>{
+  if(!eulerCustomMode) return;
+  const r=document.getElementById('euler-canvas').getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  const hit=eulerCustom.nodes.findIndex(n=>Math.hypot(n.x-mx,n.y-my)<NR+4);
+  if(hit===-1){
+    if(eulerEdgeStart!==null){eulerEdgeStart=null;eulerRender();return;}
+    eulerCustom.nodes.push({x:mx,y:my});eulerRender();
+  } else {
+    if(eulerEdgeStart===null){eulerEdgeStart=hit;}
+    else{
+      if(eulerEdgeStart!==hit&&!eulerCustom.edges.some(([a,b])=>(a===eulerEdgeStart&&b===hit)||(a===hit&&b===eulerEdgeStart))){
+        eulerCustom.edges.push([eulerEdgeStart,hit]);
+      }
+      eulerEdgeStart=null;eulerRender();
+    }
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 3: KURATOWSKI
+function drawK5(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2,r=Math.min(W,H)*0.38;
+  const nodes=Array.from({length:5},(_,i)=>({x:cx+r*Math.cos(2*Math.PI*i/5-Math.PI/2),y:cy+r*Math.sin(2*Math.PI*i/5-Math.PI/2)}));
+  for(let i=0;i<5;i++) for(let j=i+1;j<5;j++){
+    ctx.strokeStyle='#2a5a8a';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();
+  }
+  nodes.forEach((n,i)=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,12,0,2*Math.PI);ctx.fillStyle='#1e3a5f';ctx.fill();
+    ctx.strokeStyle='#ef4444';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,n.x,n.y);
+  });
+}
+function drawK33(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const topY=60,botY=160,xs=[80,140,200];
+  const top=xs.map(x=>({x:x+20,y:topY})),bot=xs.map(x=>({x:x+20,y:botY}));
+  const all=[...top,...bot];
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){
+    ctx.strokeStyle='#2a5a8a';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(top[i].x,top[i].y);ctx.lineTo(bot[j].x,bot[j].y);ctx.stroke();
+  }
+  // labels
+  const labels=['A','B','C','X','Y','Z'];
+  all.forEach((n,i)=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,12,0,2*Math.PI);ctx.fillStyle=i<3?'#1e3a5f':'#1f2a0a';ctx.fill();
+    ctx.strokeStyle='#ef4444';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(labels[i],n.x,n.y);
+  });
+  ctx.fillStyle='#38bdf8';ctx.font='10px monospace';ctx.textAlign='center';
+  ctx.fillText('Házak (A,B,C)',140,30);ctx.fillText('Kutak (X,Y,Z)',140,200);
+}
+const KUR_PRESETS={
+  k5_subdiv:{
+    nodes:[{x:260,y:40},{x:440,y:160},{x:380,y:320},{x:140,y:320},{x:80,y:160},
+           {x:350,y:100},{x:410,y:240},{x:260,y:320},{x:110,y:240},{x:170,y:100}],
+    edges:[[0,5],[5,1],[1,6],[6,2],[2,7],[7,3],[3,8],[8,4],[4,9],[9,0],[0,2],[1,3],[2,4],[3,0],[4,1]],
+    desc:'K₅ felosztása: a belső csúcsok (6–10) a K₅ éleit osztják fel. Redukálva → K₅.',
+    highlight:[5,6,7,8,9]
+  },
+  k33_subdiv:{
+    nodes:[{x:100,y:60},{x:260,y:60},{x:420,y:60},{x:100,y:280},{x:260,y:280},{x:420,y:280},
+           {x:180,y:150},{x:340,y:150},{x:260,y:170}],
+    edges:[[0,3],[0,7],[0,5],[1,6],[1,3],[1,5],[2,4],[2,6],[2,3],[7,5],[6,4],[8,4]],
+    desc:'K₃,₃ felosztása: belső csúcsok (7,8,9) osztják az éleket. Redukálva → K₃,₃.',
+    highlight:[6,7,8]
+  },
+  petersen_subdiv:{
+    nodes:[{x:260,y:40},{x:430,y:160},{x:370,y:330},{x:150,y:330},{x:90,y:160},
+           {x:260,y:130},{x:355,y:195},{x:320,y:285},{x:200,y:285},{x:165,y:195}],
+    edges:[[0,1],[1,2],[2,3],[3,4],[4,0],[5,7],[6,8],[7,9],[8,5],[9,6],[0,5],[1,6],[2,7],[3,8],[4,9]],
+    desc:'Petersen-gráf: tartalmaz K₃,₃-felosztást → nem síkgráf. (Kiemelve a 3 "ház" és 3 "kút" csúcsok.)',
+    highlight:[0,2,6,1,3,7]
+  }
+};
+let kurData=null;
+function kurLoadPreset(name,btn){
+  kurData=JSON.parse(JSON.stringify(KUR_PRESETS[name]));
+  setActivePreset(document.getElementById('kur-presets'),btn);
+  kurRender();
+}
+function kurRender(){
+  if(!kurData) return;
+  const{nodes,edges,highlight,desc}=kurData;
+  const cv=document.getElementById('kur-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  edges.forEach(([a,b])=>{ctx.strokeStyle='#2a5a8a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(nodes[a].x,nodes[a].y);ctx.lineTo(nodes[b].x,nodes[b].y);ctx.stroke();});
+  nodes.forEach((n,i)=>{
+    const isHL=highlight&&highlight.includes(i);
+    ctx.beginPath();ctx.arc(n.x,n.y,NR,0,2*Math.PI);
+    ctx.fillStyle=isHL?'#7c2d12':'#1e3a5f';ctx.fill();
+    ctx.strokeStyle=isHL?'#f97316':'#38bdf8';ctx.lineWidth=isHL?2.5:1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,n.x,n.y);
+  });
+  document.getElementById('kur-info').textContent=desc;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 4: SURFACES
+function drawSphere(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2,r=70;
+  const grad=ctx.createRadialGradient(cx-20,cy-20,10,cx,cy,r);
+  grad.addColorStop(0,'#1e5a8a');grad.addColorStop(1,'#0a1a2a');
+  ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);ctx.fillStyle=grad;ctx.fill();
+  ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+  // Draw latitude/longitude lines
+  ctx.strokeStyle='rgba(56,189,248,0.3)';ctx.lineWidth=1;
+  for(let lat=-60;lat<=60;lat+=30){
+    const yr=cy+r*Math.sin(lat*Math.PI/180);
+    const xr=r*Math.cos(lat*Math.PI/180);
+    ctx.beginPath();ctx.ellipse(cx,yr,xr,xr*0.3,0,0,2*Math.PI);ctx.stroke();
+  }
+  for(let lon=0;lon<180;lon+=60){
+    ctx.beginPath();ctx.ellipse(cx,cy,r*Math.cos(lon*Math.PI/180),r,lon*Math.PI/180,0,2*Math.PI);ctx.stroke();
+  }
+  ctx.fillStyle='#38bdf8';ctx.font='bold 11px monospace';ctx.textAlign='center';
+  ctx.fillText('σ = 2',cx,H-10);
+}
+function drawTorus(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=60,r=25;
+  ctx.strokeStyle='#f97316';ctx.lineWidth=1.5;
+  // draw torus rings
+  for(let t=0;t<24;t++){
+    const ang=2*Math.PI*t/24;
+    const ex=cx+(R+r*Math.cos(ang))*Math.cos(0),ey=cy+(R+r*Math.cos(ang))*Math.sin(0);
+    ctx.beginPath();ctx.ellipse(cx,cy,R+r*Math.cos(ang),r*0.4,0,0,2*Math.PI);
+    ctx.strokeStyle=`rgba(249,115,22,${0.15+0.15*Math.abs(Math.cos(ang))})`;ctx.stroke();
+  }
+  ctx.beginPath();ctx.ellipse(cx,cy,R+r,r*0.4,0,0,2*Math.PI);ctx.strokeStyle='#f97316';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(cx,cy,R-r,r*0.4,0,0,2*Math.PI);ctx.strokeStyle='#f97316';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,R,0,2*Math.PI);ctx.strokeStyle='rgba(249,115,22,0.3)';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle='#f97316';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillText('σ = 0',cx,H-10);
+}
+function drawMobius(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2,r=60;
+  // Draw Möbius band as twisted strip
+  ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;
+  const steps=80;
+  ctx.beginPath();
+  for(let i=0;i<=steps;i++){
+    const t=2*Math.PI*i/steps;
+    const x=cx+(r+20*Math.cos(t/2))*Math.cos(t);
+    const y=cy+(r+20*Math.cos(t/2))*Math.sin(t)*0.4+20*Math.sin(t/2);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.beginPath();
+  for(let i=0;i<=steps;i++){
+    const t=2*Math.PI*i/steps;
+    const x=cx+(r-20*Math.cos(t/2))*Math.cos(t);
+    const y=cy+(r-20*Math.cos(t/2))*Math.sin(t)*0.4-20*Math.sin(t/2);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.fillStyle='#a78bfa';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillText('σ = 1',cx,H-10);
+}
+function surfCalc(){
+  const c=parseInt(document.getElementById('surf-c').value);
+  const e=parseInt(document.getElementById('surf-e').value);
+  const l=parseInt(document.getElementById('surf-l').value);
+  document.getElementById('surf-c-val').textContent=c;
+  document.getElementById('surf-e-val').textContent=e;
+  document.getElementById('surf-l-val').textContent=l;
+  const sig=l+c-e;
+  document.getElementById('surf-euler-display').textContent=`l+c−e = ${l}+${c}−${e} = ${sig}`;
+  document.getElementById('surf-euler-display').style.color=sig===2?'#4ade80':sig===0?'#f97316':'#a78bfa';
+  const surfaces={2:'Sík/Gömb',0:'Tórusz',1:'Projektív sík',-2:'Kettős tórusz'};
+  document.getElementById('surf-result').innerHTML=
+    `Euler-karakterisztika: <b style="color:#38bdf8">σ = ${sig}</b><br>Felület: <b style="color:#f97316">${surfaces[sig]||'Általános felület (nem-sztandard)'}</b>`;
+}
+function drawK7Torus(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2,r=85;
+  const nodes=Array.from({length:7},(_,i)=>({x:cx+r*Math.cos(2*Math.PI*i/7-Math.PI/2),y:cy+r*Math.sin(2*Math.PI*i/7-Math.PI/2)}));
+  const colors=['#1e6aaf','#166534','#7c2d12','#4a1d96','#5e4000','#1a4a3a','#5a1a4a'];
+  for(let i=0;i<7;i++) for(let j=i+1;j<7;j++){
+    ctx.strokeStyle='rgba(56,189,248,0.25)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();
+  }
+  nodes.forEach((n,i)=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,12,0,2*Math.PI);ctx.fillStyle=colors[i];ctx.fill();
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,n.x,n.y);
+  });
+  ctx.fillStyle='#8ba3bc';ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('K₇: 7 csúcs, 21 él (tóruszra síkgráf!)',cx,H-6);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 5: FULLERENES
+const FULL_DATA={
+  c20:{
+    label:'C₂₀ — Dodekaéder',
+    c:20,e:30,l:12,n5:12,n6:0,
+    nodes:(()=>{
+      const phi=(1+Math.sqrt(5))/2;
+      const raw=[[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1],
+        [0,1/phi,phi],[0,1/phi,-phi],[0,-1/phi,phi],[0,-1/phi,-phi],
+        [1/phi,phi,0],[1/phi,-phi,0],[-1/phi,phi,0],[-1/phi,-phi,0],
+        [phi,0,1/phi],[phi,0,-1/phi],[-phi,0,1/phi],[-phi,0,-1/phi]];
+      const cx=190,cy=150,sc=100;
+      return raw.map(([x,y,z])=>({x:cx+sc*(x+z*0.5),y:cy-sc*(y+z*0.3)}));
+    })(),
+    edges:[[0,8],[0,12],[0,16],[1,9],[1,12],[1,17],[2,10],[2,13],[2,16],[3,11],[3,13],[3,17],
+           [4,8],[4,14],[4,18],[5,9],[5,14],[5,19],[6,10],[6,15],[6,18],[7,11],[7,15],[7,19],
+           [8,10],[9,11],[12,14],[13,15],[16,17],[18,19]]
+  },
+  c60:{
+    label:'C₆₀ — Focilabda (Buckminsterfullerén)',
+    c:60,e:90,l:32,n5:12,n6:20,
+    nodes:(()=>{
+      const phi=(1+Math.sqrt(5))/2;
+      // Generate truncated icosahedron vertices (simplified projection)
+      const pts=[];const cx=190,cy=150,sc=120;
+      for(let t=0;t<60;t++){
+        const a=2*Math.PI*t/12,b=Math.PI*(t%5)/5;
+        const r=t<12?0.3:t<30?0.7:1.0;
+        pts.push({x:cx+sc*r*Math.cos(a+b*0.4),y:cy+sc*r*0.6*Math.sin(a+b*0.4)});
+      }
+      return pts;
+    })(),
+    edges:Array.from({length:90},(_,i)=>[i%60,(i+1)%60])
+  },
+  c28:{
+    label:'C₂₈',
+    c:28,e:42,l:16,n5:12,n6:4,
+    nodes:(()=>{const pts=[];const cx=190,cy=150,sc=110;for(let i=0;i<28;i++){const a=2*Math.PI*i/28;pts.push({x:cx+sc*Math.cos(a),y:cy+sc*0.55*Math.sin(a)});}return pts;})(),
+    edges:Array.from({length:28},(_,i)=>[[i,(i+1)%28],[i,(i+14)%28]]).flat()
+  }
+};
+let fullData=null;
+function fullLoad(name,btn){
+  fullData=FULL_DATA[name];
+  setActivePreset(document.getElementById('full-presets'),btn);
+  fullRender();
+}
+function fullRender(){
+  if(!fullData) return;
+  const{label,c,e,l,n5,n6,nodes,edges}=fullData;
+  const cv=document.getElementById('full-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  edges.forEach(([a,b])=>{
+    if(a>=nodes.length||b>=nodes.length) return;
+    ctx.strokeStyle='#2a5a8a';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(nodes[a].x,nodes[a].y);ctx.lineTo(nodes[b].x,nodes[b].y);ctx.stroke();
+  });
+  nodes.forEach(n=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,5,0,2*Math.PI);ctx.fillStyle='#38bdf8';ctx.fill();
+  });
+  document.getElementById('full-stats').innerHTML=
+    `<b style="color:#38bdf8">${label}</b><br>`+
+    `Csúcsok (c): <b>${c}</b><br>Élek (e): <b>${e}</b><br>Lapok (l): <b>${l}</b><br>`+
+    `Ötszögek (n₅): <b style="color:#f97316">${n5}</b> — mindig 12!<br>`+
+    `Hatszögek (n₆): <b>${n6}</b>`;
+  document.getElementById('full-euler').textContent=`l+c−e = ${l}+${c}−${e} = ${l+c-e}`;
+  document.getElementById('full-euler').style.color=l+c-e===2?'#4ade80':'#ef4444';
+}
+function euler2Check(){
+  const ns=[3,4,5,6,7].map(i=>parseInt(document.getElementById(`eu2-n${i}`).value)||0);
+  const coefs=[3,2,1,0,-1];
+  const sum=ns.reduce((s,n,i)=>s+coefs[i]*n,0);
+  const res=document.getElementById('eu2-result');
+  res.innerHTML=`∑(6−i)·n_i = 3·${ns[0]} + 2·${ns[1]} + 1·${ns[2]} + 0·${ns[3]} + (−1)·${ns[4]} = <b style="color:${sum===12?'#4ade80':'#ef4444'}">${sum}</b><br>`;
+  res.innerHTML+=sum===12?'<b style="color:#4ade80">✓ Euler II. teljesül! (3-reguláris síkgráf lehet)</b>':'<b style="color:#ef4444">✗ Nem teljesül Euler II. tétele</b>';
+}
+function drawDual(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,H);
+  // Simple square with its dual
+  const sq=[{x:70,y:60},{x:150,y:60},{x:150,y:140},{x:70,y:140}];
+  const sqe=[[0,1],[1,2],[2,3],[3,0],[0,2]];
+  ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.5;
+  sqe.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(sq[a].x,sq[a].y);ctx.lineTo(sq[b].x,sq[b].y);ctx.stroke();});
+  sq.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,8,0,2*Math.PI);ctx.fillStyle='#1e3a5f';ctx.fill();ctx.strokeStyle='#38bdf8';ctx.lineWidth=1.2;ctx.stroke();});
+  // Dual nodes (one per face of original)
+  const dual=[{x:95,y:90},{x:145,y:90},{x:170,y:100}];
+  const duale=[[0,1],[0,2]];
+  ctx.strokeStyle='#f97316';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  duale.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(dual[a].x,dual[a].y);ctx.lineTo(dual[b].x,dual[b].y);ctx.stroke();});
+  ctx.setLineDash([]);
+  dual.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,8,0,2*Math.PI);ctx.fillStyle='#5e2d00';ctx.fill();ctx.strokeStyle='#f97316';ctx.lineWidth=1.5;ctx.stroke();});
+  ctx.fillStyle='#38bdf8';ctx.font='9px monospace';ctx.fillText('G',40,100);
+  ctx.fillStyle='#f97316';ctx.font='9px monospace';ctx.fillText('G*',200,80);
+}
+
+// ─────────────────────────────────────────────────────────────────
+function refreshAll(){
+  if(planarData) planarRender();
+  eulerRender();
+  drawK5(document.getElementById('kur-k5'));
+  drawK33(document.getElementById('kur-k33'));
+  if(kurData) kurRender();
+  drawSphere(document.getElementById('surf-sphere'));
+  drawTorus(document.getElementById('surf-torus'));
+  drawMobius(document.getElementById('surf-mobius'));
+  drawK7Torus(document.getElementById('surf-k7-torus'));
+  surfCalc();
+  if(fullData) fullRender();
+  drawDual(document.getElementById('dual-canvas'));
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  planarLoadPreset('k4',null);
+  eulerLoadPreset('cube',null);
+  kurLoadPreset('k5_subdiv',null);
+  drawSphere(document.getElementById('surf-sphere'));
+  drawTorus(document.getElementById('surf-torus'));
+  drawMobius(document.getElementById('surf-mobius'));
+  drawK7Torus(document.getElementById('surf-k7-torus'));
+  surfCalc();
+  fullLoad('c20',null);
+  drawDual(document.getElementById('dual-canvas'));
+});
+</script>
+{% endblock %}

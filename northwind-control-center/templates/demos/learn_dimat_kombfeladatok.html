@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Kombinatorikai feladatok megoldásokkal — Szalkai István{% endblock %}
+{% block title %}Kombinatorikai feladatok megoldásokkal · Combinatorics Exercises with Solutions — Szalkai István{% endblock %}
 
 {% block content %}
+{% import "_macros/i18n.html" as I %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -63,27 +64,30 @@
       <i class="bi bi-collection" style="color:var(--acc);font-size:1.2rem;"></i>
     </div>
     <div style="flex:1;min-width:0;">
-      <h4>Kombinatorikai feladatok — részletes megoldásokkal</h4>
+      <h4>{{ I.t('Kombinatorikai feladatok — részletes megoldásokkal',
+                  'Combinatorics Exercises — with detailed solutions') }}</h4>
       <small class="text-muted">{{ source }}</small>
     </div>
-    <a href="{{ url_for('demos.learn_dimat') }}" class="btn-sec">← Tanulás főoldal</a>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="btn-sec">{{ I.t('← Tanulás főoldal', '← Learn home') }}</a>
   </div>
 
   <div class="kf-stats">
-    <div class="kf-stat"><div class="kf-stat-val">{{ total }}</div><div class="kf-stat-lbl">feladat</div></div>
-    <div class="kf-stat"><div class="kf-stat-val">{{ groups|length }}</div><div class="kf-stat-lbl">szekció</div></div>
-    <div class="kf-stat"><div class="kf-stat-val" style="color:#fbbf24">{{ by_chapter|length }}</div><div class="kf-stat-lbl">könyv-fejezet</div></div>
+    <div class="kf-stat"><div class="kf-stat-val">{{ total }}</div><div class="kf-stat-lbl">{{ I.t('feladat', 'exercises') }}</div></div>
+    <div class="kf-stat"><div class="kf-stat-val">{{ groups|length }}</div><div class="kf-stat-lbl">{{ I.t('szekció', 'sections') }}</div></div>
+    <div class="kf-stat"><div class="kf-stat-val" style="color:#fbbf24">{{ by_chapter|length }}</div><div class="kf-stat-lbl">{{ I.t('könyv-fejezet', 'book chapters') }}</div></div>
   </div>
 
   <div class="kf-chapters">
     {% for ch_n, cnt in by_chapter %}
-    <span class="kf-chapter-pill">{{ ch_n }}. fejezet<span class="cnt">{{ cnt }}</span></span>
+    <span class="kf-chapter-pill">{{ I.t(ch_n ~ '. fejezet', 'Chapter ' ~ ch_n) }}<span class="cnt">{{ cnt }}</span></span>
     {% endfor %}
   </div>
 
   <div class="kf-search-row">
-    <input id="kf-search" type="search" placeholder="Keresés feladatszámra, könyv-ref-re vagy címre…" class="kf-search">
-    <span style="color:#64748b;font-size:.78rem;" id="kf-count">{{ total }} feladat</span>
+    <input id="kf-search" type="search"
+           placeholder="Keresés / Search…"
+           class="kf-search">
+    <span style="color:#64748b;font-size:.78rem;" id="kf-count">{{ total }} {{ I.t('feladat', 'exercises') }}</span>
   </div>
 
   {% for g in groups %}
@@ -91,7 +95,7 @@
     <header class="kf-section-head" onclick="this.parentElement.classList.toggle('open')">
       <span class="kf-section-roman">{{ g.roman }}.</span>
       <div class="kf-section-title">{{ g.name }}</div>
-      <div class="kf-section-meta">{{ g.count }} feladat</div>
+      <div class="kf-section-meta">{{ g.count }} {{ I.t('feladat', 'exercises') }}</div>
       <span class="kf-section-toggle">›</span>
     </header>
     <div class="kf-section-body">
@@ -109,10 +113,16 @@
   {% endfor %}
 
   <div class="foot-note">
-    <strong>Megjegyzés.</strong> A feladatok és megoldások részletességükkel egyetemi
-    bevezető szintű diszkrét matematika tárgyhoz készültek. A „könyv-fejezet" hivatkozás
-    Dr. Szalkai István <em>Diszkrét matematika</em> tankönyvének fejezeteire utal.
-    A KaTeX automatikusan rendereli a $\LaTeX$-jelölést.
+    <span class="i18n">
+      <span class="hu"><strong>Megjegyzés.</strong> A feladatok és megoldások részletességükkel egyetemi
+        bevezető szintű diszkrét matematika tárgyhoz készültek. A „könyv-fejezet" hivatkozás
+        Dr. Szalkai István <em>Diszkrét matematika</em> tankönyvének fejezeteire utal.
+        A KaTeX automatikusan rendereli a $\LaTeX$-jelölést.</span>
+      <span class="en"><strong>Note.</strong> Exercises and solutions are written at the depth of a university
+        introductory discrete-mathematics course. The "book chapter" reference points to chapters of
+        Dr. Szalkai István's <em>Discrete Mathematics</em> textbook. KaTeX auto-renders the
+        $\LaTeX$ notation.</span>
+    </span>
   </div>
 
 </div>

@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+{% block title %}Diszkrét mat. VIII — Gráfelmélet 3.{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#22d3ee!important;}
+.ila-nav-link.active{color:#22d3ee!important;border-bottom-color:#22d3ee!important;}
+.def-box  {border-left:3px solid #22d3ee;background:#071f26;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.thm-box  {border-left:3px solid #0e7490;background:#051419;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.ex-box   {border-left:3px solid #34d399;background:#041f10;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.info-box {background:#161b22;border:1px solid #21262d;padding:.75rem 1rem;border-radius:.4rem;margin:.7rem 0;}
+.warn-box {border-left:3px solid #fbbf24;background:#1c1200;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.step-row {display:flex;gap:1rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:baseline;flex-wrap:wrap;}
+.step-row:last-child{border-bottom:none;}
+.step-eq  {min-width:220px;color:#e2e8f0;font-size:.84rem;}
+.step-why {font-size:.7rem;color:#6b7280;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.prop-ok{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:.3rem;font-size:.73rem;font-weight:600;background:#041f10;border:1px solid #34d399;color:#34d399;margin:.1rem;}
+.prop-no{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:.3rem;font-size:.73rem;font-weight:600;background:#1a0000;border:1px solid #ef4444;color:#ef4444;margin:.1rem;}
+.hall-row{display:grid;grid-template-columns:80px 60px 60px 80px;gap:.3rem .5rem;font-size:.78rem;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:center;}
+.hall-row:last-child{border-bottom:none;}
+.color-chip{display:inline-block;width:1.1rem;height:1.1rem;border-radius:.2rem;vertical-align:middle;margin-right:.2rem;}
+.cmp-tbl{width:100%;font-size:.78rem;border-collapse:collapse;}
+.cmp-tbl th{background:#051419;color:#22d3ee;padding:.45rem .65rem;border:1px solid #21262d;text-align:left;}
+.cmp-tbl td{padding:.4rem .65rem;border:1px solid #21262d;color:#e2e8f0;vertical-align:top;}
+.cmp-tbl tr:nth-child(even) td{background:#071f26;}
+.katex{font-size:1em;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#22d3ee">Diszkrét matematika VIII — fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Gráfelmélet 3.</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2026</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(34,211,238,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-paros',this)"><i class="bi bi-columns-gap me-1"></i>Páros gráfok</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-par',this)"><i class="bi bi-bezier me-1"></i>Párosítás</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-hall',this)"><i class="bi bi-check2-all me-1"></i>Hall-feltétel</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-sik',this)"><i class="bi bi-map me-1"></i>Síkgráfok</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-szin',this)"><i class="bi bi-palette me-1"></i>Színezés</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════════ TAB 1: PÁROS GRÁFOK ══════════ -->
+<div id="tab-paros">
+  <h5 class="fw-bold mb-3" style="color:#22d3ee">Páros gráfok</h5>
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#22d3ee">1. Definíció — Páros gráf</div>
+        <div class="small">Egy \(G\) gráf <strong>páros gráf</strong> az \(A\) és \(B\) pontosztályokkal, ha \(A\cup B=V(G)\), \(A\cap B=\emptyset\), és minden él egyik végpontja \(A\)-ban, másik \(B\)-ben van. Az izolált pont bármely osztályhoz sorolható.</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#0e7490">3. Tétel — Jellemzés</div>
+        <div class="small">Egy \(G\) gráf páros \(\iff\) \(G\)-ben nincs <strong>páratlan hosszú kör</strong> (beleértve a hurokélt).
+        <br><br><em>Bizonyítás (⇒):</em> Páros gráfban a körön felváltva vannak A- és B-beli pontok → a kör páros.<br>
+        <em>Bizonyítás (⇐):</em> Ha nincs páratlan kör, BFS-sel 2-színezhető → páros.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box">
+        <div class="lbl mb-2" style="color:#22d3ee">Interaktív — páros gráf ellenőrző</div>
+        <div class="small mb-2 text-secondary">Kattints két csúcsra él hozzáadásához/törlésé. A BFS 2-színezés automatikusan megmutatja a particionálást.</div>
+        <canvas id="cvParos" width="400" height="200" style="border-radius:.4rem;background:#071f26;cursor:crosshair;max-width:100%"></canvas>
+        <div id="parosVerdict" class="small mt-2"></div>
+        <div class="mt-2 d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm" style="background:#071f26;border:1px solid #22d3ee;color:#22d3ee" onclick="parosReset()">Reset (páros)</button>
+          <button class="btn btn-sm" style="background:#071f26;border:1px solid #f43f5e;color:#f43f5e" onclick="parosAddOdd()">+ Páratlan kör</button>
+          <button class="btn btn-sm" style="background:#071f26;border:1px solid #374151;color:#9ca3af" onclick="parosClear()">Töröl</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ex-box">
+    <div class="lbl mb-1" style="color:#34d399">4. Példa — gép–munkafolyamat párosítás</div>
+    <div class="small">Egy gyárban \(A=\{a_1,\ldots,a_n\}\) gép és \(B=\{b_1,\ldots,b_m\}\) munkafolyamat van. Él \((a_i,b_j)\) jelzi, hogy \(a_i\) géppel végrehajtható \(b_j\). Cél: minél több kiosztás (páronként független élek maximuma). Ez a <strong>maximális párosítás</strong> problémája.</div>
+  </div>
+</div>
+
+<!-- ══════════ TAB 2: PÁROSÍTÁS ══════════ -->
+<div id="tab-par" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#22d3ee">Párosítás és Kőnig-tétel</h5>
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#22d3ee">5. Definíció — Párosítás</div>
+        <div class="small">Egy \(M\subseteq E(G)\) élhalmaz <strong>párosítás</strong>, ha bármelyik két \(M\)-beli élnek nincs közös végpontja. Az \(M\) <strong>teljes párosítás</strong>, ha \(G\) minden pontja valamely \(M\)-beli él végpontja.</div>
+      </div>
+      <div class="def-box mt-2">
+        <div class="lbl mb-1" style="color:#22d3ee">8. Definíció — Lefogó ponthalmaz</div>
+        <div class="small">Az \(S\subseteq V(G)\) halmaz <strong>lefogó ponthalmaz</strong>, ha minden \(G\)-beli élnek tartalmazza legalább az egyik végpontját. \(\tau(G)\) = minimális lefogó ponthalmaz mérete. \(\nu(G)\) = maximális párosítás mérete.</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#0e7490">10. Állítás</div>
+        <div class="small">Minden hurokélmentes \(G\)-re: \(\nu(G)\le\tau(G)\). (Minden párosítás él lefed egy csúcsot a lefogó halmazból.)</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#0e7490">11. Tétel — Kőnig-tétel</div>
+        <div class="small">Bármely \(G\) <strong>páros gráfban</strong>:
+        \[\nu(G)=\tau(G)\]
+        <em>Módszer:</em> Ha létezik alternáló út \(A_1\)-ből \(B_1\)-be, akkor bővíthető a párosítás. Ha nem, akkor \((A_0\setminus U)\cup V\) minimális lefogó ponthalmaz.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box">
+        <div class="lbl mb-2" style="color:#22d3ee">Interaktív párosítás (4+4)</div>
+        <div class="small mb-2 text-secondary">Kattints egy élre a párosításba való felvételhez/eltávolításhoz (kék = párosításban). A piros jelez konfliktust.</div>
+        <canvas id="cvMatch" width="380" height="210" style="border-radius:.4rem;background:#071f26;cursor:pointer;max-width:100%"></canvas>
+        <div id="matchStats" class="small mt-2"></div>
+        <div class="mt-2 d-flex gap-2">
+          <button class="btn btn-sm" style="background:#071f26;border:1px solid #22d3ee;color:#22d3ee" onclick="matchReset()">Reset</button>
+          <button class="btn btn-sm" style="background:#071f26;border:1px solid #374151;color:#9ca3af" onclick="matchClear()">Töröl</button>
+        </div>
+      </div>
+      <div class="ex-box mt-2">
+        <div class="lbl mb-1" style="color:#34d399">14. Algoritmus — Magyar-módszer</div>
+        <div class="small"><strong>1.</strong> Kezdj üres \(M_0\) párosítással.<br>
+        <strong>2.</strong> Határozd meg \(A_0,B_0,A_1,B_1,U,V\).<br>
+        <strong>3a.</strong> Ha van \(A_1\to B_1\) alternáló út → cserélj élt az úton, \(|\nu|\mathrel{+}=1\).<br>
+        <strong>3b.</strong> Ha nincs → \(M_i\) maximális, stop.</div>
+      </div>
+    </div>
+  </div>
+  <div class="ex-box">
+    <div class="lbl mb-1" style="color:#34d399">15. Példa — \(\nu(G)=\tau(G)=4\)</div>
+    <div class="small">A 15. Példa gráfjában 4 élből álló párosítás megtalálható (kék élek), és 4 pontos lefogó ponthalmaz is létezik (piros pontok). A Kőnig-tétel szerint \(\nu=\tau=4\). Ebből következik, hogy nincs teljes párosítás (az érintett csúcsok száma \(5+5=10\), de \(\nu=4<5\)).</div>
+  </div>
+</div>
+
+<!-- ══════════ TAB 3: HALL-FELTÉTEL ══════════ -->
+<div id="tab-hall" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#22d3ee">Kőnig–Hall-kritérium</h5>
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#0e7490">17. Tétel — Kőnig–Hall-kritérium</div>
+        <div class="small">Legyen \(G\) páros gráf az \(A\) és \(B\) osztályokkal, \(\Gamma(X)\) az \(X\)-beli pontok szomszédainak halmaza. \(G\)-ben létezik \(A\)-t lefedő párosítás \(\iff\)
+        \[\text{minden } X\subseteq A\text{-ra }|X|\le|\Gamma(X)|\]
+        (Kőnig–Hall-feltétel).</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#0e7490">18. Tétel — Teljes párosítás</div>
+        <div class="small">Páros \(G\)-ben teljes párosítás \(\iff |A|=|B|\) és teljesül a Kőnig–Hall-feltétel minden \(X\subseteq A\)-ra.</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#0e7490">20–21. Tétel — Reguláris páros gráf</div>
+        <div class="small">Egy \(G\) gráf <strong>\(k\)-reguláris</strong>, ha minden pont fokszáma pontosan \(k\). Minden reguláris páros gráfban létezik teljes párosítás.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="info-box">
+        <div class="lbl mb-2" style="color:#22d3ee">Hall-feltétel ellenőrző</div>
+        <div class="small mb-2 text-secondary">Add meg az \(A\)-oldali csúcsok szomszédait (1-5 közötti számok, vesszővel). Az ellenőrző minden \(X\subseteq A\) részhalmazra megvizsgálja a Hall-feltételt.</div>
+        <div id="hallInputs"></div>
+        <button class="btn btn-sm mt-2" style="background:#0e7490;color:#fff;border:none" onclick="hallCheck()">Ellenőriz</button>
+        <button class="btn btn-sm mt-2 ms-1" style="background:#071f26;border:1px solid #374151;color:#9ca3af" onclick="hallReset()">Reset</button>
+        <div id="hallResult" class="small mt-2"></div>
+      </div>
+      <div class="ex-box mt-2">
+        <div class="lbl mb-1" style="color:#34d399">19. Példa — nincs teljes párosítás</div>
+        <div class="small">A 15. Példa gráfjában \(|A|=5,|B|=5\), de van \(X\subseteq A\), \(|X|=2\), amelyre \(|\Gamma(X)|=1\).
+        \[2=|X|>|\Gamma(X)|=1\]
+        Kőnig–Hall-feltétel sérül → nincs teljes párosítás.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ TAB 4: SÍKGRÁFOK ══════════ -->
+<div id="tab-sik" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#22d3ee">Síkgráfok</h5>
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#22d3ee">23. Definíció — Síkbarajzolható</div>
+        <div class="small">Egy \(G\) gráf <strong>síkbarajzolható</strong> (síkgráf), ha lerajzolható a síkban úgy, hogy élek csak csúcsoknál metszik egymást.</div>
+      </div>
+      <div class="def-box mt-2">
+        <div class="lbl mb-1" style="color:#22d3ee">27. Definíció — Ország (Face)</div>
+        <div class="small">Egy síktérkép élei <strong>országokra</strong> osztják a síkot. Pontosan egy nem korlátos ország van. Ha \(h(C)\) az ország határán levő élek száma (vágóél kétszer), akkor: \(\sum_C h(C)=2|E|\) (28. Tétel).</div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#0e7490">30. Tétel — Euler-formula (síkgráf)</div>
+        <div class="small">Bármely összefüggő síktérképre:
+        \[c + o = e + 2\]
+        ahol \(c\) = csúcsok, \(o\) = országok, \(e\) = élek száma.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="thm-box">
+        <div class="lbl mb-1" style="color:#0e7490">31. Következmény — Él-korlát</div>
+        <div class="small">Legalább hárompontú, összefüggő, egyszerű síkgráfra:
+        \[e \le 3c - 6\]
+        Bizonyítás: minden ország határán legalább 3 él → \(2e\ge3o=3(e+2-c)\) → \(e\le3c-6\).</div>
+      </div>
+      <div class="ex-box mt-2">
+        <div class="lbl mb-1" style="color:#34d399">32–33. Következmény</div>
+        <div class="step-row"><div class="step-eq">\(K_5\) nem síkbarajzolható</div><div class="step-why">\(e=10>3\cdot5-6=9\)</div></div>
+        <div class="step-row"><div class="step-eq">\(K_{3,3}\) nem síkbarajzolható</div><div class="step-why">Euler: \(o=5\), min. 4 él/ország → \(20\le2\cdot9=18\) ✗</div></div>
+      </div>
+      <div class="thm-box mt-2">
+        <div class="lbl mb-1" style="color:#0e7490">34. Tétel — Kuratowski</div>
+        <div class="small">Egy gráf akkor és csak akkor síkbarajzolható, ha részgráfjai között nincs \(K_5\)-ből vagy \(K_{3,3}\)-ból élosztással kapható gráf.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Euler formula calculator -->
+  <div class="info-box">
+    <div class="lbl mb-2" style="color:#22d3ee">Euler-formula kalkulátor (\(c + o = e + 2\))</div>
+    <div class="d-flex align-items-center gap-3 flex-wrap mb-3">
+      <div>
+        <div class="lbl mb-1" style="color:#8892a4">Csúcsok (c)</div>
+        <input id="sikC" type="number" min="1" value="4" class="form-control form-control-sm" style="width:70px;background:#071f26;border-color:#0e7490;color:#e2e8f0">
+      </div>
+      <div>
+        <div class="lbl mb-1" style="color:#8892a4">Élek (e)</div>
+        <input id="sikE" type="number" min="0" value="6" class="form-control form-control-sm" style="width:70px;background:#071f26;border-color:#0e7490;color:#e2e8f0">
+      </div>
+      <div class="align-self-end">
+        <button class="btn btn-sm" style="background:#0e7490;color:#fff;border:none" onclick="sikCalc()">Számít</button>
+      </div>
+      <div id="sikResult" class="small align-self-center"></div>
+    </div>
+    <div class="row g-2">
+      <div class="col-auto"><button class="btn btn-sm" style="background:#071f26;border:1px solid #22d3ee;color:#22d3ee" onclick="sikLoad(5,10)">K₅ (nem síkgráf)</button></div>
+      <div class="col-auto"><button class="btn btn-sm" style="background:#071f26;border:1px solid #22d3ee;color:#22d3ee" onclick="sikLoad(6,9)">K₃,₃ (nem síkgráf)</button></div>
+      <div class="col-auto"><button class="btn btn-sm" style="background:#071f26;border:1px solid #22d3ee;color:#22d3ee" onclick="sikLoad(4,6)">K₄ (síkgráf)</button></div>
+      <div class="col-auto"><button class="btn btn-sm" style="background:#071f26;border:1px solid #22d3ee;color:#22d3ee" onclick="sikLoad(8,12)">Kocka Q₃</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ TAB 5: SZÍNEZÉS ══════════ -->
+<div id="tab-szin" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#22d3ee">Gráfok színezése</h5>
+  <div class="row g-3 mb-3">
+    <div class="col-md-5">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#22d3ee">36. Definíció — Kromatikus szám</div>
+        <div class="small">A \(G\) gráf \(\chi(G)\) <strong>kromatikus száma</strong> a legkisebb \(k\), amivel \(k\)-színezhető: minden szomszédos csúcspár különböző színt kap.</div>
+      </div>
+      <div class="info-box mt-2">
+        <div class="lbl mb-2" style="color:#22d3ee">Főbb tételek</div>
+        <div class="small">
+          <div class="step-row"><div class="step-eq">\(\chi(G)=1\)</div><div class="step-why">nincs él</div></div>
+          <div class="step-row"><div class="step-eq">\(\chi(K_n)=n\)</div><div class="step-why">teljes gráf</div></div>
+          <div class="step-row"><div class="step-eq">\(\chi(G)=2\iff G\) páros</div><div class="step-why">41. Állítás</div></div>
+          <div class="step-row"><div class="step-eq">\(\chi(G)\ge3\iff\) páratlan kör</div><div class="step-why">42. Következmény</div></div>
+          <div class="step-row"><div class="step-eq">\(\Delta(G)=k\Rightarrow\chi\le k+1\)</div><div class="step-why">43. Tétel (mohó)</div></div>
+          <div class="step-row"><div class="step-eq">Síkgráf: \(\chi\le5\)</div><div class="step-why">45. Tétel (5-színtétel)</div></div>
+          <div class="step-row"><div class="step-eq">Síkgráf: \(\chi\le4\)</div><div class="step-why">Appel–Haken, 1976</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="info-box">
+        <div class="lbl mb-2" style="color:#22d3ee">Interaktív mohó színezés</div>
+        <div class="small mb-2 text-secondary">Kattints a "Következő" gombra az animáláshoz, vagy töltsd be a 40. Példa ütemezési gráfját.</div>
+        <canvas id="cvSzin" width="440" height="230" style="border-radius:.4rem;background:#071f26;max-width:100%"></canvas>
+        <div id="szinDesc" class="small mt-2" style="min-height:1.5em"></div>
+        <div class="mt-2 d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm" style="background:#0e7490;color:#fff;border:none" onclick="szinNext()">Következő ▶</button>
+          <button class="btn btn-sm" style="background:#071f26;border:1px solid #22d3ee;color:#22d3ee" onclick="szinAuto()">Auto ⏩</button>
+          <button class="btn btn-sm" style="background:#071f26;border:1px solid #374151;color:#9ca3af" onclick="szinReset()">Reset</button>
+          <button class="btn btn-sm" style="background:#071f26;border:1px solid #fbbf24;color:#fbbf24" onclick="szinLoad40()">40. Példa</button>
+        </div>
+        <div id="szinVerdict" class="small mt-2 fw-bold"></div>
+      </div>
+    </div>
+  </div>
+  <div class="ex-box">
+    <div class="lbl mb-1" style="color:#34d399">40. Példa — megbeszélések ütemezése (\(\chi=4\))</div>
+    <div class="small">6 projekt (P₁–P₆), él jelzi az időütközést (közös résztvevő). Cél: min. hány idősáv. \(P_1,P_2,P_4,P_6\) teljes részgráfot (\(K_4\)) alkotnak → \(\chi\ge4\). Valóban: \(\chi(G)=4\), tehát <strong>4 idősáv elegendő</strong>.</div>
+    <div class="mt-2 small">
+      <span class="color-chip" style="background:#22d3ee"></span>P₁ (1. idősáv) &nbsp;
+      <span class="color-chip" style="background:#f43f5e"></span>P₂ (2. idősáv) &nbsp;
+      <span class="color-chip" style="background:#34d399"></span>P₃, P₄ (3. idősáv) &nbsp;
+      <span class="color-chip" style="background:#fbbf24"></span>P₅, P₆? &mdash;
+      <em class="text-secondary">Töltsd be a 40. Példát a gombbal!</em>
+    </div>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+<script>
+// ── Shared ──────────────────────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('[id^="tab-"]').forEach(p=>p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  reRender(document.getElementById(id));
+}
+function reRender(el){
+  if(window.renderMathInElement) renderMathInElement(el,{
+    delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+}
+function drawNode(ctx,x,y,label,fill,stroke,r){
+  r=r||14; ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=fill||'#1a2f3a';ctx.fill();
+  ctx.strokeStyle=stroke||'#22d3ee';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#e2e8f0';ctx.font=`bold ${r<12?9:11}px monospace`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x,y);
+}
+
+// ── TAB 1: PÁROS GRÁFOK ─────────────────────────────────────────────────────
+const PR_POS=[
+  {x:70,y:60},{x:160,y:60},{x:250,y:60},{x:340,y:60},
+  {x:70,y:150},{x:160,y:150},{x:250,y:150},{x:340,y:150}
+];
+let prEdges=[[0,4],[0,5],[1,5],[1,6],[2,6],[2,7],[3,7]];
+let prSel=-1;
+const BIPA_COLORS=['#22d3ee','#f97316'];
+const BIPA_BG=['#071f26','#1f0a00'];
+
+function checkBipartite(n,edges){
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  const color=new Array(n).fill(-1);
+  let conflict=null;
+  for(let s=0;s<n;s++){
+    if(color[s]!==-1) continue;
+    color[s]=0; const q=[s];
+    outer: while(q.length){
+      const v=q.shift();
+      for(const u of adj[v]){
+        if(color[u]===-1){color[u]=1-color[v];q.push(u);}
+        else if(color[u]===color[v]){conflict=[v,u];break outer;}
+      }
+    }
+    if(conflict) break;
+  }
+  return{bipartite:!conflict,color,conflict};
+}
+function prDraw(){
+  const cv=document.getElementById('cvParos');if(!cv)return;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+  const {bipartite,color,conflict}=checkBipartite(PR_POS.length,prEdges);
+  prEdges.forEach(([a,b])=>{
+    const isConflict=conflict&&((a===conflict[0]&&b===conflict[1])||(a===conflict[1]&&b===conflict[0]));
+    ctx.beginPath();ctx.moveTo(PR_POS[a].x,PR_POS[a].y);ctx.lineTo(PR_POS[b].x,PR_POS[b].y);
+    ctx.strokeStyle=isConflict?'#ef4444':'#0e7490';ctx.lineWidth=isConflict?2.5:1.5;ctx.stroke();
+  });
+  PR_POS.forEach((p,i)=>{
+    const c=color[i];
+    const fill=c===0?BIPA_BG[0]:c===1?BIPA_BG[1]:'#161b22';
+    const stroke=c===0?BIPA_COLORS[0]:c===1?BIPA_COLORS[1]:'#374151';
+    drawNode(ctx,p.x,p.y,i+1,fill,stroke);
+    if(i===prSel){ctx.beginPath();ctx.arc(p.x,p.y,18,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();}
+  });
+  // Labels
+  ctx.fillStyle='#22d3ee';ctx.font='10px monospace';ctx.textAlign='center';
+  if(bipartite){
+    const aNodes=color.map((c,i)=>c===0?i+1:-1).filter(x=>x>0);
+    const bNodes=color.map((c,i)=>c===1?i+1:-1).filter(x=>x>0);
+    ctx.fillText('A = {'+aNodes.join(',')+'}',200,185);
+    ctx.fillStyle='#f97316';
+    ctx.fillText('B = {'+bNodes.join(',')+'}',200,198);
+  }
+  const el=document.getElementById('parosVerdict');
+  if(bipartite) el.innerHTML='<span style="color:#34d399;font-weight:700">✓ Páros gráf</span> — nincs páratlan kör. Kék=A osztály, narancs=B osztály.';
+  else el.innerHTML='<span style="color:#ef4444;font-weight:700">✗ Nem páros</span> — páratlan kör található (piros él).';
+}
+function parosReset(){prEdges=[[0,4],[0,5],[1,5],[1,6],[2,6],[2,7],[3,7]];prSel=-1;prDraw();}
+function parosAddOdd(){
+  if(!prEdges.find(([a,b])=>a===4&&b===5)) prEdges.push([4,5]);
+  prDraw();
+}
+function parosClear(){prEdges=[];prSel=-1;prDraw();}
+document.getElementById('cvParos')?.addEventListener('click',e=>{
+  const cv=document.getElementById('cvParos'),r=cv.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(cv.width/r.width),my=(e.clientY-r.top)*(cv.height/r.height);
+  let hit=-1;
+  PR_POS.forEach((p,i)=>{if(Math.hypot(p.x-mx,p.y-my)<18) hit=i;});
+  if(hit<0){prSel=-1;prDraw();return;}
+  if(prSel<0){prSel=hit;prDraw();return;}
+  if(prSel===hit){prSel=-1;prDraw();return;}
+  const a=Math.min(prSel,hit),b=Math.max(prSel,hit);
+  const idx=prEdges.findIndex(([x,y])=>x===a&&y===b);
+  if(idx>=0) prEdges.splice(idx,1); else prEdges.push([a,b]);
+  prSel=-1;prDraw();
+});
+
+// ── TAB 2: PÁROSÍTÁS ────────────────────────────────────────────────────────
+// 4 gépek (top) + 4 munkafolyamat (bottom)
+const MT_A=[{x:60,y:55,l:'g₁'},{x:140,y:55,l:'g₂'},{x:220,y:55,l:'g₃'},{x:300,y:55,l:'g₄'}];
+const MT_B=[{x:60,y:165,l:'m₁'},{x:140,y:165,l:'m₂'},{x:220,y:165,l:'m₃'},{x:300,y:165,l:'m₄'}];
+const MT_EDGES=[
+  [0,0],[0,1],[1,1],[1,2],[2,1],[2,2],[2,3],[3,2],[3,3],[0,3],[1,3],[3,0]
+];
+let matchSet=new Set([0,2,5,8]); // default matching
+
+function matchCheck(set){
+  const usedA=new Set(), usedB=new Set();
+  let valid=true;
+  for(const i of set){
+    const [a,b]=MT_EDGES[i];
+    if(usedA.has(a)||usedB.has(b)) valid=false;
+    usedA.add(a); usedB.add(b);
+  }
+  return valid;
+}
+function matchDraw(){
+  const cv=document.getElementById('cvMatch');if(!cv)return;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#22d3ee99';ctx.font='9px monospace';ctx.textAlign='center';
+  ctx.fillText('Gépek (A)',190,18);ctx.fillStyle='#f9741699';ctx.fillText('Munkafolyamatok (B)',190,198);
+  // edges
+  MT_EDGES.forEach(([a,b],i)=>{
+    const p1=MT_A[a],p2=MT_B[b];
+    const inM=matchSet.has(i);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
+    ctx.strokeStyle=inM?'#22d3ee':'#2a3f4a';ctx.lineWidth=inM?2.5:1;ctx.stroke();
+  });
+  // nodes
+  const valid=matchCheck(matchSet);
+  const usedA=new Set(),usedB=new Set();
+  if(!valid){for(const i of matchSet){const[a,b]=MT_EDGES[i];usedA.add(a);usedB.add(b);}}
+  MT_A.forEach((p,i)=>drawNode(ctx,p.x,p.y,p.l,'#0a1f26','#22d3ee'));
+  MT_B.forEach((p,i)=>drawNode(ctx,p.x,p.y,p.l,'#1f0a00','#f97316'));
+  // click zones for edges (midpoints)
+  const el=document.getElementById('matchStats');
+  el.innerHTML=`ν (párosítás mérete): <strong style="color:#22d3ee">${matchSet.size}</strong> &nbsp; ${valid?'<span style="color:#34d399">✓ Érvényes párosítás</span>':'<span style="color:#ef4444">✗ Ütközés! Egy csúcsba 2 él fut.</span>'}`;
+}
+function matchReset(){matchSet=new Set([0,2,5,8]);matchDraw();}
+function matchClear(){matchSet=new Set();matchDraw();}
+document.getElementById('cvMatch')?.addEventListener('click',e=>{
+  const cv=document.getElementById('cvMatch'),r=cv.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(cv.width/r.width),my=(e.clientY-r.top)*(cv.height/r.height);
+  let closest=-1,minD=20;
+  MT_EDGES.forEach(([a,b],i)=>{
+    const p1=MT_A[a],p2=MT_B[b];
+    const midX=(p1.x+p2.x)/2,midY=(p1.y+p2.y)/2;
+    const d=Math.hypot(midX-mx,midY-my);
+    if(d<minD){minD=d;closest=i;}
+  });
+  if(closest<0) return;
+  if(matchSet.has(closest)) matchSet.delete(closest); else matchSet.add(closest);
+  matchDraw();
+});
+
+// ── TAB 3: HALL-FELTÉTEL ────────────────────────────────────────────────────
+function buildHallInputs(){
+  const el=document.getElementById('hallInputs');
+  el.innerHTML=['a₁','a₂','a₃','a₄'].map((lbl,i)=>`
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="small fw-bold" style="color:#22d3ee;min-width:2rem">${lbl}</span>
+      <span class="small text-secondary">→ Γ =</span>
+      <input id="hall${i}" class="form-control form-control-sm" style="max-width:140px;background:#071f26;border-color:#0e7490;color:#e2e8f0"
+        value="${['1,2','2,3','3,4','4'][i]}">
+    </div>`).join('');
+}
+function hallReset(){
+  buildHallInputs();
+  document.getElementById('hallResult').innerHTML='';
+}
+function hallCheck(){
+  const n=4, B=5;
+  const nbrs=Array.from({length:n},(_,i)=>{
+    const raw=document.getElementById('hall'+i)?.value||'';
+    return raw.split(',').map(s=>parseInt(s.trim())).filter(v=>!isNaN(v)&&v>=1&&v<=B).map(v=>v-1);
+  });
+  // Check all 2^n subsets of A
+  let failed=null;
+  for(let mask=1;mask<(1<<n);mask++){
+    const X=[],gammaSet=new Set();
+    for(let i=0;i<n;i++) if(mask>>i&1){ X.push(i); nbrs[i].forEach(b=>gammaSet.add(b)); }
+    if(X.length>gammaSet.size){ failed={X,gamma:[...gammaSet]}; break; }
+  }
+  const el=document.getElementById('hallResult');
+  if(!failed){
+    el.innerHTML='<span style="color:#34d399;font-weight:700">✓ Hall-feltétel teljesül minden X⊆A-ra</span> → létezik A-t lefedő párosítás.';
+    // Show a few subsets
+    let rows='<div class="mt-2 small"><div class="hall-row" style="font-weight:700;color:#22d3ee"><span>X⊆A</span><span>|X|</span><span>|Γ(X)|</span><span>OK?</span></div>';
+    for(let mask=1;mask<(1<<n)&&mask<=15;mask++){
+      const X=[],gammaSet=new Set();
+      for(let i=0;i<n;i++) if(mask>>i&1){ X.push(i); nbrs[i].forEach(b=>gammaSet.add(b)); }
+      const ok=X.length<=gammaSet.size;
+      rows+=`<div class="hall-row"><span>{${X.map(i=>'a'+(i+1)).join(',')}}</span><span>${X.length}</span><span>${gammaSet.size}</span><span style="color:${ok?'#34d399':'#ef4444'}">${ok?'✓':'✗'}</span></div>`;
+    }
+    el.innerHTML+=rows+'</div>';
+  } else {
+    const X=failed.X.map(i=>'a'+(i+1)), G=failed.gamma.map(b=>'b'+(b+1));
+    el.innerHTML=`<span style="color:#ef4444;font-weight:700">✗ Hall-feltétel NEM teljesül</span><br>
+    <span class="small">X = {${X.join(',')}}, |X|=${X.length} > |Γ(X)|=${G.length} = |{${G.join(',')}}|</span><br>
+    <span class="small text-secondary">→ nincs A-t lefedő párosítás</span>`;
+  }
+}
+
+// ── TAB 4: SÍKGRÁFOK ────────────────────────────────────────────────────────
+function sikLoad(c,e){
+  document.getElementById('sikC').value=c;
+  document.getElementById('sikE').value=e;
+  sikCalc();
+}
+function sikCalc(){
+  const c=parseInt(document.getElementById('sikC').value)||4;
+  const e=parseInt(document.getElementById('sikE').value)||6;
+  const o=e+2-c;
+  const el=document.getElementById('sikResult');
+  const maxE=3*c-6;
+  let html=`<strong style="color:#22d3ee">o = e+2−c = ${o}</strong> &nbsp;`;
+  if(c>=3){
+    const planOk=e<=maxE;
+    html+=`<span class="${planOk?'prop-ok':'prop-no'}">${planOk?'✓':'✗'} e=${e} ${planOk?'≤':'>'} 3c−6=${maxE}</span>`;
+    if(!planOk) html+=' <span style="color:#ef4444">→ nem síkbarajzolható!</span>';
+  }
+  el.innerHTML=html;
+}
+
+// ── TAB 5: SZÍNEZÉS ─────────────────────────────────────────────────────────
+// Default: 6-node graph, greedy example
+const CHI_COLORS=['#22d3ee','#f43f5e','#34d399','#fbbf24','#c084fc','#f97316'];
+const CHI_NAMES=['kék','piros','zöld','sárga','lila','narancs'];
+let szinNodes=[], szinEdges=[], szinOrder=[], szinStep=-1, szinColoring=[], szinAutoTimer=null;
+
+function szinSetDefault(){
+  // 6-node graph
+  szinNodes=[{x:120,y:80},{x:230,y:50},{x:330,y:80},{x:330,y:170},{x:230,y:200},{x:120,y:170}];
+  szinEdges=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,2],[1,4]];
+  szinOrder=[0,1,2,3,4,5];
+  szinStep=-1; szinColoring=new Array(szinNodes.length).fill(-1);
+}
+function szinLoad40(){
+  // 40. Példa: 6 projects in circular layout
+  szinNodes=[
+    {x:220,y:50,l:'P₁'},{x:360,y:110,l:'P₂'},{x:360,y:180,l:'P₃'},
+    {x:220,y:215,l:'P₄'},{x:80,y:180,l:'P₅'},{x:80,y:110,l:'P₆'}
+  ];
+  // Conflicts (from shared participants analysis above)
+  szinEdges=[[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,5],[2,4],[2,5],[3,4],[3,5],[4,5]];
+  szinOrder=[0,1,2,3,4,5];
+  szinStep=-1; szinColoring=new Array(6).fill(-1);
+  szinDraw();
+}
+function szinDraw(){
+  const cv=document.getElementById('cvSzin');if(!cv)return;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+  szinEdges.forEach(([a,b])=>{
+    ctx.beginPath();ctx.moveTo(szinNodes[a].x,szinNodes[a].y);ctx.lineTo(szinNodes[b].x,szinNodes[b].y);
+    ctx.strokeStyle='#1a3040';ctx.lineWidth=1.5;ctx.stroke();
+  });
+  szinNodes.forEach((p,i)=>{
+    const c=szinColoring[i];
+    const fill=c>=0?CHI_COLORS[c]+'33':'#0a1f2a';
+    const stroke=c>=0?CHI_COLORS[c]:'#374151';
+    const lbl=p.l||(i+1);
+    drawNode(ctx,p.x,p.y,lbl,fill,stroke,15);
+    if(i===szinOrder[szinStep+1]&&szinStep<szinNodes.length-1){
+      ctx.beginPath();ctx.arc(p.x,p.y,20,0,Math.PI*2);ctx.strokeStyle='#fff5';ctx.lineWidth=1.5;ctx.strokeStyle='#ffffff88';ctx.stroke();
+    }
+  });
+}
+function szinNext(){
+  if(szinStep>=szinNodes.length-1) return;
+  szinStep++;
+  const v=szinOrder[szinStep];
+  // Find adjacent colors
+  const usedColors=new Set();
+  szinEdges.forEach(([a,b])=>{
+    if(a===v&&szinColoring[b]>=0) usedColors.add(szinColoring[b]);
+    if(b===v&&szinColoring[a]>=0) usedColors.add(szinColoring[a]);
+  });
+  let c=0; while(usedColors.has(c)) c++;
+  szinColoring[v]=c;
+  const el=document.getElementById('szinDesc');
+  const lbl=szinNodes[v].l||(v+1);
+  el.innerHTML=`${szinStep+1}. lépés: v${lbl} → <span style="color:${CHI_COLORS[c]};font-weight:700">${CHI_NAMES[c]} (szín ${c+1})</span>`;
+  szinDraw();
+  if(szinStep===szinNodes.length-1){
+    const chi=Math.max(...szinColoring)+1;
+    document.getElementById('szinVerdict').innerHTML=`χ(G) ≤ <span style="color:#22d3ee;font-size:1.1rem">${chi}</span> (mohó szín; lehet kevesebb is)`;
+  }
+}
+function szinReset(){szinSetDefault();szinStep=-1;szinColoring=new Array(szinNodes.length).fill(-1);clearInterval(szinAutoTimer);szinAutoTimer=null;document.getElementById('szinDesc').textContent='';document.getElementById('szinVerdict').textContent='';szinDraw();}
+function szinAuto(){
+  if(szinAutoTimer){clearInterval(szinAutoTimer);szinAutoTimer=null;return;}
+  szinAutoTimer=setInterval(()=>{
+    if(szinStep>=szinNodes.length-1){clearInterval(szinAutoTimer);szinAutoTimer=null;return;}
+    szinNext();
+  },700);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+function initAll(){
+  prDraw(); matchDraw(); buildHallInputs(); szinSetDefault(); szinDraw(); sikCalc();
+}
+setTimeout(initAll,400);
+</script>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Database Book Chapters{% endblock %}
+
+{% block content %}
+<style>
+.ch-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: .5rem;
+  padding: 1rem 1.2rem;
+  transition: border-color .15s, background .15s;
+}
+.ch-card:hover { border-color: #58a6ff; background: #0f1923; }
+.ch-num  { font-size: .6rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.ch-title { font-size: 1rem; font-weight: 700; margin: .2rem 0 .5rem; }
+.ch-desc  { font-size: .75rem; color: #8b949e; line-height: 1.55; }
+.ch-tags  { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .6rem; }
+.ch-tag   { font-size: .6rem; padding: .15rem .45rem; border-radius: .25rem; font-weight: 600; letter-spacing: .04em; }
+.launch-btn { font-size: .72rem; font-weight: 600; padding: .3rem .9rem; border-radius: .35rem; text-decoration: none; white-space: nowrap; }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width:1100px">
+  <div class="d-flex align-items-center gap-3 mb-1">
+    <i class="bi bi-book-fill" style="font-size:1.5rem;color:#818cf8"></i>
+    <h4 class="mb-0 fw-bold">Database Book — Chapters</h4>
+  </div>
+  <p class="text-secondary mb-4" style="font-size:.82rem">Interactive labs and demos for each chapter, sorted in reading order.</p>
+
+  <div class="d-flex flex-column gap-3">
+
+    <!-- Ch 1 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#818cf8">Chapter 1</div>
+      <div class="ch-title">Core T-SQL Skills &amp; Isolation Levels</div>
+      <div class="ch-desc">T-SQL Script Lab with live Northwind queries: SELECT, GROUP BY, JOINs, subqueries, CTEs. Isolation Level Visualizer: READ COMMITTED double-sell bug vs REPEATABLE READ deadlock vs UPDLOCK fix — two concurrent sessions, one horse, one winner.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#1e1b4b;color:#818cf8">T-SQL</span>
+          <span class="ch-tag" style="background:#450a0a;color:#f87171">Isolation Levels</span>
+          <span class="ch-tag" style="background:#450a0a;color:#f87171">UPDLOCK</span>
+        </div>
+        <div class="ms-auto d-flex gap-2">
+          <a href="{{ url_for('demos.tsql_primer') }}"    class="launch-btn" style="background:#6366f1;color:#fff">T-SQL Lab</a>
+          <a href="{{ url_for('demos.isolation_demo') }}" class="launch-btn" style="background:#ef4444;color:#fff">Isolation</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ch 2 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#4ade80">Chapter 2</div>
+      <div class="ch-title">Loose Coupling &amp; the @@IDENTITY Trap</div>
+      <div class="ch-desc">Tight vs loose coupling: synchronous trigger insert vs async outbox pattern. Live demo inserts an order into Northwind and logs it via a trigger — then shows the @@IDENTITY trap where the trigger's own IDENTITY shadows the parent row's ID. Fix: SCOPE_IDENTITY() returns only the current scope, ignoring trigger inserts.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#052e16;color:#4ade80">Loose Coupling</span>
+          <span class="ch-tag" style="background:#052e16;color:#4ade80">@@IDENTITY</span>
+          <span class="ch-tag" style="background:#052e16;color:#4ade80">Triggers</span>
+        </div>
+        <a href="{{ url_for('demos.loose_coupling') }}" class="launch-btn ms-auto" style="background:#4ade80;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 3 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#22d3ee">Chapter 3</div>
+      <div class="ch-title">Replication, Log Shipping &amp; Failover</div>
+      <div class="ch-desc">Publisher → Distributor → Subscriber pipeline. Snapshot, Transactional, Merge, and Peer-to-Peer replication types. Log Shipping warm standby with three SQL Agent jobs. CAP theorem and eventual consistency via Merge replication.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#083344;color:#22d3ee">Replication</span>
+          <span class="ch-tag" style="background:#083344;color:#22d3ee">Log Shipping</span>
+          <span class="ch-tag" style="background:#083344;color:#22d3ee">CAP Theorem</span>
+        </div>
+        <a href="{{ url_for('demos.c3_replication') }}" class="launch-btn ms-auto" style="background:#22d3ee;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 4 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#fb923c">Chapter 4</div>
+      <div class="ch-title">Data Quality &amp; Functional Dependency</div>
+      <div class="ch-desc">Functional Dependency Analyzer using the GROUP BY double-count technique against AdventureWorksDW2019. Column Profiler: null %, distinct counts, top-10 frequencies. DQS Architecture Reference: Knowledge Base, Domains, 5 cleansing states.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#431407;color:#fb923c">FD Analysis</span>
+          <span class="ch-tag" style="background:#431407;color:#fb923c">DQS</span>
+          <span class="ch-tag" style="background:#431407;color:#fb923c">AdventureWorks</span>
+        </div>
+        <a href="{{ url_for('demos.data_quality') }}" class="launch-btn ms-auto" style="background:#fb923c;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 5 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#34d399">Chapter 5</div>
+      <div class="ch-title">Columnstore &amp; Partitioning</div>
+      <div class="ch-desc">Live B-Tree vs Page Compression vs Clustered Columnstore Index benchmark on FactInternetSales. Partition switching: 7-step walkthrough with RANGE LEFT, aligned CCI, and metadata-only ALTER TABLE SWITCH. PostgreSQL declarative partitioning vs table inheritance.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#052e16;color:#34d399">CCI</span>
+          <span class="ch-tag" style="background:#052e16;color:#34d399">Partitioning</span>
+          <span class="ch-tag" style="background:#052e16;color:#34d399">AdventureWorks</span>
+        </div>
+        <a href="{{ url_for('demos.columnstore') }}" class="launch-btn ms-auto" style="background:#34d399;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 6 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#60a5fa">Chapter 6</div>
+      <div class="ch-title">Database Migration (SQL Server → PostgreSQL → Cloud Firestore)</div>
+      <div class="ch-desc">Live SQL Server → PostgreSQL migration with DDL conversion (BIT→BOOLEAN, IDENTITY→SERIAL). ACID atomicity demo with injected FK error and automatic rollback. Firestore architecture: schema-on-read, Collections vs sub-collections, Atomicity XOR Isolation limitation.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#0c1a2e;color:#60a5fa">PostgreSQL</span>
+          <span class="ch-tag" style="background:#0c1a2e;color:#60a5fa">Firestore</span>
+          <span class="ch-tag" style="background:#0c1a2e;color:#60a5fa">ACID</span>
+        </div>
+        <a href="{{ url_for('demos.migration') }}" class="launch-btn ms-auto" style="background:#60a5fa;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 7 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#facc15">Chapter 7</div>
+      <div class="ch-title">Cloud Database Technologies &amp; BigQuery ML</div>
+      <div class="ch-desc">Linear regression (value_numeric) and classification (Low/Medium/High) mirroring BigQuery ML CREATE MODEL locally via sklearn. Natality model with 137M-record reference. Interactive birth weight simulator using published model coefficients.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#1a1100;color:#facc15">BigQuery ML</span>
+          <span class="ch-tag" style="background:#1a1100;color:#facc15">sklearn</span>
+          <span class="ch-tag" style="background:#1a1100;color:#facc15">Linear Reg</span>
+        </div>
+        <a href="{{ url_for('demos.bqml') }}" class="launch-btn ms-auto" style="background:#facc15;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 8 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#e879f9">Chapter 8</div>
+      <div class="ch-title">Special Data Types (Graph · Neo4j · BLOB)</div>
+      <div class="ch-desc">SQL Server Graph Tables: AS NODE / AS EDGE, CONNECTION constraints, 7 MATCH queries including SHORTEST_PATH. Neo4j/Cypher reference vs SQL Server graph. BLOB strategies: VARBINARY(MAX), FILESTREAM, FileTables, Azure Blob URL pattern.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#2e1065;color:#e879f9">Graph Tables</span>
+          <span class="ch-tag" style="background:#2e1065;color:#e879f9">Cypher</span>
+          <span class="ch-tag" style="background:#2e1065;color:#e879f9">BLOB</span>
+        </div>
+        <a href="{{ url_for('demos.c8_graph') }}" class="launch-btn ms-auto" style="background:#e879f9;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 9 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#f97316">Chapter 9</div>
+      <div class="ch-title">In-Memory OLTP (Memory-Optimized Tables)</div>
+      <div class="ch-desc">3-scenario benchmark: disk-based ~1×, MOT with hash index ~6–7×, natively compiled stored proc ~25×. Lock-free concurrency via row versioning. Migration Advisor: 7-step realistic workflow from SSMS load-test to NATIVE_COMPILATION.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#431407;color:#f97316">MOT</span>
+          <span class="ch-tag" style="background:#431407;color:#f97316">NATIVE_COMPILATION</span>
+          <span class="ch-tag" style="background:#431407;color:#f97316">Hash Index</span>
+        </div>
+        <a href="{{ url_for('demos.c9_inmemory') }}" class="launch-btn ms-auto" style="background:#f97316;color:#fff">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 11 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#a3e635">Chapter 11 — Appendix A</div>
+      <div class="ch-title">SQL DML Self-Learning Lab (12 Progressive Exercises)</div>
+      <div class="ch-desc">SELECT, subqueries, JOINs, GROUP BY pitfalls, self-join for hierarchies, IS NULL anti-join, HAVING, TOP N, CASE expressions, derived tables, and CTE-based homework. Every query runs live against Northwind.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#1a2e05;color:#a3e635">SELECT</span>
+          <span class="ch-tag" style="background:#1a2e05;color:#a3e635">GROUP BY</span>
+          <span class="ch-tag" style="background:#1a2e05;color:#a3e635">CTE</span>
+        </div>
+        <a href="{{ url_for('demos.c11_sql_lab') }}" class="launch-btn ms-auto" style="background:#a3e635;color:#000">Launch →</a>
+      </div>
+    </div>
+
+    <!-- Ch 12 -->
+    <div class="ch-card">
+      <div class="ch-num" style="color:#94a3b8">Chapter 12 — Appendix B</div>
+      <div class="ch-title">Database Administration &amp; Security</div>
+      <div class="ch-desc">DBCC CHECKDB integrity scan, page allocation DMVs, 3 backup strategies with RESTORE syntax. Server logins → DB users → roles hierarchy, GRANT/REVOKE/DENY. Dynamic Data Masking, AES_256 backup encryption, TDE vs Always Encrypted.</div>
+      <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+        <div class="ch-tags">
+          <span class="ch-tag" style="background:#0f172a;color:#94a3b8">DBCC</span>
+          <span class="ch-tag" style="background:#0f172a;color:#94a3b8">Security</span>
+          <span class="ch-tag" style="background:#0f172a;color:#94a3b8">DDM</span>
+        </div>
+        <a href="{{ url_for('demos.c12_dba') }}" class="launch-btn ms-auto" style="background:#475569;color:#fff">Launch →</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

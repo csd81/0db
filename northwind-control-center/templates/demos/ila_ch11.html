@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+{% block title %}Diszkrét mat. III — Kombinatorika 2.{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#fb923c!important;}
+.ila-nav-link.active{color:#fb923c!important;border-bottom-color:#fb923c!important;}
+.def-box  {border-left:3px solid #fb923c;background:#1c0c02;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.thm-box  {border-left:3px solid #c2410c;background:#150901;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.ex-box   {border-left:3px solid #34d399;background:#041f10;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.info-box {background:#161b22;border:1px solid #21262d;padding:.75rem 1rem;border-radius:.4rem;margin:.7rem 0;}
+.warn-box {border-left:3px solid #67e8f9;background:#031926;padding:.75rem 1rem;border-radius:.3rem;margin:.7rem 0;}
+.step-row {display:flex;gap:1rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:baseline;flex-wrap:wrap;}
+.step-row:last-child{border-bottom:none;}
+.step-eq  {min-width:260px;color:#e2e8f0;font-size:.84rem;}
+.step-why {font-size:.7rem;color:#6b7280;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.formula-chip{display:inline-block;background:#2c0e02;border:1px solid #fb923c;border-radius:.4rem;padding:.3rem .8rem;
+  font-size:.82rem;color:#fdba74;font-family:monospace;margin:.2rem;}
+.badge-ph{font-size:.62rem;font-weight:700;padding:.2rem .55rem;border-radius:.25rem;letter-spacing:.04em;background:#2c0e02;color:#fb923c;}
+.sieve-cell{display:flex;align-items:center;justify-content:center;border-radius:.3rem;font-size:.75rem;font-weight:700;
+  padding:.3rem .5rem;min-width:36px;}
+.katex{font-size:1em;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#fb923c">Diszkrét matematika III — fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Kombinatorika 2.</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2026</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(251,146,60,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-mult',this)"><i class="bi bi-grid-3x3-gap me-1"></i>Ismétléses perm.</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-binom',this)"><i class="bi bi-superscript me-1"></i>Binom. &amp; Polinom.</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-korl',this)"><i class="bi bi-funnel me-1"></i>Korlátozott komb.</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-lin',this)"><i class="bi bi-plus-slash-minus me-1"></i>Lineáris egyenletek</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-szita',this)"><i class="bi bi-filter-circle me-1"></i>Szita-formula</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-derang',this)"><i class="bi bi-shuffle me-1"></i>Derangement</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════════════════════ TAB 1: ISMÉTLÉSES PERMUTÁCIÓK ══════════════════════ -->
+<div id="tab-mult">
+  <h5 class="fw-bold mb-3" style="color:#fb923c">Rendezett osztályozás és ismétléses permutációk</h5>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#fb923c">1. Definíció — Rendezett osztályozás</div>
+        <div class="small">Az \(n\)-elemű \(A\) halmaz \((k_1,\ldots,k_r)\) <strong>típusú rendezett osztályozása</strong> a \((C_1,\ldots,C_r)\) rendezett \(r\)-es, ahol \(C_1,\ldots,C_r\) páronként diszjunkt részhalmazok, uniójuk \(A\), és \(|C_i|=k_i\).</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="def-box">
+        <div class="lbl mb-1" style="color:#fb923c">5. Definíció — Ismétléses permutáció</div>
+        <div class="small">Az \(a_1,\ldots,a_r\) elemekből álló olyan \(n\)-hosszú sorozat, amelyben pontosan \(k_1\) db \(a_1,\ldots,k_r\) db \(a_r\) szerepel, ezek <strong>\((k_1,\ldots,k_r)\) típusú ismétléses permutációi</strong>.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="thm-box mt-2">
+    <div class="lbl mb-1" style="color:#fb923c">3. & 7. Tétel</div>
+    Az \(n\) elem \((k_1,\ldots,k_r)\) típusú rendezett osztályozásainak és az ismétléses permutációinak száma azonos:
+    \[\boxed{\frac{n!}{k_1!\cdot k_2!\cdots k_r!}}\]
+    ahol \(n=k_1+\cdots+k_r\). Ezt <strong>multinomiális együtthatónak</strong> is nevezik: \(\dbinom{n}{k_1,k_2,\ldots,k_r}\).
+  </div>
+
+  <div class="thm-box small mt-1">
+    <strong>Bizonyítás (osztályozás):</strong> \(C_1\) elemeit \(\binom{n}{k_1}\)-féleképpen, majd \(C_2\)-t \(\binom{n-k_1}{k_2}\)-féleképpen, stb. A szorzat: \(\frac{n!}{k_1!\cdots k_r!}\).<br>
+    <strong>Bizonyítás (permutáció):</strong> Az \(n!\) teljes permutációt osztjuk az azonos elemek \(k_1!\cdots k_r!\) sorrendjével (ekvivalenciarelációval).
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>4. példa — csokoládék:</strong><br>
+        15 különböző csokoládé, Aladár:4, Béla:5, Csaba:3, Dénes:3.<br>
+        \[\frac{15!}{4!\cdot5!\cdot3!\cdot3!} = 12\,612\,600\]
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>8. példa — kockaszínek:</strong><br>
+        2 piros, 1 kék, 3 zöld kocka sorrendjeinek száma:<br>
+        \[\frac{6!}{2!\cdot1!\cdot3!} = 60\]
+      </div>
+    </div>
+  </div>
+
+  <!-- MATEMATIKA example -->
+  <div class="info-box mt-2">
+    <div class="small fw-bold mb-2" style="color:#fdba74">10. példa — MATEMATIKA</div>
+    <div class="small text-secondary mb-2">A MATEMATIKA szó betűi: M(2), A(3), T(2), E(1), I(1), K(1) — összesen 10 betű.</div>
+    <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+      <span class="formula-chip">\(\frac{10!}{3!\cdot1!\cdot1!\cdot1!\cdot2!\cdot2!} = 151200\)</span>
+      <span class="small text-secondary">összes sorbarendezés</span>
+    </div>
+    <div class="small text-secondary">Ha a három „A" egymás mellett áll, tekintjük az „AAA" blokkot egyetlen elemnek (8 elem, (1,1,1,1,2,2) típus):</div>
+    <div class="d-flex gap-2 flex-wrap align-items-center mt-1">
+      <span class="formula-chip">\(\frac{8!}{1!\cdot1!\cdot1!\cdot1!\cdot2!\cdot2!} = 10080\)</span>
+      <span class="small text-secondary">ebből le kell vonni → \(151200 - 10080 = 141120\)</span>
+    </div>
+  </div>
+
+  <!-- Calculator -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Multinomiális együttható-kalkulátor</p>
+  <div class="info-box">
+    <div class="small text-secondary mb-2">Add meg a \(k_i\) értékeket vesszővel elválasztva (pl. <code>2,3,1</code>):</div>
+    <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+      <input type="text" id="mult-input" value="2,3,1" class="form-control form-control-sm" style="max-width:200px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcMult()">
+    </div>
+    <div id="mult-result"></div>
+  </div>
+
+  <!-- Word anagram -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Szó-anagram számoló</p>
+  <div class="info-box">
+    <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+      <input type="text" id="word-input" value="MATEMATIKA" maxlength="16" class="form-control form-control-sm" style="max-width:180px;background:#161b22;border-color:#30363d;color:#e6edf3;text-transform:uppercase" oninput="calcWord()">
+    </div>
+    <div id="word-result"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 2: BINOMIÁLIS & POLINOMIÁLIS ══════════════════════ -->
+<div id="tab-binom" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fb923c">Binomiális tétel és Polinomiális tétel</h5>
+
+  <div class="thm-box">
+    <div class="lbl mb-1" style="color:#fb923c">11. Tétel — Polinomiális tétel</div>
+    Legyen \(n,r\in\mathbb{N}\) és \(a_1,\ldots,a_r\in\mathbb{R}\). Ekkor
+    \[(a_1+\cdots+a_r)^n = \sum_{\substack{k_1,\ldots,k_r\ge 0\\k_1+\cdots+k_r=n}} \frac{n!}{k_1!\cdots k_r!}\,a_1^{k_1}\cdots a_r^{k_r}.\]
+  </div>
+
+  <div class="thm-box mt-1">
+    <div class="lbl mb-1" style="color:#fb923c">12. Tétel — Binomiális tétel (r=2 speciális eset)</div>
+    \[(a+b)^n = \sum_{k=0}^{n}\binom{n}{k}a^k b^{n-k}\]
+  </div>
+
+  <div class="thm-box small mt-1">
+    <strong>13. Következmény:</strong><br>
+    \(a=b=1\): \(\quad\dbinom{n}{0}+\dbinom{n}{1}+\cdots+\dbinom{n}{n} = 2^n\)<br>
+    \(a=1,b=-1\): \(\quad\dbinom{n}{0}-\dbinom{n}{1}+\dbinom{n}{2}-\cdots+(-1)^n\dbinom{n}{n} = 0\)
+  </div>
+
+  <div class="ex-box small mt-2">
+    <strong>Bizonyítás (polinomiális tétel vázlat):</strong><br>
+    \((a_1+\cdots+a_r)^n\)-t kifejtve minden tagból egy-egy tényezőt választunk. Egy \(a_1^{k_1}\cdots a_r^{k_r}\) típusú szorzat pontosan annyiszor jelenik meg, ahány \((k_1,\ldots,k_r)\) típusú ismétléses permutáció van az \(1,\ldots,r\) indexekből: \(\frac{n!}{k_1!\cdots k_r!}\).
+  </div>
+
+  <!-- Interactive expansion -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Binomiális kifejtés</p>
+  <div class="info-box">
+    <div class="d-flex gap-3 align-items-center mb-3 flex-wrap">
+      <label class="small">n = <input type="range" id="bn-n" min="0" max="8" value="4" oninput="document.getElementById('bn-nv').textContent=this.value;calcBinExp()" style="width:110px"> <span id="bn-nv" style="color:#fb923c">4</span></label>
+    </div>
+    <div id="bin-expand" class="small" style="color:#fdba74;font-family:monospace;line-height:2"></div>
+    <div id="bin-terms" class="d-flex flex-wrap gap-2 mt-2"></div>
+  </div>
+
+  <!-- Polynomial (trinomial) -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Polinomiális (trinomiális) kifejtés: \((a+b+c)^n\)</p>
+  <div class="info-box">
+    <div class="d-flex gap-3 align-items-center mb-2 flex-wrap">
+      <label class="small">n = <input type="range" id="tn-n" min="1" max="5" value="2" oninput="document.getElementById('tn-nv').textContent=this.value;calcTriExp()" style="width:100px"> <span id="tn-nv" style="color:#fb923c">2</span></label>
+    </div>
+    <div id="tri-expand" class="small" style="color:#fdba74;font-family:monospace;line-height:2"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 3: KORLÁTOZOTT KOMBINÁCIÓK ══════════════════════ -->
+<div id="tab-korl" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fb923c">Ismétléses kombinációk korlátozásokkal</h5>
+
+  <div class="thm-box">
+    <div class="lbl mb-1" style="color:#fb923c">14. Tétel — alsó korlátok</div>
+    <div class="small">Egy \(n\)-elemű halmazból \(k\)-tagú ismétléses kombináció, ahol az \(i\)-edik elem <strong>legalább \(s_i\)</strong>-szer szerepel (\(\sum s_i\le k\)):</div>
+    \[\binom{n+(k-s_1-\cdots-s_n)-1}{k-s_1-\cdots-s_n}\]
+  </div>
+
+  <div class="thm-box small mt-1">
+    <strong>Bizonyítás:</strong> Foglaljunk le \(s_i\) db \(a_i\) elemet. A maradék \(k-\sum s_i\) elemet korlátozás nélkül, szabadon választjuk: \(\binom{n+(k-\sum s_i)-1}{k-\sum s_i}\). \(\square\)
+  </div>
+
+  <div class="thm-box small mt-1">
+    <strong>16. Következmény — minden elem legalább egyszer:</strong><br>
+    Ha \(s_1=\cdots=s_n=1\) és \(n\le k\):
+    \[\binom{k-1}{n-1}\]
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>15. példa:</strong> 6-féle csoki, 12 db, az 1. fajtából legalább 3, a 2. fajtából legalább 4:<br>
+        \[n=6,\;k=12,\;s_1=3,\;s_2=4\]
+        \[\binom{6+(12-7)-1}{12-7}=\binom{10}{5}=252\]
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>17. példa:</strong> 6-féle csoki, 12 db, mind a 6-féléből legalább 1:<br>
+        \[\binom{12-1}{6-1}=\binom{11}{5}=462\]
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculator -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Korlátozott kombináció-kalkulátor</p>
+  <div class="info-box">
+    <div class="row g-2 mb-3">
+      <div class="col-auto"><label class="small">n (fajták) = <input type="number" id="rk-n" value="6" min="1" max="10" class="form-control form-control-sm d-inline-block ms-1" style="width:55px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcRK()"></label></div>
+      <div class="col-auto"><label class="small">k (összesen) = <input type="number" id="rk-k" value="12" min="0" max="30" class="form-control form-control-sm d-inline-block ms-1" style="width:55px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcRK()"></label></div>
+      <div class="col-12"><label class="small">Alsó korlátok (s₁,s₂,…) vesszővel elválasztva: <input type="text" id="rk-s" value="3,4,0,0,0,0" class="form-control form-control-sm d-inline-block ms-1" style="max-width:200px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcRK()"></label></div>
+    </div>
+    <div id="rk-result"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 4: LINEÁRIS EGYENLETEK ══════════════════════ -->
+<div id="tab-lin" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fb923c">Lineáris egyenletek egységnyi együtthatóval</h5>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="thm-box h-100">
+        <div class="lbl mb-1" style="color:#fb923c">18. Tétel — nemnegatív</div>
+        <div class="small">\(x_1+\cdots+x_n=k\), ahol \(x_i\ge 0\):</div>
+        \[\binom{n+k-1}{k}\]
+        <div class="small text-secondary mt-1">= \(n\) elem \(k\)-tagú ismétléses kombinációi</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="thm-box h-100">
+        <div class="lbl mb-1" style="color:#fb923c">20. Tétel — pozitív</div>
+        <div class="small">\(x_1+\cdots+x_n=k\), ahol \(x_i\ge 1\) (\(n\le k\)):</div>
+        \[\binom{k-1}{n-1}\]
+        <div class="small text-secondary mt-1">= minden elem legalább egyszer</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="thm-box h-100">
+        <div class="lbl mb-1" style="color:#fb923c">22. Tétel — alsó korláttal</div>
+        <div class="small">\(x_i>c_i\) feltétellel:</div>
+        \[\binom{k-c_1-\cdots-c_n-1}{n-1}\]
+        <div class="small text-secondary mt-1">Helyettesítés: \(y_i=x_i-c_i\gt0\)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>19. példa</strong> — 0–999999 közötti egészek, számjegy-összeg = 7:<br>
+        \(x_1+\cdots+x_6=7,\;x_i\ge 0\)
+        \[\binom{6+7-1}{7}=\binom{12}{7}=792\]
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>21. példa</strong> — 6-jegyű szám (nincs 0), számjegy-összeg = 8:<br>
+        \(x_1+\cdots+x_6=8,\;x_i\ge 1\)
+        \[\binom{8-1}{6-1}=\binom{7}{5}=21\]
+      </div>
+    </div>
+    <div class="col-md-12">
+      <div class="ex-box small">
+        <strong>23. példa</strong> — \(x_1+x_2+x_3+x_4+x_5=10\), ahol \(x_1>3,x_2>1,x_3>-1,x_4>0,x_5>-2\):<br>
+        \[\binom{10-3-1-(-1)-0-(-2)-1}{5-1}=\binom{8}{4}=70\]
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculator -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Lineáris egyenlet megoldás-számláló</p>
+  <div class="info-box">
+    <div class="row g-2 mb-3">
+      <div class="col-auto"><label class="small">n = <input type="number" id="le-n" value="3" min="1" max="10" class="form-control form-control-sm d-inline-block ms-1" style="width:55px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcLE()"></label></div>
+      <div class="col-auto"><label class="small">k = <input type="number" id="le-k" value="10" min="0" max="50" class="form-control form-control-sm d-inline-block ms-1" style="width:60px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcLE()"></label></div>
+    </div>
+    <div id="le-result"></div>
+  </div>
+
+  <!-- Visual: stars and bars -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Stars &amp; Bars vizualizáció (nemnegatív, n=3)</p>
+  <div class="info-box">
+    <div class="d-flex gap-2 align-items-center mb-2">
+      <label class="small">k = <input type="range" id="sb-k" min="0" max="10" value="5" oninput="document.getElementById('sb-kv').textContent=this.value;drawStarsBars()" style="width:120px"> <span id="sb-kv" style="color:#fb923c">5</span></label>
+    </div>
+    <canvas id="sb-canvas" width="520" height="100" style="background:#0c1408;border-radius:.4rem"></canvas>
+    <div id="sb-info" class="small mt-2 text-secondary"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 5: SZITA-FORMULA ══════════════════════ -->
+<div id="tab-szita" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fb923c">Szita-formula (befoglalás-kizárás elve)</h5>
+
+  <div class="thm-box">
+    <div class="lbl mb-1" style="color:#fb923c">26. Tétel — Szita-formula</div>
+    \[|A_1\cup\cdots\cup A_n| = \sum_{r=1}^{n}(-1)^{r-1}\sum_{1\le i_1<\cdots<i_r\le n}|A_{i_1}\cap\cdots\cap A_{i_r}|\]
+    \[|\overline{A_1\cup\cdots\cup A_n}| = |U| + \sum_{r=1}^{n}(-1)^{r}\sum_{1\le i_1<\cdots<i_r\le n}|A_{i_1}\cap\cdots\cap A_{i_r}|\]
+  </div>
+
+  <div class="thm-box small mt-1">
+    <strong>28. Tétel — Speciális szita-formula</strong> (ha minden \(r\)-fős metszet mérete azonos):<br>
+    \[|\overline{A_1\cup\cdots\cup A_n}| = |U| + \sum_{r=1}^{n}(-1)^r\binom{n}{r}|A_1\cap\cdots\cap A_r|\]
+  </div>
+
+  <div class="row g-2 mt-2">
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>2 halmaz:</strong><br>
+        \(|A\cup B|=|A|+|B|-|A\cap B|\)<br>
+        \(|\overline{A\cup B}|=|U|-|A|-|B|+|A\cap B|\)
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ex-box small">
+        <strong>3 halmaz:</strong><br>
+        \(|A\cup B\cup C|=|A|+|B|+|C|\)<br>
+        \(-|A\cap B|-|A\cap C|-|B\cap C|+|A\cap B\cap C|\)
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive 2-set Venn -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Interaktív Venn-diagram (2 halmaz)</p>
+  <div class="info-box">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <canvas id="venn-canvas" width="300" height="180" style="background:#0c0e14;border-radius:.4rem"></canvas>
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex flex-column gap-2">
+          <label class="small">|U| = <input type="number" id="v-U" value="100" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width:70px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcVenn()"></label>
+          <label class="small">|A| = <input type="number" id="v-A" value="40" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width:70px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcVenn()"></label>
+          <label class="small">|B| = <input type="number" id="v-B" value="30" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width:70px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcVenn()"></label>
+          <label class="small">|A∩B| = <input type="number" id="v-AB" value="12" min="0" class="form-control form-control-sm d-inline-block ms-1" style="width:70px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcVenn()"></label>
+        </div>
+        <div id="venn-result" class="small mt-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Divisibility example -->
+  <div class="info-box mt-2">
+    <div class="small fw-bold mb-2" style="color:#fdba74">27. példa — oszthatóság szita-formulával</div>
+    <div class="small text-secondary mb-2">Hány 1–3000 közötti egész nem osztható 2-vel, 3-mal, 5-tel?</div>
+    <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+      <label class="small">N = <input type="number" id="div-N" value="3000" min="1" class="form-control form-control-sm d-inline-block ms-1" style="width:80px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcDivSieve()"></label>
+      <span class="small text-secondary">prímek: 2, 3, 5</span>
+    </div>
+    <div id="div-sieve-result"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB 6: DERANGEMENT ══════════════════════ -->
+<div id="tab-derang" class="d-none">
+  <h5 class="fw-bold mb-3" style="color:#fb923c">Derangementek és szürjektív leképezések</h5>
+
+  <div class="def-box">
+    <div class="lbl mb-1" style="color:#fb923c">Elcserélt levelek problémája</div>
+    <div class="small">\(n\) levél és \(n\) boríték. Hányféle elosztás lehetséges, ha senki nem kapja a saját levelét? Az ilyen <strong>fixpont nélküli permutációkat</strong> derangementnek nevezzük, jelölésük \(D_n\).</div>
+  </div>
+
+  <div class="thm-box mt-1">
+    <div class="lbl mb-1" style="color:#fb923c">29. Tétel — \(D_n\)</div>
+    \[D_n = n!\left(\frac{1}{0!}-\frac{1}{1!}+\frac{1}{2!}-\cdots+(-1)^n\frac{1}{n!}\right) = n!\sum_{k=0}^{n}\frac{(-1)^k}{k!}\]
+    Aszimptotikusan: \(D_n \approx \frac{n!}{e}\)
+  </div>
+
+  <div class="thm-box small mt-1">
+    <strong>Bizonyítás vázlat (speciális szita-formula):</strong><br>
+    Legyen \(A_i=\{\sigma:\sigma(i)=i\}\). Ekkor \(|A_{i_1}\cap\cdots\cap A_{i_r}|=(n-r)!\), tehát a speciális szita alkalmazható:
+    \[D_n=n!\sum_{r=0}^{n}(-1)^r\frac{1}{r!}\]
+  </div>
+
+  <!-- D_n table -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Derangement tábla</p>
+  <div class="info-box" style="overflow-x:auto">
+    <table style="border-collapse:collapse;font-size:.78rem;width:100%">
+      <thead><tr style="border-bottom:1px solid #30363d">
+        <th style="padding:.3rem .6rem;color:#fb923c;text-align:center">n</th>
+        <th style="padding:.3rem .6rem;color:#fb923c;text-align:center">n!</th>
+        <th style="padding:.3rem .6rem;color:#fb923c;text-align:center">D_n</th>
+        <th style="padding:.3rem .6rem;color:#fb923c;text-align:center">D_n/n!</th>
+        <th style="padding:.3rem .6rem;color:#fb923c;text-align:right">1/e ≈ 0.3679</th>
+      </tr></thead>
+      <tbody id="derang-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="ex-box small mt-2">
+    <strong>30. példa — \(S_9\), pontosan 3 fixpont:</strong><br>
+    Válasszuk ki a 3 fixpontot: \(\binom{9}{3}\) féleképpen. A maradék 6 elemen derangement: \(D_6\) féleképpen.<br>
+    \[\binom{9}{3}\cdot D_6 = 84\cdot265 = 22260\]
+  </div>
+
+  <!-- Surjections -->
+  <div class="thm-box mt-3">
+    <div class="lbl mb-1" style="color:#fb923c">31. Tétel — Szürjektív leképezések</div>
+    \(|B|=k,\;|C|=n\) (\(1\le n\le k\)) esetén a \(B\to C\) szürjektív leképezések száma:
+    \[\sum_{r=0}^{n}(-1)^r\binom{n}{r}(n-r)^k\]
+  </div>
+
+  <div class="ex-box small mt-1">
+    <strong>32. példa</strong> — 6 versenyző, 3-féle ajándék, minden típus kiosztva (szürjektív):<br>
+    \[\sum_{r=0}^{3}(-1)^r\binom{3}{r}(3-r)^6 = 3^6 - 3\cdot2^6 + 3\cdot1^6 = 729-192+3 = 540\]
+  </div>
+
+  <!-- Interactive Derangement + Surjection -->
+  <p class="small fw-bold mt-3 mb-2" style="color:#fdba74">Interaktív kalkulátor</p>
+  <div class="info-box">
+    <div class="d-flex gap-3 flex-wrap mb-3">
+      <label class="small">n = <input type="range" id="dr-n" min="1" max="10" value="4" oninput="document.getElementById('dr-nv').textContent=this.value;calcDerang()" style="width:110px"> <span id="dr-nv" style="color:#fb923c">4</span></label>
+    </div>
+    <div id="derang-result"></div>
+    <hr style="border-color:#21262d">
+    <div class="small fw-bold mb-2" style="color:#fdba74">Szürjektív leképezések:</div>
+    <div class="d-flex gap-3 flex-wrap mb-2">
+      <label class="small">|B|=k = <input type="number" id="surj-k" value="6" min="1" max="10" class="form-control form-control-sm d-inline-block ms-1" style="width:55px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcSurj()"></label>
+      <label class="small">|C|=n = <input type="number" id="surj-n" value="3" min="1" max="10" class="form-control form-control-sm d-inline-block ms-1" style="width:55px;background:#161b22;border-color:#30363d;color:#e6edf3" oninput="calcSurj()"></label>
+    </div>
+    <div id="surj-result"></div>
+  </div>
+</div>
+
+</div><!-- /pt-4 -->
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});initAll();"></script>
+
+<script>
+function reRender(el){
+  if(window.renderMathInElement) renderMathInElement(el,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});
+}
+
+function showTab(id, el){
+  document.querySelectorAll('[id^="tab-"]').forEach(p=>p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(id==='tab-mult')   { calcMult(); calcWord(); }
+  if(id==='tab-binom')  { calcBinExp(); calcTriExp(); }
+  if(id==='tab-korl')   { calcRK(); }
+  if(id==='tab-lin')    { calcLE(); drawStarsBars(); }
+  if(id==='tab-szita')  { calcVenn(); drawVenn(); calcDivSieve(); }
+  if(id==='tab-derang') { buildDerangTable(); calcDerang(); calcSurj(); }
+}
+
+/* ─── Math ─── */
+function fact(n){ if(n<0) return Infinity; if(n<=1) return 1; let r=1; for(let i=2;i<=n;i++) r*=i; return r; }
+function C(n,k){ if(k<0||k>n) return 0; if(k===0||k===n) return 1; k=Math.min(k,n-k); let r=1; for(let i=0;i<k;i++) r=r*(n-i)/(i+1); return Math.round(r); }
+function multinomial(ks){ const n=ks.reduce((a,b)=>a+b,0); return fact(n)/ks.reduce((a,b)=>a*fact(b),1); }
+function Dn(n){ let s=0; for(let k=0;k<=n;k++) s+=Math.pow(-1,k)/fact(k); return Math.round(fact(n)*s); }
+
+/* ─── Multinomial ─── */
+function calcMult(){
+  const raw=document.getElementById('mult-input').value;
+  const ks=raw.split(',').map(s=>parseInt(s.trim())).filter(v=>!isNaN(v)&&v>=0);
+  const n=ks.reduce((a,b)=>a+b,0);
+  const val=multinomial(ks);
+  const el=document.getElementById('mult-result');
+  el.innerHTML=`\\(\\displaystyle\\frac{${n}!}{${ks.map(k=>k+'!').join('\\cdot')}} = ${val.toLocaleString()}\\)`;
+  reRender(el);
+}
+
+function calcWord(){
+  const word=document.getElementById('word-input').value.toUpperCase().replace(/[^A-Z]/g,'');
+  if(!word){document.getElementById('word-result').innerHTML='';return;}
+  const freq={};
+  for(const c of word) freq[c]=(freq[c]||0)+1;
+  const n=word.length;
+  const den=Object.values(freq).map(k=>`${k}!`).join('\\cdot');
+  const val=multinomial(Object.values(freq));
+  const breakdown=Object.entries(freq).map(([c,k])=>`${c}:${k}`).join(', ');
+  const el=document.getElementById('word-result');
+  el.innerHTML=`<div class="small text-secondary mb-1">Betűk: ${breakdown} (összesen ${n})</div>\\(\\frac{${n}!}{${den}} = ${val.toLocaleString()}\\) anagram`;
+  reRender(el);
+}
+
+/* ─── Binomial expansion ─── */
+function calcBinExp(){
+  const n=+document.getElementById('bn-n').value;
+  const terms=[];
+  let line=`(a+b)^{${n}} = `;
+  const parts=[];
+  for(let k=0;k<=n;k++){
+    const c=C(n,k);
+    let t='';
+    if(c>1) t+=c;
+    if(k>0) t+= k===1?'a':`a^{${k}}`;
+    if(n-k>0) t+= n-k===1?'b':`b^{${n-k}}`;
+    if(t==='') t='1';
+    parts.push(t);
+    terms.push({c,ak:k,bk:n-k,label:t});
+  }
+  document.getElementById('bin-expand').innerHTML=`\\(${line}${parts.join(' + ')}\\)`;
+  const termsEl=document.getElementById('bin-terms');
+  const COLS=['#f87171','#fb923c','#fbbf24','#34d399','#60a5fa','#a78bfa','#f472b6','#e2e8f0','#94a3b8'];
+  termsEl.innerHTML=terms.map((t,i)=>`<div class="formula-chip" style="border-color:${COLS[i%COLS.length]};color:${COLS[i%COLS.length]}">\\(${t.label}\\)</div>`).join('');
+  reRender(document.getElementById('tab-binom'));
+}
+
+function calcTriExp(){
+  const n=+document.getElementById('tn-n').value;
+  const parts=[];
+  for(let i=n;i>=0;i--){
+    for(let j=n-i;j>=0;j--){
+      const k=n-i-j;
+      const c=Math.round(fact(n)/(fact(i)*fact(j)*fact(k)));
+      let t='';
+      if(c>1) t+=c;
+      if(i>0) t+=i===1?'a':`a^{${i}}`;
+      if(j>0) t+=j===1?'b':`b^{${j}}`;
+      if(k>0) t+=k===1?'c':`c^{${k}}`;
+      if(t==='') t='1';
+      parts.push(t);
+    }
+  }
+  document.getElementById('tri-expand').innerHTML=`\\((a+b+c)^{${n}} = ${parts.join(' + ')}\\)`;
+  reRender(document.getElementById('tri-expand'));
+}
+
+/* ─── Korlátozott kombináció ─── */
+function calcRK(){
+  const n=+document.getElementById('rk-n').value;
+  const k=+document.getElementById('rk-k').value;
+  const sraw=document.getElementById('rk-s').value;
+  const ss=sraw.split(',').map(s=>parseInt(s.trim())||0).slice(0,n);
+  while(ss.length<n) ss.push(0);
+  const sumS=ss.reduce((a,b)=>a+b,0);
+  const kp=k-sumS;
+  const val=kp>=0?C(n+kp-1,kp):0;
+  const el=document.getElementById('rk-result');
+  el.innerHTML=`\\(\\binom{${n}+(${k}-${sumS})-1}{${k}-${sumS}} = \\binom{${n+kp-1}}{${kp}} = ${val}\\)`;
+  reRender(el);
+}
+
+/* ─── Lineáris egyenlet ─── */
+function calcLE(){
+  const n=+document.getElementById('le-n').value;
+  const k=+document.getElementById('le-k').value;
+  const nonneg=C(n+k-1,k);
+  const pos=n<=k?C(k-1,n-1):0;
+  const el=document.getElementById('le-result');
+  el.innerHTML=`
+    <div class="row g-2">
+      <div class="col-md-6"><div class="thm-box small">Nemnegatív (\(x_i\ge0\)):<br>\\(\\binom{${n}+${k}-1}{${k}}=\\binom{${n+k-1}}{${k}}=${nonneg}\\)</div></div>
+      <div class="col-md-6"><div class="thm-box small">Pozitív (\(x_i\ge1\)):${n<=k?`<br>\\(\\binom{${k}-1}{${n}-1}=\\binom{${k-1}}{${n-1}}=${pos}\\)`:'<br><span style="color:#f87171">n &gt; k, nincs megoldás</span>'}</div></div>
+    </div>`;
+  reRender(el);
+}
+
+/* ─── Stars & Bars ─── */
+function drawStarsBars(){
+  const k=+document.getElementById('sb-k').value;
+  const cv=document.getElementById('sb-canvas'),ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const n=3; // fixed n=3
+  const pad=20, total=k+n-1;
+  const step=(W-2*pad)/Math.max(total,1);
+  const cy=H/2;
+  // draw one example partition
+  const parts=[Math.floor(k/3),Math.floor(k/3),k-2*Math.floor(k/3)];
+  let idx=0;
+  const COLS=['#f87171','#60a5fa','#4ade80'];
+  for(let p=0;p<n;p++){
+    for(let s=0;s<parts[p];s++){
+      const x=pad+idx*step+step/2;
+      ctx.beginPath(); ctx.arc(x,cy,8,0,Math.PI*2);
+      ctx.fillStyle=COLS[p]; ctx.fill();
+      idx++;
+    }
+    if(p<n-1){
+      const x=pad+idx*step+step/2;
+      ctx.fillStyle='#8892a4'; ctx.font='bold 16px monospace'; ctx.textAlign='center';
+      ctx.fillText('|',x,cy+6);
+      idx++;
+    }
+  }
+  // labels
+  ctx.fillStyle='#8892a4'; ctx.font='10px monospace'; ctx.textAlign='center';
+  ctx.fillText(`x₁=${parts[0]}`, pad+parts[0]*step/2, cy+26);
+  ctx.fillText(`x₂=${parts[1]}`, pad+(parts[0]+1)*step+parts[1]*step/2, cy+26);
+  ctx.fillText(`x₃=${parts[2]}`, pad+(parts[0]+parts[1]+2)*step+parts[2]*step/2, cy+26);
+  document.getElementById('sb-info').innerHTML=
+    `Egy lehetséges felosztás: x₁=${parts[0]}, x₂=${parts[1]}, x₃=${parts[2]} &nbsp;|&nbsp; Összes: C(${n+k-1},${k}) = ${C(n+k-1,k)}`;
+}
+
+/* ─── Venn ─── */
+function calcVenn(){
+  const U=+document.getElementById('v-U').value;
+  const A=+document.getElementById('v-A').value;
+  const B=+document.getElementById('v-B').value;
+  const AB=+document.getElementById('v-AB').value;
+  const AuB=A+B-AB;
+  const el=document.getElementById('venn-result');
+  el.innerHTML=`<span class="formula-chip">|A∪B| = ${AuB}</span> <span class="formula-chip">|A̅∪B̅| = ${U-AuB}</span>`;
+  drawVenn(A,B,AB,U);
+}
+function drawVenn(A,B,AB,U){
+  A=A||+document.getElementById('v-A').value;
+  B=B||+document.getElementById('v-B').value;
+  AB=AB||+document.getElementById('v-AB').value;
+  U=U||+document.getElementById('v-U').value;
+  const cv=document.getElementById('venn-canvas'),ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+  ctx.strokeRect(2,2,W-4,H-4);
+  ctx.fillStyle='#8892a4'; ctx.font='10px monospace'; ctx.textAlign='left';
+  ctx.fillText(`U = ${U}`,6,14);
+  const r=62,cy=H/2,cx1=W/2-40,cx2=W/2+40;
+  ctx.globalAlpha=.35;
+  ctx.beginPath(); ctx.arc(cx1,cy,r,0,Math.PI*2);
+  ctx.fillStyle='#f87171'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx2,cy,r,0,Math.PI*2);
+  ctx.fillStyle='#60a5fa'; ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.strokeStyle='#f87171'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx1,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='#60a5fa';
+  ctx.beginPath(); ctx.arc(cx2,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#e2e8f0'; ctx.font='bold 11px monospace'; ctx.textAlign='center';
+  ctx.fillText(`A=${A}`,cx1-28,cy+4);
+  ctx.fillText(`∩=${AB}`,(cx1+cx2)/2,cy+4);
+  ctx.fillText(`B=${B}`,cx2+28,cy+4);
+}
+
+/* ─── Divisibility sieve ─── */
+function calcDivSieve(){
+  const N=+document.getElementById('div-N').value;
+  const primes=[2,3,5];
+  const A=primes.map(p=>Math.floor(N/p));
+  const AB=[Math.floor(N/6),Math.floor(N/10),Math.floor(N/15)];
+  const ABC=Math.floor(N/30);
+  const AuBC=A[0]+A[1]+A[2]-AB[0]-AB[1]-AB[2]+ABC;
+  const result=N-AuBC;
+  const el=document.getElementById('div-sieve-result');
+  el.innerHTML=`
+    <div class="step-row"><div class="step-eq">\\(|U|=${N}\\)</div><div class="step-why"></div></div>
+    <div class="step-row"><div class="step-eq">\\(|A|=\\lfloor${N}/2\\rfloor=${A[0]},\\;|B|=\\lfloor${N}/3\\rfloor=${A[1]},\\;|C|=\\lfloor${N}/5\\rfloor=${A[2]}\\)</div></div>
+    <div class="step-row"><div class="step-eq">\\(|A\\cap B|=\\lfloor${N}/6\\rfloor=${AB[0]},\\;|A\\cap C|=\\lfloor${N}/10\\rfloor=${AB[1]},\\;|B\\cap C|=\\lfloor${N}/15\\rfloor=${AB[2]}\\)</div></div>
+    <div class="step-row"><div class="step-eq">\\(|A\\cap B\\cap C|=\\lfloor${N}/30\\rfloor=${ABC}\\)</div></div>
+    <div class="step-row"><div class="step-eq">\\(|\\overline{A\\cup B\\cup C}|=${N}-${A[0]}-${A[1]}-${A[2]}+${AB[0]}+${AB[1]}+${AB[2]}-${ABC}=\\mathbf{${result}}\\)</div></div>`;
+  reRender(el);
+}
+
+/* ─── Derangement table ─── */
+function buildDerangTable(){
+  const tbody=document.getElementById('derang-tbody');
+  if(tbody.children.length>0) return;
+  for(let n=1;n<=9;n++){
+    const fn=fact(n), dn=Dn(n), ratio=(dn/fn).toFixed(4);
+    const tr=document.createElement('tr');
+    tr.style.borderBottom='1px solid #21262d';
+    tr.innerHTML=`<td style="text-align:center;padding:.28rem .6rem;color:#fb923c">${n}</td>
+      <td style="text-align:center;padding:.28rem .6rem">${fn.toLocaleString()}</td>
+      <td style="text-align:center;padding:.28rem .6rem;color:#fdba74;font-weight:700">${dn.toLocaleString()}</td>
+      <td style="text-align:center;padding:.28rem .6rem;color:#6ee7b7">${ratio}</td>
+      <td style="text-align:right;padding:.28rem .6rem;color:#8892a4">≈ 0.3679</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function calcDerang(){
+  const n=+document.getElementById('dr-n').value;
+  document.getElementById('dr-nv').textContent=n;
+  const dn=Dn(n);
+  const el=document.getElementById('derang-result');
+  el.innerHTML=`
+    <span class="formula-chip">\\(D_{${n}} = ${n}!\\displaystyle\\sum_{k=0}^{${n}}\\frac{(-1)^k}{k!} = ${dn}\\)</span>
+    <span class="small text-secondary ms-2">\\(${n}! = ${fact(n)}\\), arány: ${(dn/fact(n)).toFixed(4)}</span>`;
+  reRender(el);
+}
+
+function calcSurj(){
+  const k=+document.getElementById('surj-k').value;
+  const n=+document.getElementById('surj-n').value;
+  if(n>k){document.getElementById('surj-result').innerHTML='<span style="color:#f87171">n &gt; k: nincs szürjekció</span>';return;}
+  let total=0;
+  const terms=[];
+  for(let r=0;r<=n;r++){
+    const t=Math.pow(-1,r)*C(n,r)*Math.pow(n-r,k);
+    total+=t;
+    terms.push(`${r===0?'':t>=0?'+':'-'}\\binom{${n}}{${r}}${(n-r)}^{${k}}`);
+  }
+  const el=document.getElementById('surj-result');
+  el.innerHTML=`\\(${terms.join('')} = ${total}\\)`;
+  reRender(el);
+}
+
+function initAll(){
+  calcMult(); calcWord();
+  calcBinExp(); calcTriExp();
+  calcRK(); calcLE(); drawStarsBars();
+  calcVenn(); drawVenn(); calcDivSieve();
+  buildDerangTable(); calcDerang(); calcSurj();
+}
+setTimeout(initAll,400);
+</script>
+{% endblock %}

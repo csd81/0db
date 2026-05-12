@@ -1,0 +1,1062 @@
+{% extends "base.html" %}
+{% block title %}ILA 4. fejezet — Relációk{% endblock %}
+{% block content %}
+<style>
+.ila-nav-link{background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;
+  color:#8892a4!important;border-radius:0!important;padding:.5rem 1rem;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:color .15s,border-color .15s;}
+.ila-nav-link:hover{color:#a78bfa!important;}
+.ila-nav-link.active{color:#a78bfa!important;border-bottom-color:#a78bfa!important;}
+.def-box{background:#13141a;border-left:3px solid #a78bfa;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.thm-box{background:#13141a;border-left:3px solid #7c3aed;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.ex-box{background:#0f1a0f;border-left:3px solid #34d399;border-radius:0 6px 6px 0;padding:.75rem 1rem;margin-bottom:.65rem;}
+.info-box{background:#13141a;border-radius:8px;border:1px solid rgba(167,139,250,.2);padding:1rem 1.25rem;}
+.lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.pf-step{display:flex;gap:1.5rem;padding:.42rem 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:baseline;}
+.pf-step:last-child{border-bottom:none;}
+.pf-eq{min-width:230px;color:#e2e8f0;font-size:.85rem;}
+.pf-why{font-size:.72rem;color:#6b7280;line-height:1.4;}
+.type-btn{padding:.35rem .9rem;font-size:.76rem;font-weight:600;border:1px solid rgba(167,139,250,.3);
+  border-radius:.3rem;background:transparent;color:#8892a4;cursor:pointer;transition:all .15s;}
+.type-btn:hover{border-color:#a78bfa;color:#a78bfa;}
+.type-btn.active{background:rgba(167,139,250,.18);border-color:#a78bfa;color:#c4b5fd;}
+.katex{font-size:1em;}
+.prop-tbl td,.prop-tbl th{padding:.3rem .55rem;font-size:.72rem;text-align:center;border:1px solid rgba(255,255,255,.06);}
+.prop-tbl th{background:#1a1b25;color:#8892a4;font-weight:600;}
+.prop-tbl td:first-child{text-align:left;color:#c4cdd8;font-family:monospace;font-size:.75rem;}
+.chk{font-size:.9rem;}
+.rel-cell{width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(167,139,250,.2);border-radius:3px;cursor:pointer;font-size:.75rem;
+  font-family:monospace;user-select:none;transition:all .12s;}
+.rel-cell:hover{border-color:#a78bfa;}
+.rel-cell.on{background:rgba(167,139,250,.25);border-color:#a78bfa;color:#c4b5fd;}
+.rel-cell.diag{border-style:dashed;}
+.prop-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .7rem;border-radius:999px;
+  font-size:.72rem;font-weight:600;border:1px solid;margin:.15rem;}
+.prop-badge.yes{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.4);color:#34d399;}
+.prop-badge.no{background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.3);color:#ef4444;}
+</style>
+
+<div class="mb-4">
+  <div class="lbl mb-1" style="color:#a78bfa">ILA — 4. fejezet</div>
+  <h2 class="fw-bold mb-1" style="color:#e2e8f0;font-size:1.4rem">Relációk</h2>
+  <p class="mb-0" style="color:#8892a4;font-size:.82rem">Hartung Ferenc · Pannon Egyetem Matematika Tanszék · 2025</p>
+</div>
+
+<ul class="nav mb-0" style="border-bottom:1px solid rgba(167,139,250,.2)">
+  <li class="nav-item"><button class="ila-nav-link active" onclick="showTab('tab-re',this)"><i class="bi bi-diagram-3 me-1"></i>Relációk</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-tu',this)"><i class="bi bi-check2-circle me-1"></i>Tulajdonságok</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-tz',this)"><i class="bi bi-arrow-repeat me-1"></i>Tranzitív lezárás</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-rn',this)"><i class="bi bi-sort-down me-1"></i>Rendezések</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ek',this)"><i class="bi bi-grid-3x3-gap me-1"></i>Ekvivalenciák</button></li>
+  <li class="nav-item"><button class="ila-nav-link" onclick="showTab('tab-ex',this)"><i class="bi bi-lightbulb me-1"></i>Előadás+</button></li>
+</ul>
+
+<div class="pt-4">
+
+<!-- ══════ TAB 1: RELÁCIÓK ══════ -->
+<div id="tab-re">
+<div class="row g-4">
+  <div class="col-lg-5">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Reláció</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen \(A\) egy halmaz. Az \(A\)-n definiált <strong style="color:#a78bfa">reláción</strong>
+        az \(A\)-ból \(A\)-ba történő megfeleltetéseket értjük, azaz az
+        \[A \times A\] Descartes-szorzat részhalmazait.<br><br>
+        Ha \(\rho \subseteq A \times A\) és \((a,b)\in\rho\), ezt \(a\,\rho\,b\) jelöléssel is írjuk.
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Irányított gráf (G = (A,ρ))</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Az \(A\) halmaz elemeit a gráf <strong style="color:#a78bfa">pontjainak</strong>,
+        a \(\rho\) reláció elemeit a gráf <strong style="color:#a78bfa">éleinek</strong> nevezzük.
+        Egy \((a,b)\in\rho\) él <em>kezdőpontja</em> \(a\), <em>végpontja</em> \(b\).
+        Az \((a,a)\) éleket <strong style="color:#a78bfa">hurokélnek</strong> nevezzük.<br><br>
+        <strong>Séta</strong> (walk): élek \(e_1,\ldots,e_n\) sorozata, ahol \(e_i\) végpontja = \(e_{i+1}\) kezdőpontja. <span style="color:#8892a4;font-size:.77rem">(Él és pont is ismétlődhet.)</span><br>
+        <span style="color:#f97316">Nyitott séta</span>: kezdőpont ≠ végpont. &ensp; <span style="color:#22d3ee">Zárt séta</span>: kezdőpont = végpont.<br>
+        <strong>Út</strong> (path): séta, ahol a közbülső pontok páronként különbözők.<br>
+        <strong>Kör</strong> (circuit): zárt út (kezdő = végpont, közbülső pontok különbözők).
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-7">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">11 példa relációra</div>
+      <div style="font-size:.78rem;color:#c4cdd8;line-height:1.9">
+        Legyen \(A = \mathbb{R}\), \(X\) = síkbeli egyenesek halmaza, \(Y\) = Magyarország lakói:
+        <table style="width:100%;border-collapse:collapse;margin-top:.4rem">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace;white-space:nowrap">\(\rho_1\)</td>
+            <td style="padding:.25rem .4rem">\(\{(a,b)\in\mathbb{R}^2 : a = b\}\) — egyenlőség</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_2\)</td>
+            <td style="padding:.25rem .4rem">\(\{(a,b)\in\mathbb{R}^2 : a \le b\}\) — kisebb-egyenlő</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_3\)</td>
+            <td style="padding:.25rem .4rem">\(\{(a,b)\in\mathbb{R}^2 : a < b\}\) — szigorú kisebb</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_4\)</td>
+            <td style="padding:.25rem .4rem">\(\{(a,b)\in\mathbb{R}^2 : |a-b|\le 1\}\) — közel van</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_5\)</td>
+            <td style="padding:.25rem .4rem">\(\{(m,n)\in\mathbb{Z}^2 : m\mid n\}\) — oszthatóság ℤ-n</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_6\)</td>
+            <td style="padding:.25rem .4rem">\(\{(m,n)\in\mathbb{N}^2 : m\mid n\}\) — oszthatóság ℕ-n</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_7\)</td>
+            <td style="padding:.25rem .4rem">\(\{(e,f)\in X^2 : e\perp f\}\) — merőlegesség</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_8\)</td>
+            <td style="padding:.25rem .4rem">\(\{(e,f)\in X^2 : e\parallel f\}\) — párhuzamosság</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_9\)</td>
+            <td style="padding:.25rem .4rem">\(\{(x,y)\in Y^2 : x\text{ és }y\text{ testvérek}\}\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_{10}\)</td>
+            <td style="padding:.25rem .4rem">\(\{(x,y)\in Y^2 : x\text{ gyermeke }y\text{-nak}\}\)</td>
+          </tr>
+          <tr>
+            <td style="padding:.25rem .4rem;color:#a78bfa;font-family:monospace">\(\rho_{11}\)</td>
+            <td style="padding:.25rem .4rem">\(\{(x,y)\in Y^2 : x,y\text{ ugyanazon a településen laknak}\}\)</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 2: TULAJDONSÁGOK ══════ -->
+<div id="tab-tu" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-5">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">5 alapvető tulajdonság</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:2">
+        Legyen \(\rho \subseteq A \times A\).
+        <ul style="margin:.4rem 0 0 1rem;padding:0">
+          <li><strong style="color:#a78bfa">Reflexív:</strong> \(\forall a\in A:\;(a,a)\in\rho\)</li>
+          <li><strong style="color:#34d399">Szimmetrikus:</strong> \((a,b)\in\rho \Rightarrow (b,a)\in\rho\)</li>
+          <li><strong style="color:#f97316">Antiszimmetrikus:</strong> \((a,b),(b,a)\in\rho \Rightarrow a=b\)</li>
+          <li><strong style="color:#22d3ee">Tranzitív:</strong> \((a,b),(b,c)\in\rho \Rightarrow (a,c)\in\rho\)</li>
+          <li><strong style="color:#f472b6">Dichotom:</strong> \(\forall a,b\in A:\;(a,b)\in\rho\text{ vagy }(b,a)\in\rho\)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — Gráfos jellemzés</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen \(\rho\) reláció, \(G=(A,\rho)\) a gráfja. Ekkor:
+        <ul style="margin:.4rem 0 0 1rem;padding:0;line-height:2.1">
+          <li>\(\rho\) <em>reflexív</em> ↔ minden pontban van hurokél</li>
+          <li>\(\rho\) <em>szimmetrikus</em> ↔ minden élhez megvan a fordított él is</li>
+          <li>\(\rho\) <em>antiszimmetrikus</em> ↔ különböző pontok közt legfeljebb egy irányban van él</li>
+          <li>\(\rho\) <em>tranzitív</em> ↔ bármely 2 hosszú séta esetén megvan a közvetlen él</li>
+          <li>\(\rho\) <em>dichotom</em> ↔ bármely két pont közt legalább egy irányban van él</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Tulajdonságtábla (ρ₁–ρ₁₁)</div>
+      <div style="overflow-x:auto">
+        <table class="prop-tbl" style="width:100%;border-collapse:collapse">
+          <tr>
+            <th>Rel.</th>
+            <th style="color:#a78bfa">Ref.</th>
+            <th style="color:#34d399">Szimm.</th>
+            <th style="color:#f97316">Antis.</th>
+            <th style="color:#22d3ee">Tran.</th>
+            <th style="color:#f472b6">Dich.</th>
+          </tr>
+          <tr><td>\(\rho_1\) (=)</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_2\) (≤, ℝ)</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+          <tr><td>\(\rho_3\) (&lt;, ℝ)</td><td class="chk" style="color:#ef4444">✗</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_4\) (|a-b|≤1)</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk" style="color:#ef4444">✗</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_5\) (∣, ℤ)</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_6\) (∣, ℕ)</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_7\) (⊥)</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk" style="color:#ef4444">✗</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_8\) (∥)</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_9\) (testvér)</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_{10}\) (szülő)</td><td class="chk" style="color:#ef4444">✗</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk" style="color:#ef4444">✗</td></tr>
+          <tr><td>\(\rho_{11}\) (város)</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td><td class="chk">✓</td><td class="chk" style="color:#ef4444">✗</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-7">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — relációs mátrix ({1,2,3,4})</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">
+        Kattints egy cellára a párnak a relációhoz való hozzáadásához / törléséhez. Az sor = kezdőpont, az oszlop = végpont.
+      </div>
+      <div class="d-flex gap-2 flex-wrap mb-3">
+        <button class="type-btn active" onclick="loadPreset('eq')">Egyenlőség</button>
+        <button class="type-btn" onclick="loadPreset('le')">Kisebb-egyenlő (≤)</button>
+        <button class="type-btn" onclick="loadPreset('div')">Oszthatóság (∣)</button>
+        <button class="type-btn" onclick="loadPreset('par')">Azonos paritás</button>
+        <button class="type-btn" onclick="loadPreset('empty')">Üres</button>
+      </div>
+
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start">
+        <div>
+          <div style="display:grid;grid-template-columns:1.5rem repeat(4,2rem);grid-template-rows:1.5rem repeat(4,2rem);gap:3px;margin-bottom:.5rem">
+            <div></div>
+            <div style="font-size:.7rem;color:#a78bfa;text-align:center;align-self:center">1</div>
+            <div style="font-size:.7rem;color:#a78bfa;text-align:center;align-self:center">2</div>
+            <div style="font-size:.7rem;color:#a78bfa;text-align:center;align-self:center">3</div>
+            <div style="font-size:.7rem;color:#a78bfa;text-align:center;align-self:center">4</div>
+            <div style="font-size:.7rem;color:#a78bfa;text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);align-self:center">1</div>
+            <div class="rel-cell diag" id="c11" onclick="toggle(1,1)"></div>
+            <div class="rel-cell" id="c12" onclick="toggle(1,2)"></div>
+            <div class="rel-cell" id="c13" onclick="toggle(1,3)"></div>
+            <div class="rel-cell" id="c14" onclick="toggle(1,4)"></div>
+            <div style="font-size:.7rem;color:#a78bfa;text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);align-self:center">2</div>
+            <div class="rel-cell" id="c21" onclick="toggle(2,1)"></div>
+            <div class="rel-cell diag" id="c22" onclick="toggle(2,2)"></div>
+            <div class="rel-cell" id="c23" onclick="toggle(2,3)"></div>
+            <div class="rel-cell" id="c24" onclick="toggle(2,4)"></div>
+            <div style="font-size:.7rem;color:#a78bfa;text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);align-self:center">3</div>
+            <div class="rel-cell" id="c31" onclick="toggle(3,1)"></div>
+            <div class="rel-cell" id="c32" onclick="toggle(3,2)"></div>
+            <div class="rel-cell diag" id="c33" onclick="toggle(3,3)"></div>
+            <div class="rel-cell" id="c34" onclick="toggle(3,4)"></div>
+            <div style="font-size:.7rem;color:#a78bfa;text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);align-self:center">4</div>
+            <div class="rel-cell" id="c41" onclick="toggle(4,1)"></div>
+            <div class="rel-cell" id="c42" onclick="toggle(4,2)"></div>
+            <div class="rel-cell" id="c43" onclick="toggle(4,3)"></div>
+            <div class="rel-cell diag" id="c44" onclick="toggle(4,4)"></div>
+          </div>
+          <div style="font-size:.66rem;color:#6b7280">sor = bal (kezdőpont) · oszlop = felső (végpont)</div>
+        </div>
+
+        <div style="flex:1;min-width:180px">
+          <div class="lbl mb-2" style="color:#a78bfa">Tulajdonságok:</div>
+          <div id="prop-badges"></div>
+          <div class="mt-3 lbl mb-1" style="color:#a78bfa">Reláció:</div>
+          <div id="rel-list" style="font-family:monospace;font-size:.75rem;color:#c4cdd8;line-height:1.7;max-height:120px;overflow-y:auto"></div>
+        </div>
+      </div>
+
+      <canvas id="rel-canvas" width="340" height="200" style="border-radius:8px;background:#0d0e14;display:block;margin-top:.75rem"></canvas>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 3: TRANZITÍV LEZÁRÁS ══════ -->
+<div id="tab-tz" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-5">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — ρ^n és tranzitív lezárás</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        A \(\rho^n\) a \(\underbrace{\rho\rho\cdots\rho}_{n}\) szorzatot jelöli. Pontosabban:
+        \((a,b)\in\rho^n\) pontosan akkor, ha létezik \(n\) hosszú séta \(a\)-ból \(b\)-be.<br><br>
+        A \(\rho\) reláció <strong style="color:#a78bfa">tranzitív lezártja</strong>:
+        \[\hat\rho = \rho \cup \rho^2 \cup \rho^3 \cup \cdots = \bigcup_{n=1}^{\infty} \rho^n\]
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tétel — tranzitív lezárt tulajdonságai</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen \(\rho\) reláció \(A\)-n, \(G=(A,\rho)\). Ekkor:
+        <ol style="margin:.4rem 0 0 1.1rem;padding:0;line-height:2.1">
+          <li>\((a,b)\in\hat\rho\) ↔ létezik séta \(a\)-ból \(b\)-be \(G\)-ben</li>
+          <li>\(\hat\rho\) tranzitív reláció \(A\)-n</li>
+          <li>\(\hat\rho\) a legszűkebb tranzitív reláció, amely tartalmazza \(\rho\)-t<br>
+              <em>(ha \(\tau\) tranzitív és \(\rho\subseteq\tau\), akkor \(\hat\rho\subseteq\tau\))</em></li>
+        </ol>
+        <div class="mt-2" style="font-size:.77rem;color:#8892a4">
+          <strong>Következmény:</strong> Minden reláció kiterjeszthető tranzitív relációvá.
+        </div>
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Példa — tranzitív lezárt kiszámítása</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen \(A=\{1,2,3,4,5\}\),
+        \[\rho = \{(1,2),(2,4),(4,3),(5,2)\}.\]
+        <div class="mt-2">
+          <div class="pf-step">
+            <div class="pf-eq">\(\rho^2 = \{(1,4),(2,3),(5,4)\}\)</div>
+            <div class="pf-why">2 lépéses utak: 1→2→4, 2→4→3, 5→2→4</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq">\(\rho^3 = \{(1,3),(5,3)\}\)</div>
+            <div class="pf-why">3 lépéses utak: 1→2→4→3, 5→2→4→3</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq">\(\rho^4 = \emptyset\)</div>
+            <div class="pf-why">nincs 4 hosszú út a gráfban</div>
+          </div>
+          <div class="pf-step">
+            <div class="pf-eq">\(\hat\rho = \rho \cup \rho^2 \cup \rho^3\)</div>
+            <div class="pf-why" style="color:#34d399">végeredmény</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-7">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — tranzitív lezárt ({1,2,3,4,5})</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">
+        Szerkeszd a relációt, majd lásd a ρ², ρ³ és ρ̂ automatikus kiszámítását:
+      </div>
+      <div class="d-flex gap-2 flex-wrap mb-2">
+        <button class="type-btn active" onclick="tzPreset('lecture')">Előadás példa</button>
+        <button class="type-btn" onclick="tzPreset('chain')">Lánc 1→2→3→4→5</button>
+        <button class="type-btn" onclick="tzPreset('empty')">Üres</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.5rem repeat(5,1.8rem);grid-template-rows:1.5rem repeat(5,1.8rem);gap:2px;margin-bottom:.75rem">
+        <div></div>
+        <div style="font-size:.65rem;color:#a78bfa;text-align:center;align-self:center">1</div>
+        <div style="font-size:.65rem;color:#a78bfa;text-align:center;align-self:center">2</div>
+        <div style="font-size:.65rem;color:#a78bfa;text-align:center;align-self:center">3</div>
+        <div style="font-size:.65rem;color:#a78bfa;text-align:center;align-self:center">4</div>
+        <div style="font-size:.65rem;color:#a78bfa;text-align:center;align-self:center">5</div>
+        <script>
+        for(let r=1;r<=5;r++){
+          document.write('<div style="font-size:.65rem;color:#a78bfa;text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);align-self:center">'+r+'</div>');
+          for(let c=1;c<=5;c++){
+            document.write('<div class="rel-cell'+(r===c?' diag':'')+'" id="tz'+r+c+'" onclick="tzToggle('+r+','+c+')"></div>');
+          }
+        }
+        </script>
+      </div>
+
+      <div id="tz-result" style="font-size:.8rem;color:#c4cdd8;line-height:1.8"></div>
+      <canvas id="tz-canvas" width="340" height="200" style="border-radius:8px;background:#0d0e14;display:block;margin-top:.6rem"></canvas>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 4: RENDEZÉSEK ══════ -->
+<div id="tab-rn" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-5">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Részbenrendezés</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Egy \(A\) halmazon értelmezett \(\rho\) relációt
+        <strong style="color:#a78bfa">részbenrendezésnek</strong> hívunk, ha
+        <strong>reflexív</strong>, <strong>antiszimmetrikus</strong> és <strong>tranzitív</strong>.
+        Az \((A,\rho)\) rendezett párt <strong>részbenrendezett halmaznak</strong> nevezzük.<br><br>
+        Jelölés: \(a\preceq b\) ha \((a,b)\in\rho\); \(a\prec b\) ha \(a\preceq b\) és \(a\neq b\).<br><br>
+        <strong>Példák:</strong> \((\mathbb{R},\le)\), \((\mathbb{N},\mid)\), \((\mathcal{P}(A),\subseteq)\)
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Fedi, Hasse-diagram, Max/Min</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        <strong style="color:#a78bfa">b fedi a-t</strong>, ha \(a\prec b\) és nincs \(c\) amelyre \(a\prec c\prec b\).<br><br>
+        A <strong style="color:#a78bfa">Hasse-diagram</strong>: pontok = elemek; él = fedési reláció;
+        \(b\) magasabban, ha \(b\) fedi \(a\)-t.<br><br>
+        \(a\) <strong style="color:#f97316">maximális</strong>: nincs nála nagyobb elem.<br>
+        \(a\) <strong style="color:#f97316">minimális</strong>: nincs nála kisebb elem.<br>
+        \(a\) <strong style="color:#22d3ee">legnagyobb</strong>: \(x\preceq a\) minden \(x\in A\)-ra.<br>
+        \(a\) <strong style="color:#22d3ee">legkisebb</strong>: \(a\preceq x\) minden \(x\in A\)-ra.
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tételek</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        <ol style="margin:0 0 0 1.1rem;padding:0;line-height:2.1">
+          <li>Legfeljebb egy <strong>legnagyobb</strong> és egy <strong>legkisebb</strong> elem létezik.<br>
+            <em style="font-size:.74rem;color:#6b7280">Biz: ha \(a,a'\) mindkét legnagyobb, akkor \(a'\preceq a\) és \(a\preceq a'\), antiszimm. miatt \(a=a'\).</em></li>
+          <li>Minden véges részbenrendezett halmazban létezik maximális és minimális elem.</li>
+          <li>\(\rho\) kiterjeszthető részbenrendezéssé ↔ \(G=(A,\rho)\) gráfjában nincs ≥2 hosszú kör ↔ \(\bar\rho = \omega_A\cup\hat\rho\) részbenrendezés.</li>
+          <li>Minden véges részbenrendezés kiterjeszthető <strong>rendezéssé</strong>.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Rendezés és lexikografikus szorzat</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Egy részbenrendezés <strong style="color:#a78bfa">rendezés</strong>, ha dichotom is (bármely két elem összehasonlítható).<br><br>
+        Rendezések <strong>lexikografikus szorzata</strong>: \((a_1,\ldots,a_n)\sqsubseteq(b_1,\ldots,b_n)\) ha egyenlők, vagy az első eltérő koordinátában \(a_i\prec_i b_i\).<br><br>
+        <em>Pl.: szótáros sorrend \((\mathbb{R},\le)\) önmagával vett lexikografikus szorzata \((\mathbb{R}^2,\sqsubseteq)\).</em>
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-7">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — Hasse-diagram</div>
+      <div class="d-flex gap-2 flex-wrap mb-2">
+        <button class="type-btn active" onclick="loadHasse('custom')">Előadás példa (6 elem)</button>
+        <button class="type-btn" onclick="loadHasse('div6')">Oszthatóság {1..6}</button>
+        <button class="type-btn" onclick="loadHasse('power')">𝒫({a,b,c})</button>
+      </div>
+      <canvas id="hasse-canvas" width="340" height="280" style="border-radius:8px;background:#0d0e14;display:block;margin-bottom:.6rem"></canvas>
+      <div id="hasse-info" style="font-size:.8rem;color:#c4cdd8;line-height:1.75"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 5: EKVIVALENCIÁK ══════ -->
+<div id="tab-ek" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-5">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Definíció — Ekvivalenciareláció</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Egy \(A\) halmazon definiált \(\sim\) relációt
+        <strong style="color:#a78bfa">ekvivalenciarelációnak</strong> hívunk, ha
+        <strong>reflexív</strong>, <strong>szimmetrikus</strong> és <strong>tranzitív</strong>.<br><br>
+        <strong>Példák:</strong>
+        <ul style="margin:.4rem 0 0 1rem;padding:0;line-height:2">
+          <li>\(=\) (egyenlőség) bármely halmazon</li>
+          <li>\(\parallel\) (párhuzamosság) egyenesen</li>
+          <li>\(\rho_{11}\) — azonos városban lakás</li>
+          <li>\(m\sim n\) ha \(3\mid(n-m)\) — modulo 3</li>
+          <li>Leképezés magja: \(a_1\sim a_2\) ha \(\varphi(a_1)=\varphi(a_2)\)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Ekvivalenciaosztály, Osztályozás</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Az \(a\) elem <strong style="color:#a78bfa">ekvivalenciaosztálya</strong>:
+        \[[a] = \{b \in A : a \sim b\}\]
+        <strong>Tétel:</strong> \(\sim\) ekvivalenciareláció ↔
+        <ol style="margin:.4rem 0 0 1.1rem;padding:0;line-height:2">
+          <li>\(a\in[a]\) minden \(a\)-ra</li>
+          <li>\([a_1]=[a_2]\) vagy \([a_1]\cap[a_2]=\emptyset\)</li>
+        </ol>
+        <br>
+        A \(\mathcal{C}\) halmazrendszer <strong style="color:#a78bfa">osztályozás (partíció)</strong>, ha:
+        <ol style="margin:.2rem 0 0 1.1rem;padding:0;line-height:2">
+          <li>\(\mathcal{C}\) elemei nem üresek</li>
+          <li>\(\mathcal{C}\) elemei páronként diszjunktak</li>
+          <li>\(\mathcal{C}\) elemei uniója \(= A\)</li>
+        </ol>
+        <div class="mt-1" style="font-size:.77rem;color:#8892a4">
+          Az ekvivalenciaosztályok az alaphalmaz egy partícióját alkotják.
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-7">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — ekvivalenciaosztályok</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">
+        Válassz ekvivalenciarelációt \(\{1,\ldots,9\}\)-n, és lásd az osztályokat:
+      </div>
+      <div class="d-flex gap-2 flex-wrap mb-3">
+        <button class="type-btn active" onclick="loadEquiv('mod3')">Modulo 3</button>
+        <button class="type-btn" onclick="loadEquiv('parity')">Paritás</button>
+        <button class="type-btn" onclick="loadEquiv('eq')">Egyenlőség</button>
+        <button class="type-btn" onclick="loadEquiv('all')">Egy osztály</button>
+      </div>
+
+      <div id="equiv-matrix-wrap" style="overflow-x:auto;margin-bottom:.75rem"></div>
+      <div id="equiv-classes" style="font-size:.82rem;color:#c4cdd8;line-height:2;min-height:60px"></div>
+      <canvas id="equiv-canvas" width="340" height="200" style="border-radius:8px;background:#0d0e14;display:block;margin-top:.6rem"></canvas>
+    </div>
+
+    <div class="ex-box mt-3">
+      <div class="lbl mb-2" style="color:#34d399">Példa — osztályok egy konkrét relációban</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyen \(A=\{1,2,3,4\}\), \(\rho=\{(1,2),(1,3),(1,4),(2,2),(4,1)\}\).<br>
+        Ez <em>nem</em> ekvivalenciareláció, de adjuk meg az elemek osztályait a "∼ reláció" szerint:
+        \[[1]=\{2,3,4\},\quad [2]=\{2\},\quad [3]=\emptyset,\quad [4]=\{1\}\]
+        <span style="font-size:.75rem;color:#6b7280">
+          Mivel ρ nem reflexív (pl. (1,1)∉ρ) és nem szimmetrikus ((1,2)∈ρ de (2,1)∉ρ), ezek nem ekvivalenciaosztályok — az osztály-fogalom csak ekvivalenciarelációnál értelmes.
+        </span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 6: ELŐADÁS+ ══════ -->
+<div id="tab-ex" class="d-none">
+<div class="row g-4">
+  <div class="col-lg-5">
+
+    <div class="def-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Tulajdonságok gráf-képe</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:2.0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr style="border-bottom:1px solid rgba(255,255,255,.07)">
+            <td style="padding:.3rem .45rem;color:#a78bfa;font-weight:700;white-space:nowrap">Reflexív</td>
+            <td style="padding:.3rem .45rem;color:#c4cdd8">Minden csúcson <em>hurokél</em> van: \((a,a)\in\rho\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.07)">
+            <td style="padding:.3rem .45rem;color:#34d399;font-weight:700">Szimmetrikus</td>
+            <td style="padding:.3rem .45rem;color:#c4cdd8">Minden \(a\!\to\!b\) élhez létezik \(b\!\to\!a\) él is (kétirányú nyilak)</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,.07)">
+            <td style="padding:.3rem .45rem;color:#f97316;font-weight:700">Antiszimm.</td>
+            <td style="padding:.3rem .45rem;color:#c4cdd8">Különböző csúcsok között <em>legfeljebb egyirányú</em> él lehet; hurokélek megengedettek</td>
+          </tr>
+          <tr>
+            <td style="padding:.3rem .45rem;color:#22d3ee;font-weight:700">Tranzitív</td>
+            <td style="padding:.3rem .45rem;color:#c4cdd8">Minden 2 hosszú séta \(a\!\to\!b\!\to\!c\)-hez létezik közvetlen \(a\!\to\!c\) él</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="ex-box">
+      <div class="lbl mb-2" style="color:#34d399">Antiszimmetria negálása</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        <strong style="color:#f97316">ρ NEM antiszimmetrikus</strong>, ha<br>
+        \[\exists\, a\neq b: (a,b)\in\rho \text{ és } (b,a)\in\rho.\]
+        Vagyis találunk <em>két különböző elemet</em>, amelyek <em>mindkét sorrendben</em> relációban állnak.<br><br>
+        <span style="color:#8892a4;font-size:.77rem">
+        Példa: \(\rho_5\) (oszthatóság, ℤ-n): \((2,-2)\in\rho_5\) és \((-2,2)\in\rho_5\) — tehát NEM antiszimmetrikus.<br>
+        Viszont \(\rho_6\) (oszthatóság, ℕ-n): ha \(m\mid n\) és \(n\mid m\) természetes számokra, akkor \(m=n\) — ezért antiszimmetrikus.
+        </span>
+      </div>
+    </div>
+
+    <div class="thm-box">
+      <div class="lbl mb-2" style="color:#7c3aed">Tranzitivitás és hurokélek</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Ha \(\rho\) tranzitív és \((a,b)\in\rho\), \((b,a)\in\rho\) (azaz \(a\to b\to a\) 2-hosszú zárt séta), akkor a tranzitivitás megköveteli:
+        \[(a,a)\in\rho \quad \text{(hurokél } a\text{-n)}\]
+        Ha ráadásul \(\rho\) <strong>antiszimmetrikus</strong> is, akkor \((a,b)\in\rho\) és \((b,a)\in\rho\) csak \(a=b\) esetén lehetséges — tehát csak hurokél lehet, oda-vissza él különböző csúcsok között tilos.<br>
+        <span style="font-size:.76rem;color:#8892a4"><em>Ez magyarázza, hogy a részbenrendezés (reflexív + antiszimm. + tranzitív) gráfjában nincsenek 2-hosszú körök, csak hurokélek.</em></span>
+      </div>
+    </div>
+
+  </div>
+  <div class="col-lg-7">
+
+    <div class="info-box">
+      <div class="lbl mb-2" style="color:#a78bfa">Interaktív — tulajdonságok a gráfon ({1,2,3,4})</div>
+      <div style="font-size:.77rem;color:#8892a4;margin-bottom:.5rem">
+        Kattints az egyik tulajdonságra, hogy lásd, hogyan néz ki egy ilyen reláció. A gráf az egyes tulajdonságok tipikus szerkezetét mutatja.
+      </div>
+      <div class="d-flex gap-2 flex-wrap mb-3">
+        <button class="type-btn active" id="ex-btn-ref" onclick="exShowProp('ref',this)">Reflexív</button>
+        <button class="type-btn" id="ex-btn-sym" onclick="exShowProp('sym',this)">Szimmetrikus</button>
+        <button class="type-btn" id="ex-btn-anti" onclick="exShowProp('anti',this)">Antiszimm.</button>
+        <button class="type-btn" id="ex-btn-trans" onclick="exShowProp('trans',this)">Tranzitív</button>
+        <button class="type-btn" id="ex-btn-poset" onclick="exShowProp('poset',this)">Részbenrendezés</button>
+      </div>
+      <canvas id="ex-canvas" width="360" height="260" style="border-radius:8px;background:#0d0e14;display:block"></canvas>
+      <div id="ex-legend" style="font-size:.78rem;color:#c4cdd8;margin-top:.6rem;line-height:1.6"></div>
+    </div>
+
+    <div class="ex-box mt-3">
+      <div class="lbl mb-2" style="color:#34d399">Nyitott vs. zárt séta</div>
+      <div style="font-size:.82rem;color:#c4cdd8;line-height:1.85">
+        Legyenek \(A=\{1,2,3,4\}\), \(\rho=\{(1,2),(2,3),(3,1),(2,4)\}\).
+        <ul style="margin:.5rem 0 0 1.1rem;padding:0;line-height:2.1">
+          <li><span style="color:#f97316">Nyitott séta</span>: \(1\to 2\to 3\to 1\to 2\to 4\) — kezdő (\(1\)) ≠ végpont (\(4\)), él és csúcs ismétlőd(het)</li>
+          <li><span style="color:#22d3ee">Zárt séta</span>: \(1\to 2\to 3\to 1\) — kezdő = végpont (\(1\)), de nem <em>út</em> (nem feltétel, hogy a közbülső pontok különbözők)</li>
+          <li><strong>Kör</strong>: \(1\to 2\to 3\to 1\) — ez egyben zárt <em>út</em> is, ha a közbülső csúcsok különbözők (1, 2, 3 mind különböző)</li>
+        </ul>
+        <div style="font-size:.75rem;color:#8892a4;margin-top:.4rem">
+          A tranzitív lezárásban: \((a,b)\in\hat\rho\) ↔ létezik (bármely hosszú) <em>nyitott séta</em> \(a\)-ból \(b\)-be.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+</div><!-- /pt-4 -->
+
+<script>
+/* ─── shared ─── */
+function showTab(id, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(p => p.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (id === 'tab-tu') { setTimeout(updateProps, 30); setTimeout(drawRelGraph, 60); }
+  if (id === 'tab-tz') { setTimeout(() => tzPreset('lecture', document.querySelector('#tab-tz .type-btn')), 30); }
+  if (id === 'tab-rn') { setTimeout(() => loadHasse('custom'), 30); }
+  if (id === 'tab-ek') { setTimeout(() => loadEquiv('mod3'), 30); }
+  if (id === 'tab-ex') { setTimeout(() => exShowProp('ref', document.getElementById('ex-btn-ref')), 30); }
+}
+
+const PALETTE = ['#a78bfa','#34d399','#f97316','#22d3ee','#f472b6','#fbbf24','#60a5fa','#e879f9'];
+
+/* ─── Tab 2: relation matrix ─── */
+const N4 = 4;
+let rel4 = Array.from({length:5},()=>Array(5).fill(0)); // 1-indexed
+
+function toggle(r,c) {
+  rel4[r][c] ^= 1;
+  document.getElementById('c'+r+c).classList.toggle('on', !!rel4[r][c]);
+  document.getElementById('c'+r+c).textContent = rel4[r][c] ? '●' : '';
+  updateProps();
+  drawRelGraph();
+}
+
+function setRel4(mat) {
+  for(let i=1;i<=N4;i++) for(let j=1;j<=N4;j++) {
+    rel4[i][j] = mat[i-1][j-1];
+    const el = document.getElementById('c'+i+j);
+    el.classList.toggle('on', !!rel4[i][j]);
+    el.textContent = rel4[i][j] ? '●' : '';
+  }
+  updateProps(); drawRelGraph();
+}
+
+const PRESETS4 = {
+  eq:    [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],
+  le:    [[1,1,1,1],[0,1,1,1],[0,0,1,1],[0,0,0,1]],
+  div:   [[1,1,1,1],[0,1,0,1],[0,0,1,0],[0,0,0,1]],
+  par:   [[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]],
+  empty: [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
+};
+
+function loadPreset(key) {
+  document.querySelectorAll('#tab-tu .type-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  setRel4(PRESETS4[key]);
+}
+
+function checkRef4(){for(let i=1;i<=N4;i++)if(!rel4[i][i])return false;return true;}
+function checkSym4(){for(let i=1;i<=N4;i++)for(let j=1;j<=N4;j++)if(rel4[i][j]&&!rel4[j][i])return false;return true;}
+function checkAntis4(){for(let i=1;i<=N4;i++)for(let j=1;j<=N4;j++)if(i!==j&&rel4[i][j]&&rel4[j][i])return false;return true;}
+function checkTrans4(){for(let i=1;i<=N4;i++)for(let j=1;j<=N4;j++)if(rel4[i][j])for(let k=1;k<=N4;k++)if(rel4[j][k]&&!rel4[i][k])return false;return true;}
+function checkDich4(){for(let i=1;i<=N4;i++)for(let j=1;j<=N4;j++)if(!rel4[i][j]&&!rel4[j][i])return false;return true;}
+
+function updateProps() {
+  const checks = [
+    {label:'Reflexív',  ok:checkRef4(),   col:'#a78bfa'},
+    {label:'Szimmetrikus', ok:checkSym4(), col:'#34d399'},
+    {label:'Antiszimmetrikus',ok:checkAntis4(),col:'#f97316'},
+    {label:'Tranzitív', ok:checkTrans4(), col:'#22d3ee'},
+    {label:'Dichotom',  ok:checkDich4(),  col:'#f472b6'},
+  ];
+  document.getElementById('prop-badges').innerHTML = checks.map(c=>
+    `<span class="prop-badge ${c.ok?'yes':'no'}">${c.ok?'✓':'✗'} ${c.label}</span>`
+  ).join('');
+
+  let classify = [];
+  if(checkRef4()&&checkSym4()&&checkTrans4()) classify.push('<span style="color:#34d399">Ekvivalenciareláció</span>');
+  if(checkRef4()&&checkAntis4()&&checkTrans4()) classify.push('<span style="color:#22d3ee">Részbenrendezés</span>');
+  if(checkRef4()&&checkAntis4()&&checkTrans4()&&checkDich4()) classify.push('<span style="color:#f97316">Rendezés</span>');
+
+  const pairs = [];
+  for(let i=1;i<=N4;i++) for(let j=1;j<=N4;j++) if(rel4[i][j]) pairs.push(`(${i},${j})`);
+  document.getElementById('rel-list').innerHTML =
+    `ρ = { ${pairs.join(', ')||'∅'} }${classify.length?'<br><span style="font-size:.7rem;color:#8892a4">Típus: </span>'+classify.join(', '):''}`;
+
+  if(window.renderMathInElement) renderMathInElement(document.getElementById('rel-list'),{
+    delimiters:[{left:'\\(',right:'\\)',display:false}],throwOnError:false});
+}
+
+function drawRelGraph() {
+  const cv = document.getElementById('rel-canvas');
+  if(!cv) return;
+  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=70;
+  const pts=[];
+  for(let i=1;i<=N4;i++){const a=(2*Math.PI*(i-1)/N4)-Math.PI/2;pts.push({x:cx+R*Math.cos(a),y:cy+R*Math.sin(a),i});}
+  for(let i=1;i<=N4;i++) for(let j=1;j<=N4;j++) {
+    if(!rel4[i][j]) continue;
+    const f=pts[i-1],t=pts[j-1];
+    ctx.strokeStyle='#a78bfa'; ctx.lineWidth=1.5; ctx.globalAlpha=0.8;
+    ctx.beginPath();
+    if(i===j){ctx.arc(f.x,f.y-18,9,0,2*Math.PI);}
+    else{
+      const mx=(f.x+t.x)/2,my=(f.y+t.y)/2,dx=t.x-f.x,dy=t.y-f.y;
+      const cpx=mx-dy*0.2,cpy=my+dx*0.2;
+      ctx.moveTo(f.x,f.y);ctx.quadraticCurveTo(cpx,cpy,t.x,t.y);
+      _ahd(ctx,cpx+(t.x-cpx)*0.85,cpy+(t.y-cpy)*0.85,t.x,t.y,'#a78bfa');
+    }
+    ctx.stroke(); ctx.globalAlpha=1;
+  }
+  pts.forEach(p=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,11,0,2*Math.PI);
+    ctx.fillStyle='#1a1b25';ctx.fill();
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#e2e8f0';ctx.font='bold 11px monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.i,p.x,p.y);
+  });
+}
+
+/* ─── Tab 3: transitive closure ─── */
+const N5=5;
+let tz5=Array.from({length:6},()=>Array(6).fill(0));
+
+function tzToggle(r,c){
+  tz5[r][c]^=1;
+  const el=document.getElementById('tz'+r+c);
+  el.classList.toggle('on',!!tz5[r][c]);
+  el.textContent=tz5[r][c]?'●':'';
+  computeTz();
+}
+
+function setTz5(mat){
+  for(let i=1;i<=N5;i++) for(let j=1;j<=N5;j++){
+    tz5[i][j]=mat[i-1][j-1];
+    const el=document.getElementById('tz'+i+j);
+    el.classList.toggle('on',!!tz5[i][j]);
+    el.textContent=tz5[i][j]?'●':'';
+  }
+  computeTz();
+}
+
+const TZ_PRESETS={
+  lecture:[[0,1,0,0,0],[0,0,0,1,0],[0,0,0,0,0],[0,0,1,0,0],[0,1,0,0,0]],
+  chain:  [[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,0],[0,0,0,0,1],[0,0,0,0,0]],
+  empty:  [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]],
+};
+
+function tzPreset(key){
+  document.querySelectorAll('#tab-tz .type-btn').forEach(b=>b.classList.remove('active'));
+  event?.target?.classList?.add('active');
+  setTz5(TZ_PRESETS[key]);
+}
+
+function mulRel(A,B,n){
+  const C=Array.from({length:n+1},()=>Array(n+1).fill(0));
+  for(let i=1;i<=n;i++) for(let k=1;k<=n;k++) if(A[i][k])
+    for(let j=1;j<=n;j++) if(B[k][j]) C[i][j]=1;
+  return C;
+}
+
+function relPairs(R,n){const p=[];for(let i=1;i<=n;i++)for(let j=1;j<=n;j++)if(R[i][j])p.push(`(${i},${j})`);return p;}
+
+function computeTz(){
+  const n=N5;
+  let r1=tz5,r2=mulRel(r1,tz5,n),r3=mulRel(r2,tz5,n),r4=mulRel(r3,tz5,n);
+  const rhat=Array.from({length:n+1},()=>Array(n+1).fill(0));
+  [r1,r2,r3,r4].forEach(R=>{for(let i=1;i<=n;i++)for(let j=1;j<=n;j++)if(R[i][j])rhat[i][j]=1;});
+  const p1=relPairs(r1,n),p2=relPairs(r2,n),p3=relPairs(r3,n);
+  const ph=relPairs(rhat,n);
+  document.getElementById('tz-result').innerHTML=
+    `<div><span style="color:#a78bfa">ρ =</span> <span style="color:#c4cdd8">{ ${p1.join(', ')||'∅'} }</span></div>`+
+    `<div><span style="color:#34d399">ρ² =</span> <span style="color:#c4cdd8">{ ${p2.join(', ')||'∅'} }</span></div>`+
+    `<div><span style="color:#f97316">ρ³ =</span> <span style="color:#c4cdd8">{ ${p3.join(', ')||'∅'} }</span></div>`+
+    `<div style="margin-top:.3rem"><span style="color:#fbbf24;font-weight:700">ρ̂ =</span> <span style="color:#e2e8f0">{ ${ph.join(', ')||'∅'} }</span></div>`;
+  drawTzGraph(rhat,n);
+}
+
+function drawTzGraph(rhat,n){
+  const cv=document.getElementById('tz-canvas');
+  if(!cv) return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=72;
+  const pts=[];
+  for(let i=1;i<=n;i++){const a=(2*Math.PI*(i-1)/n)-Math.PI/2;pts.push({x:cx+R*Math.cos(a),y:cy+R*Math.sin(a),i});}
+
+  for(let i=1;i<=n;i++) for(let j=1;j<=n;j++){
+    if(!tz5[i][j]&&!rhat[i][j]) continue;
+    const f=pts[i-1],t=pts[j-1];
+    const isNew=!tz5[i][j]&&rhat[i][j];
+    ctx.strokeStyle=isNew?'#fbbf24':'#a78bfa';
+    ctx.lineWidth=isNew?2:1.5; ctx.globalAlpha=isNew?0.9:0.6;
+    ctx.beginPath();
+    if(i===j){ctx.arc(f.x,f.y-18,9,0,2*Math.PI);}
+    else{
+      const mx=(f.x+t.x)/2,my=(f.y+t.y)/2,dx=t.x-f.x,dy=t.y-f.y;
+      const cpx=mx-dy*0.22,cpy=my+dx*0.22;
+      ctx.moveTo(f.x,f.y);ctx.quadraticCurveTo(cpx,cpy,t.x,t.y);
+      _ahd(ctx,cpx+(t.x-cpx)*0.85,cpy+(t.y-cpy)*0.85,t.x,t.y,ctx.strokeStyle);
+    }
+    ctx.stroke(); ctx.globalAlpha=1;
+  }
+  pts.forEach(p=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,11,0,2*Math.PI);
+    ctx.fillStyle='#1a1b25';ctx.fill();
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#e2e8f0';ctx.font='bold 11px monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.i,p.x,p.y);
+  });
+  ctx.fillStyle='#a78bfa';ctx.font='10px sans-serif';ctx.textAlign='left';
+  ctx.fillText('ρ  (lila)',8,14);
+  ctx.fillStyle='#fbbf24';ctx.fillText('ρ̂ \\ ρ  (arany)',8,28);
+}
+
+/* ─── Tab 4: Hasse diagram ─── */
+const HASSE_DATA={
+  custom:{
+    nodes:['1','2','3','4','5','6'],
+    // covers: [from, to] meaning "to covers from" (to is higher)
+    covers:[[5,3],[5,4],[3,1],[3,2],[6,5]],
+    info:'A={1,2,3,4,5,6}. Legkisebb: 6. Maximális elemek: 1, 2, 4. Nincs legnagyobb elem.',
+    // y-levels: 6=0, 5=1, 3=2, 4=2(right), 1=3, 2=3
+    positions:{1:[0.25,0.12],2:[0.5,0.12],3:[0.35,0.38],4:[0.72,0.38],5:[0.5,0.62],6:[0.5,0.88]},
+  },
+  div6:{
+    nodes:['1','2','3','4','5','6'],
+    covers:[[1,2],[1,3],[1,5],[2,4],[2,6],[3,6]],
+    info:'(A,∣) oszthatóság {1..6}-on. Legkisebb: 1. Maximális: 4, 5, 6. Nincs legnagyobb.',
+    positions:{1:[0.5,0.88],2:[0.28,0.62],3:[0.55,0.62],4:[0.18,0.38],5:[0.75,0.62],6:[0.55,0.38]},
+  },
+  power:{
+    nodes:['∅','{a}','{b}','{c}','{a,b}','{a,c}','{b,c}','{a,b,c}'],
+    covers:[[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]],
+    info:'(𝒫({a,b,c}),⊆). Legkisebb: ∅. Legnagyobb: {a,b,c}.',
+    positions:{0:[0.5,0.92],1:[0.18,0.68],2:[0.5,0.68],3:[0.82,0.68],4:[0.18,0.44],5:[0.5,0.44],6:[0.82,0.44],7:[0.5,0.18]},
+  },
+};
+
+function loadHasse(key){
+  document.querySelectorAll('#tab-rn .type-btn').forEach(b=>b.classList.remove('active'));
+  event?.target?.classList?.add('active');
+  const d=HASSE_DATA[key];
+  const cv=document.getElementById('hasse-canvas');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const posArr=d.nodes.map((_,i)=>{
+    const pos=d.positions[i]||[0.5,0.5];
+    return{x:pos[0]*W,y:pos[1]*H,label:d.nodes[i]};
+  });
+
+  d.covers.forEach(([a,b])=>{
+    const f=posArr[a],t=posArr[b];
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=1.5;ctx.globalAlpha=0.7;
+    ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(t.x,t.y);ctx.stroke();
+    ctx.globalAlpha=1;
+  });
+
+  posArr.forEach((p,i)=>{
+    const r=14;
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,2*Math.PI);
+    ctx.fillStyle='#1a1b25';ctx.fill();
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#e2e8f0';
+    const fontSize=p.label.length>3?8:10;
+    ctx.font=`bold ${fontSize}px monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(p.label,p.x,p.y);
+  });
+
+  document.getElementById('hasse-info').innerHTML=
+    `<span style="color:#8892a4;font-size:.76rem">${d.info}</span>`;
+}
+
+/* ─── Tab 5: equivalence classes ─── */
+const N9=9;
+const EQUIV_DEFS={
+  mod3:(i,j)=>((i-j)%3+3)%3===0,
+  parity:(i,j)=>i%2===j%2,
+  eq:(i,j)=>i===j,
+  all:(i,j)=>true,
+};
+
+function loadEquiv(key){
+  document.querySelectorAll('#tab-ek .type-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  const fn=EQUIV_DEFS[key];
+  const rel=Array.from({length:N9+1},(_,i)=>Array.from({length:N9+1},(_,j)=>fn(i,j)?1:0));
+
+  const visited=new Array(N9+1).fill(false);
+  const classes=[];
+  for(let i=1;i<=N9;i++){
+    if(!visited[i]){
+      const cls=[];
+      for(let j=1;j<=N9;j++) if(rel[i][j]){cls.push(j);visited[j]=true;}
+      classes.push(cls);
+    }
+  }
+
+  let html='<div class="lbl mb-1" style="color:#a78bfa">Ekvivalenciaosztályok:</div>';
+  classes.forEach((cls,i)=>{
+    const col=PALETTE[i%PALETTE.length];
+    html+=`<span style="display:inline-block;margin:.2rem;padding:.2rem .6rem;border-radius:999px;background:${col}22;border:1px solid ${col}44;color:${col};font-size:.78rem;font-family:monospace">[${cls[0]}] = {${cls.join(',')}}</span>`;
+  });
+  html+=`<div class="mt-2" style="font-size:.76rem;color:#6b7280">${classes.length} osztály</div>`;
+  document.getElementById('equiv-classes').innerHTML=html;
+
+  drawEquivGraph(rel,classes);
+}
+
+function drawEquivGraph(rel,classes){
+  const cv=document.getElementById('equiv-canvas');
+  if(!cv) return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,n=N9;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=75;
+  const pts=[];
+  for(let i=1;i<=n;i++){const a=(2*Math.PI*(i-1)/n)-Math.PI/2;pts.push({x:cx+R*Math.cos(a),y:cy+R*Math.sin(a),i});}
+  const nodeCol=new Array(n+1).fill('#4a5568');
+  classes.forEach((cls,ci)=>cls.forEach(v=>nodeCol[v]=PALETTE[ci%PALETTE.length]));
+
+  for(let i=1;i<=n;i++) for(let j=i+1;j<=n;j++){
+    if(!rel[i][j]) continue;
+    const f=pts[i-1],t=pts[j-1];
+    ctx.strokeStyle=nodeCol[i];ctx.lineWidth=1.2;ctx.globalAlpha=0.45;
+    ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(t.x,t.y);ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  pts.forEach(p=>{
+    const col=nodeCol[p.i];
+    ctx.beginPath();ctx.arc(p.x,p.y,12,0,2*Math.PI);
+    ctx.fillStyle=col+'44';ctx.fill();
+    ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.stroke();
+    ctx.fillStyle='#e2e8f0';ctx.font='bold 11px monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.i,p.x,p.y);
+  });
+}
+
+/* ─── Tab 6: property graph demo ─── */
+const EX_PROPS = {
+  ref: {
+    label: 'Reflexív reláció',
+    desc: 'Minden csúcson hurokél van: ∀a: (a,a)∈ρ. Pl. egyenlőség (=), ≤, oszthatóság ℕ-n.',
+    edges: [[1,1],[2,2],[3,3],[4,4],[1,2],[2,3]],
+    highlight: (i,j) => i===j,
+    col: '#a78bfa',
+    note: 'A kék élek = hurokélek (reflexivitás). Szürke élek csak a szemléltetéshez.'
+  },
+  sym: {
+    label: 'Szimmetrikus reláció',
+    desc: 'Ha (a,b)∈ρ, akkor (b,a)∈ρ is. Pl. párhuzamosság (∥), "testvér", egyenlőség.',
+    edges: [[1,2],[2,1],[2,3],[3,2],[3,4],[4,3]],
+    highlight: () => false,
+    col: '#34d399',
+    note: 'Minden él párban jelenik meg (oda-vissza nyilak).'
+  },
+  anti: {
+    label: 'Antiszimmetrikus reláció',
+    desc: 'Különböző elemek között legfeljebb egyirányú él lehet. Pl. ≤, oszthatóság ℕ-n.',
+    edges: [[1,1],[2,2],[3,3],[4,4],[1,2],[1,3],[2,4],[3,4]],
+    highlight: () => false,
+    col: '#f97316',
+    note: 'Hurokélek megengedettek. Nincs A→B és B→A egyszerre különböző csúcsoknál.'
+  },
+  trans: {
+    label: 'Tranzitív reláció',
+    desc: 'Ha (a,b)∈ρ és (b,c)∈ρ, akkor (a,c)∈ρ. A 2-hosszú sétákhoz mindig van "shortcut" él.',
+    edges: [[1,2],[2,3],[1,3],[2,4],[1,4]],
+    highlight: (i,j) => (i===1&&j===3)||(i===2&&j===4)||(i===1&&j===4),
+    col: '#22d3ee',
+    note: 'Citromsárga = shortcut élek (ezeket a tranzitivitás megköveteli).'
+  },
+  poset: {
+    label: 'Részbenrendezés (reflexív + antiszimm. + tranzitív)',
+    desc: 'Pl. (ℕ,∣) oszthatóság. Gráfjában: hurokélek, egyirányú élek, és minden sétához van shortcut.',
+    edges: [[1,1],[2,2],[3,3],[4,4],[1,2],[1,3],[2,4],[3,4],[1,4]],
+    highlight: (i,j) => i===1&&j===4,
+    col: '#fbbf24',
+    note: 'A részbenrendezés gráfja: aciklikus (nincs 2+ hosszú kör), hurokélek + tranzitív élek.'
+  }
+};
+
+function exShowProp(key, btn) {
+  document.querySelectorAll('#tab-ex .type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const p = EX_PROPS[key];
+  document.getElementById('ex-legend').textContent = p.desc;
+  drawExGraph(p.edges, p.highlight, p.col, p.note);
+}
+
+function drawExGraph(edges, hlFn, col, note) {
+  const cv = document.getElementById('ex-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  const cx = W/2, cy = H/2 - 10, R = 85;
+  const pts = [];
+  for (let i = 1; i <= 4; i++) {
+    const a = (2*Math.PI*(i-1)/4) - Math.PI/2;
+    pts.push({x: cx + R*Math.cos(a), y: cy + R*Math.sin(a), i});
+  }
+  edges.forEach(([si,di]) => {
+    const isHL = hlFn(si, di);
+    const c = isHL ? '#fbbf24' : col;
+    const f = pts[si-1], t = pts[di-1];
+    ctx.globalAlpha = isHL ? 0.95 : 0.75;
+    ctx.strokeStyle = c; ctx.lineWidth = isHL ? 2.2 : 1.8;
+    ctx.beginPath();
+    if (si === di) {
+      ctx.arc(f.x, f.y - 22, 11, 0, 2*Math.PI);
+    } else {
+      const mx = (f.x+t.x)/2, my = (f.y+t.y)/2;
+      const dx = t.x-f.x, dy = t.y-f.y;
+      const cpx = mx - dy*0.22, cpy = my + dx*0.22;
+      ctx.moveTo(f.x, f.y); ctx.quadraticCurveTo(cpx, cpy, t.x, t.y);
+      _ahd(ctx, cpx+(t.x-cpx)*0.85, cpy+(t.y-cpy)*0.85, t.x, t.y, c);
+    }
+    ctx.stroke(); ctx.globalAlpha = 1;
+  });
+  pts.forEach(p => {
+    ctx.beginPath(); ctx.arc(p.x, p.y, 13, 0, 2*Math.PI);
+    ctx.fillStyle = '#1a1b25'; ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.stroke();
+    ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(p.i, p.x, p.y);
+  });
+  ctx.fillStyle = '#6b7280'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(note, 8, H - 8);
+}
+
+/* ─── shared arrow helper ─── */
+function _ahd(ctx,fx,fy,tx,ty,color){
+  const dx=tx-fx,dy=ty-fy,len=Math.sqrt(dx*dx+dy*dy)||1;
+  const ux=dx/len,uy=dy/len,ah=7;
+  ctx.beginPath();
+  ctx.moveTo(tx,ty);
+  ctx.lineTo(tx-ah*(ux-0.4*uy),ty-ah*(uy+0.4*ux));
+  ctx.lineTo(tx-ah*(ux+0.4*uy),ty-ah*(uy-0.4*ux));
+  ctx.closePath();ctx.fillStyle=color;ctx.fill();
+}
+
+/* ─── Init ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    setRel4(PRESETS4.eq);
+  }, 150);
+});
+</script>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],
+    throwOnError:false
+  })"></script>
+{% endblock %}

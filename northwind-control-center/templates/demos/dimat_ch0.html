@@ -1,0 +1,793 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(16,185,129,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box  { border-left:3px solid var(--acc); background:rgba(16,185,129,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.thm-box  { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.ex-box   { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; }
+.badge-acc { background:rgba(16,185,129,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.badge-sky { background:rgba(56,189,248,.12); color:#38bdf8; border:1px solid #38bdf8; border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.inp-sm   { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .6rem; font-size:.85rem; width:5rem; text-align:center; }
+.inp-sm:focus { outline:none; border-color:var(--acc); }
+.inp-md   { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .7rem; font-size:.85rem; width:9rem; }
+.inp-md:focus { outline:none; border-color:var(--acc); }
+.inp-wide { background:#0e1014; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:.3rem .7rem; font-size:.85rem; width:100%; }
+.inp-wide:focus { outline:none; border-color:var(--acc); }
+.btn-acc  { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec  { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.metric-lbl { font-size:.72rem; color:#64748b; text-transform:uppercase; letter-spacing:.05em; }
+.metric-val { font-size:1.4rem; font-weight:700; color:var(--acc); }
+table.ref-tbl { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.ref-tbl th { background:#1a1f2e; color:#64748b; padding:.45rem .7rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; }
+table.ref-tbl td { padding:.45rem .7rem; border-bottom:1px solid #161b28; vertical-align:middle; }
+table.ref-tbl tr { cursor:pointer; }
+table.ref-tbl tr:hover td { background:rgba(16,185,129,.06); }
+table.ref-tbl tr.sel td { background:rgba(16,185,129,.12); }
+.sym-cell { font-family:monospace; font-size:.95rem; color:var(--acc2); min-width:8rem; }
+.branch-card { border:1px solid #1e2533; border-radius:10px; padding:1.1rem; flex:1; min-width:200px; }
+.branch-card:hover { border-color:var(--acc); }
+.tag-grid { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.5rem; }
+.tag-sm { font-size:.7rem; padding:.15rem .5rem; border-radius:4px; font-weight:600; }
+.chess-sq { width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-family:monospace; border-radius:3px; transition:background .3s; }
+.chess-sq.light { background:#2d3748; color:#94a3b8; }
+.chess-sq.dark-sq { background:#1e2533; color:#64748b; }
+.chess-sq.active { background:var(--acc); color:#000; font-weight:700; }
+#chess-grid { display:grid; grid-template-columns:repeat(8,40px); gap:2px; }
+.nl-wrap { position:relative; width:100%; height:56px; background:#0d0e14; border-radius:8px; overflow:visible; }
+canvas { border-radius:8px; display:block; }
+.subset-chip { display:inline-block; padding:.1rem .4rem; border-radius:4px; font-size:.78rem; font-family:monospace; margin:.1rem; background:#1a2035; color:#94a3b8; border:1px solid #2d3748; }
+.subset-chip.k0 { border-color:#475569; color:#64748b; }
+.subset-chip.k1 { border-color:#38bdf8; color:#7dd3fc; }
+.subset-chip.k2 { border-color:var(--acc); color:var(--acc2); }
+.subset-chip.k3 { border-color:#f59e0b; color:#fcd34d; }
+.subset-chip.k4 { border-color:#a78bfa; color:#c4b5fd; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+  <!-- Header -->
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-book-half" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">Bevezetés — 0. fejezet</h4>
+      <small class="text-muted">A diszkrét matematika fogalma · Általános jelölések · Dr. Szalkai István, Pannon Egyetem 2021</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <!-- Nav tabs -->
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-intro',this)">Bevezetés</span>
+    <span class="ila-nav-link" onclick="showTab('t-jelol',this)">Jelölések</span>
+    <span class="ila-nav-link" onclick="showTab('t-sakk',this)">Sakktábla-paradoxon</span>
+    <span class="ila-nav-link" onclick="showTab('t-egeszr',this)">Egészrészek</span>
+    <span class="ila-nav-link" onclick="showTab('t-halmaz',this)">Halmazjelölések</span>
+  </div>
+
+  <!-- ═══════════════ TAB 1: Bevezetés ═══════════════ -->
+  <div id="t-intro" class="ila-tab active">
+    <div class="row g-3 mb-3">
+      <div class="col-12">
+        <div class="card-dark">
+          <div class="badge-acc">A „diszkrét" fogalma</div>
+          <p style="font-size:.88rem;color:#c4cdd8;line-height:1.8">
+            A <strong style="color:var(--acc2)">"diszkrét"</strong> jelző latin eredetű: <em>discretus</em> = <strong>"elkülönült", "különálló"</strong>. A diszkrét matematika elsősorban <strong>véges halmazokkal</strong> foglalkozik, amelyek elemei jól elkülöníthetők egymástól — szemben az analízis és valószínűségszámítás <em>folytonos</em> szemléletével. Véges halmaz mérete akár \(10^{10^{10}}\) is lehet és még "kicsi"…
+          </p>
+          <div class="def-box">
+            <strong>Diszkrét matematika</strong> = véges (vagy megszámlálható) struktúrák matematikája. Két fő ága: <strong>Kombinatorika</strong> és <strong>Gráfelmélet</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two branches -->
+    <div class="d-flex gap-3 flex-wrap mb-3">
+      <div class="branch-card" style="border-color:#059669">
+        <div style="font-size:1.3rem;margin-bottom:.4rem">🔢</div>
+        <div style="font-size:.95rem;font-weight:700;color:var(--acc);margin-bottom:.35rem">Kombinatorika</div>
+        <p style="font-size:.8rem;color:#94a3b8;line-height:1.7;margin:0">Véges halmazok <strong style="color:#c4cdd8">megszámlálásának, leszámlálásának</strong> tudománya. A "kombináció" latin szó: <em>csoportosítás, rendezgetés</em>. A lényeg: sokszor nem egyszerű megszámolni egy véges halmazt — pl. kirándulás végzetével hazafelé a zsebünkben lévő zoknik számát.</p>
+        <div class="tag-grid">
+          <span class="tag-sm" style="background:#0d2b1e;color:var(--acc)">Permutációk</span>
+          <span class="tag-sm" style="background:#0d2b1e;color:var(--acc)">Kombinációk</span>
+          <span class="tag-sm" style="background:#0d2b1e;color:var(--acc)">Generátorfüggvények</span>
+          <span class="tag-sm" style="background:#0d2b1e;color:var(--acc)">Rekurziók</span>
+          <span class="tag-sm" style="background:#0d2b1e;color:var(--acc)">Szitaformula</span>
+        </div>
+      </div>
+      <div class="branch-card" style="border-color:#0284c7">
+        <div style="font-size:1.3rem;margin-bottom:.4rem">🕸️</div>
+        <div style="font-size:.95rem;font-weight:700;color:#38bdf8;margin-bottom:.35rem">Gráfelmélet</div>
+        <p style="font-size:.8rem;color:#94a3b8;line-height:1.7;margin:0">Nem csak pontok és vonalak rajza — sokkal általánosabb: egy <strong style="color:#c4cdd8">tetszőleges halmaz elemei közötti kapcsolatok</strong> vizsgálata. A kapcsolatok lehetnek egyszerűek (van vagy nincs), vagy általánosabban sokfélék ("színezettek"). 15 fejezet foglalkozik vele!</p>
+        <div class="tag-grid">
+          <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Euler-körök</span>
+          <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Fák</span>
+          <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Síkgráfok</span>
+          <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Hálózati folyamok</span>
+          <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Matroidok</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Motivating examples -->
+    <div class="card-dark mb-3">
+      <div class="badge-acc mb-2">Motiváló példák — a kombinatorikai robbanás</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="ex-box h-100">
+            <div style="font-size:.95rem;font-weight:700;color:#fcd34d;margin-bottom:.3rem">♟ Sakktábla</div>
+            <div style="font-size:.8rem;color:#c4cdd8;line-height:1.7">A feltaláló az \(n\)-edik mezőre az előző kétszerese búzát kért. Az összeg:<br>\[2^{64}-1 \approx 1{,}8 \times 10^{19}\]búzaszem, ami kb. \(1{,}2 \times 10^{12}\,\text{m}^3\) búza — <em>teljesíthetetlen</em>.</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="ex-box h-100">
+            <div style="font-size:.95rem;font-weight:700;color:#fcd34d;margin-bottom:.3rem">🧬 DNS molekula</div>
+            <div style="font-size:.8rem;color:#c4cdd8;line-height:1.7">Alig egymillió atomból álló DNS molekulát alkotó <strong>két</strong> atomcsoport-pár hányféle változatos élőlényt tud kódolni? A szám csillagászatilag nagy — minden lehetséges élőlényre sem elég a Világegyetem.</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="ex-box h-100">
+            <div style="font-size:.95rem;font-weight:700;color:#fcd34d;margin-bottom:.3rem">📚 ABC-könyv</div>
+            <div style="font-size:.8rem;color:#c4cdd8;line-height:1.7">Az ABC 24 betűjéből hányféle változatos, legfeljebb 1000 oldalas könyvet lehet megírni? Ez egy véges, de astronomikusan nagy szám — ennyi potenciális könyv létezik.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prerequisites -->
+    <div class="card-dark">
+      <div class="badge-sky mb-2">Előfeltételek</div>
+      <p style="font-size:.83rem;color:#94a3b8;line-height:1.75;margin:0">
+        A tananyag megértéséhez szükséges az I. éves szintű <strong style="color:#c4cdd8">analízis</strong> (komplex számok, egyváltozós függvények deriválása és integrálása, végtelen sorok, parciális törtekre bontás) és <strong style="color:#c4cdd8">lineáris algebra</strong> (absztrakt vektorterek, koordináták és bázistranszformációk, lineáris leképezések, sajátértékek, mátrixok diagonalizálása).
+      </p>
+      <div class="tag-grid mt-2">
+        <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Deriválás/integrálás</span>
+        <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Végtelen sorok</span>
+        <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Vektorterek</span>
+        <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Mátrixok</span>
+        <span class="tag-sm" style="background:#0a1f2e;color:#38bdf8">Sajátértékek</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 2: Jelölések ═══════════════ -->
+  <div id="t-jelol" class="ila-tab">
+    <div class="card-dark mb-3">
+      <div class="badge-acc mb-2">0.1. Általános jelölések — referencia</div>
+      <p style="font-size:.8rem;color:#64748b;margin-bottom:.75rem">Kattints egy sorra a részletes magyarázatért.</p>
+      <div id="jelol-detail" class="thm-box mb-3" style="display:none;font-size:.84rem;color:#c4cdd8;line-height:1.8"></div>
+
+      <!-- Number sets -->
+      <div style="font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin:.75rem 0 .35rem;border-top:1px solid #1e2533;padding-top:.6rem">Számhalmazok</div>
+      <table class="ref-tbl" id="ref-table">
+        <thead><tr><th>Jelölés</th><th>Olvasat</th><th>Példa / megjegyzés</th></tr></thead>
+        <tbody>
+          <tr onclick="showJelol(this,'szamhalmazok','num-sets')">
+            <td class="sym-cell">\(\mathbb{N},\mathbb{Z},\mathbb{Q},\mathbb{R},\mathbb{C}\)</td>
+            <td>Természetes, egész, racionális, valós, komplex számok</td>
+            <td style="color:#64748b">\(0\in\mathbb{N}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'rplus','num-sets')">
+            <td class="sym-cell">\(\mathbb{R}_+\)</td>
+            <td>Nemnegatív valós számok</td>
+            <td style="color:#64748b">\(\mathbb{R}_+=\{x\in\mathbb{R}:x\geq 0\}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'nident','num-sets')">
+            <td class="sym-cell">\(n\in\mathbb{N}\)</td>
+            <td>Természetes számot azonosítjuk \(\{1,\dots,n\}\)-nel</td>
+            <td style="color:#64748b">\(3 \equiv \{1,2,3\}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'interval','num-sets')">
+            <td class="sym-cell">\([a,b],\;(a,b)\)</td>
+            <td>Zárt, ill. nyílt intervallum</td>
+            <td style="color:#64748b">\([1,3]=\{x:1\leq x\leq 3\}\)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Set operations -->
+      <div style="font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin:.75rem 0 .35rem;border-top:1px solid #1e2533;padding-top:.6rem">Halmazelméleti jelölések</div>
+      <table class="ref-tbl">
+        <tbody>
+          <tr onclick="showJelol(this,'card','set-ops')">
+            <td class="sym-cell">\(|A|\) vagy \(\#A\)</td>
+            <td>Az \(A\) halmaz számossága (elemeinek száma)</td>
+            <td style="color:#64748b">\(|\{1,2,3\}|=3\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'powerset','set-ops')">
+            <td class="sym-cell">\(\mathcal{P}(A)\)</td>
+            <td>Az \(A\) halmaz hatványhalmaza (összes részhalmazának halmaza)</td>
+            <td style="color:#64748b">\(|\mathcal{P}(A)|=2^{|A|}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'ba','set-ops')">
+            <td class="sym-cell">\({}^AB\)</td>
+            <td>Az összes \(f:A\to B\) függvény halmaza</td>
+            <td style="color:#64748b">\(|{}^AB|=|B|^{|A|}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'ak','set-ops')">
+            <td class="sym-cell">\(A^k\)</td>
+            <td>\(A\) halmaz \(k\)-adik Descartes-hatványa</td>
+            <td style="color:#64748b">\(A^2=A\times A\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'a0','set-ops')">
+            <td class="sym-cell">\(A^0\)</td>
+            <td>\(A\) halmaz 0-adik Descartes-hatványa</td>
+            <td style="color:#64748b">\(A^0:=\{\emptyset\}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'astar','set-ops')">
+            <td class="sym-cell">\(A^*\)</td>
+            <td>Az \(A\)-ból képezhető összes véges sorozat ("szavak") halmaza</td>
+            <td style="color:#64748b">\(A^*=\bigcup_{i=0}^{\infty}A^i\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'an','set-ops')">
+            <td class="sym-cell">\(A^{\mathbb{N}}\)</td>
+            <td>Az \(A\)-ból képezhető összes <em>végtelen</em> sorozat halmaza</td>
+            <td style="color:#64748b">\({}^{\mathbb{N}}A := \{f:\mathbb{N}\to A\}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'ak2','set-ops')">
+            <td class="sym-cell">\([A]^k\)</td>
+            <td>Az \(A\) halmaz pontosan \(k\) elemű részhalmazainak halmaza</td>
+            <td style="color:#64748b">\([A]^k:=P_k(A):=\{X\subseteq A:|X|=k\}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'akle','set-ops')">
+            <td class="sym-cell">\([A]^{\leq k}\)</td>
+            <td>Az \(A\) halmaz legfeljebb \(k\) elemű részhalmazainak halmaza</td>
+            <td style="color:#64748b">\(P_{\leq k}(A):=\{X\subseteq A:|X|\leq k\}\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'partial','set-ops')">
+            <td class="sym-cell">\(f:A\hookrightarrow B\)</td>
+            <td>Parciális függvény: \(f:A\to B\) ahol \(\mathrm{Dom}(f)\subseteq A\)</td>
+            <td style="color:#64748b">Nem kötelező, hogy \(\mathrm{Dom}(f)=A\)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Asymptotic / misc -->
+      <div style="font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin:.75rem 0 .35rem;border-top:1px solid #1e2533;padding-top:.6rem">Aszimptotikus és egyéb</div>
+      <table class="ref-tbl">
+        <tbody>
+          <tr onclick="showJelol(this,'floor','asym')">
+            <td class="sym-cell">\(\lfloor x\rfloor\)</td>
+            <td>Alsó egészrész (floor): legnagyobb \(n\in\mathbb{Z}\) amelyre \(n\leq x\)</td>
+            <td style="color:#64748b">\(\lfloor 3.7\rfloor=3\), \(\lfloor -1.3\rfloor=-2\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'ceil','asym')">
+            <td class="sym-cell">\(\lceil x\rceil\)</td>
+            <td>Felső egészrész (ceiling): legkisebb \(n\in\mathbb{Z}\) amelyre \(n\geq x\)</td>
+            <td style="color:#64748b">\(\lceil 3.2\rceil=4\), \(\lceil -1.7\rceil=-1\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'bigoh','asym')">
+            <td class="sym-cell">\(\mathcal{O}(f)\)</td>
+            <td>"Nagy ordó f": \(g=\mathcal{O}(f)\) ha \(\exists C\) hogy \(g(n)\leq C\cdot f(n)\)</td>
+            <td style="color:#64748b">\(5n^2+3n=\mathcal{O}(n^2)\)</td>
+          </tr>
+          <tr onclick="showJelol(this,'asym','asym')">
+            <td class="sym-cell">\(f\sim g\)</td>
+            <td>Aszimptotikusan egyenlő: \(\lim_{x\to\infty}\frac{f(x)}{g(x)}=1\)</td>
+            <td style="color:#64748b">\(n!\sim\sqrt{2\pi n}\left(\frac{n}{e}\right)^n\) (Stirling)</td>
+          </tr>
+          <tr onclick="showJelol(this,'qed','asym')">
+            <td class="sym-cell">Q.E.D. / \(\square\)</td>
+            <td>"Quod erat demonstrandum" — bizonyítás vége</td>
+            <td style="color:#64748b">\(\square\) jelöli definíció, tétel, bizonyítás végét</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 3: Sakktábla ═══════════════ -->
+  <div id="t-sakk" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">A sakktábla-legenda</div>
+          <div class="def-box" style="margin-bottom:1rem">
+            A sakk feltalálója minden \(n\)-edik mezőre az előző mező kétszeresét kérte búzában. Az 1. mezőre 1 szemet, a 2.-ra 2-t, …, a 64.-re \(2^{63}\) szemet. Összesen: \[S = 2^{64}-1 = 18\,446\,744\,073\,709\,551\,615\]
+          </div>
+
+          <div class="mb-2 d-flex align-items-center gap-2">
+            <label style="font-size:.82rem;color:#94a3b8;white-space:nowrap">Mező:</label>
+            <input type="range" id="sq-slider" min="1" max="64" value="1" class="flex-grow-1" oninput="updateChess(this.value)">
+            <span id="sq-label" style="font-family:monospace;color:var(--acc);font-size:.9rem;min-width:2rem">1</span>
+          </div>
+
+          <div id="chess-grid" class="mb-3"></div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="card-dark" style="padding:.7rem;border-color:#1e2533">
+                <div class="metric-lbl">Ezen a mezőn</div>
+                <div class="metric-val" id="sq-here" style="font-size:1rem">1</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card-dark" style="padding:.7rem;border-color:#1e2533">
+                <div class="metric-lbl">Összes eddig</div>
+                <div class="metric-val" id="sq-total" style="font-size:1rem">1</div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="card-dark" style="padding:.7rem;border-color:#334155">
+                <div class="metric-lbl">Tudományos jelölés</div>
+                <div id="sq-sci" style="font-family:monospace;color:var(--acc2);font-size:.9rem">2⁰ = 1</div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="card-dark" style="padding:.7rem;border-color:#334155;background:#0a110d">
+                <div class="metric-lbl">Kontextus (64 mező esetén)</div>
+                <div style="font-size:.78rem;color:#94a3b8;line-height:1.8;margin-top:.3rem">
+                  🌾 <strong style="color:#c4cdd8">≈ 1,2 × 10¹² m³</strong> búza (ha minden gabonaszem 0,065 m³ tömegű)<br>
+                  🌍 A világ éves búzatermése <strong style="color:#c4cdd8">≈ 780 millió tonna ≈ 780 × 10⁶ m³</strong><br>
+                  📐 Ez <strong style="color:#fcd34d">≈ 1540 évnyi</strong> világ-búzatermés
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">A kétszereződés hatalma</div>
+          <canvas id="chess-canvas" width="320" height="220" style="width:100%"></canvas>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Összehasonlítások \(2^n\)-re</div>
+          <table class="ref-tbl">
+            <tr><td style="color:#64748b">\(2^{10}\)</td><td style="color:#c4cdd8">1 024 ≈ ezer</td></tr>
+            <tr><td style="color:#64748b">\(2^{20}\)</td><td style="color:#c4cdd8">1 048 576 ≈ millió</td></tr>
+            <tr><td style="color:#64748b">\(2^{30}\)</td><td style="color:#c4cdd8">≈ milliárd (1 GB bit)</td></tr>
+            <tr><td style="color:#64748b">\(2^{40}\)</td><td style="color:#c4cdd8">≈ billió (1 TB bit)</td></tr>
+            <tr><td style="color:#64748b">\(2^{53}\)</td><td style="color:#c4cdd8">IEEE 754 double mantissza határ</td></tr>
+            <tr><td style="color:#64748b">\(2^{64}\)</td><td style="color:#fcd34d">≈ 1,84 × 10¹⁹ (sakktábla total)</td></tr>
+            <tr><td style="color:#64748b">\(2^{80}\)</td><td style="color:#c4cdd8">≈ Föld atomjainak száma</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 4: Egészrészek ═══════════════ -->
+  <div id="t-egeszr" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">Definíciók</div>
+          <div class="def-box">
+            <strong>Alsó egészrész:</strong> \(\lfloor x\rfloor := \max\{n\in\mathbb{Z}: n\leq x\}\)<br>
+            a legnagyobb nem-nagyobb egész \(x\)-nél.
+          </div>
+          <div class="def-box">
+            <strong>Felső egészrész:</strong> \(\lceil x\rceil := \min\{n\in\mathbb{Z}: n\geq x\}\)<br>
+            a legkisebb nem-kisebb egész \(x\)-nél.
+          </div>
+          <div class="thm-box mt-2" style="font-size:.82rem">
+            <strong>Tulajdonságok:</strong><br>
+            \(\lfloor x\rfloor \leq x < \lfloor x\rfloor+1\)<br>
+            \(\lceil x\rceil-1 < x \leq \lceil x\rceil\)<br>
+            \(\lfloor x\rfloor + \lceil -x\rceil = 0\)<br>
+            \(\lfloor n/2\rfloor + \lceil n/2\rceil = n\) (egész \(n\)-re)
+          </div>
+
+          <div class="mt-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <label style="font-size:.82rem;color:#94a3b8">x =</label>
+              <input type="number" id="floor-in" class="inp-md" value="3.7" step="0.1" oninput="updateFloor()">
+              <button class="btn-acc" onclick="updateFloor()">Számol</button>
+            </div>
+            <div class="row g-2" id="floor-result">
+              <div class="col-6">
+                <div class="card-dark" style="padding:.7rem;text-align:center">
+                  <div class="metric-lbl">⌊x⌋</div>
+                  <div class="metric-val" id="floor-val">3</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="card-dark" style="padding:.7rem;text-align:center">
+                  <div class="metric-lbl">⌈x⌉</div>
+                  <div class="metric-val" id="ceil-val">4</div>
+                </div>
+              </div>
+            </div>
+            <canvas id="floor-canvas" width="400" height="80" class="mt-2" style="width:100%;background:#0d0e14;border-radius:8px"></canvas>
+          </div>
+
+          <div class="mt-3">
+            <div class="badge-acc mb-2">Gyorspéldák</div>
+            <div class="d-flex flex-wrap gap-1">
+              <button class="btn-sec" style="font-size:.75rem" onclick="setFloor(3.7)">3.7</button>
+              <button class="btn-sec" style="font-size:.75rem" onclick="setFloor(-1.3)">-1.3</button>
+              <button class="btn-sec" style="font-size:.75rem" onclick="setFloor(5)">5.0</button>
+              <button class="btn-sec" style="font-size:.75rem" onclick="setFloor(-3)">-3.0</button>
+              <button class="btn-sec" style="font-size:.75rem" onclick="setFloor(0.5)">0.5</button>
+              <button class="btn-sec" style="font-size:.75rem" onclick="setFloor(-0.5)">-0.5</button>
+              <button class="btn-sec" style="font-size:.75rem" onclick="setFloor(2.9999)">2.9999</button>
+              <button class="btn-sec" style="font-size:.75rem" onclick="setFloor(-2.0001)">-2.0001</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Alkalmazások</div>
+          <table class="ref-tbl">
+            <thead><tr><th>Kifejezés</th><th>Jelentés</th><th>Pl. n=7</th></tr></thead>
+            <tbody>
+              <tr><td>\(\lfloor n/2 \rfloor\)</td><td>n egészrész-fele (lefelé)</td><td>3</td></tr>
+              <tr><td>\(\lceil n/2 \rceil\)</td><td>n egészrész-fele (felfelé)</td><td>4</td></tr>
+              <tr><td>\(\lfloor \log_2 n \rfloor\)</td><td>Bináris fa mélysége</td><td id="log2-ex">2</td></tr>
+              <tr><td>\(\lceil \log_2 n \rceil\)</td><td>Szükséges bitek száma</td><td id="log2ceil-ex">3</td></tr>
+              <tr><td>\(\lfloor \sqrt{n} \rfloor\)</td><td>Egész négyzetgyök</td><td id="sqrt-ex">2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Nagy-O és aszimptotika</div>
+          <div class="def-box" style="font-size:.82rem">
+            \(g = \mathcal{O}(f)\) ha \(\exists C>0, n_0\) hogy minden \(n\geq n_0\)-ra:<br>
+            \(g(n) \leq C \cdot f(n)\)
+          </div>
+          <div class="def-box" style="font-size:.82rem">
+            \(f \sim g\) (aszimptotikusan egyenlő) ha \(\lim_{x\to\infty}\dfrac{f(x)}{g(x)} = 1\)
+          </div>
+          <div class="ex-box" style="font-size:.82rem">
+            <strong>Stirling-formula:</strong><br>
+            \[n! \;\sim\; \sqrt{2\pi n}\left(\frac{n}{e}\right)^n\]
+            pl. \(10! = 3\,628\,800\), Stirling: \(\approx 3\,598\,696\) (hiba &lt;1%)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB 5: Halmazjelölések ═══════════════ -->
+  <div id="t-halmaz" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Interaktív halmaz-kalkulátor</div>
+          <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <label style="font-size:.82rem;color:#94a3b8">A = {</label>
+            <input type="text" id="set-in" class="inp-md" value="a,b,c" placeholder="a,b,c" style="width:12rem" oninput="updateSet()">
+            <label style="font-size:.82rem;color:#94a3b8">}</label>
+            <button class="btn-sec" onclick="document.getElementById('set-in').value='a,b';updateSet()">n=2</button>
+            <button class="btn-sec" onclick="document.getElementById('set-in').value='a,b,c';updateSet()">n=3</button>
+            <button class="btn-sec" onclick="document.getElementById('set-in').value='0,1,2,3';updateSet()">n=4</button>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="card-dark" style="border-color:#334155;padding:.9rem">
+                <div class="metric-lbl">|A| számossága</div>
+                <div class="metric-val" id="set-card">3</div>
+                <div style="font-size:.75rem;color:#64748b;margin-top:.2rem">|𝒫(A)| = <span id="set-pow-count" style="color:var(--acc)">8</span></div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card-dark" style="border-color:#334155;padding:.9rem">
+                <div class="metric-lbl">|A²| (Descartes-négyzet)</div>
+                <div class="metric-val" id="set-cart">9</div>
+                <div style="font-size:.75rem;color:#64748b;margin-top:.2rem">= |A|²</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card-dark" style="border-color:#334155;padding:.9rem">
+                <div class="metric-lbl">|A*| első szavak száma</div>
+                <div class="metric-val" id="set-star-count">—</div>
+                <div style="font-size:.75rem;color:#64748b;margin-top:.2rem">\(A^*=\bigcup_{i=0}^\infty A^i\) (végtelen)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Power set -->
+      <div class="col-lg-6">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">\(\mathcal{P}(A)\) — hatványhalmaz</div>
+          <p style="font-size:.78rem;color:#64748b;margin-bottom:.5rem">Színek: <span style="color:#64748b">k=0</span> · <span style="color:#7dd3fc">k=1</span> · <span style="color:#34d399">k=2</span> · <span style="color:#fcd34d">k=3</span> · <span style="color:#c4b5fd">k=4</span></p>
+          <div id="powerset-out" style="line-height:2"></div>
+          <div id="set-too-big" class="thm-box mt-2" style="display:none;font-size:.8rem">A halmaz túl nagy a teljes megjelenítéshez (max 5 elem).</div>
+        </div>
+      </div>
+
+      <!-- [A]^k -->
+      <div class="col-lg-6">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">\([A]^k = P_k(A)\) — k-elemű részhalmazok</div>
+          <div id="ank-out"></div>
+          <hr style="border-color:#1e2533;margin:1rem 0">
+          <div class="badge-acc mb-2">A* — véges szavak (első néhány)</div>
+          <div id="astar-out" style="font-family:monospace;font-size:.8rem;color:#94a3b8;line-height:2"></div>
+        </div>
+      </div>
+
+      <!-- Cartesian product A² -->
+      <div class="col-12">
+        <div class="card-dark">
+          <div class="badge-acc mb-2">\(A^2 = A\times A\) — Descartes-szorzat (rendezett párok)</div>
+          <div id="cart-out" style="font-family:monospace;font-size:.8rem;color:#94a3b8;line-height:2.2;word-break:break-all"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+
+<script>
+/* ─── Tab navigation ─── */
+function showTab(id, btn) {
+  document.querySelectorAll('.ila-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ─── Jelölések detail ─── */
+const JELOL_DETAIL = {
+  'szamhalmazok': '<strong>Számhalmazok:</strong> \\(\\mathbb{N}=\\{0,1,2,\\dots\\}\\) (ahol \\(0\\in\\mathbb{N}\\)), \\(\\mathbb{Z}=\\{\\dots,-2,-1,0,1,2,\\dots\\}\\), \\(\\mathbb{Q}=\\{p/q: p,q\\in\\mathbb{Z}, q\\neq 0\\}\\), \\(\\mathbb{R}\\) a valós számok, \\(\\mathbb{C}=\\{a+bi: a,b\\in\\mathbb{R}\\}\\). Figyelem: a könyv \\(0\\in\\mathbb{N}\\) konvenciót használ (más tankönyvek \\(n=\\{0,\\dots,n-1\\}\\) vagy \\(n=\\{1,\\dots,n\\}\\)).',
+  'rplus': '\\(\\mathbb{R}_+ := \\{x\\in\\mathbb{R}: x\\geq 0\\}\\) a nemnegatív valós számok halmaza. Néha \\(\\mathbb{R}_{>0}=\\{x: x>0\\}\\) jelöli a pozitívakat.',
+  'nident': 'Fontos konvenció: az \\(n\\in\\mathbb{N}\\) természetes számot azonosítjuk az \\(\\{1,\\dots,n\\}\\) halmazzal. Tehát \\(3 = \\{1,2,3\\}\\). Ez megkönnyíti pl. az \\(A^n = A^{\\{1,\\dots,n\\}}\\) jelölést.',
+  'interval': '\\([a,b] = \\{x\\in\\mathbb{R}: a\\leq x\\leq b\\}\\) zárt intervallum, \\((a,b) = \\{x\\in\\mathbb{R}: a<x<b\\}\\) nyílt intervallum. Vegyes: \\([a,b)\\) és \\((a,b]\\). Ügyeljünk, hogy \\((a,b)\\) jelölheti a rendezett párt is — a kontextusból derül ki!',
+  'card': '\\(|A|\\) (vagy \\(\\#A\\)) az \\(A\\) halmaz elemeinek száma (számossága, kardinalitása). Véges halmazra ez egy nemnegatív egész. \\(|\\emptyset|=0\\), \\(|\\{1,2,3\\}|=3\\).',
+  'powerset': '\\(\\mathcal{P}(A) := \\{X: X\\subseteq A\\}\\) az összes részhalmaz halmaza. Kulcstétel: \\(|\\mathcal{P}(A)| = 2^{|A|}\\). Ha \\(|A|=3\\): \\(\\mathcal{P}(\\{a,b,c\\})=\\{\\emptyset,\\{a\\},\\{b\\},\\{c\\},\\{a,b\\},\\{a,c\\},\\{b,c\\},\\{a,b,c\\}\\}\\) — 8 elem.',
+  'ba': '\\({}^AB := \\{f: f:A\\to B\\text{ függvény}\\}\\) az összes \\(A\\)-ból \\(B\\)-be képező függvény halmaza. Száma: \\(|{}^AB| = |B|^{|A|}\\). Ha \\(|A|=2, |B|=3\\): \\(3^2=9\\) függvény létezik.',
+  'ak': '\\(A^k = A\\times A\\times\\cdots\\times A\\) (\\(k\\)-szoros Descartes-szorzat): az összes \\((a_1,\\dots,a_k)\\) rendezett \\(k\\)-es ahol minden \\(a_i\\in A\\). \\(|A^k|=|A|^k\\).',
+  'a0': '\\(A^0 := \\{\\emptyset\\}\\) — az üres sorozat (üres szó) egyetlen elemű halmaza. Bármely \\(A\\)-ra \\(|A^0|=1\\). Ez azért hasznos, mert \\(A^*=\\bigcup_{i=0}^\\infty A^i\\)-ből az üres szó sem marad ki.',
+  'astar': '\\(A^* := \\bigcup_{i=0}^{\\infty} A^i\\) az összes véges sorozat ("szó") halmaza \\(A\\) ábécé felett. Fontos: \\(A^*\\) mindig végtelen halmaz (ha \\(|A|\\geq 1\\)), mert tetszőlegesen hosszú szavak is beletartoznak.',
+  'an': '\\(A^{\\mathbb{N}} := {}^{\\mathbb{N}}A\\) az összes végtelen sorozat halmaza. Ez az analízisbeli sorozat fogalmának általánosítása: \\((a_0,a_1,a_2,\\dots)\\) ahol minden \\(a_i\\in A\\).',
+  'ak2': '\\([A]^k := P_k(A) := \\{X\\subseteq A: |X|=k\\}\\) az \\(A\\) halmaz pontosan \\(k\\) elemű részhalmazainak halmaza. Száma: \\(|[A]^k| = \\binom{|A|}{k}\\). Ez a kombinatorika alapja!',
+  'akle': '\\([A]^{\\leq k} := P_{\\leq k}(A) := \\{X\\subseteq A: |X|\\leq k\\}\\) a legfeljebb \\(k\\) elemű részhalmazok. Száma: \\(\\sum_{i=0}^k \\binom{|A|}{i}\\).',
+  'partial': 'Parciális függvény \\(f:A\\hookrightarrow B\\): ahol a definíciós tartomány \\(\\mathrm{Dom}(f)\\subseteq A\\) lehet valódi részhalmaz. Ha \\(\\mathrm{Dom}(f)=A\\) akkor totális függvény.',
+  'floor': '\\(\\lfloor x\\rfloor\\) = floor = alsó egészrész. Példák: \\(\\lfloor 3.7\\rfloor=3\\), \\(\\lfloor 3\\rfloor=3\\), \\(\\lfloor -1.3\\rfloor=-2\\) (nem -1!), \\(\\lfloor -3\\rfloor=-3\\). Figyelem: negatívaknál a "lefelé kerekítés" nagyobb abszolút értéket ad.',
+  'ceil': '\\(\\lceil x\\rceil\\) = ceiling = felső egészrész. Példák: \\(\\lceil 3.2\\rceil=4\\), \\(\\lceil 3\\rceil=3\\), \\(\\lceil -1.7\\rceil=-1\\) (nem -2!), \\(\\lceil -3\\rceil=-3\\). Összefüggés: \\(\\lceil x\\rceil = -\\lfloor -x\\rfloor\\).',
+  'bigoh': 'Aszimptotikus felső korlát: \\(g=\\mathcal{O}(f)\\) ha \\(\\exists C>0, n_0\\) hogy \\(\\forall n\\geq n_0: g(n)\\leq C\\cdot f(n)\\). Példák: \\(5n^2+3n=\\mathcal{O}(n^2)\\), \\(\\log n = \\mathcal{O}(n)\\), \\(n!=\\mathcal{O}(n^n)\\). Az algoritmustervezés alapnyelve.',
+  'asym': '\\(f\\sim g\\) aszimptotikusan egyenlő: \\(\\lim_{x\\to\\infty}f(x)/g(x)=1\\). Erősebb mint \\(\\mathcal{O}\\): a vezető tag azonos. Pl. Stirling: \\(n!\\sim\\sqrt{2\\pi n}(n/e)^n\\) — a hiba arányos tagjai eltűnnek.',
+  'qed': 'Q.E.D. (Quod Erat Demonstrandum) = "amit bizonyítani kellett" — latin kifejezés a bizonyítás végén. A \\(\\square\\) (üres négyzet) szimbólum ugyanezt jelöli definíciók, tételek, bizonyítások végén (akkor is, ha az állítást nem bizonyítjuk).',
+};
+
+function showJelol(row, key, _cat) {
+  document.querySelectorAll('#t-jelol tr.sel').forEach(r => r.classList.remove('sel'));
+  const detail = document.getElementById('jelol-detail');
+  if (JELOL_DETAIL[key]) {
+    row.classList.add('sel');
+    detail.style.display = 'block';
+    detail.innerHTML = JELOL_DETAIL[key];
+    if (window.renderMathInElement) renderMathInElement(detail, {
+      delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false
+    });
+  }
+}
+
+/* ─── Chess / sakktábla ─── */
+function updateChess(n) {
+  n = parseInt(n);
+  document.getElementById('sq-label').textContent = n;
+
+  // Build grid
+  const grid = document.getElementById('chess-grid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 64; i++) {
+    const sq = document.createElement('div');
+    const row = Math.floor((i-1)/8), col = (i-1)%8;
+    sq.className = 'chess-sq ' + ((row+col)%2===0 ? 'light' : 'dark-sq') + (i<=n ? ' active' : '');
+    sq.textContent = i === n ? n : '';
+    grid.appendChild(sq);
+  }
+
+  // BigInt math
+  const grain = BigInt(1) << BigInt(n-1);
+  const total = (BigInt(1) << BigInt(n)) - BigInt(1);
+
+  function fmtBig(b) {
+    const s = b.toString();
+    if (s.length <= 6) return s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const exp = s.length - 1;
+    const mantissa = (s[0] + '.' + s.slice(1,4)).replace(/\.?0+$/, '');
+    return `${mantissa} × 10^${exp}`;
+  }
+
+  document.getElementById('sq-here').textContent = fmtBig(grain);
+  document.getElementById('sq-total').textContent = fmtBig(total);
+  document.getElementById('sq-sci').textContent = `2^${n-1} = ${grain.toString().length > 8 ? fmtBig(grain) : grain.toString()}`;
+
+  drawChessChart(n);
+}
+
+function drawChessChart(nMax) {
+  const canvas = document.getElementById('chess-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0d0e14';
+  ctx.fillRect(0, 0, W, H);
+
+  const maxExp = 63;
+  const pts = [];
+  for (let i = 1; i <= nMax; i++) {
+    const x = (i/64)*W*0.9 + W*0.05;
+    const y = H - 20 - ((i-1)/maxExp)*(H-40);
+    pts.push([x, y]);
+  }
+  if (pts.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  pts.forEach(([x,y]) => { ctx.moveTo(x+3,y); ctx.arc(x,y,3,0,Math.PI*2); });
+  ctx.fillStyle = '#34d399';
+  ctx.fill();
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = '11px monospace';
+  ctx.fillText('Exponenciális növekedés (log-lineáris skálán)', 8, H-4);
+}
+
+/* ─── Floor / Ceiling ─── */
+function setFloor(v) {
+  document.getElementById('floor-in').value = v;
+  updateFloor();
+}
+
+function updateFloor() {
+  const x = parseFloat(document.getElementById('floor-in').value);
+  if (isNaN(x)) return;
+  const fl = Math.floor(x), ce = Math.ceil(x);
+  document.getElementById('floor-val').textContent = fl;
+  document.getElementById('ceil-val').textContent = ce;
+  drawFloor(x, fl, ce);
+}
+
+function drawFloor(x, fl, ce) {
+  const canvas = document.getElementById('floor-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#0d0e14';
+  ctx.fillRect(0,0,W,H);
+
+  const range = Math.max(4, Math.abs(x)+2);
+  const lo = Math.floor(x-range/2), hi = Math.ceil(x+range/2);
+  const toX = v => 20 + (v-lo)/(hi-lo)*(W-40);
+  const midY = H/2;
+
+  // Axis
+  ctx.beginPath();
+  ctx.moveTo(10, midY); ctx.lineTo(W-10, midY);
+  ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Integer ticks
+  ctx.fillStyle = '#475569'; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+  for (let i = lo; i <= hi; i++) {
+    const tx = toX(i);
+    ctx.beginPath(); ctx.moveTo(tx, midY-5); ctx.lineTo(tx, midY+5);
+    ctx.strokeStyle = '#334155'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillText(i, tx, midY+18);
+  }
+
+  // Floor marker
+  const flX = toX(fl);
+  ctx.beginPath(); ctx.arc(flX, midY, 7, 0, Math.PI*2);
+  ctx.fillStyle = '#10b981'; ctx.fill();
+  ctx.fillStyle = '#000'; ctx.font = 'bold 9px sans-serif';
+  ctx.fillText('⌊⌋', flX, midY+3);
+
+  // Ceil marker
+  if (ce !== fl) {
+    const ceX = toX(ce);
+    ctx.beginPath(); ctx.arc(ceX, midY, 7, 0, Math.PI*2);
+    ctx.fillStyle = '#38bdf8'; ctx.fill();
+    ctx.fillStyle = '#000'; ctx.font = 'bold 9px sans-serif';
+    ctx.fillText('⌈⌉', ceX, midY+3);
+  }
+
+  // x marker
+  const xX = toX(x);
+  ctx.beginPath(); ctx.moveTo(xX, midY-18); ctx.lineTo(xX, midY+18);
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle = '#fcd34d'; ctx.font = '11px monospace'; ctx.textAlign='center';
+  ctx.fillText('x='+x, xX, midY-22);
+}
+
+/* ─── Set operations ─── */
+function getElems() {
+  return [...new Set(document.getElementById('set-in').value.split(',').map(s=>s.trim()).filter(s=>s))];
+}
+
+function powerSet(A) {
+  const res = [[]];
+  for (const e of A) {
+    const len = res.length;
+    for (let i=0; i<len; i++) res.push([...res[i], e]);
+  }
+  return res;
+}
+
+const CHIP_CLASSES = ['k0','k1','k2','k3','k4'];
+
+function updateSet() {
+  const A = getElems();
+  const n = A.length;
+  document.getElementById('set-card').textContent = n;
+  document.getElementById('set-pow-count').textContent = Math.pow(2,n);
+  document.getElementById('set-cart').textContent = n*n;
+  document.getElementById('set-star-count').textContent = '∞';
+
+  // Power set
+  const psOut = document.getElementById('powerset-out');
+  const tooBig = document.getElementById('set-too-big');
+  if (n > 5) { psOut.innerHTML=''; tooBig.style.display='block'; }
+  else {
+    tooBig.style.display='none';
+    const ps = powerSet(A);
+    psOut.innerHTML = ps.map(sub => {
+      const k = Math.min(sub.length, CHIP_CLASSES.length-1);
+      const label = sub.length===0 ? '∅' : '{'+sub.join(',')+'}';
+      return `<span class="subset-chip ${CHIP_CLASSES[k]}">${label}</span>`;
+    }).join('');
+  }
+
+  // [A]^k
+  const ankOut = document.getElementById('ank-out');
+  const maxK = Math.min(n, 4);
+  ankOut.innerHTML = Array.from({length:maxK+1},(_,k)=>{
+    const subs = powerSet(A).filter(s=>s.length===k);
+    const label = `<span style="color:var(--acc);font-size:.78rem;font-weight:600">[A]^${k}</span> <span style="color:#64748b;font-size:.72rem">(${subs.length} db)</span><br>`;
+    const chips = subs.map(s=>`<span class="subset-chip ${CHIP_CLASSES[Math.min(k,CHIP_CLASSES.length-1)]}">${s.length===0?'∅':'{'+s.join(',')+'}' }</span>`).join('');
+    return `<div class="mb-2">${label}${chips}</div>`;
+  }).join('');
+
+  // A* (first few words, length 0..3)
+  const astarOut = document.getElementById('astar-out');
+  const words = [];
+  words.push('ε'); // empty word
+  for (const a of A) words.push(a);
+  if (A.length <= 3) {
+    for (const a of A) for (const b of A) words.push(a+b);
+    if (words.length < 25) for (const a of A) for (const b of A) for (const c of A) words.push(a+b+c);
+  }
+  astarOut.innerHTML = words.slice(0,30).map(w=>`<span class="subset-chip">${w}</span>`).join('') + (words.length>= 30 ? '<span class="subset-chip k0">…</span>' : '');
+
+  // A² Cartesian product
+  const cartOut = document.getElementById('cart-out');
+  if (n <= 5) {
+    const pairs = [];
+    for (const a of A) for (const b of A) pairs.push(`(${a},${b})`);
+    cartOut.innerHTML = pairs.map(p=>`<span class="subset-chip" style="border-color:#38bdf8;color:#7dd3fc">${p}</span>`).join('');
+  } else {
+    cartOut.innerHTML = '<span style="color:#64748b;font-size:.8rem">Túl sok elem a megjelenítéshez.</span>';
+  }
+}
+
+/* ─── Init ─── */
+function initAll() {
+  updateChess(1);
+  updateFloor();
+  updateSet();
+}
+
+setTimeout(initAll, 400);
+</script>
+{% endblock %}
