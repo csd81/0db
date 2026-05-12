@@ -27,6 +27,29 @@
 .ex-card.problem .ex-card-label { color:var(--acc); }
 .ex-card.solution .ex-card-label { color:#10b981; }
 .ex-card pre { background:#0a0d14; color:#cbd5e1; padding:.9rem 1.1rem; border-radius:.4rem; overflow-x:auto; margin:0; white-space:pre-wrap; word-wrap:break-word; font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace; font-size:.84rem; line-height:1.6; }
+
+/* Rendered (math-aware) body — used when ex.format is 'auto' or 'markdown'. */
+.ex-body {
+  background: transparent;
+  color: #d1d5db;
+  padding: .25rem 0;
+  font-size: .92rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.ex-body strong { color: #e6edf3; }
+.ex-body em { color: var(--acc2); font-style: italic; }
+.ex-body code { background: #1e1538; color: var(--acc2); padding: .08rem .35rem; border-radius: .2rem; font-size: .85em; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.ex-body .katex-display { margin: .65rem 0; overflow-x: auto; overflow-y: hidden; }
+.ex-body .katex { font-size: 1.02em; }
+.ex-format-badge {
+  display: inline-block; margin-left: .4rem; padding: .08rem .4rem;
+  font-size: .58rem; font-weight: 700; letter-spacing: .08em;
+  border-radius: .25rem;
+}
+.ex-format-badge.manual { background: rgba(16,185,129,.15); color: #10b981; border: 1px solid rgba(16,185,129,.4); }
+.ex-format-badge.auto { background: rgba(167,139,250,.12); color: var(--acc2); border: 1px solid rgba(167,139,250,.35); }
 .ex-card .ex-empty { color:#94a3b8; font-style:italic; padding:.5rem 0; }
 .ex-card.solution { border-left:3px solid #10b981; }
 .ex-card.problem { border-left:3px solid var(--acc); }
@@ -69,11 +92,18 @@
   </div>
 
   <div class="ex-card problem">
-    <div class="ex-card-label">Feladat</div>
-    {% if ex.problem %}
-    <pre>{{ ex.problem }}</pre>
+    <div class="ex-card-label">
+      Feladat
+      {% if ex.format == 'manual' or ex.manual %}<span class="ex-format-badge manual">kézi LaTeX</span>
+      {% elif ex.format == 'auto' %}<span class="ex-format-badge auto">auto LaTeX</span>
+      {% endif %}
+    </div>
+    {% if ex.problem_html %}
+      <div class="ex-body">{{ ex.problem_html|safe }}</div>
+    {% elif ex.problem %}
+      <pre>{{ ex.problem }}</pre>
     {% else %}
-    <div class="ex-empty">A feladat szövege nem elérhető.</div>
+      <div class="ex-empty">A feladat szövege nem elérhető.</div>
     {% endif %}
   </div>
 
@@ -81,7 +111,11 @@
   <button id="toggle-sol" class="btn-toggle-sol" onclick="toggleSol(this)">Megoldás megjelenítése ▾</button>
   <div class="ex-card solution" id="sol-card" style="display:none;">
     <div class="ex-card-label">Megoldás</div>
-    <pre>{{ ex.solution }}</pre>
+    {% if ex.solution_html %}
+      <div class="ex-body">{{ ex.solution_html|safe }}</div>
+    {% else %}
+      <pre>{{ ex.solution }}</pre>
+    {% endif %}
   </div>
   {% else %}
   <div class="ex-card solution">
