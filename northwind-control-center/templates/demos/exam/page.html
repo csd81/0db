@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Tétel {{ '%02d' % topic.n }} — {{ topic.title }}{% endblock %}
 {% block content %}
+{% import "_macros/i18n.html" as I %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -20,20 +21,20 @@
               padding:.32rem .7rem;border:1px solid {{ topic.path_meta.colour }}55;
               border-radius:.3rem;background:{{ topic.path_meta.colour }}11;
               transition:background .15s;">
-      <span aria-hidden="true">←</span> Vissza a tartalomjegyzékhez
+      <span aria-hidden="true">←</span> <span class="i18n"><span class="hu">Vissza a tartalomjegyzékhez</span><span class="en">Back to the table of contents</span></span>
     </a>
     <a href="/demos/dimat/path/{{ topic.path }}"
        style="display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;
               color:#9ca3af;font-size:.78rem;font-weight:600;
               padding:.32rem .7rem;border:1px solid #374151;border-radius:.3rem;
               background:transparent;">
-      ↑ {{ topic.path_meta.title }} útvonal
+      ↑ {{ topic.path_meta.title }} <span class="i18n"><span class="hu">útvonal</span><span class="en">path</span></span>
     </a>
   </div>
 
   {# Breadcrumb + path pill #}
   <nav style="font-size:.72rem;color:#6b7280;margin-bottom:.5rem;">
-    <a href="/demos/learn/tetelsor" style="color:#6b7280;text-decoration:none;">Tételsor</a>
+    <a href="/demos/learn/tetelsor" style="color:#6b7280;text-decoration:none;"><span class="i18n"><span class="hu">Tételsor</span><span class="en">Theorem list</span></span></a>
     &rsaquo;
     <a href="/demos/dimat/path/{{ topic.path }}" style="color:{{ topic.path_meta.colour }};text-decoration:none;">
       {{ topic.path_meta.title }}
@@ -79,7 +80,7 @@
   <div class="exam-formula-card" style="background:#0f1722;border-left:3px solid {{ topic.path_meta.colour }};
        border-radius:0 8px 8px 0;padding:.85rem 1.1rem;margin-bottom:1.5rem;">
     <div style="font-size:.65rem;font-weight:700;letter-spacing:.12em;color:{{ topic.path_meta.colour }};
-         text-transform:uppercase;margin-bottom:.5rem;">Kulcsképletek</div>
+         text-transform:uppercase;margin-bottom:.5rem;"><span class="i18n"><span class="hu">Kulcsképletek</span><span class="en">Key formulas</span></span></div>
     <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.4rem;">
       {% for f in topic.formulas %}
       <li style="color:#e2e8f0;font-size:1rem;">{{ f|safe }}</li>
@@ -93,7 +94,7 @@
     {{ topic.body_html|safe }}
   </article>
 
-  {# Mélyebbre panel #}
+  {# <span class="i18n"><span class="hu">Mélyebbre</span><span class="en">Go deeper</span></span> panel #}
   {% if topic.related_dimat or topic.related_ila or topic.related_exercises %}
   <section class="exam-deeper" style="margin-top:2rem;background:#0d1117;border:1px solid #1f2937;
            border-radius:8px;padding:1rem 1.25rem;">
@@ -130,12 +131,12 @@
     {% if topic.related_dimat %}
     <a class="op-btn" style="padding:.5rem 1rem;font-size:.82rem;text-decoration:none;
        border:1px solid #38bdf8;color:#38bdf8;background:transparent;border-radius:.35rem;font-weight:600;"
-       href="/demos/dimat/{{ topic.related_dimat[0] }}#kviz">🎯 Kvíz a témáról</a>
+       href="/demos/dimat/{{ topic.related_dimat[0] }}#kviz">🎯 <span class="i18n"><span class="hu">Kvíz</span><span class="en">Quiz</span></span> a témáról</a>
     {% endif %}
     <button class="op-btn" id="dq-exam-srs-add"
        style="padding:.5rem 1rem;font-size:.82rem;border:1px solid #a78bfa;color:#a78bfa;
               background:transparent;border-radius:.35rem;font-weight:600;cursor:pointer;">
-      🔁 Add SRS-be
+      🔁 <span class="i18n"><span class="hu">Add SRS-be</span><span class="en">Add to SRS</span></span>
     </button>
     <a class="op-btn" style="padding:.5rem 1rem;font-size:.82rem;text-decoration:none;
        border:1px solid #6b7280;color:#9ca3af;background:transparent;border-radius:.35rem;font-weight:600;"
