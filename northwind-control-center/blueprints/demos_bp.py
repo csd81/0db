@@ -4589,6 +4589,89 @@ def learn_dimat():
     return render_template('learn/dimat.html')
 
 
+# ── KombFeladatok (Szalkai 2023) — dimat exercise collection ────────────────
+
+_KOMBFELADATOK_CACHE: dict | None = None
+
+
+def _kombfeladatok() -> dict:
+    """Lazy-load + cache the parsed kombfeladatok JSON."""
+    global _KOMBFELADATOK_CACHE
+    if _KOMBFELADATOK_CACHE is None:
+        path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'content', 'dimat_feladatok', 'kombfeladatok.json',
+        )
+        try:
+            with open(path, encoding='utf-8') as f:
+                _KOMBFELADATOK_CACHE = json.load(f)
+        except OSError:
+            _KOMBFELADATOK_CACHE = {
+                'source': '', 'count': 0, 'exercises': {},
+                'by_section': {}, 'by_chapter': {}, 'sections': {},
+            }
+    return _KOMBFELADATOK_CACHE
+
+
+@demos_bp.route('/learn/dimat/kombfeladatok')
+@login_required
+def kombfeladatok_index():
+    data = _kombfeladatok()
+    ex_map = data['exercises']
+
+    # Build groupings preserving original order
+    by_section = data.get('by_section', {})
+    groups = []
+    for sect_roman in sorted(by_section.keys()):
+        section_name = data.get('sections', {}).get(sect_roman, '')
+        ids = sorted(by_section[sect_roman], key=lambda x: ex_map[x]['n'])
+        items = [ex_map[i] for i in ids]
+        groups.append({
+            'roman': sect_roman,
+            'name': section_name,
+            'count': len(items),
+            'items': items,
+        })
+
+    # Per-chapter sub-totals for the stats banner
+    by_chapter = sorted(
+        ((int(k), len(v)) for k, v in data.get('by_chapter', {}).items()),
+        key=lambda x: x[0],
+    )
+
+    return render_template(
+        'demos/learn_dimat_kombfeladatok.html',
+        groups=groups,
+        by_chapter=by_chapter,
+        total=data.get('count', 0),
+        source=data.get('source', ''),
+    )
+
+
+@demos_bp.route('/learn/dimat/kombfeladatok/<exid>')
+@login_required
+def kombfeladatok_detail(exid):
+    data = _kombfeladatok()
+    ex = data['exercises'].get(exid)
+    if not ex:
+        abort(404)
+    # Compute prev/next within the section
+    section_ids = sorted(
+        data.get('by_section', {}).get(ex['section'], []),
+        key=lambda x: data['exercises'][x]['n'],
+    )
+    prev_id = next_id = None
+    if exid in section_ids:
+        idx = section_ids.index(exid)
+        prev_id = section_ids[idx - 1] if idx > 0 else None
+        next_id = section_ids[idx + 1] if idx + 1 < len(section_ids) else None
+    return render_template(
+        'demos/learn_dimat_kombfeladatok_detail.html',
+        ex=ex,
+        prev_id=prev_id, next_id=next_id,
+    )
+
+
 # ── Algoritmikus számelmélet (Szalkai–Dósa 2011) — 13 fejezet ────────────────
 
 _ALGO_CHAPTERS = [

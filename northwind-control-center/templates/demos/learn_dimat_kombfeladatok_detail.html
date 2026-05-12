@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Feladat {{ ex.id }}) — {{ ex.title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false,ignoredTags:['script','noscript','style','textarea','pre','code']})"></script>
+
+<style>
+:root { --acc:#10b981; --acc2:#34d399; --acc-bg:rgba(16,185,129,.08); --acc-bg2:rgba(16,185,129,.15); }
+.kf-wrap { max-width: 920px; margin: 0 auto; padding: 1rem 1.5rem; }
+
+.kf-crumb { font-size:.78rem; color:#64748b; margin-bottom:.5rem; }
+.kf-crumb a { color:var(--acc); text-decoration:none; }
+.kf-crumb a:hover { text-decoration:underline; }
+
+.kf-head { margin-bottom:1.25rem; padding-bottom:.65rem; border-bottom:1px solid #1e2533; }
+.kf-head .kf-pill { display:inline-flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin-bottom:.45rem; }
+.kf-head .badge-id { background:var(--acc-bg2); color:var(--acc); border:1px solid var(--acc); border-radius:.3rem; padding:.18rem .55rem; font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace; font-weight:700; font-size:.85rem; }
+.kf-head .badge-bookref { background:rgba(56,189,248,.1); color:#7dd3fc; border:1px solid #38bdf855; border-radius:.3rem; padding:.18rem .55rem; font-family:monospace; font-size:.78rem; font-weight:600; }
+.kf-head .badge-section { background:#1e1538; color:#c4b5fd; border:1px solid #a78bfa55; border-radius:.3rem; padding:.18rem .55rem; font-size:.72rem; font-weight:600; }
+.kf-head h1 { margin:.1rem 0 0; font-size:1.35rem; color:#e6edf3; font-weight:700; }
+
+.kf-card { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.1rem 1.25rem; margin-bottom:1rem; }
+.kf-card-label { font-size:.65rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.5rem; }
+.kf-card.problem .kf-card-label { color:var(--acc); }
+.kf-card.solution .kf-card-label { color:#fbbf24; }
+.kf-card.problem { border-left:3px solid var(--acc); }
+.kf-card.solution { border-left:3px solid #fbbf24; }
+
+.kf-body { color:#d1d5db; font-size:.94rem; line-height:1.8; }
+.kf-body strong { color:#e6edf3; }
+.kf-body em { color:var(--acc2); font-style:italic; }
+.kf-body code { background:#1e1538; color:var(--acc2); padding:.08rem .35rem; border-radius:.2rem; font-size:.86em; font-family:'JetBrains Mono',ui-monospace,monospace; }
+.kf-body pre { background:#0a0d14; border:1px solid #1e2533; border-radius:.4rem; padding:.7rem 1rem; overflow-x:auto; }
+.kf-body pre code { background:transparent; padding:0; color:#cbd5e1; }
+.kf-body blockquote { margin:.85rem 0; padding:.5rem 1rem; border-left:3px solid var(--acc); background:var(--acc-bg); color:#cbd5e1; font-style:italic; }
+.kf-body table { width:auto; max-width:100%; margin:.85rem 0; border-collapse:collapse; font-size:.88rem; background:#0d1117; border:1px solid #1e2533; border-radius:.35rem; overflow:hidden; }
+.kf-body th, .kf-body td { padding:.45rem .85rem; border:1px solid #1e2533; text-align:left; vertical-align:top; }
+.kf-body th { background:#0a0d14; color:var(--acc2); font-weight:700; font-size:.82rem; }
+.kf-body hr { border:0; border-top:1px dashed #1e2533; margin:1.3rem 0; }
+.kf-body ul, .kf-body ol { padding-left:1.4rem; margin:.5rem 0 .85rem; }
+.kf-body .katex-display { margin:.85rem 0; overflow-x:auto; overflow-y:hidden; }
+.kf-body .katex { font-size:1.02em; }
+
+.btn-toggle { background:#fbbf24; color:#000; border:none; border-radius:.3rem; padding:.45rem 1rem; font-size:.78rem; font-weight:700; cursor:pointer; margin-bottom:.5rem; }
+.btn-toggle:hover { opacity:.85; }
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; text-decoration:none; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+
+.kf-nav { display:flex; justify-content:space-between; gap:.6rem; margin-top:1.5rem; flex-wrap:wrap; }
+.kf-nav a, .kf-nav span { padding:.55rem 1rem; border-radius:.4rem; background:#0e1014; border:1px solid #1e2533; color:#cbd5e1; text-decoration:none; font-size:.82rem; min-width:0; max-width:48%; }
+.kf-nav a:hover { border-color:var(--acc); color:#fff; background:var(--acc-bg); }
+.kf-nav span.disabled { opacity:.3; pointer-events:none; }
+.kf-nav .lbl { color:var(--acc); font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; }
+.kf-nav .title { color:#e6edf3; font-weight:600; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.85rem; }
+</style>
+
+<div class="kf-wrap">
+
+  <div class="kf-crumb">
+    <a href="{{ url_for('demos.learn_dimat') }}">Tanulás</a>
+    &rsaquo;
+    <a href="{{ url_for('demos.kombfeladatok_index') }}">Kombinatorikai feladatok</a>
+    &rsaquo; <span style="color:var(--acc2)">{{ ex.id }})</span>
+  </div>
+
+  <div class="kf-head">
+    <div class="kf-pill">
+      <span class="badge-id">{{ ex.id }})</span>
+      <span class="badge-bookref">{{ ex.book_ref }})</span>
+      {% if ex.section_name %}<span class="badge-section">{{ ex.section }}. {{ ex.section_name }}</span>{% endif %}
+    </div>
+    <h1>{{ ex.title }}</h1>
+  </div>
+
+  <div class="kf-card problem">
+    <div class="kf-card-label">Feladat</div>
+    {% if ex.problem_html %}
+      <div class="kf-body">{{ ex.problem_html|safe }}</div>
+    {% else %}
+      <div class="kf-body" style="color:#64748b;font-style:italic;">A feladat szövege nincs külön elválasztva — lásd a megoldás-blokkban.</div>
+    {% endif %}
+  </div>
+
+  {% if ex.solution_html %}
+  <button id="toggle-sol" class="btn-toggle" onclick="toggleSol(this)">Megoldás megjelenítése ▾</button>
+  <div class="kf-card solution" id="sol-card" style="display:none;">
+    <div class="kf-card-label">Megoldás</div>
+    <div class="kf-body">{{ ex.solution_html|safe }}</div>
+  </div>
+  {% endif %}
+
+  <div class="kf-nav">
+    {% if prev_id %}
+    <a href="{{ url_for('demos.kombfeladatok_detail', exid=prev_id) }}">
+      <span class="lbl">← Előző</span>
+      <span class="title">{{ prev_id }})</span>
+    </a>
+    {% else %}
+    <span class="disabled"><span class="lbl">—</span></span>
+    {% endif %}
+
+    {% if next_id %}
+    <a href="{{ url_for('demos.kombfeladatok_detail', exid=next_id) }}" style="text-align:right;">
+      <span class="lbl">Következő →</span>
+      <span class="title">{{ next_id }})</span>
+    </a>
+    {% else %}
+    <span class="disabled"><span class="lbl">—</span></span>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function toggleSol(btn) {
+  const card = document.getElementById('sol-card');
+  const open = card.style.display !== 'none';
+  card.style.display = open ? 'none' : '';
+  btn.textContent = open ? 'Megoldás megjelenítése ▾' : 'Megoldás elrejtése ▴';
+}
+document.addEventListener('keydown', (e) => {
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  {% if prev_id %}if (e.key === 'ArrowLeft') window.location.href = "{{ url_for('demos.kombfeladatok_detail', exid=prev_id) }}";{% endif %}
+  {% if next_id %}if (e.key === 'ArrowRight') window.location.href = "{{ url_for('demos.kombfeladatok_detail', exid=next_id) }}";{% endif %}
+});
+</script>
+
+{% endblock %}

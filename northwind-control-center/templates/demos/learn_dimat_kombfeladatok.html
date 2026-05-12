@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Kombinatorikai feladatok megoldásokkal — Szalkai István{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false,ignoredTags:['script','noscript','style','textarea','pre','code']})"></script>
+
+<style>
+:root { --acc:#10b981; --acc2:#34d399; --acc-bg:rgba(16,185,129,.08); --acc-bg2:rgba(16,185,129,.15); }
+.kf-wrap { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem; }
+.kf-hero { display:flex; align-items:center; gap:.9rem; margin-bottom:.5rem; }
+.kf-hero-ico { width:44px; height:44px; border-radius:50%; background:var(--acc-bg2); border:2px solid var(--acc); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.kf-hero h4 { margin:0; color:var(--acc); font-weight:700; }
+
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; text-decoration:none; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+
+.kf-stats { display:flex; gap:1.2rem; flex-wrap:wrap; margin:1rem 0 1.5rem; padding:.75rem 1rem; background:#0e1014; border:1px solid #1e2533; border-radius:.5rem; }
+.kf-stat { display:flex; flex-direction:column; }
+.kf-stat-val { font-size:1.4rem; font-weight:700; color:var(--acc); }
+.kf-stat-lbl { font-size:.7rem; color:#64748b; letter-spacing:.06em; text-transform:uppercase; }
+
+.kf-chapters { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:1.25rem; }
+.kf-chapter-pill { padding:.2rem .55rem; font-size:.74rem; font-weight:600; color:var(--acc2); background:var(--acc-bg); border:1px solid rgba(16,185,129,.35); border-radius:.35rem; }
+.kf-chapter-pill .cnt { color:#fbbf24; font-weight:700; margin-left:.25rem; }
+
+.kf-search-row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:1.25rem; }
+.kf-search { flex:1; min-width:260px; background:#0d1117; border:1px solid #374151; color:#e6edf3; padding:.55rem .85rem; border-radius:.4rem; font-size:.9rem; }
+.kf-search:focus { outline:none; border-color:var(--acc); }
+
+.kf-section { background:#12161f; border:1px solid #1e2533; border-radius:10px; margin-bottom:1rem; overflow:hidden; }
+.kf-section-head { display:flex; align-items:center; gap:.7rem; padding:.85rem 1.1rem; background:#0a0d14; border-bottom:1px solid #1e2533; cursor:pointer; user-select:none; }
+.kf-section-head:hover { background:#0f1320; }
+.kf-section-roman { background:var(--acc-bg2); color:var(--acc); border:1px solid var(--acc); border-radius:.3rem; padding:.18rem .55rem; font-size:.72rem; font-weight:700; letter-spacing:.05em; min-width:2.5rem; text-align:center; }
+.kf-section-title { color:#e6edf3; font-weight:700; font-size:.95rem; flex:1; min-width:0; }
+.kf-section-meta { color:#94a3b8; font-size:.78rem; }
+.kf-section-toggle { color:#64748b; transition:transform .15s; }
+.kf-section.open .kf-section-toggle { transform:rotate(90deg); }
+.kf-section-body { display:none; padding:.4rem .5rem .65rem; }
+.kf-section.open .kf-section-body { display:block; }
+
+.kf-row {
+  display:flex; align-items:baseline; gap:.55rem;
+  padding:.5rem .85rem; border-radius:.35rem;
+  text-decoration:none; color:#cbd5e1; font-size:.85rem;
+  transition:background .12s;
+}
+.kf-row:hover { background:var(--acc-bg); color:#e6edf3; }
+.kf-row-id { font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace; color:var(--acc2); font-weight:700; min-width:3.5rem; flex-shrink:0; }
+.kf-row-bookref { font-family:monospace; color:#7dd3fc; font-size:.78rem; min-width:5rem; flex-shrink:0; }
+.kf-row-title { color:#cbd5e1; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.foot-note { background:#0a0d14; border:1px solid #1e2533; border-radius:.5rem; padding:.85rem 1.1rem; margin-top:1.5rem; color:#94a3b8; font-size:.84rem; line-height:1.6; }
+.foot-note strong { color:#e6edf3; }
+</style>
+
+<div class="kf-wrap">
+
+  <div class="kf-hero">
+    <div class="kf-hero-ico">
+      <i class="bi bi-collection" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <h4>Kombinatorikai feladatok — részletes megoldásokkal</h4>
+      <small class="text-muted">{{ source }}</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="btn-sec">← Tanulás főoldal</a>
+  </div>
+
+  <div class="kf-stats">
+    <div class="kf-stat"><div class="kf-stat-val">{{ total }}</div><div class="kf-stat-lbl">feladat</div></div>
+    <div class="kf-stat"><div class="kf-stat-val">{{ groups|length }}</div><div class="kf-stat-lbl">szekció</div></div>
+    <div class="kf-stat"><div class="kf-stat-val" style="color:#fbbf24">{{ by_chapter|length }}</div><div class="kf-stat-lbl">könyv-fejezet</div></div>
+  </div>
+
+  <div class="kf-chapters">
+    {% for ch_n, cnt in by_chapter %}
+    <span class="kf-chapter-pill">{{ ch_n }}. fejezet<span class="cnt">{{ cnt }}</span></span>
+    {% endfor %}
+  </div>
+
+  <div class="kf-search-row">
+    <input id="kf-search" type="search" placeholder="Keresés feladatszámra, könyv-ref-re vagy címre…" class="kf-search">
+    <span style="color:#64748b;font-size:.78rem;" id="kf-count">{{ total }} feladat</span>
+  </div>
+
+  {% for g in groups %}
+  <section class="kf-section{% if loop.first %} open{% endif %}">
+    <header class="kf-section-head" onclick="this.parentElement.classList.toggle('open')">
+      <span class="kf-section-roman">{{ g.roman }}.</span>
+      <div class="kf-section-title">{{ g.name }}</div>
+      <div class="kf-section-meta">{{ g.count }} feladat</div>
+      <span class="kf-section-toggle">›</span>
+    </header>
+    <div class="kf-section-body">
+      {% for ex in g['items'] %}
+      <a href="{{ url_for('demos.kombfeladatok_detail', exid=ex.id) }}"
+         class="kf-row"
+         data-search="{{ ex.id }} {{ ex.book_ref }} {{ ex.title|lower }}">
+        <span class="kf-row-id">{{ ex.id }})</span>
+        <span class="kf-row-bookref">{{ ex.book_ref }})</span>
+        <span class="kf-row-title">{{ ex.title }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <div class="foot-note">
+    <strong>Megjegyzés.</strong> A feladatok és megoldások részletességükkel egyetemi
+    bevezető szintű diszkrét matematika tárgyhoz készültek. A „könyv-fejezet" hivatkozás
+    Dr. Szalkai István <em>Diszkrét matematika</em> tankönyvének fejezeteire utal.
+    A KaTeX automatikusan rendereli a $\LaTeX$-jelölést.
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const search = document.getElementById('kf-search');
+  const count = document.getElementById('kf-count');
+  const sections = document.querySelectorAll('.kf-section');
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    let total = 0;
+    sections.forEach(s => {
+      let m = 0;
+      s.querySelectorAll('.kf-row').forEach(r => {
+        const hay = (r.dataset.search || '').toLowerCase();
+        const ok = !q || hay.includes(q);
+        r.style.display = ok ? '' : 'none';
+        if (ok) m++;
+      });
+      total += m;
+      if (q) {
+        if (m > 0) s.classList.add('open');
+        s.style.display = m > 0 ? '' : 'none';
+      } else {
+        s.style.display = '';
+      }
+    });
+    count.textContent = total + ' találat' + (q ? ' (szűrve)' : '');
+  });
+})();
+</script>
+
+{% endblock %}
