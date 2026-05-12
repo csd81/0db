@@ -47,6 +47,24 @@
     body: JSON.stringify(body || {}),
   }).then(r => r.ok ? r.json() : Promise.reject(r.status));
 
+  // ── Language-aware field picker ──────────────────────────────────────────
+  // HU mode: prefer the `_hu` field, fall back to canonical English.
+  // EN mode: always use canonical English.
+  // The current language is whatever <html>/<body> has the `lang-en` class
+  // (synced by static/js/lang_switch.js, default = Hungarian).
+  function currentLang() {
+    return document.documentElement.classList.contains('lang-en') ||
+           document.body.classList.contains('lang-en') ? 'en' : 'hu';
+  }
+  function pick(item, base) {
+    if (!item) return '';
+    if (currentLang() === 'hu') {
+      var hu = item[base + '_hu'];
+      if (hu != null && hu !== '') return hu;
+    }
+    return item[base] || '';
+  }
+
   // ── KaTeX render helper (uses global if present) ─────────────────────────
 
   function renderMath(node) {
@@ -266,23 +284,23 @@
     const card = el('div', {class: 'dq-ex-card', 'data-status': status, 'data-ex-id': ex.id});
     const head = el('div', {class: 'dq-ex-head'}, [
       el('span', {class: 'dq-ex-id'}, ex.id),
-      el('span', {class: 'dq-ex-title'}, ex.title || '(cím nélkül)'),
+      el('span', {class: 'dq-ex-title'}, pick(ex, 'title') || '(cím nélkül)'),
       statusPill(status),
     ]);
-    const body = el('div', {class: 'dq-ex-body', html: mdToHtml(ex.problem_md || '')});
+    const body = el('div', {class: 'dq-ex-body', html: mdToHtml(pick(ex, 'problem_md'))});
     const actions = el('div', {class: 'dq-ex-actions'});
 
     const solvedBtn = el('button', {class: 'dq-btn dq-btn-primary', onclick: () => mark(card, 'solved', ex)},
       '✓ Megoldottam (+10 XP)');
     actions.appendChild(solvedBtn);
 
-    if (ex.hint_md) {
+    if (pick(ex, 'hint_md')) {
       let hintShown = false;
       const hintBtn = el('button', {class: 'dq-btn dq-btn-hint', onclick: () => {
         hintShown = !hintShown;
         if (hintShown) {
           if (!card.querySelector('.dq-hint-block')) {
-            const h = el('div', {class: 'dq-solution-block dq-hint-block', html: '<strong>💡 Útmutatás:</strong><br>' + mdToHtml(ex.hint_md)});
+            const h = el('div', {class: 'dq-solution-block dq-hint-block', html: '<strong>💡 Útmutatás:</strong><br>' + mdToHtml(pick(ex, 'hint_md'))});
             body.parentNode.insertBefore(h, actions);
             renderMath(h);
           }
@@ -294,12 +312,12 @@
       actions.appendChild(hintBtn);
     }
 
-    if (ex.solution_md) {
+    if (pick(ex, 'solution_md')) {
       const revBtn = el('button', {class: 'dq-btn dq-btn-reveal', onclick: () => {
         const existing = card.querySelector('.dq-solution-show');
         if (existing) { existing.remove(); return; }
         const sol = el('div', {class: 'dq-solution-block dq-solution-show',
-                               html: '<strong>👁 Megoldás:</strong><br>' + mdToHtml(ex.solution_md)});
+                               html: '<strong>👁 Megoldás:</strong><br>' + mdToHtml(pick(ex, 'solution_md'))});
         body.parentNode.insertBefore(sol, actions);
         renderMath(sol);
         if (status !== 'solved' && status !== 'revealed') {
@@ -426,7 +444,7 @@
     document.getElementById('dq-qprog').style.width = ((s.idx) / s.total * 100) + '%';
     document.getElementById('dq-quiz-counter').textContent = `Kérdés ${s.idx + 1} / ${s.total}`;
     const card = el('div', {class: 'dq-quiz-q'});
-    card.appendChild(el('div', {class: 'dq-quiz-q-text', html: mdToHtml(q.q || '')}));
+    card.appendChild(el('div', {class: 'dq-quiz-q-text', html: mdToHtml(pick(q, 'q'))}));
     const opts = el('div', {class: 'dq-quiz-options'});
     (q.options || []).forEach(o => {
       const btn = el('button', {
@@ -438,7 +456,7 @@
         },
       }, [
         el('span', {class: 'dq-quiz-opt-letter'}, o.k + ')'),
-        el('span', {html: mdToHtml(o.text || '')}),
+        el('span', {html: mdToHtml(pick(o, 'text'))}),
       ]);
       opts.appendChild(btn);
     });
@@ -495,7 +513,7 @@
       const correct = s.answers[q.id] === q.answer;
       review.appendChild(el('div', {style: {marginBottom: '.5rem', fontSize: '.78rem',
         color: correct ? '#34d399' : '#ef4444', fontFamily: 'monospace'}},
-        (correct ? '✓ ' : '✗ ') + `Q${i + 1}: ${q.q.slice(0, 60)}${q.q.length > 60 ? '…' : ''} → válaszodtál: ${s.answers[q.id] || '—'} | helyes: ${q.answer}`));
+        (correct ? '✓ ' : '✗ ') + `Q${i + 1}: ${(pick(q, 'q')||'').slice(0, 60)}${(pick(q, 'q')||'').length > 60 ? '…' : ''} → válaszodtál: ${s.answers[q.id] || '—'} | helyes: ${q.answer}`));
     });
     result.appendChild(review);
     result.appendChild(el('div', {style: {marginTop: '1.2rem', display: 'flex', gap: '.5rem', justifyContent: 'center'}}, [
@@ -659,6 +677,23 @@
     el,
     get currentChapter() { return CH; },
   };
+
+  // ── Language change handler ──────────────────────────────────────────────
+  // When user toggles HU/EN, re-render whichever universal tab is currently
+  // showing so the new language takes effect immediately. The cached fetch
+  // data already contains both languages, so no refetch is needed.
+  window.addEventListener('langchange', function () {
+    if (!CH) return;
+    var active = document.querySelector('.ila-tab.active');
+    if (!active) return;
+    var id = active.id;
+    if (id === 't-fel-univ' || id === 't-kvi-univ' || id === 't-min-univ') {
+      renderedTabs.delete(id);
+      // Quiz state would otherwise carry over half-rendered DOM; reset it
+      if (id === 't-kvi-univ') _quizState = null;
+      renderTab(id);
+    }
+  });
 
   // ── Boot ─────────────────────────────────────────────────────────────────
 

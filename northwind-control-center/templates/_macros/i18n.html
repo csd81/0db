@@ -1,0 +1,28 @@
+{#-
+  i18n.html — Jinja macros for bilingual (HU/EN) content.
+
+  Usage in a template:
+    {% import "_macros/i18n.html" as I %}
+
+    Inline: {{ I.t('Halmazok', 'Sets') }}
+    Block:  {{ I.tb('Halmazok elmélete', 'Set theory') }}
+
+  The macros emit <span class="i18n"> with paired .hu / .en children.
+  CSS in static/css/lang_switch.css hides one based on body class.
+
+  If the English translation is empty / unknown, pass '' for `en` —
+  the CSS fallback will show Hungarian even in EN mode.
+-#}
+
+{% macro t(hu, en='') -%}
+<span class="i18n"><span class="hu">{{ hu|safe }}</span><span class="en">{{ en|safe }}</span></span>
+{%- endmacro %}
+
+{% macro tb(hu, en='') -%}
+<span class="i18n i18n-block"><span class="hu">{{ hu|safe }}</span><span class="en">{{ en|safe }}</span></span>
+{%- endmacro %}
+
+{# Alias for clarity when passing pre-rendered HTML fragments. #}
+{% macro raw(hu, en='') -%}
+<span class="i18n"><span class="hu">{{ hu|safe }}</span><span class="en">{{ en|safe }}</span></span>
+{%- endmacro %}

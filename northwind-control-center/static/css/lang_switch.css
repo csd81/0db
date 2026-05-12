@@ -1,0 +1,63 @@
+/* lang_switch.css — site-wide bilingual (HU/EN) visibility toggle.
+   The body class is set in <head> by lang_switch.js BEFORE first paint,
+   so there is no flash of wrong-language content. */
+
+/* Default: Hungarian visible, English hidden.
+   We match the language class on <html> (set by the inline head script
+   before first paint) AND on <body> (set by lang_switch.js after parse).
+   Either being present is sufficient. */
+.i18n > .en,
+[data-lang-en] { display: none; }
+
+html.lang-en .i18n > .hu,
+html.lang-en [data-lang-hu],
+body.lang-en .i18n > .hu,
+body.lang-en [data-lang-hu] { display: none; }
+
+html.lang-en .i18n > .en,
+html.lang-en [data-lang-en],
+body.lang-en .i18n > .en,
+body.lang-en [data-lang-en] { display: revert; }
+
+/* Fallback: if .en span is empty, gracefully keep .hu visible in EN mode */
+html.lang-en .i18n > .en:empty,
+body.lang-en .i18n > .en:empty { display: none; }
+html.lang-en .i18n > .en:empty ~ .hu,
+body.lang-en .i18n > .en:empty ~ .hu { display: revert; }
+
+/* Toggle button group in the top nav */
+.lang-toggle {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-left: .5rem;
+}
+.lang-toggle .lang-btn {
+  background: transparent;
+  color: #94a3b8;
+  border: 0;
+  padding: .25rem .55rem;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  line-height: 1.2;
+}
+.lang-toggle .lang-btn:hover {
+  background: #1e2533;
+  color: #e2e8f0;
+}
+.lang-toggle .lang-btn.active {
+  background: #10b981;
+  color: #000;
+}
+.lang-toggle .lang-btn + .lang-btn {
+  border-left: 1px solid #334155;
+}
+
+/* Inline `.i18n` should stay inline; block-level wrappers may use a div */
+.i18n { display: inline; }
+.i18n.i18n-block { display: block; }
