@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% import "_macros/i18n.html" as I %}
 <style>
 :root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
 .ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
@@ -59,12 +60,12 @@ canvas { border-radius:8px; display:block; }
   </div>
 
   <div class="d-flex gap-1 mb-3 flex-wrap">
-    <span class="ila-nav-link active" onclick="showTab('t-def',this)">Halmazok definíciója</span>
-    <span class="ila-nav-link" onclick="showTab('t-bool',this)">Boole-algebrák</span>
-    <span class="ila-nav-link" onclick="showTab('t-venn',this)">Venn-diagramok</span>
-    <span class="ila-nav-link" onclick="showTab('t-dual',this)">Dualitás &amp; De Morgan</span>
-    <span class="ila-nav-link" onclick="showTab('t-indep',this)">Minőségi Függetlenség</span>
-    <span class="ila-nav-link" onclick="showTab('t-hist',this)">Történet &amp; Irodalom</span>
+    <span class="ila-nav-link active" onclick="showTab('t-def',this)"><span class="i18n"><span class="hu">Halmazok definíciója</span><span class="en">Set definition</span></span></span>
+    <span class="ila-nav-link" onclick="showTab('t-bool',this)"><span class="i18n"><span class="hu">Boole-algebrák</span><span class="en">Boolean algebras</span></span></span>
+    <span class="ila-nav-link" onclick="showTab('t-venn',this)"><span class="i18n"><span class="hu">Venn-diagramok</span><span class="en">Venn diagrams</span></span></span>
+    <span class="ila-nav-link" onclick="showTab('t-dual',this)"><span class="i18n"><span class="hu">Dualitás &amp; De Morgan</span><span class="en">Duality &amp; De Morgan</span></span></span>
+    <span class="ila-nav-link" onclick="showTab('t-indep',this)"><span class="i18n"><span class="hu">Minőségi Függetlenség</span><span class="en">Qualitative Independence</span></span></span>
+    <span class="ila-nav-link" onclick="showTab('t-hist',this)"><span class="i18n"><span class="hu">Történet &amp; Irodalom</span><span class="en">History &amp; References</span></span></span>
   </div>
 
   <!-- ═══ TAB 1: Halmazok definíciója + Cantor ═══ -->
@@ -253,7 +254,7 @@ canvas { border-radius:8px; display:block; }
             </tbody>
           </table>
           <div class="ex-box mt-2">
-            <strong>Következmény:</strong> Elég bebizonyítani az egyik De Morgan-azonosságot, a másik automatikusan következik a Dualitás elvéből!
+            <strong><span class="i18n"><span class="hu">Következmény</span><span class="en">Corollary</span></span>:</strong> Elég bebizonyítani az egyik De Morgan-azonosságot, a másik automatikusan következik a Dualitás elvéből!
           </div>
           <div class="badge-acc mb-2 mt-3">De Morgan-azonosságok interaktív ellenőrzése</div>
           <div id="dm-check-area">
@@ -314,7 +315,7 @@ canvas { border-radius:8px; display:block; }
             <strong>(ii):</strong> Minden \(2^n\) elemű halmazban léteznek \(n\) darab minőségileg független részhalmaz. A konstrukció: \(A_i = \{x\in I: x\text{ bináris alakjának }i\text{-edik bitje }=1\}\).
           </div>
           <div class="ex-box">
-            <strong>Példa n=2, I={0,1,2,3}:</strong><br>
+            <strong><span class="i18n"><span class="hu">Példa</span><span class="en">Example</span></span> n=2, I={0,1,2,3}:</strong><br>
             \(A_1 = \{2,3\}\) (2-es bit = 1)<br>
             \(A_2 = \{1,3\}\) (1-es bit = 1)<br>
             Mind a 4 metszet \(\neq\emptyset\):<br>
@@ -486,8 +487,8 @@ function showTab(id, btn) {
 ══════════════════════════════════ */
 const CANTOR_STEPS = [
   { text: '<strong>Feltevés (indirekt):</strong> Tegyük fel, hogy létezik olyan <em>Z</em> halmaz, amely a világ minden elemét tartalmazza. Minden "dolog" ∈ Z.', cls: 'active' },
-  { text: '<strong>Definíció:</strong> Tekintsük az Y := {x ∈ Z | x ∉ x} objektumot — az összes olyan elem, amely <em>nem eleme önmagának</em>. Mivel Z mindent tartalmaz és x∉x értelmes tulajdonság, Y is halmaz kell, hogy legyen.', cls: 'active' },
-  { text: '<strong>Következmény:</strong> Mivel Z mindent tartalmaz, ezért Y ∈ Z is teljesül. Most eldöntjük: Y ∈ Y, vagy Y ∉ Y?', cls: 'active' },
+  { text: '<strong><span class="i18n"><span class="hu">Definíció</span><span class="en">Definition</span></span>:</strong> Tekintsük az Y := {x ∈ Z | x ∉ x} objektumot — az összes olyan elem, amely <em>nem eleme önmagának</em>. Mivel Z mindent tartalmaz és x∉x értelmes tulajdonság, Y is halmaz kell, hogy legyen.', cls: 'active' },
+  { text: '<strong><span class="i18n"><span class="hu">Következmény</span><span class="en">Corollary</span></span>:</strong> Mivel Z mindent tartalmaz, ezért Y ∈ Z is teljesül. Most eldöntjük: Y ∈ Y, vagy Y ∉ Y?', cls: 'active' },
   { text: '<strong>I. eset: Y ∉ Y.</strong> Ekkor Y kielégíti az "x ∉ x" feltételt, tehát Y eleme kell legyen Y-nak (a definíció szerint). De ez pontosan Y ∈ Y — <strong>ellentmondás!</strong>', cls: 'contra' },
   { text: '<strong>II. eset: Y ∈ Y.</strong> Ekkor Y NEM elégíti ki az "x ∉ x" feltételt (hiszen Y ∈ Y). Tehát Y ∉ Y — <strong>ellentmondás!</strong>', cls: 'contra' },
   { text: '<strong>Mindkét eset</strong> (Y ∈ Y és Y ∉ Y) ellentmondáshoz vezet. Az indirekt feltétel hamis.', cls: 'active' },
