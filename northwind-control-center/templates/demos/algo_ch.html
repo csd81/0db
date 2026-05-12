@@ -3648,7 +3648,179 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTERS (11–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 11 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 11 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c11-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c11-protocol',this)">Feige–Fiat–Shamir protokoll</span>
+    <span class="ila-nav-link" onclick="showTab('t-c11-security',this)">Biztonság &amp; alkalmazás</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c11-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">11. fejezet — Bizonyítás nulla információval</span>
+      <p>
+        <strong>Zero-Knowledge Proof (ZKP)</strong> — paradoxnak tűnő, de mély eredmény:
+        a Válaszadó (V, <em>Prover</em>) be tudja bizonyítani a Kérdezőnek (K, <em>Verifier</em>),
+        hogy birtokában van egy titoknak, <strong>anélkül</strong>, hogy a titok bármely részét
+        is felfedné — még a beszélgetés végén sem.
+      </p>
+      <div class="def-box">
+        <strong>Goldwasser, Micali, Rackoff 1985:</strong> a ZKP fogalmának első formális
+        definíciója (CRYPTO konferencia). Három tulajdonság:
+        <ul style="margin:.4rem 0 0;">
+          <li><strong>Completeness</strong> — ha V tényleg ismeri a titkot, K elfogadja.</li>
+          <li><strong>Soundness</strong> — ha V <em>nem</em> ismeri, $\varepsilon$ esélynél nagyobb arányban K nem fogadja el.</li>
+          <li><strong>Zero-knowledge</strong> — K <em>semmit</em> nem tanul meg a titokról a párbeszéd alatt.</li>
+        </ul>
+      </div>
+
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Az alábbi algoritmus a Csirmaz László (BME, Matematikai Intézet) által ismertetett változat
+        (1992). Csirmaz László honlapján:
+        <a href="http://www.math-inst.hu/~csirmaz" style="color:var(--acc);">math-inst.hu/~csirmaz</a> sok érdekes anyag található.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-key-fill me-1"></i> Miért fontos?</h6>
+      <ul>
+        <li><strong>Belépés/azonosítás</strong> jelszó leütése nélkül — szervernek sem mutatjuk meg.</li>
+        <li><strong>Banki tranzakciók</strong> hitelkártya-szám megosztása nélkül.</li>
+        <li><strong>Blockchain</strong> zk-SNARK / zk-STARK technológia: titkos tranzakciók (Zcash, Tornado Cash).</li>
+        <li><strong>Cryptographic voting</strong> — bizonyítható korrekt szavazatszámlálás, de a szavazat marad titok.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: Feige-Fiat-Shamir ═══ -->
+  <div id="t-c11-protocol" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">11.1 Algoritmus — Feige–Fiat–Shamir (1988)</span>
+
+      <h6>Előkészítés (egyszer, titokban)</h6>
+      <ol>
+        <li>V választ egy nagy összetett $m$-et — pl. $m = pq$ két prím szorzata, $p, q$ titok.</li>
+        <li>V választ titkos PIN-kódot: $(r_1, r_2, \dots, r_k) \in \mathbb{Z}_m^*$, ahol $k$ legalább pár tucat.</li>
+        <li>Nyilvánosságra hozza a négyzeteket:
+          $$s_i \equiv r_i^2 \pmod m, \quad i = 1, \dots, k.$$
+        </li>
+      </ol>
+
+      <div class="def-box">
+        V <em>nem</em> a PIN-kódot, hanem annak <em>négyzeteit</em> ($s_i$) hozza nyilvánosságra.
+        Az inverz művelet — <strong>kvadratikus gyökvonás $\pmod m$</strong> — nagy $m$-re
+        gyors algoritmus nélkül ($\Leftrightarrow$ $m$ faktorizálása).
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">Egy bizonyítási kör (round)</span>
+
+      <h6>0) V választ egy új $v$-t</h6>
+      <p>Minden körben friss véletlen $v \in \mathbb{Z}_m^*$, és átadja $K$-nak a négyzetét:</p>
+      $$w \equiv v^2 \pmod m$$
+
+      <h6>1) K kihívást küld</h6>
+      <p>K véletlen kérdést küld $(e_1, e_2, \dots, e_k) \in \{0, 1\}^k$, kb. fele 0, fele 1.</p>
+
+      <h6>2) V válaszol</h6>
+      <p>V titokban kiszámolja és átadja:</p>
+      $$b \equiv v \cdot \prod_{i=1}^k r_i^{e_i} \pmod m$$
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Csak azokkal az $r_i$-kkal szoroz, ahol $e_i = 1$. <em>$v$ „elfedi" a többit.</em>
+      </p>
+
+      <h6>3) K ellenőrzése</h6>
+      <p>K megnézi:</p>
+      $$b^2 \;\stackrel{?}{\equiv}\; w \cdot \prod_{i=1}^k s_i^{e_i} \pmod m$$
+      <p>(Igaz, mert $b^2 = v^2 \prod r_i^{2 e_i} = w \prod s_i^{e_i}$.)</p>
+
+      <div class="thm-box">
+        Ha V tényleg ismeri $(r_1, \dots, r_k)$-t, mindig átmegy. <strong>Ha nem,</strong> egy
+        kör csak $\varepsilon < 1$ valószínűséggel sikerül. (Mivel $\mathbb{Z}_m^*$-ban minden
+        négyzetszámnak <em>pontosan két</em> négyzetgyöke van, csaló max. $1/2$-eséllyel találgathat.)
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">Megerősítés — ismételd $t$-szer</span>
+      <p>Ha K nagyon biztos akar lenni, a köröket $t$-szer megismételi <strong>új $v$-vel</strong> minden alkalommal.</p>
+      <p>Csalási esély: $\varepsilon^t$, ami</p>
+      $$\varepsilon = \tfrac{1}{2}, \;t = 200 \;\Longrightarrow\; 2^{-200} < 10^{-60}.$$
+
+      <div class="def-box">
+        $t = 200$ kör a mai gépeken észre sem vehető, mégis <strong>$10^{60}$-szor</strong> ritkább
+        eset, mint a Földön élő emberek számának ($\sim 10^{10}$) százszorosa. Gyakorlatilag
+        100% biztonság.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Biztonság & alkalmazás ═══ -->
+  <div id="t-c11-security" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">Miért nem szimulálható?</span>
+      <p>
+        Kérdés: a teljes párbeszédet ($s_i, w, e_i, b$) <em>bárki hallhatja</em>. Miért nem tudja egy
+        harmadik fél (vagy K maga) később V-ként szerepelni?
+      </p>
+
+      <div class="def-box">
+        Mert új körben K új $(e_i)$ kihívást fog küldeni — a megfelelő $b'$ kiszámításához szükség
+        van az $(r_i)$ titokra. <strong>Egy adott $(e_i)$-re passzoló $b$</strong> kiszámolható (mert
+        a beszélgetés alatt $v$ már megválasztva), de <em>új</em> $(e_i)$-re nem.
+      </div>
+
+      <p>Formálisan: ha valaki tud új körben átmenni, akkor a $\mathbb{Z}_m^*$-ban kvadratikus
+      gyököt tud vonni — ami ekvivalens $m$ faktorizációjával. Tehát:</p>
+
+      <div class="thm-box">
+        <strong>Tétel.</strong> Feige–Fiat–Shamir biztonsága $\Leftrightarrow$ $m$ faktorizálása nehéz.
+        Ha valaki polinomidőben tudna faktorizálni, mind az RSA, mind ez a ZKP megdől.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">Tulajdonságok ellenőrzése</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Tulajdonság</th><th>Bizonyítás</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Completeness</strong></td><td>$b^2 = v^2 \prod r_i^{2 e_i} = w \prod s_i^{e_i}$ azonosság miatt mindig átmegy.</td></tr>
+          <tr><td><strong>Soundness</strong></td><td>$t$ körön át $2^{-t}$ a csalási esély (kvadratikus gyökvonás nehéz).</td></tr>
+          <tr><td><strong>Zero-knowledge</strong></td><td>K csak a véletlen kihívásokra látja a válaszokat. Mivel $(s_i)$ <em>nyilvános</em> és $(r_i)$ négyzetgyöke nem számolható ki, K maga sem többet — szimulátor program is képes ugyanezt a beszélgetést <em>$r_i$ ismerete nélkül</em> előállítani.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">Modern alkalmazások</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Technológia</th><th>Felhasználás</th></tr></thead>
+        <tbody>
+          <tr><td><strong>zk-SNARK</strong> (Groth 2010, Pinocchio 2013)</td><td>Zcash kriptopénz, „shielded transactions"</td></tr>
+          <tr><td><strong>zk-STARK</strong> (Ben-Sasson 2018)</td><td>StarkWare, Ethereum L2 (StarkNet)</td></tr>
+          <tr><td><strong>Bulletproofs</strong> (Bünz 2017)</td><td>Monero range proofs (tranzakciós összegek elrejtése)</td></tr>
+          <tr><td><strong>FIDO2 / WebAuthn</strong></td><td>Jelszó nélküli bejelentkezés modern webhelyeken</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        Az igazi áttörést a <em>nem-interaktív</em> ZKP (Fiat–Shamir heurisztika, 1986) adta — egyetlen
+        üzenetben be lehet bizonyítani egy állítást. Erre épül minden mai blockchain-ZKP.
+      </div>
+
+      <h6>Hivatkozások</h6>
+      <ul>
+        <li>Csirmaz László: <a href="http://www.math-inst.hu/~csirmaz/kript/mattan.html" style="color:var(--acc);">math-inst.hu/~csirmaz/kript/mattan.html</a></li>
+        <li>Goldwasser–Micali–Rackoff: <em>The knowledge complexity of interactive proof systems</em>, SIAM J. Comput. 18 (1989), 186–208</li>
+        <li>Feige–Fiat–Shamir: <em>Zero-knowledge proofs of identity</em>, J. Cryptology 1 (1988), 77–94</li>
+      </ul>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTERS (12–13) — SECTIONS LIST + STUB ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
