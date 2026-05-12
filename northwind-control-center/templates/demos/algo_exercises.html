@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Feladatok — Algoritmikus számelmélet{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false,ignoredTags:['script','noscript','style','textarea','pre','code']})"></script>
+
+<style>
+:root { --acc: #a78bfa; --acc2: #c4b5fd; --acc-bg: rgba(167,139,250,.07); --acc-bg2: rgba(167,139,250,.15); }
+.ex-wrap { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem; }
+.ex-hero { display:flex; align-items:center; gap:.9rem; margin-bottom:.5rem; }
+.ex-hero-ico { width:44px; height:44px; border-radius:50%; background:var(--acc-bg2); border:2px solid var(--acc); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ex-hero h4 { margin:0; color:var(--acc); font-weight:700; }
+
+.btn-sec { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; text-decoration:none; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+
+.ex-stats { display:flex; gap:1.2rem; flex-wrap:wrap; margin:1rem 0 1.5rem; padding:.75rem 1rem; background:#0e1014; border:1px solid #1e2533; border-radius:.5rem; }
+.ex-stat { display:flex; flex-direction:column; }
+.ex-stat-val { font-size:1.4rem; font-weight:700; color:var(--acc); }
+.ex-stat-lbl { font-size:.7rem; color:#64748b; letter-spacing:.06em; text-transform:uppercase; }
+
+.ex-search-row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:1.25rem; }
+.ex-search { flex:1; min-width:260px; background:#0d1117; border:1px solid #374151; color:#e6edf3; padding:.55rem .85rem; border-radius:.4rem; font-size:.9rem; }
+.ex-search:focus { outline:none; border-color:var(--acc); }
+
+.ex-chgroup { background:#12161f; border:1px solid #1e2533; border-radius:10px; margin-bottom:1rem; overflow:hidden; }
+.ex-chgroup-head { display:flex; align-items:center; gap:.7rem; padding:.85rem 1.1rem; background:#0a0d14; border-bottom:1px solid #1e2533; cursor:pointer; user-select:none; }
+.ex-chgroup-head:hover { background:#0f1320; }
+.ex-chgroup-num { background:var(--acc-bg2); color:var(--acc); border:1px solid var(--acc); border-radius:.3rem; padding:.18rem .55rem; font-size:.72rem; font-weight:700; letter-spacing:.05em; min-width:3rem; text-align:center; }
+.ex-chgroup-title { color:#e6edf3; font-weight:700; font-size:.95rem; flex:1; min-width:0; }
+.ex-chgroup-meta { color:#94a3b8; font-size:.78rem; }
+.ex-chgroup-meta .with-sol { color:#10b981; font-weight:600; }
+.ex-chgroup-meta .no-sol { color:#fbbf24; font-weight:600; }
+.ex-chgroup-toggle { color:#64748b; transition:transform .15s; }
+.ex-chgroup.open .ex-chgroup-toggle { transform:rotate(90deg); }
+.ex-chgroup-body { display:none; padding:.4rem .5rem .65rem; }
+.ex-chgroup.open .ex-chgroup-body { display:block; }
+
+.ex-row {
+  display:flex; align-items:baseline; gap:.55rem;
+  padding:.5rem .85rem; border-radius:.35rem;
+  text-decoration:none; color:#cbd5e1; font-size:.85rem;
+  transition:background .12s;
+}
+.ex-row:hover { background:var(--acc-bg); color:#e6edf3; }
+.ex-row-id { font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace; color:var(--acc2); font-weight:600; min-width:5.5rem; flex-shrink:0; }
+.ex-row-preview { color:#cbd5e1; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ex-row-section { color:#64748b; font-size:.72rem; font-style:italic; flex-shrink:0; }
+.ex-row-sol-pill { font-size:.62rem; padding:.08rem .35rem; border-radius:.2rem; font-weight:700; flex-shrink:0; }
+.ex-row-sol-yes { background:rgba(16,185,129,.15); color:#10b981; border:1px solid rgba(16,185,129,.4); }
+.ex-row-sol-no { background:rgba(251,191,36,.1); color:#fbbf24; border:1px solid rgba(251,191,36,.3); }
+
+.unmapped-note { background:#0a0d14; border:1px solid #1e2533; border-radius:.5rem; padding:.85rem 1.1rem; margin-top:1.5rem; color:#94a3b8; font-size:.85rem; line-height:1.6; }
+.unmapped-note strong { color:#e6edf3; }
+</style>
+
+<div class="ex-wrap">
+
+  <div class="ex-hero">
+    <div class="ex-hero-ico">
+      <i class="bi bi-pencil-square" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <h4>Feladatok — Algoritmikus számelmélet</h4>
+      <small class="text-muted">Forrás: Dr. Szalkai István: <em>Algebra és számelmélet feladatgyűjtemény</em> (Pannon Egyetem, 2021)</small>
+    </div>
+    <a href="{{ url_for('demos.learn_algo') }}" class="btn-sec">← Könyv főoldal</a>
+  </div>
+
+  <div class="ex-stats">
+    <div class="ex-stat"><div class="ex-stat-val">{{ total }}</div><div class="ex-stat-lbl">feladat</div></div>
+    <div class="ex-stat"><div class="ex-stat-val" style="color:#10b981">{{ with_solution }}</div><div class="ex-stat-lbl">megoldással</div></div>
+    <div class="ex-stat"><div class="ex-stat-val" style="color:#fbbf24">{{ total - with_solution }}</div><div class="ex-stat-lbl">megoldás nélkül</div></div>
+    <div class="ex-stat"><div class="ex-stat-val" style="color:var(--acc2)">{{ chapter_groups|length }}</div><div class="ex-stat-lbl">fejezet-csoport</div></div>
+  </div>
+
+  <div class="ex-search-row">
+    <input id="ex-search" type="search" placeholder="Keresés feladatszámra vagy szövegre…" class="ex-search">
+    <span style="color:#64748b;font-size:.78rem;" id="ex-count">{{ total }} feladat</span>
+  </div>
+
+  {# ─── Chapter-mapped exercises ─── #}
+  {% for g in chapter_groups %}
+  <section class="ex-chgroup{% if loop.first %} open{% endif %}" data-chapter="{{ g.n }}">
+    <header class="ex-chgroup-head" onclick="this.parentElement.classList.toggle('open')">
+      <span class="ex-chgroup-num">CH&nbsp;{{ g.n }}</span>
+      <div class="ex-chgroup-title">{{ g.title }}</div>
+      <div class="ex-chgroup-meta">
+        <span class="with-sol">{{ g.with_solution }}</span> /
+        {{ g.count }} feladat
+      </div>
+      <span class="ex-chgroup-toggle">›</span>
+    </header>
+    <div class="ex-chgroup-body">
+      {% for ex in g['items'] %}
+      <a href="{{ url_for('demos.algo_exercise', exid=ex.id) }}"
+         class="ex-row"
+         data-search="{{ ex.id }} {{ ex.problem[:200]|lower }}">
+        <span class="ex-row-id">{{ ex.id }})</span>
+        <span class="ex-row-preview">{{ (ex.problem.split('\n')[0] if ex.problem else '')[:120] }}</span>
+        <span class="ex-row-section">{{ ex.section_title }}</span>
+        {% if ex.solution %}
+          <span class="ex-row-sol-pill ex-row-sol-yes">megoldás</span>
+        {% else %}
+          <span class="ex-row-sol-pill ex-row-sol-no">nincs</span>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  {% if unmapped %}
+  <section class="ex-chgroup" data-chapter="0">
+    <header class="ex-chgroup-head" onclick="this.parentElement.classList.toggle('open')">
+      <span class="ex-chgroup-num" style="background:#1e2533;color:#94a3b8;border-color:#374151;">EGYÉB</span>
+      <div class="ex-chgroup-title">AlgFgy 1–3. fejezet — Halmazok, struktúrák, csoportok</div>
+      <div class="ex-chgroup-meta">
+        {{ unmapped|selectattr('solution')|list|length }} /
+        {{ unmapped|length }} feladat — <em>nem közvetlen Algoritmikus számelmélet anyag</em>
+      </div>
+      <span class="ex-chgroup-toggle">›</span>
+    </header>
+    <div class="ex-chgroup-body">
+      {% for ex in unmapped %}
+      <a href="{{ url_for('demos.algo_exercise', exid=ex.id) }}"
+         class="ex-row"
+         data-search="{{ ex.id }} {{ ex.problem[:200]|lower }}">
+        <span class="ex-row-id">{{ ex.id }})</span>
+        <span class="ex-row-preview">{{ (ex.problem.split('\n')[0] if ex.problem else '')[:120] }}</span>
+        <span class="ex-row-section">{{ ex.section_title }}</span>
+        {% if ex.solution %}
+          <span class="ex-row-sol-pill ex-row-sol-yes">megoldás</span>
+        {% else %}
+          <span class="ex-row-sol-pill ex-row-sol-no">nincs</span>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="unmapped-note">
+    <strong>Megjegyzés.</strong> Az <em>Algebra és számelmélet feladatgyűjtemény</em>
+    (Szalkai, 2021) az algoritmikus számelmélet melletti általánosabb algebrai feladatokat
+    is tartalmaz (halmazelmélet, csoportok, gyűrűk általában). A fenti fejezet-csoportosítás
+    azokat a feladatokat sorolja a könyvünk megfelelő fejezeteihez, amelyek tartalmilag
+    illeszkednek. A „<strong>EGYÉB</strong>" csoport a feladatgyűjtemény 1–3. fejezetét
+    tartalmazza, amelyek nem közvetlenül az algoritmikus számelmélet tárgykörébe esnek,
+    de algebrai háttérként hasznosak.
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const search = document.getElementById('ex-search');
+  const count = document.getElementById('ex-count');
+  const groups = document.querySelectorAll('.ex-chgroup');
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    let total = 0;
+    groups.forEach(g => {
+      let groupMatches = 0;
+      g.querySelectorAll('.ex-row').forEach(r => {
+        const hay = (r.dataset.search || '').toLowerCase();
+        const ok = !q || hay.includes(q);
+        r.style.display = ok ? '' : 'none';
+        if (ok) groupMatches++;
+      });
+      total += groupMatches;
+      if (q) {
+        if (groupMatches > 0) g.classList.add('open');
+        g.style.display = groupMatches > 0 ? '' : 'none';
+      } else {
+        g.style.display = '';
+      }
+    });
+    count.textContent = total + ' találat' + (q ? ' (szűrve)' : '');
+  });
+})();
+</script>
+
+{% endblock %}

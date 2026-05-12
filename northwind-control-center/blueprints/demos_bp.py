@@ -4588,6 +4588,281 @@ def learn_ila():
 def learn_dimat():
     return render_template('learn/dimat.html')
 
+
+# ── Algoritmikus számelmélet (Szalkai–Dósa 2011) — 13 fejezet ────────────────
+
+_ALGO_CHAPTERS = [
+    {
+        'n': 1, 'title': 'Bevezetés',
+        'glossary': 'A számelmélet algoritmikus szemléletmódjának bevezetése. Faktorizációs próbák 6–129 jegyű számokra — miért nem elég a kézi vagy iskolás módszer modern alkalmazásban.',
+        'tags': ['Faktorizáció', 'Prím1d.exe', 'Jelölések'],
+        'sections': [{'id': '1.1', 'title': 'Jelölések'}],
+        'related_tetel': [{'n': 30, 'title': 'Prímfelbontás'}],
+    },
+    {
+        'n': 2, 'title': 'Algoritmusok sebessége',
+        'glossary': 'Aszimptotika: O, Θ, Ω, o. Determinisztikus vs. valószínűségi algoritmusok. Természetes számok mérete és az alapműveletek bitszintű komplexitása.',
+        'tags': ['Big-O', 'Bitkomplexitás', 'CLR'],
+        'sections': [
+            {'id': '2.1', 'title': 'Alapfogalmak'},
+            {'id': '2.2', 'title': 'Alapműveletek sebessége (számok mérete, műveletek)'},
+        ],
+        'related_tetel': [],
+    },
+    {
+        'n': 3, 'title': 'A számelmélet alapjai',
+        'glossary': 'Oszthatóság, prímszámok, lnko és lkkt. A számelmélet öt kulcs-problémája, prímeloszlás π(n)~n/log n. Pitagorasz, FLT, Karácsonyi tétel, Bolyai János munkássága, számtani sorozatok és ikerprímek.',
+        'tags': ['Oszthatóság', 'π(n)', 'FLT', 'Bolyai János'],
+        'sections': [
+            {'id': '3.1', 'title': 'Oszthatóság és prímszámok'},
+            {'id': '3.2', 'title': 'A számelmélet algoritmikus problémái'},
+            {'id': '3.3', 'title': 'lnko és lkkt'},
+            {'id': '3.4', 'title': 'A prímszámok eloszlása'},
+            {'id': '3.5', 'title': 'Nevezetes problémák (Pitagorasz/FLT, Karácsonyi tétel & Bolyai, számtani sorozatok, ikerprímek)'},
+        ],
+        'related_tetel': [{'n': 30, 'title': 'Prímfelbontás'}, {'n': 31, 'title': 'Prímtesztelés'}],
+    },
+    {
+        'n': 4, 'title': 'Maradékos osztás és Euklidesz algoritmusa',
+        'glossary': 'A maradékos osztás létezése és egyértelműsége. Az Euklidesz-algoritmus O(log min(a,b)) lépésben (Lamé-tétel). Kibővített Euklidesz Bézout-együtthatókkal.',
+        'tags': ['Euklidesz', 'Bézout', 'Lamé'],
+        'sections': [
+            {'id': '4.1', 'title': 'Maradékos osztás'},
+            {'id': '4.2', 'title': 'Euklidesz algoritmusa'},
+        ],
+        'related_tetel': [{'n': 33, 'title': 'Euklideszi algoritmus'}],
+    },
+    {
+        'n': 5, 'title': 'Lineáris Diophantoszi egyenletek',
+        'glossary': 'ax+by=c egészegyütthatós egyenlet megoldhatósága: gcd(a,b)∣c. Paraméteres általános megoldás. n-változós kiterjesztés a₁x₁+⋯+aₙxₙ=c rekurzív redukcióval.',
+        'tags': ['Diophantosz', 'Bézout-feltétel', 'Paraméteres mo.'],
+        'sections': [
+            {'id': '5.1', 'title': 'ax + by = c egyenletek'},
+            {'id': '5.2', 'title': 'a₁x₁ + ⋯ + aₙxₙ = c egyenletek'},
+        ],
+        'related_tetel': [{'n': 34, 'title': 'Lineáris diofantikus egyenletek'}],
+    },
+    {
+        'n': 6, 'title': 'Kongruenciák és maradékosztályok',
+        'glossary': 'Z_m maradékosztály-gyűrű. Elsőfokú kongruencia, Euler-φ, Lagrange/Euler/Fermat-tétel, gyorshatványozás O(log k). Primitív gyökök, diszkrét logaritmus, magasabbfokú kongruenciák.',
+        'tags': ['Z_m', 'Euler-φ', 'Fermat', 'Gyorshatv.', 'Diszkrét log'],
+        'sections': [
+            {'id': '6.1', 'title': 'Kongruenciák'},
+            {'id': '6.2', 'title': 'Maradékosztályok'},
+            {'id': '6.3', 'title': 'Elsőfokú kongruencia-egyenletek'},
+            {'id': '6.4', 'title': 'Euler-féle φ(n) függvény'},
+            {'id': '6.5', 'title': 'Maradékosztály-tételek (Lagrange, Euler, Fermat)'},
+            {'id': '6.6', 'title': 'Nagy kitevőjű hatványozás'},
+            {'id': '6.7', 'title': 'Primitív gyökök és diszkrét logaritmus'},
+            {'id': '6.8', 'title': 'Magasabbfokú kongruenciák'},
+        ],
+        'related_tetel': [
+            {'n': 36, 'title': 'Euler-féle φ-függvény'},
+            {'n': 37, 'title': 'Lagrange, Euler, Fermat tételei'},
+            {'n': 38, 'title': 'Nagy kitevőjű hatványozás mod m'},
+        ],
+    },
+    {
+        'n': 7, 'title': 'Kínai Maradéktétel és nagy számok szorzása',
+        'glossary': 'CRT: páronként relatív prím modulusok esetén egyértelmű megoldás mod M=∏mᵢ. Általános modulusokra kiterjesztés. Algoritmikus alkalmazás: nagy számok párhuzamos szorzása kis modulusokon.',
+        'tags': ['CRT', 'Párhuzamos szorzás', 'Karatsuba'],
+        'sections': [
+            {'id': '7.1', 'title': 'Kínai Maradéktétel'},
+            {'id': '7.2', 'title': 'Általános modulusok'},
+            {'id': '7.3', 'title': 'Nagy számok szorzása'},
+        ],
+        'related_tetel': [{'n': 35, 'title': 'Kínai maradéktétel'}],
+    },
+    {
+        'n': 8, 'title': 'Prímtesztelés és számok felbontása',
+        'glossary': 'Eratoszthenész szitája. Fermat-féle prímteszt és az álprímek (Carmichael-számok). Miller–Rabin valószínűségi teszt. Pollard ρ-faktorizáció. AKS deterministic prímteszt (2002).',
+        'tags': ['Eratoszthenész', 'Miller–Rabin', 'Pollard ρ', 'AKS', 'Carmichael'],
+        'sections': [
+            {'id': '8.1', 'title': 'Eratoszthenész algoritmusa'},
+            {'id': '8.2', 'title': 'Fermat algoritmusa'},
+            {'id': '8.3', 'title': 'Álprímek'},
+            {'id': '8.4', 'title': 'Miller–Rabin teszt'},
+            {'id': '8.5', 'title': 'Pollard ρ-módszere'},
+            {'id': '8.6', 'title': 'Az AKS algoritmus'},
+        ],
+        'related_tetel': [{'n': 31, 'title': 'Prímtesztelés'}, {'n': 30, 'title': 'Prímfelbontás'}],
+    },
+    {
+        'n': 9, 'title': 'Prímkeresés',
+        'glossary': 'Speciális prímcsaládok. Mersenne-számok Mₚ=2^p−1 (Lucas-Lehmer teszt, GIMPS rekordok). Fermat-prímek Fₙ=2^(2ⁿ)+1 és a Gauss-féle szabályos sokszögszerkesztés.',
+        'tags': ['Mersenne', 'Lucas-Lehmer', 'Fermat-prím', 'Gauss-sokszög'],
+        'sections': [
+            {'id': '9.1', 'title': 'Mersenne-számok'},
+            {'id': '9.2', 'title': 'Fermat-prímek'},
+        ],
+        'related_tetel': [{'n': 32, 'title': 'Prímgenerálás'}],
+    },
+    {
+        'n': 10, 'title': 'Titkosírás nyilvános kulccsal',
+        'glossary': 'RSA (Rivest–Shamir–Adleman 1977): kulcsgenerálás, titkosítás c=mᵉ mod N, dekódolás m=c^d mod N. Konkrét lépéses példák. Merkle–Hellman hátizsák-titkosítás (történelmi, feltört).',
+        'tags': ['RSA', 'Hátizsák', 'Aláírás'],
+        'sections': [
+            {'id': '10.1', 'title': 'Az RSA-algoritmus (példák és megoldások)'},
+            {'id': '10.2', 'title': 'A hátizsák algoritmus'},
+        ],
+        'related_tetel': [{'n': 39, 'title': 'RSA algoritmus'}],
+    },
+    {
+        'n': 11, 'title': 'Bizonyítás nulla információval',
+        'glossary': 'Zero-Knowledge Proof: egy állítás bizonyítása anélkül, hogy maga a titok kiszivárogna. Completeness, soundness, zero-knowledge. Goldwasser–Micali–Rackoff 1985; modern zk-SNARKs alkalmazás.',
+        'tags': ['ZKP', 'Soundness', 'zk-SNARK'],
+        'sections': [],
+        'related_tetel': [],
+    },
+    {
+        'n': 12, 'title': 'Számítógépes megvalósítások',
+        'glossary': 'A könyvhöz mellékelt öt segédprogram: Prim1d.exe (faktorizáció), Eukl1d.exe (Euklidesz), Kongr1d.exe (kongruenciák), Maradek1d.exe (CRT), RSA1d.exe (titkosírás). Lépésenkénti oktatási output.',
+        'tags': ['Prim1d.exe', 'RSA1d.exe', 'Eukl1d.exe'],
+        'sections': [],
+        'related_tetel': [],
+    },
+    {
+        'n': 13, 'title': 'Függelék — Boole-algebrák, Euklideszi gyűrűk, táblázatok',
+        'glossary': 'Algebrai általánosítások. Boole-algebrák, polinom- és Euklideszi gyűrűk: hová vihető át a maradékos osztás és lnko-számolás. Hivatkozási táblázatok: kis prímek, Mersenne- és Fermat-rekordok.',
+        'tags': ['Boole-algebra', 'Polinomgyűrű', 'Euklideszi gyűrű'],
+        'sections': [
+            {'id': '13.1', 'title': 'Boole-algebrák'},
+            {'id': '13.2', 'title': 'Polinomok, Euklideszi gyűrűk'},
+            {'id': '13.3', 'title': 'Táblázatok'},
+        ],
+        'related_tetel': [],
+    },
+]
+
+
+@demos_bp.route('/learn/algo')
+@login_required
+def learn_algo():
+    return render_template('learn/algo.html')
+
+
+_ALGO_CONTENT_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'content', 'algo'
+)
+
+
+def _algo_chapter_body_html(n: int) -> str:
+    """Load content/algo/<NN>.md if it exists; return rendered HTML or ''."""
+    md_path = os.path.join(_ALGO_CONTENT_DIR, f'{n:02d}.md')
+    try:
+        with open(md_path, encoding='utf-8') as f:
+            body_md = f.read()
+    except OSError:
+        return ''
+    try:
+        import markdown as md_lib
+    except ImportError:
+        return body_md
+    return md_lib.markdown(
+        body_md,
+        extensions=['extra', 'tables', 'sane_lists', 'fenced_code'],
+        output_format='html5',
+    )
+
+
+@demos_bp.route('/algo/ch/<int:n>')
+@login_required
+def algo_ch(n):
+    if not 1 <= n <= 13:
+        abort(404)
+    ch = dict(_ALGO_CHAPTERS[n - 1])
+    ch['prev'] = _ALGO_CHAPTERS[n - 2] if n > 1 else None
+    ch['next'] = _ALGO_CHAPTERS[n] if n < 13 else None
+    ch['body_html'] = _algo_chapter_body_html(n)
+    return render_template('demos/algo_ch.html', ch=ch)
+
+
+# ── Exercises (Szalkai feladatgyűjtemény, AlgFgy 2021) ────────────────────────
+
+_ALGO_EXERCISES_CACHE: dict | None = None
+
+
+def _algo_exercises() -> dict:
+    """Lazy-load + cache the exercises JSON."""
+    global _ALGO_EXERCISES_CACHE
+    if _ALGO_EXERCISES_CACHE is None:
+        path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'content', 'algo_exercises.json',
+        )
+        try:
+            with open(path, encoding='utf-8') as f:
+                _ALGO_EXERCISES_CACHE = json.load(f)
+        except OSError:
+            _ALGO_EXERCISES_CACHE = {
+                'feladatok': {}, 'sections': {}, 'by_chapter': {}, 'unmapped': [],
+            }
+    return _ALGO_EXERCISES_CACHE
+
+
+def _sort_ex_ids(ids):
+    """Sort exercise ids like '4.2.1.0' as tuples of ints (handles 3- and 4-level)."""
+    return sorted(ids, key=lambda s: tuple(int(p) for p in s.split('.')))
+
+
+@demos_bp.route('/algo/exercises')
+@login_required
+def algo_exercises():
+    data = _algo_exercises()
+    fe = data['feladatok']
+    by_chapter_raw = data.get('by_chapter', {})
+
+    # Build a list of (chapter_n, chapter_title, [exercises]) groups for the page.
+    chapter_titles = {c['n']: c['title'] for c in _ALGO_CHAPTERS}
+    chapter_groups = []
+    for ch in sorted({int(k) for k in by_chapter_raw.keys()}):
+        ids = _sort_ex_ids(by_chapter_raw[str(ch)])
+        items = [fe[i] for i in ids if i in fe]
+        chapter_groups.append({
+            'n': ch,
+            'title': chapter_titles.get(ch, f'Fejezet {ch}'),
+            'count': len(items),
+            'with_solution': sum(1 for x in items if x.get('solution')),
+            'items': items,
+        })
+
+    # Also list the unmapped exercises (AlgFgy chapters 1-3 — set theory, groups, etc.)
+    unmapped_ids = _sort_ex_ids(data.get('unmapped') or [])
+    unmapped_items = [fe[i] for i in unmapped_ids if i in fe]
+
+    return render_template(
+        'demos/algo_exercises.html',
+        chapter_groups=chapter_groups,
+        unmapped=unmapped_items,
+        total=len(fe),
+        with_solution=sum(1 for x in fe.values() if x.get('solution')),
+    )
+
+
+@demos_bp.route('/algo/exercises/<exid>')
+@login_required
+def algo_exercise(exid):
+    data = _algo_exercises()
+    fe = data['feladatok']
+    if exid not in fe:
+        abort(404)
+    ex = fe[exid]
+    # Compute prev/next within the same algo_chapter (if any)
+    ch = ex.get('algo_chapter')
+    siblings = _sort_ex_ids(data.get('by_chapter', {}).get(str(ch), []) if ch else [])
+    prev_id = next_id = None
+    if exid in siblings:
+        idx = siblings.index(exid)
+        prev_id = siblings[idx - 1] if idx > 0 else None
+        next_id = siblings[idx + 1] if idx + 1 < len(siblings) else None
+    chapter_titles = {c['n']: c['title'] for c in _ALGO_CHAPTERS}
+    return render_template(
+        'demos/algo_exercise.html',
+        ex=ex,
+        prev_id=prev_id, next_id=next_id,
+        chapter_title=chapter_titles.get(ch) if ch else None,
+    )
+
 @demos_bp.route('/dimat/ch0')
 @login_required
 def dimat_ch0():

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Feladat {{ ex.id }}) — {{ ex.section_title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false,ignoredTags:['script','noscript','style','textarea','pre','code']})"></script>
+
+<style>
+:root { --acc: #a78bfa; --acc2: #c4b5fd; --acc-bg: rgba(167,139,250,.07); --acc-bg2: rgba(167,139,250,.15); }
+.ex-wrap { max-width: 900px; margin: 0 auto; padding: 1rem 1.5rem; }
+
+.ex-crumb { font-size:.78rem; color:#64748b; margin-bottom:.5rem; }
+.ex-crumb a { color:var(--acc); text-decoration:none; }
+.ex-crumb a:hover { text-decoration:underline; }
+
+.ex-head { margin-bottom:1.25rem; padding-bottom:.65rem; border-bottom:1px solid #1e2533; }
+.ex-head .ex-pill { display:inline-flex; gap:.5rem; align-items:center; margin-bottom:.45rem; }
+.ex-head .badge-id { background:var(--acc-bg2); color:var(--acc); border:1px solid var(--acc); border-radius:.3rem; padding:.18rem .55rem; font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace; font-weight:700; font-size:.85rem; }
+.ex-head .badge-section { background:#0a1f2e; color:#7dd3fc; border:1px solid #38bdf855; border-radius:.3rem; padding:.18rem .55rem; font-size:.72rem; font-weight:600; }
+.ex-head .badge-chapter { background:#0d2b1e; color:#10b981; border:1px solid #10b98155; border-radius:.3rem; padding:.18rem .55rem; font-size:.72rem; font-weight:600; text-decoration:none; }
+.ex-head h1 { margin:.1rem 0 0; font-size:1.35rem; color:#e6edf3; font-weight:700; }
+
+.ex-card { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.1rem 1.25rem; margin-bottom:1rem; }
+.ex-card-label { font-size:.65rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.5rem; }
+.ex-card.problem .ex-card-label { color:var(--acc); }
+.ex-card.solution .ex-card-label { color:#10b981; }
+.ex-card pre { background:#0a0d14; color:#cbd5e1; padding:.9rem 1.1rem; border-radius:.4rem; overflow-x:auto; margin:0; white-space:pre-wrap; word-wrap:break-word; font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace; font-size:.84rem; line-height:1.6; }
+.ex-card .ex-empty { color:#94a3b8; font-style:italic; padding:.5rem 0; }
+.ex-card.solution { border-left:3px solid #10b981; }
+.ex-card.problem { border-left:3px solid var(--acc); }
+
+.ex-nav { display:flex; justify-content:space-between; gap:.6rem; margin-top:1.5rem; flex-wrap:wrap; }
+.ex-nav a, .ex-nav span { padding:.55rem 1rem; border-radius:.4rem; background:#0e1014; border:1px solid #1e2533; color:#cbd5e1; text-decoration:none; font-size:.82rem; min-width:0; max-width:48%; }
+.ex-nav a:hover { border-color:var(--acc); color:#fff; background:var(--acc-bg); }
+.ex-nav span.disabled { opacity:.3; pointer-events:none; }
+.ex-nav .lbl { color:var(--acc); font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; }
+.ex-nav .title { color:#e6edf3; font-weight:600; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.85rem; }
+
+.btn-toggle-sol { background:#10b981; color:#000; border:none; border-radius:.3rem; padding:.45rem 1rem; font-size:.78rem; font-weight:700; cursor:pointer; margin-bottom:.5rem; }
+.btn-toggle-sol:hover { opacity:.85; }
+</style>
+
+<div class="ex-wrap">
+
+  <div class="ex-crumb">
+    <a href="{{ url_for('demos.learn_algo') }}">Algoritmikus számelmélet</a>
+    &rsaquo;
+    <a href="{{ url_for('demos.algo_exercises') }}">Feladatok</a>
+    {% if ex.algo_chapter %}
+    &rsaquo;
+    <a href="{{ url_for('demos.algo_ch', n=ex.algo_chapter) }}">{{ ex.algo_chapter }}. fejezet</a>
+    {% endif %}
+    &rsaquo; <span style="color:var(--acc2)">{{ ex.id }})</span>
+  </div>
+
+  <div class="ex-head">
+    <div class="ex-pill">
+      <span class="badge-id">{{ ex.id }})</span>
+      {% if ex.section_title %}<span class="badge-section">§ {{ ex.section }} {{ ex.section_title }}</span>{% endif %}
+      {% if ex.algo_chapter and chapter_title %}
+        <a class="badge-chapter" href="{{ url_for('demos.algo_ch', n=ex.algo_chapter) }}">
+          → {{ ex.algo_chapter }}. fejezet — {{ chapter_title }}
+        </a>
+      {% endif %}
+    </div>
+    <h1>Feladat {{ ex.id }})</h1>
+  </div>
+
+  <div class="ex-card problem">
+    <div class="ex-card-label">Feladat</div>
+    {% if ex.problem %}
+    <pre>{{ ex.problem }}</pre>
+    {% else %}
+    <div class="ex-empty">A feladat szövege nem elérhető.</div>
+    {% endif %}
+  </div>
+
+  {% if ex.solution %}
+  <button id="toggle-sol" class="btn-toggle-sol" onclick="toggleSol(this)">Megoldás megjelenítése ▾</button>
+  <div class="ex-card solution" id="sol-card" style="display:none;">
+    <div class="ex-card-label">Megoldás</div>
+    <pre>{{ ex.solution }}</pre>
+  </div>
+  {% else %}
+  <div class="ex-card solution">
+    <div class="ex-card-label">Megoldás</div>
+    <div class="ex-empty">A megoldás nem elérhető ebben az extrakcióban.</div>
+  </div>
+  {% endif %}
+
+  <div class="ex-nav">
+    {% if prev_id %}
+    <a href="{{ url_for('demos.algo_exercise', exid=prev_id) }}">
+      <span class="lbl">← Előző</span>
+      <span class="title">{{ prev_id }})</span>
+    </a>
+    {% else %}
+    <span class="disabled"><span class="lbl">—</span></span>
+    {% endif %}
+
+    {% if next_id %}
+    <a href="{{ url_for('demos.algo_exercise', exid=next_id) }}" style="text-align:right;">
+      <span class="lbl">Következő →</span>
+      <span class="title">{{ next_id }})</span>
+    </a>
+    {% else %}
+    <span class="disabled"><span class="lbl">—</span></span>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function toggleSol(btn) {
+  const card = document.getElementById('sol-card');
+  const open = card.style.display !== 'none';
+  card.style.display = open ? 'none' : '';
+  btn.textContent = open ? 'Megoldás megjelenítése ▾' : 'Megoldás elrejtése ▴';
+}
+document.addEventListener('keydown', (e) => {
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  {% if prev_id %}if (e.key === 'ArrowLeft') window.location.href = "{{ url_for('demos.algo_exercise', exid=prev_id) }}";{% endif %}
+  {% if next_id %}if (e.key === 'ArrowRight') window.location.href = "{{ url_for('demos.algo_exercise', exid=next_id) }}";{% endif %}
+});
+</script>
+
+{% endblock %}
