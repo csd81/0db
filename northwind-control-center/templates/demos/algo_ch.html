@@ -3300,7 +3300,355 @@ table.ref-tbl tr:hover td { background:var(--acc-bg); }
     </div>
   </div>
 
-  {# ─────────────────── GENERIC CHAPTERS (10–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {# ─────────────────────────── CHAPTER 10 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 10 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c10-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c10-rsa',this)">10.1 RSA</span>
+    <span class="ila-nav-link" onclick="showTab('t-c10-pelda',this)">RSA példa</span>
+    <span class="ila-nav-link" onclick="showTab('t-c10-aliras',this)">Aláírás-hitelesítés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c10-129',this)">RSA-129 feltörés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c10-hatizsak',this)">10.2 Hátizsák</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c10-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">10. fejezet — Titkosírás nyilvános kulccsal</span>
+      <p>
+        Olyan titkosírás, amelynek menete (kódolás és kulcsa) <strong>bárki számára nyilvános</strong>,
+        mégis a levelet csak a címzett tudja elolvasni (dekódolni) — <em>még maga a levél írója sem!</em>
+      </p>
+
+      <div class="def-box">
+        <strong>Nyilvános kulcsú titkosírás (public key cryptography).</strong>
+        Whitfield Diffie és Martin Hellman 1976-ban javasolta az ötletet, és Ron Rivest,
+        Adi Shamir és Leonard Adleman 1977-ben adta az első működő algoritmust — az
+        <strong>RSA</strong>-t. (A brit hírszerzés GCHQ Ellis–Cocks–Williamson titkos
+        rendszere 1973-ban már ugyanezt megalkotta — de csak 1997-ben hozták nyilvánosságra.)
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-shield-check me-1"></i> Az aszimmetrikus titkosírás négy haszna</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Tulajdonság</th><th>Magyarázat</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Feltörhetetlenség</strong></td><td>A titkos kulcs nélkül a kódolt üzenet csak prímfelbontással olvasható el (kvázi: $2^{1000}$ év).</td></tr>
+          <tr><td><strong>Előzetes megállapodás nélkül</strong></td><td>$B$ írhat $A$-nak anélkül, hogy korábban találkoztak volna.</td></tr>
+          <tr><td><strong>Skálázás $O(t)$ helyett $O(t^2)$</strong></td><td>$t$ résztvevő esetén nem $\binom{t}{2}$ titok, csak $t$ nyilvános kulcs.</td></tr>
+          <tr><td><strong>Aláírás-hitelesítés</strong></td><td>Bizonyítható, hogy <em>kitől</em> jött az üzenet — és bírósági szinten is.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: RSA algoritmus ═══ -->
+  <div id="t-c10-rsa" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">10.1 Algoritmus — RSA (Rivest–Shamir–Adleman, 1977)</span>
+
+      <h6>Előkészítés (mindenki <em>külön, titokban</em>)</h6>
+      <ol>
+        <li>Válasszunk két nagy prímet: $p, q$ ($\sim$ 500–1000 jegy). <em>Kerüljük</em> a közeli prímeket (Fermat-faktorizáció) és azokat, ahol $p-1$ vagy $q-1$ kis prímosztókkal bír (Pollard $p-1$).</li>
+        <li>Számoljuk ki $n := pq$ — ezt nyilvánosságra hozzuk („modulus").</li>
+        <li>Számoljuk ki $\varphi(n) = (p-1)(q-1)$ — ezt <strong>titokban tartjuk</strong>.</li>
+        <li>Válasszunk $e$ számot, amely relatív prím $\varphi(n)$-hez (próbálkozás: $e = \varphi(n)/2 + j$). $e$ a <strong>nyilvános kulcs</strong>.</li>
+        <li>Számoljuk ki $f$ titkos megoldókulcsot a $\;ef \equiv 1 \pmod{\varphi(n)}\;$ Diophantoszi egyenletből (Euklideszi alg.). $p, q, \varphi(n)$ adatokat <em>elégetjük</em>!</li>
+      </ol>
+
+      <div class="def-box">
+        <strong>Nyilvános:</strong> $n, e$ &nbsp; (és a személy neve/elérhetősége).<br>
+        <strong>Titkos:</strong> $f$ &nbsp; (a $p, q, \varphi(n)$ már nincs meg).
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">A protokoll — $B$ ír $A$-nak</span>
+      <p>
+        $B$ az üzenetet $k < n_A$ darabokra bontja. Minden $k$ kódja $A$ nyilvános $(n_A, e_A)$ kulcsával:
+      </p>
+      $$K := C_A(k) \equiv k^{e_A} \pmod{n_A}.$$
+      <p>$A$ a saját $f_A$ titkos kulcsával dekódol:</p>
+      $$D_A(K) \equiv K^{f_A} \pmod{n_A}.$$
+
+      <h6>Miért működik? — (10.4) levezetés</h6>
+      $$K^{f_A} \equiv (k^{e_A})^{f_A} = k^{e_A f_A} = k^{s y + 1} = (k^s)^y \cdot k \equiv 1^y \cdot k \equiv k \pmod{n_A}$$
+      <p>az Euler-tétel ($k^{\varphi(n)} \equiv 1$, ha $\operatorname{lnko}(k, n) = 1$) alapján.</p>
+
+      <div class="thm-box">
+        <strong>10.4 Állítás.</strong> $C_A$ és $D_A : \mathbb{Z}_{n_A}^* \to \mathbb{Z}_{n_A}^*$ egymás inverz
+        <em>bijektív</em> függvényei: $C_A(D_A(x)) = D_A(C_A(x)) = x$. Tehát a kódolás $\leftrightarrow$ dekódolás
+        szimmetrikus művelet, csak a kulcs van „más kéznél".
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: RSA példa ═══ -->
+  <div id="t-c10-pelda" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">10.13 Példa — Teljes RSA-számolás reális prímekkel</span>
+      <p>Adott: $\;p = 269, \;q = 241, \;e = 53\,201$.</p>
+
+      <h6>(a) $\varphi(n)$ kiszámítása</h6>
+      $$n = pq = 269 \cdot 241 = 64\,829$$
+      $$s = \varphi(n) = (p-1)(q-1) = 268 \cdot 204 = 64\,320$$
+
+      <h6>(b) $f$ titkos kulcs — Bézout</h6>
+      <p>Megoldjuk $\;ef - sy = 1$, vagyis $\;53\,201 f - 64\,320 y = 1$ Euklideszi-algoritmussal:</p>
+      $$f = \mathbf{28\,721}$$
+      <p>Ellenőrzés: $\;53\,201 \cdot 28\,721 = 1\,528\,005\,121 = 23\,756 \cdot 64\,320 + 1$. ✓</p>
+
+      <h6>(c) Üzenet kódolása $x = 48\,055$</h6>
+      $$y \equiv x^e \equiv 48\,055^{53\,201} \equiv \mathbf{61\,606} \pmod{64\,829}$$
+
+      <h6>(d) Dekódolás visszaellenőrzéssel</h6>
+      $$x \equiv y^f \equiv 61\,606^{28\,721} \equiv \mathbf{48\,055} \pmod{64\,829} \checkmark$$
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">(e) „HELLO" kódolása</span>
+      <p>26-betűs ABC: $H{=}08, E{=}05, L{=}12, L{=}12, O{=}15$. Két-két betű egy blokkban:</p>
+      $$\texttt{HELLO} = 0008\ 0512\ 1215$$
+
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.85rem;">
+        <thead><tr><th>blokk</th><th>$k^e \bmod n$</th><th>kód</th></tr></thead>
+        <tbody>
+          <tr><td>$0008$</td><td>$8^{53201} \bmod 64829$</td><td><strong>$13\,745$</strong></td></tr>
+          <tr><td>$0512$</td><td>$512^{53201} \bmod 64829$</td><td><strong>$57\,388$</strong></td></tr>
+          <tr><td>$1215$</td><td>$1215^{53201} \bmod 64829$</td><td><strong>$18\,638$</strong></td></tr>
+        </tbody>
+      </table>
+
+      <h6>(f) Visszafejtés — $36\,376,\ 28\,210,\ 53\,334$</h6>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.85rem;">
+        <thead><tr><th>kód</th><th>$y^f \bmod n$</th><th>blokk</th><th>betűk</th></tr></thead>
+        <tbody>
+          <tr><td>$36\,376$</td><td>$36376^{28721} \bmod 64829$</td><td>$0016$</td><td><strong>P</strong></td></tr>
+          <tr><td>$28\,210$</td><td>$28210^{28721} \bmod 64829$</td><td>$0918$</td><td><strong>IR</strong></td></tr>
+          <tr><td>$53\,334$</td><td>$53334^{28721} \bmod 64829$</td><td>$1519$</td><td><strong>OS</strong></td></tr>
+        </tbody>
+      </table>
+
+      <div class="def-box">
+        Dekódolt üzenet: <strong>P I R O S</strong> (00, 16, 09, 18, 15, 19 → P-I-R-O-S).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Aláírás-hitelesítés ═══ -->
+  <div id="t-c10-aliras" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">10.9 Megj. — Aláírás-hitelesítés (signing)</span>
+      <p>
+        $B$ szeretné igazolni, hogy egy üzenetet <strong>valóban ő írt</strong> $A$-nak —
+        nem egy harmadik fél „$E$" hamisította. Ehhez $B$ a <em>saját titkos $f_B$</em> kulcsával
+        is „rákódol" egy véletlen $\ell$ jelsorozatra.
+      </p>
+
+      <h6>Hitelesítési protokoll — 7 lépésben</h6>
+      <ol>
+        <li>$B$ választ egy véletlen $\ell$ jelsorozatot (név + dátum + véletlen karakterek).</li>
+        <li>$B$ kódolja $\ell$-et $A$ nyilvános kulcsával: $\;L \equiv \ell^{e_A} \pmod{n_A}$.</li>
+        <li>$B$ a saját titkos $f_B$-vel „aláírja" $\ell$-et: $\;\lambda \equiv \ell^{f_B} \pmod{n_B}$.</li>
+        <li>$B$ még egyszer $A$-nak kódolja $\lambda$-t: $\;\Lambda \equiv \lambda^{e_A} \pmod{n_A}$.</li>
+        <li>$B$ <strong>$L$-et és $\Lambda$-t küldi</strong> $A$-nak.</li>
+        <li>$A$ dekódolja: $\;\ell_1 = D_A(L), \;\lambda = D_A(\Lambda), \;\ell_2 = C_B(\lambda) \equiv \lambda^{e_B} \pmod{n_B}$.</li>
+        <li>Hitelesnek tekinti, ha $\boxed{\;\ell_1 = \ell_2\;}$.</li>
+      </ol>
+
+      <div class="def-box">
+        <strong>Miért hiteles?</strong> $\lambda$-t csak $B$ tudja előállítani $\ell$-ből, mert
+        $\lambda = \ell^{f_B} \pmod{n_B}$ — a titkos $f_B$ ismerete nélkül senki sem tudja
+        kiszámolni. Ha $\ell_1 = \ell_2$, akkor $\lambda$ valóban $\ell$-ből származik
+        $B$ kulcsával.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">10.10 Megj. — Megrendelés-bizonyítás (non-repudiation)</span>
+      <p>
+        $A$-nak bíróság előtt kell igazolnia, hogy az $\ell$ üzenetet <strong>valóban $B$ írta</strong>.
+        Erre $A$ átadja a bírónak $\Lambda$-t és $\lambda$-t (de <em>nem</em> $D_A$-t vagy $D_B$-t).
+      </p>
+
+      <h6>A bíró ellenőrzése</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Ellenőrzés</th><th>Mit bizonyít?</th></tr></thead>
+        <tbody>
+          <tr><td>$\Lambda = C_A(\lambda)$?</td><td>Az üzenetet valóban $A$ kapta meg.</td></tr>
+          <tr><td>$\ell = C_B(\lambda)$?</td><td>$\lambda$ valóban $\ell$ aláírása $B$-től.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>Mai gyakorlat.</strong> Az RSA-aláírás ma is a digitális szerződések és tanúsítványok
+        (X.509, TLS) alapja. Ma a modern változat <em>elliptikus görbe</em> alapú (ECDSA, Ed25519) — sokkal kisebb kulccsal, de ugyanazzal a matematikai elvvel.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">10.11 Összegzés — Minden, ami működik az RSA-nál</span>
+      <p>
+        A 10.6–10.10 előnyök <em>bármely olyan</em> nyilvános kulcsú titkosírásra érvényesek, amelyre
+        a 10.4 Állítás teljesül ($C \circ D = D \circ C = \text{id}$). Tehát az aláírás-hitelesítés és
+        non-repudiation <em>az RSA-tól független</em> — bármelyik invertálható kódolási
+        rendszerre alkalmazható.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: RSA-129 feltörés ═══ -->
+  <div id="t-c10-129" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">10.17 Példa — RSA-129 kihívás (1977, Scientific American)</span>
+      <p>
+        Martin Gardner az 1977. augusztusi <em>Scientific American</em> rovatban tette közzé.
+        Rivest–Shamir–Adleman $100 \text{ USD}$ jutalmat ajánlott a feltörőnek.
+      </p>
+
+      <p><strong>A nyilvános kulcs:</strong> $e = 9007$ és a 129-jegyű</p>
+      <div class="bignum-block">
+        $n$ = 11438162 5757888867 6692357799 7614661201 0218296721<br>
+        &nbsp;&nbsp;&nbsp; 2423625625 6184293570 6935245733 8978305971 2356395870<br>
+        &nbsp;&nbsp;&nbsp; 50589890751 4759929002 6879543541
+      </div>
+
+      <p style="margin-top:.7rem;"><strong>A kódolt $K$ üzenet:</strong></p>
+      <div class="bignum-block">
+        $K$ = 96869613 754622 06147714092 2254355882 90575999112<br>
+        &nbsp;&nbsp;&nbsp; 4574319874 6951209308 16298225145 70835693147<br>
+        &nbsp;&nbsp;&nbsp; 66228839898 6280133919 9055182994 5157815154
+      </div>
+
+      <p style="color:#94a3b8;font-style:italic;margin-top:.7rem;">
+        Eredeti becslés (RSA-szerzők, 1977): <em>40 quadrillió év</em>!
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">10.23 Megoldás — 1994 áprilisi feltörés</span>
+
+      <h6>A történet (10.18 megj.)</h6>
+      <p>
+        <strong>Atkins, Graff, Lenstra és Leyland</strong> elosztott számítást szervezett:
+        <strong>600+ önkéntes</strong> a világhálón futtatott egy faktorizációs programot, amikor
+        számítógépük tétlen volt. <strong>8 hónap</strong> tartott — az adatok egy
+        $569\,466 \times 524\,338$-as mátrixot adtak, ami Gauss-eliminációval $188\,614 \times 188\,160$-ra
+        csökkent. Végső faktorizáció: 16K MasPar P-1 párhuzamos szuperszámítógépen <strong>45 óra</strong>.
+      </p>
+
+      <h6>A felbontás $n = p \cdot q$</h6>
+      <div class="bignum-block">
+        $p$ = 3490 5295108476 5094914784 9619903898 1334177646<br>
+        &nbsp;&nbsp;&nbsp; 3849338784 3990820577<br><br>
+        $q$ = 32769 1329932667 0954996198 8190834461 4131776429<br>
+        &nbsp;&nbsp;&nbsp; 6799294253 9798288533
+      </div>
+
+      <h6>A titkos kulcs $f$</h6>
+      <div class="bignum-block">
+        $f$ = 106 69861436857 8024442868 7713289201 54780709906<br>
+        &nbsp;&nbsp;&nbsp; 63393786280 1226224496 63106312591 17744708733<br>
+        &nbsp;&nbsp;&nbsp; 4016859746 23065539685 4451327710 9053606095
+      </div>
+
+      <h6>Az üzenet</h6>
+      <div class="def-box" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:1.1rem;text-align:center;color:#fbbf24;font-weight:700;">
+        „THE MAGIC WORDS ARE SQUEAMISH OSSIFRAGE"
+      </div>
+      <p style="color:#94a3b8;font-size:.8rem;text-align:center;font-style:italic;">
+        „A varázsszó: a kényesgyomrú halászsas." &nbsp;Squeamish ossifrage = halászsas (Pandion haliaetus).
+      </p>
+
+      <div class="warn-box">
+        <strong>Tanulság.</strong> 1977-ben 129-jegyű RSA „feltörhetetlen" volt. 1994-re már nem.
+        Ma <strong>2048-bites RSA</strong> a minimum, <strong>3072–4096 bit</strong> ajánlott. A
+        kvantumszámítógép (Shor 1994 algoritmusa) eljövetelével az egész RSA elavult lesz —
+        ezért a <em>poszt-kvantum kriptográfia</em> (NIST 2024-es szabványok) a következő nagy ugrás.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 6: Hátizsák ═══ -->
+  <div id="t-c10-hatizsak" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">10.2 § — Merkle–Hellman hátizsák-titkosírás (1978)</span>
+      <p>
+        Az RSA után <em>második</em> nyilvános kulcsú titkosírás. Az 1980-as évek elején
+        Adi Shamir <strong>feltörte</strong> — történelmi érdekesség, gyakorlatban nem használjuk.
+      </p>
+
+      <h6>10.24 Probléma — Általános hátizsák (NP-teljes)</h6>
+      <p>Adottak $m_1, \dots, m_k$ és $M$. Keresendő:</p>
+      $$M = \sum_{i=1}^k \varepsilon_i \cdot m_i, \quad \varepsilon_i \in \{0, 1\}.$$
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Hátizsák-analógia: $M$ teherbírású zsákba mely tárgyakat tegyük be? Általánosan
+        <strong>NP-teljes</strong> — gyors algoritmus nem ismert.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">10.25 Def. — Szupernövekvő sorozat</span>
+      <p>$(m_1, \dots, m_k)$ szupernövekvő, ha minden $i$-re:</p>
+      $$m_i > \sum_{j=1}^{i-1} m_j.$$
+
+      <h6>10.27 Tétel — Szupernövekvő hátizsák $O(k)$ idő alatt</h6>
+      <p>
+        <strong>Mohó algoritmus:</strong> csökkenő $m_k, m_{k-1}, \dots, m_1$ sorrendben próbáljuk
+        beletenni — ha belefér, kötelező betenni (a többi együttesen sem érné el $m_i$-t).
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">10.29 — Merkle–Hellman titkosírás (vázlat)</span>
+      <ol>
+        <li>Válasszunk titkos $\vec v = (v_0, \dots, v_{k-1})$ szupernövekvő sorozatot és $m = v_k$ prím modulust.</li>
+        <li>Keressünk $a$-t $\operatorname{lnko}(a, m) = 1$-gyel, és számoljuk $b \equiv a^{-1} \pmod m$.</li>
+        <li>Az <strong>elrejtett</strong> sorozat: $w_i \equiv a \cdot v_i \pmod m$ — ez már nem szupernövekvő!</li>
+        <li><strong>Nyilvános kulcs:</strong> $\vec w$. <strong>Titkos:</strong> $b, m$.</li>
+      </ol>
+
+      <h6>Kódolás</h6>
+      <p>$\vec \varepsilon = (\varepsilon_0, \dots, \varepsilon_{k-1})$ bitek; titkos üzenet:</p>
+      $$F = \sum \varepsilon_i \cdot w_i.$$
+      <p>Illetéktelennek általános hátizsák problémát kellene megoldania ($w$-kkel). NP-nehéz.</p>
+
+      <h6>Dekódolás</h6>
+      <p>Címzett kiszámol:</p>
+      $$H \equiv b \cdot F \equiv \sum \varepsilon_i \cdot b w_i \equiv \sum \varepsilon_i \cdot v_i \pmod m$$
+      <p>— ami már <em>szupernövekvő</em> hátizsák! Lineáris időben megoldható.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">10.30 Példa</span>
+      <p>$\vec v = (2, 3, 7, 15, 31), \;m = 61, \;a = 17 \Rightarrow b = 18$.</p>
+      <p>$\vec w \equiv 17 \cdot \vec v \pmod{61} = (34, 51, 58, 11, 39)$.</p>
+
+      <p>Üzenet $\vec\varepsilon = (1, 0, 1, 1, 0)$:</p>
+      $$F = 1 \cdot 34 + 0 + 1 \cdot 58 + 1 \cdot 11 + 0 = 148$$
+
+      <p>Dekódolás:</p>
+      $$H \equiv 148 \cdot 18 \equiv 41 \pmod{61}$$
+      <p>A szupernövekvő $\vec v$ mohó algoritmusa: $41 = 31 + 7 + 3 = v_4 + v_2 + v_1$.</p>
+      <p>$\Rightarrow \vec\varepsilon = (1, 0, 1, 1, 0)$ ✓ — visszakaptuk az eredetit.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">10.32 Megj. — Shamir feltörése (1982)</span>
+      <div class="warn-box">
+        <strong>Shamir polinomidőben feltörte</strong> az egyszeres Merkle–Hellman rendszert!
+        Megmutatta: bár $\vec w$ nem szupernövekvő, a struktúra (származása szupernövekvő sorozatból)
+        kihasználható.
+        <br><br>
+        <strong>Iterált változat</strong> $(m_1, a_1)$ és $(m_2, a_2)$ páros titkosítással is sebezhető;
+        Brickell 1985-ben mindezt is feltörte. A hátizsák-titkosírás történeti
+        érdekesség — ma <strong>nem használjuk biztonsági céllal.</strong>
+      </div>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTERS (11–13) — SECTIONS LIST + STUB ─────────────────── #}
   {% else %}
   <div class="card-dark mt-3">
     <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
