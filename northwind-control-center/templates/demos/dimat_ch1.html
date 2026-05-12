@@ -1,0 +1,873 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+:root { --acc: #10b981; --acc2: #34d399; --acc3: #059669; }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:rgba(16,185,129,.15); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; }
+.def-box  { border-left:3px solid var(--acc); background:rgba(16,185,129,.07); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.thm-box  { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.ex-box   { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.warn-box { border-left:3px solid #ef4444; background:rgba(239,68,68,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; font-size:.84rem; }
+.badge-acc { background:rgba(16,185,129,.15); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.badge-sky { background:rgba(56,189,248,.12); color:#38bdf8; border:1px solid #38bdf8; border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.badge-amber{ background:rgba(245,158,11,.12); color:#f59e0b; border:1px solid #f59e0b; border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; }
+.btn-acc  { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec  { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+.btn-op   { background:#1a2535; color:#94a3b8; border:1px solid #2d3748; border-radius:6px; padding:.3rem .8rem; font-size:.82rem; cursor:pointer; transition:all .15s; }
+.btn-op:hover,.btn-op.active { background:rgba(16,185,129,.2); color:var(--acc2); border-color:var(--acc); }
+.step-box { border-radius:8px; padding:.8rem 1rem; margin:.4rem 0; transition:all .3s; font-size:.84rem; color:#c4cdd8; border:1px solid transparent; }
+.step-box.pending { background:#0e1014; border-color:#1e2533; color:#475569; }
+.step-box.active  { background:rgba(16,185,129,.12); border-color:var(--acc); color:#c4cdd8; }
+.step-box.contra  { background:rgba(239,68,68,.12); border-color:#ef4444; color:#fca5a5; }
+.step-box.done    { background:rgba(52,211,153,.08); border-color:#059669; color:#6ee7b7; }
+table.ax-tbl { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.ax-tbl th { background:#1a1f2e; color:#64748b; padding:.45rem .7rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.73rem; text-transform:uppercase; letter-spacing:.06em; }
+table.ax-tbl td { padding:.45rem .7rem; border-bottom:1px solid #161b28; vertical-align:middle; }
+table.ax-tbl tr.ax-row { cursor:pointer; }
+table.ax-tbl tr.ax-row:hover td { background:rgba(16,185,129,.05); }
+table.ax-tbl tr.ax-row.sel td { background:rgba(16,185,129,.12); }
+.ax-id  { font-size:.72rem; color:#64748b; font-weight:700; min-width:3.5rem; }
+.ax-set { color:var(--acc2); font-family:monospace; }
+.ax-log { color:#38bdf8; font-family:monospace; }
+.ax-name{ color:#8b949e; font-style:italic; }
+.mint-cell { width:80px; height:64px; display:flex; align-items:center; justify-content:center; flex-direction:column; border-radius:8px; cursor:pointer; border:2px solid #1e2533; transition:all .2s; font-size:.72rem; font-family:monospace; text-align:center; }
+.mint-cell:hover { border-color:#38bdf8; }
+.mint-cell.sel { background:rgba(16,185,129,.2); border-color:var(--acc); color:var(--acc2); }
+.mint-cell .label { font-size:.65rem; color:#64748b; margin-top:.2rem; }
+canvas { border-radius:8px; display:block; }
+.elem-dot { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; font-size:.78rem; font-weight:700; cursor:pointer; transition:all .2s; border:2px solid transparent; user-select:none; }
+.set-row  { display:flex; align-items:center; gap:.35rem; flex-wrap:wrap; margin:.4rem 0; }
+.set-label { font-size:.8rem; font-family:monospace; min-width:1.5rem; color:#64748b; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,.18);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-intersect" style="color:var(--acc);font-size:1.2rem;"></i>
+    </div>
+    <div>
+      <h4 class="mb-0" style="color:var(--acc);">I.1. fejezet — Halmazok</h4>
+      <small class="text-muted">Cantor-tétel · Boole-algebrák (BA1–BA14) · Venn-diagramok · Minőségi függetlenség · DNF/CNF</small>
+    </div>
+    <a href="{{ url_for('demos.learn_dimat') }}" class="ms-auto btn-sec px-3 py-1" style="text-decoration:none;">← Könyv főoldal</a>
+  </div>
+
+  <div class="d-flex gap-1 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-def',this)">Halmazok definíciója</span>
+    <span class="ila-nav-link" onclick="showTab('t-bool',this)">Boole-algebrák</span>
+    <span class="ila-nav-link" onclick="showTab('t-venn',this)">Venn-diagramok</span>
+    <span class="ila-nav-link" onclick="showTab('t-dual',this)">Dualitás &amp; De Morgan</span>
+    <span class="ila-nav-link" onclick="showTab('t-indep',this)">Minőségi Függetlenség</span>
+    <span class="ila-nav-link" onclick="showTab('t-hist',this)">Történet &amp; Irodalom</span>
+  </div>
+
+  <!-- ═══ TAB 1: Halmazok definíciója + Cantor ═══ -->
+  <div id="t-def" class="ila-tab active">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">1.1. Tétel — Cantor</div>
+          <div class="thm-box"><em>Nem létezik olyan halmaz, amely a „világ" minden elemét tartalmazza.</em></div>
+          <p style="font-size:.8rem;color:#64748b;margin:.5rem 0">Lépésről-lépésre bizonyítás (indirekt):</p>
+          <div id="cantor-steps"></div>
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn-acc" id="cantor-next" onclick="cantorNext()">Következő lépés →</button>
+            <button class="btn-sec" onclick="cantorReset()">Újra</button>
+          </div>
+          <div id="cantor-progress" style="font-size:.75rem;color:#64748b;margin-top:.5rem"></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">1.2. Definíció (ZFC Axiómák)</div>
+          <p style="font-size:.8rem;color:#94a3b8;line-height:1.7;margin-bottom:.6rem">A halmazt és elemet <strong style="color:#c4cdd8">nem definiáljuk</strong> (alapfogalmak). Az axiómák rögzítik, hogyan viselkednek:</p>
+          <table class="ax-tbl">
+            <thead><tr><th>Axióma</th><th>Tartalom</th></tr></thead>
+            <tbody>
+              <tr><td class="ax-id" style="color:#a78bfa">∈-reláció</td><td style="color:#c4cdd8">Minden <em>x</em>-re: <em>x ∈ A</em> vagy <em>x ∉ A</em> — pontosan az egyik teljesül</td></tr>
+              <tr><td class="ax-id" style="color:#a78bfa">Egyenlőség</td><td style="color:#c4cdd8">A = B ⟺ (∀x: x∈A ⟺ x∈B)</td></tr>
+              <tr><td class="ax-id" style="color:#a78bfa">Üres halmaz</td><td style="color:#c4cdd8">∃! üres halmaz ∅: minden x-re x ∉ ∅</td></tr>
+              <tr><td class="ax-id" style="color:#a78bfa">ZFC</td><td style="color:#c4cdd8">Zermelo–Fraenkel + Választási axióma — a modern halmazelmélet alapja (1903/1921)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Halmazelméleti terminológia (EN–HU)</div>
+          <div class="row g-1" style="font-size:.78rem">
+            <div class="col-6"><span style="color:#38bdf8">set</span> = halmaz</div>
+            <div class="col-6"><span style="color:#38bdf8">ground set</span> = alaphalmaz</div>
+            <div class="col-6"><span style="color:#38bdf8">subset</span> = részhalmaz</div>
+            <div class="col-6"><span style="color:#38bdf8">empty set</span> = üres halmaz</div>
+            <div class="col-6"><span style="color:#38bdf8">power set</span> = hatványhalmaz</div>
+            <div class="col-6"><span style="color:#38bdf8">intersection</span> = metszet</div>
+            <div class="col-6"><span style="color:#38bdf8">union</span> = unió</div>
+            <div class="col-6"><span style="color:#38bdf8">complement</span> = komplemens</div>
+            <div class="col-6"><span style="color:#38bdf8">cardinality</span> = számosság</div>
+            <div class="col-6"><span style="color:#38bdf8">class</span> = osztály (nem halmaz!)</div>
+          </div>
+          <div class="warn-box mt-2">
+            <strong>Figyelem:</strong> Russell/Cantor paradoxona miatt a "minden halmaz halmaza" csupán egy <strong>osztály</strong>, nem halmaz. A halmazban nem szerepelhetnek "túl nagy" gyűjtemények.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: Boole-algebrák ═══ -->
+  <div id="t-bool" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="card-dark mb-2">
+          <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+            <div class="badge-acc">1.4. Állítás — Boole-axiómák (BA1–BA14)</div>
+            <div class="d-flex gap-1 ms-auto">
+              <button class="btn-sec" style="font-size:.75rem" onclick="toggleNotation()">Jelölés váltás: <span id="notLabel">Halmazok ↔ Logika</span></button>
+            </div>
+          </div>
+          <p style="font-size:.79rem;color:#64748b;margin-bottom:.6rem">Kattints egy sorra a részletesebb magyarázatért.</p>
+          <div id="ax-detail" class="thm-box mb-2" style="display:none;font-size:.83rem;color:#c4cdd8;line-height:1.8"></div>
+          <table class="ax-tbl" id="ax-table">
+            <thead><tr><th>ID</th><th>Neve</th><th id="col-set">Halmazalgebra</th><th id="col-log">Logika</th></tr></thead>
+            <tbody>
+              <tr class="ax-row" onclick="showAx(this,'ba1')"><td class="ax-id">BA1</td><td class="ax-name">Kommutativitás ∪</td><td class="ax-set">A∪B = B∪A</td><td class="ax-log">a∨b = b∨a</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba2')"><td class="ax-id">BA2</td><td class="ax-name">Kommutativitás ∩</td><td class="ax-set">A∩B = B∩A</td><td class="ax-log">a∧b = b∧a</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba3')"><td class="ax-id">BA3</td><td class="ax-name">Asszociativitás ∪</td><td class="ax-set">A∪(B∪C) = (A∪B)∪C</td><td class="ax-log">a∨(b∨c) = (a∨b)∨c</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba4')"><td class="ax-id">BA4</td><td class="ax-name">Asszociativitás ∩</td><td class="ax-set">A∩(B∩C) = (A∩B)∩C</td><td class="ax-log">a∧(b∧c) = (a∧b)∧c</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba5')"><td class="ax-id">BA5</td><td class="ax-name">Disztributivitás ∪ felett ∩</td><td class="ax-set">A∪(B∩C) = (A∪B)∩(A∪C)</td><td class="ax-log">a∨(b∧c) = (a∨b)∧(a∨c)</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba6')"><td class="ax-id">BA6</td><td class="ax-name">Disztributivitás ∩ felett ∪</td><td class="ax-set">A∩(B∪C) = (A∩B)∪(A∩C)</td><td class="ax-log">a∧(b∨c) = (a∧b)∨(a∧c)</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba7')"><td class="ax-id">BA7</td><td class="ax-name">Elnyelés (∪ nyeli ∩-t)</td><td class="ax-set">A∪(A∩B) = A</td><td class="ax-log">a∨(a∧b) = a</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba8')"><td class="ax-id">BA8</td><td class="ax-name">Elnyelés (∩ nyeli ∪-t)</td><td class="ax-set">A∩(A∪B) = A</td><td class="ax-log">a∧(a∨b) = a</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba9')"><td class="ax-id">BA9</td><td class="ax-name">Komplemens + I</td><td class="ax-set">A∪Ā = I</td><td class="ax-log">a∨¬a = |</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba10')"><td class="ax-id">BA10</td><td class="ax-name">Komplemens + ∅</td><td class="ax-set">A∩Ā = ∅</td><td class="ax-log">a∧¬a = ○</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba11')"><td class="ax-id">BA11</td><td class="ax-name">Nullelem ∪-ban</td><td class="ax-set">A∪∅ = A</td><td class="ax-log">a∨○ = a</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba12')"><td class="ax-id">BA12</td><td class="ax-name">Nullelem ∩-ban</td><td class="ax-set">A∩∅ = ∅</td><td class="ax-log">a∧○ = ○</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba13')"><td class="ax-id">BA13</td><td class="ax-name">Egységelem ∪-ban</td><td class="ax-set">A∪I = I</td><td class="ax-log">a∨| = |</td></tr>
+              <tr class="ax-row" onclick="showAx(this,'ba14')"><td class="ax-id">BA14</td><td class="ax-name">Egységelem ∩-ban</td><td class="ax-set">A∩I = A</td><td class="ax-log">a∧| = a</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">1.7. Példák Boole-algebrákra</div>
+          <div class="ex-box"><strong style="color:#fcd34d">(a) Halmazalgebra \(\mathcal{P}_I\):</strong> Az \(I\) halmaz összes részhalmazának halmaza \(\mathcal{P}(I)\) az \(\cup,\cap,\overline{\phantom{x}},I,\emptyset\) műveletekkel. Ez a "legszokásosabb" Boole-algebra.</div>
+          <div class="ex-box"><strong style="color:#fcd34d">(b) Rész-Boole-algebra:</strong> Ha \(\mathbf{X}\subseteq\mathcal{P}(I)\) zárt a halmazműveletekre és \(I\in\mathbf{X}\), akkor \(\mathcal{X}=(\mathbf{X},\cup,\cap,\overline{\phantom{x}},I,\emptyset)\) is Boole-algebra.</div>
+          <div class="ex-box"><strong style="color:#fcd34d">(c) Logikai műveletek:</strong> \(H=\{h,i\}\) ahol \(h\)=hamis, \(i\)=igaz; \(\vee\)="vagy", \(\wedge\)="és", \(\neg\)="nem". Igazságtáblázat.</div>
+          <div class="ex-box"><strong style="color:#fcd34d">(d) Háromérték logika:</strong> \(H=\{h,k,i\}=\{0,\tfrac{1}{2},1\}\) ahol \(k\) a kvázi-igazság (félig-igazság). Műveletek: \(a\vee b:=\max(a,b)\), \(a\wedge b:=\min(a,b)\), \(\neg a:=1-a\). <em>Csak kvázi-BA</em> — BA9 (\(a\vee\neg a=I\)) és BA10 (\(a\wedge\neg a=\emptyset\)) <strong>nem teljesül</strong> \(k\)-ra: \(k\vee\neg k=k\neq 1\). Ld. többértékű logika, Boole-értékű logika.</div>
+          <div class="ex-box"><strong style="color:#fcd34d">(e) Számelmélet:</strong> Egy négyzetmentes \(N\) szám osztóinak halmaza \(H\), ahol \(a\vee b:=\text{lkkt}(a,b)\), \(a\wedge b:=\text{lnko}(a,b)\), \(\neg a:=N/a\). Pl. \(N=30\): osztói \(\{1,2,3,5,6,10,15,30\}\).</div>
+          <div class="ex-box"><strong style="color:#fcd34d">(f) Eseményalgebra (valószínűségszámítás):</strong> \(\Omega\) eseménytér, \(H:=\mathcal{P}(\Omega)\) az események halmaza. \(\vee\)=események összege (uniója), \(\wedge\)=szorzat (metszet), \(\neg\)=ellentett esemény, \(I=\Omega\) (biztos), \(\emptyset\)=lehetetlen esemény. Az axiómák triviálisan teljesülnek.</div>
+          <div class="ex-box"><strong style="color:#fcd34d">(g) Kapcsoló-/csapalgebra:</strong> Villanykapcsolók (vagy vízcsapok) soros és párhuzamos kapcsolása BA-t alkot. \(\vee\)=párhuzamos, \(\wedge\)=soros, \(\neg\)=invertált működés, \(I\)=mindig nyitott (cső csőtörés), \(\emptyset\)=mindig zárt. Izomorf a logikai BA-val (c).</div>
+          <div class="ex-box"><strong style="color:#fcd34d">(h) Színkeverés:</strong> Alaphalmaz: a lehetséges kikeverhető színek. \(\vee\)=additív keverés (RGB, fény), \(\wedge\)=szubtraktív keverés (CMY, festék), \(\neg\)=komplementer szín. \(I:=\)<span style="background:#fff;color:#000;padding:.05rem .3rem;border-radius:.2rem">fehér</span>, \(\emptyset:=\)<span style="background:#000;color:#fff;padding:.05rem .3rem;border-radius:.2rem">fekete</span>.</div>
+          <div class="warn-box"><strong style="color:#fcd34d">(i) Ellenpélda:</strong> \((\mathbb{R},+,\cdot)\) <strong>nem</strong> Boole-algebra! BA1–BA8 ugyan teljesülnek, de pl. nincs olyan \(\neg a\), amelyre \(a+\neg a=1\) és \(a\cdot\neg a=0\) <em>egyszerre</em> minden \(a\)-ra (HF: \(a=\tfrac{1}{2}\) esetén). A \(+,\cdot\) gyűrűstruktúra különbözik a BA-tól.</div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Következmények (1.8. Állítás)</div>
+          <table class="ax-tbl">
+            <thead><tr><th>Jelölés</th><th>Azonosság</th><th>Neve</th></tr></thead>
+            <tbody>
+              <tr><td class="ax-id">(a)</td><td class="ax-set">A∪A = A, A∩A = A</td><td class="ax-name">Idempotencia</td></tr>
+              <tr><td class="ax-id">(b)</td><td class="ax-set">Ā̄ = A</td><td class="ax-name">¬-involúció</td></tr>
+              <tr><td class="ax-id">(c)</td><td class="ax-set">A∪B = I és A∩B = ∅ ⟹ B = Ā</td><td class="ax-name">Komplemens egyértelműsége</td></tr>
+              <tr><td class="ax-id">(d)</td><td class="ax-set">A∪B = Ā∩B̄</td><td class="ax-name">De Morgan 1.</td></tr>
+              <tr><td class="ax-id">(e)</td><td class="ax-set">A∩B = Ā∪B̄</td><td class="ax-name">De Morgan 2.</td></tr>
+              <tr><td class="ax-id">(f)</td><td class="ax-set">Ī = ∅, ∅̄ = I</td><td class="ax-name">Komplemens ∩/∪ egységelemre</td></tr>
+            </tbody>
+          </table>
+          <div class="thm-box mt-2">
+            <strong>1.11. Stone-tétel (1936):</strong> Tetszőleges Boole-algebra <em>izomorf</em> egy halmazalgebra valamely rész-Boole-algebrájával. Ez igazolja, hogy Venn-diagramos bizonyítás minden Boole-algebrára helyes!<br>
+            <span style="font-size:.74rem;color:#64748b;">Marshall Harvey Stone (1903–1989) amerikai matematikus, elsősorban analízis-kutató.</span>
+          </div>
+          <div class="def-box mt-2" style="font-size:.84rem">
+            <strong>Steinitz izomorfia-elve (1910):</strong> A matematika minden ágában az <em>izomorfnak</em> deklarált objektumokat <strong>azonosnak</strong> kell tekintenünk — csak az adott területen lényegtelen tulajdonságokban térnek el. Az izomorfizmus pontosan a lényeges (vizsgált) tulajdonságokat őrzi meg. <span style="color:#64748b">(Ernst Steinitz, 1871–1928, német matematikus.)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Venn-diagramok ═══ -->
+  <div id="t-venn" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="card-dark">
+          <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <div class="badge-acc">Interaktív Venn-diagram</div>
+            <div class="d-flex gap-1 flex-wrap ms-auto">
+              <button class="btn-op active" onclick="setOp('AuB',this)">\(A\cup B\)</button>
+              <button class="btn-op" onclick="setOp('AnB',this)">\(A\cap B\)</button>
+              <button class="btn-op" onclick="setOp('AdB',this)">\(A\setminus B\)</button>
+              <button class="btn-op" onclick="setOp('BdA',this)">\(B\setminus A\)</button>
+              <button class="btn-op" onclick="setOp('sym',this)">\(A\triangle B\)</button>
+              <button class="btn-op" onclick="setOp('compA',this)">\(\overline{A}\)</button>
+              <button class="btn-op" onclick="setOp('compB',this)">\(\overline{B}\)</button>
+              <button class="btn-op" onclick="setOp('none',this)">\(\emptyset\)</button>
+              <button class="btn-op" onclick="setOp('all',this)">\(I\)</button>
+            </div>
+          </div>
+          <canvas id="venn-canvas" width="520" height="240" style="width:100%;background:#0d0e14;border-radius:8px"></canvas>
+          <div id="venn-expr" class="def-box mt-2" style="text-align:center;font-size:.95rem;font-family:monospace"></div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Halmazban lévő elemek</div>
+          <p style="font-size:.75rem;color:#64748b;margin-bottom:.5rem">Alaphalmaz I = {0…9}. Kattints az elemekre A-ba / B-be helyezéshez.</p>
+          <div class="set-row"><span class="set-label">A:</span><div id="setA-dots"></div></div>
+          <div class="set-row"><span class="set-label">B:</span><div id="setB-dots"></div></div>
+          <hr style="border-color:#1e2533;margin:.5rem 0">
+          <div id="venn-result" style="font-size:.8rem;color:#c4cdd8;font-family:monospace;line-height:1.9"></div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">3 halmazos Venn</div>
+          <p style="font-size:.77rem;color:#64748b;line-height:1.6">3 halmazhoz \(2^3=8\) különböző régió kell. Grünbaum (1975) megmutatta, hogy tetszőleges \(n\)-re léteznek ilyen <em>minőségileg független</em>, konvex sokszögekkel rajzolt Venn-diagramok.</p>
+          <canvas id="venn3-canvas" width="220" height="180" style="width:100%;background:#0d0e14;border-radius:8px"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Dualitás & De Morgan ═══ -->
+  <div id="t-dual" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">1.9. Tétel — Dualitás Elve</div>
+          <div class="thm-box">Ha \(\Phi\) azonosság igaz minden Boole-algebrában, akkor a <strong>duálisa \(\Phi^*\)</strong> is azonosság — ahol \(\vee\leftrightarrow\wedge\) és \(|\leftrightarrow\circ\) (azaz \(\cup\leftrightarrow\cap\) és \(I\leftrightarrow\emptyset\)).</div>
+          <div class="badge-acc mb-2 mt-3">Duális párok</div>
+          <table class="ax-tbl">
+            <thead><tr><th>Azonosság</th><th>Duálisa</th></tr></thead>
+            <tbody>
+              <tr><td class="ax-set">A∪∅ = A</td><td class="ax-log">A∩I = A</td></tr>
+              <tr><td class="ax-set">A∪I = I</td><td class="ax-log">A∩∅ = ∅</td></tr>
+              <tr><td class="ax-set">A∪(A∩B) = A</td><td class="ax-log">A∩(A∪B) = A</td></tr>
+              <tr><td class="ax-set">A∪(B∩C) = (A∪B)∩(A∪C)</td><td class="ax-log">A∩(B∪C) = (A∩B)∪(A∩C)</td></tr>
+              <tr><td class="ax-set">A∪Ā = I</td><td class="ax-log">A∩Ā = ∅</td></tr>
+            </tbody>
+          </table>
+          <div class="ex-box mt-2">
+            <strong>Következmény:</strong> Elég bebizonyítani az egyik De Morgan-azonosságot, a másik automatikusan következik a Dualitás elvéből!
+          </div>
+          <div class="badge-acc mb-2 mt-3">De Morgan-azonosságok interaktív ellenőrzése</div>
+          <div id="dm-check-area">
+            <div style="font-size:.8rem;color:#94a3b8;margin-bottom:.5rem">Válassz elemeket A-ba és B-be (I={0,1,2,3,4,5,6,7}):</div>
+            <div class="set-row"><span class="set-label">A:</span><div id="dmA-dots"></div></div>
+            <div class="set-row"><span class="set-label">B:</span><div id="dmB-dots"></div></div>
+            <div id="dm-result" class="def-box mt-2" style="font-family:monospace;font-size:.82rem;line-height:2"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">De Morgan-azonosságok</div>
+          <div class="thm-box" style="font-size:.9rem">
+            \[\overline{A\cup B} = \overline{A}\cap\overline{B}\]
+            \[\overline{A\cap B} = \overline{A}\cup\overline{B}\]
+          </div>
+          <p style="font-size:.8rem;color:#94a3b8;line-height:1.7">A két azonosság <strong>egymás duálisa</strong>. Elég belátni az egyiket (pl. igazságtáblával vagy Venn-diagrammal), a Dualitás elvéből a másik automatikusan következik.</p>
+          <div class="ex-box">
+            <strong>Logikában:</strong> \(\neg(p\vee q) = \neg p\wedge\neg q\)<br>
+            <strong>Halmazokra:</strong> \(\overline{A\cup B} = \overline{A}\cap\overline{B}\)<br>
+            <strong>Áramkörökben:</strong> NOR ≡ AND-of-NOTs; NAND ≡ OR-of-NOTs
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Igazságtábla ellenőrző</div>
+          <p style="font-size:.78rem;color:#64748b;margin-bottom:.5rem">Ellenőrizd a De Morgan-azonosságot az összes lehetséges értékre:</p>
+          <table class="ax-tbl" id="dm-truth-tbl">
+            <thead><tr><th>p</th><th>q</th><th>¬(p∨q)</th><th>¬p∧¬q</th><th>✓</th></tr></thead>
+            <tbody>
+              <tr><td>H</td><td>H</td><td id="tt00a">I</td><td id="tt00b">I</td><td style="color:#10b981">✓</td></tr>
+              <tr><td>H</td><td>I</td><td id="tt01a">H</td><td id="tt01b">H</td><td style="color:#10b981">✓</td></tr>
+              <tr><td>I</td><td>H</td><td id="tt10a">H</td><td id="tt10b">H</td><td style="color:#10b981">✓</td></tr>
+              <tr><td>I</td><td>I</td><td id="tt11a">H</td><td id="tt11b">H</td><td style="color:#10b981">✓</td></tr>
+            </tbody>
+          </table>
+          <div class="thm-box mt-3">
+            <strong>1.12. Tétel (Teljességi tétel):</strong> Boole-algebrák nyelvén felírt \(\Phi\) egyenlőség vagy <em>minden</em> Boole-algebrában igaz, vagy <em>minden</em> Boole-algebrában hamis. (Gödel teljességi tétele alapján, \(\mathcal{O}(2^n)\) igazságtáblával eldönthető.)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: Minőségi Függetlenség ═══ -->
+  <div id="t-indep" class="ila-tab">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card-dark h-100">
+          <div class="badge-acc mb-2">1.13. Definíció — Minőségi Függetlenség</div>
+          <div class="def-box">
+            Legyen \(A_1,\dots,A_n\subset I\). A rendszer <strong>minőségileg független</strong>, ha tetszőleges \(\varepsilon_i\in\{+1,-1\}\) esetén:
+            \[A_1^{\varepsilon_1}\cap\cdots\cap A_n^{\varepsilon_n}\neq\emptyset\]
+            ahol \(A^{+1}:=A\) és \(A^{-1}:=\overline{A}\).
+          </div>
+          <div class="thm-box">
+            <strong>1.14. Állítás (i):</strong> Ha \(A_1,\dots,A_n\subset I\) minőségileg független, akkor \(|I|\geq 2^n\).<br><br>
+            <strong>(ii):</strong> Minden \(2^n\) elemű halmazban léteznek \(n\) darab minőségileg független részhalmaz. A konstrukció: \(A_i = \{x\in I: x\text{ bináris alakjának }i\text{-edik bitje }=1\}\).
+          </div>
+          <div class="ex-box">
+            <strong>Példa n=2, I={0,1,2,3}:</strong><br>
+            \(A_1 = \{2,3\}\) (2-es bit = 1)<br>
+            \(A_2 = \{1,3\}\) (1-es bit = 1)<br>
+            Mind a 4 metszet \(\neq\emptyset\):<br>
+            \(A_1\cap A_2=\{3\},\; A_1\cap\overline{A_2}=\{2\},\; \overline{A_1}\cap A_2=\{1\},\; \overline{A_1}\cap\overline{A_2}=\{0\}\)
+          </div>
+          <div class="thm-box mt-2">
+            <strong>1.20. Következmény:</strong> Ha \(\mathcal{B}\) egy \(m\) elemmel generált Boole-algebra, akkor:
+            \[|\mathcal{B}|\leq 2^{2^m}\]
+            Egyenlőség pontosan akkor, ha a generátorelemek minőségileg függetlenek.
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">1.19. DNF/CNF Normálformák — Mintermek</div>
+          <p style="font-size:.79rem;color:#64748b;margin-bottom:.6rem">Generátorrendszer: \(\{a_1, a_2\}\). Kattints a mintermekre a DNF kiválasztásához:</p>
+          <div class="d-flex gap-2 justify-content-center mb-3" id="minterm-grid">
+            <div class="mint-cell" id="m11" onclick="toggleMint('m11')">
+              <div>\(a_1\!\cap\! a_2\)</div>
+              <div class="label">(+1,+1)</div>
+            </div>
+            <div class="mint-cell" id="m10" onclick="toggleMint('m10')">
+              <div>\(a_1\!\cap\!\overline{a_2}\)</div>
+              <div class="label">(+1,−1)</div>
+            </div>
+            <div class="mint-cell" id="m01" onclick="toggleMint('m01')">
+              <div>\(\overline{a_1}\!\cap\! a_2\)</div>
+              <div class="label">(−1,+1)</div>
+            </div>
+            <div class="mint-cell" id="m00" onclick="toggleMint('m00')">
+              <div>\(\overline{a_1}\!\cap\!\overline{a_2}\)</div>
+              <div class="label">(−1,−1)</div>
+            </div>
+          </div>
+          <div id="dnf-expr" class="def-box" style="font-family:monospace;font-size:.88rem;min-height:2.5rem;text-align:center">
+            Válassz mintermeket a DNF kifejezéshez…
+          </div>
+          <div id="dnf-meaning" class="ex-box mt-2" style="font-size:.79rem"></div>
+
+          <div class="thm-box mt-3" style="font-size:.82rem">
+            <strong>Minterm vs Maxterm (1.4 képlet)</strong> — generátorrendszer \(\{a_1,\dots,a_m\}\) esetén:
+            \[\mathbf{m}_{\vec{\varepsilon}} := \bigwedge_{i=1}^m a_i^{\varepsilon_i} \quad\text{(minterm — egy }\wedge\text{-tag a DNF-ben)}\]
+            \[\mathbf{M}_{\vec{\eta}} := \bigvee_{i=1}^m a_i^{\eta_i} \quad\text{(maxterm — egy }\vee\text{-tag a CNF-ben)}\]
+            Pl. áramkörök tervezésénél: a <em>term</em> = "tag" (angolul). A CNF maxtermek konjunkciója; a DNF mintermek diszjunkciója. <strong>Stone-tétel</strong> miatt mindkét forma létezik <em>minden</em> Boole-algebra minden elemére.
+          </div>
+        </div>
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Boole-algebrák mérete — 2^(2^m) korlát</div>
+          <table class="ax-tbl">
+            <thead><tr><th>Generátorok (m)</th><th>Max. elemszám \(2^{2^m}\)</th><th>Lehetséges DNF-ek</th></tr></thead>
+            <tbody>
+              <tr><td>m = 1</td><td style="color:var(--acc)">4</td><td>\(\{○, a, \neg a, |\}\)</td></tr>
+              <tr><td>m = 2</td><td style="color:var(--acc)">16</td><td>16 különböző logikai függvény</td></tr>
+              <tr><td>m = 3</td><td style="color:var(--acc)">256</td><td>256 lehetséges Boole-függ.</td></tr>
+              <tr><td>m = 4</td><td style="color:var(--acc)">65 536</td><td>—</td></tr>
+              <tr><td>m = 5</td><td style="color:var(--acc)">4 294 967 296</td><td>≈ 4 milliárd</td></tr>
+            </tbody>
+          </table>
+          <div class="thm-box mt-2" style="font-size:.8rem">
+            Az \(n=50\) változós esetben \(2^{2^{50}}\) lehetséges logikai függvény létezik — ez csillagászatilag nagy, és az igazságtáblával való ellenőrzés \(\mathcal{O}(2^n)\) lépést igényelne, azaz "csak évekig kellene várni".
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 6: Történet & Irodalom ═══ -->
+  <div id="t-hist" class="ila-tab">
+    <div class="row g-3">
+
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Matematikusok — kapcsolódó életrajzok</div>
+          <table class="ax-tbl">
+            <thead><tr><th>Név</th><th>Évek · Nemzet</th><th>Hozzájárulás</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Georg Cantor</strong></td><td>1845–1918 · német</td><td>Halmazelmélet megteremtője; végtelen számosságok; <em>nem létezik univerzális halmaz</em> (1.1).</td></tr>
+              <tr><td><strong>Ernst Zermelo</strong></td><td>1871–1953 · német</td><td>1903: a halmazelmélet axiómarendszere.</td></tr>
+              <tr><td><strong>Adolf Fraenkel</strong></td><td>1891–1965 · német</td><td>1921: kiválasztási axióma függetlenségének bizonyítása → ZFC.</td></tr>
+              <tr><td><strong>Bertrand Russell</strong></td><td>1872–1970 · angol</td><td>Russell-paradoxon — kimutatta a naiv halmazelmélet ellentmondását.</td></tr>
+              <tr><td><strong>Johann Venn</strong></td><td>1834–1923 · angol</td><td>Angol lelkész; 1880-as cikkében a róla elnevezett diagramok pedagógiai alkalmazása. (Euler már 100 évvel korábban használta.)</td></tr>
+              <tr><td><strong>Georg Boole</strong></td><td>1815–1864 · angol</td><td>A formális algebra első kutatója; matematikai logika megalapozása a róla elnevezett struktúrákkal.</td></tr>
+              <tr><td><strong>Augustus De Morgan</strong></td><td>1806–1871 · angol</td><td>De Morgan-azonosságok (1.8 d, e).</td></tr>
+              <tr><td><strong>Ernst Steinitz</strong></td><td>1871–1928 · német</td><td>1910: izomorfia-elv általános megfogalmazása.</td></tr>
+              <tr><td><strong>Marshall H. Stone</strong></td><td>1903–1989 · amerikai</td><td>1936: Stone-tétel (1.11); elsősorban analízis-kutató.</td></tr>
+              <tr><td><strong>Kurt Gödel</strong></td><td>1906–1978 · osztrák</td><td>1930-as években: a modern matematikai logika alaptételei (teljességi és nemteljességi).</td></tr>
+              <tr><td><strong>Paul J. Cohen</strong></td><td>1934–2007 · amerikai</td><td>1960: a kontinuum-hipotézis eldönthetetlenségének bizonyítása (forszolás-módszer).</td></tr>
+              <tr><td><strong>Branko Grünbaum</strong></td><td>1929–2018 · amerikai-zsidó</td><td>1975: tetszőleges \(n\)-re létezik konvex sokszögekkel rajzolt Venn-diagram (1.15).</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card-dark mb-3">
+          <div class="badge-acc mb-2">Kontinuum-hipotézis · Cohen 1960</div>
+          <div class="def-box" style="font-size:.84rem">
+            <strong>Kontinuum-hipotézis:</strong> Létezik-e \(\mathbb{R}\)-nek olyan \(X\subseteq\mathbb{R}\) részhalmaza, amelynek számossága \(\mathbb{N}\) és \(\mathbb{R}\) számossága között van, azaz \(|\mathbb{N}|<|X|<|\mathbb{R}|\)?
+          </div>
+          <div class="thm-box" style="font-size:.84rem">
+            <strong>Cohen 1960:</strong> A válasz a matematika szokásos alapfeltevései (ZFC) <em>között nem adható meg</em>. A bizonyításhoz Cohen kifejlesztette a <strong>forszolás-módszert</strong> — ez a XX. század egyik legmélyebb logikai eredménye. Cohen ezért 1966-ban Fields-érmet kapott. Magyar nyelvű bevezetés: Horváth–Joó–Szalkai [HJSz] cikke a Matematikai Lapokban (1991).
+          </div>
+        </div>
+
+        <div class="card-dark">
+          <div class="badge-acc mb-2">1.4. § — Hivatkozások (Szalkai, 2021)</div>
+          <table class="ax-tbl" style="font-size:.82rem">
+            <thead><tr><th style="width:5rem">Kód</th><th>Hivatkozás</th></tr></thead>
+            <tbody>
+              <tr><td class="ax-id">[GB]</td><td>Grünbaum, B.: <em>Venn Diagrams and Independent Families of Sets</em>, 1975.</td></tr>
+              <tr><td class="ax-id">[HH]</td><td>Hajnal András — Hamburger Péter: <em>Halmazelmélet</em>, Tankönyvkiadó, 1983.</td></tr>
+              <tr><td class="ax-id">[HM]</td><td>Hámori Miklós: <em>Halmazok és matematikai logika</em>, Általános iskolai szakköri füzet, Tankönyvkiadó, 1972.</td></tr>
+              <tr><td class="ax-id">[HS]</td><td>Halmos Pál — Sieger, L. E.: <em>Elemi halmazelmélet, Halmazelméleti feladatok</em>, Műszaki Kiadó, 1981.</td></tr>
+              <tr><td class="ax-id">[HJSz]</td><td>Horváth Miklós — Joó István — Szalkai István: <em>A „Banach-elv"-ről</em>, Matematikai Lapok 34 (1991), 253–300. old.</td></tr>
+              <tr><td class="ax-id">[UJ]</td><td>Urbán János: <em>Matematikai Logika — Példatár</em>, Bolyai könyvek sorozat, Műszaki Kiadó, 1987.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="card-dark">
+          <div class="badge-acc mb-2">Történeti idővonal — Halmazelmélet és Boole-algebrák</div>
+          <table class="ax-tbl" style="font-size:.82rem">
+            <thead><tr><th style="width:5rem">Év</th><th>Esemény</th></tr></thead>
+            <tbody>
+              <tr><td><strong>1854</strong></td><td>Boole: <em>The Laws of Thought</em> — formális logika algebrai keretben.</td></tr>
+              <tr><td><strong>1880</strong></td><td>Venn pedagógiai cikke a Venn-diagramokról (Euler már 100 évvel korábban használta).</td></tr>
+              <tr><td><strong>~1880-as évek</strong></td><td>Cantor halmazelmélete; végtelen számosságok, diagonális érv.</td></tr>
+              <tr><td><strong>1903</strong></td><td>Russell felfedezi a "minden halmaz halmaza" paradoxonát.</td></tr>
+              <tr><td><strong>1903</strong></td><td>Zermelo axiómarendszere.</td></tr>
+              <tr><td><strong>1910</strong></td><td>Steinitz izomorfia-elv.</td></tr>
+              <tr><td><strong>1921</strong></td><td>Fraenkel — kiválasztási axióma függetlensége → ZFC.</td></tr>
+              <tr><td><strong>~1930</strong></td><td>Gödel teljességi és nemteljességi tételei.</td></tr>
+              <tr><td><strong>1936</strong></td><td>Stone-tétel — minden BA halmazalgebra rész-BA-ja.</td></tr>
+              <tr><td><strong>1960</strong></td><td>Cohen — kontinuum-hipotézis eldönthetetlen ZFC-ben (forszolás).</td></tr>
+              <tr><td><strong>1975</strong></td><td>Grünbaum — Venn-diagramok tetszőleges \(n\)-re konvex sokszögekkel.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});initAll()"></script>
+
+<script>
+/* ── Tab navigation ── */
+function showTab(id, btn) {
+  document.querySelectorAll('.ila-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 't-venn') { setTimeout(drawVenn, 50); setTimeout(drawVenn3, 80); }
+  if (id === 't-dual') { setTimeout(drawDmDots, 50); }
+}
+
+/* ════════════════════════════════
+   TAB 1: Cantor proof
+══════════════════════════════════ */
+const CANTOR_STEPS = [
+  { text: '<strong>Feltevés (indirekt):</strong> Tegyük fel, hogy létezik olyan <em>Z</em> halmaz, amely a világ minden elemét tartalmazza. Minden "dolog" ∈ Z.', cls: 'active' },
+  { text: '<strong>Definíció:</strong> Tekintsük az Y := {x ∈ Z | x ∉ x} objektumot — az összes olyan elem, amely <em>nem eleme önmagának</em>. Mivel Z mindent tartalmaz és x∉x értelmes tulajdonság, Y is halmaz kell, hogy legyen.', cls: 'active' },
+  { text: '<strong>Következmény:</strong> Mivel Z mindent tartalmaz, ezért Y ∈ Z is teljesül. Most eldöntjük: Y ∈ Y, vagy Y ∉ Y?', cls: 'active' },
+  { text: '<strong>I. eset: Y ∉ Y.</strong> Ekkor Y kielégíti az "x ∉ x" feltételt, tehát Y eleme kell legyen Y-nak (a definíció szerint). De ez pontosan Y ∈ Y — <strong>ellentmondás!</strong>', cls: 'contra' },
+  { text: '<strong>II. eset: Y ∈ Y.</strong> Ekkor Y NEM elégíti ki az "x ∉ x" feltételt (hiszen Y ∈ Y). Tehát Y ∉ Y — <strong>ellentmondás!</strong>', cls: 'contra' },
+  { text: '<strong>Mindkét eset</strong> (Y ∈ Y és Y ∉ Y) ellentmondáshoz vezet. Az indirekt feltétel hamis.', cls: 'active' },
+  { text: '<strong>Következtetés (Q.E.D.):</strong> Z "túl nagy" ahhoz, hogy halmaz legyen — csupán egy <em>osztály</em>. Nem létezik mindent tartalmazó halmaz. □', cls: 'done' },
+];
+let cantorStep = 0;
+
+function cantorReset() {
+  cantorStep = 0;
+  renderCantorSteps();
+}
+function cantorNext() {
+  if (cantorStep < CANTOR_STEPS.length) cantorStep++;
+  renderCantorSteps();
+}
+function renderCantorSteps() {
+  const cont = document.getElementById('cantor-steps');
+  cont.innerHTML = CANTOR_STEPS.slice(0, cantorStep).map((s,i) =>
+    `<div class="step-box ${s.cls}">${i+1}. ${s.text}</div>`
+  ).join('') + (cantorStep < CANTOR_STEPS.length
+    ? `<div class="step-box pending">${cantorStep+1}. ???</div>` : '');
+  const btn = document.getElementById('cantor-next');
+  btn.textContent = cantorStep >= CANTOR_STEPS.length ? 'Kész ✓' : 'Következő lépés →';
+  btn.disabled = cantorStep >= CANTOR_STEPS.length;
+  document.getElementById('cantor-progress').textContent = `${cantorStep} / ${CANTOR_STEPS.length} lépés`;
+  if (window.renderMathInElement) renderMathInElement(cont, {delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});
+}
+
+/* ════════════════════════════════
+   TAB 2: Boolean axioms
+══════════════════════════════════ */
+const AX_DETAIL = {
+  ba1:  'Kommutativitás: ∪sorrendje nem számít. Ellenőrizhető Venn-diagrammal: A∪B és B∪A ugyanazt a területet takarja. Halmazban: ha x∈A∪B akkor x∈A vagy x∈B, ami szimmetrikus feltétel.',
+  ba2:  'Kommutativitás: ∩sorrendje nem számít. Hasonlóan: x∈A∩B ⟺ x∈B∩A.',
+  ba3:  'Asszociativitás: a zárójelezés irreleváns unióban. A∪(B∪C) = (A∪B)∪C — mindkettő az A, B, C bármelyikébe eső elemek halmaza.',
+  ba4:  'Asszociativitás: a zárójelezés irreleváns metszetben. A∩(B∩C) = (A∩B)∩C — mindkettő az A, B, C mindháromba eső elemek.',
+  ba5:  'Disztributivitás: ∪ "szétosztható" ∩ felett. Szemléletesen: A∪(B∩C) — ami A-ban van, VAGY ami B-ben és C-ben is. Ez pontosan (A∪B)∩(A∪C).',
+  ba6:  'Disztributivitás: ∩ "szétosztható" ∪ felett. Ez a BA5 duálisa. Szemléletesen: ami A-ban és (B∪C)-ben van.',
+  ba7:  'Elnyelési tulajdonság: A∪(A∩B)=A. Az A∩B⊆A miatt A∪(A∩B) nem tud A-nál nagyobb lenni — elnyelés.',
+  ba8:  'Elnyelési tulajdonság: A∩(A∪B)=A. A∩(A∪B)⊆A∩(A∪anything)=A. Ez BA7 duálisa.',
+  ba9:  'Kizárt harmadik elve: minden elem vagy A-ban van, vagy a komplementerében. A∪Ā = I.',
+  ba10: 'Ellentmondás elve: semmi sem lehet egyszerre A-ban és Ā-ban. A∩Ā = ∅.',
+  ba11: 'Az üres halmaz ∅ az ∪ nulleleme: A-hoz semmit hozzáadni A-t adja.',
+  ba12: 'Az üres halmaz ∅ az ∩ nulleleme: bármivel vett metszete ∅. "Ha nincs elem, akkor nincs közös elem."',
+  ba13: 'Az alaphalmaz I az ∪ egységeleme: A∪I=I, mert minden elem I-ben van.',
+  ba14: 'Az alaphalmaz I az ∩ egységeleme: A∩I=A, mert I mindent tartalmaz.',
+};
+let showLogic = false;
+function toggleNotation() {
+  showLogic = !showLogic;
+  document.querySelectorAll('.ax-set').forEach(e => e.style.display = showLogic ? 'none' : '');
+  document.querySelectorAll('.ax-log').forEach(e => e.style.display = showLogic ? '' : 'none');
+  document.getElementById('notLabel').textContent = showLogic ? 'Logika → Halmazok' : 'Halmazok ↔ Logika';
+}
+function showAx(row, key) {
+  document.querySelectorAll('.ax-row.sel').forEach(r => r.classList.remove('sel'));
+  row.classList.add('sel');
+  const d = document.getElementById('ax-detail');
+  d.style.display = 'block';
+  d.textContent = AX_DETAIL[key] || '';
+}
+
+/* ════════════════════════════════
+   TAB 3: Venn diagram
+══════════════════════════════════ */
+const UNI = [0,1,2,3,4,5,6,7,8,9];
+let setA = new Set([1,2,3,5,7]);
+let setB = new Set([2,3,4,6,7]);
+let vennOp = 'AuB';
+
+function buildDots(containerId, currentSet, otherSet, onToggle) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  UNI.forEach(e => {
+    const d = document.createElement('span');
+    d.className = 'elem-dot';
+    d.textContent = e;
+    const inThis = currentSet.has(e);
+    const inOther = otherSet.has(e);
+    d.style.background = inThis && inOther ? '#10b981' : inThis ? '#059669' : '#1e2533';
+    d.style.color = inThis ? '#000' : '#64748b';
+    d.style.borderColor = inOther ? '#38bdf8' : 'transparent';
+    d.onclick = () => { onToggle(e); };
+    c.appendChild(d);
+  });
+}
+function rebuildDots() {
+  buildDots('setA-dots', setA, setB, e => { if(setA.has(e)) setA.delete(e); else setA.add(e); rebuildDots(); drawVenn(); });
+  buildDots('setB-dots', setB, setA, e => { if(setB.has(e)) setB.delete(e); else setB.add(e); rebuildDots(); drawVenn(); });
+  updateVennResult();
+}
+
+function getOpSet() {
+  const cA = new Set(UNI.filter(e => !setA.has(e)));
+  const cB = new Set(UNI.filter(e => !setB.has(e)));
+  switch(vennOp) {
+    case 'AuB':  return new Set([...setA, ...setB]);
+    case 'AnB':  return new Set(UNI.filter(e => setA.has(e) && setB.has(e)));
+    case 'AdB':  return new Set(UNI.filter(e => setA.has(e) && !setB.has(e)));
+    case 'BdA':  return new Set(UNI.filter(e => setB.has(e) && !setA.has(e)));
+    case 'sym':  return new Set(UNI.filter(e => setA.has(e) !== setB.has(e)));
+    case 'compA':return cA;
+    case 'compB':return cB;
+    case 'none': return new Set();
+    case 'all':  return new Set(UNI);
+  }
+  return new Set();
+}
+
+function updateVennResult() {
+  const res = getOpSet();
+  const el = document.getElementById('venn-result');
+  const exprs = {
+    AuB:'A ∪ B', AnB:'A ∩ B', AdB:'A \\ B', BdA:'B \\ A',
+    sym:'A △ B', compA:'Ā (komplemens)', compB:'B̄ (komplemens)', none:'∅', all:'I'
+  };
+  el.innerHTML = `<strong style="color:var(--acc)">${exprs[vennOp]}</strong> = {${[...res].sort((a,b)=>a-b).join(', ')}} (${res.size} elem)`;
+}
+
+function setOp(op, btn) {
+  vennOp = op;
+  document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const labels = {AuB:'A \\cup B', AnB:'A \\cap B', AdB:'A \\setminus B', BdA:'B \\setminus A',
+    sym:'A \\triangle B', compA:'\\overline{A}', compB:'\\overline{B}', none:'\\emptyset', all:'I'};
+  document.getElementById('venn-expr').textContent = labels[op] || op;
+  drawVenn();
+  updateVennResult();
+}
+
+function drawVenn() {
+  const canvas = document.getElementById('venn-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const cAx = W*0.38, cBx = W*0.62, cy = H*0.5, r = 80;
+
+  // Region flags
+  const regions = { onlyA: false, both: false, onlyB: false, neither: false };
+  switch(vennOp) {
+    case 'AuB':  regions.onlyA = regions.both = regions.onlyB = true; break;
+    case 'AnB':  regions.both = true; break;
+    case 'AdB':  regions.onlyA = true; break;
+    case 'BdA':  regions.onlyB = true; break;
+    case 'sym':  regions.onlyA = regions.onlyB = true; break;
+    case 'compA':regions.onlyB = regions.neither = true; break;
+    case 'compB':regions.onlyA = regions.neither = true; break;
+    case 'none': break;
+    case 'all':  regions.onlyA = regions.both = regions.onlyB = regions.neither = true; break;
+  }
+
+  const ACC = 'rgba(16,185,129,0.55)', ACC2 = 'rgba(16,185,129,0.35)';
+  const SKY = 'rgba(56,189,248,0.3)';
+
+  // Helper: fill A only
+  function fillOnlyA(color) {
+    const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    const tc = tmp.getContext('2d');
+    tc.fillStyle = color;
+    tc.beginPath(); tc.arc(cAx, cy, r, 0, Math.PI*2); tc.fill();
+    tc.globalCompositeOperation = 'destination-out';
+    tc.beginPath(); tc.arc(cBx, cy, r, 0, Math.PI*2); tc.fill();
+    ctx.drawImage(tmp, 0, 0);
+  }
+  function fillBoth(color) {
+    const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    const tc = tmp.getContext('2d');
+    tc.save();
+    tc.beginPath(); tc.arc(cAx, cy, r, 0, Math.PI*2); tc.clip();
+    tc.beginPath(); tc.arc(cBx, cy, r, 0, Math.PI*2); tc.clip();
+    tc.fillStyle = color; tc.fillRect(0,0,W,H);
+    tc.restore();
+    ctx.drawImage(tmp, 0, 0);
+  }
+  function fillOnlyB(color) {
+    const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    const tc = tmp.getContext('2d');
+    tc.fillStyle = color;
+    tc.beginPath(); tc.arc(cBx, cy, r, 0, Math.PI*2); tc.fill();
+    tc.globalCompositeOperation = 'destination-out';
+    tc.beginPath(); tc.arc(cAx, cy, r, 0, Math.PI*2); tc.fill();
+    ctx.drawImage(tmp, 0, 0);
+  }
+  function fillNeither(color) {
+    const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    const tc = tmp.getContext('2d');
+    tc.fillStyle = color; tc.fillRect(0,0,W,H);
+    tc.globalCompositeOperation = 'destination-out';
+    tc.beginPath(); tc.arc(cAx, cy, r, 0, Math.PI*2); tc.fill();
+    tc.beginPath(); tc.arc(cBx, cy, r, 0, Math.PI*2); tc.fill();
+    ctx.drawImage(tmp, 0, 0);
+  }
+
+  // Draw background I rectangle
+  ctx.strokeStyle = '#2d3748'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(20, 20, W-40, H-40);
+  ctx.fillStyle = '#64748b'; ctx.font = '12px monospace';
+  ctx.fillText('I', 30, 40);
+
+  // Fill highlighted regions
+  if (regions.neither) fillNeither('rgba(16,185,129,0.18)');
+  if (regions.onlyA)   fillOnlyA(ACC2);
+  if (regions.both)    fillBoth(ACC);
+  if (regions.onlyB)   fillOnlyB(ACC2);
+
+  // Draw circle outlines
+  ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cAx, cy, r, 0, Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = '#38bdf8';
+  ctx.beginPath(); ctx.arc(cBx, cy, r, 0, Math.PI*2); ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#34d399'; ctx.font = 'bold 16px monospace';
+  ctx.fillText('A', cAx - r + 10, cy - r + 22);
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('B', cBx + r - 20, cy - r + 22);
+
+  // Element dots
+  const res = getOpSet();
+  const elemColors = {};
+  UNI.forEach(e => { elemColors[e] = res.has(e) ? '#10b981' : '#2d3748'; });
+
+  // Place elements in visual regions
+  const positions = [
+    [cAx-r*0.65, cy-18], [cAx-r*0.5, cy+15], [cAx-r*0.7, cy+40],   // A only zone
+    [(cAx+cBx)/2, cy-18], [(cAx+cBx)/2, cy+18],                       // A∩B zone
+    [cBx+r*0.5, cy-18], [cBx+r*0.4, cy+20], [cBx+r*0.6, cy+5],       // B only zone
+    [40, H-40], [W-55, H-40],                                           // neither zone
+  ];
+  const elemOrder = [1,2,5, 3,7, 4,6,9, 0,8];
+
+  positions.forEach(([px,py], i) => {
+    if (i >= elemOrder.length) return;
+    const e = elemOrder[i];
+    ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI*2);
+    ctx.fillStyle = res.has(e) ? 'rgba(16,185,129,0.8)' : 'rgba(45,55,72,0.8)';
+    ctx.fill();
+    ctx.fillStyle = res.has(e) ? '#000' : '#94a3b8';
+    ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(e, px, py);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  });
+}
+
+function drawVenn3() {
+  const canvas = document.getElementById('venn3-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const r = 58, cx = W/2, cy = H/2;
+  const centers = [
+    [cx, cy - 34],
+    [cx - 30, cy + 20],
+    [cx + 30, cy + 20],
+  ];
+  const colors = ['rgba(16,185,129,0.25)', 'rgba(56,189,248,0.25)', 'rgba(245,158,11,0.25)'];
+  const labels = ['A', 'B', 'C'];
+  const strokes = ['#34d399', '#38bdf8', '#fbbf24'];
+  centers.forEach(([x,y], i) => {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fillStyle = colors[i]; ctx.fill();
+    ctx.strokeStyle = strokes[i]; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+  centers.forEach(([x,y], i) => {
+    const lx = x + (x-cx)*0.6, ly = y + (y-cy)*0.6 - 4;
+    ctx.fillStyle = strokes[i]; ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center'; ctx.fillText(labels[i], lx, ly);
+  });
+  ctx.fillStyle = '#64748b'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('8 régió', cx, H-6);
+}
+
+/* ════════════════════════════════
+   TAB 4: De Morgan dots
+══════════════════════════════════ */
+const DM_UNI = [0,1,2,3,4,5,6,7];
+let dmA = new Set([1,2,3,5]);
+let dmB = new Set([2,3,4,6]);
+
+function buildDmDots(id, curSet, otherSet) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  c.innerHTML = '';
+  DM_UNI.forEach(e => {
+    const d = document.createElement('span');
+    d.className = 'elem-dot';
+    d.textContent = e;
+    const inT = curSet.has(e);
+    d.style.background = inT ? 'rgba(16,185,129,0.7)' : '#1e2533';
+    d.style.color = inT ? '#000' : '#64748b';
+    d.style.borderColor = otherSet.has(e) ? '#38bdf8' : 'transparent';
+    d.onclick = () => {
+      if (id === 'dmA-dots') { if(dmA.has(e)) dmA.delete(e); else dmA.add(e); }
+      else { if(dmB.has(e)) dmB.delete(e); else dmB.add(e); }
+      drawDmDots();
+    };
+    c.appendChild(d);
+  });
+}
+function drawDmDots() {
+  buildDmDots('dmA-dots', dmA, dmB);
+  buildDmDots('dmB-dots', dmB, dmA);
+  const AuB = new Set(DM_UNI.filter(e => dmA.has(e) || dmB.has(e)));
+  const AnB = new Set(DM_UNI.filter(e => dmA.has(e) && dmB.has(e)));
+  const compAuB = new Set(DM_UNI.filter(e => !AuB.has(e)));
+  const compA = new Set(DM_UNI.filter(e => !dmA.has(e)));
+  const compB = new Set(DM_UNI.filter(e => !dmB.has(e)));
+  const compAncompB = new Set(DM_UNI.filter(e => compA.has(e) && compB.has(e)));
+  const compAnB = new Set(DM_UNI.filter(e => !AnB.has(e)));
+  const compAucmpB = new Set(DM_UNI.filter(e => compA.has(e) || compB.has(e)));
+
+  const fmt = s => '{' + [...s].sort((a,b)=>a-b).join(',') + '}';
+  const eq1 = fmt(compAuB) === fmt(compAncompB);
+  const eq2 = fmt(compAnB) === fmt(compAucmpB);
+  const r = document.getElementById('dm-result');
+  r.innerHTML = `<span style="color:#64748b">Ā∪B = ${fmt(AuB)}</span><br>
+<strong>overline(A∪B)</strong> = <span style="color:var(--acc2)">${fmt(compAuB)}</span><br>
+<strong>Ā∩B̄</strong> = <span style="color:var(--acc2)">${fmt(compAncompB)}</span>
+<span style="color:${eq1?'#10b981':'#ef4444'};margin-left:.5rem">${eq1?'✓ Egyenlők':'✗ Nem egyenlők?!'}</span><br>
+<hr style="border-color:#1e2533;margin:.4rem 0">
+<strong>overline(A∩B)</strong> = <span style="color:#38bdf8">${fmt(compAnB)}</span><br>
+<strong>Ā∪B̄</strong> = <span style="color:#38bdf8">${fmt(compAucmpB)}</span>
+<span style="color:${eq2?'#10b981':'#ef4444'};margin-left:.5rem">${eq2?'✓ Egyenlők':'✗ Nem egyenlők?!'}</span>`;
+}
+
+/* ════════════════════════════════
+   TAB 5: DNF/CNF
+══════════════════════════════════ */
+let mints = { m11:false, m10:false, m01:false, m00:false };
+const MINT_NAMES = {
+  m11: 'a₁∩a₂', m10: 'a₁∩ā₂', m01: 'ā₁∩a₂', m00: 'ā₁∩ā₂'
+};
+const MINT_MEANINGS = {
+  m11:'Mindkét generátorban lévő elemek (a₁ ÉS a₂)',
+  m10:'Csak a₁-ben lévő elemek (a₁ ÉS nem a₂)',
+  m01:'Csak a₂-ben lévő elemek (nem a₁ ÉS a₂)',
+  m00:'Sem a₁-ben sem a₂-ben nem lévő elemek (sem a₁ sem a₂)'
+};
+
+function toggleMint(id) {
+  mints[id] = !mints[id];
+  document.getElementById(id).classList.toggle('sel', mints[id]);
+  updateDNF();
+}
+
+function updateDNF() {
+  const selected = Object.entries(mints).filter(([,v])=>v).map(([k])=>k);
+  const expr = document.getElementById('dnf-expr');
+  const meaning = document.getElementById('dnf-meaning');
+  if (selected.length === 0) {
+    expr.textContent = '∅ (üres halmaz — semmi sem teljesül)';
+    meaning.innerHTML = 'Egyetlen mintermterm sem selected.';
+    return;
+  }
+  if (selected.length === 4) {
+    expr.textContent = 'I (egységelem — minden elem teljesül)';
+    meaning.innerHTML = 'Mind a 4 minterm kiválasztva → DNF = I (az alaphalmaz egésze).';
+    return;
+  }
+  const dnf = selected.map(k => MINT_NAMES[k]).join(' ∪ ');
+  expr.textContent = dnf;
+  meaning.innerHTML = 'Kiválasztott régiók:<br>' +
+    selected.map(k => `• <strong>${MINT_NAMES[k]}</strong>: ${MINT_MEANINGS[k]}`).join('<br>');
+}
+
+/* ── Init ── */
+function initAll() {
+  cantorReset();
+  toggleNotation(); toggleNotation(); // init display (both visible by default)
+  rebuildDots();
+  drawVenn();
+  drawVenn3();
+  drawDmDots();
+  updateDNF();
+  // Init logic cols hidden
+  document.querySelectorAll('.ax-log').forEach(e => e.style.display = 'none');
+}
+setTimeout(initAll, 400);
+</script>
+{% endblock %}
