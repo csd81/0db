@@ -1,0 +1,1780 @@
+{% extends "base.html" %}
+{% block title %}{{ ch.n }}. fejezet — {{ ch.title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false,ignoredTags:['script','noscript','style','textarea','pre','code']})"></script>
+
+<style>
+:root { --acc: #a78bfa; --acc2: #c4b5fd; --acc3: #8b5cf6; --acc-bg: rgba(167,139,250,.07); --acc-bg2: rgba(167,139,250,.15); }
+.ila-nav-link { cursor:pointer; padding:.45rem 1rem; border-radius:6px; color:#94a3b8; font-size:.85rem; transition:background .15s,color .15s; white-space:nowrap; }
+.ila-nav-link:hover { background:#1e2533; color:#e2e8f0; }
+.ila-nav-link.active { background:var(--acc-bg2); color:var(--acc); font-weight:600; }
+.ila-tab { display:none; }
+.ila-tab.active { display:block; }
+
+.card-dark { background:#12161f; border:1px solid #1e2533; border-radius:10px; padding:1.25rem; margin-bottom:1rem; }
+.card-dark h5 { color:var(--acc); font-size:1rem; font-weight:700; margin:0 0 .65rem; }
+.card-dark h6 { color:var(--acc2); font-size:.85rem; font-weight:700; margin:1rem 0 .45rem; letter-spacing:.02em; }
+.card-dark p  { color:#c4cdd8; font-size:.88rem; line-height:1.8; margin:0 0 .8rem; }
+.card-dark p:last-child { margin-bottom:0; }
+.card-dark ul, .card-dark ol { color:#c4cdd8; font-size:.88rem; line-height:1.75; padding-left:1.3rem; margin:.5rem 0 .8rem; }
+.card-dark li { margin:.2rem 0; }
+.card-dark strong { color:#e6edf3; }
+.card-dark em { color:var(--acc2); font-style:italic; }
+.card-dark code { background:#1e1538; color:var(--acc2); padding:.08rem .35rem; border-radius:.2rem; font-size:.85em; font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace; }
+
+.def-box  { border-left:3px solid var(--acc); background:var(--acc-bg); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; color:#cbd5e1; font-size:.86rem; line-height:1.7; }
+.thm-box  { border-left:3px solid #38bdf8; background:rgba(56,189,248,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; color:#cbd5e1; font-size:.86rem; line-height:1.7; }
+.ex-box   { border-left:3px solid #f59e0b; background:rgba(245,158,11,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; color:#cbd5e1; font-size:.86rem; line-height:1.7; }
+.warn-box { border-left:3px solid #ef4444; background:rgba(239,68,68,.06); padding:.75rem 1rem; border-radius:0 8px 8px 0; margin:.75rem 0; color:#fca5a5; font-size:.86rem; line-height:1.7; }
+
+.badge-acc { background:var(--acc-bg2); color:var(--acc); border:1px solid var(--acc); border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; font-weight:600; }
+.badge-sky { background:rgba(56,189,248,.12); color:#38bdf8; border:1px solid #38bdf8; border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; font-weight:600; }
+.badge-amber { background:rgba(245,158,11,.12); color:#f59e0b; border:1px solid #f59e0b; border-radius:6px; padding:.15rem .55rem; font-size:.78rem; display:inline-block; margin-bottom:.5rem; font-weight:600; }
+
+.btn-acc  { background:var(--acc); color:#000; border:none; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-acc:hover { opacity:.85; }
+.btn-sec  { background:#1e2533; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:.35rem 1rem; font-size:.82rem; cursor:pointer; transition:background .15s; }
+.btn-sec:hover { background:#263045; color:#e2e8f0; }
+
+table.ref-tbl { width:100%; border-collapse:collapse; font-size:.85rem; }
+table.ref-tbl th { background:#1a1f2e; color:#94a3b8; padding:.5rem .8rem; text-align:left; border-bottom:1px solid #1e2533; font-size:.74rem; text-transform:uppercase; letter-spacing:.06em; }
+table.ref-tbl td { padding:.5rem .8rem; border-bottom:1px solid #161b28; vertical-align:middle; color:#cbd5e1; }
+table.ref-tbl tr:hover td { background:var(--acc-bg); }
+.sym-cell { font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace; font-size:.95rem; color:var(--acc2); min-width:7rem; }
+
+.factor-tbl { width:100%; border-collapse:collapse; font-size:.85rem; margin:.5rem 0 .25rem; }
+.factor-tbl th { background:#1a1f2e; color:#94a3b8; padding:.5rem .7rem; text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; }
+.factor-tbl td { padding:.55rem .7rem; border-bottom:1px solid #161b28; color:#cbd5e1; vertical-align:middle; }
+.factor-tbl td.digit-cnt { color:var(--acc2); font-weight:700; text-align:center; font-family:monospace; width:6rem; }
+.factor-tbl td.num { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.86rem; color:#e6edf3; word-break:break-all; }
+.factor-tbl td.label { font-weight:700; color:var(--acc); width:2.6rem; font-family:monospace; }
+.factor-tbl tr.reveal td.status { font-weight:700; }
+.factor-tbl tr td.status { color:#64748b; text-align:right; font-size:.78rem; width:7rem; font-style:italic; }
+.factor-tbl tr.reveal[data-prime="true"]  td.status { color:#10b981; font-style:normal; }
+.factor-tbl tr.reveal[data-prime="false"] td.status { color:#f59e0b; font-style:normal; }
+.factor-tbl tr { cursor:pointer; transition:background .12s; }
+.factor-tbl tr:hover { background:var(--acc-bg); }
+
+.prog-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.7rem; margin-top:.75rem; }
+.prog-card { background:#0e1014; border:1px solid #1e2533; border-radius:8px; padding:.85rem 1rem; transition:border-color .15s; }
+.prog-card:hover { border-color:var(--acc); }
+.prog-card code { display:block; color:var(--acc); font-size:.86rem; font-weight:700; margin-bottom:.35rem; background:transparent; padding:0; }
+.prog-card .desc { color:#94a3b8; font-size:.78rem; line-height:1.55; }
+
+.bignum-block { background:#0e1014; border:1px solid #1e2533; border-radius:6px; padding:.7rem .9rem; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.82rem; color:#cbd5e1; word-break:break-all; line-height:1.7; }
+.bignum-block .ghost { color:#475569; }
+
+.nav-strip { display:flex; gap:.6rem; justify-content:space-between; flex-wrap:wrap; margin-top:1.25rem; }
+.nav-btn { display:inline-flex; align-items:center; gap:.5rem; padding:.55rem 1rem; border-radius:.4rem; background:#0e1014; border:1px solid #1e2533; color:#cbd5e1; text-decoration:none; font-size:.82rem; font-weight:600; transition:border-color .15s,color .15s,background .15s; min-width:0; max-width:48%; }
+.nav-btn:hover { border-color:var(--acc); color:#fff; background:var(--acc-bg); }
+.nav-btn.disabled { opacity:.3; pointer-events:none; }
+.nav-btn .lbl { color:var(--acc); font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; }
+.nav-btn .title { color:#e6edf3; font-weight:600; }
+
+.related-strip { display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; margin-top:.55rem; }
+.related-chip { display:inline-flex; align-items:center; gap:.3rem; padding:.25rem .55rem; border-radius:.3rem; background:rgba(56,189,248,.08); border:1px solid rgba(56,189,248,.35); color:#7dd3fc; text-decoration:none; font-size:.76rem; font-weight:600; transition:background .12s; }
+.related-chip:hover { background:rgba(56,189,248,.2); color:#bae6fd; }
+</style>
+
+<div class="container-fluid py-3" style="max-width:980px;">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div style="width:44px;height:44px;border-radius:50%;background:var(--acc-bg2);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i class="bi bi-shield-lock-fill" style="color:var(--acc);font-size:1.15rem;"></i>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <h4 class="mb-0" style="color:var(--acc);">{{ ch.title }} — {{ ch.n }}. fejezet</h4>
+      <small class="text-muted">Algoritmikus számelmélet · Szalkai István &amp; Dósa György · Pannon Egyetem · Typotex 2011</small>
+    </div>
+    <a href="{{ url_for('demos.learn_algo') }}" class="btn-sec px-3 py-1" style="text-decoration:none;flex-shrink:0;">← Könyv főoldal</a>
+  </div>
+
+  {% if ch.related_tetel %}
+  <div class="related-strip">
+    <span style="color:#64748b;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;">Kapcsolódó tételsor:</span>
+    {% for r in ch.related_tetel %}
+    <a href="/demos/dimat/exam/{{ '%02d' % r.n }}" class="related-chip">
+      <span>#{{ '%02d' % r.n }}</span><span style="opacity:.7">{{ r.title }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ─────────────────────────── CHAPTER 1 — TABBED CONTENT ─────────────────────────── #}
+  {% if ch.n == 1 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-kihivas',this)">1.1 Kihívás</span>
+    <span class="ila-nav-link" onclick="showTab('t-titkosiras',this)">Titkosírás</span>
+    <span class="ila-nav-link" onclick="showTab('t-programok',this)">Programok</span>
+    <span class="ila-nav-link" onclick="showTab('t-jelolesek',this)">1.1 Jelölések</span>
+  </div>
+
+  <!-- ═══ TAB 1: Áttekintés ═══ -->
+  <div id="t-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">A számelmélet algoritmikus szemszögből</span>
+      <p style="font-size:1.02rem;font-style:italic;color:#e6edf3;">
+        „Minden egész szám (lényegében) egyértelműen bontható fel prímszámok szorzatára"
+      </p>
+      <p>— tanultuk általános iskolában, és fel is bontottunk néhány 3–4-jegyű számot.</p>
+      <div class="def-box">
+        <strong>A könyv tézise:</strong> az iskolában tanult műveletek nem skálázódnak. Egy
+        8–10 jegyű szám már próbára teszi a kézi módszert; a modern titkosírás <strong>500–1000 jegyű</strong>
+        prímeket használ. A különbség nem fokozat, hanem <em>nagyságrend</em>: napok vs. évmilliók.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-stopwatch me-1"></i> Miért nehéz a nagy számok faktorizációja?</h6>
+      <p>
+        A bajok már a 8–10 jegyű számokkal elkezdődnek, pedig modern alkalmazásokban
+        többszáz vagy akár ezer jegyű egész- és prímszámokkal kellene számolnunk. A könyv lényegét a
+        <strong>2.2. „A számelmélet algoritmikus problémái"</strong> alfejezet fejti ki részletesen:
+        a tényleges számítások mennyi időt is igényelnek, hogyan csökkenthetők
+        <em>több évmillió (!)</em> helyett pár napra.
+      </p>
+      <p>Ez vonatkozik egyrészt</p>
+      <ul>
+        <li>a számelméletben felmerülő számítási problémák — prímtesztelés, faktorizáció, lnko, lkkt — kiszámításának nehézségeire és azok megoldási módszereire,</li>
+        <li>másrészt a számelmélet felhasználásaira a modern számítástechnikában (számítások gyorsítása, titkosírások, kódelmélet).</li>
+      </ul>
+      <div class="thm-box">
+        <strong>Tanulság:</strong> gyors algoritmus nem létezik beható elméleti vizsgálatok nélkül. A 2., 4–7.
+        fejezetek azt az elméleti minimumot adják (maradékosztályok, kongruenciák, Euklidesz, CRT, Euler-φ),
+        amely nélkül a gyakorlati módszerek nem érthetők.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: 1.1 Kihívás ═══ -->
+  <div id="t-kihivas" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">1.1. Példa — Faktorizációs kihívás</span>
+      <p>
+        Faktorizáljuk (bontsuk szorzótényezőkre) az alábbi számokat, vagy győződjünk meg róla, hogy
+        prímszámok (vagyis nincs valódi felbontásuk). <strong>Kattints egy sorra</strong> a státusz felfedéséhez.
+      </p>
+
+      <table class="factor-tbl">
+        <thead>
+          <tr><th></th><th>Szám</th><th class="text-end">Jegyek</th><th class="text-end">Státusz</th></tr>
+        </thead>
+        <tbody>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">a)</td>
+            <td class="num">$n_a = 440\,747$</td>
+            <td class="digit-cnt">6</td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">b)</td>
+            <td class="num">$n_b = 2\,347\,589$</td>
+            <td class="digit-cnt">7</td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="true" onclick="this.classList.toggle('reveal')">
+            <td class="label">c)</td>
+            <td class="num">$n_c = 97\,189\,241$</td>
+            <td class="digit-cnt">8</td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">d)</td>
+            <td class="num">$n_d = 17\,967\,876\,255\,379$</td>
+            <td class="digit-cnt">14</td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">e)</td>
+            <td class="num">$n_e = 444\,113\,096\,135\,661\,846\,937$</td>
+            <td class="digit-cnt">21</td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">f)</td>
+            <td class="num">$n_f = 2^{67} - 1 = 147\,573\,952\,589\,676\,412\,927$</td>
+            <td class="digit-cnt">21</td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">g)</td>
+            <td class="num">$n_g$ — 129-jegyű (lásd alább)</td>
+            <td class="digit-cnt">129</td>
+            <td class="status">kattints ▾</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h6 style="margin-top:1.1rem;">A 129-jegyű $n_g$</h6>
+      <div class="bignum-block">
+        11438162 5757888867 6692357799 7614661201<br>
+        0218296721 2423625625 6184293570 6935245733<br>
+        8978305971 2356395870 50589890751 4759929002<br>
+        6879543541
+      </div>
+
+      <div class="ex-box" style="margin-top:1rem;">
+        <strong>Kedves Olvasónk</strong>, próbálja meg a fenti számokat faktorizálni:
+        <em>kézzel</em> (mint a XIX. században), <em>egyszerű számológéppel</em>, saját kis programmal,
+        vagy a könyvhöz mellékelt <code>Prim1d.exe</code> programmal — de egyelőre <strong>ne</strong>
+        használjon internetet! (A megfejtést se nézze meg a 3.25. Megoldásban.)
+      </div>
+
+      <div class="thm-box">
+        <strong>Megjegyzés.</strong> A „kattints" mező csak azt árulja el, hogy a szám prím-e vagy összetett —
+        a <em>tényleges felbontást</em> nem. Az $n_f = 2^{67}-1$ híres Mersenne-szám:
+        Mersenne 1644-ben tévedésből prímnek vélte; Cole 1903-ban a New York-i Matematikai Társaság
+        előadásán szótlanul felírta a táblára a $193\,707\,721 \times 761\,838\,257\,287$ szorzást.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Titkosírás ═══ -->
+  <div id="t-titkosiras" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">A titkosírás kettős természete</span>
+      <p>
+        A titkosírások elvégezhetősége azon alapszik, hogy aránylag könnyen
+      </p>
+      <ul>
+        <li><strong>találunk</strong> nagyméretű (500–1000 jegyű) prímszámokat (ld. <strong>8. „Prímkeresés"</strong> fejezet),</li>
+        <li><strong>tudunk számolni</strong> velük (ld. <strong>5. „Kongruenciák és maradékosztályok"</strong> fejezet),</li>
+      </ul>
+      <p>
+        míg titkosságát az biztosítja, hogy (jelenlegi ismereteink szerint) <em>ugyanekkora, de
+        ismeretlen</em> számokat csak <strong>évezredekig tartó</strong> algoritmusokkal tudnánk
+        prímtényezőkre bontani (ld. <strong>7. „Prímtesztelés és számok felbontása"</strong> fejezet).
+      </p>
+      <div class="def-box">
+        <strong>Konvenció.</strong> Egy egész számot akkor nevezünk <em>„ismeretlen"-nek</em>, ha nem ismerjük
+        prímtényezős felbontását.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-arrow-right-circle me-1"></i> Aszimmetria, amelyre az RSA épül</h6>
+      <table class="ref-tbl">
+        <thead>
+          <tr><th>Művelet</th><th>Idő ($n$-jegyű számra)</th><th>Fejezet</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="sym-cell">Prímgenerálás</td><td>$O(n^4)$ — másodpercek</td><td>8., 9.</td></tr>
+          <tr><td class="sym-cell">Hatványozás $\bmod\, m$</td><td>$O(n^3)$ — ezredmásodperc</td><td>5., 6.6</td></tr>
+          <tr><td class="sym-cell">Prímtesztelés (Miller–Rabin)</td><td>$O(n^3)$ — másodperc</td><td>7.4</td></tr>
+          <tr><td class="sym-cell">Faktorizáció (legjobb ismert)</td><td>$\exp(n^{1/3})$ — <strong>évek vagy évszázadok</strong></td><td>7.</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:.7rem;">
+        Könyvünk bevezető jellegű — csak néhány egyszerűbb szemléltető algoritmust mutat,
+        és inkább részletesebb művekre hivatkozik. A téma legátfogóbb ismertetése
+        ma is <strong>Donald Knuth</strong> [KD] művében (TAOCP vol.&nbsp;2) található.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Programok ═══ -->
+  <div id="t-programok" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">A könyvhöz mellékelt öt program</span>
+      <p>
+        Nem díszes megjelenítés volt a cél, hanem a könyvben leírt algoritmusok
+        <strong>lépésenkénti</strong> bemutatása. Az output-szöveg szerkeszthető; egyszerűsége miatt
+        az adatok beírása nem „szerkesztősorban" történik — legyünk körültekintőek.
+      </p>
+
+      <div class="prog-grid">
+        <div class="prog-card">
+          <code>Prim1d.exe</code>
+          <div class="desc">Prímtesztelés és faktorizáció. Próbaosztás, Fermat-teszt, Miller–Rabin, Pollard $\rho$ — lépésenként.</div>
+        </div>
+        <div class="prog-card">
+          <code>EuklDio2D.exe</code>
+          <div class="desc">Euklidesz-algoritmus és $ax+by=c$ Diophantoszi egyenletek megoldása Bézout-együtthatókkal.</div>
+        </div>
+        <div class="prog-card">
+          <code>HatvModDD.exe</code>
+          <div class="desc">Nagy kitevőjű hatványozás $\bmod\, m$ — bináris (négyzetreemeléses) gyorshatványozás.</div>
+        </div>
+        <div class="prog-card">
+          <code>Kinai3D.exe</code>
+          <div class="desc">Kínai Maradéktétel kis modulusokra — szimultán kongruencia-rendszer megoldása.</div>
+        </div>
+        <div class="prog-card">
+          <code>Poliosz5.exe</code>
+          <div class="desc">Magasabbfokú kongruenciák megoldása mod $p$ — polinom-faktorizáció véges testen.</div>
+        </div>
+      </div>
+
+      <div class="warn-box" style="margin-top:1rem;">
+        <strong>⚠ A programok kizárólag magáncélra használhatók, bárminemű üzleti alkalmazásuk szigorúan tilos!</strong>
+      </div>
+
+      <div class="thm-box" style="margin-top:.5rem;">
+        Jól használhatók „számológép"-ként kisebb feladatok (pl. RSA) megoldásához és tanulmányozásához.
+        A részletes leírás a <strong>11. „Számítógépes megvalósítások"</strong> fejezetben olvasható.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6>Köszönet</h6>
+      <p>
+        A szerzők köszönetüket fejezik ki kedves tanáraiknak:
+        <strong>Szalay Mihálynak</strong>, <strong>Freud Róbertnak</strong> és
+        <strong>Csirmaz Lászlónak</strong>; külön köszönet a Lektor (Dr.&nbsp;Hujter Mihály, BME)
+        lelkiismeretes munkájának.
+      </p>
+      <p>
+        A könyv újszerű jelölésekkel — pl. $\mathfrak{p}(n)$, $\Delta$ és $\nabla$ jelek
+        (lásd 3.9. és 3.33. Definíciók), atomelmélet és Boole-algebrák — igyekszik az anyag mélyebb
+        megértését elősegíteni. A <em>Függelékben</em> az oszthatóság fogalmát Euklideszi gyűrűkre
+        terjesztjük ki — ezek a vizsgálatok többek között a <strong>Fermat-sejtés</strong>
+        megoldásában játszottak kulcsszerepet.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: 1.1 Jelölések ═══ -->
+  <div id="t-jelolesek" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">1.1 § — A könyvben használt jelölések</span>
+
+      <h6>Számhalmazok</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Jelentés</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$\mathbb{N}$</td><td>természetes számok halmaza: $\mathbb{N} := \{0, 1, 2, \dots\}$ &nbsp;<span style="color:#64748b;">(megj.: a 0 is benne van!)</span></td></tr>
+          <tr><td class="sym-cell">$\mathbb{Z}$</td><td>egész számok halmaza</td></tr>
+          <tr><td class="sym-cell">$\mathbb{P}$</td><td>prímszámok halmaza</td></tr>
+        </tbody>
+      </table>
+
+      <h6>Halmaz-jelölések</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Jelentés</th><th>Példa</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$\#\{\dots\}$ &nbsp; $|\{\dots\}|$</td><td>halmaz <strong>számossága</strong></td><td>$\#\{2,3,5,7\} = 4$</td></tr>
+          <tr><td class="sym-cell">$\mathfrak{p}(n)$</td><td>$n$ prímosztóinak <strong>multihalmaza</strong> &nbsp;($n \in \mathbb{N}$)</td><td>$\mathfrak{p}(12) = \{2, 2, 3\}$</td></tr>
+        </tbody>
+      </table>
+
+      <h6>Egészrész-függvények</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Jelentés</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$\operatorname{int}(x) = [x] = \lfloor x \rfloor$</td><td><strong>alsó egészrész</strong> — az $x$-nél nem nagyobb egész számok közül a legnagyobb. Nemnegatív $x$-re: „lefelé csonkítás".</td></tr>
+          <tr><td class="sym-cell">$\lceil x \rceil$</td><td><strong>felső egészrész</strong> — az $x$-nél nem kisebb egész számok közül a legkisebb. Nemnegatív $x$-re: „felfelé kerekítés".</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>Tulajdonság.</strong> Minden $x \in \mathbb{R}$ valós számra:
+        $$\lfloor x \rfloor,\ \lceil x \rceil \in \mathbb{Z}, \qquad \lfloor x \rfloor \leq x \leq \lceil x \rceil$$
+        és egyenlőség csak $x \in \mathbb{Z}$ egész számoknál van.
+      </div>
+
+      <h6>Sorozat-jelölések</h6>
+      <p>
+        Tudjuk, hogy egy (véges vagy végtelen) sorozat semmi esetre sem részhalmaz, de
+        kényelmesek az $(a_n) \subset \mathbb{N}$, $(a_n) \subset \mathbb{R}$, illetve
+        $(m_1, m_2, \dots, m_k) \subset \mathbb{R}$ jelölések.
+      </p>
+
+      <h6>Tizedesvessző</h6>
+      <p>
+        Sok számítógép-program tizedes <em>pontot</em> használ, mi mégis maradunk a
+        tizedes/bináris <strong>vesszőnél</strong>, hiszen Magyarországon a tudományos- és közéletben,
+        oktatásban és tankönyvekben (és a Windows-rendszerben is) ez az elterjedt.
+      </p>
+
+      <h6>Algebrai fogalmak</h6>
+      <p>
+        Néhány absztrakt matematikai fogalmat — Boole-algebrák, gyűrűk, testek — a
+        <strong>Függelékben (13. fejezet)</strong> vázlatosan ismertetünk.
+      </p>
+
+      <div class="def-box">
+        A &nbsp;$\square$&nbsp; szimbólum egy-egy gondolat / Definíció / Megjegyzés / Állítás /
+        Tétel / Bizonyítás végét jelöli.
+      </div>
+    </div>
+  </div>
+
+  {# ─────────────────────────── CHAPTER 2 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 2 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c2-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c2-bigo',this)">O, Θ, Ω, o, ω</span>
+    <span class="ila-nav-link" onclick="showTab('t-c2-scale',this)">Növekedési skála</span>
+    <span class="ila-nav-link" onclick="showTab('t-c2-meret',this)">2.2.1 Input mérete</span>
+    <span class="ila-nav-link" onclick="showTab('t-c2-muvelet',this)">2.2.2 Műveletek</span>
+  </div>
+
+  <!-- ═══ TAB 1: Áttekintés ═══ -->
+  <div id="t-c2-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">2.1 § — Mit nevezünk algoritmusnak?</span>
+      <p>
+        Az algoritmus fogalmát precízen is lehet definiálni (lásd [SzI2]), nekünk azonban elég a következő
+        intuitív magyarázat:
+      </p>
+      <div class="def-box">
+        „A probléma megadása után a számítógép <strong>véges idő</strong> után megáll, és
+        <strong>helyes</strong> (pontos) eredményt ad", és természetesen
+        „ugyanazon inputtal megismételt minden futás ugyanazt az eredményt adja" —
+        az ilyen algoritmusokat <strong>determinisztikus</strong> algoritmusoknak hívják.
+      </div>
+      <p>Háromféle algoritmust különböztetünk meg:</p>
+      <ul>
+        <li><strong>Determinisztikus</strong> — minden futás után megáll, helyes eredményt ad, ismételhető.</li>
+        <li><strong>Valószínűségi</strong> — minden futás után megáll, de néha csak „99% eséllyel az eredmény $X$" típusú választ kapunk; a válasz valószínűsége becsülhető.</li>
+        <li><strong>Nemdeterminisztikus</strong> — ugyanarra az inputra nem mindig áll meg, nem mindig ad helyes választ. <em>Könyvünkben nem foglalkozunk velük.</em></li>
+      </ul>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-stopwatch me-1"></i> A „véges idő" pontosabban</h6>
+      <p>
+        A „véges idő" elég tág fogalom: $10^{100}$ lépés is véges
+        (1000 GHz = $10^{12}$ lépés/másodperc sebességgel ez „csak" $3\times 10^{80}$ év…),
+        márpedig a titkosírásoknál látni fogunk olyan problémákat, amelyekre <strong>ennél is gyorsabb</strong>
+        algoritmust 2010-ben még senki sem ismert.
+      </p>
+      <div class="thm-box">
+        <strong>Bonyolultság.</strong> Az algoritmusok futásának gyorsaságát, időigényét az algoritmus
+        (pontosabban az általa megoldott probléma) <strong>bonyolultságának</strong> nevezzük.
+      </div>
+      <p>
+        Pontos számításra nincs szükségünk — ha hónapokig fut, pár óra már nem érdekes. A program egyéb
+        műveleteket is végez (I/O), és különböző sebességű gépeken különböző mértékben gyorsul. Ezért
+        csak az idő <strong>nagyságrendjére</strong>, <em>aszimptotikus viselkedésére</em>
+        ($n \to \infty$) vagyunk kíváncsiak.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: O, Θ, Ω, o, ω ═══ -->
+  <div id="t-c2-bigo" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">2.1 Definíció — Aszimptotikus jelölések</span>
+      <p>
+        Legyenek $f, g: \mathbb{N} \to \mathbb{R}^+$ tetszőleges pozitív értékű függvények.
+        A [CLR] jelölésrendszerét használjuk; a $c_1, c_2$ konstansok elnyelik a kerekítési hibákat
+        és a gépek sebességkülönbségeit.
+      </p>
+
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Név</th><th>Feltétel ($n > n_0$)</th><th>Határérték</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="sym-cell">$f = O(g)$</td>
+            <td><strong>nagy ordó</strong> g <span style="color:#64748b;">(big-oh)</span></td>
+            <td>$\exists\, c_2 > 0:\ f(n) < c_2 \cdot g(n)$</td>
+            <td>$\limsup f/g < \infty$</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$f = \Theta(g)$</td>
+            <td><strong>tétha</strong> g</td>
+            <td>$\exists\, c_1, c_2 > 0:\ c_1 g(n) < f(n) < c_2 g(n)$</td>
+            <td>$0 < \liminf,\limsup < \infty$</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$f = \Omega(g)$</td>
+            <td><strong>omega</strong> g</td>
+            <td>$\exists\, c_1 > 0:\ c_1 g(n) < f(n)$</td>
+            <td>$\liminf f/g > 0$</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$f = o(g)$</td>
+            <td><strong>kis ordó</strong> g <span style="color:#64748b;">(little-oh)</span></td>
+            <td>$\forall\, c_2 > 0:\ f(n) < c_2 g(n)$</td>
+            <td>$\lim_{n\to\infty} f(n)/g(n) = 0$</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$f = \omega(g)$</td>
+            <td><strong>kis omega</strong> g</td>
+            <td>$\forall\, c_1 > 0:\ c_1 g(n) \leq f(n)$</td>
+            <td>$\lim_{n\to\infty} f(n)/g(n) = \infty$</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        Lényegében az $O$ és $\Theta$ jelölések a <em>„körülbelül"</em> szó matematikai szinonimái.
+        A jelöléseknek csak akkor van értelme, ha $f$ bonyolult és $g$ egyszerű.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6>2.3 Megjegyzés — A logaritmus alapja lényegtelen</h6>
+      <p>
+        Bármely $a, b \in \mathbb{R}^+$ esetén:
+      </p>
+      $$\log_b(x) = c \cdot \log_a(x), \qquad c = \frac{1}{\log_a(b)} \text{ — rögzített konstans.}$$
+      <p>
+        Az $O$ és $\Theta$ szempontjából tehát a logaritmus alapja <strong>lényegtelen</strong> —
+        a konstans szorzót a $c_1, c_2$ elnyelik.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Növekedési skála ═══ -->
+  <div id="t-c2-scale" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">2.2 Definíció — Növekedési osztályok</span>
+      <p>$f = \Theta(g)$ vagy $f = O(g)$ esetén az $f, g$ függvényeket az alábbi elnevezésekkel illetjük (növekvő sorrendben):</p>
+
+      <table class="ref-tbl">
+        <thead><tr><th>$g(n)$</th><th>Név</th><th>$n=100$ értéke</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$c$</td><td><strong>konstans</strong> (inputtól független)</td><td>$1$</td></tr>
+          <tr><td class="sym-cell">$\log_a(n)$</td><td><strong>logaritmikus</strong> (alap $>1$)</td><td>$\approx 6{,}6$</td></tr>
+          <tr><td class="sym-cell">$n$</td><td><strong>lineáris</strong> (elsőfokú)</td><td>$100$</td></tr>
+          <tr><td class="sym-cell">$n \log_a(n)$</td><td><strong>szemilineáris</strong></td><td>$\approx 664$</td></tr>
+          <tr><td class="sym-cell">$n^2$</td><td><strong>négyzetes</strong> (kvadratikus)</td><td>$10{,}000$</td></tr>
+          <tr><td class="sym-cell">$n^k$ &nbsp;($k>1$)</td><td><strong>polinomiális</strong></td><td>$10^{2k}$</td></tr>
+          <tr><td class="sym-cell">$a^n$ &nbsp;($a>1$)</td><td><strong>exponenciális</strong></td><td>$2^{100} \approx 1{,}3 \times 10^{30}$</td></tr>
+          <tr><td class="sym-cell">$n^n$</td><td><strong>hiperexponenciális</strong></td><td>$10^{200}$</td></tr>
+        </tbody>
+      </table>
+
+      <div class="ex-box">
+        <strong>Vizuális intuíció.</strong> A hiperexponenciális görbék <strong>$n < 7$</strong> értékek
+        után <em>már a papírra sem férnek el</em>, még logaritmikus függőleges összenyomás után sem.
+        Lineáris és parabola lefelé görbülnek, az exponenciális kiegyenesedik.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">2.4 Tétel — A növekedési hierarchia</span>
+      <p>$a, b, k \in \mathbb{R}^+$, $1 < b$ esetén:</p>
+      $$\log_a(n) \;\prec\; n^k \;\prec\; b^n \;\prec\; n^n$$
+      $$\lim_{n\to\infty} \frac{\log_a n}{n^k} = 0, \quad
+        \lim_{n\to\infty} \frac{n^k}{b^n} = 0, \quad
+        \lim_{n\to\infty} \frac{b^n}{n^n} = 0.$$
+
+      <h6>2.5 Definíció — $\prec$ és $\sim$</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Jelentés</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$f \prec g$</td><td>$g$ <em>végtelenszer</em> nagyobb mint $f$: &nbsp;$\lim_{n\to\infty} g(n)/f(n) = \infty$</td></tr>
+          <tr><td class="sym-cell">$f \sim g$</td><td>$f$ és $g$ <strong>aszimptotikusan egyenlő</strong>: &nbsp;$\lim_{n\to\infty} f(n)/g(n) = 1$</td></tr>
+        </tbody>
+      </table>
+      <p style="color:#94a3b8;font-size:.8rem;margin-top:.5rem;">
+        <em>Vigyázat:</em> a $\sim$ jelölést ne tévesszük össze a gyűrűknél használt „asszociált elemek" jelöléssel
+        (lásd Függelék).
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">2.6 Tétel — Stirling-formula</span>
+      <p>Elég nagy $n \in \mathbb{N}$ esetén:</p>
+      $$n! \;\sim\; \left(\frac{n}{e}\right)^n \cdot \sqrt{2\pi n}$$
+      <p>kicsit pontosabban:</p>
+      $$\left(\frac{n}{e}\right)^n \sqrt{2\pi n}\, e^{\frac{1}{12n} - \frac{1}{360 n^3}}
+        \;\leq\; n! \;\leq\;
+        \left(\frac{n}{e}\right)^n \sqrt{2\pi n}\, e^{\frac{1}{12n}}.$$
+      <p>Más alakja:</p>
+      $$\log(n!) \;\sim\; n \log n - n.$$
+      <div class="thm-box">
+        James Stirling (1692–1770) skót matematikus. A formula a faktoriális gyors aszimptotikája —
+        a kombinatorika és valószínűségszámítás kulcseszköze.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6>Tanulság — Mit tekintünk „gyors"-nak?</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Osztály</th><th>Ítélet</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$O(n)$, $O(n \log n)$</td><td style="color:#10b981;font-weight:600;">jó</td></tr>
+          <tr><td class="sym-cell">$O(n^2)$</td><td style="color:#10b981;font-weight:600;">még jónak tartjuk</td></tr>
+          <tr><td class="sym-cell">$O(n^k)$ polinomiális</td><td style="color:#fbbf24;font-weight:600;">elfogadható, „gyors"</td></tr>
+          <tr><td class="sym-cell">$O(2^n)$ exponenciális</td><td style="color:#ef4444;font-weight:600;">kibírhatatlanul lassú</td></tr>
+          <tr><td class="sym-cell">$O(n^n)$ hiperexponenciális</td><td style="color:#94a3b8;font-style:italic;">…-nak tartjuk</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:.65rem;">
+        Elméletileg például a $54\,312 \cdot n^2$ négyzetes idejű algoritmust <strong>jobbnak</strong> tartjuk
+        a $10^{-3} \cdot 2^n$ exponenciális idejűnél, noha <em>kis</em> $n$ értékekre az utóbbi a gyorsabb.
+        Nagy $n$-re viszont már nem.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">2.7 Tétel (Cejtin) — Alsó becslés létezése</span>
+      <p>
+        Tetszőleges $f: \mathbb{N} \to \mathbb{N}$ <em>rekurzív</em> (képlettel kiszámítható) függvényhez
+        létezik olyan probléma, amelyet megoldó <strong>minden</strong> algoritmus $n$ adat esetén legalább
+        $\Omega(f(n))$ ideig fut.
+      </p>
+      <p style="color:#94a3b8;font-size:.82rem;font-style:italic;">
+        Bizonyítás-ötlet: ha a végeredmény kijelzéséhez is legalább ennyi karaktert kell leírnunk…
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">2.8 Definíció (naiv) — NP-teljes</span>
+      <div class="def-box">
+        Egy problémát <strong>NP-teljesnek</strong> (Nondeterministic Polynomial Complete) nevezünk, ha:
+        <br><br>
+        <em>„Ha erre a problémára lenne gyors algoritmus, akkor a világ <strong>összes</strong>
+        problémájára is lenne (azonnal!) gyors algoritmus."</em>
+      </div>
+      <p>
+        Bármilyen hihetetlen: már a múlt század 70-es éveiben közismert „hétköznapi" problémák
+        tucatjairól bizonyították be, hogy NP-teljes. A faktorizáció <em>nem</em> bizonyítottan NP-teljes,
+        de senki sem ismer rá polinomidejű algoritmust — erre épül az RSA biztonsága.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Input mérete ═══ -->
+  <div id="t-c2-meret" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">2.2.1 — Az input mérete</span>
+      <div class="def-box">
+        <strong>2.9 Megjegyzés.</strong> Amennyiben az input egy $n \in \mathbb{N}$ természetes szám, akkor
+        az input mérete = az $n$ <strong>számjegyeinek</strong> száma, <em>nem $n$ értéke maga!</em>
+      </div>
+      <p>Az input méretét $\operatorname{in}(n)$-nel jelöljük ($n > 0$):</p>
+      $$\operatorname{in}(n) := \lfloor \log(n) \rfloor + 1$$
+      <p>A számrendszer alapja lényegtelen — csak konstans szorzóban tér el.</p>
+
+      <h6>2.10 Példa — Miért exponenciális a próbaosztás?</h6>
+      <p>
+        Ha egy $k=100$ jegyű $n$ számot adunk a gépnek, mi csak <strong>100 karaktert</strong> ($k$ jegy)
+        írtunk be — de $n$ <em>értéke</em> $\approx 10^{100}$.
+      </p>
+      <p>
+        Ha a páratlan számokkal próbáljuk faktorizálni $\sqrt{n}$-ig, a végrehajtott $O(\sqrt n)$ lépés
+        <em>az input mérete függvényében</em>:
+      </p>
+      $$O(\sqrt{n}) = O\!\left(\sqrt{10^k}\right) = O(10^{k/2}) \quad \text{— exponenciális!}$$
+      <div class="warn-box">
+        Az iskolában „polinomiálisnak" tűnő próbaosztás valójában <strong>exponenciális</strong>
+        az input mérete (a jegyek száma) szerint. Itt válik el a számelmélet az analízistől.
+      </div>
+
+      <h6>2.11 Definíció — $\langle n \rangle$ bináris jegyszám</h6>
+      <p>Legyen $n \in \mathbb{N}$. Ekkor:</p>
+      $$\langle n \rangle := \lfloor \log_2(n) \rfloor + 1$$
+      <p>
+        az $n$ szám bináris számjegyeinek (bitek) száma. A $k_b$ és $k_d$ jelölést a bináris ill. decimális
+        jegyek számára használjuk; ekkor $n$ értéke $\approx 2^{k_b} = 10^{k_d}$ —
+        <em>exponenciálisan nagy</em> az input méretéhez képest.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">2.12 Példa — Hány jegyűek ezek a számok?</span>
+      <p>Számoljuk ki, hány decimális számjegyből állnak (használjuk: jegyszám = $\lfloor \log_{10}(n) \rfloor + 1$):</p>
+
+      <table class="factor-tbl">
+        <thead><tr><th>Jelölés</th><th>Szám</th><th class="text-end">Jegyek</th></tr></thead>
+        <tbody>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">a</td>
+            <td class="num">$a = 2^7 \cdot 3^{43} \cdot 11^{93} \cdot 39^{45} \cdot 101^2$</td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">b</td>
+            <td class="num">$b_{1,2} = 697\,053\,813 \cdot 2^{16352} \pm 1$ &nbsp;<span style="color:#64748b;">(ikerprímek, [JA])</span></td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">c</td>
+            <td class="num">$c_{1,2} = 242\,206\,083 \cdot 2^{38880} \pm 1$ &nbsp;<span style="color:#64748b;">(ikerprímek, [JA])</span></td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">d</td>
+            <td class="num">$d_{1,2} = 16\,869\,987\,339\,975 \cdot 2^{171960} \pm 1$ &nbsp;<span style="color:#64748b;">(2005-ös rekord, Járai Antal et al.)</span></td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="true" onclick="this.classList.toggle('reveal')">
+            <td class="label">M</td>
+            <td class="num">$M_{43\,112\,609} = 2^{43\,112\,609} - 1$ &nbsp;<span style="color:#64748b;">(Mersenne-prím)</span></td>
+            <td class="status">kattints ▾</td>
+          </tr>
+          <tr data-prime="false" onclick="this.classList.toggle('reveal')">
+            <td class="label">Mö</td>
+            <td class="num">$M_\circ = 2^p - 1$, &nbsp; $p = 2\,375\,063\,906\,985 \cdot 2^{19380}$ &nbsp;<span style="color:#64748b;">(összetett Mersenne, [JA])</span></td>
+            <td class="status">kattints ▾</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h6>2.13 Megoldás — A jegyszámok</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Szám</th><th>$\log_{10}$ közelítés</th><th>Jegyek</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$a$</td><td>$\approx 195{,}0794$</td><td><strong style="color:var(--acc2);">196</strong></td></tr>
+          <tr><td class="sym-cell">$b_{1,2}$</td><td>$\approx 4931{,}286$</td><td><strong style="color:var(--acc2);">4\,932</strong></td></tr>
+          <tr><td class="sym-cell">$c_{1,2}$</td><td>$\approx 11\,712{,}430$</td><td><strong style="color:var(--acc2);">11\,713</strong></td></tr>
+          <tr><td class="sym-cell">$d_{1,2}$</td><td>$\approx 51\,778{,}345$</td><td><strong style="color:var(--acc2);">51\,779</strong></td></tr>
+          <tr><td class="sym-cell">$M_{43\,112\,609}$</td><td>$\approx 12\,978\,188{,}5$</td><td><strong style="color:#fbbf24;">12\,978\,189</strong> &nbsp;<span style="color:#64748b;">(12 millió jegy!)</span></td></tr>
+          <tr><td class="sym-cell">$M_\circ$</td><td>$\log_{10}\log_{10}(M_\circ) \approx 6{,}54 \times 10^{5845}$</td><td><strong style="color:#ef4444;">$\approx 10^{5845}$</strong></td></tr>
+        </tbody>
+      </table>
+
+      <div class="warn-box" style="margin-top:.8rem;">
+        <strong>$M_\circ$ — a kozmikus polcprobléma.</strong> $M_\circ$ kiszámításához
+        $\log_{10}(M_\circ)$-t kellene kiírnunk — a Windows számológép sem birkózik meg vele,
+        ezért $\log_{10}(\log_{10}(M_\circ))$-t számoljuk: $\approx 6{,}54 \times 10^{5845}$.
+        $M_\circ$-nek tehát kb. $10^{5845}$ számjegye van — csak ahhoz kell <strong>5845 számjegy</strong>,
+        hogy leírjuk: „$M_\circ$-nek ennyi számjegye van"! 4 pt biblia-papíron a számjegyek
+        szorosan egymáshoz téve $\approx 8{,}2 \times 10^{5816}$ <em>fényévnyi polcra</em>
+        férnének el. Szerencsére ebben a könyvben ekkora számokkal nem foglalkozunk.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: Műveletek sebessége ═══ -->
+  <div id="t-c2-muvelet" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">2.2.2 § — Az alapműveletek bonyolultsága</span>
+      <p>
+        A modern titkosírásokban többszázjegyű számokkal kell <em>exponenciálisan sok</em> (!) műveletet
+        végeznünk — érdemes elgondolkodni az alapműveletek gyorsabb elvégzésén. Legyen
+        $k = \operatorname{in}(n) = \lfloor \log_2 n \rfloor + 1$ az input méret.
+      </p>
+
+      <table class="ref-tbl">
+        <thead><tr><th>Művelet</th><th>Iskolai (papír-ceruza)</th><th>Legjobb ismert</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="sym-cell">$m + n$, $\;m - n$</td>
+            <td>$O(k)$ — <strong>lineáris</strong></td>
+            <td>$O(k)$ <span style="color:#64748b;">(gyorsabb elvileg sem létezik)</span></td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$m \cdot n$</td>
+            <td>$O(k^2)$ — <strong>négyzetes</strong></td>
+            <td>$O(k \log k \log\log k)$ <span style="color:#64748b;">(Schönhage–Strassen, FFT)</span></td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$m \div n$</td>
+            <td>$O(k^2)$</td>
+            <td>$O(k \log k \log\log k)$</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$u^k$</td>
+            <td>$O(k \cdot \text{súly})$ &nbsp;ismételt négyzetreemelés</td>
+            <td>kimenet $\sim n$ bit, így $\Omega(n)$ a kiírás</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$u^k \bmod m$</td>
+            <td colspan="2">$O(k \cdot (\log m)^2)$ — <strong>szemilineáris</strong> (lásd 6.6.)</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$n!$</td>
+            <td>$O(n^2 \log^2 n)$</td>
+            <td>nincs lényegesen jobb ismert algoritmus</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">$\lfloor\sqrt{n}\rfloor$</td>
+            <td>félhosszú dividir<br><span style="color:#64748b;">(Newton-iteráció: $x_{n+1} = (x_n + n/x_n)/2$)</span></td>
+            <td>$O(k^2)$ praktikus</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">binárás → decimális</td>
+            <td>$O(k^2)$ [KN]</td>
+            <td>$O(k \log k \log\log k)$</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">Karacuba 1962 — az első szubkvadratikus szorzás</span>
+      <p>
+        Anatolij <strong>Karacuba</strong> szovjet matematikus 1962-ben felfedezte, hogy két $k$-jegyű
+        szám szorzásához $k^2$ helyett elegendő:
+      </p>
+      $$27 \cdot k^{\log_2 3} \approx 27 \cdot k^{1{,}585}$$
+      <p>
+        lépés. <strong>Lényege:</strong> két szám $A = a_1 \cdot 10^{k/2} + a_0$ és $B = b_1 \cdot 10^{k/2} + b_0$
+        szorzata háromm (nem négy) kisebb szorzásra redukálódik:
+      </p>
+      <ol>
+        <li>$P_1 = a_1 b_1$</li>
+        <li>$P_2 = a_0 b_0$</li>
+        <li>$P_3 = (a_1 + a_0)(b_1 + b_0) - P_1 - P_2 = a_1 b_0 + a_0 b_1$</li>
+      </ol>
+      $$AB = P_1 \cdot 10^k + P_3 \cdot 10^{k/2} + P_2$$
+      <div class="thm-box">
+        Az algoritmus lényegében „2 hatványaival szoroz" — a bináris-vessző tologatásának felel meg.
+        Az ötletet messzemenően általánosította <strong>Schönhage és Strassen</strong> svájci matematikusok
+        a véges Fourier-transzformáltak segítségével: $O(k \log k \log\log k)$ — a mai napig majdnem
+        a legjobb ismert.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-arrow-repeat me-1"></i> Newton-iteráció reciprokra</h6>
+      <p>
+        $1/u$ kiszámításához az $f(x) = u - \frac{1}{x}$ függvény zérushelyét keressük iterációval.
+        Legyen $x_0 := 1$ és $n \in \mathbb{N}$ esetén:
+      </p>
+      $$x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)} = x_n - \frac{u - 1/x_n}{1/x_n^2} = 2 x_n - u \cdot x_n^2.$$
+      <p>
+        Az iteráció kvadratikusan konvergál: $\ell$ jegyre $O(\ell \log \ell \log\log \ell)$ művelet elég.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <h6>Olvasásra ajánljuk</h6>
+      <p>
+        Az algoritmusok elméletéről rövid bevezető: [SzI2] utolsó 40 oldala. Olvasmányos mély bevezető:
+        <strong>Lovász László és Gács Péter — [LG]</strong>. Részletes további irodalom: [CLR], [IA], [LL2],
+        [RF], [RISz], és a műfaj klasszikusa <strong>Donald Knuth — TAOCP</strong> [KD], 2. kötet,
+        4.3.3. és 4.4. alfejezet.
+      </p>
+    </div>
+  </div>
+
+  {# ─────────────────────────── CHAPTER 3 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 3 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c3-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c3-oszt',this)">3.1 Oszthatóság</span>
+    <span class="ila-nav-link" onclick="showTab('t-c3-algprob',this)">3.2 Algoritmikus problémák</span>
+    <span class="ila-nav-link" onclick="showTab('t-c3-lnko',this)">3.3 lnko &amp; lkkt</span>
+    <span class="ila-nav-link" onclick="showTab('t-c3-eloszlas',this)">3.4 Prímeloszlás</span>
+    <span class="ila-nav-link" onclick="showTab('t-c3-nevezetes',this)">3.5 Nevezetes</span>
+  </div>
+
+  <!-- ═══ TAB 1: Áttekintés ═══ -->
+  <div id="t-c3-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">3. fejezet — A számelmélet alapjai</span>
+      <p>
+        A középiskolai számelmélet-ismereteket — <strong>oszthatóság, prímszámok, prímfelbontás,
+        lnko, lkkt</strong> — ismertnek tételezzük fel. Most csak felsoroljuk a legfontosabb fogalmakat
+        és összefüggéseket, a hangsúlyt inkább az <em>új szemléletre</em> helyezzük.
+      </p>
+      <div class="def-box">
+        Új jelölések és nézőpontok ebben a fejezetben:
+        <ul style="margin:.4rem 0 0;">
+          <li>$\mathfrak{p}(n)$ — multihalmaz a prímosztókkal (3.9. Def.)</li>
+          <li>$\Delta$ &amp; $\nabla$ — lnko és lkkt mint absztrakt műveletek (3.33. Def.)</li>
+          <li>Boole-algebra-szemlélet a négyzetmentes számok osztóhalmazán</li>
+          <li>Hasonlat a kémiai atomok elméletével</li>
+        </ul>
+      </div>
+      <p style="color:#94a3b8;font-style:italic;">
+        A „szám" alatt itt is mindig <strong>egész</strong> számot értünk. Negatív számok és $\pm 1$
+        külön kezelést igényelnek a prímdefinícióban.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-atom me-1"></i> Atomelmélet-hasonlat (3.8 Megj.)</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Kémia</th><th>Számelmélet</th></tr></thead>
+        <tbody>
+          <tr><td>atom <span style="color:#64748b;">(gör. „oszthatatlan")</span></td><td>prímszám</td></tr>
+          <tr><td>molekula</td><td>$n \in \mathbb{N},\ n > 1$</td></tr>
+          <tr><td>összegképlet pl. $H_2O$</td><td>kanonikus alak: $12 = 2^2 \cdot 3$</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:.65rem;">
+        A molekulákat atomok építik fel — a természetes számokat prímszámok. Ez a hasonlat
+        pedagógiailag rendkívül hasznos, és magyarázza, miért nevezzük a prímeket
+        „<em>primitív szám</em>"-oknak (latin <em>primus</em> = első, alapvető).
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: 3.1 Oszthatóság ═══ -->
+  <div id="t-c3-oszt" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">3.1 § — Oszthatóság és prímek</span>
+
+      <h6>Alapdefiníciók</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Definíció</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$a \mid b$</td><td><strong>$a$ osztója $b$-nek</strong>: létezik $x \in \mathbb{Z}$, hogy $b = ax$.</td></tr>
+          <tr><td class="sym-cell">$p$ prím</td><td><strong>irreducibilis</strong>: $p \neq -1, 0, 1$, és nem írható fel $p = xy$ alakban ahol $x, y > 1$. Pozitív prímek halmaza: $\mathbb{P}$.</td></tr>
+          <tr><td class="sym-cell">összetett</td><td>$n \in \mathbb{Z}$, $n \notin \{-1, 0, 1, \pm p\}$ — felbontható nemtriviálisan.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>3.3 Megjegyzés.</strong> $\pm 1$ és $0$ <em>külön</em> tárgyalandó — egészen más
+        tulajdonságokkal bírnak mint a prímek. A prímek lényege nem a felbonthatatlanság, hanem
+        hogy minden egész szám előállítható belőlük (lásd 3.6. Tétel).
+        <br><br>
+        Negatív számok is léteznek — minden $p \in \mathbb{P}$ esetén $-p$ is prím!
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">3.5 Tétel — Prímtulajdonság</span>
+      <p>Ha $p$ prím és $p \mid ab$, akkor $p \mid a$ <strong>vagy</strong> $p \mid b$.</p>
+      <p>Általánosabban: ha $p \mid a_1 a_2 \cdots a_n$, akkor valamely $i$-re $p \mid a_i$.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.6 Tétel — A Számelmélet Alaptétele</span>
+      <div class="def-box">
+        Minden $n \in \mathbb{Z}$, $n \neq 0$ egész szám felbontható prímszámok szorzatára,
+        <strong>lényegében egyértelműen</strong> (a tényezők sorrendjében és az előjelekben lehet eltérés).
+      </div>
+      <p>Tehát $|n| > 1$ esetén:</p>
+      $$n = p_1^{\alpha_1} \cdot p_2^{\alpha_2} \cdots p_r^{\alpha_r}$$
+      <p>
+        ahol a $p_i \in \mathbb{P}$ páronként különböző prímek, $\alpha_i \geq 1$. Ezt $n$
+        <strong>törzs-tényezős alakjának</strong> vagy <strong>kanonikus alakjának</strong> hívjuk.
+      </p>
+
+      <h6>3.9 Definíció — $\mathfrak{p}(n)$ multihalmaz</h6>
+      <p>$n > 1$ egészre $\mathfrak{p}(n)$ jelölje a prímosztók multihalmazát (multiplicitással):</p>
+      $$\mathfrak{p}(n) := \{\,\underbrace{p_1,\dots,p_1}_{\alpha_1},\ \underbrace{p_2,\dots,p_2}_{\alpha_2},\ \dots,\ \underbrace{p_r,\dots,p_r}_{\alpha_r}\,\}$$
+      <p>Példa: $\mathfrak{p}(12) = \{2, 2, 3\}$, $\mathfrak{p}(60) = \{2, 2, 3, 5\}$, $\mathfrak{p}(1) := \emptyset$.</p>
+
+      <div class="thm-box">
+        <strong>3.10 Állítás.</strong> A multihalmaz-műveletek lefordítják az oszthatóságot:
+        $$\mathfrak{p}(nm) = \mathfrak{p}(n) \cup \mathfrak{p}(m), \qquad n \mid m \iff \mathfrak{p}(n) \subseteq \mathfrak{p}(m).$$
+        $$\mathfrak{p}\!\left(\tfrac{m}{n}\right) = \mathfrak{p}(m) \setminus \mathfrak{p}(n) \quad \text{(ha } n \mid m\text{)}$$
+        Sőt $\;\operatorname{lnko}(n,m) = \mathfrak{p}(n) \cap \mathfrak{p}(m)$, $\;\operatorname{lkkt}(n,m) = \mathfrak{p}(n) \cup \mathfrak{p}(m)$.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6>További jelölések</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Jelentés</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$p^\alpha \| n$</td><td><strong>$p^\alpha$ pontosan osztja $n$-t</strong>: $p^\alpha \mid n$ de $p^{\alpha+1} \nmid n$ &nbsp;(3.11 Def.)</td></tr>
+          <tr><td class="sym-cell">$n$ négyzetmentes</td><td>minden prímosztó csak egyszer szerepel: minden $\alpha_i = 1$ &nbsp;(3.12 Def.)</td></tr>
+          <tr><td class="sym-cell">$d(n)$</td><td>$n$ <strong>pozitív osztóinak száma</strong> &nbsp;(3.13 Def.)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>3.14 Állítás (osztószám-képlet).</strong>
+        $$d(n) = (\alpha_1 + 1)(\alpha_2 + 1)\cdots(\alpha_r + 1)$$
+        Pl. $d(12) = d(2^2 \cdot 3) = 3 \cdot 2 = 6$ &nbsp;(osztók: $1, 2, 3, 4, 6, 12$).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: 3.2 Algoritmikus problémák ═══ -->
+  <div id="t-c3-algprob" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">3.16 Probléma — A számelmélet három alapfeladata</span>
+      <p>Legyen az input egy tetszőleges (többszáz- vagy ezerjegyű) $n \in \mathbb{N}$.</p>
+
+      <table class="ref-tbl">
+        <thead><tr><th style="width:5rem;">№</th><th>Probléma</th><th>Status (2010)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="sym-cell">(i)</td>
+            <td><strong>Prímtesztelés</strong> — Prímszám-e $n$?</td>
+            <td style="color:#10b981;font-weight:600;">megoldva — AKS 2002</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">(ii)</td>
+            <td><strong>Prímfelbontás (faktorizáció)</strong> — bontsuk fel két kisebb tényezőre.</td>
+            <td style="color:#ef4444;font-weight:600;">nincs gyors algoritmus</td>
+          </tr>
+          <tr>
+            <td class="sym-cell">(iii)</td>
+            <td><strong>Prímgenerálás</strong> — adjunk meg egy $n$-nél nagyobb $p$ prímet.</td>
+            <td style="color:#fbbf24;font-weight:600;">aránylag gyors heurisztikák</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>3.17 Megjegyzés.</strong> A (ii) megoldása automatikusan megoldja az (i)-et is, és segít a
+        (iii)-ban. De fordítva nem áll! 2002 óta tudjuk biztosan tesztelni a prímséget anélkül,
+        hogy a számot felbontanánk — ez az AKS-algoritmus áttörése.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.19 Algoritmus — Eratosztheneszi szita</span>
+      <p>
+        Adott $n \in \mathbb{N}$ prímtényezős felbontására: $n$-t elosztjuk a $\sqrt{n}$-nél kisebb
+        páratlan számokkal.
+      </p>
+      <p style="color:#64748b;font-size:.8rem;">
+        Eratoszthenész (Kr.e. 276–196), Alexandriai görög matematikus — könyvtár-vezető és sokoldalú
+        polihisztor; a Föld kerületét is megmérte 1% pontosságon belül.
+      </p>
+
+      <div class="warn-box">
+        <strong>3.20 Megjegyzés.</strong> Az Eratosztheneszi szita <strong>exponenciálisan lassú</strong>
+        (lásd 2.10 Példa) — $k$ jegyű input esetén $\sqrt{n} \approx 10^{k/2}$ lépést igényel.
+      </div>
+
+      <h6>3.21 Példa — Mennyi ideig fut 5 GHz-es gépen?</h6>
+      <p>Feltevés: másodpercenként $5 \cdot 10^9$ osztás. Lépésszám $\approx \sqrt{n}/2 \approx 10^{k/2}$.</p>
+
+      <table class="factor-tbl">
+        <thead><tr><th>Jegyek</th><th>Lépésszám</th><th class="text-end">Futásidő</th></tr></thead>
+        <tbody>
+          <tr><td class="label">k=20</td><td class="num">$5 \cdot 10^9$</td><td class="status" style="color:#10b981;font-style:normal;">1 mp</td></tr>
+          <tr><td class="label">k=30</td><td class="num">$5 \cdot 10^{14}$</td><td class="status" style="color:#10b981;font-style:normal;">~ 27 óra 46 perc</td></tr>
+          <tr><td class="label">k=40</td><td class="num">$5 \cdot 10^{19}$</td><td class="status" style="color:#fbbf24;font-style:normal;">~ 317 év</td></tr>
+          <tr><td class="label">k=50</td><td class="num">$5 \cdot 10^{24}$</td><td class="status" style="color:#f59e0b;font-style:normal;">~ 31,7 millió év</td></tr>
+          <tr><td class="label" style="color:#ef4444;">k=100</td><td class="num">$5 \cdot 10^{49}$</td><td class="status" style="color:#ef4444;font-style:normal;">~ 3,17 × 10²³ <em>milliárd</em> év</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>(b)</strong> Ha csak prímekkel próbálkozunk (tömbből), a Nagy Prímszámtétel szerint
+        $\pi(\sqrt{n}) \sim \sqrt{n} / \ln(\sqrt{n})$ — gyorsulás csak konstans szorzóban; k=50 esetén
+        31,7 millió év → 5,5 millió év.
+        <br><br>
+        <strong>(c)</strong> Ha 1000-szer gyorsabb gép → <em>semmi sem változik.</em>
+        Exponenciális falba mégha 1 000 000-szor gyorsabb gép is csak alatti pár nagyságrendet csökkent.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.23 Tétel — AKS (Agrawal–Kayal–Saxena, 2002)</span>
+      <p>
+        A (i) <strong>Prímtesztelés</strong> problémára létezik <em>polinomiális</em>
+        (gyors) determinisztikus algoritmus. Eredeti komplexitás: $\tilde{O}(\log^{10.5} n)$;
+        később $\tilde{O}(\log^6 n)$-re javítva.
+      </p>
+      <div class="warn-box">
+        A faktorizációra (ii) <strong>máig nem ismert</strong> polinomiális algoritmus —
+        ez biztosítja az RSA-titkosítás biztonságát! A legjobb klasszikus algoritmus:
+        általános számtest-szita (GNFS), $\exp(O(\sqrt[3]{\log n \cdot \log^2 \log n}))$.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">3.25 Megoldás — A bevezető 1.1 példa felbontásai</span>
+      <p>Most felfedjük a bevezető fejezet 7 számának prímfelbontásait:</p>
+
+      <table class="factor-tbl">
+        <thead><tr><th>Jel</th><th>Felbontás</th><th class="text-end">Megjegyzés</th></tr></thead>
+        <tbody>
+          <tr><td class="label">a)</td><td class="num">$440\,747 = 613 \times 719$</td><td class="status" style="color:#94a3b8;font-style:normal;">két közeli prím</td></tr>
+          <tr><td class="label">b)</td><td class="num">$2\,347\,589 = 1\,483 \times 1\,583$</td><td class="status" style="color:#94a3b8;font-style:normal;">két közeli prím</td></tr>
+          <tr><td class="label">c)</td><td class="num">$97\,189\,241 = 7\,151 \times 13\,591$</td><td class="status" style="color:#94a3b8;font-style:normal;">két prím</td></tr>
+          <tr><td class="label">d)</td><td class="num">$17\,967\,876\,255\,379 = 81\,371 \times 220\,814\,249$</td><td class="status" style="color:#94a3b8;font-style:normal;">két prím</td></tr>
+          <tr><td class="label">e)</td><td class="num">$444\,113\,096\,135\,661\,846\,937 = 3\,719\,977\,867 \times 119\,385\,951\,211$</td><td class="status" style="color:#94a3b8;font-style:normal;">két 10-jegyű prím</td></tr>
+          <tr><td class="label">f)</td><td class="num">$2^{67} - 1 = 193\,707\,721 \times 761\,838\,257\,287$</td><td class="status" style="color:#fbbf24;font-style:normal;">Cole, 1903 — történelmi</td></tr>
+          <tr><td class="label">g)</td><td class="num">129-jegyű <em>RSA-129</em> — feltörés: 1994, 600 gép, 8 hónap</td><td class="status" style="color:#ef4444;font-style:normal;">9.1 alfej. 10.23. Megoldás</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>RSA-129 anekdota.</strong> 1977-ben Martin Gardner a <em>Scientific American</em>-ben
+        közölte a 129-jegyű kihívást — Rivest, Shamir, Adleman 100 USD-t ajánlott a feltöréséért,
+        és azt jósolták hogy <em>40 kvadrillió év</em> kellene hozzá. 1994-ben Atkins, Graff, Lenstra
+        és Leyland az interneten szervezett elosztott számítással 8 hónap alatt megoldotta. Üzenet:
+        <em>„The magic words are squeamish ossifrage."</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: 3.3 lnko & lkkt ═══ -->
+  <div id="t-c3-lnko" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">3.3 § — lnko és lkkt</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Definíció</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$\operatorname{lnko}(a,b)$</td><td><strong>legnagyobb közös osztó</strong>; angolul $\gcd(a,b)$. Mindig pozitív, $1 \leq \operatorname{lnko}(a,b) \leq \min(|a|,|b|)$.</td></tr>
+          <tr><td class="sym-cell">$\operatorname{lkkt}(a,b)$</td><td><strong>legkisebb közös többszörös</strong>; angolul $\operatorname{lcm}(a,b)$.</td></tr>
+        </tbody>
+      </table>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        A széles körben elterjedt $(a,b)$ és $[a,b]$ jelölést könyvünk <em>nem</em> használja
+        (más jelentésekkel keveredne).
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.30 Tétel — Prímfelbontás-képlet</span>
+      <p>Ha $a = \prod p_i^{\alpha_i}$ és $b = \prod p_i^{\beta_i}$ (közös prímalapokkal), akkor:</p>
+      $$\operatorname{lnko}(a,b) = \prod p_i^{\min(\alpha_i, \beta_i)}, \qquad
+        \operatorname{lkkt}(a,b) = \prod p_i^{\max(\alpha_i, \beta_i)}.$$
+
+      <div class="thm-box">
+        <strong>3.31 Tétel.</strong> $\mathfrak{p}$-multihalmazokkal szemléletesen:
+        $$\operatorname{lnko}(a_1,\dots,a_t) = \mathfrak{p}(a_1) \cap \cdots \cap \mathfrak{p}(a_t),$$
+        $$\operatorname{lkkt}(a_1,\dots,a_t) = \mathfrak{p}(a_1) \cup \cdots \cup \mathfrak{p}(a_t).$$
+      </div>
+
+      <div class="warn-box">
+        <strong>Vigyázat — 3.32 Megj.</strong> Ezek a képletek <em>csak elméleti</em> jelentőségűek!
+        Gyakorlatban a prímfelbontás megkereshetetlen — az lnko-t Euklidesz algoritmusával
+        számítjuk ki (4.2. alfejezet) <em>prímfelbontás nélkül</em>. Ez teszi az Euklideszi
+        algoritmust pótolhatatlanná a 7. fejezet prímtesztelő algoritmusaiban.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.33 Definíció — $\Delta$ és $\nabla$ jelölés</span>
+      <p>Vezessük be a Boole-algebrákra emlékeztető absztrakt jelölést:</p>
+      $$a \,\Delta\, b := \operatorname{lnko}(a,b), \qquad a \,\nabla\, b := \operatorname{lkkt}(a,b).$$
+
+      <h6>Tulajdonságok (3.34–3.36)</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Tulajdonság</th><th>Képlet</th></tr></thead>
+        <tbody>
+          <tr><td><strong>kommutativitás</strong></td><td>$a \Delta b = b \Delta a$, &nbsp; $a \nabla b = b \nabla a$</td></tr>
+          <tr><td><strong>asszociativitás</strong></td><td>$(a \Delta b) \Delta c = a \Delta (b \Delta c)$</td></tr>
+          <tr><td><strong>disztributivitás</strong></td><td>$(a \Delta b) \nabla c = (a \nabla c) \Delta (b \nabla c)$</td></tr>
+          <tr><td><strong>disztributivitás (másik)</strong></td><td>$(a \nabla b) \Delta c = (a \Delta c) \nabla (b \Delta c)$</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        <strong>3.38 Tétel — Boole-algebra-struktúra.</strong> Legyen $n$ négyzetmentes,
+        $D_n := \{\text{osztói}\}$. Ekkor a hatos
+        $$\left(D_n,\ \operatorname{lnko},\ \operatorname{lkkt},\ \tfrac{n}{x},\ n,\ 1\right)$$
+        <strong>Boole-algebrát</strong> alkot — pontosan ugyanazokkal a tulajdonságokkal mint
+        $(P(H), \cap, \cup, \overline{\cdot}, H, \emptyset)$ a hatványhalmaz-műveletek.
+      </div>
+
+      <div class="ex-box">
+        <strong>3.39 Példa — De Morgan a számelmélet nyelvén.</strong>
+        Az $\overline{A \cup B} = \overline{A} \cap \overline{B}$ azonosság:
+        $$\frac{n}{\operatorname{lkkt}(x,y)} = \operatorname{lnko}\!\left(\frac{n}{x},\ \frac{n}{y}\right)$$
+        ahol $x, y$ az $n$ négyzetmentes szám osztói.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.40 Definíció — Relatív prím</span>
+      <p>$a$ és $b$ <strong>relatív prímek</strong> (coprime), ha $\operatorname{lnko}(a,b) = 1$, vagyis $\mathfrak{p}(a) \cap \mathfrak{p}(b) = \emptyset$.</p>
+
+      <div class="thm-box">
+        <strong>3.43 Definíció — Több szám esete.</strong> Több szám relatív prímsége
+        <strong>kétféle</strong> módon értelmezhető:
+        <ul style="margin:.4rem 0 0;">
+          <li><strong>(i)</strong> relatív prímek: $\operatorname{lnko}(a_1,\dots,a_t) = 1$</li>
+          <li><strong>(ii)</strong> <em>páronként</em> relatív prímek: $\operatorname{lnko}(a_i,a_j) = 1$ minden $i \neq j$</li>
+        </ul>
+        <strong>(ii) sokkal erősebb feltétel</strong> mint (i)! Ez kulcsfontosságú a 7. fej. Kínai
+        maradéktételében.
+      </div>
+
+      <h6>3.44–3.45 Hasznos azonosságok</h6>
+      $$\operatorname{lkkt}(a,b) = \frac{a \cdot b}{\operatorname{lnko}(a,b)} \qquad \text{(rangsoros kompenzáció)}$$
+      $$\operatorname{lnko}(ma, mb) = |m| \cdot \operatorname{lnko}(a,b)$$
+      $$\operatorname{lnko}\!\left(\frac{a}{d}, \frac{b}{d}\right) = \frac{1}{d} \operatorname{lnko}(a,b) \quad \text{ha } d \mid \operatorname{lnko}(a,b)$$
+      <p>Az utolsó következménye: $\frac{a}{d}$ és $\frac{b}{d}$ pontosan akkor relatív prímek, ha $d = \operatorname{lnko}(a,b)$.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">3.47 Tétel — Dirichlet 1849</span>
+      <p>Tetszőlegesen választott $u, v \in \mathbb{N}$ természetes számok</p>
+      $$\frac{6}{\pi^2} \approx 0{,}60793 \quad \text{(kb. 60,8%)}$$
+      <p>valószínűséggel relatív prímek. <em>Két véletlen természetes szám tehát majdnem 61% eséllyel coprime.</em></p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: 3.4 Prímeloszlás ═══ -->
+  <div id="t-c3-eloszlas" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">3.4 § — A prímszámok eloszlása</span>
+
+      <h6>3.48 Tétel (Euklidesz, Kr.e. ~300)</h6>
+      <p>A prímszámok száma <strong>végtelen</strong>.</p>
+      <div class="def-box">
+        <strong>Bizonyítás.</strong> Ha $p_1, p_2, \dots, p_k$ az „összes" prím, akkor
+        $$N := p_1 p_2 \cdots p_k + 1$$
+        egyik $p_i$-vel sem osztható — tehát vagy maga prím, vagy minden osztója egy új prím.
+        Ellentmondás. <span style="color:#64748b;">$\square$</span>
+      </div>
+
+      <h6>3.49 Tétel — Tetszőlegesen nagy prímrések</h6>
+      <p>Bármely $\ell \in \mathbb{N}^+$ számhoz létezik $\ell$ db <strong>egymás utáni</strong> összetett szám.</p>
+      <div class="def-box">
+        <strong>Bizonyítás.</strong> Tetszőleges $k \geq 2$ esetén a $k! + 2,\ k! + 3,\ \dots,\ k! + k$ számok
+        rendre $2, 3, \dots, k$-val oszthatóak — egyik sem prím. Ez $\ell = k - 1$ db szám, $k$ tetszőlegesen
+        nagy lehet. <span style="color:#64748b;">$\square$</span>
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.50 Definíció — $p_n$ és $\pi(x)$</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Jel</th><th>Jelentés</th></tr></thead>
+        <tbody>
+          <tr><td class="sym-cell">$p_n$</td><td>az $n$-edik (pozitív) prímszám. Pl. $p_1 = 2,\ p_2 = 3,\ p_3 = 5,\dots$</td></tr>
+          <tr><td class="sym-cell">$\pi(x)$</td><td>az $x$-nél kisebb (pozitív) prímek <strong>száma</strong>. Pl. $\pi(10) = 4$ &nbsp;(2, 3, 5, 7).</td></tr>
+        </tbody>
+      </table>
+
+      <div class="ex-box">
+        <strong>Érdekesség.</strong> Az <em>egymilliomodik</em> prím:
+        $$p_{1\,000\,000} = 15\,485\,863 \quad \text{(még csak 8-jegyű, és 1-gyel kezdődik)}$$
+        $$\pi(15\,485\,863) = 1\,000\,000.$$
+        Tehát az első 8-jegyű prímnél már egymillió prím létezik — <em>nagyon sűrűek</em>!
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.51 Tétel — Nagy Prímszámtétel</span>
+      $$\lim_{n\to\infty} \frac{\pi(n)}{n / \log n} = 1, \quad \text{azaz} \quad \pi(n) \;\sim\; \frac{n}{\log n}$$
+
+      <p>Más alakban (logaritmusos integrál):</p>
+      $$\pi(n) \;\sim\; \operatorname{li}(n) = \int_2^n \frac{1}{\ln x}\, dx$$
+
+      <p>Pontosabb aszimptotikus sor: bármely $r \in \mathbb{N}$-re</p>
+      $$\pi(n) = \frac{n}{\log n} + \frac{1! \cdot n}{\log^2 n} + \frac{2! \cdot n}{\log^3 n} + \cdots + \frac{r! \cdot n}{\log^{r+1} n} + O\!\left(\frac{n}{\log^{r+2} n}\right).$$
+
+      <div class="thm-box">
+        <strong>Történet.</strong> A sejtés <strong>Gauss</strong> (1777–1855) 15 éves korából
+        származik (számtáblákon megfigyelte a sűrűséget). Bizonyítani csak 1896-ban sikerült
+        <strong>Hadamard</strong> (FR, 1865–1963) és <strong>de la Vallée Poussin</strong> (BE, 1866–1962)
+        egymástól függetlenül a Riemann-zeta-függvény elméletével. Elemibb bizonyítás:
+        Erdős–Selberg, 1948.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.52 Tétel — Csebisev (Bertrand-posztulátum)</span>
+      <p>Tetszőleges $n > 1$ egészre $n$ és $2n$ között <strong>mindig van prím</strong>.</p>
+      <p style="color:#64748b;font-size:.8rem;">
+        Pafnutyij Lvovics Csebisev (1821–1894) orosz matematikus. Bertrand 1845-ben sejtette,
+        Csebisev 1850-ben bizonyította. Erdős Pál 17 évesen (1932) elemi bizonyítást adott rá.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">3.53–3.54 További aszimptotikák</span>
+      <p>Az $n$-edik prím:</p>
+      $$p_n \;\sim\; n \cdot \log n$$
+      <p>A reciprokok harmonikus-szerű összege:</p>
+      $$\sum_{\substack{p \leq x \\ p \in \mathbb{P}}} \frac{1}{p} \;=\; \log(\log x) + o(1)$$
+      <p style="color:#94a3b8;font-style:italic;">
+        Tehát $\sum 1/p$ <em>divergens</em>, de <em>iszonyúan lassan</em> — log-log nagyságrendben.
+        $x = 10^{1000}$ esetén az összeg még mindig csak kb. 7.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 6: 3.5 Nevezetes problémák ═══ -->
+  <div id="t-c3-nevezetes" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">3.5.1 — Pitagorasz és FLT</span>
+
+      <h6>3.55 Definíció — Pitagoraszi számhármasok</h6>
+      <p>Az $x^2 + y^2 = z^2$ egyenlet pozitív egész megoldásai. Pl. $(3,4,5)$, $(5,12,13)$, $(8,15,17)$.</p>
+
+      <div class="thm-box">
+        <strong>3.56 Állítás.</strong> Egy parametrikus végtelen család (Babilóniaiak, $\sim$ Kr.e. 1800):
+        $$x = 2m, \qquad y = m^2 - 1, \qquad z = m^2 + 1, \qquad m \in \mathbb{N}.$$
+        <em>(Nem minden Pitagoraszi hármast ad meg — pl. $(3,4,5)$ hiányzik.)</em> A teljes
+        parametrizáció: $x = k(p^2 - q^2),\ y = 2kpq,\ z = k(p^2 + q^2)$ ahol $p > q$,
+        $\operatorname{lnko}(p,q) = 1$, $p, q$ különböző paritású.
+      </div>
+
+      <h6>3.57 Állítás — Fermat Nagy Sejtése (FLT)</h6>
+      <div class="def-box" style="font-style:italic;">
+        „Az $x^n + y^n = z^n$ egyenletnek $n \geq 3$ esetén <strong>nincsen</strong> pozitív egész gyöke.
+        Erre egy csodálatos bizonyítást találtam, de a lap széle túl keskeny ahhoz, hogy azt befogadja."
+        <br><br>
+        — Pierre de Fermat, 1637 (egy <em>Diophantosz-kötet</em> margóján)
+      </div>
+
+      <div class="thm-box">
+        <strong>358 év várakozás.</strong> A sejtést Andrew Wiles 1993-ban (R. Taylorral közösen)
+        bizonyította a moduláris formák és elliptikus görbék elméletével — végleges publikáció:
+        <em>Annals of Mathematics</em>, 1995. Máig <em>rejtély, mi volt Fermat „csodálatos"
+        bizonyítása</em> — szakértők szerint hibás vagy hiányos lehetett.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">3.5.2 — Karácsonyi tétel és Bolyai János</span>
+
+      <h6>3.58 Tétel — Fermat karácsonyi tétele</h6>
+      <p>Minden <strong>$4m + 1$</strong> alakú prímszám előáll <em>két négyzetszám</em> összegeként.</p>
+      <p>Pl. $5 = 1^2 + 2^2$, $13 = 2^2 + 3^2$, $17 = 1^2 + 4^2$, $29 = 2^2 + 5^2$, $37 = 1^2 + 6^2$…</p>
+
+      <div class="thm-box">
+        <strong>Történet.</strong> Fermat 1640 karácsonyán fogalmazta meg a tételt, de bizonyítást
+        nem közölt. Euler 1747-ben (7 év küzdelem után) bizonyította be — <strong>55 oldalas</strong>
+        dolgozatban.
+      </div>
+
+      <div class="ex-box">
+        <strong>Bolyai János — kétsoros bizonyítás.</strong> Bolyai Farkas bíztatására fia
+        a komplex egészek $\mathbb{Z}[i] = \{a + bi : a, b \in \mathbb{Z}\}$
+        (Gauss-egészek) gyűrűjében dolgozva <strong>négy</strong> bizonyítást talált — köztük
+        egy alig <strong>két soros</strong>. A XX. század matematikusai versenyeztek a
+        legrövidebb bizonyításért; <strong>Don Zagier 1990-es egyetlen mondatos</strong> változata
+        bekerült az „Erdős Pál féle Nagy Könyvbe". Kiss Elemér szerint azonban inkább
+        <em>Bolyai bizonyítása</em> érdemli a helyet.
+      </div>
+
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Részletek: Kiss Elemér [KE1], [KE2]. Bolyai János számelméleti munkásságának feltárása
+        a 20. század végén történt — a hagyatékában talált kéziratok elemzése Kiss Elemér,
+        Bolyai-kutató matematikus munkája.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">3.5.3 — Számtani sorozatok prímekből</span>
+
+      <h6>3.59 Tétel — Dirichlet 1837</h6>
+      <p>
+        Ha egy számtani sorozat <em>első tagja és különbsége relatív prímek</em>, akkor
+        <strong>végtelen sok prím</strong> van benne.
+      </p>
+      <p>Pl. $4k + 1$ vagy $4k + 3$ alakú prímekből egyaránt végtelen sok van.</p>
+
+      <h6>3.60 Probléma — Tisztán prímekből álló sorozat</h6>
+      <p>Milyen hosszú olyan számtani sorozat van, amelynek <em>minden tagja</em> prímszám?</p>
+
+      <div class="ex-box">
+        <strong>2005-ös rekord (22 tagú).</strong>
+        $$a_n = 28\,383\,220\,937\,263 + 1\,861\,263\,814\,410 \cdot k, \quad 0 \leq k \leq 21$$
+        ahol a különbség
+        $$1\,861\,263\,814\,410 = 2 \cdot 3 \cdot 5^2 \cdot 7 \cdot 11 \cdot 13 \cdot 17 \cdot 19 \cdot 23 \cdot 103$$
+        — éppen $23\#/2$ formájú, az első $k$ prím szorzata közelében.
+      </div>
+
+      <h6>3.61 Tétel — Green–Tao, 2004</h6>
+      <p>
+        <strong>Létezik tetszőleges véges hosszúságú</strong>, csak prímekből álló számtani sorozat.
+      </p>
+      <div class="thm-box">
+        Ben Green és Terence Tao 2004-es áttörése Szemerédi tétele
+        (számtani progresszió pozitív sűrűségű halmazokban) és a Fourier-analízis kombinációjával.
+        Tao 2006-ban Fields-érmet kapott részben ezért. Sajnos a bizonyítás <em>nem konstruktív</em> —
+        nem ismert algoritmus 23+ tagú sorozat megtalálására!
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">3.5.4 — Ikerprímek</span>
+
+      <h6>3.62 Definíció</h6>
+      <p>$p, q \in \mathbb{P}$ <strong>ikerprímek</strong>, ha $q = p + 2$. Pl. $(3,5)$, $(5,7)$, $(11,13)$, $(17,19)$, $(29,31)$…</p>
+
+      <h6>3.63 Sejtés — Ikerprím-probléma</h6>
+      <div class="def-box">
+        Végtelen sok $(p, q)$ ikerprím-pár létezik.
+      </div>
+      <p style="color:#94a3b8;font-size:.8rem;">
+        Az ókorban már felmerült; máig nyitott. <strong>Yitang Zhang 2013-as áttörése:</strong>
+        végtelen sok $p, q$ prímpár létezik $q - p < 70\,000\,000$ réssel. Polymath együttműködéssel
+        a határ ma $\leq 246$. A 2-es rés (igazi ikerprímek) még mindig nyitott!
+      </p>
+
+      <h6>Aktuális rekordok (2005)</h6>
+      <p>
+        Járai Antal és munkatársai találták (a 2.12 példában is szerepelt):
+      </p>
+      $$d_{1,2} = 16\,869\,987\,339\,975 \cdot 2^{171960} \pm 1 \quad \text{— 51 779 jegyűek}$$
+      <p style="color:#64748b;font-size:.8rem;">
+        Azóta természetesen tovább nőttek. A legfrissebb rekord a
+        <a href="https://primes.utm.edu/" style="color:var(--acc);">primes.utm.edu</a>
+        rangsorán követhető.
+      </p>
+    </div>
+  </div>
+
+  {# ─────────────────────────── CHAPTER 4 — TABBED CONTENT ─────────────────────────── #}
+  {% elif ch.n == 4 %}
+  <div class="d-flex gap-1 mt-3 mb-3 flex-wrap">
+    <span class="ila-nav-link active" onclick="showTab('t-c4-intro',this)">Áttekintés</span>
+    <span class="ila-nav-link" onclick="showTab('t-c4-mod',this)">4.1 Maradékos osztás</span>
+    <span class="ila-nav-link" onclick="showTab('t-c4-eukl',this)">4.2 Euklidesz alg.</span>
+    <span class="ila-nav-link" onclick="showTab('t-c4-pelda',this)">Példák</span>
+    <span class="ila-nav-link" onclick="showTab('t-c4-lame',this)">Lamé &amp; elemzés</span>
+  </div>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div id="t-c4-intro" class="ila-tab active">
+    <div class="card-dark">
+      <span class="badge-acc">4. fejezet — Maradékos osztás és Euklidesz</span>
+      <p>
+        A 3.2. alfejezetben láttuk, hogy nagy számok prímtényezőkre bontása <em>gyakorlatilag lehetetlen</em>.
+        Mégis, $\operatorname{lnko}(a, b)$ kiszámítására van egy meglepően egyszerű és gyors algoritmus,
+        amit már több mint <strong>2300 éve</strong> felfedeztek — és máig a legjobbak közé tartozik.
+      </p>
+      <div class="def-box">
+        <strong>Euklidesz</strong> (Kr.e. ~300, Alexandria). A görög matematika elsősorban
+        <em>geometria</em> volt, ezért Euklidesz az algoritmusát <strong>szakaszokra</strong> definiálta —
+        tetszőleges pozitív valós számok legnagyobb közös mértékét határozta meg algoritmikusan.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <h6><i class="bi bi-link-45deg me-1"></i> Alkalmazások (előretekintés)</h6>
+      <ul>
+        <li><strong>Relatív prímek</strong> ellenőrzése és keresése</li>
+        <li><strong>Törtek</strong> egyszerűsítése</li>
+        <li><strong>Lineáris Diophantoszi egyenletek</strong> ($ax + by = c$) — 5. fejezet</li>
+        <li><strong>Lineáris kongruenciák</strong> — 6. fejezet</li>
+        <li><strong>Kínai maradéktétel</strong> — 7. fejezet</li>
+        <li><strong>Multiplikatív inverz</strong> $\bmod\, m$ — RSA-kulcsgenerálás (10. fejezet)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: Maradékos osztás ═══ -->
+  <div id="t-c4-mod" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">4.1 Tétel — Maradékos osztás</span>
+      <div class="def-box">
+        Minden $a \in \mathbb{Z}$ és $b > 0$ egész számokhoz létezik
+        <strong>egyértelműen meghatározott</strong> $q, r \in \mathbb{Z}$, amelyre
+        $$a = b \cdot q + r \quad \text{és} \quad 0 \leq r < b.$$
+      </div>
+      <p>
+        Meglepő módon a későbbiekben <strong>nem a hányados</strong>, hanem a
+        <strong>maradék</strong> $r$ lesz a lényeges. Programnyelvekben gyakran:
+      </p>
+      <pre><code>r := a mod b      # Python: a % b
+                  # C:      a % b
+                  # SQL:    MOD(a, b)</code></pre>
+      <p>Negatív $b$-re kiterjeszthető: $0 \leq r < |b|$, de a gyakorlatban felesleges bonyolítás.</p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">4.2 Megjegyzés — Általánosítás más gyűrűkre</span>
+      <p>A maradékos osztás $b \mid (4.2)$-megfelelője <strong>érvényes</strong> az alábbi gyűrűkben is:</p>
+
+      <table class="ref-tbl">
+        <thead><tr><th>Gyűrű</th><th>Elemek</th><th>Példa-művelet</th></tr></thead>
+        <tbody>
+          <tr><td><strong>$\mathbb{R}[x]$</strong></td><td>valós együtthatós polinomok</td><td>polinomosztás</td></tr>
+          <tr><td><strong>$\mathbb{Z}[i]$</strong> Gauss-egészek</td><td>$a + bi$, &nbsp;$a, b \in \mathbb{Z}$</td><td>komplex egész osztás</td></tr>
+          <tr><td><strong>$\mathbb{Z}[\rho]$</strong> Euler-egészek</td><td>$\rho = -\tfrac{1}{2} + \tfrac{\sqrt{3}}{2}i$</td><td>köbgyök-egységekkel</td></tr>
+          <tr><td>$\mathbb{Z}[\alpha]$</td><td>$\alpha \in \mathbb{C}$ másodfokú algebrai szám</td><td>algebrai egész</td></tr>
+        </tbody>
+      </table>
+
+      <div class="thm-box">
+        Mivel a 4–7. fejezetek a maradékos osztás <em>egyetlen</em> tulajdonságára épülnek
+        (Diophantoszi egyenletek, kongruenciák, Kínai maradéktétel),
+        <strong>minden módszer érvényes</strong> $\mathbb{Z}[i]$, $\mathbb{Z}[\rho]$, polinomok és
+        általánosabb <em>Euklideszi gyűrűk</em> esetében is. Részletek a Függelékben (13. fejezet).
+      </div>
+
+      <p style="color:#94a3b8;font-style:italic;">
+        A valós számoknál is használjuk a maradékos osztást: a trigonometrikus függvényeknél
+        $b = 2\pi$ a periódus.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: Euklideszi algoritmus ═══ -->
+  <div id="t-c4-eukl" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">4.3 Algoritmus — Euklideszi algoritmus</span>
+      <p>
+        Adott $a, b \in \mathbb{Z}$ esetén ismételten alkalmazzuk a maradékos osztást: ha
+        $|a| \geq |b|$, akkor osszuk $a$-t $b$-vel, majd $b$-t a maradékkal, majd az osztót a
+        maradékkal — mindig a <em>osztót</em> az új <em>maradékkal</em>.
+      </p>
+
+      $$\begin{aligned}
+        a &= b \cdot q_1 + r_1, & 0 &< r_1 < |b| \\
+        b &= r_1 \cdot q_2 + r_2, & 0 &< r_2 < r_1 \\
+        r_1 &= r_2 \cdot q_3 + r_3, & 0 &< r_3 < r_2 \\
+        &\vdots \\
+        r_{i-2} &= r_{i-1} \cdot q_i + r_i, & 0 &< r_i < r_{i-1} \\
+        &\vdots \\
+        r_{m-2} &= r_{m-1} \cdot q_m + r_m, & 0 &< r_m < r_{m-1} \\
+        r_{m-1} &= r_m \cdot q_{m+1} & \text{(itt }&\, r_{m+1} = 0\text{)}
+      \end{aligned}$$
+
+      <div class="def-box">
+        Az algoritmus akkor áll meg, amikor <strong>$r_{m+1} = 0$</strong>. Ekkor:
+        $$\operatorname{lnko}(a, b) = r_m \qquad \text{— a legutolsó, nem nulla maradék.}$$
+      </div>
+
+      <p style="color:#64748b;font-size:.8rem;">
+        <strong>4.5 Jelölés.</strong> A maradékokat $\langle r_i \rangle$ szögletes zárójelbe tesszük,
+        hogy a hányadosoktól (az alább szereplő $q_i$-tól) megkülönböztessük.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">4.4 Megjegyzés — Miért fontos prímfelbontás <em>nélkül</em>?</span>
+      <p>
+        Az Euklideszi algoritmus előnye <strong>nem csak a gyorsasága</strong>! Ha vele a legnagyobb
+        közös osztót az argumentumok prímtényezős felbontása nélkül is ki lehet számolni — akkor
+        prímtesztelő és -felbontó algoritmusoknál az <em>ismeretlen</em>
+        („prím vagy összetett?") számok lnko-ját is meg tudjuk határozni!
+      </p>
+      <div class="thm-box">
+        Erre számtalanszor lesz szükségünk a 7–8. fejezetben (Pollard $\rho$, Lenstra elliptikus
+        görbe-faktorizáció, AKS prímteszt). Ez teszi az Euklideszi algoritmust az egész könyv
+        <em>egyik központi pillérévé</em>.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 4: Példák ═══ -->
+  <div id="t-c4-pelda" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-amber">4.6 Példa — $\operatorname{lnko}(9867, 8855)$</span>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.86rem;">
+        <thead><tr><th>Osztandó</th><th>=</th><th>Osztó · hányados</th><th>+</th><th>maradék</th></tr></thead>
+        <tbody>
+          <tr><td>$\langle 9867 \rangle$</td><td>=</td><td>$\langle 8855 \rangle \cdot 1$</td><td>+</td><td>$\langle 1012 \rangle$</td></tr>
+          <tr><td>$\langle 8855 \rangle$</td><td>=</td><td>$\langle 1012 \rangle \cdot 8$</td><td>+</td><td>$\langle 759 \rangle$</td></tr>
+          <tr><td>$\langle 1012 \rangle$</td><td>=</td><td>$\langle 759 \rangle \cdot 1$</td><td>+</td><td>$\langle 253 \rangle$</td></tr>
+          <tr><td>$\langle 759 \rangle$</td><td>=</td><td>$\langle 253 \rangle \cdot 3$</td><td>+</td><td>$\langle \mathbf{0} \rangle$</td></tr>
+        </tbody>
+      </table>
+      <div class="def-box">
+        $$\operatorname{lnko}(9867, 8855) = \mathbf{253}$$
+        Csak <strong>4 lépés</strong>! A két szám prímfelbontása ezzel szemben $9867 = 3 \cdot 11 \cdot 13 \cdot 23$,
+        $8855 = 5 \cdot 7 \cdot 11 \cdot 23$ — közvetlenül megtalálni jóval bonyolultabb.
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">4.7 Példa — $\operatorname{lnko}(5\,170\,549,\ 4\,195\,813)$</span>
+      <p>7-jegyű inputokra is csak <strong>8 lépés</strong> kell:</p>
+      <table class="ref-tbl" style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.84rem;">
+        <thead><tr><th>Osztandó</th><th>Osztó · q</th><th>maradék</th></tr></thead>
+        <tbody>
+          <tr><td>5 170 549</td><td>4 195 813 · 1</td><td>974 736</td></tr>
+          <tr><td>4 195 813</td><td>974 736 · 4</td><td>296 869</td></tr>
+          <tr><td>974 736</td><td>296 869 · 3</td><td>84 129</td></tr>
+          <tr><td>296 869</td><td>84 129 · 3</td><td>44 482</td></tr>
+          <tr><td>84 129</td><td>44 482 · 1</td><td>39 647</td></tr>
+          <tr><td>44 482</td><td>39 647 · 1</td><td>4 835</td></tr>
+          <tr><td>39 647</td><td>4 835 · 8</td><td>967</td></tr>
+          <tr><td>4 835</td><td>967 · 5</td><td>$\mathbf{0}$</td></tr>
+        </tbody>
+      </table>
+      <div class="def-box">
+        $$\operatorname{lnko}(5\,170\,549,\ 4\,195\,813) = \mathbf{967}$$
+        Ezeknek a 7-jegyű számoknak a faktorizációja $\sqrt{5 \cdot 10^6} \approx 2236$
+        próbaosztás — nagyságrendileg ugyanannyi. De Euklidesszel <strong>csak 8 lépés</strong>!
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">4.11–4.12 — Több szám lnko-ja</span>
+      <p>Az lnko (és lkkt) több számra <em>iteratívan</em> az Euklideszi algoritmussal:</p>
+      $$\operatorname{lnko}(a, b, c) = \operatorname{lnko}\!\bigl(\operatorname{lnko}(a, b),\ c\bigr)$$
+
+      <h6>Példa — $\operatorname{lnko}(39\,137\,563,\ 15\,836\,693,\ 37\,219\,177)$</h6>
+      <table class="ref-tbl">
+        <thead><tr><th>Lépés</th><th>Eredmény</th></tr></thead>
+        <tbody>
+          <tr><td>$\operatorname{lnko}(39\,137\,563,\ 15\,836\,693)$</td><td>$= 39\,493$</td></tr>
+          <tr><td>$\operatorname{lnko}(37\,219\,177,\ 39\,493)$</td><td>$= 541$</td></tr>
+          <tr><td><strong>Eredmény</strong></td><td>$\mathbf{= 541}$</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: Lamé tétel & elemzés ═══ -->
+  <div id="t-c4-lame" class="ila-tab">
+    <div class="card-dark">
+      <span class="badge-acc">A „jó algoritmus" 5 kritériuma — Euklidesz mind 5-ön átmegy</span>
+      <table class="ref-tbl">
+        <thead><tr><th>Kérdés</th><th>Válasz Euklideszre</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1)</strong> Megáll-e minden inputra?</td><td>✓ Igen — <em>descente infinie</em></td></tr>
+          <tr><td><strong>2)</strong> Helyes eredményt ad?</td><td>✓ Igen — 4.10 Tétel</td></tr>
+          <tr><td><strong>3)</strong> Mennyi idő alatt? </td><td>✓ Lineáris (Lamé — 4.8 Tétel)</td></tr>
+          <tr><td><strong>4)</strong> Milyen bonyolult?</td><td>✓ $O(\log b)$ — gyakorlatilag azonnal</td></tr>
+          <tr><td><strong>5)</strong> Más alkalmazások?</td><td>✓ Lásd 5–10. fejezet</td></tr>
+        </tbody>
+      </table>
+
+      <div class="def-box">
+        <strong>Descente infinie elve.</strong> Az algoritmus természetesen véges sok lépésben véget ér, mert
+        $$|b| > r_1 > r_2 > \dots > r_i > r_{i+1} > \dots > 0$$
+        és <em>pozitív egészek szigorúan csökkenő sorozata nem lehet végtelen</em>.
+        Pierre de Fermat híres bizonyítási elve (francia: „végtelen leszállás").
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-amber">4.8 Tétel — Lamé (1844)</span>
+      <p>
+        Az Euklideszi algoritmus legfeljebb annyi lépésig tart, mint amennyi $b$ számjegyei
+        számának <strong>ötszöröse</strong>:
+      </p>
+      $$m \leq 5 \cdot \log_{10} |b|$$
+      <p style="color:#64748b;font-size:.8rem;">
+        Gabriel Lamé (1795–1870) francia matematikus. Ez volt a <em>legelső</em> bizonyított felső becslés
+        egy algoritmus lépésszámára — a számítástudomány <em>előtti</em> aszimptotikus elemzés!
+      </p>
+
+      <h6>Bizonyítás-vázlat — A Fibonacci-kapcsolat</h6>
+      <p>
+        Az algoritmus akkor tart a legtovább, ha a $q_i$ együtthatók a <strong>legkisebbek</strong>
+        (mindig 1). De $q_i \equiv 1$ esetén a maradékok éppen a <strong>Fibonacci-sorozatot</strong>
+        adják visszafelé:
+      </p>
+      $$r_m, r_{m-1}, \dots, r_2, r_1, |b| \;=\; F_1, F_2, F_3, \dots, F_{m+1}$$
+      <p>Binet-formula szerint $F_n = \frac{1}{\sqrt{5}}(\varphi^n - \psi^n)$, ahol $\varphi = (1+\sqrt{5})/2$:</p>
+      $$b \;\geq\; F_{m+1} \;\approx\; \frac{\varphi^{m+1}}{\sqrt{5}} \;\Longrightarrow\; m = O(\log b).$$
+
+      <div class="thm-box">
+        <strong>Pontosabb [CLR] 33.2-5.</strong> $a > b > 0$ esetén a futásidő
+        $1 + \log_\varphi(b)$, ami tovább csökkenthető:
+        $$1 + \log_\varphi\!\left(\frac{b}{\operatorname{lnko}(a,b)}\right), \qquad \varphi = \frac{\sqrt{5} + 1}{2}.$$
+      </div>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">4.9 Megjegyzés — Miért „a lehető leggyorsabb"?</span>
+      <p>
+        Lamé tétele szerint az Euklideszi algoritmus <strong>lineáris</strong> az input méretében:
+        a futásidő csak <em>egyenes arányban</em> nő a jegyek számával. Ezt az input <em>beolvasása</em>
+        is megköveteli — tehát nincs lényegesen gyorsabb algoritmus elvileg sem.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-acc">4.10 Tétel — Helyességbizonyítás</span>
+      <p>$r_m = \operatorname{lnko}(a, b)$.</p>
+      <div class="def-box">
+        <strong>Bizonyítás (teljes indukció alulról-felfelé):</strong>
+        $$r_m = \operatorname{lnko}(r_m, r_{m-1}) = \operatorname{lnko}(r_{m-1}, r_{m-2}) = \cdots$$
+        $$= \operatorname{lnko}(r_i, r_{i-1}) = \cdots = \operatorname{lnko}(a, b). \quad \square$$
+      </div>
+      <p style="color:#64748b;font-size:.8rem;">
+        Az <em>induktív lépés</em> kulcsa: ha $a = bq + r$, akkor $\operatorname{lnko}(a, b) = \operatorname{lnko}(b, r)$.
+      </p>
+    </div>
+
+    <div class="card-dark">
+      <span class="badge-sky">Modern változatok</span>
+      <p>
+        A XX. században gyorsabb módszereket is felfedeztek:
+      </p>
+      <ul>
+        <li>
+          <strong>Stein (1961) bináris algoritmus</strong> — csak <em>kivonást és felezést</em>
+          (bináris-vessző áthelyezést) használ. Hardver szempontból gyorsabb, mert osztás nincs benne.
+          Részletek: Knuth [KD] 2. kötet, 4.5.2.
+        </li>
+        <li>
+          <strong>Kibővített Euklideszi (extended)</strong> — egyszerre adja az
+          $\operatorname{lnko}(a,b)$-t <em>és</em> a Bézout-együtthatókat $x, y$, amelyekre
+          $ax + by = \operatorname{lnko}(a, b)$. Erre alapszik a multiplikatív inverz $\bmod\, m$ keresése
+          (RSA-kulcsgenerálás).
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  {# ─────────────────── GENERIC CHAPTERS (5–13) — SECTIONS LIST + STUB ─────────────────── #}
+  {% else %}
+  <div class="card-dark mt-3">
+    <span class="badge-acc">{{ ch.n }}. fejezet · áttekintés</span>
+    <p style="font-size:1rem;color:#e6edf3;">{{ ch.glossary }}</p>
+    {% if ch.tags %}
+    <div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.65rem;">
+      {% for t in ch.tags %}
+      <span style="background:var(--acc-bg2);color:var(--acc);border:1px solid var(--acc);border-radius:.3rem;padding:.18rem .55rem;font-size:.7rem;font-weight:600;letter-spacing:.03em;">{{ t }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if ch.sections %}
+  <div class="card-dark">
+    <h5><i class="bi bi-list-ol me-1"></i> Alfejezetek</h5>
+    <table class="ref-tbl">
+      <thead><tr><th style="width:5rem;">§</th><th>Cím</th></tr></thead>
+      <tbody>
+        {% for s in ch.sections %}
+        <tr><td class="sym-cell">§ {{ s.id }}</td><td>{{ s.title }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="card-dark">
+    <h5><i class="bi bi-file-earmark-pdf me-1"></i> Forrás</h5>
+    <p>
+      Szalkai István &amp; Dósa György: <em>Algoritmikus számelmélet</em>,
+      Pannon Egyetem · Typotex 2011, ISBN&nbsp;978&nbsp;963&nbsp;279&nbsp;523&nbsp;2.
+      CC BY-NC-ND 3.0. A teljes szöveg: <code>szamelmelet/book/Algoritmikus_szamelmelet.pdf</code>.
+    </p>
+    {% if ch.related_tetel %}
+    <p>
+      Vizsga-szintű tömör összefoglaló a fent linkelt
+      <a href="/demos/dimat/path/szamelm" style="color:var(--acc);text-decoration:none;font-weight:600">Számelmélet tételsor</a>
+      lapokon — minden tétel saját oldalt kap (RSA, CRT, Euler-φ, Euklidesz, …).
+    </p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Prev / Next nav -->
+  <div class="nav-strip">
+    {% if ch.prev %}
+    <a href="{{ url_for('demos.algo_ch', n=ch.prev.n) }}" class="nav-btn">
+      <span>←</span>
+      <span>
+        <div class="lbl">{{ ch.prev.n }}. fejezet</div>
+        <div class="title">{{ ch.prev.title }}</div>
+      </span>
+    </a>
+    {% else %}
+    <span class="nav-btn disabled"><span class="lbl">—</span></span>
+    {% endif %}
+
+    {% if ch.next %}
+    <a href="{{ url_for('demos.algo_ch', n=ch.next.n) }}" class="nav-btn" style="text-align:right;">
+      <span>
+        <div class="lbl">{{ ch.next.n }}. fejezet</div>
+        <div class="title">{{ ch.next.title }}</div>
+      </span>
+      <span>→</span>
+    </a>
+    {% else %}
+    <span class="nav-btn disabled"><span class="lbl">—</span></span>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('.ila-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ila-nav-link').forEach(n => n.classList.remove('active'));
+  const tab = document.getElementById(id);
+  if (tab) tab.classList.add('active');
+  if (el) el.classList.add('active');
+  // Re-render math in newly visible tab in case KaTeX missed it
+  if (window.renderMathInElement && tab) {
+    try { window.renderMathInElement(tab, {
+      delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},
+                  {left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],
+      throwOnError:false,
+      ignoredTags:['script','noscript','style','textarea','pre','code'],
+    }); } catch(e){}
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  {% if ch.prev %}if (e.key === 'ArrowLeft')  window.location.href = "{{ url_for('demos.algo_ch', n=ch.prev.n) }}";{% endif %}
+  {% if ch.next %}if (e.key === 'ArrowRight') window.location.href = "{{ url_for('demos.algo_ch', n=ch.next.n) }}";{% endif %}
+});
+</script>
+
+{% endblock %}
