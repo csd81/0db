@@ -287,6 +287,24 @@ def _read_text(path: Path) -> str:
         return ''
 
 
+def _merge_bilingual(items_en: list, items_hu: list) -> list:
+    """Pair English and Hungarian exercises/quizzes by position.
+    If counts mismatch, missing fields are None. Each EN item gets `_hu`
+    keys for its Hungarian counterpart's text fields."""
+    if not items_hu:
+        return items_en
+    merged = []
+    for i, en in enumerate(items_en):
+        hu = items_hu[i] if i < len(items_hu) else None
+        item = dict(en)
+        if hu:
+            for k, v in hu.items():
+                if isinstance(v, str) and k not in ('id', 'index'):
+                    item[f'{k}_hu'] = v
+        merged.append(item)
+    return merged
+
+
 def _load_chapter(ch: str) -> dict:
     folder_name = _CH_TO_FOLDER.get(ch)
     title = CH_TITLES.get(ch, ch)
@@ -296,7 +314,9 @@ def _load_chapter(ch: str) -> dict:
         'exercises': [],
         'quiz': [],
         'has_folder': False,
+        'has_hu': False,
         'readme_md': '',
+        'readme_md_hu': '',
     }
     if not folder_name:
         return out
@@ -304,11 +324,27 @@ def _load_chapter(ch: str) -> dict:
     if not folder.is_dir():
         return out
     out['has_folder'] = True
+
+    # English (canonical)
     out['readme_md'] = _read_text(folder / 'README.md')
     out['exercises'] = _parse_solutions_md(_read_text(folder / 'solutions.md'))
     quiz_text = _read_text(folder / 'quiz.md')
     if quiz_text:
         out['quiz'] = _parse_quiz_md(quiz_text)
+
+    # Hungarian (optional, paired by position)
+    readme_hu = _read_text(folder / 'README.hu.md')
+    solutions_hu_text = _read_text(folder / 'solutions.hu.md')
+    quiz_hu_text = _read_text(folder / 'quiz.hu.md')
+    if solutions_hu_text or quiz_hu_text or readme_hu:
+        out['has_hu'] = True
+        out['readme_md_hu'] = readme_hu
+        if solutions_hu_text:
+            ex_hu = _parse_solutions_md(solutions_hu_text)
+            out['exercises'] = _merge_bilingual(out['exercises'], ex_hu)
+        if quiz_hu_text:
+            qz_hu = _parse_quiz_md(quiz_hu_text)
+            out['quiz'] = _merge_bilingual(out['quiz'], qz_hu)
     return out
 
 

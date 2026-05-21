@@ -496,11 +496,11 @@ def _ls_worker():
 
             time.sleep(1.0)
 
-        # Phase gap: 15s countdown, replica stays empty
+        # Phase gap: 5s countdown, replica stays empty
         with _LS_LOCK:
             _LS_STATE['phase'] = 'gap'
             _LS_STATE['current_sql'] = ''
-        for remaining in range(15, 0, -1):
+        for remaining in range(5, 0, -1):
             with _LS_LOCK:
                 _LS_STATE['countdown'] = remaining
             time.sleep(1.0)
